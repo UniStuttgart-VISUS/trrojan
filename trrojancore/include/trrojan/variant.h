@@ -3,8 +3,12 @@
 /// </copyright>
 /// <author>Christoph Müller</author>
 
+#pragma once
+
 #include <cstdint>
 #include <stdexcept>
+
+#include "trrojan/export.h"
 
 
 namespace trrojan {
@@ -12,7 +16,7 @@ namespace trrojan {
     /// <summary>
     /// Possible data types <see cref="trrojan::variant" /> can hold.
     /// </summary>
-    enum class variant_type {
+    enum class TRROJANCORE_API variant_type {
         /// <summary>
         /// The variant does not contain valid data.
         /// </summary>
@@ -88,10 +92,10 @@ namespace trrojan {
     /// The default implementation does indicate an invalid type; the template
     /// specialisations implement the type deduction.
     /// </remarks>
-    template<variant_type T> struct variant_type_traits { };
+    template<variant_type T> struct TRROJANCORE_API variant_type_traits { };
 
 #define __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(t0, t1)                         \
-    template<> struct variant_type_traits<variant_type::t0> {                  \
+    template<> struct TRROJANCORE_API variant_type_traits<variant_type::t0> {  \
         typedef t1 type;                                                       \
     }
 
@@ -111,10 +115,10 @@ namespace trrojan {
 #undef __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS
 
 
-    // <summary>
-    // A type that can opaquely store different kind of data.
-    // </summary>
-    class variant {
+    /// <summary>
+    /// A type that can opaquely store different kind of data.
+    /// </summary>
+    class TRROJANCORE_API variant {
 
     public:
 

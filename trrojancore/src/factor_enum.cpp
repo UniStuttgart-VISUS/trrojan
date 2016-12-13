@@ -4,3 +4,25 @@
 /// <author>Christoph Müller</author>
 
 #include "factor_enum.h"
+
+
+/*
+ * trrojan::detail::factor_enum::size
+ */
+size_t trrojan::detail::factor_enum::size(void) const {
+    return this->manifestations.size();
+}
+
+
+/*
+ * trrojan::detail::factor_enum::operator []
+ */
+const trrojan::variant& trrojan::detail::factor_enum::operator [](
+        const size_t i) const {
+    if (i >= this->size()) {
+        throw std::range_error("The factor does not contain the requested "
+            "manifestation.");
+    }
+
+    return this->manifestations[i];
+}

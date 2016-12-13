@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "trrojan/variant.h"
+#include "factor_base.h"
 
 
 namespace trrojan {
@@ -15,14 +15,17 @@ namespace detail {
     /// Base class for different implementations of a
     /// <see cref="trrojan::factor" />.
     /// </summary>
-    class factor_range {
+    /// <tparam name="T">A numeric type that can be interpolated.</tparam>
+    template<class T> class factor_range : public factor_base {
 
     public:
 
-        virtual size_t size(void) const = 0;
+        virtual size_t size(void) const;
 
-        virtual const variant& operator [](const size_t i) const = 0;
+        virtual const variant& operator [](const size_t i) const;
 
     };
 }
 }
+
+#include "factor_range.inl"

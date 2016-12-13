@@ -6,8 +6,16 @@
 #pragma once
 
 
+#if (defined(_MSC_VER) && defined(TRROJANCORE_DLL))
+
 #ifdef TRROJANCORE_EXPORTS
 #define TRROJANCORE_API __declspec(dllexport)
 #else /* TRROJANCORE_EXPORTS */
 #define TRROJANCORE_API __declspec(dllimport)
 #endif /* TRROJANCORE_EXPORTS*/
+
+#else /* (defined(_MSC_VER) && defined(TRROJANCORE_DLL)) */
+
+#define TRROJANCORE_API
+
+#endif /* (defined(_MSC_VER) && defined(TRROJANCORE_DLL)) */

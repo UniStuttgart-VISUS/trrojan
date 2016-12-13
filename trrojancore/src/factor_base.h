@@ -5,6 +5,8 @@
 
 #pragma once
 
+#include "trrojan\variant.h"
+
 
 namespace trrojan {
 namespace detail {

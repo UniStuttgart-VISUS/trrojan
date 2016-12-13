@@ -9,6 +9,18 @@
 #include <stdexcept>
 
 #include "factor_base.h"
+#include "factor_enum.h"
+#include "factor_range.h"
+
+
+/*
+ * trrojan::factor::create_from_steps
+ */
+trrojan::factor trrojan::factor::create_from_steps(const int begin,
+        const int dist, const int cnt) {
+    auto impl = new detail::factor_range<int>();
+    return std::move(factor(std::move(impl)));
+}
 
 
 /*

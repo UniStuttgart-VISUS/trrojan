@@ -5,6 +5,8 @@
 
 #pragma once
 
+#include <vector>
+
 #include "factor_base.h"
 
 
@@ -23,6 +25,13 @@ namespace detail {
         virtual size_t size(void) const;
 
         virtual const variant& operator [](const size_t i) const;
+
+    private:
+
+        /// <summary>
+        /// Stores all known manifestations of the factor.
+        /// </summary>
+        std::vector<variant> manifestations;
 
     };
 }

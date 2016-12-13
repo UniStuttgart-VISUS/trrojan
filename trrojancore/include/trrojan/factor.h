@@ -24,10 +24,15 @@ namespace trrojan {
     /// <para>We use the facade pattern in order to allow for the factor living
     /// on the stack and hiding different kinds of factors which implement the
     /// same functionality differently.</para>
-    /// <remarks>
+    /// </remarks>
     class TRROJANCORE_API factor {
 
     public:
+
+        static factor create_from_steps(const int begin, const int dist,
+            const int cnt);
+
+        inline factor(factor&& rhs) : impl(std::move(rhs.impl)) { }
 
         /// <summary>
         /// Answer the number of different manifestations the factor has.
@@ -44,6 +49,12 @@ namespace trrojan {
         const variant& operator [](const size_t i) const;
 
     private:
+
+        inline factor(detail::factor_base *impl) : impl(impl) { }
+
+        factor(const factor&) = delete;
+
+        factor& operator =(const factor&) = delete;
 
         /// <summary>
         /// Pointer to the actual implementation.
