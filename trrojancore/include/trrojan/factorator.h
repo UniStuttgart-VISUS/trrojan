@@ -130,7 +130,7 @@ namespace trrojan {
         /// <remarks>
         /// The object does not own this variable, but only holds a pointer.
         /// </remarks>
-        const factor *factor;
+        const trrojan::factor *factor;
 
         /// <summary>
         /// The current position of the iterator.
