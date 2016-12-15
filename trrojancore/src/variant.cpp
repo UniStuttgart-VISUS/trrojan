@@ -3,7 +3,7 @@
 /// </copyright>
 /// <author>Christoph Müller</author>
 
-#include "trrojan\variant.h"
+#include "trrojan/variant.h"
 
 #include <cstring>
 #include <memory>
