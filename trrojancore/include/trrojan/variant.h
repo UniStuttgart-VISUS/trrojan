@@ -417,7 +417,7 @@ namespace trrojan {
         friend inline std::basic_ostream<C, T>& operator <<(
                 std::basic_ostream<C, T>& lhs, const variant& rhs) {
 #define __TRROJANCORE_PRINT(t)                                                 \
-                case variant_type::##t: lhs << rhs.val_##t; return lhs
+                case variant_type::t: lhs << rhs.val_##t; return lhs
 
             switch (rhs.cur_type) {
                 __TRROJANCORE_PRINT(int8);
