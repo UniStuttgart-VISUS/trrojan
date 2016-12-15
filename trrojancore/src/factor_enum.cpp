@@ -14,6 +14,16 @@ trrojan::detail::factor_enum::~factor_enum(void) { }
 
 
 /*
+ * trrojan::detail::factor_enum::clone
+ */
+std::unique_ptr<trrojan::detail::factor_base>
+trrojan::detail::factor_enum::clone(void) const {
+    return std::unique_ptr<factor_base>(
+        new factor_enum(this->_name, this->manifestations));
+}
+
+
+/*
  * trrojan::detail::factor_enum::size
  */
 size_t trrojan::detail::factor_enum::size(void) const {

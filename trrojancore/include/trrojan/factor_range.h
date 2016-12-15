@@ -6,6 +6,7 @@
 #pragma once
 
 #include <cmath>
+#include <memory>
 
 #include "factor_base.h"
 
@@ -50,6 +51,9 @@ namespace detail {
         virtual ~factor_range(void);
 
         /// <inheritdoc />
+        virtual std::unique_ptr<factor_base> clone(void) const;
+
+        /// <inheritdoc />
         virtual size_t size(void) const;
 
         /// <inheritdoc />
@@ -60,7 +64,7 @@ namespace detail {
         /// </summary>
         /// <param name="rhs">The right-hand side operand.</param>
         /// <returns><c>true</c> if this object and <paramref name="rhs" />
-        /// are equal, <c>false</c> otherwise.
+        /// are equal, <c>false</c> otherwise.</returns>
         inline bool operator ==(const factor_range& rhs) const {
             return (factor_base::operator ==(rhs)
                 && (this->begin == rhs.begin)
@@ -72,8 +76,8 @@ namespace detail {
         /// Test for inequality.
         /// </summary>
         /// <param name="rhs">The right-hand side operand.</param>
-        /// <returns><c>true</c> if this object and <paramref name="rhs" />
-        /// are equal, <c>false</c> otherwise.
+        /// <returns><c>false</c> if this object and <paramref name="rhs" />
+        /// are equal, <c>true</c> otherwise.</returns>
         inline bool operator !=(const factor_range& rhs) const {
             return !(*this == rhs);
         }
@@ -109,7 +113,7 @@ namespace detail {
     template<class T> std::unique_ptr<factor_range<T>> make_factor_from_range(
             const std::string& name, const T begin, const T end,
             const size_t cnt_steps) {
-        auto range = static_cast<double>(std::abs(end - begin));
+        auto range = static_cast<double>(std::abs(end - begin) + 1);
         auto retval = std::unique_ptr<factor_range<T>>(new factor_range<T>(name,
             begin, static_cast<T>(range / cnt_steps), cnt_steps));
         return std::move(retval);

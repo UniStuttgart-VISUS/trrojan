@@ -56,7 +56,11 @@ namespace trrojan {
                 step_size, cnt_steps));
         }
 
-        factor(const factor&) = delete;
+        /// <summary>
+        /// Clone <paramref name="rhs" />.
+        /// </summary>
+        /// <param name="rhs">The object to be cloned.</param>
+        factor(const factor& rhs);
 
         /// <summary>
         /// Move <paramref name="rhs" />.
@@ -89,7 +93,12 @@ namespace trrojan {
         /// <exception cref="std::range_error"></exception>
         const variant& operator [](const size_t i) const;
 
-        factor& operator =(const factor&) = delete;
+        /// <summary>
+        /// Assignment.
+        /// </summary>
+        /// <param name="rhs">The right hand side operand.</param>
+        /// <returns><c>*this</c></returns>
+        factor& operator =(const factor& rhs);
 
         /// <summary>
         /// Move assignment.
@@ -103,15 +112,15 @@ namespace trrojan {
         /// </summary>
         /// <param name="rhs">The right-hand side operand.</param>
         /// <returns><c>true</c> if this object and <paramref name="rhs" />
-        /// are equal, <c>false</c> otherwise.
+        /// are equal, <c>false</c> otherwise.</returns>
         bool operator ==(const factor& rhs) const;
 
         /// <summary>
         /// Test for inequality.
         /// </summary>
         /// <param name="rhs">The right-hand side operand.</param>
-        /// <returns><c>true</c> if this object and <paramref name="rhs" />
-        /// are equal, <c>false</c> otherwise.
+        /// <returns><c>false</c> if this object and <paramref name="rhs" />
+        /// are equal, <c>true</c> otherwise.</returns>
         inline bool operator !=(const factor& rhs) const {
             return !(*this == rhs);
         }

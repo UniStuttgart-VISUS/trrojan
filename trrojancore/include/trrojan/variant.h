@@ -6,6 +6,7 @@
 #pragma once
 
 #include <cstdint>
+#include <iostream>
 #include <stdexcept>
 
 #include "trrojan/export.h"
@@ -402,6 +403,39 @@ namespace trrojan {
         /// are equal.</returns>
         inline bool operator !=(const variant& rhs) const {
             return !(*this == rhs);
+        }
+
+        /// <summary>
+        /// Write the <see cref="trrojan::variant" /> to a stream.
+        /// </summary>
+        /// <param name="lhs"></param>
+        /// <param name="rhs"></param>
+        /// <returns><paramref name="lhs" /></returns>
+        /// <tparam name="C"></tparam>
+        /// <tparam name="T"></tparam>
+        template<class C, class T>
+        friend inline std::basic_ostream<C, T>& operator <<(
+                std::basic_ostream<C, T>& lhs, const variant& rhs) {
+#define __TRROJANCORE_PRINT(t)                                                 \
+                case variant_type::##t: lhs << rhs.val_##t; return lhs
+
+            switch (rhs.cur_type) {
+                __TRROJANCORE_PRINT(int8);
+                __TRROJANCORE_PRINT(int16);
+                __TRROJANCORE_PRINT(int32);
+                __TRROJANCORE_PRINT(int64);
+                __TRROJANCORE_PRINT(uint8);
+                __TRROJANCORE_PRINT(uint16);
+                __TRROJANCORE_PRINT(uint32);
+                __TRROJANCORE_PRINT(uint64);
+                __TRROJANCORE_PRINT(float32);
+                __TRROJANCORE_PRINT(float64);
+                __TRROJANCORE_PRINT(string);
+                __TRROJANCORE_PRINT(wstring);
+                default: return lhs;
+            }
+
+#undef __TRROJANCORE_PRINT
         }
 
     private:

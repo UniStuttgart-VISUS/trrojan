@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <memory>
 #include <string>
 
 #include "trrojan/variant.h"
@@ -31,6 +32,12 @@ namespace detail {
         virtual ~factor_base(void);
 
         /// <summary>
+        /// Create a deep copy of the factor.
+        /// </summary>
+        /// <returns>A deep copy of the factor.</returns>
+        virtual std::unique_ptr<factor_base> clone(void) const = 0;
+
+        /// <summary>
         /// Answers the name of the factor.
         /// </summary>
         inline const std::string& name(void) const {
@@ -48,7 +55,7 @@ namespace detail {
         /// </summary>
         /// <param name="rhs">The right-hand side operand.</param>
         /// <returns><c>true</c> if this object and <paramref name="rhs" />
-        /// are equal, <c>false</c> otherwise.
+        /// are equal, <c>false</c> otherwise.</returns>
         inline bool operator ==(const factor_base& rhs) const {
             return (this->_name == rhs._name);
         }
@@ -57,8 +64,8 @@ namespace detail {
         /// Test for inequality.
         /// </summary>
         /// <param name="rhs">The right-hand side operand.</param>
-        /// <returns><c>true</c> if this object and <paramref name="rhs" />
-        /// are equal, <c>false</c> otherwise.
+        /// <returns><c>false</c> if this object and <paramref name="rhs" />
+        /// are equal, <c>true</c> otherwise.</returns>
         inline bool operator !=(const factor_base& rhs) const {
             return !(*this == rhs);
         }

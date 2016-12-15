@@ -10,6 +10,16 @@
 
 
 /*
+ * trrojan::factor::factor
+ */
+trrojan::factor::factor(const factor& rhs) {
+    if (rhs.impl != nullptr) {
+        this->impl = rhs.impl->clone();
+    }
+}
+
+
+/*
  * trrojan::factor::operator []
  */
 const trrojan::variant& trrojan::factor::operator [](const size_t i) const {
@@ -19,6 +29,17 @@ const trrojan::variant& trrojan::factor::operator [](const size_t i) const {
     }
 
     return (*this->impl)[i];
+}
+
+
+/*
+ * trrojan::factor::operator =
+ */
+trrojan::factor& trrojan::factor::operator =(const factor & rhs) {
+    if (this != std::addressof(rhs)) {
+        this->impl = (rhs.impl) ? rhs.impl->clone() : nullptr;
+    }
+    return *this;
 }
 
 

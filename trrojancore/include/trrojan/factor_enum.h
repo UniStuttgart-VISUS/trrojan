@@ -56,6 +56,9 @@ namespace detail {
         virtual ~factor_enum(void);
 
         /// <inheritdoc />
+        virtual std::unique_ptr<factor_base> clone(void) const;
+
+        /// <inheritdoc />
         virtual size_t size(void) const;
 
         /// <inheritdoc />
@@ -66,7 +69,7 @@ namespace detail {
         /// </summary>
         /// <param name="rhs">The right-hand side operand.</param>
         /// <returns><c>true</c> if this object and <paramref name="rhs" />
-        /// are equal, <c>false</c> otherwise.
+        /// are equal, <c>false</c> otherwise.</returns>
         inline bool operator ==(const factor_enum& rhs) const {
             return (factor_base::operator ==(rhs)
                 && (this->manifestations == rhs.manifestations));
@@ -76,8 +79,8 @@ namespace detail {
         /// Test for inequality.
         /// </summary>
         /// <param name="rhs">The right-hand side operand.</param>
-        /// <returns><c>true</c> if this object and <paramref name="rhs" />
-        /// are equal, <c>false</c> otherwise.
+        /// <returns><c>false</c> if this object and <paramref name="rhs" />
+        /// are equal, <c>true</c> otherwise.</returns>
         inline bool operator !=(const factor_enum& rhs) const {
             return !(*this == rhs);
         }

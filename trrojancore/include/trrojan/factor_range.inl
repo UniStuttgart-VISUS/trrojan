@@ -12,6 +12,16 @@ trrojan::detail::factor_range<T>::~factor_range(void) { }
 
 
 /*
+ * trrojan::detail::factor_range<T>::clone
+ */
+template<class T> inline std::unique_ptr<trrojan::detail::factor_base>
+trrojan::detail::factor_range<T>::clone(void) const {
+    return std::unique_ptr<factor_base>(new factor_range<T>(this->_name,
+        this->begin, this->step_size, this->cnt_steps));
+}
+
+
+/*
  * trrojan::detail::factor_range<T>::size
  */
 template<class T>
@@ -31,5 +41,6 @@ const trrojan::variant& trrojan::detail::factor_range<T>::operator [](
             "manifestation.");
     }
 
+    // TODO: implicit cast here is a problem ...
     return (this->begin + i * this->step_size);
 }
