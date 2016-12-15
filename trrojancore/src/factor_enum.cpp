@@ -3,7 +3,14 @@
 /// </copyright>
 /// <author>Christoph Müller</author>
 
-#include "factor_enum.h"
+#include "trrojan/factor_enum.h"
+
+
+
+/*
+ * trrojan::detail::factor_enum::~factor_enum
+ */
+trrojan::detail::factor_enum::~factor_enum(void) { }
 
 
 /*

@@ -97,7 +97,7 @@ namespace trrojan {
 #define __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(t0, t1)                         \
     template<> struct TRROJANCORE_API variant_type_traits<variant_type::t0> {  \
         typedef t1 type;                                                       \
-    }
+    }                                                                          \
 
     __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(int8, std::int8_t);
     __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(int16, std::int16_t);

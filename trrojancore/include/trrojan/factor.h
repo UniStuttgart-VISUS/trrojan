@@ -5,17 +5,17 @@
 
 #pragma once
 
+#include <algorithm>
 #include <memory>
 
 #include "trrojan/export.h"
+#include "trrojan/factor_base.h"
+#include "trrojan/factor_enum.h"
+#include "trrojan/factor_range.h"
 #include "trrojan/variant.h"
 
 
 namespace trrojan {
-
-    /* Forward declarations. */
-    namespace detail { class factor_base; }
-
 
     /// <summary>
     /// This class represents a variable factor which impacts performance.
@@ -29,16 +29,57 @@ namespace trrojan {
 
     public:
 
-        static factor create_from_steps(const int begin, const int dist,
-            const int cnt);
+        template<class T> static inline factor from_manifestations(
+                const std::string& name, const std::vector<T>& manifestations) {
+            std::vector<variant> m;
+            std::transform(manifestations.cbegin(), manifestations.cend(),
+                std::back_inserter(m), [](const T& n) { return variant(n); });
+            return factor(new detail::factor_enum(name, std::move(m)));
+        }
 
+        template<class I> static inline factor from_manifestations(
+                const std::string& name, I begin, I end) {
+            return factor(new detail::factor_enum(name, begin, end));
+        }
+
+        template<class T>
+        static inline factor from_range(const std::string& name, const T begin,
+            const T end, const size_t cnt_steps) {
+            return factor(detail::make_factor_from_range(name, begin,
+                end, cnt_steps));
+        }
+
+        template<class T>
+        static inline factor from_steps(const std::string& name, const T begin,
+                const T step_size, const size_t cnt_steps) {
+            return factor(detail::make_factor_from_steps(name, begin,
+                step_size, cnt_steps));
+        }
+
+        factor(const factor&) = delete;
+
+        /// <summary>
+        /// Move <paramref name="rhs" />.
+        /// </summary>
+        /// <param name="rhs">The object to be moved.</param>
         inline factor(factor&& rhs) : impl(std::move(rhs.impl)) { }
+
+        /// <summary>
+        /// Answers the name of the factor.
+        /// </summary>
+        /// <returns>The name of the factor</returns>
+        inline const std::string& name(void) const {
+            static const std::string EMPTY;
+            return (this->impl != nullptr) ? this->impl->name() : EMPTY;
+        }
 
         /// <summary>
         /// Answer the number of different manifestations the factor has.
         /// </summary>
         /// <returns>The number of manifestations.</returns>
-        size_t size(void) const;
+        inline size_t size(void) const {
+            return (this->impl != nullptr) ? this->impl->size() : 0;
+        }
 
         /// <summary>
         /// Answer a specific manifestation.
@@ -48,18 +89,43 @@ namespace trrojan {
         /// <exception cref="std::range_error"></exception>
         const variant& operator [](const size_t i) const;
 
+        factor& operator =(const factor&) = delete;
+
+        /// <summary>
+        /// Move assignment.
+        /// </summary>
+        /// <param name="rhs">The right hand side operand.</param>
+        /// <returns><c>*this</c></returns>
+        factor& operator =(factor&& rhs);
+
+        /// <summary>
+        /// Test for equality.
+        /// </summary>
+        /// <param name="rhs">The right-hand side operand.</param>
+        /// <returns><c>true</c> if this object and <paramref name="rhs" />
+        /// are equal, <c>false</c> otherwise.
+        bool operator ==(const factor& rhs) const;
+
+        /// <summary>
+        /// Test for inequality.
+        /// </summary>
+        /// <param name="rhs">The right-hand side operand.</param>
+        /// <returns><c>true</c> if this object and <paramref name="rhs" />
+        /// are equal, <c>false</c> otherwise.
+        inline bool operator !=(const factor& rhs) const {
+            return !(*this == rhs);
+        }
+
     private:
 
         inline factor(detail::factor_base *impl) : impl(impl) { }
 
-        factor(const factor&) = delete;
-
-        factor& operator =(const factor&) = delete;
+        inline factor(std::unique_ptr<detail::factor_base> impl)
+            : impl(std::move(impl)) { }
 
         /// <summary>
         /// Pointer to the actual implementation.
         /// </summary>
         std::unique_ptr<detail::factor_base> impl;
-
     };
 }
