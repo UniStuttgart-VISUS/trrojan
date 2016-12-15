@@ -42,6 +42,13 @@ namespace trrojan {
             return factor(new detail::factor_enum(name, begin, end));
         }
 
+        template<class T> static inline factor from_manifestations(
+                const std::string& name, 
+                const std::initializer_list<T>& manifestations) {
+            std::vector<T> m = manifestations;
+            return factor::from_manifestations(name, m);
+        }
+
         template<class T>
         static inline factor from_range(const std::string& name, const T begin,
             const T end, const size_t cnt_steps) {
