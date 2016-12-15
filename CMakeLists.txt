@@ -7,11 +7,14 @@ project(TRRojan)
 
 set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_USE_RELATIVE_PATHS ON)
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 
 # Configure the compiler.
 IF (${CMAKE_COMPILER_IS_GNUCXX})
-	add_definitions(-pedantic -fPIC -DUNIX)
+	add_definitions(-pedantic -fPIC -DUNIX )
 	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -DDEBUG -D_DEBUG -ggdb")
 ENDIF (${CMAKE_COMPILER_IS_GNUCXX})
 
