@@ -8,6 +8,7 @@
 #include <iterator>
 #include <vector>
 
+#include "trrojan/export.h"
 #include "factor_base.h"
 
 
@@ -19,7 +20,7 @@ namespace detail {
     /// Implements a factor with discrete manifestations that are explicitly
     /// enumerated.
     /// </summary>
-    class factor_enum : public factor_base {
+    class TRROJANCORE_API factor_enum : public factor_base {
 
     public:
 

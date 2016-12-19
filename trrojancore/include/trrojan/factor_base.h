@@ -8,6 +8,7 @@
 #include <memory>
 #include <string>
 
+#include "trrojan/export.h"
 #include "trrojan/variant.h"
 
 
@@ -22,7 +23,7 @@ namespace detail {
     /// This class serves as interface for the facade and provides some shared
     /// implementation like handling of the name of the factor.
     /// </remarks>
-    class factor_base {
+    class TRROJANCORE_API factor_base {
 
     public:
 

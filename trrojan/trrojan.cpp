@@ -1,9 +1,7 @@
 #include <iostream>
 #include <numeric>
 
-#include "trrojan/factor.h"
-#include "trrojan/factorator.h"
-#include "trrojan/variant.h"
+#include "trrojan/configuration_set.h"
 
 
 int main(const int argc, const char **argv) {
@@ -45,19 +43,18 @@ int main(const int argc, const char **argv) {
     auto fStepSizes = trrojan::factor::from_manifestations("StepSize", { 0.75f, 1.0f, 2.0f });
     auto fVolumes = trrojan::factor::from_manifestations("Volume", { std::string("chameleon.raw "), std::string("nova.raw") });
 
-    std::vector<trrojan::factor> configuration = { fVolumeSizes, fStepSizes, fVolumes };
-    std::vector<size_t> offset;
-    std::transform(configuration.cbegin(), configuration.cend(),
-        std::back_inserter(offset), [](const trrojan::factor& f) {return f.size(); });
-    //for (size_t)
+    trrojan::configuration_set cfgs;
+    cfgs.add_factor(fVolumeSizes);
+    cfgs.add_factor(fStepSizes);
+    cfgs.add_factor(fVolumes);
 
-    auto cntTests = std::accumulate(configuration.cbegin(), configuration.cend(), 1,
-        [](size_t sum, const trrojan::factor& f) { return sum * f.size(); });
-
-    for (size_t i = 0; i < cntTests; ++i) {
-
-    }
-
+    cfgs.foreach_configuration([&](const trrojan::configuration_set::configuration& c) {
+        std::cout << std::endl << std::endl;
+        for (auto& f : c) {
+            std::cout << f.first << " = " << f.second << std::endl;
+        }
+        return true;
+    });
 
 
     return 0;

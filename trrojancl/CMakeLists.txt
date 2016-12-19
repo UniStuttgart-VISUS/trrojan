@@ -10,9 +10,11 @@ file(GLOB_RECURSE HeaderFiles RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${IncludeD
 file(GLOB_RECURSE SourceFiles RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${SourceDirectory}/*.cpp")
 
 include_directories("${IncludeDirectory}")
+include_directories(${TrrojanCoreIncludeDir})
 
-set(TrrojanCoreIncludeDir "${CMAKE_CURRENT_SOURCE_DIR}/${IncludeDirectory}" PARENT_SCOPE)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTRROJANCL_EXPORTS")
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTRROJANCORE_EXPORTS")
+#add_library(trrojancl MODULE ${HeaderFiles} ${SourceFiles})
+add_library(trrojancl SHARED ${HeaderFiles} ${SourceFiles})
 
-add_library(trrojancore SHARED ${HeaderFiles} ${SourceFiles})
+target_link_libraries(trrojancl LINK_PUBLIC trrojancore)
