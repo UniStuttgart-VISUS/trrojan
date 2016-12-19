@@ -95,7 +95,8 @@ trrojan::executive::plugin_dll trrojan::executive::plugin_dll::open(
 #else /* _WIN32 */
     retval.handle = ::dlopen(path.c_str(), RTLD_LAZY | RTLD_GLOBAL);
     if (retval.handle == plugin_dll::invalid_handle) {
-        throw std::exception(::dlerror());
+        std::string whyisthisrequired(::dlerror());
+        throw std::exception(whyisthisrequired.c_str());
     }
 
 #endif /* _WIN32 */
@@ -127,7 +128,8 @@ void trrojan::executive::plugin_dll::close(void) {
 #else /* _WIN32 */
         auto ec = ::dlclose(this->handle);
         if (ec != 0) {
-            throw std::exception(::dlerror());
+            std::string whyisthisrequired(::dlerror());
+            throw std::exception(whyisthisrequired.c_str());
         }
 #endif /* _WIN32 */
 
