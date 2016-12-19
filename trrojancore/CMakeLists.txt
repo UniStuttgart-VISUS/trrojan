@@ -17,4 +17,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTRROJANCORE_EXPORTS")
 
 add_library(trrojancore SHARED ${HeaderFiles} ${SourceFiles})
 
-target_link_libraries(trrojancore ldl)
+IF (${CMAKE_COMPILER_IS_GNUCXX})
+	target_link_libraries(trrojancore dl)
+ENDIF (${CMAKE_COMPILER_IS_GNUCXX})
