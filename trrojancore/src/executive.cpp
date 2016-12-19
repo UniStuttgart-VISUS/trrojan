@@ -6,6 +6,7 @@
 #include "trrojan/executive.h"
 
 #include <iostream>
+#include <stdexcept>
 
 #ifndef _WIN32
 #include <dlfcn.h>
@@ -92,8 +93,8 @@ trrojan::executive::plugin_dll trrojan::executive::plugin_dll::open(
         throw std::system_error(ec, "Failed to open DLL.");
     }
 #else /* _WIN32 */
-    this->handle = ::dlopen(path.c_str(), RTLD_LAZY | RTLD_GLOBAL);
-    if (this->handle == plugin_dll::invalid_handle) {
+    retval.handle = ::dlopen(path.c_str(), RTLD_LAZY | RTLD_GLOBAL);
+    if (retval.handle == plugin_dll::invalid_handle) {
         throw std::exception(::dlerror());
     }
 
