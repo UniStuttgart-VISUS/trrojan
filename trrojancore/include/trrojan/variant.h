@@ -199,7 +199,7 @@ namespace trrojan {
         }
 
 #define __TRROJANCORE_IMPL_GET_VARIANT(t)                                      \
-        inline const typename variant_type_traits<variant_type::t>::type       \
+        inline const variant_type_traits<variant_type::t>::type                \
         get_##t(void) const {                                                  \
             if (!this->is(variant_type::t)) {                                  \
                 throw std::logic_error("variant does not hold this type.");    \
@@ -232,11 +232,11 @@ namespace trrojan {
             return (this->cur_type == type);
         }
 
-#define __TRROJANCORE_IMPL_SET_INTEGRAL_VARIANT(t) inline void set_##t(         \
-                const typename variant_type_traits<variant_type::t>::type val) {\
-            this->clean_before_set();                                           \
-            this->cur_type = variant_type::t;                                   \
-            this->val_##t = val;                                                \
+#define __TRROJANCORE_IMPL_SET_INTEGRAL_VARIANT(t) inline void set_##t(        \
+                const variant_type_traits<variant_type::t>::type val) {        \
+            this->clean_before_set();                                          \
+            this->cur_type = variant_type::t;                                  \
+            this->val_##t = val;                                               \
         }
 
         __TRROJANCORE_IMPL_SET_INTEGRAL_VARIANT(int8);
@@ -300,12 +300,12 @@ namespace trrojan {
             return this->cur_type;
         }
 
-#define __TRROJANCORE_IMPL_SET_INTEGRAL_VARIANT(t) inline variant& operator =(  \
-                const typename variant_type_traits<variant_type::t>::type rhs) {\
-            this->clean_before_set();                                           \
-            this->cur_type = variant_type::t;                                   \
-            this->val_##t = rhs;                                                \
-            return *this;                                                       \
+#define __TRROJANCORE_IMPL_SET_INTEGRAL_VARIANT(t) inline variant& operator =( \
+                const variant_type_traits<variant_type::t>::type rhs) {        \
+            this->clean_before_set();                                          \
+            this->cur_type = variant_type::t;                                  \
+            this->val_##t = rhs;                                               \
+            return *this;                                                      \
         }
 
         __TRROJANCORE_IMPL_SET_INTEGRAL_VARIANT(int8);
