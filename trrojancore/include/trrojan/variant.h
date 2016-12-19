@@ -147,7 +147,7 @@ namespace trrojan {
         }
 
 #define __TRROJANCORE_IMPL_INTEGRAL_VARIANT_CTOR(t) inline variant(            \
-            const typename variant_type_traits<variant_type::t>::type val)     \
+            const variant_type_traits<variant_type::t>::type val)              \
             : cur_type(variant_type::t), val_##t(val) { }
 
         __TRROJANCORE_IMPL_INTEGRAL_VARIANT_CTOR(int8);
