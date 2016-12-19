@@ -14,11 +14,19 @@ namespace trrojan {
 namespace opencl {
 
     /// <summary>
-    /// 
+    /// Descriptor for the OpenCL plugin.
     /// </summary>
     class TRROJANCL_API plugin : public trrojan::plugin_base {
 
     public:
+
+        typedef trrojan::plugin_base::environment_list environment_list;
+
+        inline plugin(void) : trrojan::plugin_base("opencl") { }
+
+        virtual ~plugin(void);
+
+        virtual void create_environments(environment_list& dst) const;
 
     };
 

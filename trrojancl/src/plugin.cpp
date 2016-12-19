@@ -3,4 +3,28 @@
 /// </copyright>
 /// <author>Christoph Müller</author>
 
-#include "trrojan/plugin.h"
+#include "trrojan/opencl/plugin.h"
+
+#include "trrojan/opencl/environment.h"
+
+
+/// <summary>
+/// Gets a new instance of the plugin descriptor.
+/// </summary>
+extern "C" TRROJANCL_API trrojan::plugin_base *get_trrojan_plugin(void) {
+    return new trrojan::opencl::plugin();
+}
+
+
+/*
+ * trrojan::opencl::plugin::~plugin
+ */
+trrojan::opencl::plugin::~plugin(void) { }
+
+
+/*
+ * trrojan::opencl::plugin::create_environments
+ */
+void trrojan::opencl::plugin::create_environments(environment_list& dst) const {
+    dst.push_back(std::make_shared<environment>());
+}

@@ -14,7 +14,7 @@
 #define TRROJANCL_API __declspec(dllimport)
 #endif /* TRROJANCL_EXPORTS*/
 
-#else /* (defined(_MSC_VER) && defined(TRROJANCORE_DLL)) */
+#else /* (defined(_MSC_VER) && !defined(TRROJANCL_STATIC)) */
 
 #define TRROJANCL_API
 

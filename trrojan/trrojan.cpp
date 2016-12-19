@@ -2,6 +2,7 @@
 #include <numeric>
 
 #include "trrojan/configuration_set.h"
+#include "trrojan/executive.h"
 
 
 int main(const int argc, const char **argv) {
@@ -55,6 +56,10 @@ int main(const int argc, const char **argv) {
         }
         return true;
     });
+
+
+    trrojan::executive te;
+    te.load_plugins();
 
 
     return 0;
