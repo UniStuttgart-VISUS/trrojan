@@ -12,6 +12,7 @@
 #pragma once
 
 #include <cinttypes>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
