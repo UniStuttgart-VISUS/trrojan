@@ -7,15 +7,14 @@
 
 #include <vector>
 
-#include "trrojan/named_variant.h"
+#include "trrojan/result.h"
 
 
 namespace trrojan {
 
     /// <summary>
-    /// A configuration, which is defined as a set of manifestations of
-    /// (named) factors.
+    
     /// </summary>
-    typedef std::vector<named_variant> configuration;
+    typedef std::vector<result> result_set;
 
 }

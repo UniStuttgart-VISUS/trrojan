@@ -50,8 +50,8 @@ bool trrojan::configuration_set::foreach_configuration(
             config.clear();
             for (size_t j = 0; j < this->factors.size(); ++j) {
                 auto ij = (i / frequencies[j]) % this->factors.size();
-                config.push_back(std::make_pair(this->factors[j].name(),
-                    this->factors[j][ij]));
+                config.emplace_back(this->factors[j].name(),
+                    this->factors[j][ij]);
             }
             retval = cb(config);
         }

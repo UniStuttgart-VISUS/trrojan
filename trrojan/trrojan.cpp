@@ -52,7 +52,7 @@ int main(const int argc, const char **argv) {
     cfgs.foreach_configuration([&](const trrojan::configuration& c) {
         std::cout << std::endl << std::endl;
         for (auto& f : c) {
-            std::cout << f.first << " = " << f.second << std::endl;
+            std::cout << f.name() << " = " << f.value() << std::endl;
         }
         return true;
     });

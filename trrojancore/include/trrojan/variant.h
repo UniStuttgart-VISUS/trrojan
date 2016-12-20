@@ -9,6 +9,8 @@
 #include <iostream>
 #include <stdexcept>
 
+#include "trrojan/device.h"
+#include "trrojan/environment.h"
 #include "trrojan/export.h"
 
 
@@ -81,7 +83,11 @@ namespace trrojan {
         /// <summary>
         /// The variant holds a wide string.
         /// </summary>
-        wstring
+        wstring,
+
+        device,
+
+        environment
     };
 
 
@@ -112,6 +118,8 @@ namespace trrojan {
     __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(float64, double);
     __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(string, char *);
     __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(wstring, wchar_t *);
+    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(device, trrojan::device);
+    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(environment, trrojan::environment);
 
 #undef __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS
 
@@ -160,6 +168,8 @@ namespace trrojan {
         __TRROJANCORE_IMPL_INTEGRAL_VARIANT_CTOR(uint64);
         __TRROJANCORE_IMPL_INTEGRAL_VARIANT_CTOR(float32);
         __TRROJANCORE_IMPL_INTEGRAL_VARIANT_CTOR(float64);
+        __TRROJANCORE_IMPL_INTEGRAL_VARIANT_CTOR(device);
+        __TRROJANCORE_IMPL_INTEGRAL_VARIANT_CTOR(environment);
 
 #undef __TRROJANCORE_IMPL_INTEGRAL_VARIANT_CTOR
 
@@ -188,6 +198,11 @@ namespace trrojan {
         /// </summary>
         /// <param name="val">The initial value of the variant.</param>
         inline variant(const std::wstring& val) { this->set(val.c_str()); }
+
+        /// <summary>
+        /// Finalises the instance.
+        /// </summary>
+        ~variant(void);
 
         /// <summary>
         /// Answer whether the variant is empty.
@@ -219,6 +234,8 @@ namespace trrojan {
         __TRROJANCORE_IMPL_GET_VARIANT(float64);
         __TRROJANCORE_IMPL_GET_VARIANT(string);
         __TRROJANCORE_IMPL_GET_VARIANT(wstring);
+        __TRROJANCORE_IMPL_GET_VARIANT(device);
+        __TRROJANCORE_IMPL_GET_VARIANT(environment);
 
 #undef __TRROJANCORE_IMPL_GET_VARIANT
 
@@ -249,6 +266,8 @@ namespace trrojan {
         __TRROJANCORE_IMPL_SET_INTEGRAL_VARIANT(uint64);
         __TRROJANCORE_IMPL_SET_INTEGRAL_VARIANT(float32);
         __TRROJANCORE_IMPL_SET_INTEGRAL_VARIANT(float64);
+        __TRROJANCORE_IMPL_SET_INTEGRAL_VARIANT(device);
+        __TRROJANCORE_IMPL_SET_INTEGRAL_VARIANT(environment);
 
 #undef __TRROJANCORE_IMPL_SET_INTEGRAL_VARIANT
 
@@ -318,6 +337,8 @@ namespace trrojan {
         __TRROJANCORE_IMPL_SET_INTEGRAL_VARIANT(uint64);
         __TRROJANCORE_IMPL_SET_INTEGRAL_VARIANT(float32);
         __TRROJANCORE_IMPL_SET_INTEGRAL_VARIANT(float64);
+        __TRROJANCORE_IMPL_SET_INTEGRAL_VARIANT(device);
+        __TRROJANCORE_IMPL_SET_INTEGRAL_VARIANT(environment);
 
 #undef __TRROJANCORE_IMPL_SET_INTEGRAL_VARIANT
 
@@ -432,6 +453,8 @@ namespace trrojan {
                 __TRROJANCORE_PRINT(float64);
                 __TRROJANCORE_PRINT(string);
                 __TRROJANCORE_PRINT(wstring);
+                __TRROJANCORE_PRINT(device);
+                __TRROJANCORE_PRINT(environment);
                 default: return lhs;
             }
 
@@ -461,6 +484,8 @@ namespace trrojan {
             double val_float64;
             char *val_string;
             wchar_t *val_wstring;
+            device val_device;
+            environment val_environment;
         };
     };
 }

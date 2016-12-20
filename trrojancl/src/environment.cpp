@@ -10,3 +10,10 @@
  * trrojan::opencl::environment::~environment
  */
 trrojan::opencl::environment::~environment(void) { }
+
+
+/*
+ * trrojan::opencl::environment::get_devices
+ */
+void trrojan::opencl::environment::get_devices(device_list& dst) {
+}

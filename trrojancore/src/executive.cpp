@@ -35,7 +35,7 @@ trrojan::executive::~executive(void) {
 void trrojan::executive::load_plugins(void) {
     try {
         log::instance().write(log_level::debug, "%s: remove debugging code", "TODO");
-        auto p = plugin_dll::open("trrojancl.dll"); // TODO: Enumerate!!!!
+        auto p = plugin_dll::open(std::string("trrojancl") + plugin_dll::extension); // TODO: Enumerate!!!!
         auto e = p.find_entry_point();
         auto xx = plugin(e());
         std::vector<environment> ee;
@@ -64,6 +64,17 @@ void trrojan::executive::enable_environment(const std::string& name) {
  */
 const std::string trrojan::executive::plugin_dll::entry_point_name
 = "get_trrojan_plugin";
+
+
+/*
+ * trrojan::executive::plugin_dll::extension
+ */
+const std::string trrojan::executive::plugin_dll::extension
+#ifdef _WIN32
+= ".dll";
+#else /* _WIN32 */
+= ".so";
+#endif /* _WIN32 */
 
 
 /*

@@ -98,6 +98,11 @@ namespace trrojan {
             static const std::string entry_point_name;
 
             /// <summary>
+            /// The extension (including the leading ".") of a DLL.
+            /// </summary>
+            static const std::string extension;
+
+            /// <summary>
             /// The value of an invalid handle.
             /// </summary>
             static handle_type invalid_handle;

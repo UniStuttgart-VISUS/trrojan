@@ -20,6 +20,8 @@ namespace opencl {
 
     public:
 
+        typedef environment_base::device_list device_list;
+
         /// <summary>
         /// Initialises a new instance.
         /// </summary>
@@ -29,6 +31,8 @@ namespace opencl {
         /// Finalises the instance.
         /// </summary>
         virtual ~environment(void);
+
+        virtual void get_devices(device_list& dst);
     };
 
 }

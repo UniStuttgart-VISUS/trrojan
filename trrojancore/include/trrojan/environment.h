@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "trrojan/export.h"
+#include "trrojan/device.h"
 
 
 namespace trrojan {
@@ -27,9 +28,16 @@ namespace trrojan {
     public:
 
         /// <summary>
+        /// A list of <see cref="trrojan::device" />s.
+        /// </summary>
+        typedef std::vector<device> device_list;
+
+        /// <summary>
         /// Finalises the instance.
         /// </summary>
         virtual ~environment_base(void);
+
+        virtual void get_devices(device_list& dst) = 0;
 
         /// <summary>
         /// Gets the name of the execution environment.
