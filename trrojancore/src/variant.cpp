@@ -5,6 +5,7 @@
 
 #include "trrojan/variant.h"
 
+#include <cassert>
 #include <cstring>
 #include <memory>
 
@@ -16,8 +17,42 @@
  * trrojan::variant::~variant
  */
 trrojan::variant::~variant(void) {
-    this->set_uint16(0);    // Will call clean_before_set and erase any
-                            // string or pointer value.
+    this->clear();
+}
+
+
+/*
+ * trrojan::variant::clear
+ */
+void trrojan::variant::clear(void) {
+    switch (this->cur_type) {
+        case variant_type::device:
+            this->val_device.reset();
+            break;
+
+        case variant_type::environment:
+            this->val_environment.reset();
+            break;
+
+        case variant_type::string:
+            if (this->val_string != nullptr) {
+                delete[] this->val_string;
+                this->val_string = nullptr;
+            }
+            break;
+
+        case variant_type::wstring:
+            if (this->val_wstring != nullptr) {
+                delete[] this->val_wstring;
+                this->val_wstring = nullptr;
+            }
+
+        default:
+            this->val_uint64 = 0;
+            break;
+    }
+
+    this->cur_type = variant_type::empty;
 }
 
 
@@ -26,7 +61,7 @@ trrojan::variant::~variant(void) {
  */
 trrojan::variant& trrojan::variant::operator =(const variant& rhs) {
     if (this != std::addressof(rhs)) {
-        this->clean_before_set();
+        this->clear();
 
         switch (rhs.cur_type) {
             // TODO: this is hugly
@@ -62,10 +97,10 @@ trrojan::variant& trrojan::variant::operator =(const variant& rhs) {
  */
 trrojan::variant& trrojan::variant::operator =(variant&& rhs) {
     if (this != std::addressof(rhs)) {
+        this->clear();
+
         // TODO: this is hugly
-        this->clean_before_set();
         switch (rhs.cur_type) {
-            // TODO: fixme
             case variant_type::device:
                 this->val_device = rhs.val_device;
                 break;
@@ -79,8 +114,9 @@ trrojan::variant& trrojan::variant::operator =(variant&& rhs) {
                 break;
         }
         this->cur_type = rhs.cur_type;
-        rhs.cur_type = variant_type::empty;
-        rhs.clean_before_set();
+
+        rhs.clear();
+        assert(rhs.empty());
     }
 
     return *this;
@@ -92,40 +128,22 @@ trrojan::variant& trrojan::variant::operator =(variant&& rhs) {
  */
 bool trrojan::variant::operator ==(const variant& rhs) const {
     if (this->is(rhs.cur_type)) {
-        // TODO: fixme
-        return (this->val_uint64 == rhs.val_uint64);
+        // TODO: this is hugly
+        switch (rhs.cur_type) {
+            case variant_type::device:
+                return (this->val_device == rhs.val_device);
+
+            case variant_type::environment:
+                return (this->val_environment == rhs.val_environment);
+            break;
+
+            default:
+                return (this->val_uint64 == rhs.val_uint64);
+        }
+
     } else {
+        /* If the type is not the same, the value does not matter. */
         return false;
-    }
-}
-
-
-/*
- * trrojan::variant::clean_before_set
- */
-void trrojan::variant::clean_before_set(void) {
-    switch (this->cur_type) {
-        case variant_type::device:
-            this->val_device.reset();
-            break;
-
-        case variant_type::environment:
-            this->val_environment.reset();
-            break;
-
-        case variant_type::string:
-            if (this->val_string != nullptr) {
-                delete[] this->val_string;
-                this->val_string = nullptr;
-            }
-            break;
-
-        case variant_type::wstring:
-            if (this->val_wstring != nullptr) {
-                delete[] this->val_wstring;
-                this->val_wstring = nullptr;
-            }
-            break;
     }
 }
 

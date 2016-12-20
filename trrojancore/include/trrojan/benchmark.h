@@ -1,6 +1,7 @@
 /// <copyright file="benchmark.h" company="SFB-TRR 161 Quantitative Methods for Visual Computing">
 /// Copyright © 2016 SFB-TRR 161. Alle Rechte vorbehalten.
 /// </copyright>
+/// <author>Valentin Bruder</author>
 /// <author>Christoph Müller</author>
 
 #pragma once
@@ -27,6 +28,10 @@ namespace trrojan {
         /// </summary>
         virtual ~benchmark_base(void);
 
+        /// <summary>
+        /// Answer the name of the benchmark.
+        /// </summary>
+        /// <returns></returns>
         inline const std::string& name(void) const {
             return this->_name;
         }

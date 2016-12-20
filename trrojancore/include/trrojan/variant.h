@@ -205,6 +205,11 @@ namespace trrojan {
         ~variant(void);
 
         /// <summary>
+        /// Clears the variant, effectively resetting it to empty state.
+        /// </summary>
+        void clear(void);
+
+        /// <summary>
         /// Answer whether the variant is empty.
         /// </summary>
         /// <returns><c>true</c> if the variant is empty,
@@ -251,7 +256,7 @@ namespace trrojan {
 
 #define __TRROJANCORE_IMPL_SET_INTEGRAL_VARIANT(t) inline void set_##t(        \
                 const variant_type_traits<variant_type::t>::type val) {        \
-            this->clean_before_set();                                          \
+            this->clear();                                                     \
             this->cur_type = variant_type::t;                                  \
             this->val_##t = val;                                               \
         }
@@ -278,7 +283,7 @@ namespace trrojan {
         /// <param name="val">The new value of the variant. It is safe to
         /// pass <c>nullptr</c>.</param>
         inline void set_string(const char *val) {
-            this->clean_before_set();
+            this->clear();
             this->set(val);
         }
 
@@ -298,7 +303,7 @@ namespace trrojan {
         /// <param name="val">The new value of the variant. It is safe to
         /// pass <c>nullptr</c>.</param>
         inline void set_wstring(const wchar_t *val) {
-            this->clean_before_set();
+            this->clear();
             this->set(val);
         }
 
@@ -321,7 +326,7 @@ namespace trrojan {
 
 #define __TRROJANCORE_IMPL_SET_INTEGRAL_VARIANT(t) inline variant& operator =( \
                 const variant_type_traits<variant_type::t>::type rhs) {        \
-            this->clean_before_set();                                          \
+            this->clear();                                                     \
             this->cur_type = variant_type::t;                                  \
             this->val_##t = rhs;                                               \
             return *this;                                                      \
@@ -351,7 +356,7 @@ namespace trrojan {
         /// <param name="rhs">The right hand side operand.</param>
         /// <returns><c>*this</c></returns>
         inline variant& operator =(const char *rhs) {
-            this->clean_before_set();
+            this->clear();
             this->set(rhs);
             return *this;
         }
@@ -365,7 +370,7 @@ namespace trrojan {
         /// <param name="rhs">The right hand side operand.</param>
         /// <returns><c>*this</c></returns>
         inline variant& operator =(const wchar_t *rhs) {
-            this->clean_before_set();
+            this->clear();
             this->set(rhs);
             return *this;
         }
@@ -462,8 +467,6 @@ namespace trrojan {
         }
 
     private:
-
-        void clean_before_set(void);
 
         void set(const char *val);
 
