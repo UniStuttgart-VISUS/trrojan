@@ -102,11 +102,21 @@ trrojan::variant& trrojan::variant::operator =(variant&& rhs) {
         // TODO: this is hugly
         switch (rhs.cur_type) {
             case variant_type::device:
-                this->val_device = rhs.val_device;
+                this->val_device = std::move(rhs.val_device);
                 break;
 
             case variant_type::environment:
-                this->val_environment = rhs.val_environment;
+                this->val_environment = std::move(rhs.val_environment);
+                break;
+
+            case variant_type::string:
+                this->val_string = rhs.val_string;
+                rhs.val_string = nullptr;
+                break;
+
+            case variant_type::wstring:
+                this->val_wstring = rhs.val_wstring;
+                rhs.val_wstring = nullptr;
                 break;
 
             default:

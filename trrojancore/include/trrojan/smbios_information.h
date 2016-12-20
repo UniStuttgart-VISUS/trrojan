@@ -15,14 +15,15 @@
 #include <string>
 #include <vector>
 
-#ifdef _WIN32
+#include "trrojan/export.h"
+
 
 namespace trrojan {
 
     /// <summary>
     /// Provides means to read and process the system management BIOS (SMBIOS).
     /// </summary>
-    class smbios_information {
+    class TRROJANCORE_API smbios_information {
 
     public:
 
@@ -32,8 +33,6 @@ namespace trrojan {
         typedef uint64_t qword_type;
         typedef uint8_t string_type;    // Represents the index of the string.
         typedef uint16_t word_type;
-
-        template<class T> struct structure_desc { };
 
         // See http://www.dmtf.org/sites/default/files/standards/documents/DSP0134_3.0.0.pdf
 #pragma pack(push)
@@ -114,10 +113,6 @@ namespace trrojan {
             }
         } bios_information_type;
 
-        template<> struct structure_desc<bios_information_type> {
-            static const byte_type id = 0;
-        };
-
         typedef struct {
             header_type header;
             string_type manufacturer;
@@ -147,10 +142,6 @@ namespace trrojan {
                 return smbios_information::get_string(this, this->serial_number);
             }
         } system_information_type;
-
-        template<> struct structure_desc<system_information_type> {
-            static const byte_type id = 1;
-        };
 
         typedef struct {
             header_type header;
@@ -187,10 +178,6 @@ namespace trrojan {
             }
         } baseboard_information_type;
 
-        template<> struct structure_desc<baseboard_information_type> {
-            static const byte_type id = 2;
-        };
-
         typedef struct {
             header_type header;
             string_type manufacturer;
@@ -211,10 +198,6 @@ namespace trrojan {
             byte_type contained_element_record_length;
             byte_type contained_elements[255 * 255];
         } chassis_information_type;
-
-        template<> struct structure_desc<chassis_information_type> {
-            static const byte_type id = 3;
-        };
 
         typedef struct {
             header_type header;
@@ -278,10 +261,6 @@ namespace trrojan {
             }
         } processor_information_type;
 
-        template<> struct structure_desc<processor_information_type> {
-            static const byte_type id = 4;
-        };
-
         typedef struct {
             header_type header;
             byte_type error_detecting_method;
@@ -298,10 +277,6 @@ namespace trrojan {
             //byte_type enabled_error_correcting_capabilities;
         } memory_controller_information_type;
 
-        template<> struct structure_desc<memory_controller_information_type> {
-            static const byte_type id = 5;
-        };
-
         typedef struct {
             header_type header;
             string_type socket_designation;
@@ -312,10 +287,6 @@ namespace trrojan {
             byte_type enabled_size;
             byte_type error_status;
         } memory_module_information_type;
-
-        template<> struct structure_desc<memory_module_information_type> {
-            static const byte_type id = 6;
-        };
 
         typedef struct {
             header_type header;
@@ -331,10 +302,6 @@ namespace trrojan {
             byte_type associativity;
         } cache_information_type;
 
-        template<> struct structure_desc<cache_information_type> {
-            static const byte_type id = 7;
-        };
-
         typedef struct {
             header_type header;
             /* SMBIOS 2.1+ */
@@ -347,10 +314,6 @@ namespace trrojan {
             /* SMBIOS 2.7+ */
             qword_type extended_maximum_capacity;
         } physical_memory_array_type;
-
-        template<> struct structure_desc<physical_memory_array_type> {
-            static const byte_type id = 16;
-        };
 
         typedef struct {
             header_type header;
@@ -408,10 +371,6 @@ namespace trrojan {
             }
         } memory_device_type;
 
-        template<> struct structure_desc<memory_device_type> {
-            static const byte_type id = 17;
-        };
-
         typedef struct {
             header_type header;
             /* SMBIOS 2.1+ */
@@ -424,9 +383,6 @@ namespace trrojan {
             dword_type resolution;
         } memory_error_information_type;
 
-        template<> struct structure_desc<memory_error_information_type> {
-            static const byte_type id = 18;
-        };
 #pragma pack(pop)
 
         static std::string decode_memory_device_form_factor(
@@ -438,6 +394,10 @@ namespace trrojan {
         template<class T>
         static const char *get_string(const T *structure, const string_type id);
 
+        /// <summary>
+        /// Reads the SMBIOS information of the local system and returns the
+        /// whole block.
+        /// </summary>
         static smbios_information read(void);
 
         //template<class T> static inline byte_type type_id(void) {
@@ -448,13 +408,27 @@ namespace trrojan {
         //    return 0;
         //}
 
+        /// <summary>
+        /// Initialises an empty instance.
+        /// </summary>
         inline smbios_information(void)
             : enumFlags(0), tableBegin(0), tableEnd(0) { }
 
+        /// <summary>
+        /// Clone <paramref name="rhs" />.
+        /// </summary>
+        /// <param name="rhs"></param>
         smbios_information(const smbios_information& rhs);
 
+        /// <summary>
+        /// Move <paramref name="rhs" />.
+        /// </summary>
+        /// <param name="rhs"></param>
         smbios_information(smbios_information&& rhs);
 
+        /// <summary>
+        /// Finalise the instance.
+        /// </summary>
         ~smbios_information(void);
 
         template<class I, class P> void entries(I oit, P predicate) const;
@@ -463,11 +437,15 @@ namespace trrojan {
             this->entries(oit, [](const header_type *) -> bool { return true; });
         }
 
-        template<class T, class I> inline void entries_by_type(I oit) const {
-            auto typeId = structure_desc<T>::id;
-            // TODO: could cast here
-            this->entries_by_type_id(oit, typeId);
-        }
+        /// <summary>
+        /// Retrieves all SMBIOS entries of the specified type
+        /// <tparamref name="T" />.
+        /// </summary>
+        /// <param name="oit">An output iterator for <tparamref name="T" />.
+        /// </param>
+        /// <tparam name=T"></tparam>
+        /// <tparam name=I"></tparam>
+        template<class T, class I> void entries_by_type(I oit) const;
 
         template<class I>
         inline void entries_by_type_id(I oit, const byte_type type) const {
@@ -515,8 +493,71 @@ namespace trrojan {
         size_t tableEnd;
     };
 
+
+namespace detail {
+
+    /// <summary>
+    /// Allows for inferring the ID of a SMBIOS structure from its C++ type.
+    /// </summary>
+    /// <tparam name="T">The type of the SMBIOS structure to derive the ID
+    /// for.</tparam>
+    template<class T> struct structure_desc { };
+
+    template<>
+    struct structure_desc<smbios_information::bios_information_type> {
+        static const smbios_information::byte_type id = 0;
+    };
+
+    template<>
+    struct structure_desc<smbios_information::system_information_type> {
+        static const smbios_information::byte_type id = 1;
+    };
+
+    template<>
+    struct structure_desc<smbios_information::baseboard_information_type> {
+        static const smbios_information::byte_type id = 2;
+    };
+
+    template<>
+    struct structure_desc<smbios_information::chassis_information_type> {
+        static const smbios_information::byte_type id = 3;
+    };
+
+    template<>
+    struct structure_desc<smbios_information::processor_information_type> {
+        static const smbios_information::byte_type id = 4;
+    };
+
+    template<>
+    struct structure_desc<smbios_information::memory_controller_information_type> {
+        static const smbios_information::byte_type id = 5;
+    };
+
+    template<>
+    struct structure_desc<smbios_information::memory_module_information_type> {
+        static const smbios_information::byte_type id = 6;
+    };
+
+    template<>
+    struct structure_desc<smbios_information::cache_information_type> {
+        static const smbios_information::byte_type id = 7;
+    };
+
+    template<>
+    struct structure_desc<smbios_information::physical_memory_array_type> {
+        static const smbios_information::byte_type id = 16;
+    };
+
+    template<>
+    struct structure_desc<smbios_information::memory_device_type> {
+        static const smbios_information::byte_type id = 17;
+    };
+
+    template<>
+    struct structure_desc<smbios_information::memory_error_information_type> {
+        static const smbios_information::byte_type id = 18;
+    };
+}
 }
 
-
 #include "smbios_information.inl"
-#endif /* _WIN32 */

@@ -3,6 +3,7 @@
 
 #include "trrojan/configuration_set.h"
 #include "trrojan/executive.h"
+#include "trrojan/system_factors.h"
 
 
 int main(const int argc, const char **argv) {
@@ -60,6 +61,9 @@ int main(const int argc, const char **argv) {
 
     trrojan::executive te;
     te.load_plugins();
+
+    trrojan::system_factors sf;
+    sf.crowbar();
 
 
     return 0;

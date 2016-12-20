@@ -70,6 +70,16 @@ void trrojan::smbios_information::entries(I oit, P predicate) const {
 }
 
 
+/*
+ * trrojan::smbios_information::entries_by_type
+ */
+template<class T, class I>
+void trrojan::smbios_information::entries_by_type(I oit) const {
+    auto typeId = detail::structure_desc<T>::id;
+    // TODO: could cast here
+    this->entries_by_type_id(oit, typeId);
+}
+
 ///*
 // * smbios_information::entry_point
 // */
