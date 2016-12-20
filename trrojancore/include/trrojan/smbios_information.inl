@@ -17,7 +17,7 @@ template<class T>
 const char *trrojan::smbios_information::get_string(const T *structure,
         const string_type id) {
     if (structure == nullptr) {
-        throw std::invalid_argument("structure must not be nullptr.");
+        throw std::invalid_argument("'structure' must not be nullptr.");
     }
     if (id > 0) {
         auto header = &(structure->header);

@@ -16,7 +16,7 @@
 #endif /* _WIN32 */
 
 #include "trrojan/io.h"
-
+#ifdef _WIN32
 
 static const char *BIOS_CHARACTERISTICS[] = {
     "Reserved.",
@@ -938,3 +938,5 @@ bool trrojan::smbios_information::validate_checksum(const uint8_t *buf,
 
     return (sum == 0);
 }
+
+#endif /* _WIN32 */

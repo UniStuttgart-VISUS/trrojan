@@ -15,6 +15,7 @@
 #include <string>
 #include <vector>
 
+#ifdef _WIN32
 
 namespace trrojan {
 
@@ -518,3 +519,4 @@ namespace trrojan {
 
 
 #include "smbios_information.inl"
+#endif /* _WIN32 */
