@@ -559,6 +559,12 @@ namespace detail {
     struct structure_desc<smbios_information::memory_error_information_type> {
         static const smbios_information::byte_type id = 18;
     };
+
+
+    template<class T, size_t S>
+    inline constexpr size_t size(const T(&)[S]) noexcept {
+        return S;
+    }
 }
 }
 

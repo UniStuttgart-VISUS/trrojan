@@ -778,7 +778,7 @@ static const char *MEMORY_ERROR_OPERATIONS[] = {
  */
 std::string trrojan::smbios_information::decode_memory_device_form_factor(
         const byte_type value) {
-    auto c = std::size(MEMORY_DEVICE_FORM_FACTORS);
+    auto c = detail::size(MEMORY_DEVICE_FORM_FACTORS);
     return (value < c) ? MEMORY_DEVICE_FORM_FACTORS[value] : "";
 }
 
@@ -788,7 +788,7 @@ std::string trrojan::smbios_information::decode_memory_device_form_factor(
  */
 std::string trrojan::smbios_information::decode_memory_device_type(
         const byte_type value) {
-    auto c = std::size(MEMORY_DEVICE_TYPES);
+    auto c = detail::size(MEMORY_DEVICE_TYPES);
     return (value < c) ? MEMORY_DEVICE_TYPES[value] : "";
 }
 
@@ -800,7 +800,7 @@ std::string trrojan::smbios_information::decode_memory_device_type_detail(
         const word_type value) {
     std::string retval;
 
-    auto c = std::size(MEMORY_DEVICE_TYPE_DETAILS);
+    auto c = detail::size(MEMORY_DEVICE_TYPE_DETAILS);
     auto v = value;
     for (size_t i = 0; i < c; ++i) {
         auto m = static_cast<word_type>(1 << i);
