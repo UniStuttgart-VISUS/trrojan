@@ -12,6 +12,8 @@
 #include <dlfcn.h>
 #endif /* !_WIN32 */
 
+#include "trrojan/log.h"
+
 
 /*
  * trrojan::executive::~executive
@@ -32,14 +34,15 @@ trrojan::executive::~executive(void) {
  */
 void trrojan::executive::load_plugins(void) {
     try {
+        log::instance().write(log_level::debug, "%s: remove debugging code", "TODO");
         auto p = plugin_dll::open("trrojancl.dll"); // TODO: Enumerate!!!!
         auto e = p.find_entry_point();
         auto xx = plugin(e());
         std::vector<environment> ee;
         xx->create_environments(ee);
         std::cout << "remove test code for " << xx->name() << std::endl;
-    } catch (std::exception e) {
-        std::cerr << e.what() << std::endl; // TODO: we need logging!
+    } catch (std::exception ex) {
+        log::instance().write(ex);
     }
 }
 

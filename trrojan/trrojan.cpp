@@ -49,7 +49,7 @@ int main(const int argc, const char **argv) {
     cfgs.add_factor(fStepSizes);
     cfgs.add_factor(fVolumes);
 
-    cfgs.foreach_configuration([&](const trrojan::configuration_set::configuration& c) {
+    cfgs.foreach_configuration([&](const trrojan::configuration& c) {
         std::cout << std::endl << std::endl;
         for (auto& f : c) {
             std::cout << f.first << " = " << f.second << std::endl;

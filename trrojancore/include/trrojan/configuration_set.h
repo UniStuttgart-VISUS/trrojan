@@ -9,6 +9,7 @@
 #include <string>
 #include <vector>
 
+#include "trrojan/configuration.h"
 #include "trrojan/export.h"
 #include "trrojan/factor.h"
 
@@ -22,12 +23,6 @@ namespace trrojan {
     class TRROJANCORE_API configuration_set {
 
     public:
-
-        /// <summary>
-        /// A configuration, which is defined as a set of manifestations of
-        /// (named) factors.
-        /// </summary>
-        typedef std::vector<std::pair<std::string, variant>> configuration;
 
         /// <summary>
         /// Add an additional factor to be tested.
