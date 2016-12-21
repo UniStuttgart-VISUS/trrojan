@@ -11,6 +11,9 @@
 
 #include "trrojan/smbios_information.h"
 
+#include <cstring>
+#include <iostream>
+
 #ifdef _WIN32
 #include <Windows.h>
 #endif /* _WIN32 */
@@ -866,9 +869,11 @@ trrojan::smbios_information trrojan::smbios_information::read(void) {
 
 #else /* defined(_WIN32) */
     // TODO: implement this!
-    auto ef = read_binary_file("/sys/firmware/dmi/tables/smbios_entry_point");
+    auto ep = read_binary_file("/sys/firmware/dmi/tables/smbios_entry_point");
     // "/sys/firmware/dmi/tables/DMI"
 #endif /* defined(_WIN32) */
+
+
 
     return std::move(retval);
 }
