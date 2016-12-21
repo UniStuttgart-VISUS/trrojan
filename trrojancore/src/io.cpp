@@ -28,7 +28,7 @@ std::vector<char> trrojan::read_binary_file(const char *path) {
     std::vector<char> retval(file.tellg());
     file.seekg(0, std::ios::beg);
 
-    if (file.read(retval.data(), retval.size())) {
+    if (!file.read(retval.data(), retval.size())) {
         std::stringstream msg;
         msg << "Failed to read all " << retval.size()
             << " bytes from \"" << path << "\"." << std::ends;
