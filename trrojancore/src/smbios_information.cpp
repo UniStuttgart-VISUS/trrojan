@@ -974,7 +974,7 @@ trrojan::smbios_information& trrojan::smbios_information::operator =(
 /*
  * trrojan::smbios_information::validate_checksum
  */
-bool trrojan::smbios_information::validate_checksum(const uint8_t *buf,
+bool trrojan::smbios_information::validate_checksum(const char *buf,
         const size_t len) {
     uint8_t sum = 0;
 

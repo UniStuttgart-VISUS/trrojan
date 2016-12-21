@@ -534,7 +534,7 @@ namespace trrojan {
 
     private:
 
-        static bool validate_checksum(const uint8_t *buf, const size_t len);
+        static bool validate_checksum(const char *buf, const size_t len);
 
         uint32_t enumFlags;
         std::vector<uint8_t> rawData;
