@@ -21,7 +21,7 @@ std::vector<char> trrojan::read_binary_file(const char *path) {
     std::fstream file(path, std::ios::in | std::ios::binary | std::ios::ate);
     if (!file) {
         std::stringstream msg;
-        msg << "Failed opening \"" << path << "\"" << std::ends;
+        msg << "Failed to open \"" << path << "\"" << std::ends;
         throw std::runtime_error(msg.str());
     }
 
@@ -30,7 +30,8 @@ std::vector<char> trrojan::read_binary_file(const char *path) {
 
     if (file.read(retval.data(), retval.size())) {
         std::stringstream msg;
-        msg << "Failed reading all data from \"" << path << "\"." << std::ends;
+        msg << "Failed to read all " << retval.size()
+            << " bytes from \"" << path << "\"." << std::ends;
         throw std::runtime_error(msg.str());
     }
 
