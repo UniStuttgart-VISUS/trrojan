@@ -18,7 +18,7 @@ std::vector<char> trrojan::read_binary_file(const char *path) {
         throw std::invalid_argument("'path' must not be nullptr.");
     }
 
-    std::fstream file(path, std::ios::binary | std::ios::ate);
+    std::fstream file(path, std::ios::in | std::ios::binary | std::ios::ate);
     if (!file) {
         std::stringstream msg;
         msg << "Failed opening \"" << path << "\"" << std::ends;
