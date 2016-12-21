@@ -11,6 +11,7 @@
 
 #include "trrojan/smbios_information.h"
 
+#include <algorithm>
 #include <cstring>
 #include <iostream>
 
@@ -870,24 +871,19 @@ trrojan::smbios_information trrojan::smbios_information::read(void) {
 #else /* defined(_WIN32) */
     // Cf. http://git.savannah.gnu.org/cgit/dmidecode.git/tree/dmidecode.c
     uint16_t version = 0;
-    uint64_t offset = 0;
-    uint64_t length = 0;
 
-    std::cerr << "here" << std::endl;
     auto ef = read_binary_file("/sys/firmware/dmi/tables/smbios_entry_point");
-    std::cerr << "here2" << std::endl;
     auto tf = read_binary_file("/sys/firmware/dmi/tables/DMI");
-    std::cerr << "here3" << std::endl;
-
 
     if ((ef.size() >= 24) && (::memcmp(ef.data(), "_SM3_", 5) == 0)) {
         // SMBIOS 3
         if (!smbios_information::validate_checksum(ef.data(), ef[0x06])) {
             throw std::runtime_error("Checksum error in SMBIOS 3 entry point.");
         }
+std::cerr << "smbios3" << std::endl;
         version = (ef[0x07] << 8) + ef[0x08];
-        offset = *reinterpret_cast<uint64_t *>(ef.data() + 0x10);
-        length = ef[0x0C];
+        retval.tableBegin = *reinterpret_cast<uint64_t *>(ef.data() + 0x10);
+        retval.tableEnd = retval.tableBegin + ef[0x0C];
 
     } else if ((ef.size() >= 31) && (::memcmp(ef.data(), "_SM_", 4) == 0)) {
         if (!smbios_information::validate_checksum(ef.data(), ef[0x5])
@@ -895,23 +891,40 @@ trrojan::smbios_information trrojan::smbios_information::read(void) {
                 || !smbios_information::validate_checksum(ef.data() + 0x10, 0x0F)) {
             throw std::runtime_error("Checksum error in SMBIOS entry point.");
         }
+std::cerr << "smbios" << std::endl;
         version = (ef[0x06] << 8) + ef[0x07];
-        // TODO: fix from dmidecode?
-        offset = ef[0x18];
-        length = ef[0x16];
+
+        // Fix version like GNU dmidecode:
+        switch (version) {
+            case 0x021F:
+            case 0x0221:
+                version = 0x0203;
+                break;
+
+            case 0x0233:
+                version = 0x0206;
+        }
+
+        retval.tableBegin = ef[0x18];
+        retval.tableEnd = retval.tableBegin + ef[0x16];
         auto num = ef[0x1c];
 
     } else if ((ef.size() >= 15) && (::memcmp(ef.data(), "_DMI_", 5) == 0)) {
+std::cerr << "dmi" << std::endl;
         version = ((ef[0x0e] & 0xf0) << 4) + (ef[0x0e] & 0x0f);
-        offset = ef[0x08];
-        length = ef[0x06];
+        retval.tableBegin = ef[0x08];
+        retval.tableEnd = retval.tableBegin + ef[0x06];
         auto num = ef[0x0c];
 
     } else {
         throw std::runtime_error("SMBIOS entry point is defective.");
     }
 
-    std::cerr << version << std::endl << offset << std::endl << length << std::endl;
+    retval.rawData.reserve(tf.size());
+    std::transform(tf.cbegin(), tf.cend(), std::back_inserter(retval.rawData),
+        [&](char c) { return c; });
+
+    std::cerr << version << std::endl << retval.tableBegin << std::endl << retval.tableEnd << std::endl;
 #endif /* defined(_WIN32) */
 
 
@@ -940,6 +953,7 @@ trrojan::smbios_information::smbios_information(smbios_information&& rhs)
  * trrojan::smbios_information::~smbios_information
  */
 trrojan::smbios_information::~smbios_information(void) { }
+
 
 /*
  * trrojan::smbios_information::operator =
