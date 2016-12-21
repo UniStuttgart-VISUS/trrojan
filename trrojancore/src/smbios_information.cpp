@@ -11,6 +11,9 @@
 
 #include "trrojan/smbios_information.h"
 
+#include <cstring>
+#include <iostream>
+
 #ifdef _WIN32
 #include <Windows.h>
 #endif /* _WIN32 */
@@ -865,10 +868,49 @@ trrojan::smbios_information trrojan::smbios_information::read(void) {
 
 
 #else /* defined(_WIN32) */
-    // TODO: implement this!
-    auto ep = read_binary_file("/sys/firmware/dmi/tables/smbios_entry_point");
+    // Cf. 
+    uint16_t version = 0;
+    uint64_t offset = 0;
+    uint64_t length = 0;
+
+std::cerr << "here" << std::endl;
+    auto ef = read_binary_file("/sys/firmware/dmi/tables/smbios_entry_point");
+std::cerr << "here2" << std::endl;
+    auto tf = read_binary_file("/sys/firmware/dmi/tables/DMI");
+std::cerr << "here3" << std::endl;
+    
+
+    if ((ef.size() >= 24) && (::memcmp(ef.data(), "_SM3_", 5) == 0)) {
+        // SMBIOS 3
+        // if (!checksum(ef.data(), ef[0x06])
+        version = (ef[0x07] << 8) + ef[0x08];
+        offset = *reinterpret_cast<uint64_t *>(ef.data() + 0x10);
+        length = ef[0x0C];
+        
+    } else if ((ef.size() >= 31) && (::memcmp(ef.data(), "_SM_", 4) == 0)) {
+        // if (!checksum(ef.data(), ef[0x5]) || ::memcmp(ef.data() + 0x10, "_DMI_", 5) != 0 || !checksum(ef.data() + 0x10, 0x0F)
+        version = (ef[0x06] << 8) + ef[0x07];
+        // TODO: fix from dmidecode?
+        offset = ef[0x18];
+        length = ef[0x16];
+        auto num = ef[0x1c]; 
+
+    } else if ((ef.size() >= 15) && (::memcmp(ef.data(), "_DMI_", 5) == 0)) {
+        version = ((ef[0x0e] & 0xf0) << 4) + (ef[0x0e] & 0x0f);
+        offset = ef[0x08];
+        length = ef[0x06];
+        auto num = ef[0x0c];
+
+    } else {
+        throw std::runtime_error("SMBIOS entry point is defective.");
+    }
+
+    std::cerr<< version << std::endl <<offset << std::endl << length << std::endl;
+
     // "/sys/firmware/dmi/tables/DMI"
 #endif /* defined(_WIN32) */
+
+
 
     return std::move(retval);
 }

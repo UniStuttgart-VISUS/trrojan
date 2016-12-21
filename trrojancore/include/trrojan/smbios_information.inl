@@ -48,7 +48,7 @@ void trrojan::smbios_information::entries(I oit, P predicate) const {
     for (auto ptr = BEGIN; ptr < END;) {
         auto header = reinterpret_cast<const header_type *>(ptr);
         if (header->length < 4) {
-            throw std::exception("SMBIOS structure is broken.");
+            throw std::runtime_error("SMBIOS structure is broken.");
         }
 
         /* Return the pointer to the header. */

@@ -13,7 +13,6 @@
 
 
 void trrojan::system_factors::crowbar(void) {
-#ifdef _WIN32
     auto smbios = smbios_information::read();
 
     {
@@ -93,5 +92,4 @@ void trrojan::system_factors::crowbar(void) {
             std::cout << e->get_version() << std::endl;
         }
     }
-#endif
 }
