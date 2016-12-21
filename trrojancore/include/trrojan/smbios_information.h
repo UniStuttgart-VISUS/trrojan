@@ -387,12 +387,55 @@ namespace trrojan {
 
 #pragma pack(pop)
 
+        /// <summary>
+        /// Answer the string representation of a memory device form factor
+        /// <paramref name="value" /> from a
+        /// <see cref="trrojan::smbios_information::memory_device_type" />
+        /// structure.
+        /// </summary>
+        /// <param name="value">A value from a
+        /// <see cref="trrojan::smbios_information::memory_device_type::form_factor" />
+        /// member.</param>
+        /// <returns>A human-readable interpretation of
+        /// <paramref name="value" />.</returns>
         static std::string decode_memory_device_form_factor(
             const byte_type value);
+
+        /// <summary>
+        /// Answer the string representation of a memory device type
+        /// <paramref name="value" /> from a
+        /// <see cref="trrojan::smbios_information::memory_device_type" />
+        /// structure.
+        /// </summary>
+        /// <param name="value">A value from a
+        /// <see cref="trrojan::smbios_information::memory_device_type::type" />
+        /// member.</param>
+        /// <returns>A human-readable interpretation of
+        /// <paramref name="value" />.</returns>
         static std::string decode_memory_device_type(const byte_type value);
+
+        /// <summary>
+        /// Answer the string representation of a memory device type details
+        /// <paramref name="value" /> from a
+        /// <see cref="trrojan::smbios_information::memory_device_type" />
+        /// structure.
+        /// </summary>
+        /// <param name="value">A value from a
+        /// <see cref="trrojan::smbios_information::memory_device_type::type_detail" />
+        /// member.</param>
+        /// <returns>A human-readable interpretation of
+        /// <paramref name="value" />.</returns>
         static std::string decode_memory_device_type_detail(
             const word_type value);
 
+        /// <summary>
+        /// Decode the <paramref name="id" />th  string value in an SMBIOS
+        /// structure of type <tparamref name="T" />.
+        /// </summary>
+        /// <param name="structure"></param>
+        /// <param name="id"></param>
+        /// <tparam name="T"></tparam>
+        /// <returns></returns>
         template<class T>
         static const char *get_string(const T *structure, const string_type id);
 
@@ -400,6 +443,10 @@ namespace trrojan {
         /// Reads the SMBIOS information of the local system and returns the
         /// whole block.
         /// </summary>
+        /// <exception cref="std::runtime_error">In case the SMBIOS data could
+        /// not be read.</exception>
+        /// <exception cref="std::bad_alloc">In case memory for the SMBIOS table
+        /// could not be allocated.</exception>
         static smbios_information read(void);
 
         //template<class T> static inline byte_type type_id(void) {
@@ -561,6 +608,13 @@ namespace detail {
     };
 
 
+    /// <summary>
+    /// Answer the number of elements in a stack-allocated array.
+    /// </summary>
+    /// <remarks>
+    /// This is a backport of <see cref="std::size" /> from the C++17 STL, which
+    /// is already available in VS2015, but not in gcc.
+    /// </remarks>
     template<class T, size_t S>
     inline constexpr size_t size(const T(&)[S]) noexcept {
         return S;

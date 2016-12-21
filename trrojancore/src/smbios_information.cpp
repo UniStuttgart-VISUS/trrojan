@@ -844,7 +844,7 @@ trrojan::smbios_information trrojan::smbios_information::read(void) {
     {
         auto status = ::GetSystemFirmwareTable('RSMB', 0, nullptr, 0);
         if (status == 0) {
-            throw std::exception("Failed to retrieve SMBIOS table size.");
+            throw std::runtime_error("Failed to retrieve SMBIOS table size.");
         }
         retval.rawData.resize(status);
     }
@@ -854,7 +854,7 @@ trrojan::smbios_information trrojan::smbios_information::read(void) {
         auto status = ::GetSystemFirmwareTable('RSMB', 0, retval.rawData.data(),
             static_cast<DWORD>(retval.rawData.size()));
         if (status != retval.rawData.size()) {
-            throw std::exception("Failed to retrieve SMBIOS table.");
+            throw std::runtime_error("Failed to retrieve SMBIOS table.");
         }
     }
 
@@ -866,7 +866,7 @@ trrojan::smbios_information trrojan::smbios_information::read(void) {
 
 #else /* defined(_WIN32) */
     // TODO: implement this!
-    auto ep = read_binary_file("/sys/firmware/dmi/tables/smbios_entry_point");
+    auto ef = read_binary_file("/sys/firmware/dmi/tables/smbios_entry_point");
     // "/sys/firmware/dmi/tables/DMI"
 #endif /* defined(_WIN32) */
 
