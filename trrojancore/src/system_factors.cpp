@@ -7,6 +7,7 @@
 
 #include <cinttypes>
 #include <iterator>
+#include <regex>
 #include <sstream>
 #include <thread>
 
@@ -18,6 +19,7 @@
 #include <sys/sysinfo.h>
 #endif /* _WIN32 */
 
+#include "trrojan/io.h"
 #include "trrojan/log.h"
 
 
@@ -98,6 +100,26 @@ trrojan::variant trrojan::system_factors::cpu(void) const {
     smbios.entries_by_type<entry_type>(std::back_inserter(entries));
 
     if (entries.empty()) {
+#ifndef _WIN32
+        /* Try /proc/cpuinfo as fallback (eg if not running as root). */
+        try {
+            static const std::regex RX_MODEL("model\\s+name\\s*:\\s*([^n]+)");
+
+            auto cpuInfo = read_text_file("/proc/cpuinfo");
+            std::stringstream value;
+
+            std::sregex_iterator it(cpuInfo.cbegin(), cpuInfo.cend(), RX_MODEL);
+            std::sregex_iterator end;
+            for (; it != end; ++it) {
+                value << it->str();
+            }
+
+            if (value.tellg() > 0) {
+                return variant(value.str());
+            }
+        } catch (...) { /* Fall through to error handling. */ }
+#endif /* !_WIN32 */
+
         log::instance().write(log_level::warning, "No information about the "
             "installed CPUs could be retrieved from SMBIOS.");
         return variant();

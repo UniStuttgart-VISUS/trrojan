@@ -31,4 +31,22 @@ namespace trrojan {
         return read_binary_file(path.c_str());
     }
 
+    /// <summary>
+    /// Read a whole text file at the location designated by
+    /// <see cref="path" />.
+    /// </summary>
+    /// <param name="path"></param>
+    /// <returns></returns>
+    std::string read_text_file(const char *path);
+
+    /// <summary>
+    /// Read a whole text file at the location designated by
+    /// <see cref="path" />.
+    /// </summary>
+    /// <param name="path"></param>
+    /// <returns></returns>
+    inline std::string read_text_file(const std::string& path) {
+        return read_text_file(path.c_str());
+    }
+
 }
