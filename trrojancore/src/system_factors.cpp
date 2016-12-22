@@ -105,7 +105,7 @@ trrojan::variant trrojan::system_factors::cpu(void) const {
 #ifndef _WIN32
         /* Try /proc/cpuinfo as fallback (eg if not running as root). */
         try {
-            auto pf = std::ifstream("/proc/cpuinfo", std::ios::in);
+            auto file = std::ifstream("/proc/cpuinfo", std::ios::in);
             bool isFirst = true;
             std::string line;
             std::stringstream value;
