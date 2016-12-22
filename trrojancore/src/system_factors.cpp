@@ -124,16 +124,15 @@ trrojan::variant trrojan::system_factors::cpu(void) const {
                     value << match[1].str();
                 }
 #else /* (defined(__GNUC__) && ((__GNUC__ > 4) ... */
-                static const std::string KEY = "model name";
-                auto it1 = line.find(KEY);
-                auto it2 = line.find(":");
-                if ((it1 != line.cend()) && (it2 != line.cend())) {
+                auto kp = line.find("model name");
+                auto sp = line.find(": ");
+                if ((kp != std::string::npos) && (sp != std::string::npos)) {
                     if (isFirst) {
                         isFirst = false;
                     } else {
                         value << ", ";
                     }
-                    value << line.replace(it2, line.length(), "");
+                    value << line.replace(0, sp + 1, "");
                 }
 #endif /* (defined(__GNUC__) && ((__GNUC__ > 4) ... */
             }
