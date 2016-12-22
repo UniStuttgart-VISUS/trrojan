@@ -6,9 +6,11 @@
 #include "trrojan/system_factors.h"
 
 #include <cinttypes>
+#include <fstream>
 #include <iterator>
 #include <regex>
 #include <sstream>
+#include <string>
 #include <thread>
 
 #ifdef _WIN32
@@ -101,14 +103,23 @@ trrojan::variant trrojan::system_factors::cpu(void) const {
 
     if (entries.empty()) {
 #ifndef _WIN32
+#if (defined(__GNUC__) && ((__GNUC__ > 4) \
+    || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 9))))
         /* Try /proc/cpuinfo as fallback (eg if not running as root). */
         try {
-#if 0   // requires gcc 4.9+
+            std::cerr << "here asdasdasdasdasdasdasdasd" << std::endl;
             static const std::regex RX_MODEL("model\\s+name\\s*:\\s*([^n]+)");
 
-            auto cpuInfo = read_text_file("/proc/cpuinfo");
+            auto file = std::ifstream("/proc/cpuinfo", std::ios::in);
+            std::string line;
+            while (std::getline(file, line)) {
+		std::cerr << line << std::endl;
+            }
+            auto cpuInfo = std::string();
+             
             std::stringstream value;
 
+std::cerr << ">>>" << cpuInfo.c_str() << "<<<"<< std::endl;
             std::sregex_iterator it(cpuInfo.cbegin(), cpuInfo.cend(), RX_MODEL);
             std::sregex_iterator end;
             for (; it != end; ++it) {
@@ -118,8 +129,10 @@ trrojan::variant trrojan::system_factors::cpu(void) const {
             if (value.tellg() > 0) {
                 return variant(value.str());
             }
-#endif
-        } catch (...) { /* Fall through to error handling. */ }
+        } catch (const std::exception& ex) {
+            log::instance().write(log_level::verbose, ex);
+            /* Fall through to error handling. */
+        }
 #endif /* !_WIN32 */
 
         log::instance().write(log_level::warning, "No information about the "

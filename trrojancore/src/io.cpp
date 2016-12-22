@@ -19,7 +19,7 @@ std::vector<char> trrojan::read_binary_file(const char *path) {
         throw std::invalid_argument("'path' must not be nullptr.");
     }
 
-    std::fstream file(path, std::ios::in | std::ios::binary | std::ios::ate);
+    std::ifstream file(path, std::ios::in | std::ios::binary | std::ios::ate);
     if (!file) {
         std::stringstream msg;
         msg << "Failed to open \"" << path << "\"" << std::ends;
@@ -43,24 +43,24 @@ std::vector<char> trrojan::read_binary_file(const char *path) {
 /*
  * trrojan::read_text_file
  */
- std::string trrojan::read_text_file(const char *path) {
-     if (path == nullptr) {
-         throw std::invalid_argument("'path' must not be nullptr.");
-     }
+std::string trrojan::read_text_file(const char *path) {
+    if (path == nullptr) {
+        throw std::invalid_argument("'path' must not be nullptr.");
+    }
 
-     std::fstream file(path, std::ios::in | std::ios::ate);
-     if (!file) {
-         std::stringstream msg;
-         msg << "Failed to open \"" << path << "\"" << std::ends;
-         throw std::runtime_error(msg.str());
-     }
+    std::ifstream file(path, std::ios::in | std::ios::ate);
+    if (!file) {
+        std::stringstream msg;
+        msg << "Failed to open \"" << path << "\"" << std::ends;
+        throw std::runtime_error(msg.str());
+    }
 
-     std::string retval;
-     retval.reserve(file.tellg());
-     file.seekg(0, std::ios::beg);
+    std::string retval;
+    retval.reserve(file.tellg());
+    file.seekg(0, std::ios::beg);
 
     retval.assign((std::istreambuf_iterator<char>(file)),
-         std::istreambuf_iterator<char>());
+        std::istreambuf_iterator<char>());
 
     return retval;
- }
+}
