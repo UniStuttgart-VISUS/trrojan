@@ -111,11 +111,13 @@ trrojan::variant trrojan::system_factors::cpu(void) const {
             std::stringstream value;
 
             while (std::getline(pf, line)) {
+                // TODO: filter sockets using physical id
 #if (defined(__GNUC__) && ((__GNUC__ > 4)\
     || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 9))))
-                static const std::regex RX("model\\s+name\\s*:\\s*([^\\n]+)");
+                static const std::regex RXM("model\\s+name\\s*:\\s*([^\\n]+)");
+                //static const std::regex RXP("physical\\s+id\\s*:\\s*([0-9]+)");
                 std::smatch match;
-                if (std::regex_match(line, match, RX)) {
+                if (std::regex_match(line, match, RXM)) {
                     if (isFirst) {
                         isFirst = false;
                     } else {
