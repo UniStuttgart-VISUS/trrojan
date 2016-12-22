@@ -105,17 +105,19 @@ trrojan::variant trrojan::system_factors::cpu(void) const {
 #ifndef _WIN32
         /* Try /proc/cpuinfo as fallback (eg if not running as root). */
         try {
-            auto pf = std::ifstream("/proc/cpuinfo", std::ios::in);
+            std::ifstream pf("/proc/cpuinfo", std::ios::in);
             bool isFirst = true;
             std::string line;
             std::stringstream value;
 
             while (std::getline(pf, line)) {
+                // TODO: filter sockets using physical id
 #if (defined(__GNUC__) && ((__GNUC__ > 4)\
     || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 9))))
-                static const std::regex RX("model\\s+name\\s*:\\s*([^\\n]+)");
+                static const std::regex RXM("model\\s+name\\s*:\\s*([^\\n]+)");
+                //static const std::regex RXP("physical\\s+id\\s*:\\s*([0-9]+)");
                 std::smatch match;
-                if (std::regex_match(line, match, RX)) {
+                if (std::regex_match(line, match, RXM)) {
                     if (isFirst) {
                         isFirst = false;
                     } else {
@@ -124,6 +126,16 @@ trrojan::variant trrojan::system_factors::cpu(void) const {
                     value << match[1].str();
                 }
 #else /* (defined(__GNUC__) && ((__GNUC__ > 4) ... */
+                auto kp = line.find("model name");
+                auto sp = line.find(": ");
+                if ((kp != std::string::npos) && (sp != std::string::npos)) {
+                    if (isFirst) {
+                        isFirst = false;
+                    } else {
+                        value << ", ";
+                    }
+                    value << line.replace(0, sp + 1, "");
+                }
 #endif /* (defined(__GNUC__) && ((__GNUC__ > 4) ... */
             }
             value << std::ends;
