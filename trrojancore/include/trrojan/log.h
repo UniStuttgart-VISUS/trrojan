@@ -62,6 +62,15 @@ namespace trrojan {
             this->write(log_level::error, ex);
         }
 
+        inline void write_line(const log_level level,
+                const std::exception& ex) {
+            this->write(level, "%s\n", ex.what());
+        }
+
+        inline void write_line(const std::exception& ex) {
+            this->write_line(log_level::error, ex);
+        }
+
     private:
 
         /// <summary>

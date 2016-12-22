@@ -103,6 +103,7 @@ trrojan::variant trrojan::system_factors::cpu(void) const {
 #ifndef _WIN32
         /* Try /proc/cpuinfo as fallback (eg if not running as root). */
         try {
+#if 0   // requires gcc 4.9+
             static const std::regex RX_MODEL("model\\s+name\\s*:\\s*([^n]+)");
 
             auto cpuInfo = read_text_file("/proc/cpuinfo");
@@ -117,6 +118,7 @@ trrojan::variant trrojan::system_factors::cpu(void) const {
             if (value.tellg() > 0) {
                 return variant(value.str());
             }
+#endif
         } catch (...) { /* Fall through to error handling. */ }
 #endif /* !_WIN32 */
 
