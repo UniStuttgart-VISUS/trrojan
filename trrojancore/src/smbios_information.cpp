@@ -880,7 +880,6 @@ trrojan::smbios_information trrojan::smbios_information::read(void) {
         if (!smbios_information::validate_checksum(ef.data(), ef[0x06])) {
             throw std::runtime_error("Checksum error in SMBIOS 3 entry point.");
         }
-std::cerr << "smbios3" << std::endl;
         version = (ef[0x07] << 8) + ef[0x08];
         retval.tableBegin = *reinterpret_cast<uint64_t *>(ef.data() + 0x10);
         retval.tableEnd = retval.tableBegin + ef[0x0C];
@@ -891,7 +890,6 @@ std::cerr << "smbios3" << std::endl;
                 || !smbios_information::validate_checksum(ef.data() + 0x10, 0x0F)) {
             throw std::runtime_error("Checksum error in SMBIOS entry point.");
         }
-std::cerr << "smbios" << std::endl;
         version = (ef[0x06] << 8) + ef[0x07];
 
         // Fix version like GNU dmidecode:
@@ -910,7 +908,6 @@ std::cerr << "smbios" << std::endl;
         auto num = ef[0x1c];
 
     } else if ((ef.size() >= 15) && (::memcmp(ef.data(), "_DMI_", 5) == 0)) {
-std::cerr << "dmi" << std::endl;
         version = ((ef[0x0e] & 0xf0) << 4) + (ef[0x0e] & 0x0f);
         retval.tableBegin = ef[0x08];
         retval.tableEnd = retval.tableBegin + ef[0x06];
@@ -923,11 +920,7 @@ std::cerr << "dmi" << std::endl;
     retval.rawData.reserve(tf.size());
     std::transform(tf.cbegin(), tf.cend(), std::back_inserter(retval.rawData),
         [&](char c) { return c; });
-
-    std::cerr << version << std::endl << retval.tableBegin << std::endl << retval.tableEnd << std::endl;
 #endif /* defined(_WIN32) */
-
-
 
     return std::move(retval);
 }

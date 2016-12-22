@@ -480,8 +480,31 @@ namespace trrojan {
         /// </summary>
         ~smbios_information(void);
 
-        template<class I, class P> void entries(I oit, P predicate) const;
+        /// <summary>
+        /// Retrieves all SMBIOS entries fulfiling the given predicate.
+        /// </summary>
+        /// <param name="oit">An output iterator for
+        /// <c>const <tparamref name="T" /> *</c>.</param>
+        /// <param name="predicate"></param>
+        /// <tparam name="I">The output iterator type.</tparam>
+        /// <tparam name="P">The type of the predicate functor. Please note that
+        /// the predicate works on
+        /// <c>const <see cref="smbios_information::header_type" /> *</c>.
+        /// </tparam>
+        /// <tparam name="T">The type of the entry, which should be
+        /// <see cref="smbios_information::header_type" /> if the predicate does
+        /// not limit the result set to a more specific type that can be safely
+        /// casted. Note that the conversion of the output data is done after
+        /// the predicate was evaluated.</tparam>
+        template<class I, class P, class T = smbios_information::header_type>
+        void entries(I oit, P predicate) const;
 
+        /// <summary>
+        /// Retrieves all SMBIOS entries.
+        /// </summary>
+        /// <param name="oit">An output iterator for <c>const
+        /// <see cref="smbios_information::header_type" /> *</c>.</param>
+        /// <tparam name="I">The output iterator type.</tparam>
         template<class I> inline void entries(I oit) const {
             this->entries(oit, [](const header_type *) -> bool { return true; });
         }
@@ -490,8 +513,8 @@ namespace trrojan {
         /// Retrieves all SMBIOS entries of the specified type
         /// <tparamref name="T" />.
         /// </summary>
-        /// <param name="oit">An output iterator for <tparamref name="T" />.
-        /// </param>
+        /// <param name="oit">An output iterator for
+        /// <c>const <tparamref name="T" /> *</c>.</param>
         /// <tparam name=T"></tparam>
         /// <tparam name=I"></tparam>
         template<class T, class I> void entries_by_type(I oit) const;

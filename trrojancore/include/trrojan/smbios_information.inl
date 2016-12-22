@@ -40,7 +40,7 @@ const char *trrojan::smbios_information::get_string(const T *structure,
 /*
  * trrojan::smbios_information::entries
  */
-template<class I, class P>
+template<class I, class P, class T>
 void trrojan::smbios_information::entries(I oit, P predicate) const {
     const auto BEGIN = this->rawData.data() + this->tableBegin;
     const auto END = this->rawData.data() + this->tableEnd;
@@ -53,7 +53,7 @@ void trrojan::smbios_information::entries(I oit, P predicate) const {
 
         /* Return the pointer to the header. */
         if (predicate(header)) {
-            *oit++ = header;
+            *oit++ = reinterpret_cast<const T *>(ptr);
         }
 
         /* Search next handle. */
@@ -75,9 +75,10 @@ void trrojan::smbios_information::entries(I oit, P predicate) const {
  */
 template<class T, class I>
 void trrojan::smbios_information::entries_by_type(I oit) const {
-    auto typeId = detail::structure_desc<T>::id;
-    // TODO: could cast here
-    this->entries_by_type_id(oit, typeId);
+    static auto pred = [](const header_type *h) -> bool {
+        return (h->type == detail::structure_desc<T>::id);
+    };
+    this->entries<I, decltype(pred), T>(oit, pred);
 }
 
 ///*

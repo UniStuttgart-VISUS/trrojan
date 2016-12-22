@@ -64,8 +64,14 @@ int main(const int argc, const char **argv) {
 //    te.load_plugins();
 
     std::cout << "smbios" << std::endl;
-    trrojan::system_factors sf;
-    sf.crowbar();
+    auto& sf = trrojan::system_factors::instance();
+    std::cout << sf.system_desc() << std::endl;
+    std::cout << sf.mainboard() << std::endl;
+    std::cout << sf.bios() << std::endl;
+    std::cout << sf.cpu() << std::endl;
+    std::cout << sf.logical_cores() << std::endl;
+    std::cout << sf.ram() << std::endl;
+    std::cout << sf.installed_memory() << std::endl;
 
 
     return 0;
