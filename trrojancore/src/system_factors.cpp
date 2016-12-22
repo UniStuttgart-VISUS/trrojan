@@ -103,34 +103,37 @@ trrojan::variant trrojan::system_factors::cpu(void) const {
 
     if (entries.empty()) {
 #ifndef _WIN32
-#if (defined(__GNUC__) && ((__GNUC__ > 4) \
-    || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 9))))
         /* Try /proc/cpuinfo as fallback (eg if not running as root). */
         try {
-            std::cerr << "here asdasdasdasdasdasdasdasd" << std::endl;
-            static const std::regex RX_MODEL("model\\s+name\\s*:\\s*([^n]+)");
-
-            auto file = std::ifstream("/proc/cpuinfo", std::ios::in);
+            auto pf = std::ifstream("/proc/cpuinfo", std::ios::in);
+            bool isFirst = true;
             std::string line;
-            while (std::getline(file, line)) {
-		std::cerr << line << std::endl;
-            }
-            auto cpuInfo = std::string();
-             
             std::stringstream value;
 
-std::cerr << ">>>" << cpuInfo.c_str() << "<<<"<< std::endl;
-            std::sregex_iterator it(cpuInfo.cbegin(), cpuInfo.cend(), RX_MODEL);
-            std::sregex_iterator end;
-            for (; it != end; ++it) {
-                value << it->str();
+            while (std::getline(file, line)) {
+#if (defined(__GNUC__) && ((__GNUC__ > 4)\
+    || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 9))))
+                static const std::regex RX("model\\s+name\\s*:\\s*([^n]+)");
+                std::smatch match;
+                if (std::regex_search(line, match, RX)) {
+                    if (isFirst) {
+                        isFirst = false;
+                    } else {
+                        value << ", ";
+                    }
+                    value << match[1];
+                }
+#else /* (defined(__GNUC__) && ((__GNUC__ > 4) ... */
+
+#endif /* (defined(__GNUC__) && ((__GNUC__ > 4) ... */
             }
+            value << std::ends;
 
             if (value.tellg() > 0) {
                 return variant(value.str());
             }
         } catch (const std::exception& ex) {
-            log::instance().write(log_level::verbose, ex);
+            log::instance().write_line(log_level::verbose, ex);
             /* Fall through to error handling. */
         }
 #endif /* !_WIN32 */
