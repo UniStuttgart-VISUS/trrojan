@@ -110,26 +110,25 @@ trrojan::variant trrojan::system_factors::cpu(void) const {
             std::string line;
             std::stringstream value;
 
-            while (std::getline(file, line)) {
+            while (std::getline(pf, line)) {
 #if (defined(__GNUC__) && ((__GNUC__ > 4)\
     || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 9))))
-                static const std::regex RX("model\\s+name\\s*:\\s*([^n]+)");
+                static const std::regex RX("model\\s+name\\s*:\\s*([^\\n]+)");
                 std::smatch match;
-                if (std::regex_search(line, match, RX)) {
+                if (std::regex_match(line, match, RX)) {
                     if (isFirst) {
                         isFirst = false;
                     } else {
                         value << ", ";
                     }
-                    value << match[1];
+                    value << match[1].str();
                 }
 #else /* (defined(__GNUC__) && ((__GNUC__ > 4) ... */
-
 #endif /* (defined(__GNUC__) && ((__GNUC__ > 4) ... */
             }
             value << std::ends;
-
-            if (value.tellg() > 0) {
+            
+            if (value.tellp() > 0) {
                 return variant(value.str());
             }
         } catch (const std::exception& ex) {
