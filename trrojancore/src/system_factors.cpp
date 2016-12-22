@@ -105,7 +105,7 @@ trrojan::variant trrojan::system_factors::cpu(void) const {
 #ifndef _WIN32
         /* Try /proc/cpuinfo as fallback (eg if not running as root). */
         try {
-            auto pf = std::ifstream("/proc/cpuinfo", std::ios::in);
+            std::ifstream pf("/proc/cpuinfo", std::ios::in);
             bool isFirst = true;
             std::string line;
             std::stringstream value;
@@ -124,6 +124,17 @@ trrojan::variant trrojan::system_factors::cpu(void) const {
                     value << match[1].str();
                 }
 #else /* (defined(__GNUC__) && ((__GNUC__ > 4) ... */
+                static const std::string KEY = "model name";
+                auto it1 = line.find(KEY);
+                auto it2 = line.find(":");
+                if ((it1 != line.cend()) && (it2 != line.cend())) {
+                    if (isFirst) {
+                        isFirst = false;
+                    } else {
+                        value << ", ";
+                    }
+                    value << line.replace(it2, line.length(), "");
+                }
 #endif /* (defined(__GNUC__) && ((__GNUC__ > 4) ... */
             }
             value << std::ends;
