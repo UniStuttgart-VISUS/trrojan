@@ -57,6 +57,16 @@ namespace trrojan {
         static const std::string factor_mainboard;
 
         /// <summary>
+        /// Name of the built-in factor describing the operating system.
+        /// </summary>
+        static const std::string factor_os;
+
+        /// <summary>
+        /// Name of the built-in factor describing the operating system version.
+        /// </summary>
+        static const std::string factor_os_version;
+
+        /// <summary>
         /// Name of the built-in factor describing the memory hardware.
         /// </summary>
         static const std::string factor_ram;
@@ -76,6 +86,10 @@ namespace trrojan {
         variant installed_memory(void) const;
 
         variant mainboard(void) const;
+
+        variant os(void) const;
+
+        variant os_version(void) const;
 
         variant logical_cores(void) const;
 

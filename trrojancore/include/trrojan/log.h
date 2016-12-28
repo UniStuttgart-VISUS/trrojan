@@ -46,7 +46,7 @@ namespace trrojan {
         ~log(void);
 
         inline void write(const log_level level, const char *str) {
-            ::printf(str);  // TODO: preliminary implementation
+            ::printf("%s", str);  // TODO: preliminary implementation
         }
 
         template<class... P>
@@ -60,6 +60,10 @@ namespace trrojan {
 
         inline void write(const std::exception& ex) {
             this->write(log_level::error, ex);
+        }
+
+        inline void write_line(const log_level level, const char *str) {
+            ::printf("%s\n", str);  // TODO: preliminary implementation
         }
 
         inline void write_line(const log_level level,

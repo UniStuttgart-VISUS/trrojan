@@ -23,6 +23,7 @@
 
 #include "trrojan/io.h"
 #include "trrojan/log.h"
+#include "trrojan/text.h"
 
 
 /*
@@ -55,6 +56,18 @@ const std::string trrojan::system_factors::factor_logical_cores(
  * trrojan::system_factors::factor_mainboard
  */
 const std::string trrojan::system_factors::factor_mainboard("mainboard");
+
+
+/*
+ * trrojan::system_factors::factor_os
+ */
+const std::string trrojan::system_factors::factor_os("os");
+
+
+/*
+ * trrojan::system_factors::factor_os_version
+ */
+const std::string trrojan::system_factors::factor_os_version("os_version");
 
 
 /*
@@ -123,7 +136,7 @@ trrojan::variant trrojan::system_factors::cpu(void) const {
                     } else {
                         value << ", ";
                     }
-                    value << match[1].str();
+                    value << trim(match[1].str());
                 }
 #else /* (defined(__GNUC__) && ((__GNUC__ > 4) ... */
                 auto kp = line.find("model name");
@@ -134,7 +147,7 @@ trrojan::variant trrojan::system_factors::cpu(void) const {
                     } else {
                         value << ", ";
                     }
-                    value << line.replace(0, sp + 1, "");
+                    value << trim(line.replace(0, sp + 1, ""));
                 }
 #endif /* (defined(__GNUC__) && ((__GNUC__ > 4) ... */
             }
@@ -206,6 +219,12 @@ trrojan::variant trrojan::system_factors::get(const std::string& factor) const {
 
     } else if (factor == system_factors::factor_mainboard) {
         return system_factors::mainboard();
+
+    } else if (factor == system_factors::factor_os) {
+        return system_factors::os();
+
+    } else if (factor == system_factors::factor_os_version) {
+        return system_factors::os_version();
 
     } else if (factor == system_factors::factor_logical_cores) {
         return system_factors::logical_cores();
@@ -296,6 +315,129 @@ trrojan::variant trrojan::system_factors::mainboard(void) const {
             << e->get_version() << ")" << std::ends;
         return variant(value.str());
     }
+}
+
+
+/*
+ * trrojan::system_factors::os
+ */
+trrojan::variant trrojan::system_factors::os(void) const {
+#ifdef _WIN32
+    OSVERSIONINFOEXA vi;
+    ::ZeroMemory(&vi, sizeof(vi));
+    vi.dwOSVersionInfoSize = sizeof(vi);
+
+    if (!::GetVersionExA(reinterpret_cast<LPOSVERSIONINFOA>(&vi))) {
+        std::error_code ec(::GetLastError(), std::system_category());
+        throw std::system_error(ec, "Failed to get operating system version.");
+    }
+
+    auto isWorkstation = (vi.wProductType == VER_NT_WORKSTATION);
+
+    // https://msdn.microsoft.com/de-de/library/windows/desktop/ms724833(v=vs.85).aspx
+    if ((vi.dwMajorVersion == 5) && (vi.dwMinorVersion == 0)) {
+        return std::string("Windows 2000");
+
+    } else if ((vi.dwMajorVersion == 5) && (vi.dwMinorVersion == 1)) {
+        return std::string("Windows XP");
+
+    } else if ((vi.dwMajorVersion == 5) && (vi.dwMinorVersion == 2)) {
+        auto server2 = ::GetSystemMetrics(SM_SERVERR2);
+
+        if (isWorkstation) {
+            return std::string("Windows XP");
+
+        } else if (server2 == 0) {
+            return std::string("Windows Server 2003");
+
+        } else if (vi.wSuiteMask & VER_SUITE_WH_SERVER) {
+            return std::string("Windows Home Server");
+
+        } else if (server2 != 0) {
+            return std::string("Windows Server 2003 R2");
+
+        } else {
+            // Should be unreachable
+            return std::string("Windows 5.2");
+        }
+
+    } else if ((vi.dwMajorVersion == 6) && (vi.dwMinorVersion == 0)) {
+        return isWorkstation
+                ? std::string("Windows Vista")
+                : std::string("Windows Server 2008");
+
+    } else if ((vi.dwMajorVersion == 6) && (vi.dwMinorVersion == 1)) {
+        return isWorkstation
+            ? std::string("Windows 7")
+            : std::string("Windows Server 2008 R2");
+
+    } else if ((vi.dwMajorVersion == 6) && (vi.dwMinorVersion == 2)) {
+        return isWorkstation
+            ? std::string("Windows 8")
+            : std::string("Windows Server 2012");
+
+    } else if ((vi.dwMajorVersion == 6) && (vi.dwMinorVersion == 3)) {
+        return isWorkstation
+            ? std::string("Windows 8.1")
+            : std::string("Windows Server 2012 R2");
+
+    } else if ((vi.dwMajorVersion == 10) && (vi.dwMinorVersion == 0)) {
+        return isWorkstation
+            ? std::string("Windows 10")
+            : std::string("Windows Server 2016");
+
+    } else {
+        return isWorkstation
+            ? std::string("Windows")
+            : std::string("Windows Server");
+    }
+
+#else /* _WIN32 */
+    utsname vi;
+
+    // http://stackoverflow.com/questions/6315666/c-get-linux-distribution-name-version
+    if (::uname(&vi) < 0) {
+        std::error_code ec(errno, std::system_category());
+        throw std::system_error(ec, "Failed to get operating system version.");
+    }
+
+    return std::string(vi.sysname);
+#endif /* _WIN32 */
+}
+
+
+/*
+ * trrojan::system_factors::os_version
+ */
+trrojan::variant trrojan::system_factors::os_version(void) const {
+#ifdef _WIN32
+    OSVERSIONINFOEXA vi;
+    ::ZeroMemory(&vi, sizeof(vi));
+    vi.dwOSVersionInfoSize = sizeof(vi);
+
+    if (!::GetVersionExA(reinterpret_cast<LPOSVERSIONINFOA>(&vi))) {
+        std::error_code ec(::GetLastError(), std::system_category());
+        throw std::system_error(ec, "Failed to get operating system version.");
+    }
+
+    std::stringstream str;
+    str << vi.dwMajorVersion << "."
+        << vi.dwMinorVersion << "."
+        << vi.dwBuildNumber;
+
+    return str.str();
+
+#else /* _WIN32 */
+    utsname vi;
+
+    // http://stackoverflow.com/questions/6315666/c-get-linux-distribution-name-version
+    if (::uname(&vi) < 0) {
+        std::error_code ec(errno, std::system_category());
+        throw std::system_error(ec, "Failed to get operating system version.");
+    }
+
+    return std::string(vi.release);
+#endif /* _WIN32 */
 }
 
 
