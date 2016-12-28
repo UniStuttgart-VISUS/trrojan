@@ -17,9 +17,16 @@
 namespace trrojan {
 
     /// <summary>
-    /// A configuration is a collection of factors which define all
+    /// A configuration set is a collection of factors which define all
     /// configurations to be tested.
     /// </summary>
+    /// <remarks>
+    /// A configuration set can be expanded into a set of
+    /// <see cref="trrojan::configurations" />, which is the power set of the
+    /// manifestations of all <see cref="trrrojan::factor" />s in the
+    /// configuration set. The resulting configurations can be passed to one
+    /// or more benchmarks to perfom the test.
+    /// </remarks>
     class TRROJANCORE_API configuration_set {
 
     public:

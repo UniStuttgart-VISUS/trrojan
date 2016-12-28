@@ -63,7 +63,7 @@ namespace detail {
         virtual size_t size(void) const;
 
         /// <inheritdoc />
-        virtual const variant& operator [](const size_t i) const;
+        virtual variant operator [](const size_t i) const;
 
         /// <summary>
         /// Test for equality.

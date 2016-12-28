@@ -12,6 +12,7 @@
 #include <stdexcept>
 #include <sstream>
 #include <string>
+#include <system_error>
 #include <thread>
 
 #ifdef _WIN32

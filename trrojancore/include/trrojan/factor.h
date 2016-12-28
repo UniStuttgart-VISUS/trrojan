@@ -95,10 +95,15 @@ namespace trrojan {
         /// <summary>
         /// Answer a specific manifestation.
         /// </summary>
+        /// <remarks>
+        /// The method returns a deep copy to allow implementations generating
+        /// factors on-the-fly. If we required a reference to be returned, this
+        /// would result in returning a reference to a temporary.
+        /// </remarks>
         /// <param name="i"></param>
         /// <returns>The <paramref name="i" />th manifestation.</returns>
         /// <exception cref="std::range_error"></exception>
-        const variant& operator [](const size_t i) const;
+        variant operator [](const size_t i) const;
 
         /// <summary>
         /// Assignment.
