@@ -9,6 +9,7 @@
 #include <fstream>
 #include <iterator>
 #include <regex>
+#include <stdexcept>
 #include <sstream>
 #include <string>
 #include <thread>
@@ -327,10 +328,13 @@ trrojan::variant trrojan::system_factors::os(void) const {
     ::ZeroMemory(&vi, sizeof(vi));
     vi.dwOSVersionInfoSize = sizeof(vi);
 
+#pragma warning(push)
+#pragma warning(disable: 4996)
     if (!::GetVersionExA(reinterpret_cast<LPOSVERSIONINFOA>(&vi))) {
         std::error_code ec(::GetLastError(), std::system_category());
         throw std::system_error(ec, "Failed to get operating system version.");
     }
+#pragma warning(pop)
 
     auto isWorkstation = (vi.wProductType == VER_NT_WORKSTATION);
 
@@ -415,10 +419,13 @@ trrojan::variant trrojan::system_factors::os_version(void) const {
     ::ZeroMemory(&vi, sizeof(vi));
     vi.dwOSVersionInfoSize = sizeof(vi);
 
+#pragma warning(push)
+#pragma warning(disable: 4996)
     if (!::GetVersionExA(reinterpret_cast<LPOSVERSIONINFOA>(&vi))) {
         std::error_code ec(::GetLastError(), std::system_category());
         throw std::system_error(ec, "Failed to get operating system version.");
     }
+#pragma warning(pop)
 
     std::stringstream str;
     str << vi.dwMajorVersion << "."

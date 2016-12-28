@@ -85,8 +85,14 @@ namespace trrojan {
         /// </summary>
         wstring,
 
+        /// <summary>
+        /// The variant holds a <see cref="trrojan::device" />.
+        /// </summary>
         device,
 
+        /// <summary>
+        /// The variant holds a <see cref="trrojan::environment" />.
+        /// </summary>
         environment
     };
 
