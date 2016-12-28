@@ -33,5 +33,4 @@ void trrojan::environment_base::on_finalise(void)  throw() { }
 /*
  * trrojan::environment_base::on_initialise
  */
-void trrojan::environment_base::on_initialise(
-    const std::vector<std::string>& cmdLine) { }
+void trrojan::environment_base::on_initialise(const cmd_line& cmdLine) { }

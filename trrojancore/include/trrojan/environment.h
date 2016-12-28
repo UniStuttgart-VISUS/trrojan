@@ -9,8 +9,9 @@
 #include <string>
 #include <vector>
 
-#include "trrojan/export.h"
+#include "trrojan/cmd_line.h"
 #include "trrojan/device.h"
+#include "trrojan/export.h"
 
 
 namespace trrojan {
@@ -94,7 +95,7 @@ namespace trrojan {
         /// </remarks>
         /// <param name="cmdLine"> The command line of the application
         /// invocation.</param>
-        virtual void on_initialise(const std::vector<std::string>& cmdLine);
+        virtual void on_initialise(const cmd_line& cmdLine);
 
     protected:
 

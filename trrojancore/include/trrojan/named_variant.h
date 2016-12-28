@@ -47,6 +47,14 @@ namespace trrojan {
             : _name(name), _value(value) { }
 
         /// <summary>
+        /// Initialises a new instance with the given variant as value.
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="value"></param>
+        inline named_variant(const std::string& name, variant&& value)
+            : _name(name), _value(std::move(value)) { }
+
+        /// <summary>
         /// Initialises a new instance with the given value, which must be
         /// convertible to a <see cref="trrojan::variant" />.
         /// </summary>

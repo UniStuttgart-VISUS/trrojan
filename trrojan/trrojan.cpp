@@ -7,6 +7,8 @@
 
 
 int main(const int argc, const char **argv) {
+    trrojan::cmd_line cmdLine(argv, argv + argc);
+
     //std::vector<int> values1 = { 1, 2, 3, 4, 5 };
     //auto factor1 = trrojan::factor::from_manifestations("factor1", values1);
     //std::cout << factor1.name() << " " << factor1.size() << std::endl;
@@ -40,6 +42,9 @@ int main(const int argc, const char **argv) {
     //for (size_t i = 0; i < factor5.size(); ++i) {
     //    std::cout << factor5[i] << std::endl;
     //}
+
+    auto paramHoncho = trrojan::find_argument(std::string("--honcho"), cmdLine.cbegin(), cmdLine.cend());
+
 
     auto fVolumeSizes = trrojan::factor::from_manifestations("VolumeSize", { 256, 512, 1024 });
     auto fStepSizes = trrojan::factor::from_manifestations("StepSize", { 0.75f, 1.0f, 2.0f });

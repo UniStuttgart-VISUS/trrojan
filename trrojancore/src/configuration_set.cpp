@@ -51,7 +51,7 @@ bool trrojan::configuration_set::foreach_configuration(
             for (size_t j = 0; j < this->factors.size(); ++j) {
                 auto ij = (i / frequencies[j]) % this->factors.size();
                 config.emplace_back(this->factors[j].name(),
-                    this->factors[j][ij]);
+                    std::move(this->factors[j][ij]));
             }
             retval = cb(config);
         }
