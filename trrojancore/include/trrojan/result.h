@@ -39,17 +39,17 @@ namespace trrojan {
         /// </summary>
         typedef std::vector<std::string> result_names_type;
 
-        inline basic_result(const configuration& configuration,
+        inline basic_result(const ::trrojan::configuration& configuration,
             const result_names_type& result_names)
             : _configuration(configuration),
             _result_names(result_names) { }
 
-        inline basic_result(configuration&& configuration,
+        inline basic_result(::trrojan::configuration&& configuration,
             result_names_type&& result_names)
             : _configuration(std::move(configuration)),
             _result_names(std::move(result_names)) { }
 
-        inline basic_result(configuration&& configuration,
+        inline basic_result(::trrojan::configuration&& configuration,
             std::initializer_list<std::string> result_names)
             : _configuration(std::move(configuration)),
             _result_names(std::move(result_names)) { }
@@ -85,7 +85,7 @@ namespace trrojan {
         /// Answer the <see cref="trrojan::configuration" /> the results are for.
         /// </summary>
         /// <returns>The configuration the results are for.</returns>
-        inline const trrojan::configuration& configuration(void) const {
+        inline const ::trrojan::configuration& configuration(void) const {
             return this->_configuration;
         }
 
@@ -150,7 +150,7 @@ namespace trrojan {
 
         template<class T> void check_size(const T& results);
 
-        trrojan::configuration _configuration;
+        ::trrojan::configuration _configuration;
         result_names_type _result_names;
         result_type _results;
 
