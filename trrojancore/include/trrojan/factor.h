@@ -49,6 +49,12 @@ namespace trrojan {
             return factor::from_manifestations(name, m);
         }
 
+        template<class T> static inline factor from_manifestations(
+            const std::string& name, const T& manifestation) {
+            std::vector<T> m(1, manifestation);
+            return factor::from_manifestations(name, m);
+        }
+
         template<class T>
         static inline factor from_range(const std::string& name, const T begin,
             const T end, const size_t cnt_steps) {

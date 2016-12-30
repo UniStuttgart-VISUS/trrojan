@@ -292,7 +292,7 @@ trrojan::variant trrojan::system_factors::installed_memory(void) const {
  * trrojan::system_factors::logical_cores
  */
 trrojan::variant trrojan::system_factors::logical_cores(void) const {
-    return std::thread::hardware_concurrency();
+    return static_cast<std::uint32_t>(std::thread::hardware_concurrency());
 }
 
 
