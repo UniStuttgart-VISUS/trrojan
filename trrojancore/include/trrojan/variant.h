@@ -440,11 +440,13 @@ namespace trrojan {
         /// <summary>
         /// Write the <see cref="trrojan::variant" /> to a stream.
         /// </summary>
-        /// <param name="lhs"></param>
-        /// <param name="rhs"></param>
-        /// <returns><paramref name="lhs" /></returns>
-        /// <tparam name="C"></tparam>
-        /// <tparam name="T"></tparam>
+        /// <param name="lhs">The left-hand side operand (the stream to
+        /// write to).</param>
+        /// <param name="rhs">The right-hand side operand (the object to
+        /// be written).</param>
+        /// <returns><paramref name="lhs" />.</returns>
+        /// <tparam name="C">The character type used in the stream.</tparam>
+        /// <tparam name="T">The traits for <tparamref name="C" />.</tparam>
         template<class C, class T>
         friend inline std::basic_ostream<C, T>& operator <<(
                 std::basic_ostream<C, T>& lhs, const variant& rhs) {

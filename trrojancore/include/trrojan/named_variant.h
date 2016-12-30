@@ -66,6 +66,18 @@ namespace trrojan {
             : _name(name), _value(value) { }
 
         /// <summary>
+        /// Initialises a new instance from a pair of string and variant.
+        /// </summary>
+        /// <remarks>
+        /// This constructor can be used to create instances while iterating
+        /// an <see cref="std::unordered_map" />.
+        /// </remarks>
+        /// <param name="name"></param>
+        /// <param name="value"></param>
+        inline named_variant(const std::pair<std::string, variant>& value)
+            : _name(value.first), _value(value.second) { }
+
+        /// <summary>
         /// Finalises the instance.
         /// </summary>
         inline ~named_variant(void) { }
@@ -92,6 +104,23 @@ namespace trrojan {
         /// <returns></returns>
         inline operator const variant&(void) const {
             return this->_value;
+        }
+
+        /// <summary>
+        /// Write the <see cref="trrojan::named_variant" /> to a stream.
+        /// </summary>
+        /// <param name="lhs">The left-hand side operand (the stream to
+        /// write to).</param>
+        /// <param name="rhs">The right-hand side operand (the object to
+        /// be written).</param>
+        /// <returns><paramref name="lhs" />.</returns>
+        /// <tparam name="C">The character type used in the stream.</tparam>
+        /// <tparam name="T">The traits for <tparamref name="C" />.</tparam>
+        template<class C, class T>
+        friend inline std::basic_ostream<C, T>& operator <<(
+                std::basic_ostream<C, T>& lhs, const named_variant& rhs) {
+            lhs << rhs._name << " = \"" << rhs._value << "\"";
+            return lhs;
         }
 
     private:

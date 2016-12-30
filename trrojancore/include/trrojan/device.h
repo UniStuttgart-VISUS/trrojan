@@ -27,6 +27,8 @@ namespace trrojan {
 
         // TODO: define the interface.
 
+        //const std::string& name(void) const;
+
     };
 
     /// <summary>

@@ -1,7 +1,6 @@
 /// <copyright file="environment.h" company="SFB-TRR 161 Quantitative Methods for Visual Computing">
 /// Copyright © 2016 SFB-TRR 161. Alle Rechte vorbehalten.
 /// </copyright>
-/// <author>Valentin Bruder</author>
 /// <author>Christoph Müller</author>
 
 #pragma once
@@ -26,7 +25,7 @@ namespace stream {
         /// <summary>
         /// Initialises a new instance.
         /// </summary>
-        inline environment(void) : environment_base("strean") { }
+        inline environment(void) : environment_base("stream") { }
 
         /// <summary>
         /// Finalises the instance.

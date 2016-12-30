@@ -10,3 +10,11 @@
  * trrojan::output_base::~output_base
  */
 trrojan::output_base::~output_base(void) { }
+
+
+/*
+ * trrojan::output_base::operator <<
+ */
+trrojan::output_base& trrojan::output_base::operator <<(const result result) {
+    return (result) ? (*this << *result) : *this;
+}

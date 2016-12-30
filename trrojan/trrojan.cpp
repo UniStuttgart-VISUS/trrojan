@@ -3,6 +3,7 @@
 
 #include "trrojan/configuration_set.h"
 #include "trrojan/executive.h"
+#include "trrojan/result.h"
 #include "trrojan/system_factors.h"
 #include "trrojan/timer.h"
 
@@ -47,7 +48,9 @@ int main(const int argc, const char **argv) {
     trrojan::timer t;
     t.start();
 
-    auto paramHoncho = trrojan::find_argument(std::string("--honcho"), cmdLine.cbegin(), cmdLine.cend());
+    {
+        auto paramHoncho = trrojan::find_argument(std::string("--honcho"), cmdLine.cbegin(), cmdLine.cend());
+    }
 
 
 
@@ -66,23 +69,27 @@ int main(const int argc, const char **argv) {
         for (auto& f : c) {
             std::cout << f.name() << " = " << f.value() << std::endl;
         }
+        trrojan::basic_result r1(c, { "hugo", "horst" });
         return true;
     });
 
 
-    std::cout << "executive" << std::endl;
-    trrojan::executive te;
-//    te.load_plugins();
+    {
+        std::cout << "executive" << std::endl;
+        trrojan::executive te;
+        //    te.load_plugins();
+    }
 
-    std::cout << "smbios" << std::endl;
-    auto& sf = trrojan::system_factors::instance();
-    std::cout << sf.system_desc() << std::endl;
-    std::cout << sf.mainboard() << std::endl;
-    std::cout << sf.bios() << std::endl;
-    std::cout << sf.cpu() << std::endl;
-    std::cout << sf.logical_cores() << std::endl;
-    std::cout << sf.ram() << std::endl;
-    std::cout << sf.installed_memory() << std::endl;
+    {
+        std::cout << "smbios" << std::endl;
+        auto& sf = trrojan::system_factors::instance();
+        std::vector<trrojan::named_variant> sfs;
+        sf.get(std::back_inserter(sfs));
+        for (auto& s : sfs) {
+            std::cout << s << std::endl;
+        }
+    }
+
 
     std::cout << "elapsed: " << t.elapsed_millis() << std::endl;
 

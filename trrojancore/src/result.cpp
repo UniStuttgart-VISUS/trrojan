@@ -1,0 +1,59 @@
+/// <copyright file="result.cpp" company="SFB-TRR 161 Quantitative Methods for Visual Computing">
+/// Copyright © 2016 SFB-TRR 161. Alle Rechte vorbehalten.
+/// </copyright>
+/// <author>Valentin Bruder</author>
+
+#include "trrojan/result.h"
+
+#include <algorithm>
+
+
+/*
+ * trrojan::basic_result::~basic_result
+ */
+trrojan::basic_result::~basic_result(void) { }
+
+
+/*
+ * trrojan::basic_result::results
+ */
+std::vector<std::vector<trrojan::named_variant>> trrojan::basic_result::results(
+        void) const {
+    std::vector<std::vector<named_variant>> retval;
+    retval.reserve(this->measurements());
+
+    for (size_t m = 0; m < this->measurements(); ++m) {
+        retval.emplace_back();
+        auto& r = retval.back();
+        r.reserve(this->_result_names.size());
+
+        for (size_t f = 0; f < this->_result_names.size(); ++f) {
+            r[f] = named_variant(this->_result_names[f],
+                this->_results[m * f + f]);
+        }
+    }
+
+    return std::move(retval);
+}
+
+
+/*
+ * trrojan::basic_result::results
+ */
+trrojan::basic_result::result_type trrojan::basic_result::results(
+        const std::string& result_name) const {
+    auto it = std::find(this->_result_names.cbegin(),
+        this->_result_names.cend(), result_name);
+    if (it == this->_result_names.cend()) {
+        throw std::invalid_argument("The given result name was not found.");
+    }
+    auto d = std::distance(this->_result_names.cbegin(), it);
+
+    result_type retval;
+    retval.reserve(this->measurements());
+    for (size_t i = d; i < this->_results.size(); i += d) {
+        retval.push_back(this->_results[i]);
+    }
+
+    return std::move(retval);
+}
