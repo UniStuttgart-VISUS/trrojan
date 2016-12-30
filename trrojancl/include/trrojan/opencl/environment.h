@@ -86,7 +86,7 @@ namespace opencl
         /// </summary>
         virtual ~environment(void);
 
-        virtual void get_devices(device_list& dst);
+        virtual size_t get_devices(device_list& dst);
 
         virtual void on_initialise(const std::vector<std::string> &cmdLine);
 

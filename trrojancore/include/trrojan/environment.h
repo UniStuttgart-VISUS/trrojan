@@ -38,7 +38,14 @@ namespace trrojan {
         /// </summary>
         virtual ~environment_base(void);
 
-        virtual void get_devices(device_list& dst) = 0;
+        /// <summary>
+        /// Answer the (compute) devices the environment supports.
+        /// </summary>
+        /// <param name="dst">A <see cref="device_list" /> to append the
+        /// devices to.</param>
+        /// <returns>The number of devices which have been appended to
+        /// <paramref name="dst" />.</returns>
+        virtual size_t get_devices(device_list& dst) = 0;
 
         /// <summary>
         /// Gets the name of the execution environment.

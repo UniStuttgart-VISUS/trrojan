@@ -4,6 +4,7 @@
 #include "trrojan/configuration_set.h"
 #include "trrojan/executive.h"
 #include "trrojan/system_factors.h"
+#include "trrojan/timer.h"
 
 
 int main(const int argc, const char **argv) {
@@ -43,7 +44,12 @@ int main(const int argc, const char **argv) {
     //    std::cout << factor5[i] << std::endl;
     //}
 
+    trrojan::timer t;
+    t.start();
+
     auto paramHoncho = trrojan::find_argument(std::string("--honcho"), cmdLine.cbegin(), cmdLine.cend());
+
+
 
 
     auto fVolumeSizes = trrojan::factor::from_manifestations("VolumeSize", { 256, 512, 1024 });
@@ -77,6 +83,8 @@ int main(const int argc, const char **argv) {
     std::cout << sf.logical_cores() << std::endl;
     std::cout << sf.ram() << std::endl;
     std::cout << sf.installed_memory() << std::endl;
+
+    std::cout << "elapsed: " << t.elapsed_millis() << std::endl;
 
 
     return 0;

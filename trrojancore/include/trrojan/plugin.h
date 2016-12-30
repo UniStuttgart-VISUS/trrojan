@@ -44,9 +44,11 @@ namespace trrojan {
         /// <see cref="trrojan::executive" /> decides when initialisation is to
         /// be performed.
         /// </remarks>
-        /// <param name="dst">An <see cref="std::vector" /> to append the
+        /// <param name="dst">An <see cref="environment_list" /> to append the
         /// environments to.</param>
-        virtual void create_environments(environment_list& dst) const = 0;
+        /// <returns>The number of environments which have been added to
+        /// <paramref name="dst" />.</returns>
+        virtual size_t create_environments(environment_list& dst) const = 0;
 
         /// <summary>
         /// Answer the name of the plugin.

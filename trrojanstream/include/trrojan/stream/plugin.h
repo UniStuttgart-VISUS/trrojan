@@ -7,22 +7,22 @@
 
 #include "trrojan/plugin.h"
 
-#include "trrojan/opencl/export.h"
+#include "trrojan/stream/export.h"
 
 
 namespace trrojan {
-namespace opencl {
+namespace stream {
 
     /// <summary>
-    /// Descriptor for the OpenCL plugin.
+    /// Descriptor for the RAM stream benchmark plugin.
     /// </summary>
-    class TRROJANCL_API plugin : public trrojan::plugin_base {
+    class TRROJANSTREAM_API plugin : public trrojan::plugin_base {
 
     public:
 
         typedef trrojan::plugin_base::environment_list environment_list;
 
-        inline plugin(void) : trrojan::plugin_base("opencl") { }
+        inline plugin(void) : trrojan::plugin_base("stream") { }
 
         virtual ~plugin(void);
 

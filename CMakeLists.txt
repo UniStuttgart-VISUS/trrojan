@@ -29,5 +29,8 @@ add_subdirectory(trrojancore)
 # Build the OpenCL plugin
 add_subdirectory(trrojancl)
 
+# Build the RAM stream plugin
+add_subdirectory(trrojanstream)
+
 # Build the executable
 add_subdirectory(trrojan)
