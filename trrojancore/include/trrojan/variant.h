@@ -107,10 +107,25 @@ namespace trrojan {
     /// </remarks>
     template<variant_type T> struct TRROJANCORE_API variant_type_traits { };
 
+    /// <summary>
+    /// This structure allows for deriving the
+    /// <see cref="trrojan::variant_type" /> from a C++ type.
+    /// </summary>
+    /// <remarks>
+    /// <para>This structure implements the inverse operation of
+    /// <see cref="trrojan::variant_type_traits" />.</para>
+    /// <para>The default implementation does indicate an invalid type; the
+    /// template specialisations implement the type deduction.</para>
+    /// </remarks>
+    template<class T> struct TRROJANCORE_API variant_reverse_traits { };
+
 #define __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(t0, t1)                         \
     template<> struct TRROJANCORE_API variant_type_traits<variant_type::t0> {  \
         typedef t1 type;                                                       \
-    }                                                                          \
+    };                                                                         \
+    template<> struct TRROJANCORE_API variant_reverse_traits<t1> {             \
+        static const variant_type type = variant_type::t0;                     \
+    }
 
     __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(int8, std::int8_t);
     __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(int16, std::int16_t);

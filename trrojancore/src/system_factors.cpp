@@ -28,60 +28,20 @@
 #include "trrojan/text.h"
 
 
-/*
- * trrojan::system_factors::factor_bios
- */
-const std::string trrojan::system_factors::factor_bios("bios");
+#define __TRROJAN_DEFINE_FACTOR(n)\
+const std::string trrojan::system_factors::factor_##n(#n);
 
+__TRROJAN_DEFINE_FACTOR(bios);
+__TRROJAN_DEFINE_FACTOR(cpu);
+__TRROJAN_DEFINE_FACTOR(installed_memory);
+__TRROJAN_DEFINE_FACTOR(logical_cores);
+__TRROJAN_DEFINE_FACTOR(mainboard);
+__TRROJAN_DEFINE_FACTOR(os);
+__TRROJAN_DEFINE_FACTOR(os_version);
+__TRROJAN_DEFINE_FACTOR(ram);
+__TRROJAN_DEFINE_FACTOR(system_desc);
 
-/*
- * trrojan::system_factors::factor_cpu
- */
-const std::string trrojan::system_factors::factor_cpu("cpu");
-
-
-/*
- * trrojan::system_factors::factor_installed_memory
- */
-const std::string trrojan::system_factors::factor_installed_memory(
-    "installed_memory");
-
-
-/*
- * trrojan::system_factors::factor_logical_cores
- */
-const std::string trrojan::system_factors::factor_logical_cores(
-    "logical_cores");
-
-
-/*
- * trrojan::system_factors::factor_mainboard
- */
-const std::string trrojan::system_factors::factor_mainboard("mainboard");
-
-
-/*
- * trrojan::system_factors::factor_os
- */
-const std::string trrojan::system_factors::factor_os("os");
-
-
-/*
- * trrojan::system_factors::factor_os_version
- */
-const std::string trrojan::system_factors::factor_os_version("os_version");
-
-
-/*
- * trrojan::system_factors::factor_ram
- */
-const std::string trrojan::system_factors::factor_ram("ram");
-
-
-/*
- * trrojan::system_factors::factor_system_desc
- */
-const std::string trrojan::system_factors::factor_system_desc("system_desc");
+#undef __TRROJAN_DEFINE_FACTOR
 
 
 /*
@@ -337,6 +297,8 @@ trrojan::variant trrojan::system_factors::os(void) const {
     }
 #pragma warning(pop)
 
+    // TODO: rewrite this; it will return the SDK version for Win10
+
     auto isWorkstation = (vi.wProductType == VER_NT_WORKSTATION);
 
     // https://msdn.microsoft.com/de-de/library/windows/desktop/ms724833(v=vs.85).aspx
@@ -427,6 +389,8 @@ trrojan::variant trrojan::system_factors::os_version(void) const {
         throw std::system_error(ec, "Failed to get operating system version.");
     }
 #pragma warning(pop)
+
+    // TODO: rewrite this; it will return the SDK version for Win10
 
     std::stringstream str;
     str << vi.dwMajorVersion << "."

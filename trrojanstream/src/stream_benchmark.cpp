@@ -56,7 +56,7 @@ trrojan::result_set trrojan::stream::stream_benchmark::run(
         // to the number of logical processors in the system.
         auto flc = system_factors::instance().logical_cores();
         auto lc = static_cast<int>(flc.get_uint32());
-        cs.add_factor(factor::from_range("threads", 1, lc, lc - 1));
+        cs.add_factor(factor::from_manifestations("threads", { 1, lc }));
     }
 
     // Problem size
