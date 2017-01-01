@@ -163,6 +163,22 @@ namespace trrojan {
             return this->_result_names.size();
         }
 
+        /// <summary>
+        /// Alias for <see cref="result::add" />.
+        /// </summary>
+        inline basic_result& operator <<(const result_type& rhs) {
+            this->add(rhs);
+            return *this;
+        }
+
+        /// <summary>
+        /// Alias for <see cref="result::add" />.
+        /// </summary>
+        inline basic_result& operator <<(std::initializer_list<variant> rhs) {
+            this->add(rhs);
+            return *this;
+        }
+
     private:
 
         template<class T> void check_size(const T& results);
