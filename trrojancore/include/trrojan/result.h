@@ -102,6 +102,15 @@ namespace trrojan {
         }
 
         /// <summary>
+        /// Answer the <paramref name="v" />th result of the
+        /// <paramref name="n" />th measurement.
+        /// </summary>
+        inline const variant& raw_result(const size_t m,
+                const size_t n) const {
+            return this->_results[m * n + n];
+        }
+
+        /// <summary>
         /// Answer the raw results (ordered in tuples according to
         /// <see cref="basic_result::result_names" />) of the test.
         /// </summary>
@@ -145,6 +154,14 @@ namespace trrojan {
         /// <exception cref="std::invalid_argument">If the given result name was
         /// not found in the <see cref="basic_result" />.</exception>
         result_type results(const std::string& result_name) const;
+
+        /// <summary>
+        /// Answer the number of values we have for each measurement.
+        /// </summary>
+        /// <returns>The number of values per measurement.</returns>
+        inline size_t values_per_measurement(void) const {
+            return this->_result_names.size();
+        }
 
     private:
 
