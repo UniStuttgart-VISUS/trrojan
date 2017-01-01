@@ -11,3 +11,7 @@ include_directories(${TrrojanCoreIncludeDir})
 add_executable(trrojan ${SourceFiles})
 
 target_link_libraries(trrojan LINK_PUBLIC trrojancore)
+
+# Do some debugging quickhack ...
+include_directories(${TrrojanStreamIncludeDir})
+target_link_libraries(trrojan LINK_PUBLIC trrojanstream)

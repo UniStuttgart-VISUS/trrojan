@@ -7,6 +7,8 @@
 #include "trrojan/system_factors.h"
 #include "trrojan/timer.h"
 
+#include "trrojan/stream/worker_thread.h"
+
 
 int main(const int argc, const char **argv) {
     trrojan::cmd_line cmdLine(argv, argv + argc);
@@ -52,6 +54,7 @@ int main(const int argc, const char **argv) {
         auto paramHoncho = trrojan::find_argument(std::string("--honcho"), cmdLine.cbegin(), cmdLine.cend());
     }
 
+    trrojan::stream::worker_thread::crowbar();
 
 
 
