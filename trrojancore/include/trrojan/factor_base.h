@@ -62,7 +62,7 @@ namespace detail {
         /// <param name="i"></param>
         /// <returns>The <paramref name="i" />th manifestation.</returns>
         /// <exception cref="std::range_error"></exception>
-        virtual variant operator [](const size_t i) const = 0;
+        virtual trrojan::variant operator [](const size_t i) const = 0;
 
         /// <summary>
         /// Test for equality.

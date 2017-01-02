@@ -57,7 +57,7 @@ namespace detail {
         virtual size_t size(void) const;
 
         /// <inheritdoc />
-        virtual variant operator [](const size_t i) const;
+        virtual trrojan::variant operator [](const size_t i) const;
 
         /// <summary>
         /// Test for equality.

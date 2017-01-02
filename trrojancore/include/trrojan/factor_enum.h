@@ -33,14 +33,14 @@ namespace detail {
         /// Initialises a new instance from a list of given manifestations.
         /// </summary>
         inline factor_enum(const std::string& name,
-            const std::vector<variant>& manifestations)
+            const std::vector<trrojan::variant>& manifestations)
             : factor_base(name), manifestations(manifestations) { }
 
         /// <summary>
         /// Initialises a new instance with a list of given manifestations.
         /// </summary>
         inline factor_enum(const std::string& name,
-            std::vector<variant>&& manifestations)
+            std::vector<trrojan::variant>&& manifestations)
             : factor_base(name), manifestations(std::move(manifestations)) { }
 
         /// <summary>
@@ -63,7 +63,7 @@ namespace detail {
         virtual size_t size(void) const;
 
         /// <inheritdoc />
-        virtual variant operator [](const size_t i) const;
+        virtual trrojan::variant operator [](const size_t i) const;
 
         /// <summary>
         /// Test for equality.
@@ -91,7 +91,7 @@ namespace detail {
         /// <summary>
         /// Stores all known manifestations of the factor.
         /// </summary>
-        std::vector<variant> manifestations;
+        std::vector<trrojan::variant> manifestations;
 
     };
 }

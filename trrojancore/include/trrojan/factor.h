@@ -31,9 +31,9 @@ namespace trrojan {
 
         template<class T> static inline factor from_manifestations(
                 const std::string& name, const std::vector<T>& manifestations) {
-            std::vector<variant> m;
+            std::vector<trrojan::variant> m;
             std::transform(manifestations.cbegin(), manifestations.cend(),
-                std::back_inserter(m), [](const T& n) { return variant(n); });
+                std::back_inserter(m), [](const T& n) { return trrojan::variant(n); });
             return factor(new detail::factor_enum(name, std::move(m)));
         }
 

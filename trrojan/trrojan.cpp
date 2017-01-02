@@ -54,7 +54,10 @@ int main(const int argc, const char **argv) {
         auto paramHoncho = trrojan::find_argument(std::string("--honcho"), cmdLine.cbegin(), cmdLine.cend());
     }
 
-    trrojan::stream::worker_thread::crowbar();
+    //trrojan::stream::worker_thread::crowbar();
+
+    trrojan::variant x;
+    x.crowbar();
 
 
 
