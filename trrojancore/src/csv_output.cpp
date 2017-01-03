@@ -47,8 +47,7 @@ void trrojan::csv_output::open(const output_params& params) {
         this->params = std::make_shared<csv_output_params>(*params);
     }
 
-    this->file = std::move(std::ofstream(this->params->path(),
-        std::ios::trunc));
+    this->file.open(this->params->path(),std::ios::trunc);
     if (!this->file) {
         std::stringstream msg;
         msg << "Failed to open output file \"" << this->params->path() << "\""
