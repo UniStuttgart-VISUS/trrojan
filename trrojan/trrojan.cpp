@@ -50,12 +50,6 @@ int main(const int argc, const char **argv) {
     trrojan::timer t;
     t.start();
 
-    {
-        auto paramHoncho = trrojan::find_argument(std::string("--honcho"), cmdLine.cbegin(), cmdLine.cend());
-    }
-
-    //trrojan::stream::worker_thread::crowbar();
-
 
     auto fVolumeSizes = trrojan::factor::from_manifestations("VolumeSize", { 256, 512, 1024 });
     auto fStepSizes = trrojan::factor::from_manifestations("StepSize", { 0.75f, 1.0f, 2.0f });
@@ -79,7 +73,7 @@ int main(const int argc, const char **argv) {
     {
         std::cout << "executive" << std::endl;
         trrojan::executive te;
-        //    te.load_plugins();
+        te.load_plugins();
     }
 
     {

@@ -29,6 +29,15 @@ namespace trrojan {
 
     public:
 
+        /// <summary>
+        /// Creates a new factor with a set of discrete manifestations.
+        /// </summary>
+        /// <parama name="name">The name which uniquely identifies the factor.
+        /// </param>
+        /// <parama name="manifestations">The manifestations of the factor.
+        /// </param>
+        /// <returns>A new instance with the specified manifestations.</returns>
+        /// <tparam name="T">The value type of the factor.</tparam>
         template<class T> static inline factor from_manifestations(
                 const std::string& name, const std::vector<T>& manifestations) {
             std::vector<trrojan::variant> m;
@@ -37,18 +46,46 @@ namespace trrojan {
             return factor(new detail::factor_enum(name, std::move(m)));
         }
 
+        /// <summary>
+        /// Creates a new factor from a set of discrete manifestations.
+        /// </summary>
+        /// <parama name="name">The name which uniquely identifies the factor.
+        /// </param>
+        /// <parama name="begin">The begin of the range of manifestations.
+        /// </param>
+        /// <parama name="end">The end of the range of manifestations.</param>
+        /// <returns>A new instance with the specified manifestations.</returns>
+        /// <tparam name="T">The value type of the factor.</tparam>
         template<class I> static inline factor from_manifestations(
                 const std::string& name, I begin, I end) {
             return factor(new detail::factor_enum(name, begin, end));
         }
 
+        /// <summary>
+        /// Creates a new factor with a set of discrete manifestations.
+        /// </summary>
+        /// <parama name="name">The name which uniquely identifies the factor.
+        /// </param>
+        /// <parama name="manifestations">The manifestations of the factor.
+        /// </param>
+        /// <returns>A new instance with the specified manifestations.</returns>
+        /// <tparam name="T">The value type of the factor.</tparam>
         template<class T> static inline factor from_manifestations(
-                const std::string& name, 
+                const std::string& name,
                 const std::initializer_list<T>& manifestations) {
             std::vector<T> m = manifestations;
             return factor::from_manifestations(name, m);
         }
 
+        /// <summary>
+        /// Creates a new factor with a single manifestation.
+        /// </summary>
+        /// <parama name="name">The name which uniquely identifies the factor.
+        /// </param>
+        /// <parama name="manifestation">The manifestation of the factor.
+        /// </param>
+        /// <returns>A new instance with the specified manifestation.</returns>
+        /// <tparam name="T">The value type of the factor.</tparam>
         template<class T> static inline factor from_manifestations(
             const std::string& name, const T& manifestation) {
             std::vector<T> m(1, manifestation);
