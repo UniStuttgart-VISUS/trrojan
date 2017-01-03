@@ -6,7 +6,9 @@
 #pragma once
 
 #include <cassert>
+#if (!defined(__GNUC__) || (__GNUC__ >= 5))
 #include <codecvt>
+#endif /* (!defined(__GNUC__) || (__GNUC__ >= 5)) */
 #include <cstdint>
 #include <functional>
 #include <iostream>
@@ -419,7 +421,7 @@ namespace detail {
         /// <param name="rhs">The right hand side operand.</param>
         /// <returns><c>*this</c></returns>
         template<variant_type T> inline variant& operator =(
-                const typename variant_type_traits<T>& rhs) const {
+                const typename variant_type_traits<T>::type& rhs) const {
             this->set(rhs);
             return *this;
         }
