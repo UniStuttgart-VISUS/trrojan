@@ -26,32 +26,7 @@ trrojan::variant::~variant(void) {
  */
 trrojan::variant& trrojan::variant::operator =(const variant& rhs) {
     if (this != std::addressof(rhs)) {
-        this->clear();
-        // TODO
-
-        //switch (rhs.cur_type) {
-        //    // TODO: this is hugly
-        //    case variant_type::device:
-        //        this->val_device = rhs.val_device;
-        //        break;
-
-        //    case variant_type::environment:
-        //        this->val_environment = rhs.val_environment;
-        //        break;
-
-        //    case variant_type::string:
-        //        this->set(rhs.val_string);
-        //        break;
-
-        //    case variant_type::wstring:
-        //        this->set(rhs.val_wstring);
-        //        break;
-
-        //    default:
-        //        this->cur_type = rhs.cur_type;
-        //        this->val_uint64 = rhs.val_uint64;
-        //        break;
-        //}
+        const_cast<variant&>(rhs).conditional_invoke<copy_to>(*this);
     }
 
     return *this;
@@ -63,35 +38,7 @@ trrojan::variant& trrojan::variant::operator =(const variant& rhs) {
  */
 trrojan::variant& trrojan::variant::operator =(variant&& rhs) {
     if (this != std::addressof(rhs)) {
-        this->clear();
-        // TODO
-
-        // TODO: this is hugly
-        //switch (rhs.cur_type) {
-        //    case variant_type::device:
-        //        this->val_device = std::move(rhs.val_device);
-        //        break;
-
-        //    case variant_type::environment:
-        //        this->val_environment = std::move(rhs.val_environment);
-        //        break;
-
-        //    case variant_type::string:
-        //        this->val_string = rhs.val_string;
-        //        rhs.val_string = nullptr;
-        //        break;
-
-        //    case variant_type::wstring:
-        //        this->val_wstring = rhs.val_wstring;
-        //        rhs.val_wstring = nullptr;
-        //        break;
-
-        //    default:
-        //        this->val_uint64 = rhs.val_uint64;
-        //        break;
-        //}
-        //this->cur_type = rhs.cur_type;
-
+        rhs.conditional_invoke<move_to>(*this);
         rhs.clear();
         assert(rhs.empty());
     }

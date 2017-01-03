@@ -348,7 +348,7 @@ namespace detail {
         /// <param name="value">The new value of the variant.</param>
         /// <tparam name="T">The new type of the variant.</tparam>
         template<variant_type T>
-        void set(const typename variant_type_traits<T>& value) {
+        void set(const typename variant_type_traits<T>::type& value) {
             this->reconstruct<T>();
             *variant_type_traits<T>::get(this->data) = value;
         }
@@ -359,8 +359,31 @@ namespace detail {
         /// <param name="value">The new value of the variant.</param>
         /// <tparam name="T">The type of the new value.</tparam>
         template<class T> void set(const T& value) {
-            this->reconstruct<variant_reverse_traits<T>::type>();
-            *variant_reverse_traits<T>::get(this->data) = value;
+            typedef typename std::decay<T>::type type;
+            this->reconstruct<variant_reverse_traits<type>::type>();
+            *variant_reverse_traits<type>::get(this->data) = value;
+        }
+
+        /// <summary>
+        /// Sets a new value by moving the data.
+        /// </summary>
+        /// <param name="value">The new value of the variant.</param>
+        /// <tparam name="T">The new type of the variant.</tparam>
+        template<variant_type T>
+        void set(typename variant_type_traits<T>::type&& value) {
+            this->reconstruct<T>();
+            *variant_type_traits<T>::get(this->data) = std::move(value);
+        }
+
+        /// <summary>
+        /// Sets a new value by moving the data.
+        /// </summary>
+        /// <param name="value">The new value of the variant.</param>
+        /// <tparam name="T">The type of the new value.</tparam>
+        template<class T> void set(T&& value) {
+            typedef typename std::decay<T>::type type;
+            this->reconstruct<variant_reverse_traits<type>::type>();
+            *variant_reverse_traits<type>::get(this->data) = std::move(value);
         }
 
         /// <summary>
@@ -433,11 +456,14 @@ namespace detail {
 
     private:
 
-        template<variant_type T> struct copy {
+        /// <summary>
+        /// Functor which copies the data of the calling variant to another
+        /// one.
+        /// </summary>
+        template<variant_type T> struct copy_to {
             typedef typename variant_type_traits<T>::type type;
-            static void invoke(type& v, const variant& rhs) {
-                this->reconstruct();
-                
+            static void invoke(type& v, variant& target) {
+                target.set(v);
             }
         };
 
@@ -447,6 +473,22 @@ namespace detail {
         template<variant_type T> struct destruct {
             typedef typename variant_type_traits<T>::type type;
             static void invoke(type& v) { v.~type(); }
+        };
+
+        /// <summary>
+        /// Functor which moves the data of the calling variant to another
+        /// one.
+        /// </summary>
+        /// <remarks>
+        /// Please not that the source variant will be unmodified, only the
+        /// data are moved, ie changes to the state of the variant itself must
+        /// be done manually after the call.
+        /// </remarks>
+        template<variant_type T> struct move_to {
+            typedef typename variant_type_traits<T>::type type;
+            static void invoke(type& v, variant& target) {
+                target.set(std::move(v));
+            }
         };
 
         /// <summary>
@@ -544,28 +586,12 @@ namespace detail {
             this->cur_type = T;
         }
 
+        // TODO: remove crowbar
         public:
         void crowbar() {
             variant x(5);
             x.conditional_invoke<destruct>();
         }
-
-        //template<variant_type T>
-        //inline void conditional_invoke(std::function<void(typename variant_type_traits<T>::type&)> func) {
-        //    this->conditional_invoke<variant_type::int8, variant_type::int16>();
-        //}
-
-        //template<class... F, variant_type... T>
-        //void conditional_invoke0(F... func) {
-        //    this->conditional_invoke1(func)...;
-        //}
-
-        //template<class F, variant_type T>
-        //typename std::enable_if(std::is_same<Fsomemagictogetparam, T>::type conditional_invoke1(F func) {
-        //    if (this->cur_type == T) {
-        //        func(*variant_type_traits<T>::get(this->data));
-        //    }
-        //}
 
         /// <summary>
         /// Stores which of the members of <see cref="data" /> is currently
