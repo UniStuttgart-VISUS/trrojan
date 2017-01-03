@@ -87,7 +87,7 @@ void TRROJANCORE_API trrojan::get_file_system_entries(I oit,
                     stack.push(fn);
                 }
                 if (predicate(*fd)) {
-                    *oit++ = fd;
+                    *oit++ = fn;
                 }
             }
         }
