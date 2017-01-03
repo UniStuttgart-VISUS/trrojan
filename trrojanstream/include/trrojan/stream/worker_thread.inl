@@ -10,7 +10,7 @@
  * trrojan::stream::worker_thread::join
  */
 template<class I>
-static void trrojan::stream::worker_thread::join(I begin, I end) {
+void trrojan::stream::worker_thread::join(I begin, I end) {
 #ifdef _WIN32
     std::vector<HANDLE> handles;
 

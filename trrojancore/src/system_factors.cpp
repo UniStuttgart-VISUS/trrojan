@@ -29,7 +29,7 @@
 
 
 #define __TRROJAN_DEFINE_FACTOR(n)\
-const std::string trrojan::system_factors::factor_##n(#n);
+const std::string trrojan::system_factors::factor_##n(#n)
 
 __TRROJAN_DEFINE_FACTOR(bios);
 __TRROJAN_DEFINE_FACTOR(cpu);
