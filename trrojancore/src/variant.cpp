@@ -26,7 +26,7 @@ trrojan::variant::~variant(void) {
  */
 trrojan::variant& trrojan::variant::operator =(const variant& rhs) {
     if (this != std::addressof(rhs)) {
-        rhs.conditional_invoke<copy_to>(*this);
+        rhs.conditional_invoke<detail::copy_to>(*this);
     }
 
     return *this;
@@ -38,7 +38,7 @@ trrojan::variant& trrojan::variant::operator =(const variant& rhs) {
  */
 trrojan::variant& trrojan::variant::operator =(variant&& rhs) {
     if (this != std::addressof(rhs)) {
-        rhs.conditional_invoke<move_to>(*this);
+        rhs.conditional_invoke<detail::move_to>(*this);
         rhs.clear();
         assert(rhs.empty());
     }
@@ -54,7 +54,7 @@ bool trrojan::variant::operator ==(const variant& rhs) const {
     bool retval = (this == std::addressof(rhs));
 
     if (!retval && this->is(rhs.cur_type)) {
-        this->conditional_invoke<is_same>(rhs, retval);
+        this->conditional_invoke<detail::is_same>(rhs, retval);
     }
 
     return retval;

@@ -25,6 +25,10 @@
 
 namespace trrojan {
 
+    /* Forward declarations */
+    class TRROJANCORE_API variant;
+
+
     /// <summary>
     /// Possible data types <see cref="trrojan::variant" /> can hold.
     /// </summary>
@@ -128,6 +132,7 @@ namespace trrojan {
         // Add new members here.
     };
 
+
 namespace detail {
     /// <summary>
     //// Actual storage structure for <see cref="trrojan::variant" />.
@@ -161,11 +166,19 @@ namespace detail {
         inline ~variant(void) { }
     };
 
+
     /// <summary>
     /// A list of variant types to expand.
     /// </summary>
     template<trrojan::variant_type...> struct variant_type_list_t { };
 
+    /// <summary>
+    /// The actual type list we use in 
+    /// <see cref="trrojan::variant::conditional_invoke" />.
+    /// </summary>
+    /// <remarks>
+    /// New types in <see cref="trrojan::variant_type" /> must be added here.
+    /// </remarks>
     typedef variant_type_list_t<variant_type::int8, variant_type::int16,
         variant_type::int32, variant_type::int64, variant_type::uint8,
         variant_type::uint16, variant_type::uint32, variant_type::uint64,
@@ -175,6 +188,7 @@ namespace detail {
         variant_type_list;
 
 } /* end namespace detail */
+
 
     /// <summary>
     /// This structure allows for deriving the value type from a given
@@ -237,6 +251,108 @@ namespace detail {
 #undef __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS
 
 
+namespace detail {
+    /// <summary>
+    /// Functor which tries casting the value of the variant to a specific
+    /// type and returning it.
+    /// </summary>
+    template<variant_type T> struct cast_to {
+        typedef typename variant_type_traits<T>::type type;
+
+        template<class U>
+        static inline typename std::enable_if<std::is_convertible<type, U>::value>::type
+            invoke(type& v, U& target) {
+            target = static_cast<U>(v);
+        }
+
+        template<class U>
+        static inline typename std::enable_if<!std::is_convertible<type, U>::value>::type
+            invoke(type& v, U& target) {
+            throw std::bad_cast();
+        }
+    };
+
+    /// <summary>
+    /// Functor which copies the data of the calling variant to another one.
+    /// </summary>
+    template<variant_type T> struct copy_to {
+        typedef typename variant_type_traits<T>::type type;
+        static inline void invoke(type& v, trrojan::variant& target) {
+            target.set(v);
+        }
+    };
+
+    /// <summary>
+    /// Functor which destructs the currently active variant data.
+    /// </summary>
+    template<variant_type T> struct destruct {
+        typedef typename variant_type_traits<T>::type type;
+        static inline void invoke(type& v) { v.~type(); }
+    };
+
+    /// <summary>
+    /// Functor which compares the values of two variants with the same
+    /// type.
+    /// </summary>
+    template<variant_type T> struct is_same {
+        typedef typename variant_type_traits<T>::type type;
+        static inline void invoke(type& v, const trrojan::variant& rhs,
+            bool& retval) {
+            retval = (v == rhs.get<T>());
+        }
+    };
+
+    /// <summary>
+    /// Functor which moves the data of the calling variant to another
+    /// one.
+    /// </summary>
+    /// <remarks>
+    /// Please not that the source variant will be unmodified, only the
+    /// data are moved, ie changes to the state of the variant itself must
+    /// be done manually after the call.
+    /// </remarks>
+    template<variant_type T> struct move_to {
+        typedef typename variant_type_traits<T>::type type;
+        static inline void invoke(type& v, trrojan::variant& target) {
+            target.set(std::move(v));
+        }
+    };
+
+    /// <summary>
+    /// Functor for printing the currently active variant data to an
+    /// <see cref="std::ostream" />.
+    /// </summary>
+    template<variant_type T> struct print {
+        typedef typename variant_type_traits<T>::type type;
+        static inline void invoke(type& v, std::ostream& stream) {
+            stream << v;
+        }
+    };
+
+    /// <summary>
+    /// Specialisation of the <see cref="variant::print" /> functor for
+    /// <see cref="std::wstring" />, which performs the necessary string
+    /// conversion before output.
+    /// </summary>
+    template<> struct print<variant_type::wstring> {
+        static inline void invoke(std::wstring& v, std::ostream& stream) {
+            static std::wstring_convert<std::codecvt_utf8<wchar_t>> cvt;
+            stream << cvt.to_bytes(v);
+        }
+    };
+
+    /// <summary>
+    /// Specialisation of the <see cref="variant::print" /> functor for
+    /// <see cref="trrojan::environment" />, which prints the environemnt name.
+    /// </summary>
+    template<> struct print<variant_type::environment> {
+        static inline void invoke(trrojan::environment& v, std::ostream& stream) {
+            stream << ((v != nullptr) ? v->name() : "null");
+        }
+    };
+} /* end namespace detail */
+
+
     /// <summary>
     /// A type that can opaquely store different kind of data.
     /// </summary>
@@ -294,7 +410,7 @@ namespace detail {
         /// convertible to <tparam name="T" />.</exception>
         template<class T> inline T as(void) const {
             auto retval = T();
-            this->conditional_invoke<cast_to>(retval);
+            this->conditional_invoke<detail::cast_to>(retval);
             return retval;
         }
 
@@ -302,7 +418,7 @@ namespace detail {
         /// Clears the variant, effectively resetting it to empty state.
         /// </summary>
         inline void clear(void) {
-            this->conditional_invoke<destruct>();
+            this->conditional_invoke<detail::destruct>();
             this->cur_type = variant_type::empty;
         }
 
@@ -484,101 +600,11 @@ namespace detail {
         /// <returns><paramref name="lhs" />.</returns>
         friend inline std::ostream& operator <<(std::ostream& lhs,
                 const variant& rhs) {
-            rhs.conditional_invoke<print>(lhs);
+            rhs.conditional_invoke<detail::print>(lhs);
             return lhs;
         }
 
     private:
-
-        /// <summary>
-        /// Functor which tries casting the value of the variant to a specific
-        /// type and returning it.
-        /// </summary>
-        template<variant_type T> struct cast_to {
-            typedef typename variant_type_traits<T>::type type;
-
-            template<class U>
-            static inline typename std::enable_if<std::is_convertible<type, U>::value>::type
-            invoke(type& v, U& target) {
-                target = static_cast<U>(v);
-            }
-
-            template<class U>
-            static inline typename std::enable_if<!std::is_convertible<type, U>::value>::type
-            invoke(type& v, U& target) {
-                throw std::bad_cast();
-            }
-        };
-
-        /// <summary>
-        /// Functor which copies the data of the calling variant to another
-        /// one.
-        /// </summary>
-        template<variant_type T> struct copy_to {
-            typedef typename variant_type_traits<T>::type type;
-            static inline void invoke(type& v, variant& target) {
-                target.set(v);
-            }
-        };
-
-        /// <summary>
-        /// Functor which destructs the currently active variant data.
-        /// </summary>
-        template<variant_type T> struct destruct {
-            typedef typename variant_type_traits<T>::type type;
-            static inline void invoke(type& v) { v.~type(); }
-        };
-
-        /// <summary>
-        /// Functor which compares the values of two variants with the same
-        /// type.
-        /// </summary>
-        template<variant_type T> struct is_same {
-            typedef typename variant_type_traits<T>::type type;
-            static inline void invoke(type& v, const variant& rhs,
-                    bool& retval) {
-                retval = (v == rhs.get<T>());
-            }
-        };
-
-        /// <summary>
-        /// Functor which moves the data of the calling variant to another
-        /// one.
-        /// </summary>
-        /// <remarks>
-        /// Please not that the source variant will be unmodified, only the
-        /// data are moved, ie changes to the state of the variant itself must
-        /// be done manually after the call.
-        /// </remarks>
-        template<variant_type T> struct move_to {
-            typedef typename variant_type_traits<T>::type type;
-            static inline void invoke(type& v, variant& target) {
-                target.set(std::move(v));
-            }
-        };
-
-        /// <summary>
-        /// Functor for printing the currently active variant data to an
-        /// <see cref="std::ostream" />.
-        /// </summary>
-        template<variant_type T> struct print {
-            typedef typename variant_type_traits<T>::type type;
-            static inline void invoke(type& v, std::ostream& stream) {
-                stream << v;
-            }
-        };
-
-        /// <summary>
-        /// Specialisation of the <see cref="variant::print" /> functor for
-        /// <see cref="std::wstring" />, which performs the necessary string
-        /// conversion before output.
-        /// </summary>
-        template<> struct print<variant_type::wstring> {
-            static inline void invoke(std::wstring& v, std::ostream& stream) {
-                static std::wstring_convert<std::codecvt_utf8<wchar_t>> cvt;
-                stream << cvt.to_bytes(v);
-            }
-        };
 
         /// <summary>
         /// Invokes the functor <tparamref name="F" /> on the currently active
@@ -665,7 +691,7 @@ namespace detail {
         /// initialised by the method.</tparam>
         template<variant_type T> void reconstruct(void) {
             typedef typename variant_type_traits<T>::type type;
-            this->conditional_invoke<destruct>();
+            this->conditional_invoke<detail::destruct>();
             ::new (variant_type_traits<T>::get(this->data)) type();
             this->cur_type = T;
         }
