@@ -1,5 +1,5 @@
 /// <copyright file="variant.h" company="SFB-TRR 161 Quantitative Methods for Visual Computing">
-/// Copyright © 2016 SFB-TRR 161. Alle Rechte vorbehalten.
+/// Copyright © 2016 - 2017 SFB-TRR 161. Alle Rechte vorbehalten.
 /// </copyright>
 /// <author>Christoph Müller</author>
 
@@ -261,13 +261,13 @@ namespace detail {
 
         template<class U>
         static inline typename std::enable_if<std::is_convertible<type, U>::value>::type
-            invoke(type& v, U& target) {
+        invoke(type& v, U& target) {
             target = static_cast<U>(v);
         }
 
         template<class U>
         static inline typename std::enable_if<!std::is_convertible<type, U>::value>::type
-            invoke(type& v, U& target) {
+        invoke(type& v, U& target) {
             throw std::bad_cast();
         }
     };
@@ -277,9 +277,7 @@ namespace detail {
     /// </summary>
     template<variant_type T> struct copy_to {
         typedef typename variant_type_traits<T>::type type;
-        static inline void invoke(type& v, trrojan::variant& target) {
-            target.set(v);
-        }
+        static void invoke(type& v, trrojan::variant& target);
     };
 
     /// <summary>
@@ -296,10 +294,7 @@ namespace detail {
     /// </summary>
     template<variant_type T> struct is_same {
         typedef typename variant_type_traits<T>::type type;
-        static inline void invoke(type& v, const trrojan::variant& rhs,
-            bool& retval) {
-            retval = (v == rhs.get<T>());
-        }
+        static void invoke(type& v, const trrojan::variant& rhs, bool& retval);
     };
 
     /// <summary>
@@ -313,9 +308,7 @@ namespace detail {
     /// </remarks>
     template<variant_type T> struct move_to {
         typedef typename variant_type_traits<T>::type type;
-        static inline void invoke(type& v, trrojan::variant& target) {
-            target.set(std::move(v));
-        }
+        static void invoke(type& v, trrojan::variant& target);
     };
 
     /// <summary>
@@ -336,8 +329,14 @@ namespace detail {
     /// </summary>
     template<> struct print<variant_type::wstring> {
         static inline void invoke(std::wstring& v, std::ostream& stream) {
+#if (!defined(__GNUC__) || (__GNUC__ >= 5))
             static std::wstring_convert<std::codecvt_utf8<wchar_t>> cvt;
             stream << cvt.to_bytes(v);
+#else /* (!defined(__GNUC__) || (__GNUC__ >= 5)) */
+            for (auto c : v) {
+                stream << static_cast<char>(c);
+            }
+#endif /* (!defined(__GNUC__) || (__GNUC__ >= 5)) */
         }
     };
 
@@ -346,7 +345,8 @@ namespace detail {
     /// <see cref="trrojan::environment" />, which prints the environemnt name.
     /// </summary>
     template<> struct print<variant_type::environment> {
-        static inline void invoke(trrojan::environment& v, std::ostream& stream) {
+        static inline void invoke(trrojan::environment& v,
+                std::ostream& stream) {
             stream << ((v != nullptr) ? v->name() : "null");
         }
     };
@@ -655,14 +655,7 @@ namespace detail {
         template<template<variant_type> class F, variant_type T,
             variant_type... U, class... P>
         void conditional_invoke0(detail::variant_type_list_t<T, U...>,
-                P&&... params) {
-            if (this->cur_type == T) {
-                F<T>::invoke(*variant_type_traits<T>::get(this->data),
-                    std::forward<P>(params)...);
-            }
-            this->conditional_invoke0<F>(detail::variant_type_list_t<U...>(),
-                std::forward<P>(params)...);
-        }
+            P&&... params);
 
         /// <summary>
         /// End of recursion for
@@ -689,7 +682,7 @@ namespace detail {
         /// <remarks>
         /// <tparam name="T">The new type of the variant, which should be
         /// initialised by the method.</tparam>
-        template<variant_type T> void reconstruct(void) {
+        template<variant_type T> inline void reconstruct(void) {
             typedef typename variant_type_traits<T>::type type;
             this->conditional_invoke<detail::destruct>();
             ::new (variant_type_traits<T>::get(this->data)) type();
@@ -708,3 +701,5 @@ namespace detail {
         detail::variant data;
     };
 }
+
+#include "trrojan/variant.inl"

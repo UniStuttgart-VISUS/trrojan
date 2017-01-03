@@ -276,14 +276,14 @@ namespace stream {
 
     public:
         inline static void crowbar() {
-            typedef step<10000, scalar_type::float32, task_type::copy> step_type;
-            std::array<float, 10000> a;
-            std::array<float, 10000> b;
-            std::array<float, 10000> c;
+            //typedef step<10000, scalar_type::float32, task_type::copy> step_type;
+            //std::array<float, 10000> a;
+            //std::array<float, 10000> b;
+            //std::array<float, 10000> c;
 
 
-            step_type::apply(&a[0], &b[0], &c[0], 12.4f, 1);
-            std::cout << worker_thread::verify(a.data(), b.data(), c.data(), 12.4f, a.size(), task_type::copy) << std::endl;
+            //step_type::apply(&a[0], &b[0], &c[0], 12.4f, 1);
+            //std::cout << worker_thread::verify(a.data(), b.data(), c.data(), 12.4f, a.size(), task_type::copy) << std::endl;
         }
     };
 
