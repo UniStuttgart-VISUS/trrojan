@@ -13,6 +13,7 @@
 #include <locale>
 #include <sstream>
 #include <stdexcept>
+#include <type_traits>
 #include <utility>
 
 #include "trrojan/device.h"
@@ -281,6 +282,21 @@ namespace detail {
         ~variant(void);
 
         /// <summary>
+        /// Converts the value of the variant to <tparamref name="T" /> if
+        /// possible.
+        /// </summary>
+        /// <tparam name="T">The target type.</tparam>
+        /// <returns>The value of the variant casted to <tparamref name="T" />.
+        /// </returns>
+        /// <exception cref="std::bad_cast">If the currently stored value is not
+        /// convertible to <tparam name="T" />.</exception>
+        template<class T> inline T as(void) const {
+            auto retval = T();
+            this->conditional_invoke<cast_to>(retval);
+            return retval;
+        }
+
+        /// <summary>
         /// Clears the variant, effectively resetting it to empty state.
         /// </summary>
         inline void clear(void) {
@@ -441,6 +457,22 @@ namespace detail {
         }
 
         /// <summary>
+        /// Cast to <tparamref name="T" />.
+        /// </summary>
+        /// <remarks>
+        /// This operator is an alias for <see cref="trrojan::variant::as" />.
+        /// </remarks>
+        /// <tparam name="T">The target type.</tparam>
+        /// <returns>The value of the variant casted to <tparamref name="T" />.
+        /// </returns>
+        /// <exception cref="std::bad_cast">If the currently stored value is not
+        /// convertible to <tparam name="T" />.</exception>
+
+        template<class T> operator T(void) const {
+            return this->as<T>();
+        }
+
+        /// <summary>
         /// Write the <see cref="trrojan::variant" /> to a stream.
         /// </summary>
         /// <param name="lhs">The left-hand side operand (the stream to
@@ -450,11 +482,31 @@ namespace detail {
         /// <returns><paramref name="lhs" />.</returns>
         friend inline std::ostream& operator <<(std::ostream& lhs,
                 const variant& rhs) {
-            const_cast<variant&>(rhs).conditional_invoke<print>(lhs);
+            rhs.conditional_invoke<print>(lhs);
             return lhs;
         }
 
     private:
+
+        /// <summary>
+        /// Functor which tries casting the value of the variant to a specific
+        /// type and returning it.
+        /// </summary>
+        template<variant_type T> struct cast_to {
+            typedef typename variant_type_traits<T>::type type;
+
+            template<class U>
+            static inline typename std::enable_if<std::is_convertible<type, U>::value>::type
+            invoke(type& v, U& target) {
+                target = static_cast<U>(v);
+            }
+
+            template<class U>
+            static inline typename std::enable_if<!std::is_convertible<type, U>::value>::type
+            invoke(type& v, U& target) {
+                throw std::bad_cast();
+            }
+        };
 
         /// <summary>
         /// Functor which copies the data of the calling variant to another
@@ -462,7 +514,7 @@ namespace detail {
         /// </summary>
         template<variant_type T> struct copy_to {
             typedef typename variant_type_traits<T>::type type;
-            static void invoke(type& v, variant& target) {
+            static inline void invoke(type& v, variant& target) {
                 target.set(v);
             }
         };
@@ -472,7 +524,19 @@ namespace detail {
         /// </summary>
         template<variant_type T> struct destruct {
             typedef typename variant_type_traits<T>::type type;
-            static void invoke(type& v) { v.~type(); }
+            static inline void invoke(type& v) { v.~type(); }
+        };
+
+        /// <summary>
+        /// Functor which compares the values of two variants with the same
+        /// type.
+        /// </summary>
+        template<variant_type T> struct is_same {
+            typedef typename variant_type_traits<T>::type type;
+            static inline void invoke(type& v, const variant& rhs,
+                    bool& retval) {
+                retval = (v == rhs.get<T>());
+            }
         };
 
         /// <summary>
@@ -486,7 +550,7 @@ namespace detail {
         /// </remarks>
         template<variant_type T> struct move_to {
             typedef typename variant_type_traits<T>::type type;
-            static void invoke(type& v, variant& target) {
+            static inline void invoke(type& v, variant& target) {
                 target.set(std::move(v));
             }
         };
@@ -497,7 +561,7 @@ namespace detail {
         /// </summary>
         template<variant_type T> struct print {
             typedef typename variant_type_traits<T>::type type;
-            static void invoke(type& v, std::ostream& stream) {
+            static inline void invoke(type& v, std::ostream& stream) {
                 stream << v;
             }
         };
@@ -508,7 +572,7 @@ namespace detail {
         /// conversion before output.
         /// </summary>
         template<> struct print<variant_type::wstring> {
-            static void invoke(std::wstring& v, std::ostream& stream) {
+            static inline void invoke(std::wstring& v, std::ostream& stream) {
                 static std::wstring_convert<std::codecvt_utf8<wchar_t>> cvt;
                 stream << cvt.to_bytes(v);
             }
@@ -527,6 +591,24 @@ namespace detail {
         inline void conditional_invoke(P&&... params) {
             this->conditional_invoke0<F>(detail::variant_type_list(),
                 std::forward<P>(params)...);
+        }
+
+        /// <summary>
+        /// Invokes the functor <tparamref name="F" /> on the currently active
+        /// variant data.
+        /// </summary>
+        /// <param name="params">An optional list of runtime-parameters
+        /// which are forwarded to the functor.</param>
+        /// <tparam name="F">The functor to be called for the matching
+        /// <see cref="trrojan::variant_type" />.</tparam>
+        /// <tparam name="P">The parameter list for the functor.</tparam>
+        template<template<variant_type> class F, class... P>
+        inline void conditional_invoke(P&&... params) const {
+            // Rationale: We do not want to implement the whole stack twice, so
+            // we use the const_cast here as we know that our own functors do
+            // not do nasty things.
+            const_cast<variant *>(this)->conditional_invoke0<F>(
+                detail::variant_type_list(), std::forward<P>(params)...);
         }
 
         /// <summary>
@@ -584,13 +666,6 @@ namespace detail {
             this->conditional_invoke<destruct>();
             ::new (variant_type_traits<T>::get(this->data)) type();
             this->cur_type = T;
-        }
-
-        // TODO: remove crowbar
-        public:
-        void crowbar() {
-            variant x(5);
-            x.conditional_invoke<destruct>();
         }
 
         /// <summary>

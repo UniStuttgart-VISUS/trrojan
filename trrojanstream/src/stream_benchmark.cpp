@@ -5,6 +5,8 @@
 
 #include "trrojan/stream/stream_benchmark.h"
 
+#include <cinttypes>
+
 #include "trrojan/factor_enum.h"
 #include "trrojan/factor_range.h"
 #include "trrojan/system_factors.h"
@@ -54,9 +56,8 @@ trrojan::result_set trrojan::stream::stream_benchmark::run(
     if (!cs.contains_factor("threads")) {
         // If no number of threads is specifed, use all possible values up
         // to the number of logical processors in the system.
-        auto flc = system_factors::instance().logical_cores();
-        auto lc = static_cast<int>(flc.get<std::uint32_t>());
-        cs.add_factor(factor::from_manifestations("threads", { 1, lc }));
+        auto lc = system_factors::instance().logical_cores().as<uint32_t>();
+        cs.add_factor(factor::from_manifestations("threads", { 1u, lc }));
     }
 
     // Problem size

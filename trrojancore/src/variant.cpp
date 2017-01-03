@@ -26,7 +26,7 @@ trrojan::variant::~variant(void) {
  */
 trrojan::variant& trrojan::variant::operator =(const variant& rhs) {
     if (this != std::addressof(rhs)) {
-        const_cast<variant&>(rhs).conditional_invoke<copy_to>(*this);
+        rhs.conditional_invoke<copy_to>(*this);
     }
 
     return *this;
@@ -51,24 +51,11 @@ trrojan::variant& trrojan::variant::operator =(variant&& rhs) {
  * trrojan::variant::operator ==
  */
 bool trrojan::variant::operator ==(const variant& rhs) const {
-    if (this->is(rhs.cur_type)) {
-        // TODO
+    bool retval = (this == std::addressof(rhs));
 
-        // TODO: this is hugly
-        //switch (rhs.cur_type) {
-        //    case variant_type::device:
-        //        return (this->val_device == rhs.val_device);
-
-        //    case variant_type::environment:
-        //        return (this->val_environment == rhs.val_environment);
-        //    break;
-
-        //    default:
-        //        return (this->val_uint64 == rhs.val_uint64);
-        //}
-        return false;
-    } else {
-        /* If the type is not the same, the value does not matter. */
-        return false;
+    if (!retval && this->is(rhs.cur_type)) {
+        this->conditional_invoke<is_same>(rhs, retval);
     }
+
+    return retval;
 }

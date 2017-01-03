@@ -56,10 +56,6 @@ int main(const int argc, const char **argv) {
 
     //trrojan::stream::worker_thread::crowbar();
 
-    trrojan::variant x;
-    x.crowbar();
-
-
 
     auto fVolumeSizes = trrojan::factor::from_manifestations("VolumeSize", { 256, 512, 1024 });
     auto fStepSizes = trrojan::factor::from_manifestations("StepSize", { 0.75f, 1.0f, 2.0f });
