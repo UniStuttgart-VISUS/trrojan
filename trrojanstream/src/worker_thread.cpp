@@ -10,10 +10,11 @@
  * trrojan::stream::worker_thread::create
  */
 trrojan::stream::worker_thread::pointer_type
-trrojan::stream::worker_thread::create(const rank_type rank,
+trrojan::stream::worker_thread::create(problem_type problem,
+        barrier_type barrier, const rank_type rank,
         const uint64_t affinity_mask, const uint16_t affinity_group) {
     auto retval = std::make_shared<worker_thread>();
-    retval->start(rank, affinity_mask, affinity_group);
+    retval->start(problem, barrier, rank, affinity_mask, affinity_group);
     return retval;
 }
 
@@ -21,13 +22,23 @@ trrojan::stream::worker_thread::create(const rank_type rank,
 /*
  * trrojan::stream::worker_thread::star
  */
-void trrojan::stream::worker_thread::start(const rank_type rank,
+void trrojan::stream::worker_thread::start(problem_type problem,
+        barrier_type barrier, const rank_type rank,
         const uint64_t affinity_mask, const uint16_t affinity_group) {
+    if (problem == nullptr) {
+        throw std::invalid_argument("The problem must not be null.");
+    }
+    if (barrier == nullptr) {
+        throw std::invalid_argument("The barrier must not be null.");
+    }
     if (this->hThread != static_cast<handle_type>(0)) {
         throw std::logic_error("A worker thread can only be started while it "
             "is not yet running.");
     }
 
+    this->barrier = barrier;
+    this->problem = problem;
+    this->rank = rank;
 
 #ifdef _WIN32
     /* Create suspended thread. */
@@ -126,9 +137,28 @@ DWORD WINAPI trrojan::stream::worker_thread::thunk(void *param) {
 void *trrojan::stream::worker_thread::thunk(void *param) {
 #endif /* _WIN32*/
     auto that = static_cast<worker_thread *>(param);
+    assert(that != nullptr);
+    assert(that->problem != nullptr);
+    scalar_type_dispatch<dispatch>(that->problem->scalar_type(), that);
     return 0;
 }
 
+
+/*
+ * trrojan::stream::worker_thread::synchronise
+ */
+void trrojan::stream::worker_thread::synchronise(const int barrierId) {
+    // Implementation of repeated barrier as in
+    // http://stackoverflow.com/questions/24205226/how-to-implement-a-re-usable-thread-barrier-with-stdatomic
+    assert(this->barrier != nullptr);
+    assert(this->problem != nullptr);
+    assert(INT_MAX / this->problem->parallelism() > barrierId);
+    auto& barrier = *this->barrier;
+    int expected = (barrierId + 1) * static_cast<int>(
+        this->problem->parallelism());
+    ++barrier;
+    while (barrier - barrierId < 0);    // TODO: Should yield if too many threads?
+}
 
 #if 0
 /*
@@ -243,20 +273,3 @@ template<class T> DWORD worker_thread<T>::thunk(void * param) {
     return 0;
 }
 #endif
-
-#if 0
-/*
-* worker_thread<T>::synchronise
-*/
-template<class T> void worker_thread<T>::synchronise(const int barrierId) {
-    // Implementation of repeated barrier as in
-    // http://stackoverflow.com/questions/24205226/how-to-implement-a-re-usable-thread-barrier-with-stdatomic
-    assert(INT_MAX / this->scenario->number_of_threads() > barrierId);
-    auto& barrier = *this->barrier;
-    int expected = (barrierId + 1) * static_cast<int>(
-        this->scenario->number_of_threads());
-    ++barrier;
-    while (barrier - barrierId < 0);    // TODO: Should yield if too many threads.
-}
-#endif
-

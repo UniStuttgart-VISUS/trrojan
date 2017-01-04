@@ -92,3 +92,43 @@ bool trrojan::stream::worker_thread::verify(const S *a, const S *b, const S *c,
                 "task.");
     }
 }
+
+
+/*
+ * trrojan::stream::worker_thread::dispatch<T>::invoke
+ */
+template<trrojan::stream::scalar_type T>
+void trrojan::stream::worker_thread::dispatch<T>::invoke(worker_thread *that) {
+    typedef typename scalar_type_traits<T>::type type;
+    assert(that != nullptr);
+    assert(that->barrier != nullptr);
+    assert(that->problem != nullptr);
+
+    // Get local of all arrays and values we access frequently to bypass
+    // the indirection introduced by the shared pointer and to prevent the
+    // overhead induced by casts etc.
+    auto a = that->problem->a<type>();
+    auto b = that->problem->b<type>();
+    auto c = that->problem->c<type>();
+    auto& barrier = *that->barrier;
+    auto parallelism = that->problem->parallelism();
+    //auto scalar = that->scenario->scalar();
+    //auto timesAdd = that->times[test_result::test_name_add].data();
+    //auto timesCopy = that->times[test_result::test_name_copy].data();
+    //auto timesScale = that->times[test_result::test_name_scale].data();
+    //auto timesTriad = that->times[test_result::test_name_triad].data();
+    //const size_type r = that->scenario->iterations() + 1;
+    int barrierId = 0;
+
+    size_t r = 10;  // TODO
+
+    typedef step<1000000, T, task_type::copy> step_type;
+
+
+    for (size_t i = 0; i < r; ++i) {
+        that->synchronise(barrierId++);
+        //timesCopy[i].first = system_information::get_timer_seconds();
+        
+        //timesCopy[i].second = system_information::get_timer_seconds();
+    }
+}

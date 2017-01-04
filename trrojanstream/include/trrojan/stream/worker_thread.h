@@ -8,6 +8,7 @@
 #include "trrojan/benchmark.h"
 
 #include <array>
+#include <cassert>
 #include <atomic>
 #include <cinttypes>
 #include <climits>
@@ -27,6 +28,7 @@
 #include "trrojan/timer.h"
 
 #include "trrojan/stream/export.h"
+#include "trrojan/stream/problem.h"
 #include "trrojan/stream/scalar_type.h"
 #include "trrojan/stream/task_type.h"
 
@@ -61,12 +63,17 @@ namespace stream {
         typedef std::shared_ptr<worker_thread> pointer_type;
 
         /// <summary>
+        /// The type of a problem to be processed by a thread.
+        /// </summary>
+        typedef problem::pointer_type problem_type;
+
+        /// <summary>
         /// A type to express a thread's rank.
         /// </summary>
         typedef std::size_t rank_type;
 
-        static pointer_type create(const rank_type rank,
-            const uint64_t affinity_mask = 0,
+        static pointer_type create(problem_type problem, barrier_type barrier,
+            const rank_type rank, const uint64_t affinity_mask = 0,
             const uint16_t affinity_group = 0);
 
         /// <summary>
@@ -78,6 +85,16 @@ namespace stream {
         /// <tparam name="I">An iterator over
         /// <see cref="worker_thread::pointer_type" />.</tparam>
         template<class I> static void join(I begin, I end);
+
+        /// <summary>
+        /// Creates a pre-initialised barriert for the given number of threads
+        /// working on the same problem.
+        /// </summary>
+        /// <param name="parallelism"></param>
+        /// <returns></returns>
+        static inline barrier_type make_barrier(const size_t parallelism) {
+            return std::make_shared<barrier_type::element_type>(parallelism);
+        }
 
         /// <summary>
         /// Verifies that <paramref name="c"> holds the results of the specified
@@ -102,95 +119,19 @@ namespace stream {
         /// </summary>
         inline worker_thread(void) : hThread(0), rank(0) { }
 
-        void start(const rank_type rank, const uint64_t affinity_mask = 0,
-            const uint16_t affinity_group = 0);
-
-    private:
-
-        /// <summary>
-        /// The thread function that performs the actual work.
-        /// </summary>
-        /// <param name="param">A pointer to the thread object that holds the
-        /// handle and the configuration.</param>
-        /// <returns>0</returns>
-#ifdef _WIN32
-        static DWORD WINAPI thunk(void *param);
-#else /* _WIN32 */
-        static void *thunk(void *param);
-#endif /* _WIN32 */
-
         worker_thread(const worker_thread&) = delete;
+
+        void start(problem_type problem, barrier_type barrier,
+            const rank_type rank, const uint64_t affinity_mask = 0,
+            const uint16_t affinity_group = 0);
 
         worker_thread& operator =(const worker_thread&) = delete;
 
-        /// <summary>
-        /// The type of a native thread handle.
-        /// </summary>
-#ifdef _WIN32
-        typedef HANDLE handle_type;
-#else /* _WIN32 */
-        typedef pthread_t handle_type;
-#endif /* _WIN32 */
+    private:
 
-        /// <summary>
-        /// The barrier synchronising the test.
-        /// </summary>
-        barrier_type barrier;
-
-        /// <summary>
-        /// The native thread handle.
-        /// </summary>
-        handle_type hThread;
-
-        /// <summary>
-        /// The rank of the thread, which determines the offset
-        /// </summary>
-        rank_type rank;
-
-
-        /// <summary>
-        /// Gets the end of the iteration for the thread with the given rank
-        /// considering the configured access pattern.
-        /// </summary>
-        /// <remarks>
-        /// <para>The returned value is the array index <i>after</i> the last
-        /// element to be read, ie it can be used like the array size in a for
-        /// loop.</para>
-        /// <para>In case of a contiguous access pattern, the last thread is
-        /// assumed to perform more work in case the problem size is not
-        /// divisble by the number of worker threads.</para>
-        /// </remarks>
-        /*inline size_type end(const size_type rank) const {
-            auto isLast = (rank == (this->number_of_threads() - 1));
-            auto p = this->problem_size();
-            auto t = this->number_of_threads();
-            auto r = p % t;
-            return (this->access_pattern() == access_pattern::contiguous)
-                ? (isLast ? p : this->offset(rank + 1))
-                : (p - r - t + rank + 1 + ((rank < r) ? t : 0));
-        }*/
-
-        /// <summary>
-        /// Gets the start offset of the thread with the given rank considering the
-        /// configured access pattern.
-        /// </summary>
-        /*inline size_type offset(const size_type rank) const {
-            assert(this->problem_size() > this->number_of_threads());
-            return (this->access_pattern() == access_pattern::contiguous)
-                ? rank * this->problem_size() / this->number_of_threads()
-                : rank;
-        }*/
-
-        /// <summary>
-        /// Answer how big the share of the <paramref name="rank" />th thread is.
-        /// </summary>
-        /*inline size_type problem_size(const size_type rank) const {
-            auto p = this->problem_size();
-            auto t = this->number_of_threads();
-            return (this->access_pattern() == access_pattern::contiguous)
-                ? (this->end(rank) - this->offset(rank))
-                : ((p / t) + ((rank < (p % t)) ? 1 : 0));
-        }*/
+        template<scalar_type T> struct dispatch {
+            static void invoke(worker_thread *that);
+        };
 
         /// <summary>
         /// This functor expands the testing loop at compile time to remove any
@@ -312,6 +253,49 @@ namespace stream {
                 *c = s * *a + *b;
             }
         };
+
+        /// <summary>
+        /// The type of a native thread handle.
+        /// </summary>
+#ifdef _WIN32
+        typedef HANDLE handle_type;
+#else /* _WIN32 */
+        typedef pthread_t handle_type;
+#endif /* _WIN32 */
+
+        /// <summary>
+        /// The thread function that performs the actual work.
+        /// </summary>
+        /// <param name="param">A pointer to the thread object that holds the
+        /// handle and the configuration.</param>
+        /// <returns>0</returns>
+#ifdef _WIN32
+        static DWORD WINAPI thunk(void *param);
+#else /* _WIN32 */
+        static void *thunk(void *param);
+#endif /* _WIN32 */
+
+        void synchronise(const int barrierId);
+
+        /// <summary>
+        /// The barrier synchronising the test.
+        /// </summary>
+        barrier_type barrier;
+
+        /// <summary>
+        /// The native thread handle.
+        /// </summary>
+        handle_type hThread;
+
+        /// <summary>
+        /// Stores the problem, which is shared between the threads.
+        /// </summary>
+        problem_type problem;
+
+        /// <summary>
+        /// The rank of the thread, which determines the offset
+        /// </summary>
+        rank_type rank;
 
     public:
         inline static void crowbar() {
