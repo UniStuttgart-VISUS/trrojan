@@ -32,6 +32,11 @@ namespace trrojan {
     public:
 
         /// <summary>
+        /// A list of <see cref="trrrojan::factor" />s.
+        /// </summary>
+        typedef std::vector<factor> factor_list;
+
+        /// <summary>
         /// Add an additional factor to be tested.
         /// </summary>
         void add_factor(const factor& factor);
@@ -44,9 +49,15 @@ namespace trrojan {
         /// <returns><c>true</c> if the configuration contains a factor with the
         /// given name, <c>false</c> otherwise.</returns>
         inline bool contains_factor(const std::string& name) const {
-            auto it = std::find_if(this->factors.cbegin(), this->factors.cend(),
-                [&name](const factor& f) { return (f.name() == name); });
-            return (it != this->factors.cend());
+            return (this->find_factor(name) != this->_factors.cend());
+        }
+
+        /// <summary>
+        /// Gets the <see cref="trrojan::factor" />s defining the
+        /// configurations.
+        /// </summary>
+        inline const factor_list& factors(void) const {
+            return this->_factors;
         }
 
         /// <summary>
@@ -60,18 +71,32 @@ namespace trrojan {
             std::function<bool(const configuration&)> cb) const;
 
         /// <summary>
-        /// Gets the <see cref="trrojan::factor" />s defining the
-        /// configurations.
+        /// Merge <paramref name="other" /> into this configuration set.
         /// </summary>
-        inline const std::vector<factor>& get_factors(void) const {
-            return this->factors;
-        }
+        /// <remarks>
+        /// If <paramref name="overwrite" /> is <c>true</c>,
+        /// <see cref="trrojan::factor" />s in this configuration set will be
+        /// overwritten by the ones from <paramref name="other" />. Otherwise, 
+        /// already existing factors will be ignored.
+        /// </remarks>
+        /// <param name="other">The configuration set to be integrated into this
+        /// one.</param>
+        /// <param name="overwrite">If <c>true</c>, factors from
+        /// <param name="other" /> take precedence, otherwise, factors from
+        /// this configuration set will be kept unmodified.</param>
+        void merge(const configuration_set& other, const bool overwrite);
 
     private:
+
+        inline factor_list::const_iterator find_factor(
+                const std::string& name) const {
+            return std::find_if(this->_factors.cbegin(), this->_factors.cend(),
+                [&name](const factor& f) { return (f.name() == name); });
+        }
 
         /// <summary>
         /// Holds all the factors defining the configurations.
         /// </summary>
-        std::vector<factor> factors;
+        factor_list _factors;
     };
 }
