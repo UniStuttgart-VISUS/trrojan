@@ -33,8 +33,8 @@ namespace stream {
         /// <summary>
         /// Creates a new problem with the specified properties.
         /// </summary>
-        problem(
-            const trrojan::stream::scalar_type scalar = scalar_type::float32,
+        problem(const trrojan::stream::scalar_type scalar
+            = trrojan::stream::scalar_type::float32,
             const size_t parallelism = 1,
             const size_t size = default_problem_size);
 
