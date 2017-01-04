@@ -47,7 +47,8 @@ void trrojan::executive::load_plugins(void) {
 #ifdef _WIN32
         {
             std::vector<char> mfn(MAX_PATH);
-            if (::GetModuleFileName(NULL, mfn.data(), mfn.size())) {
+            if (::GetModuleFileName(NULL, mfn.data(),
+                    static_cast<DWORD>(mfn.size()))) {
                 auto it = std::find(mfn.rbegin(), mfn.rend(),
                     directory_separator_char);
                 auto p = std::string(mfn.begin(), it.base());

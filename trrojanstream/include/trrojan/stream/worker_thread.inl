@@ -57,12 +57,17 @@ bool trrojan::stream::worker_thread::verify(const S *a, const S *b, const S *c,
         step<1, scalar_reverse_traits<S>::type, T>::apply(a + i, b + i,
             &expected, s, 0);
         if (expected != c[i]) {
-            //TODO: trrojan::log::write_line()
+            trrojan::log::instance().write(trrojan::log_level::warning,
+                "Verification of stream results failed for item %u: found %s, "
+                "but expected %s.\n", i, std::to_string(c[i]).c_str(),
+                std::to_string(expected).c_str());
             return false;
         }
     }
     /* No problem found at this point. */
 
+    trrojan::log::instance().write(trrojan::log_level::information,
+        "Verification of %u stream results succeeded.\n", cnt);
     return true;
 }
 
@@ -83,7 +88,7 @@ bool trrojan::stream::worker_thread::verify(const S *a, const S *b, const S *c,
         case task_type::triad:
             return worker_thread::verify<S, task_type::triad>(a, b, c, s, cnt);
         default:
-            //TODO: trrojan::log::write_line()
-            return false;
+            throw std::logic_error("No verification is possible for the given "
+                "task.");
     }
 }

@@ -13,6 +13,8 @@
 namespace trrojan {
 namespace stream {
 
+    // TODO: remove this class? The stream benchmark does not need an env.
+
     /// <summary>
     /// The environment for memory streaming benchmarks.
     /// </summary>

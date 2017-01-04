@@ -6,6 +6,7 @@
 #include "trrojan/stream/plugin.h"
 
 #include "trrojan/stream/environment.h"
+#include "trrojan/stream/stream_benchmark.h"
 
 
 /// <summary>
@@ -23,10 +24,19 @@ trrojan::stream::plugin::~plugin(void) { }
 
 
 /*
+ * trrojan::stream::plugin::create_benchmarks
+ */
+size_t trrojan::stream::plugin::create_benchmarks(benchmark_list& dst) const {
+    dst.push_back(std::make_shared<stream_benchmark>());
+    return 1;
+}
+
+
+/*
  * trrojan::stream::plugin::create_environments
  */
 size_t trrojan::stream::plugin::create_environments(
         environment_list& dst) const {
-    dst.push_back(std::make_shared<environment>());
+    //dst.push_back(std::make_shared<environment>());
     return 0;
 }

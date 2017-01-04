@@ -8,6 +8,7 @@
 #include <memory>
 #include <string>
 
+#include "trrojan/benchmark.h"
 #include "trrojan/environment.h"
 #include "trrojan/export.h"
 
@@ -26,6 +27,11 @@ namespace trrojan {
     public:
 
         /// <summary>
+        /// A list of <see cref="trrojan::benchmark" />s.
+        /// </summary>
+        typedef std::vector<benchmark> benchmark_list;
+
+        /// <summary>
         /// A list of <see cref="trrojan::environment" />s.
         /// </summary>
         typedef std::vector<environment> environment_list;
@@ -34,6 +40,15 @@ namespace trrojan {
         /// Finalises the instance.
         /// </summary>
         virtual ~plugin_base(void);
+
+        /// <summary>
+        /// Creates a instance of each of the benchmarks provided by the plugin.
+        /// </summary>
+        /// <param name="dst">An <see cref="benchmark_list" /> to append the
+        /// benchmarks to.</param>
+        /// <returns>The number of benchmarks which have been added to
+        /// <paramref name="dst" />.</returns>
+        virtual size_t create_benchmarks(benchmark_list& dst) const = 0;
 
         /// <summary>
         /// Creates an instance of each of the environments provided by the

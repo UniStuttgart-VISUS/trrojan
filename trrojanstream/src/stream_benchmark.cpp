@@ -10,6 +10,9 @@
 #include "trrojan/factor_enum.h"
 #include "trrojan/factor_range.h"
 #include "trrojan/system_factors.h"
+#include "trrojan/timer.h"
+
+#include "trrojan/stream/worker_thread.h"
 
 
 /*
@@ -61,6 +64,10 @@ trrojan::result_set trrojan::stream::stream_benchmark::run(
     }
 
     // Problem size
+
+    // TODO: remove hack
+    //std::cout << "here" << std::endl;
+    worker_thread::crowbar();
 
     return result_set();
 }

@@ -72,6 +72,7 @@ int main(const int argc, const char **argv) {
         std::cout << "executive" << std::endl;
         trrojan::executive te;
         te.load_plugins();
+        te.crowbar();
     }
 
     {

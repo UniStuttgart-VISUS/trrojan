@@ -22,7 +22,9 @@
 #include <pthread.h>
 #endif /* _WIN32 */
 
+#include "trrojan/constants.h"
 #include "trrojan/log.h"
+#include "trrojan/timer.h"
 
 #include "trrojan/stream/export.h"
 #include "trrojan/stream/scalar_type.h"
@@ -205,18 +207,55 @@ namespace stream {
         /// per thread).</tparam>
         /// <tparam name="S">The scalar type stored in the arrays.</tparam>
         /// <tparam name="T">The type of test to be performed.</tparam>
-        template<size_t N, scalar_type S, task_type T>
-        struct step {
+        template<int N, scalar_type S, task_type T> struct step {
             typedef typename scalar_type_traits<S>::type scalar_type;
 
+            // TODO: this is insanely slow; we need to make it faster ...
+            //static TRROJANSTREAM_FORCE_INLINE void apply(const scalar_type *a,
+            //        const scalar_type *b, scalar_type *c, const scalar_type s,
+            //        const size_t o) {
+            //    std::cout << N << " " << o << std::endl;
+            //    step<1, S, T>::apply(a, b, c, s, o);
+            //    step<N - 1, S, T>::apply(a + o, b + o, c + o, s, o);
+            //}
+#ifdef __GNUC___
+            __attribute__((optimize("unroll-loops")))
+#endif /* __GNUC___ */
             static TRROJANSTREAM_FORCE_INLINE void apply(const scalar_type *a,
                     const scalar_type *b, scalar_type *c, const scalar_type s,
                     const size_t o) {
-                std::cout << N << " " << o << std::endl;
-                step<1, S, T>::apply(a, b, c, s, o);
-                step<N - 1, S, T>::apply(a + o, b + o, c + o, s, o);
+#ifdef _MSC_VER
+#pragma loop(hint_parallel(0))
+#pragma loop(ivdep)
+#endif /* _MSC_VER */
+                for (int i = 0; i < N; ++i) {
+                    step<1, S, T>::apply(a + i * o, b + i * o, c + i * o, s, o);
+                }
             }
         };
+
+        ///// <summary>
+        ///// Specialisation of <see cref="step" /> which performs ten steps an
+        ///// once and thus makes code generation faster.
+        ///// </summary>
+        //template<scalar_type S, task_type T> struct step<10, S, T> {
+        //    typedef typename scalar_type_traits<S>::type scalar_type;
+
+        //    static TRROJANSTREAM_FORCE_INLINE void apply(const scalar_type *a,
+        //            const scalar_type *b, scalar_type *c, const scalar_type s,
+        //            const size_t o) {
+        //        step<1, S, T>::apply(a + 0 * o, b + 0 * o, c + 0 * o, s, o);
+        //        step<1, S, T>::apply(a + 1 * o, b + 1 * o, c + 1 * o, s, o);
+        //        step<1, S, T>::apply(a + 2 * o, b + 2 * o, c + 2 * o, s, o);
+        //        step<1, S, T>::apply(a + 3 * o, b + 3 * o, c + 3 * o, s, o);
+        //        step<1, S, T>::apply(a + 4 * o, b + 4 * o, c + 4 * o, s, o);
+        //        step<1, S, T>::apply(a + 5 * o, b + 5 * o, c + 5 * o, s, o);
+        //        step<1, S, T>::apply(a + 6 * o, b + 6 * o, c + 6 * o, s, o);
+        //        step<1, S, T>::apply(a + 7 * o, b + 7 * o, c + 7 * o, s, o);
+        //        step<1, S, T>::apply(a + 8 * o, b + 8 * o, c + 8 * o, s, o);
+        //        step<1, S, T>::apply(a + 9 * o, b + 9 * o, c + 9 * o, s, o);
+        //    }
+        //};
 
         /// <summary>
         /// Template specialisation which actually performs the
@@ -276,14 +315,22 @@ namespace stream {
 
     public:
         inline static void crowbar() {
-            //typedef step<10000, scalar_type::float32, task_type::copy> step_type;
-            //std::array<float, 10000> a;
-            //std::array<float, 10000> b;
-            //std::array<float, 10000> c;
+            typedef step<1000000, scalar_type::float32, task_type::copy> step_type;
+            std::vector<float> a(1000000);
+            std::vector<float> b(1000000);
+            std::vector<float> c(1000000);
+
+            std::generate(a.begin(), a.end(), std::rand);
+            std::generate(b.begin(), b.end(), std::rand);
 
 
-            //step_type::apply(&a[0], &b[0], &c[0], 12.4f, 1);
-            //std::cout << worker_thread::verify(a.data(), b.data(), c.data(), 12.4f, a.size(), task_type::copy) << std::endl;
+            trrojan::timer timer;
+            timer.start();
+            step_type::apply(a.data(), b.data(), c.data(), 12.4f, 1);
+            auto elapsed = timer.elapsed_millis();
+            auto gigs = ((double) a.size() * sizeof(float)) / trrojan::bytes_per_gigabyte;
+            std::cout << "stream elapsed: " << elapsed << " " << gigs  << " " << gigs * millis_per_second / elapsed << std::endl;
+            std::cout << "verify: " << worker_thread::verify(a.data(), b.data(), c.data(), 12.4f, a.size(), task_type::copy) << std::endl;
         }
     };
 

@@ -47,18 +47,22 @@ namespace stream {
     template<scalar_type S> struct scalar_type_traits { };
 
     template<> struct scalar_type_traits<scalar_type::float32> {
+        static const size_t size = sizeof(float);
         typedef float type;
     };
 
     template<> struct scalar_type_traits<scalar_type::float64> {
+        static const size_t size = sizeof(double);
         typedef double type;
     };
 
     template<> struct scalar_type_traits<scalar_type::int32> {
+        static const size_t size = sizeof(std::int32_t);
         typedef std::int32_t type;
     };
 
     template<> struct scalar_type_traits<scalar_type::int64> {
+        static const size_t size = sizeof(std::int64_t);
         typedef std::int64_t type;
     };
 
@@ -70,18 +74,22 @@ namespace stream {
     template<class T> struct scalar_reverse_traits { };
 
     template<> struct scalar_reverse_traits<float> {
+        static const size_t size = sizeof(float);
         static const scalar_type type = scalar_type::float32;
     };
 
     template<> struct scalar_reverse_traits<double> {
+        static const size_t size = sizeof(double);
         static const scalar_type type = scalar_type::float64;
     };
 
     template<> struct scalar_reverse_traits<std::int32_t> {
+        static const size_t size = sizeof(std::int32_t);
         static const scalar_type type = scalar_type::int32;
     };
 
     template<> struct scalar_reverse_traits<std::int64_t> {
+        static const size_t size = sizeof(std::int64_t);
         static const scalar_type type = scalar_type::int64;
     };
 }
