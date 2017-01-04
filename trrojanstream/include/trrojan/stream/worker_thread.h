@@ -328,8 +328,8 @@ namespace stream {
             timer.start();
             step_type::apply(a.data(), b.data(), c.data(), 12.4f, 1);
             auto elapsed = timer.elapsed_millis();
-            auto gigs = ((double) a.size() * sizeof(float)) / trrojan::bytes_per_gigabyte;
-            std::cout << "stream elapsed: " << elapsed << " " << gigs  << " " << gigs * millis_per_second / elapsed << std::endl;
+            auto gigs = ((double) a.size() * sizeof(float)) / trrojan::constants<decltype(elapsed)>::bytes_per_gigabyte;
+            std::cout << "stream elapsed: " << elapsed << " " << gigs  << " " << gigs * trrojan::constants<decltype(elapsed)>::millis_per_second / elapsed << std::endl;
             std::cout << "verify: " << worker_thread::verify(a.data(), b.data(), c.data(), 12.4f, a.size(), task_type::copy) << std::endl;
         }
     };

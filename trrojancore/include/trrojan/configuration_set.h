@@ -88,6 +88,11 @@ namespace trrojan {
 
     private:
 
+        inline factor_list::iterator find_factor(const std::string& name) {
+            return std::find_if(this->_factors.begin(), this->_factors.end(),
+                [&name](const factor& f) { return (f.name() == name); });
+        }
+
         inline factor_list::const_iterator find_factor(
                 const std::string& name) const {
             return std::find_if(this->_factors.cbegin(), this->_factors.cend(),

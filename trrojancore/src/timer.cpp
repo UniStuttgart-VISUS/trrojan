@@ -18,7 +18,7 @@ trrojan::timer::millis_type trrojan::timer::to_millis(
 
     if (::QueryPerformanceFrequency(&frequency)) {
         auto v = static_cast<millis_type>(value);
-        auto s = static_cast<millis_type>(millis_per_second);
+        auto s = trrojan::constants<millis_type>::millis_per_second;
         auto f = static_cast<millis_type>(frequency.QuadPart);
         return ((v * s) / f);
 
