@@ -1,7 +1,7 @@
 /// <copyright file="plugin.cpp" company="SFB-TRR 161 Quantitative Methods for Visual Computing">
-/// Copyright © 2016 SFB-TRR 161. Alle Rechte vorbehalten.
+/// Copyright ï¿½ 2016 SFB-TRR 161. Alle Rechte vorbehalten.
 /// </copyright>
-/// <author>Christoph Müller</author>
+/// <author>Christoph Mï¿½ller</author>
 
 #include "trrojan/stream/worker_thread.h"
 
@@ -37,7 +37,7 @@ void trrojan::stream::worker_thread::start(problem_type problem,
     }
 
     this->barrier = barrier;
-    this->problem = problem;
+    this->_problem = problem;
     this->rank = rank;
 
 #ifdef _WIN32
@@ -138,8 +138,8 @@ void *trrojan::stream::worker_thread::thunk(void *param) {
 #endif /* _WIN32*/
     auto that = static_cast<worker_thread *>(param);
     assert(that != nullptr);
-    assert(that->problem != nullptr);
-    scalar_type_dispatch<dispatch>(that->problem->scalar_type(), that);
+    assert(that->_problem != nullptr);
+    scalar_type_dispatch<dispatch>(that->_problem->scalar_type(), that);
     return 0;
 }
 
@@ -151,11 +151,11 @@ void trrojan::stream::worker_thread::synchronise(const int barrierId) {
     // Implementation of repeated barrier as in
     // http://stackoverflow.com/questions/24205226/how-to-implement-a-re-usable-thread-barrier-with-stdatomic
     assert(this->barrier != nullptr);
-    assert(this->problem != nullptr);
-    assert(INT_MAX / this->problem->parallelism() > barrierId);
+    assert(this->_problem != nullptr);
+    assert(INT_MAX / this->_problem->parallelism() > barrierId);
     auto& barrier = *this->barrier;
     int expected = (barrierId + 1) * static_cast<int>(
-        this->problem->parallelism());
+        this->_problem->parallelism());
     ++barrier;
     while (barrier - barrierId < 0);    // TODO: Should yield if too many threads?
 }

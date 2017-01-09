@@ -1,8 +1,8 @@
 #include "worker_thread.h"
 /// <copyright file="worker_thread.inl" company="SFB-TRR 161 Quantitative Methods for Visual Computing">
-/// Copyright © 2016 SFB-TRR 161. Alle Rechte vorbehalten.
+/// Copyright ï¿½ 2016 SFB-TRR 161. Alle Rechte vorbehalten.
 /// </copyright>
-/// <author>Christoph Müller</author>
+/// <author>Christoph Mï¿½ller</author>
 
 
 
@@ -102,16 +102,16 @@ void trrojan::stream::worker_thread::dispatch<T>::invoke(worker_thread *that) {
     typedef typename scalar_type_traits<T>::type type;
     assert(that != nullptr);
     assert(that->barrier != nullptr);
-    assert(that->problem != nullptr);
+    assert(that->_problem != nullptr);
 
     // Get local of all arrays and values we access frequently to bypass
     // the indirection introduced by the shared pointer and to prevent the
     // overhead induced by casts etc.
-    auto a = that->problem->a<type>();
-    auto b = that->problem->b<type>();
-    auto c = that->problem->c<type>();
+    auto a = that->_problem->a<type>();
+    auto b = that->_problem->b<type>();
+    auto c = that->_problem->c<type>();
     auto& barrier = *that->barrier;
-    auto parallelism = that->problem->parallelism();
+    auto parallelism = that->_problem->parallelism();
     //auto scalar = that->scenario->scalar();
     //auto timesAdd = that->times[test_result::test_name_add].data();
     //auto timesCopy = that->times[test_result::test_name_copy].data();

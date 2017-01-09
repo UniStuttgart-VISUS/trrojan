@@ -41,9 +41,6 @@ namespace trrojan {
     /// <item><description>A new line of the 
     /// <c>__TRROJANCORE_DECL_VARIANT_TYPE_TRAITS</c> declarations must be
     /// added below.</description></item>
-    /// <item><description>A new line of the <c>__TRROJANCORE_IMPL_CLEAR</c>
-    /// calls must be added in <see cref="trrojan::variant::clear" />.
-    /// </description></item>
     /// <item><description>Add the new member to the variadic template list of
     /// the <see cref="trrojan::detail::variant_type_list" /> <c>typedef</c>
     /// below to enable conditional invocation.
