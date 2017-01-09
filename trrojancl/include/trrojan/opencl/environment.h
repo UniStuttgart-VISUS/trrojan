@@ -10,6 +10,8 @@
 
 #include "trrojan/opencl/export.h"
 
+#include "trrojan/opencl/device.h"
+
 #define __CL_ENABLE_EXCEPTIONS
 
 #if defined(__APPLE__) || defined(__MACOSX)
@@ -133,7 +135,7 @@ namespace opencl
         ///
         cl::Platform get_platform(cl_device_type type, opencl::vendor vendor, const int platform_no);
 
-        // OpenCL _opencl;
+        cl::Context _opencl;
     };
 
 }
