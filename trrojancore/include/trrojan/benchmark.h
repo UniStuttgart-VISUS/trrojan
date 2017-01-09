@@ -31,6 +31,15 @@ namespace trrojan {
         virtual ~benchmark_base(void);
 
         /// <summary>
+        /// Answer the default factors to be tested if not specified by the
+        /// user.
+        /// </summary>
+        /// <returns></returns>
+        inline const trrojan::configuration_set& default_configs(void) const {
+            return this->_default_configs;
+        }
+
+        /// <summary>
         /// Answer the name of the benchmark.
         /// </summary>
         /// <returns></returns>
@@ -45,9 +54,7 @@ namespace trrojan {
         /// </summary>
         /// <returns>The names of the factor which are required for the
         /// benchmark to run</returns>
-        inline const std::vector<std::string>& required_factors(void) const {
-            return this->_required_factors;
-        }
+        std::vector<std::string> required_factors(void) const;
 
         /// <summary>
         /// Run the benchmark for each of the
@@ -67,8 +74,8 @@ namespace trrojan {
         inline benchmark_base(const std::string& name) : _name(name) { }
 
         inline benchmark_base(const std::string& name,
-            std::initializer_list<std::string> required_factors)
-            : _required_factors(required_factors), _name(name) { }
+            trrojan::configuration_set default_configs)
+            : _default_configs(default_configs), _name(name) { }
 
         /// <summary>
         /// Check whether the given configuration set has all required factors
@@ -76,10 +83,15 @@ namespace trrojan {
         /// </summary>
         void check_required_factors(const trrojan::configuration_set& cs) const;
 
+
         /// <summary>
-        /// The list of factors the benchmark required to run.
+        /// The default configuration set which is used to find required
+        /// factors and to fill-in missing ones.
         /// </summary>
-        std::vector<std::string> _required_factors;
+        /// <remarks>
+        /// It is safe to modfiy this while the benchmark is not being used.
+        /// </remarks>
+        trrojan::configuration_set _default_configs;
 
     private:
 

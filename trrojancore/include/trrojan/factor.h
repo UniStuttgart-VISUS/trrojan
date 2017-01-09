@@ -30,6 +30,15 @@ namespace trrojan {
     public:
 
         /// <summary>
+        /// Answer a factor with the specified name, but without any
+        /// manifestation.
+        /// </summary>
+        static inline factor empty(const std::string& name) {
+            std::vector<trrojan::variant> m(0);
+            return factor(new detail::factor_enum(name, m));
+        }
+
+        /// <summary>
         /// Creates a new factor with a set of discrete manifestations.
         /// </summary>
         /// <parama name="name">The name which uniquely identifies the factor.
