@@ -54,7 +54,7 @@ namespace opencl
     };
 
     /// <summary>
-    ///
+    /// OpenCL struct
     /// </summary>
     typedef struct OpenCL
     {
@@ -91,11 +91,45 @@ namespace opencl
         /// </summary>
         virtual ~environment(void);
 
+        ///
+        /// \brief Get a list of available devices
+        /// \param dst device list
+        /// \return size
+        ///
         virtual size_t get_devices(device_list& dst);
 
+        ///
+        /// \brief on_initialise
+        /// \param cmdLine
+        ///
         virtual void on_initialise(const std::vector<std::string> &cmdLine);
 
-//        virtual void on_finalise();
+        ///
+        /// \brief on_finalise
+        ///
+        virtual void on_finalise() noexcept;
+
+    private:
+
+        ///
+        /// \brief Create an OpenCL context with a specific device typy of a vendor.
+        /// \param type The device type (CPU, GPU, ACCELERATOR)
+        /// \param vendor The device vendor.
+        /// \return The selected OpenCL context.
+        /// \throws cl::Error of no context is found with the specified parameters.
+        ///
+        cl::Context create_context(cl_device_type type, opencl::vendor vendor);
+
+        ///
+        /// \brief Get a OpenCL platform of a specific device type and vendor
+        /// \param type The device type (CPU, GPU, ACCELERATOR)
+        /// \param vendor The device vendor.
+        /// \return The selected OpenCL platform.
+        /// \throws cl::Error of no platform is found with the specified parameters.
+        ///
+        cl::Platform get_platform(cl_device_type type, opencl::vendor vendor);
+
+        // OpenCL _opencl;
     };
 
 }

@@ -23,19 +23,24 @@ extern "C" TRROJANCL_API trrojan::plugin_base *get_trrojan_plugin(void)
 trrojan::opencl::plugin::~plugin(void) { }
 
 
+/**
+ * trrojan::opencl::plugin::create_benchmarks
+ */
 size_t trrojan::opencl::plugin::create_benchmarks(benchmark_list& dst) const
 {
     //dst.push_back(std::make_shared<opencl_benchmark>());
     return 1;
 }
 
+
 /*
  * trrojan::opencl::plugin::create_environments
  */
 size_t trrojan::opencl::plugin::create_environments(environment_list& dst) const
 {
-    for (size_t i; i < environment::get_platform_cnt(); ++i)
+    for (size_t i = 0; i < environment::get_platform_cnt(); ++i)
     {
         dst.push_back(std::make_shared<environment>(environment()));
     }
+    return environment::get_platform_cnt();
 }

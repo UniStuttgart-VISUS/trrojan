@@ -21,13 +21,13 @@ void trrojan::environment_base::on_activate(void) { }
 /*
  * trrojan::environment_base::on_deactivate
  */
-void trrojan::environment_base::on_deactivate(void)  throw() { }
+void trrojan::environment_base::on_deactivate(void)  noexcept { }
 
 
 /*
  * trrojan::environment_base::on_finalise
  */
-void trrojan::environment_base::on_finalise(void)  throw() { }
+void trrojan::environment_base::on_finalise(void)  noexcept { }
 
 
 /*
