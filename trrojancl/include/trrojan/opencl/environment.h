@@ -102,7 +102,11 @@ namespace opencl
         /// \brief on_initialise
         /// \param cmdLine
         ///
-        virtual void on_initialise(const std::vector<std::string> &cmdLine);
+        virtual void on_initialise(const std::vector<std::string> &cmdLine, const int platform_no = 0);
+        virtual void on_initialize(const std::vector<std::string> &cmdLine, const int platform_no = 0)
+        {
+            on_initialise(cmdLine, platform_no);
+        }
 
         ///
         /// \brief on_finalise
@@ -118,7 +122,7 @@ namespace opencl
         /// \return The selected OpenCL context.
         /// \throws cl::Error of no context is found with the specified parameters.
         ///
-        cl::Context create_context(cl_device_type type, opencl::vendor vendor);
+        cl::Context create_context(cl_device_type type, opencl::vendor vendor, const int platform_no);
 
         ///
         /// \brief Get a OpenCL platform of a specific device type and vendor
@@ -127,7 +131,7 @@ namespace opencl
         /// \return The selected OpenCL platform.
         /// \throws cl::Error of no platform is found with the specified parameters.
         ///
-        cl::Platform get_platform(cl_device_type type, opencl::vendor vendor);
+        cl::Platform get_platform(cl_device_type type, opencl::vendor vendor, const int platform_no);
 
         // OpenCL _opencl;
     };

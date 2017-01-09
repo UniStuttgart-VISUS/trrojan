@@ -38,9 +38,13 @@ size_t trrojan::opencl::plugin::create_benchmarks(benchmark_list& dst) const
  */
 size_t trrojan::opencl::plugin::create_environments(environment_list& dst) const
 {
+    // create one environment per OpenCL platform that is found
+    cmd_line l;
     for (size_t i = 0; i < environment::get_platform_cnt(); ++i)
     {
-        dst.push_back(std::make_shared<environment>(environment()));
+        environment e;
+        e.on_initialize(l, i);
+        dst.push_back(std::make_shared<environment>(e));
     }
     return environment::get_platform_cnt();
 }

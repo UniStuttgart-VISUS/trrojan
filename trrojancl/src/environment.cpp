@@ -6,6 +6,7 @@
 
 #include "trrojan/opencl/environment.h"
 
+#include <assert.h>
 
 /*
  * trrojan::opencl::environment::~environment
@@ -28,7 +29,7 @@ size_t trrojan::opencl::environment::get_platform_cnt()
     std::vector<cl::Platform> platforms;
     cl::Platform::get(&platforms);
 
-    if(platforms.size() == 0)
+    if (platforms.size() == 0)
     {
         throw cl::Error(1, "No OpenCL platforms were found.");
     }
@@ -40,16 +41,17 @@ size_t trrojan::opencl::environment::get_platform_cnt()
  * @brief trrojan::opencl::environment::on_initialise
  * @param cmdLine
  */
-void trrojan::opencl::environment::on_initialise(const std::vector<std::string> &cmdLine)
+void trrojan::opencl::environment::on_initialise(const std::vector<std::string> &cmdLine,
+                                                 const int platform_no)
 {
     cl_device_type type = CL_DEVICE_TYPE_ALL;
     opencl::vendor vendor = VENDOR_ANY;
 
     if (cmdLine.size() > 0)
     {
-        for(size_t i = 0; i < cmdLine.size() - 1; ++i)
+        for (size_t i = 0; i < cmdLine.size() - 1; ++i)
         {
-            if(cmdLine.at(i).compare("--device") == 0)
+            if (cmdLine.at(i).compare("--device") == 0)
             {
                 if(cmdLine.at(i + 1).compare("cpu") == 0)
                 {
@@ -64,17 +66,17 @@ void trrojan::opencl::environment::on_initialise(const std::vector<std::string> 
                     type = CL_DEVICE_TYPE_ACCELERATOR;
                 }
             }
-            else if(cmdLine.at(i).compare("--vendor") == 0)
+            else if (cmdLine.at(i).compare("--vendor") == 0)
             {
-                if(cmdLine.at(i + 1).compare("amd") == 0)
+                if (cmdLine.at(i + 1).compare("amd") == 0)
                 {
                     vendor = VENDOR_AMD;
                 }
-                else if(cmdLine.at(i + 1).compare("intel") == 0)
+                else if (cmdLine.at(i + 1).compare("intel") == 0)
                 {
                     vendor = VENDOR_INTEL;
                 }
-                else if(cmdLine.at(i + 1).compare("nvidia") == 0)
+                else if (cmdLine.at(i + 1).compare("nvidia") == 0)
                 {
                     vendor = VENDOR_NVIDIA;
                 }
@@ -82,13 +84,15 @@ void trrojan::opencl::environment::on_initialise(const std::vector<std::string> 
         }
     }
 
-    create_context(type, vendor);
+    create_context(type, vendor, platform_no);
 }
 
 
-cl::Context trrojan::opencl::environment::create_context(cl_device_type type, opencl::vendor vendor)
+cl::Context trrojan::opencl::environment::create_context(cl_device_type type,
+                                                         opencl::vendor vendor,
+                                                         const int platform_no)
 {
-    cl::Platform platform = get_platform(type, vendor);
+    cl::Platform platform = get_platform(type, vendor, platform_no);
 
     // Use the preferred platform and create a context
     cl_context_properties cps[] = {
@@ -102,29 +106,31 @@ cl::Context trrojan::opencl::environment::create_context(cl_device_type type, op
         cl::Context context = cl::Context(type, cps);
         return context;
     }
-    catch(cl::Error error)
+    catch (cl::Error error)
     {
         throw cl::Error(1, "Failed to create OpenCL context.");
     }
 }
 
 
-cl::Platform trrojan::opencl::environment::get_platform(cl_device_type type, opencl::vendor vendor)
+cl::Platform trrojan::opencl::environment::get_platform(cl_device_type type,
+                                                        opencl::vendor vendor,
+                                                        const int platform_no)
 {
     // Get available platforms
     std::vector<cl::Platform> platforms;
     cl::Platform::get(&platforms);
 
-    if(platforms.size() == 0)
+    if (platforms.size() == 0)
     {
         throw cl::Error(1, "No OpenCL platforms were found.");
     }
 
     int platform_id = -1;
-    if(vendor != VENDOR_ANY)
+    if (vendor != VENDOR_ANY)
     {
         std::string find;
-        switch(vendor)
+        switch (vendor)
         {
             case VENDOR_NVIDIA:
                 find = "NVIDIA";
@@ -140,7 +146,7 @@ cl::Platform trrojan::opencl::environment::get_platform(cl_device_type type, ope
                 throw cl::Error(1, "Invalid vendor specified.");
             break;
         }
-        for(size_t i = 0; i < platforms.size(); ++i)
+        for (size_t i = 0; i < platforms.size(); ++i)
         {
             if(platforms[i].getInfo<CL_PLATFORM_VENDOR>().find(find) != std::string::npos)
             {
@@ -151,16 +157,23 @@ cl::Platform trrojan::opencl::environment::get_platform(cl_device_type type, ope
                     platform_id = i;
                     break;
                 }
-                catch(cl::Error error)
+                catch (cl::Error error)
                 {
                    continue;
                 }
             }
         }
     }
-    else
+
+    if (platform_id == -1)
     {
-        for(size_t i = 0; i < platforms.size(); ++i)
+        if (vendor != VENDOR_ANY)
+        {
+            std::cout << "No platform of the specified vendor found. Trying other available platforms."
+                      << std::endl;
+        }
+        assert(platform_no < platforms.size());
+        for (size_t i = platform_no; i < platforms.size(); ++i)
         {
             try
             {
@@ -169,14 +182,14 @@ cl::Platform trrojan::opencl::environment::get_platform(cl_device_type type, ope
                 platform_id = i;
                 break;
             }
-            catch(cl::Error e)
+            catch (cl::Error error)
             {
                continue;
             }
         }
     }
 
-    if(platform_id == -1)
+    if (platform_id == -1)
     {
         throw cl::Error(1, "No compatible OpenCL platform found.");
     }

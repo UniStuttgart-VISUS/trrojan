@@ -65,10 +65,11 @@ namespace trrojan {
                 p->create_environments(es);
             }
 
-            cmd_line dummy_line;
+            // iterate environments
             for (auto e : es)
             {
-                e->on_initialise(dummy_line);
+                // TODO: iterate devices    (scripting interaface)
+                // TODO: iterate benchamrks (scripting interaface)
             }
 
             for (auto b : bs) {
