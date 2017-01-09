@@ -11,7 +11,8 @@
 /// <summary>
 /// Gets a new instance of the plugin descriptor.
 /// </summary>
-extern "C" TRROJANCL_API trrojan::plugin_base *get_trrojan_plugin(void) {
+extern "C" TRROJANCL_API trrojan::plugin_base *get_trrojan_plugin(void)
+{
     return new trrojan::opencl::plugin();
 }
 
@@ -22,10 +23,16 @@ extern "C" TRROJANCL_API trrojan::plugin_base *get_trrojan_plugin(void) {
 trrojan::opencl::plugin::~plugin(void) { }
 
 
+size_t trrojan::opencl::plugin::create_benchmarks(benchmark_list& dst) const
+{
+    //dst.push_back(std::make_shared<opencl_benchmark>());
+    return 1;
+}
+
 /*
  * trrojan::opencl::plugin::create_environments
  */
-void trrojan::opencl::plugin::create_environments(environment_list& dst) const
+size_t trrojan::opencl::plugin::create_environments(environment_list& dst) const
 {
     for (size_t i; i < environment::get_platform_cnt(); ++i)
     {

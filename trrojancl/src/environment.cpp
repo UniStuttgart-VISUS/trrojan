@@ -36,13 +36,10 @@ size_t trrojan::opencl::environment::get_platform_cnt()
     return platforms.size();
 }
 
-/*
- * trrojan::opencl::environment::get_devices
+/**
+ * @brief trrojan::opencl::environment::on_initialise
+ * @param cmdLine
  */
-void trrojan::opencl::environment::get_devices(device_list& dst)
-{
-}
-
 void trrojan::opencl::environment::on_initialise(const std::vector<std::string> &cmdLine)
 {
     cl_device_type type = CL_DEVICE_TYPE_ALL;

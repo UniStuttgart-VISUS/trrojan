@@ -3,7 +3,7 @@
 
 cmake_minimum_required(VERSION 3.1.0)
 
-find_package(OPENCL)
+find_package(OpenCL)
 
 set(IncludeDirectory "include")
 set(SourceDirectory "src")
@@ -23,5 +23,5 @@ if (${OpenCL_FOUND})
     add_library(trrojancl SHARED ${HeaderFiles} ${SourceFiles})
 
     target_link_libraries(trrojancl LINK_PUBLIC trrojancore)
-    target_link_libraries(trrojancl LINK_PUBLIC OpenCL_LIBRARY)
+    target_link_libraries(trrojancl LINK_PUBLIC ${OpenCL_LIBRARY})
 endif (${OpenCL_FOUND})
