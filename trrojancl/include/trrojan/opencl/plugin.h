@@ -26,8 +26,15 @@ namespace opencl {
 
         virtual ~plugin(void);
 
-        virtual size_t create_environments(environment_list& dst) const;
+        virtual size_t create_benchmarks(benchmark_list& dst) const;
 
+        ///
+        /// \brief Create one environment for each valid OpenCL platform that is found and
+        /// has at least one device available.
+        /// \param dst The list of environments.
+        /// \return The size of the list of environemnts.
+        ///
+        virtual size_t create_environments(environment_list& dst) const;
     };
 
 }

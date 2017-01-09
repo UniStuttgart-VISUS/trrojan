@@ -57,9 +57,21 @@ namespace trrojan {
         void crowbar() {
             configuration_set ec;
             plugin_base::benchmark_list bs;
-            for (auto p : this->plugins) {
+            plugin_base::environment_list es;
+
+            for (auto p : this->plugins)
+            {
                 p->create_benchmarks(bs);
+                p->create_environments(es);
             }
+
+            // iterate environments
+            for (auto e : es)
+            {
+                // TODO: iterate devices    (scripting interaface)
+                // TODO: iterate benchamrks (scripting interaface)
+            }
+
             for (auto b : bs) {
                 std::cout << "=== " << b->name() << " ===" << std::endl;
                 b->run(ec);

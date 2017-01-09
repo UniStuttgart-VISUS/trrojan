@@ -74,7 +74,7 @@ namespace trrojan {
         /// <para>The default implementation does nothing.</para>
         /// <para>This method should not throw!</para>
         /// </remarks>
-        virtual void on_deactivate(void) throw();
+        virtual void on_deactivate(void) noexcept;
 
         /// <summary>
         /// The <see cref="trrojan::executive" /> calls this method to undo
@@ -86,7 +86,7 @@ namespace trrojan {
         /// has been called. All resources should be freed in the call.</para>
         /// <para>This method should not throw!</para>
         /// </remarks>
-        virtual void on_finalise(void) throw();
+        virtual void on_finalise(void) noexcept;
 
         /// <summary>
         /// The <see cref="trrojan::executive" /> calls this method for one-time
@@ -103,6 +103,7 @@ namespace trrojan {
         /// <param name="cmdLine"> The command line of the application
         /// invocation.</param>
         virtual void on_initialise(const cmd_line& cmdLine);
+        virtual void on_initialize(const cmd_line& cmdLine) {on_initialise(cmdLine);}
 
     protected:
 

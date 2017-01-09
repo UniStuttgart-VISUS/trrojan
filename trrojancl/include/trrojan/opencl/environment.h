@@ -54,7 +54,7 @@ namespace opencl
     };
 
     /// <summary>
-    ///
+    /// OpenCL struct
     /// </summary>
     typedef struct OpenCL
     {
@@ -77,6 +77,11 @@ namespace opencl
         typedef environment_base::device_list device_list;
 
         /// <summary>
+        /// Returns the number of available OpenCL platforms.
+        /// </summary>
+        static size_t get_platform_cnt();
+
+        /// <summary>
         /// Initialises a new instance.
         /// </summary>
         inline environment(void) : environment_base("opencl") { }
@@ -86,16 +91,49 @@ namespace opencl
         /// </summary>
         virtual ~environment(void);
 
+        ///
+        /// \brief Get a list of available devices
+        /// \param dst device list
+        /// \return size
+        ///
         virtual size_t get_devices(device_list& dst);
 
-        virtual void on_initialise(const std::vector<std::string> &cmdLine);
+        ///
+        /// \brief on_initialise
+        /// \param cmdLine
+        ///
+        virtual void on_initialise(const std::vector<std::string> &cmdLine, const int platform_no = 0);
+        virtual void on_initialize(const std::vector<std::string> &cmdLine, const int platform_no = 0)
+        {
+            on_initialise(cmdLine, platform_no);
+        }
 
-//        virtual void on_finalise();
+        ///
+        /// \brief on_finalise
+        ///
+        virtual void on_finalise() noexcept;
 
-        /// <summary>
-        /// Returns the number of available OpenCL platforms.
-        /// </summary>
-        size_t get_platform_cnt();
+    private:
+
+        ///
+        /// \brief Create an OpenCL context with a specific device typy of a vendor.
+        /// \param type The device type (CPU, GPU, ACCELERATOR)
+        /// \param vendor The device vendor.
+        /// \return The selected OpenCL context.
+        /// \throws cl::Error of no context is found with the specified parameters.
+        ///
+        cl::Context create_context(cl_device_type type, opencl::vendor vendor, const int platform_no);
+
+        ///
+        /// \brief Get a OpenCL platform of a specific device type and vendor
+        /// \param type The device type (CPU, GPU, ACCELERATOR)
+        /// \param vendor The device vendor.
+        /// \return The selected OpenCL platform.
+        /// \throws cl::Error of no platform is found with the specified parameters.
+        ///
+        cl::Platform get_platform(cl_device_type type, opencl::vendor vendor, const int platform_no);
+
+        // OpenCL _opencl;
     };
 
 }
