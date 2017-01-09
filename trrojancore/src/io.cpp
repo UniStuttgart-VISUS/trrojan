@@ -14,7 +14,7 @@
 /*
  * trrojan::read_binary_file
  */
-std::vector<char> trrojan::read_binary_file(const char *path) {
+std::vector<char> TRROJANCORE_API trrojan::read_binary_file(const char *path) {
     if (path == nullptr) {
         throw std::invalid_argument("'path' must not be nullptr.");
     }
@@ -43,7 +43,7 @@ std::vector<char> trrojan::read_binary_file(const char *path) {
 /*
  * trrojan::read_text_file
  */
-std::string trrojan::read_text_file(const char *path) {
+std::string TRROJANCORE_API trrojan::read_text_file(const char *path) {
     if (path == nullptr) {
         throw std::invalid_argument("'path' must not be nullptr.");
     }
@@ -64,3 +64,60 @@ std::string trrojan::read_text_file(const char *path) {
 
     return retval;
 }
+
+
+/*
+ * trrojan::alt_directory_separator_char
+ */
+const char TRROJANCORE_API trrojan::alt_directory_separator_char = '/';
+
+
+/*
+ * trrojan::current_directory_name
+ */
+const std::string TRROJANCORE_API trrojan::current_directory_name(".");
+
+
+/*
+ * trrojan::directory_separator_char
+ */
+const char TRROJANCORE_API trrojan::directory_separator_char
+#ifdef _WIN32
+    = '\\';
+#else /* _WIN32 */
+    = '/';
+#endif /* _WIN32 */
+
+
+/*
+ * trrojan::extension_separator_char
+ */
+const char TRROJANCORE_API trrojan::extension_separator_char = '.';
+
+
+/*
+ * trrojan::parent_directory_name
+ */
+const std::string TRROJANCORE_API trrojan::parent_directory_name("..");
+
+
+/*
+ * trrojan::path_separator_char
+ */
+const char TRROJANCORE_API trrojan::path_separator_char
+#ifdef _WIN32
+    = ';';
+#else /* _WIN32 */
+    = ':';
+#endif /* _WIN32 */
+
+
+/*
+ * trrojan::volume_separator_char
+ */
+const char TRROJANCORE_API trrojan::volume_separator_char
+#ifdef __linux
+    = '/';
+#else /* __linux */
+    = ':';
+#endif /* __linux */

@@ -8,6 +8,7 @@
 #include <string>
 
 #include "trrojan/export.h"
+#include "trrojan/named_variant.h"
 #include "trrojan/variant.h"
 #include "trrojan/smbios_information.h"
 
@@ -57,6 +58,16 @@ namespace trrojan {
         static const std::string factor_mainboard;
 
         /// <summary>
+        /// Name of the built-in factor describing the operating system.
+        /// </summary>
+        static const std::string factor_os;
+
+        /// <summary>
+        /// Name of the built-in factor describing the operating system version.
+        /// </summary>
+        static const std::string factor_os_version;
+
+        /// <summary>
         /// Name of the built-in factor describing the memory hardware.
         /// </summary>
         static const std::string factor_ram;
@@ -73,9 +84,25 @@ namespace trrojan {
 
         variant get(const std::string& factor) const;
 
+        template<class I> inline void get(I oit) const {
+            oit++ = named_variant(factor_bios, this->bios());
+            oit++ = named_variant(factor_cpu, this->cpu());
+            oit++ = named_variant(factor_installed_memory, this->installed_memory());
+            oit++ = named_variant(factor_mainboard, this->mainboard());
+            oit++ = named_variant(factor_os, this->os());
+            oit++ = named_variant(factor_os_version, this->os_version());
+            oit++ = named_variant(factor_logical_cores, this->logical_cores());
+            oit++ = named_variant(factor_ram, this->ram());
+            oit++ = named_variant(factor_system_desc, this->system_desc());
+        }
+
         variant installed_memory(void) const;
 
         variant mainboard(void) const;
+
+        variant os(void) const;
+
+        variant os_version(void) const;
 
         variant logical_cores(void) const;
 

@@ -26,7 +26,7 @@ namespace opencl {
 
         virtual ~plugin(void);
 
-        virtual void create_environments(environment_list& dst) const;
+        virtual size_t create_environments(environment_list& dst) const;
 
     };
 

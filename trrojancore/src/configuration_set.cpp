@@ -5,6 +5,7 @@
 
 #include "trrojan/configuration_set.h"
 
+#include <cassert>
 #include <stdexcept>
 
 
@@ -24,7 +25,7 @@ void trrojan::configuration_set::add_factor(const factor& factor) {
             "factor with the given name.");
     }
 
-    this->factors.push_back(factor);
+    this->_factors.push_back(factor);
 }
 
 
@@ -35,27 +36,45 @@ bool trrojan::configuration_set::foreach_configuration(
         std::function<bool(const configuration&)> cb) const {
     bool retval = true;
 
-    if (!this->factors.empty() && cb) {
+    if (!this->_factors.empty() && cb) {
         size_t cntTests = 1;
         configuration config;
         std::vector<size_t> frequencies;
 
-        config.reserve(this->factors.size());
-        for (auto& f : this->factors) {
+        config.reserve(this->_factors.size());
+        for (auto& f : this->_factors) {
             frequencies.push_back(cntTests);
             cntTests *= f.size();
         }
 
         for (size_t i = 0; (i < cntTests) && retval; ++i) {
             config.clear();
-            for (size_t j = 0; j < this->factors.size(); ++j) {
-                auto ij = (i / frequencies[j]) % this->factors.size();
-                config.emplace_back(this->factors[j].name(),
-                    this->factors[j][ij]);
+            for (size_t j = 0; j < this->_factors.size(); ++j) {
+                auto ij = (i / frequencies[j]) % this->_factors.size();
+                config.emplace_back(this->_factors[j].name(),
+                    std::move(this->_factors[j][ij]));
             }
             retval = cb(config);
         }
     } /* end if (!this->factors.empty()) */
 
     return retval;
+}
+
+
+/*
+ * trrojan::configuration_set::merge
+ */
+void trrojan::configuration_set::merge(const configuration_set& other,
+        const bool overwrite) {
+    for (auto& f : other._factors) {
+        assert(f.size() > 0);
+        auto it = this->find_factor(f.name());
+        if (it != this->_factors.cend() && overwrite) {
+            this->_factors.erase(it);
+            this->_factors.push_back(f);
+        } else if (it == this->_factors.cend()) {
+            this->_factors.push_back(f);
+        }
+    }
 }

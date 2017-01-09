@@ -34,7 +34,7 @@ size_t trrojan::detail::factor_range<T>::size(void) const {
  * trrojan::detail::factor_range<T>::operator []
  */
 template<class T>
-const trrojan::variant& trrojan::detail::factor_range<T>::operator [](
+trrojan::variant trrojan::detail::factor_range<T>::operator [](
         const size_t i) const {
     if (i >= this->size()) {
         throw std::range_error("The factor does not contain the requested "

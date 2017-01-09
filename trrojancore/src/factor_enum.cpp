@@ -34,7 +34,7 @@ size_t trrojan::detail::factor_enum::size(void) const {
 /*
  * trrojan::detail::factor_enum::operator []
  */
-const trrojan::variant& trrojan::detail::factor_enum::operator [](
+trrojan::variant trrojan::detail::factor_enum::operator [](
         const size_t i) const {
     if (i >= this->size()) {
         throw std::range_error("The factor does not contain the requested "

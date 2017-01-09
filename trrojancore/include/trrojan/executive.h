@@ -53,6 +53,19 @@ namespace trrojan {
 
         executive operator =(const executive&) = delete;
 
+        // TODO: remove this
+        void crowbar() {
+            configuration_set ec;
+            plugin_base::benchmark_list bs;
+            for (auto p : this->plugins) {
+                p->create_benchmarks(bs);
+            }
+            for (auto b : bs) {
+                std::cout << "=== " << b->name() << " ===" << std::endl;
+                b->run(ec);
+            }
+        }
+
     private:
 
         /// <summary>

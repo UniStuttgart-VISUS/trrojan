@@ -45,11 +45,24 @@ namespace detail {
             return this->_name;
         }
 
-        /// <inheritdoc />
+        /// <summary>
+        /// Answer the number of different manifestations the factor has.
+        /// </summary>
+        /// <returns>The number of manifestations.</returns>
         virtual size_t size(void) const = 0;
 
-        /// <inheritdoc />
-        virtual const variant& operator [](const size_t i) const = 0;
+        /// <summary>
+        /// Answer a specific manifestation.
+        /// </summary>
+        /// <remarks>
+        /// The method returns a deep copy to allow implementations generating
+        /// factors on-the-fly. If we required a reference to be returned, this
+        /// would result in returning a reference to a temporary.
+        /// </remarks>
+        /// <param name="i"></param>
+        /// <returns>The <paramref name="i" />th manifestation.</returns>
+        /// <exception cref="std::range_error"></exception>
+        virtual trrojan::variant operator [](const size_t i) const = 0;
 
         /// <summary>
         /// Test for equality.

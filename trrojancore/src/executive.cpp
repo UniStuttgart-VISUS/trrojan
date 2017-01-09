@@ -5,13 +5,16 @@
 
 #include "trrojan/executive.h"
 
+#include <algorithm>
 #include <iostream>
+#include <iterator>
 #include <stdexcept>
 
 #ifndef _WIN32
 #include <dlfcn.h>
 #endif /* !_WIN32 */
 
+#include "trrojan/io.h"
 #include "trrojan/log.h"
 
 
@@ -34,15 +37,52 @@ trrojan::executive::~executive(void) {
  */
 void trrojan::executive::load_plugins(void) {
     try {
-        log::instance().write(log_level::debug, "%s: remove debugging code", "TODO");
-        auto p = plugin_dll::open(std::string("trrojancl") + plugin_dll::extension); // TODO: Enumerate!!!!
-        auto e = p.find_entry_point();
-        auto xx = plugin(e());
-        std::vector<environment> ee;
-        xx->create_environments(ee);
-        std::cout << "remove test code for " << xx->name() << std::endl;
+        std::vector<std::string> paths;
+
+        log::instance().write(log_level::verbose, "Considering plugins "
+            "from the current working directory.\n");
+        get_file_system_entries(std::back_inserter(paths), std::string("."),
+            false, trrojan::has_extension(plugin_dll::extension));
+
+#ifdef _WIN32
+        {
+            std::vector<char> mfn(MAX_PATH);
+            if (::GetModuleFileName(NULL, mfn.data(),
+                    static_cast<DWORD>(mfn.size()))) {
+                auto it = std::find(mfn.rbegin(), mfn.rend(),
+                    directory_separator_char);
+                auto p = std::string(mfn.begin(), it.base());
+                log::instance().write(log_level::verbose, "Considering plugins "
+                    "from the directory \"%s\" holding the executable.\n",
+                    p.c_str());
+                get_file_system_entries(std::back_inserter(paths), p,
+                    false, trrojan::has_extension(plugin_dll::extension));
+            }
+        }
+#endif /* _WIN32 */
+
+        log::instance().write(log_level::verbose, "Found %u potential "
+            "plugin(s).\n", paths.size());
+
+        for (auto& path : paths) {
+            auto dll  = plugin_dll::open(path);
+            auto ep = dll.find_entry_point();
+
+            if (ep != nullptr) {
+                log::instance().write(log_level::verbose, "Found a plugin "
+                    "entry point in \"%s\".\n", path.c_str());
+                auto plugin = trrojan::plugin(ep());
+                if (plugin != nullptr) {
+                    log::instance().write(log_level::verbose, "Found plugin "
+                        "\"%s\" in \"%s\".\n", plugin->name().c_str(),
+                        path.c_str());
+                    this->plugins.push_back(std::move(plugin));
+                    this->plugin_dlls.push_back(std::move(dll));
+                }
+            }
+        }
     } catch (std::exception ex) {
-        log::instance().write(ex);
+        log::instance().write_line(ex);
     }
 }
 

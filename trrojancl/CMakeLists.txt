@@ -3,6 +3,8 @@
 
 cmake_minimum_required(VERSION 3.1.0)
 
+find_package(OPENCL)
+
 set(IncludeDirectory "include")
 set(SourceDirectory "src")
 
@@ -17,7 +19,9 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTRROJANCL_EXPORTS")
 
 #set_source_files_properties(plugin.def PROPERTIES HEADER_FILE_ONLY TRUE)
 
-#add_library(trrojancl MODULE ${HeaderFiles} ${SourceFiles})
-add_library(trrojancl SHARED ${HeaderFiles} ${SourceFiles})
+if (${OpenCL_FOUND})
+    add_library(trrojancl SHARED ${HeaderFiles} ${SourceFiles})
 
-target_link_libraries(trrojancl LINK_PUBLIC trrojancore)
+    target_link_libraries(trrojancl LINK_PUBLIC trrojancore)
+    target_link_libraries(trrojancl LINK_PUBLIC OpenCL_LIBRARY)
+endif (${OpenCL_FOUND})

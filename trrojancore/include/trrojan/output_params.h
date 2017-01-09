@@ -1,0 +1,58 @@
+/// <copyright file="output_params.h" company="SFB-TRR 161 Quantitative Methods for Visual Computing">
+/// Copyright © 2017 SFB-TRR 161. Alle Rechte vorbehalten.
+/// </copyright>
+/// <author>Christoph Müller</author>
+
+#pragma once
+
+#include <memory>
+#include <string>
+
+#include "trrojan/export.h"
+
+
+namespace trrojan {
+
+    /// <summary>
+    /// Base class for output parameters, which define what a
+    /// <see cref="trrojan::output_base" />-based class should do.
+    /// </summary>
+    class TRROJANCORE_API basic_output_params {
+
+    public:
+
+        /// <summary>
+        /// Finalises the instance.
+        /// </summary>
+        virtual ~basic_output_params(void);
+
+        /// <summary>
+        /// Answer the path of the output file.
+        /// </summary>
+        /// <returns>The output location.</returns>
+        const std::string& path(void) const {
+            return this->_path;
+        }
+
+    protected:
+
+        /// <summary>
+        /// Initialises a new instance.
+        /// </summary>
+        inline basic_output_params(const std::string path) : _path(path) { }
+
+    private:
+
+        basic_output_params(const basic_output_params&) = delete;
+
+        basic_output_params& operator =(const basic_output_params&) = delete;
+
+        std::string _path;
+
+    };
+
+    /// <summary>
+    /// Output parameters.
+    /// </summary>
+    typedef std::shared_ptr<basic_output_params> output_params;
+}

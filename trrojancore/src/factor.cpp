@@ -22,7 +22,7 @@ trrojan::factor::factor(const factor& rhs) {
 /*
  * trrojan::factor::operator []
  */
-const trrojan::variant& trrojan::factor::operator [](const size_t i) const {
+trrojan::variant trrojan::factor::operator [](const size_t i) const {
     if (this->impl == nullptr) {
         throw std::range_error("The factor does not contain the requested "
             "manifestation.");

@@ -5,3 +5,5 @@
 /_build
 /bin/Debug
 /lib/Debug
+/bin/Release
+/lib/Release

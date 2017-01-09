@@ -9,8 +9,9 @@
 #include <string>
 #include <vector>
 
-#include "trrojan/export.h"
+#include "trrojan/cmd_line.h"
 #include "trrojan/device.h"
+#include "trrojan/export.h"
 
 
 namespace trrojan {
@@ -37,7 +38,14 @@ namespace trrojan {
         /// </summary>
         virtual ~environment_base(void);
 
-        virtual void get_devices(device_list& dst) = 0;
+        /// <summary>
+        /// Answer the (compute) devices the environment supports.
+        /// </summary>
+        /// <param name="dst">A <see cref="device_list" /> to append the
+        /// devices to.</param>
+        /// <returns>The number of devices which have been appended to
+        /// <paramref name="dst" />.</returns>
+        virtual size_t get_devices(device_list& dst) = 0;
 
         /// <summary>
         /// Gets the name of the execution environment.
@@ -94,7 +102,7 @@ namespace trrojan {
         /// </remarks>
         /// <param name="cmdLine"> The command line of the application
         /// invocation.</param>
-        virtual void on_initialise(const std::vector<std::string>& cmdLine);
+        virtual void on_initialise(const cmd_line& cmdLine);
 
     protected:
 
