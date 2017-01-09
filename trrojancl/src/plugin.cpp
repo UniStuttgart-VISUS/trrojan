@@ -25,6 +25,10 @@ trrojan::opencl::plugin::~plugin(void) { }
 /*
  * trrojan::opencl::plugin::create_environments
  */
-void trrojan::opencl::plugin::create_environments(environment_list& dst) const {
-    dst.push_back(std::make_shared<environment>());
+void trrojan::opencl::plugin::create_environments(environment_list& dst) const
+{
+    for (size_t i; i < environment::get_platform_cnt(); ++i)
+    {
+        dst.push_back(std::make_shared<environment>(environment()));
+    }
 }

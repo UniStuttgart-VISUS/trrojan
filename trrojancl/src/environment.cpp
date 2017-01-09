@@ -12,14 +12,6 @@
  */
 trrojan::opencl::environment::~environment(void) { }
 
-
-/*
- * trrojan::opencl::environment::get_devices
- */
-void trrojan::opencl::environment::get_devices(device_list& dst)
-{
-}
-
 /*
  *
  */
@@ -34,6 +26,13 @@ size_t trrojan::opencl::environment::get_platform_cnt()
     }
 
     return platforms.size();
+}
+
+/*
+ * trrojan::opencl::environment::get_devices
+ */
+void trrojan::opencl::environment::get_devices(device_list& dst)
+{
 }
 
 void trrojan::opencl::environment::on_initialise(const std::vector<std::string> &cmdLine)

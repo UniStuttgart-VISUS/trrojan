@@ -77,6 +77,11 @@ namespace opencl
         typedef environment_base::device_list device_list;
 
         /// <summary>
+        /// Returns the number of available OpenCL platforms.
+        /// </summary>
+        static size_t get_platform_cnt();
+
+        /// <summary>
         /// Initialises a new instance.
         /// </summary>
         inline environment(void) : environment_base("opencl") { }
@@ -91,11 +96,6 @@ namespace opencl
         virtual void on_initialise(const std::vector<std::string> &cmdLine);
 
 //        virtual void on_finalise();
-
-        /// <summary>
-        /// Returns the number of available OpenCL platforms.
-        /// </summary>
-        size_t get_platform_cnt();
     };
 
 }
