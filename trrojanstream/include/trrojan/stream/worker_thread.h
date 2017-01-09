@@ -1,7 +1,7 @@
 /// <copyright file="worker_thread.h" company="SFB-TRR 161 Quantitative Methods for Visual Computing">
-/// Copyright © 2016 SFB-TRR 161. Alle Rechte vorbehalten.
+/// Copyright ï¿½ 2016 SFB-TRR 161. Alle Rechte vorbehalten.
 /// </copyright>
-/// <author>Christoph Müller</author>
+/// <author>Christoph Mï¿½ller</author>
 
 #pragma once
 
@@ -65,7 +65,7 @@ namespace stream {
         /// <summary>
         /// The type of a problem to be processed by a thread.
         /// </summary>
-        typedef problem::pointer_type problem_type;
+        typedef trrojan::stream::problem::pointer_type problem_type;
 
         /// <summary>
         /// A type to express a thread's rank.
@@ -290,7 +290,7 @@ namespace stream {
         /// <summary>
         /// Stores the problem, which is shared between the threads.
         /// </summary>
-        problem_type problem;
+        problem_type _problem;
 
         /// <summary>
         /// The rank of the thread, which determines the offset
