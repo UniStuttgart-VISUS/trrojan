@@ -89,7 +89,11 @@ namespace trrojan {
         /// factors and to fill-in missing ones.
         /// </summary>
         /// <remarks>
-        /// It is safe to modfiy this while the benchmark is not being used.
+        /// <para>It is safe to modfiy this while the benchmark is not being
+        /// used.</para>
+        /// <para>Any factor in this configuration set which does not have a
+        /// manifestation is conisdered a required factor (the user must
+        /// provide at least one manifestation for it).</para>
         /// </remarks>
         trrojan::configuration_set _default_configs;
 

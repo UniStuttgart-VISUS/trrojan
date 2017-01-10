@@ -22,6 +22,8 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTRROJANCL_EXPORTS")
 if (${OpenCL_FOUND})
     add_library(trrojancl SHARED ${HeaderFiles} ${SourceFiles})
 
+	include_directories("${OpenCL_INCLUDE_DIR}")
+
     target_link_libraries(trrojancl LINK_PUBLIC trrojancore)
     target_link_libraries(trrojancl LINK_PUBLIC ${OpenCL_LIBRARY})
 endif (${OpenCL_FOUND})
