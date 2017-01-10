@@ -27,8 +27,33 @@ namespace trrojan {
 
         // TODO: define the interface.
 
-        //const std::string& name(void) const;
+        /// <summary>
+        /// Gets the name of the device.
+        /// </summary>
+        /// <returns>The name of the device (type).</returns>
+        inline const std::string& name(void) const {
+            return this->_name;
+        }
 
+        /// <summary>
+        /// Gets the unique id of the device.
+        /// </summary>
+        /// <returns>The unique id of the device.</returns>
+        inline const std::string& unique_id(void) const {
+            return this->_unique_id;
+        }
+
+    protected:
+
+        /// <summary>
+        /// The name (i.e. 'type') of the device.
+        /// </summary>
+        std::string _name;
+
+        /// <summary>
+        /// The unique id, specifying this unique device.
+        /// </summary>
+        std::string _unique_id;
     };
 
     /// <summary>

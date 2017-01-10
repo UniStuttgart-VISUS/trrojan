@@ -18,7 +18,15 @@ trrojan::opencl::environment::~environment(void) { }
  */
 size_t trrojan::opencl::environment::get_devices(device_list& dst)
 {
-    return 0;
+    for (auto cl_dev : _opencl.getInfo<CL_CONTEXT_DEVICES>())
+    {
+        trrojan::opencl::device d;
+        d.set_cl_device(cl_dev);
+        std::cout << d.name() << " " << d.unique_id() << std::endl;
+        //dst.push_back(std::static_pointer_cast<trrojan::device>(d));
+    }
+
+    return dst.size();
 }
 
 /*
@@ -104,12 +112,14 @@ cl::Context trrojan::opencl::environment::create_context(cl_device_type type,
     try
     {
         cl::Context context = cl::Context(type, cps);
+        _opencl = context;
         return context;
     }
     catch (cl::Error error)
     {
         throw cl::Error(1, "Failed to create OpenCL context.");
     }
+
 }
 
 

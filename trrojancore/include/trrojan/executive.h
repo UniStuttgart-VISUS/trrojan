@@ -68,6 +68,12 @@ namespace trrojan {
             // iterate environments
             for (auto e : es)
             {
+                std::vector<device> dst;
+                e->get_devices(dst);
+                for (auto d : dst)
+                {
+                    std::cout << d->name() << "  " << d->unique_id() << std::endl;
+                }
                 // TODO: iterate devices    (scripting interaface)
                 // TODO: iterate benchamrks (scripting interaface)
             }
