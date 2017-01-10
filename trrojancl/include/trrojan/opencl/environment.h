@@ -98,8 +98,12 @@ namespace opencl
     };
 
     /// <summary>
-    /// OpenCL environment class.
+    /// OpenCL environment and basic utility class.
     /// </summary>
+    /// <remarks>
+    /// This implementation is related and uses some code of Eric Smistad's OpenCL utilities:
+    /// https://www.eriksmistad.no/opencl-utilities/
+    /// </remarks>
     class TRROJANCL_API environment : public trrojan::environment_base
     {
 
