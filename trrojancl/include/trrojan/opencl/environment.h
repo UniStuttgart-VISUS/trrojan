@@ -22,6 +22,7 @@
     #include <CL/cl.hpp>
 
     #if _WIN32
+        #include <gl/gl.h>
     #else
         #include <GL/glx.h>
     #endif
