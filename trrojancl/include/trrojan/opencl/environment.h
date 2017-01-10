@@ -43,33 +43,55 @@ namespace opencl
     /// <summary>
     /// Garbage collector class for OpenCL memory objects.
     /// </summary>
-    class GC
+    class garbage_collector
     {
-        typedef std::shared_ptr<cl::Memory> cl_mem_ptr;
     public:
-        void add_mem_object(cl_mem_ptr mem);
-        void del_mem_object(cl_mem_ptr mem);
-        void del_all();
-        ~GC();
+        void add_mem_object(cl::Memory* mem)
+        {
+            mem_objects.insert(mem);
+        }
+
+        void del_mem_object(cl::Memory* mem)
+        {
+            mem_objects.erase(mem);
+            delete mem;
+            mem = NULL;
+        }
+
+        void del_all()
+        {
+            std::set<cl::Memory *>::iterator it;
+            for(it = mem_objects.begin(); it != mem_objects.end(); ++it)
+            {
+                cl::Memory* mem = *it;
+                delete (mem);
+                mem = NULL;
+            }
+            mem_objects.clear();
+        }
+
+        ~garbage_collector()
+        {
+            del_all();
+        }
+
     private:
-        std::set<cl_mem_ptr> mem_objects;
+        std::set<cl::Memory*> mem_objects;
     };
 
-    /// <summary>
-    /// OpenCL struct
-    /// </summary>
-    typedef struct OpenCL
+    struct properties
     {
+        cl::Platform platform;
+        std::vector<cl::Device> devices;
         cl::Context context;
         cl::CommandQueue queue;
         cl::Program program;
-        cl::Device device;
-        cl::Platform platform;
-        GC gc;
-    } OpenCL;
+
+        garbage_collector gc;
+    };
 
     /// <summary>
-    /// 
+    /// OpenCL environment class.
     /// </summary>
     class TRROJANCL_API environment : public trrojan::environment_base
     {
@@ -135,7 +157,10 @@ namespace opencl
         ///
         cl::Platform get_platform(cl_device_type type, opencl::vendor vendor, const int platform_no);
 
-        cl::Context _opencl;
+        ///
+        /// OpenCL properties
+        ///
+        properties _prop;
     };
 
 }

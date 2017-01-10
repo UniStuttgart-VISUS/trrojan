@@ -18,12 +18,13 @@ trrojan::opencl::environment::~environment(void) { }
  */
 size_t trrojan::opencl::environment::get_devices(device_list& dst)
 {
-    for (auto cl_dev : _opencl.getInfo<CL_CONTEXT_DEVICES>())
+    for (auto cl_dev : _prop.context.getInfo<CL_CONTEXT_DEVICES>())
     {
-        trrojan::opencl::device d;
+        opencl::device d;
         d.set_cl_device(cl_dev);
-        std::cout << d.name() << " " << d.unique_id() << std::endl;
-        //dst.push_back(std::static_pointer_cast<trrojan::device>(d));
+        _prop.devices.push_back(cl_dev);
+
+        dst.push_back(std::make_shared<opencl::device>(d));
     }
 
     return dst.size();
@@ -46,8 +47,7 @@ size_t trrojan::opencl::environment::get_platform_cnt()
 }
 
 /**
- * @brief trrojan::opencl::environment::on_initialise
- * @param cmdLine
+ * trrojan::opencl::environment::on_initialise
  */
 void trrojan::opencl::environment::on_initialise(const std::vector<std::string> &cmdLine,
                                                  const int platform_no)
@@ -111,15 +111,14 @@ cl::Context trrojan::opencl::environment::create_context(cl_device_type type,
 
     try
     {
-        cl::Context context = cl::Context(type, cps);
-        _opencl = context;
-        return context;
+        _prop.context = cl::Context(type, cps);
+        return _prop.context;
+//        return cl::Context(type, cps);
     }
     catch (cl::Error error)
     {
         throw cl::Error(1, "Failed to create OpenCL context.");
     }
-
 }
 
 
