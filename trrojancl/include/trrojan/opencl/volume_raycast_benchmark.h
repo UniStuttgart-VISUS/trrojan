@@ -32,8 +32,14 @@ namespace opencl
 
         inline volume_raycast_benchmark(void) : trrojan::benchmark_base("volume_raycast") { }
 
+        /// <summary>
+        /// Destructor.
+        /// </summary>
         virtual ~volume_raycast_benchmark(void);
 
+        /// <summary>
+        /// Overrides benchmark run method.
+        /// </summary>
         virtual result_set run(const configuration_set& configs);
 
     private:
