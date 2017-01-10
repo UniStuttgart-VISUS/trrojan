@@ -101,6 +101,7 @@ cl::Context trrojan::opencl::environment::create_context(cl_device_type type,
                                                          const int platform_no)
 {
     cl::Platform platform = get_platform(type, vendor, platform_no);
+    _prop.platform = platform;
 
     // Use the preferred platform and create a context
     cl_context_properties cps[] = {
@@ -113,7 +114,6 @@ cl::Context trrojan::opencl::environment::create_context(cl_device_type type,
     {
         _prop.context = cl::Context(type, cps);
         return _prop.context;
-//        return cl::Context(type, cps);
     }
     catch (cl::Error error)
     {

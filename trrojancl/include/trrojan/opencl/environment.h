@@ -144,7 +144,7 @@ namespace opencl
         /// \param type The device type (CPU, GPU, ACCELERATOR)
         /// \param vendor The device vendor.
         /// \return The selected OpenCL context.
-        /// \throws cl::Error of no context is found with the specified parameters.
+        /// \throws cl::Error if no context is found with the specified parameters.
         ///
         cl::Context create_context(cl_device_type type, opencl::vendor vendor, const int platform_no);
 
@@ -153,7 +153,7 @@ namespace opencl
         /// \param type The device type (CPU, GPU, ACCELERATOR)
         /// \param vendor The device vendor.
         /// \return The selected OpenCL platform.
-        /// \throws cl::Error of no platform is found with the specified parameters.
+        /// \throws cl::Error if no platform is found with the specified parameters.
         ///
         cl::Platform get_platform(cl_device_type type, opencl::vendor vendor, const int platform_no);
 
