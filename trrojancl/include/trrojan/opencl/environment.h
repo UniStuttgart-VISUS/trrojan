@@ -14,10 +14,17 @@
 
 #define __CL_ENABLE_EXCEPTIONS
 
-#if defined(__APPLE__) || defined(__MACOSX)
+#if defined(__APPLE__) || defined(__MACOSX) // untested
+    #define GL_SHARING_EXTENSION "cl_APPLE_gl_sharing"
     #include "OpenCL/cl.hpp"
 #else
+    #define GL_SHARING_EXTENSION "cl_khr_gl_sharing"
     #include <CL/cl.hpp>
+
+    #if _WIN32
+    #else
+        #include <GL/glx.h>
+    #endif
 #endif
 
 #include <string>
@@ -147,6 +154,21 @@ namespace opencl
         /// \throws cl::Error if no context is found with the specified parameters.
         ///
         cl::Context create_context(cl_device_type type, opencl::vendor vendor, const int platform_no);
+
+        /// <summary>
+        /// Create an OpenCL context with a specific device typy of a vendor with an OpenGL context.
+        /// Note that you need a valid OpenGL window from which you can derive the context.
+        /// </summary>
+        cl::Context create_CLGL_context(cl_device_type type,
+                                        opencl::vendor vendor,
+                                        const int platform_no);
+
+        /// <summary>
+        /// Returns a valid GLCL interoperation device if one exists.
+        /// Throws an OpenCL error otherwise.
+        /// </summary>
+        cl::Device get_valid_GLCL_device(cl::Platform platform,
+                                         cl_context_properties* properties);
 
         ///
         /// \brief Get a OpenCL platform of a specific device type and vendor

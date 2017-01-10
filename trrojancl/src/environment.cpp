@@ -122,6 +122,109 @@ cl::Context trrojan::opencl::environment::create_context(cl_device_type type,
 }
 
 
+cl::Context trrojan::opencl::environment::create_CLGL_context(cl_device_type type,
+                                                              opencl::vendor vendor,
+                                                              const int platform_no)
+{
+    // We need a valid window to create a shared context
+
+    cl::Platform platform = get_platform(type, vendor, platform_no);
+    std::vector<cl::Device> interop_device;
+
+#if defined(__APPLE__) || defined(__MACOSX)
+    // Apple (untested)
+    cl_context_properties cps[] = {
+       CL_CONTEXT_PROPERTY_USE_CGL_SHAREGROUP_APPLE,
+       (cl_context_properties)CGLGetShareGroup(CGLGetCurrentContext()),
+       0
+    };
+#else
+  #ifdef _WIN32
+      // Windows
+      cl_context_properties cps[] = {
+          CL_GL_CONTEXT_KHR,
+          (cl_context_properties)wglGetCurrentContext(),
+          CL_WGL_HDC_KHR,
+          (cl_context_properties)wglGetCurrentDC(),
+          CL_CONTEXT_PLATFORM,
+          (cl_context_properties)(platform)(),
+          0
+      };
+  #else
+      // Linux
+      cl_context_properties cps[] = {
+          CL_GL_CONTEXT_KHR,
+          (cl_context_properties)glXGetCurrentContext(),
+          CL_GLX_DISPLAY_KHR,
+          (cl_context_properties)glXGetCurrentDisplay(),
+          CL_CONTEXT_PLATFORM,
+          (cl_context_properties)(platform)(),
+          0
+      };
+  #endif
+#endif
+
+    try
+    {
+        platform.getDevices(type, &(_prop.devices));
+
+        // If there is more than one CL device, find out which one is associated with GL context.
+        if(_prop.devices.size() > 1u)
+        {
+#if !(defined(__APPLE__) || defined(__MACOSX))
+            interop_device.push_back(get_valid_GLCL_device(platform, cps));
+            _prop.context = cl::Context(interop_device, cps);
+#else
+            _prop.context = cl::Context(type, cps);
+#endif
+        }
+        else
+        {
+            _prop.context = cl::Context(type, cps);
+        }
+
+        return _prop.context;
+    }
+    catch(cl::Error error)
+    {
+        throw error;
+    }
+}
+
+
+cl::Device trrojan::opencl::environment::get_valid_GLCL_device(cl::Platform platform,
+                                                               cl_context_properties* properties)
+{
+    cl_device_id interop_device_id;
+
+    int status;
+    size_t device_size = 0;
+
+    // Load extension function call
+    clGetGLContextInfoKHR_fn glGetGLContextInfo_func =
+            (clGetGLContextInfoKHR_fn)clGetExtensionFunctionAddressForPlatform(NULL,
+                                                                               "clGetGLContextInfoKHR");
+
+    // Ask for the CL device associated with the GL context
+    status = glGetGLContextInfo_func(properties,
+                                     CL_CURRENT_DEVICE_FOR_GL_CONTEXT_KHR,
+                                     sizeof(cl_device_id),
+                                     &interop_device_id,
+                                     &device_size);
+
+    if(device_size == 0)
+    {
+        throw cl::Error(1,"No GLGL devices found for current platform");
+    }
+
+    if(status != CL_SUCCESS)
+    {
+        throw cl::Error(1, "Could not get CLGL interop device for the current platform. Failure occured during call to clGetGLContextInfoKHR.");
+    }
+
+    return cl::Device(interop_device_id);
+}
+
 cl::Platform trrojan::opencl::environment::get_platform(cl_device_type type,
                                                         opencl::vendor vendor,
                                                         const int platform_no)
@@ -181,7 +284,7 @@ cl::Platform trrojan::opencl::environment::get_platform(cl_device_type type,
             std::cout << "No platform of the specified vendor found. Trying other available platforms."
                       << std::endl;
         }
-        assert(platform_no < platforms.size());
+        assert(platform_no < static_cast<int>(platforms.size()));
         for (size_t i = platform_no; i < platforms.size(); ++i)
         {
             try
