@@ -9,6 +9,7 @@
 
 #include "trrojan/opencl/export.h"
 
+#include <tr1/unordered_set>
 
 namespace trrojan
 {
@@ -49,12 +50,14 @@ namespace opencl
         /// <summary>
         /// Setup the raycaster with the given configuration.
         /// </summary>
-        void setup_raycaster(const configuration &cfg);
+        void setup_raycaster(const configuration &cfg,
+                             const std::tr1::unordered_set<std::string> changed);
 
         /// <summary>
         /// Compose and generate the OpenCL kernel source based on the given configuration.
         /// </summary>
-        void compose_kernel(const configuration &cfg);
+        void compose_kernel(const configuration &cfg,
+                            const std::tr1::unordered_set<std::string> changed);
 
         /// <summary>
         /// Compile the OpenCL kernel source.
@@ -62,9 +65,29 @@ namespace opencl
         void build_kernel();
 
         /// <summary>
+        /// Update runtime kernel arguments.
+        /// </summary>
+        /// \param cfg
+        /// \param changed
+        void update_kernel_args(const configuration &cfg,
+                                const std::tr1::unordered_set<std::string> changed);
+
+        /// <summary>
         /// Run the OpenCL kernel.
         /// </summary>
         trrojan::result run_kernel();
+
+        /// <summary>
+        /// Vector containing the names of all factors that are relevent at build time
+        /// of the OpenCL kernel.
+        /// </summary>
+        std::vector<std::string> _kernel_build_factors;
+
+        /// <summary>
+        /// Vector containing the names of all factors that are relevent at run-time
+        /// of the OpenCL kernel.
+        /// </summary>
+        std::vector<std::string> _kernel_run_factors;
     };
 
 }

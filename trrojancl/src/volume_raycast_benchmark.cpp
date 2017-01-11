@@ -16,7 +16,7 @@ trrojan::opencl::volume_raycast_benchmark::volume_raycast_benchmark(void)
     // if no number of test iterations is specified, use a magic number
     this->_default_configs.add_factor(factor::from_manifestations("iterations", 5));
 
-    // volume and view properties
+    // volume and view properties -> basic config
     //
     // volume .dat file name is a required factor
     this->_default_configs.add_factor(factor::empty("volume_file_name"));
@@ -26,44 +26,68 @@ trrojan::opencl::volume_raycast_benchmark::volume_raycast_benchmark(void)
     this->_default_configs.add_factor(factor::empty("volume_res_z"));
     // data precision from .dat file
     this->_default_configs.add_factor(factor::empty("data_precision"));
-    this->_default_configs.add_factor(factor::from_manifestations("viewport_width",  1024));
-    this->_default_configs.add_factor(factor::from_manifestations("viewport_height", 1024));
-    this->_default_configs.add_factor(factor::from_manifestations("sample_precision", 1));
-    this->_default_configs.add_factor(factor::from_manifestations("step_size_factor", 0.5));
-    // transfer function file name, use a provided linear transfer function as default
-    this->_default_configs.add_factor(factor::from_manifestations("tff_file_name", "linear.tff"));
-    this->_default_configs.add_factor(factor::from_manifestations("view_rot_x", 0.0));
-    this->_default_configs.add_factor(factor::from_manifestations("view_rot_y", 0.0));
-    this->_default_configs.add_factor(factor::from_manifestations("view_rot_z", 0.0));
-    this->_default_configs.add_factor(factor::from_manifestations("view_pos_x", 0.0));
-    this->_default_configs.add_factor(factor::from_manifestations("view_pos_y", 0.0));
-    this->_default_configs.add_factor(factor::from_manifestations("view_pos_z",-2.0));
+    // transfer function file name, use a provided linear transfer function file as default
+    this->_default_configs.add_factor(factor::from_manifestations("tff_file_name",
+                                                                  std::string("linear.tff")));
 
-    // rendering modes
+    // camera setup -> kernel runtime factors
     //
+    this->_default_configs.add_factor(factor::from_manifestations("viewport_width",  1024));
+    _kernel_run_factors.push_back("viewport_width");
+    this->_default_configs.add_factor(factor::from_manifestations("viewport_height", 1024));
+    _kernel_run_factors.push_back("viewport_height");
+    this->_default_configs.add_factor(factor::from_manifestations("step_size_factor", 0.5));
+    _kernel_run_factors.push_back("step_size_factor");
+    this->_default_configs.add_factor(factor::from_manifestations("view_rot_x", 0.0));
+    _kernel_run_factors.push_back("view_rot_x");
+    this->_default_configs.add_factor(factor::from_manifestations("view_rot_y", 0.0));
+    _kernel_run_factors.push_back("view_rot_y");
+    this->_default_configs.add_factor(factor::from_manifestations("view_rot_z", 0.0));
+    _kernel_run_factors.push_back("view_rot_z");
+    this->_default_configs.add_factor(factor::from_manifestations("view_pos_x", 0.0));
+    _kernel_run_factors.push_back("view_pos_x");
+    this->_default_configs.add_factor(factor::from_manifestations("view_pos_y", 0.0));
+    _kernel_run_factors.push_back("view_pos_y");
+    this->_default_configs.add_factor(factor::from_manifestations("view_pos_z",-2.0));
+    _kernel_run_factors.push_back("view_pos_z");
+
+    // rendering modes -> kernel build factors
+    //
+    // sample precision in bytes
+    this->_default_configs.add_factor(factor::from_manifestations("sample_precision", 1));
+    _kernel_build_factors.push_back("sample_precision");
     // use linear interpolation (not nearest neighbor interpolation)
     this->_default_configs.add_factor(factor::from_manifestations("use_lerp", true));
+    _kernel_build_factors.push_back("use_lerp");
     // use early ray termination
     this->_default_configs.add_factor(factor::from_manifestations("use_ERT", true));
+    _kernel_build_factors.push_back("use_ERT");
     // make a transfer function lookups
     this->_default_configs.add_factor(factor::from_manifestations("use_tff", true));
+    _kernel_build_factors.push_back("use_tff");
     // use direct volume rendering (not inderect aka iso-surface rendering)
     this->_default_configs.add_factor(factor::from_manifestations("use_dvr", true));
+    _kernel_build_factors.push_back("use_dvr");
     // shuffle ray IDs pseudo randomly
     this->_default_configs.add_factor(factor::from_manifestations("shuffle", false));
+    _kernel_build_factors.push_back("shuffle");
     // use a linear buffer as volume data structure (instead of a texture)
     this->_default_configs.add_factor(factor::from_manifestations("use_buffer", false));
+    _kernel_build_factors.push_back("use_buffer");
     // use a simple illumination technique
     this->_default_configs.add_factor(factor::from_manifestations("use_illumination", false));
+    _kernel_build_factors.push_back("use_illumination");
     // use an orthographic camera projection (instead of a perspective one)
     this->_default_configs.add_factor(factor::from_manifestations("use_ortho_proj", false));
+    _kernel_build_factors.push_back("use_ortho_proj");
 
     // debug and misc testing configurations
     //
-    // output a rendered image to file (PNG)
+    // output a rendered image to file (PNG) -> basic config
     this->_default_configs.add_factor(factor::from_manifestations("img_output", false));
-    // count all samples taken along rays
+    // count all samples taken along rays -> kernel build factor
     this->_default_configs.add_factor(factor::from_manifestations("count_samples", false));
+    _kernel_build_factors.push_back("count_samples");
     // perform a test for memory patterns
     // this->_default_configs.add_factor(factor::from_manifestations("test_memory_patterns", false));
     // pixel offset
@@ -80,12 +104,12 @@ trrojan::opencl::volume_raycast_benchmark::~volume_raycast_benchmark(void)
 
 
 /*
- *
+ * trrojan::opencl::volume_raycast_benchmark::run
  */
 trrojan::result_set trrojan::opencl::volume_raycast_benchmark::run(
         const configuration_set& configs)
 {
-    std::vector<std::string> changed;
+    std::tr1::unordered_set<std::string> changed;
     result_set retval;
 
     // Check that caller has provided all required factors.
@@ -98,44 +122,71 @@ trrojan::result_set trrojan::opencl::volume_raycast_benchmark::run(
     cs.foreach_configuration([&](const trrojan::configuration& cs)
     {
         changed.clear();
-        this->check_changed_factors(cs, std::back_inserter(changed));
+        this->check_changed_factors(cs, std::inserter(changed, changed.begin()));
         for (auto& f : cs)
         {
             std::cout << f << std::endl;
         }
         std::cout << std::endl;
 
+        // change the setup according to changed factors
+        // relevant factors:
+        //  volume_file_name, data_precision, tff_file_name
+        setup_raycaster(cs, changed);
 
-        setup_raycaster(cs);
+        // compose the OpenCL kernel according to the changed factors,
+        // if at least one relevant factor changed
+        // relavant factors:
+        //  sample_precision, use_lerp, use_ERT, use_tff, use_dvr, shuffle, use_buffer,
+        //  use_illumination, count_samples
+        if (std::any_of(_kernel_build_factors.begin(), _kernel_build_factors.end(),
+                        [&](std::string s){return changed.count(s);}))
+        {
+            compose_kernel(cs, changed);
+            // build the kernel file
+            build_kernel();
+        }
 
-        compose_kernel(cs);
-
-        build_kernel();
-
+        // run the OpenCL kernel, i.e. the actual test
+        // relevant factors (kernel arguments):
+        //  viewport_, view_rot_, view_pos_, sample_precision, step_size_factor
+        if (std::any_of(_kernel_run_factors.begin(), _kernel_run_factors.end(),
+                         [&](std::string s){return changed.count(s);}))
+        {
+            update_kernel_args(cs, changed);
+        }
 
         retval.push_back(this->run_kernel());
         return true;
     });
 
-    return result_set();
+    return retval;
 }
 
 
 /*
  * setup volume raycaster
  */
-void trrojan::opencl::volume_raycast_benchmark::setup_raycaster(
-        const trrojan::configuration &cfg)
+void trrojan::opencl::volume_raycast_benchmark::setup_raycaster(const trrojan::configuration &cfg,
+                                                                const std::tr1::unordered_set<std::string> changed)
 {
     // TODO
+    if (changed.count("volume_file_name") || changed.count("data_precision"))
+    {
+        //load_volume_data(cfg.find());
+    }
+    if (changed.count("tff_file_name"))
+    {
+        //load_transfer_function(  );
+    }
 }
 
 
 /*
  * Compose the raycastig kernel source
  */
-void trrojan::opencl::volume_raycast_benchmark::compose_kernel(
-        const trrojan::configuration &cfg)
+void trrojan::opencl::volume_raycast_benchmark::compose_kernel(const trrojan::configuration &cfg,
+                                                               const std::tr1::unordered_set<std::string> changed)
 {
     // TODO
 }
@@ -148,6 +199,17 @@ void trrojan::opencl::volume_raycast_benchmark::build_kernel()
 {
     // TODO
 }
+
+
+/**
+ * trrojan::opencl::volume_raycast_benchmark::update_kernel_args
+ */
+void trrojan::opencl::volume_raycast_benchmark::update_kernel_args(const trrojan::configuration &cfg,
+                                                                   const std::tr1::unordered_set<std::string> changed)
+{
+    // TODO
+}
+
 
 /**
  * trrojan::opencl::volume_raycast_benchmark::run_kernel
