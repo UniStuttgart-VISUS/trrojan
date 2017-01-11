@@ -57,6 +57,11 @@ namespace trrojan {
         empty,
 
         /// <summary>
+        /// The variant holds a Boolean value.
+        /// </summary>
+        boolean,
+
+        /// <summary>
         /// The variant holds a signed 8-bit integer.
         /// </summary>
         int8,
@@ -143,6 +148,7 @@ namespace detail {
     /// initialisation and finalisation on behalf of the union.
     /// </remarks>
     union variant {
+        bool val_boolean;
         std::int8_t val_int8;
         std::int16_t val_int16;
         std::int32_t val_int32;
@@ -176,12 +182,12 @@ namespace detail {
     /// <remarks>
     /// New types in <see cref="trrojan::variant_type" /> must be added here.
     /// </remarks>
-    typedef variant_type_list_t<variant_type::int8, variant_type::int16,
-        variant_type::int32, variant_type::int64, variant_type::uint8,
-        variant_type::uint16, variant_type::uint32, variant_type::uint64,
-        variant_type::float32, variant_type::float64, variant_type::string,
-        variant_type::wstring, variant_type::device, variant_type::environment
-        /* Add new members here. */>
+    typedef variant_type_list_t<variant_type::boolean, variant_type::int8,
+        variant_type::int16, variant_type::int32, variant_type::int64,
+        variant_type::uint8, variant_type::uint16, variant_type::uint32,
+        variant_type::uint64, variant_type::float32, variant_type::float64,
+        variant_type::string, variant_type::wstring, variant_type::device,
+        variant_type::environment /* Add new members here. */>
         variant_type_list;
 
 } /* end namespace detail */
@@ -209,40 +215,44 @@ namespace detail {
     /// </remarks>
     template<class T> struct TRROJANCORE_API variant_reverse_traits { };
 
-#define __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(t0, t1)                         \
-    template<> struct TRROJANCORE_API variant_type_traits<variant_type::t0> {  \
-        typedef t1 type;                                                       \
-        inline static t1 *get(detail::variant& v) {                            \
-            return &v.val_##t0;                                                \
+#define __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(t)                              \
+    template<> struct TRROJANCORE_API variant_type_traits<variant_type::t> {   \
+        typedef decltype(trrojan::detail::variant::val_##t) type;              \
+        inline static type *get(detail::variant& v) {                          \
+            return &v.val_##t;                                                 \
         }                                                                      \
-        inline static const t1 *get(const detail::variant& v) {                \
-            return &v.val_##t0;                                                \
+        inline static const type *get(const detail::variant& v) {              \
+            return &v.val_##t;                                                 \
         }                                                                      \
     };                                                                         \
-    template<> struct TRROJANCORE_API variant_reverse_traits<t1> {             \
-        static const variant_type type = variant_type::t0;                     \
-        inline static t1 *get(detail::variant& v) {                            \
-            return &v.val_##t0;                                                \
+    template<> struct TRROJANCORE_API variant_reverse_traits<                  \
+            decltype(trrojan::detail::variant::val_##t)> {                     \
+        static const variant_type type = variant_type::t;                      \
+        inline static decltype(trrojan::detail::variant::val_##t) *get(        \
+                detail::variant& v) {                                          \
+            return &v.val_##t;                                                 \
         }                                                                      \
-        inline static const t1 *get(const detail::variant& v) {                \
-            return &v.val_##t0;                                                \
+        inline static const decltype(trrojan::detail::variant::val_##t) *get(  \
+                const detail::variant& v) {                                    \
+            return &v.val_##t;                                                 \
         }                                                                      \
     }
 
-    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(int8, std::int8_t);
-    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(int16, std::int16_t);
-    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(int32, std::int32_t);
-    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(int64, std::int64_t);
-    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(uint8, std::uint8_t);
-    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(uint16, std::uint16_t);
-    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(uint32, std::uint32_t);
-    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(uint64, std::uint64_t);
-    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(float32, float);
-    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(float64, double);
-    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(string, std::string);
-    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(wstring, std::wstring);
-    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(device, trrojan::device);
-    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(environment, trrojan::environment);
+    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(boolean);
+    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(int8);
+    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(int16);
+    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(int32);
+    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(int64);
+    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(uint8);
+    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(uint16);
+    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(uint32);
+    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(uint64);
+    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(float32);
+    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(float64);
+    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(string);
+    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(wstring);
+    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(device);
+    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(environment);
     // Add new specialisations here here.
 
 #undef __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS

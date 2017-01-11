@@ -4,6 +4,7 @@
 cmake_minimum_required(VERSION 3.1.0)
 
 find_package(OpenCL)
+find_package(OpenGL)
 
 set(IncludeDirectory "include")
 set(SourceDirectory "src")
@@ -19,11 +20,12 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTRROJANCL_EXPORTS")
 
 #set_source_files_properties(plugin.def PROPERTIES HEADER_FILE_ONLY TRUE)
 
-if (${OpenCL_FOUND})
+if (${OpenCL_FOUND} AND ${OPENGL_FOUND})
     add_library(trrojancl SHARED ${HeaderFiles} ${SourceFiles})
 
-	include_directories("${OpenCL_INCLUDE_DIR}")
+    include_directories("${OpenCL_INCLUDE_DIR}")
 
     target_link_libraries(trrojancl LINK_PUBLIC trrojancore)
     target_link_libraries(trrojancl LINK_PUBLIC ${OpenCL_LIBRARY})
-endif (${OpenCL_FOUND})
+    target_link_libraries(trrojancl LINK_PUBLIC ${OPENGL_gl_LIBRARY})
+endif (${OpenCL_FOUND} AND ${OPENGL_FOUND})
