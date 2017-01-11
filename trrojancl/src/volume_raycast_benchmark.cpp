@@ -168,12 +168,24 @@ void trrojan::opencl::volume_raycast_benchmark::setup_raycaster(const trrojan::c
     // TODO
     if (changed.count("volume_file_name") || changed.count("data_precision"))
     {
-        //load_volume_data(cfg.find());
+        auto it = std::find_if(cfg.begin(), cfg.end(),
+                           [](const named_variant& el){ return el.name() == "volume_file_name";});
+        it->name();
+        load_volume_data(it->value());
     }
     if (changed.count("tff_file_name"))
     {
         //load_transfer_function(  );
     }
+}
+
+
+/**
+ * trrojan::opencl::volume_raycast_benchmark::load_volume_data
+ */
+void trrojan::opencl::volume_raycast_benchmark::load_volume_data(const std::string dat_file)
+{
+    std::cout << "Loading volume data defined in " << dat_file << std::endl;
 }
 
 
@@ -184,6 +196,7 @@ void trrojan::opencl::volume_raycast_benchmark::compose_kernel(const trrojan::co
                                                                const std::tr1::unordered_set<std::string> changed)
 {
     // TODO
+
 }
 
 

@@ -58,6 +58,13 @@ namespace opencl
                              const std::tr1::unordered_set<std::string> changed);
 
         /// <summary>
+        /// Load volume data based on information from the given .dat file.
+        /// </summary>
+        /// <param name="dat_file">Name of the .dat-file that contains the information
+        /// on the volume data.</param>
+        void load_volume_data(const std::string dat_file);
+
+        /// <summary>
         /// Compose and generate the OpenCL kernel source based on the given configuration.
         /// </summary>
         void compose_kernel(const configuration &cfg,
