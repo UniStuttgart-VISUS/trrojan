@@ -67,6 +67,8 @@ namespace trrojan {
         /// are specified in the configuration set.</exception>
         virtual result_set run(const configuration_set& configs) = 0;
 
+        virtual result run(const configuration& config) = 0;
+
         // TODO: define the interface.
 
     protected:
@@ -78,11 +80,34 @@ namespace trrojan {
             : _default_configs(default_configs), _name(name) { }
 
         /// <summary>
+        /// Compares the given configuration to the last configuration and
+        /// returns the names of the factors that have been changed.
+        /// </summary>
+        /// <remarks>
+        /// The new configuration is directly saved (if
+        /// <paramref name="update_last" /> is <c>true</c>) as reference for the
+        /// next call to this function, ie the new call with the same parameter
+        /// will yield no change.
+        /// </remarks>
+        /// <param name="new_config">The new configuration to be tested and
+        /// stored as reference for the next call if
+        /// <paramref name="update_last" /> is set.</param>
+        /// <param name="oit">An output iterator for <see cref="std::string" />.
+        /// </param>
+        /// <param name="update_last">Controls whether the new configuration is
+        /// remembered as last configuration (the default) or not.</param>
+        /// <tparam name="I">The output iterator type.</tparam>
+        /// <returns><c>true</c> if any factor has changed, <c>false</c>
+        /// otherwise.</returns>
+        template<class I>
+        bool check_changed_factors(const trrojan::configuration& new_config,
+            I oit, const bool update_last = true);
+
+        /// <summary>
         /// Check whether the given configuration set has all required factors
         /// or raise an exception.
         /// </summary>
         void check_required_factors(const trrojan::configuration_set& cs) const;
-
 
         /// <summary>
         /// The default configuration set which is used to find required
@@ -99,7 +124,17 @@ namespace trrojan {
 
     private:
 
+        /// <summary>
+        /// Allows for preserving the last configuration in order to determine
+        /// which of the factors have changed.
+        /// </summary>
+        trrojan::configuration _last_config;
+
+        /// <summary>
+        /// The name of the benchmark.
+        /// </summary>
         std::string _name;
+
     };
 
     /// <summary>
@@ -107,3 +142,5 @@ namespace trrojan {
     /// </summary>
     typedef std::shared_ptr<benchmark_base> benchmark;
 }
+
+#include "trrojan/benchmark.inl"

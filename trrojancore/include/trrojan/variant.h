@@ -274,7 +274,7 @@ namespace detail {
     /// </summary>
     template<variant_type T> struct copy_to {
         typedef typename variant_type_traits<T>::type type;
-        static void invoke(type& v, trrojan::variant& target);
+        static void invoke(const type& v, trrojan::variant& target);
     };
 
     /// <summary>

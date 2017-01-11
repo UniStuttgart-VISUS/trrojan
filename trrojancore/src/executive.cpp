@@ -65,10 +65,14 @@ void trrojan::executive::load_plugins(void) {
             "plugin(s).\n", paths.size());
 
         for (auto& path : paths) {
-            auto dll  = plugin_dll::open(path);
-            auto ep = dll.find_entry_point();
+            try {
+                auto dll = plugin_dll::open(path);
+                auto ep = dll.find_entry_point();
+                if (ep == nullptr) {
+                    throw std::runtime_error("Plugin entry point was not "
+                        "found.");
+                }
 
-            if (ep != nullptr) {
                 log::instance().write(log_level::verbose, "Found a plugin "
                     "entry point in \"%s\".\n", path.c_str());
                 auto plugin = trrojan::plugin(ep());
@@ -79,9 +83,11 @@ void trrojan::executive::load_plugins(void) {
                     this->plugins.push_back(std::move(plugin));
                     this->plugin_dlls.push_back(std::move(dll));
                 }
+            } catch (std::exception& ex) {
+                log::instance().write_line(ex);
             }
         }
-    } catch (std::exception ex) {
+    } catch (std::exception& ex) {
         log::instance().write_line(ex);
     }
 }
