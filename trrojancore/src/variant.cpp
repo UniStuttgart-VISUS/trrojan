@@ -12,7 +12,6 @@
 #include <wchar.h>
 
 
-
 /*
  * trrojan::variant::~variant
  */
