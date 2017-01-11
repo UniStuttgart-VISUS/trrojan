@@ -9,7 +9,11 @@
 
 #include "trrojan/opencl/export.h"
 
-#include <tr1/unordered_set>
+#ifdef _WIN32
+    #include <unordered_map>
+#else
+    #include <tr1/unordered_set>
+#endif
 
 namespace trrojan
 {

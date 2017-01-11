@@ -129,16 +129,11 @@ trrojan::result_set trrojan::opencl::volume_raycast_benchmark::run(
         }
         std::cout << std::endl;
 
-        // change the setup according to changed factors
-        // relevant factors:
-        //  volume_file_name, data_precision, tff_file_name
+        // change the setup according to changed factors that are relevant
         setup_raycaster(cs, changed);
 
         // compose the OpenCL kernel according to the changed factors,
         // if at least one relevant factor changed
-        // relavant factors:
-        //  sample_precision, use_lerp, use_ERT, use_tff, use_dvr, shuffle, use_buffer,
-        //  use_illumination, count_samples
         if (std::any_of(_kernel_build_factors.begin(), _kernel_build_factors.end(),
                         [&](std::string s){return changed.count(s);}))
         {
@@ -147,15 +142,15 @@ trrojan::result_set trrojan::opencl::volume_raycast_benchmark::run(
             build_kernel();
         }
 
-        // run the OpenCL kernel, i.e. the actual test
-        // relevant factors (kernel arguments):
-        //  viewport_, view_rot_, view_pos_, sample_precision, step_size_factor
+        // update the OpenCL kernel arguments according to the changed factors,
+        // if at least one relevant factor changed
         if (std::any_of(_kernel_run_factors.begin(), _kernel_run_factors.end(),
                          [&](std::string s){return changed.count(s);}))
         {
             update_kernel_args(cs, changed);
         }
 
+        // run the OpenCL kernel, i.e. the actual test
         retval.push_back(this->run_kernel());
         return true;
     });
