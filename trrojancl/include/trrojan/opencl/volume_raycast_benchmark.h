@@ -43,7 +43,6 @@ namespace opencl
         virtual result_set run(const configuration_set& configs);
 
     private:
-
         /// <summary>
         /// Setup the raycaster with the given configuration.
         /// </summary>

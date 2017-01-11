@@ -20,7 +20,7 @@ trrojan::result_set trrojan::opencl::volume_raycast_benchmark::run(
     this->check_required_factors(configs);
     auto cs = configs;
 
-    /* configs:
+    /* _default_configs:
      *
      * - uint: # test repetitions                   5
      *
