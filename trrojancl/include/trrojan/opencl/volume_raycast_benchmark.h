@@ -30,7 +30,10 @@ namespace opencl
 
     public:
 
-        inline volume_raycast_benchmark(void) : trrojan::benchmark_base("volume_raycast") { }
+        /// <summary>
+        /// Constructor. Default config is defined here.
+        /// </summary>
+        volume_raycast_benchmark(void);
 
         /// <summary>
         /// Destructor.
@@ -40,18 +43,18 @@ namespace opencl
         /// <summary>
         /// Overrides benchmark run method.
         /// </summary>
-        virtual result_set run(const configuration_set& configs);
+        virtual result_set run(const configuration_set &configs);
 
     private:
         /// <summary>
         /// Setup the raycaster with the given configuration.
         /// </summary>
-        void setup_raycaster(const configuration_set& configs);
+        void setup_raycaster(const configuration &cfg);
 
         /// <summary>
         /// Compose and generate the OpenCL kernel source based on the given configuration.
         /// </summary>
-        void compose_kernel(const configuration_set& configs);
+        void compose_kernel(const configuration &cfg);
 
         /// <summary>
         /// Compile the OpenCL kernel source.
@@ -61,7 +64,7 @@ namespace opencl
         /// <summary>
         /// Run the OpenCL kernel.
         /// </summary>
-        void run_kernel();
+        trrojan::result run_kernel();
     };
 
 }
