@@ -10,7 +10,7 @@
 #include "trrojan/opencl/export.h"
 
 #ifdef _WIN32
-    #include <unordered_map>
+    #include <unordered_set>
 #else
     #include <tr1/unordered_set>
 #endif
