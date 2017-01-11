@@ -7,6 +7,7 @@
 
 #include "trrojan/benchmark.h"
 
+#include <algorithm>
 #include <atomic>
 #include <memory>
 
@@ -35,13 +36,17 @@ namespace stream {
 
         static const std::string access_pattern_interleaved;
 
-        inline stream_benchmark(void) : trrojan::benchmark_base("stream") { }
+        stream_benchmark(void);
 
         virtual ~stream_benchmark(void);
 
-        virtual result_set run(const configuration_set& configs);
+        virtual trrojan::result_set run(const configuration_set& configs);
+
+        virtual trrojan::result run(const configuration& config);
 
     private:
+
+        //bool run0(const trrojan::configuration& cfg);
 
     };
 

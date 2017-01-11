@@ -39,6 +39,11 @@ namespace trrojan {
         /// <summary>
         /// Gets the unique id of the device.
         /// </summary>
+        /// <remarks>
+        /// The unique identifier is implementation-defined and might
+        /// only be unique on the current machine and using the current
+        /// executable.
+        /// </remarks>
         /// <returns>The unique id of the device.</returns>
         inline const std::string& unique_id(void) const {
             return this->_unique_id;

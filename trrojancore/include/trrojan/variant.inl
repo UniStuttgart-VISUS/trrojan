@@ -8,7 +8,8 @@
  * trrojan::detail::copy_to::invoke
  */
 template<trrojan::variant_type T>
-void trrojan::detail::copy_to<T>::invoke(type& v, trrojan::variant& target) {
+void trrojan::detail::copy_to<T>::invoke(const type& v,
+        trrojan::variant& target) {
     target.set(v);
 }
 

@@ -53,6 +53,11 @@ int main(const int argc, const char **argv) {
     auto fStepSizes = trrojan::factor::from_manifestations("StepSize", { 0.75f, 1.0f, 2.0f });
     auto fVolumes = trrojan::factor::from_manifestations("Volume", { std::string("chameleon.raw "), std::string("nova.raw") });
 
+    {
+        trrojan::variant var1(std::string("hugo"));
+        trrojan::variant var2 = var1;
+    }
+
     trrojan::configuration_set cfgs;
     cfgs.add_factor(fVolumeSizes);
     cfgs.add_factor(fStepSizes);
