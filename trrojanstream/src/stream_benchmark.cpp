@@ -55,7 +55,9 @@ trrojan::stream::stream_benchmark::stream_benchmark(void)
     this->_default_configs.add_factor(factor::from_manifestations(
         "threads", { 1u, lc }));
 
-    //this->_default_configs.add_factor(factor::empty("hurz"));
+    // If no problem size is given, test all all of them.
+    this->_default_configs.add_factor(factor::from_manifestations(
+        "problem_size", worker_thread::problem_sizes::to_vector()));
 }
 
 

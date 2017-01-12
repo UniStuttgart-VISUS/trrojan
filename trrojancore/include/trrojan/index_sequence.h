@@ -9,6 +9,7 @@
 
 #include <cstdint>
 #include <type_traits>
+#include <vector>
 
 
 namespace trrojan {
@@ -33,8 +34,15 @@ namespace trrojan {
         /// <summary>
         /// Answer the number of elements in <tparamref name="V" />.
         /// </summary>
-        static constexpr size_t size() noexcept {
+        static constexpr size_t size(void) noexcept {
             return (sizeof...(V));
+        }
+
+        /// <summary>
+        /// Answer the elements of the sequence.
+        /// </summary>
+        static constexpr std::vector<T> to_vector(void) {
+            return { V... };
         }
     };
 
