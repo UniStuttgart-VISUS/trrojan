@@ -1,7 +1,7 @@
 /// <copyright file="plugin.cpp" company="SFB-TRR 161 Quantitative Methods for Visual Computing">
-/// Copyright � 2016 SFB-TRR 161. Alle Rechte vorbehalten.
+/// Copyright (C) 2016 - 2017 SFB-TRR 161. Alle Rechte vorbehalten.
 /// </copyright>
-/// <author>Christoph M�ller</author>
+/// <author>Christoph Müller</author>
 
 #include "trrojan/stream/worker_thread.h"
 
@@ -139,7 +139,11 @@ void *trrojan::stream::worker_thread::thunk(void *param) {
     auto that = static_cast<worker_thread *>(param);
     assert(that != nullptr);
     assert(that->_problem != nullptr);
-    scalar_type_dispatch<dispatch>(that->_problem->scalar_type(), that);
+    that->dispatch(scalar_type_list(),
+        that->_problem->scalar_type(),
+        that->_problem->access_pattern(),
+        that->_problem->size(),
+        that->_problem->task_type());
     return 0;
 }
 
@@ -154,8 +158,8 @@ void trrojan::stream::worker_thread::synchronise(const int barrierId) {
     assert(this->_problem != nullptr);
     assert(INT_MAX / this->_problem->parallelism() > barrierId);
     auto& barrier = *this->barrier;
-    int expected = (barrierId + 1) * static_cast<int>(
-        this->_problem->parallelism());
+    auto expected = static_cast<int>(this->_problem->parallelism());
+    expected *= (barrierId + 1);
     ++barrier;
     while (barrier - barrierId < 0);    // TODO: Should yield if too many threads?
 }

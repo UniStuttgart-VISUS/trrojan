@@ -145,7 +145,7 @@ namespace detail {
     /// <para>The union defines an empty default constructor and an empty
     /// destructor, which results in its members being treated like
     /// uninitialised memory. The <see cref="trrojan::variant" /> must handle
-    /// initialisation and finalisation on behalf of the union.
+    /// initialisation and finalisation on behalf of the union.</para>
     /// </remarks>
     union variant {
         bool val_boolean;
@@ -163,7 +163,7 @@ namespace detail {
         std::wstring val_wstring;
         device val_device;
         environment val_environment;
-        // Add new members here.
+        // Add new members here (must be val_[variant_type name]).
 
         inline variant(void) { }
         inline ~variant(void) { }

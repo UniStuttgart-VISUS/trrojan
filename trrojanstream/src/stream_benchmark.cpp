@@ -55,7 +55,9 @@ trrojan::stream::stream_benchmark::stream_benchmark(void)
     this->_default_configs.add_factor(factor::from_manifestations(
         "threads", { 1u, lc }));
 
-    //this->_default_configs.add_factor(factor::empty("hurz"));
+    // If no problem size is given, test all all of them.
+    this->_default_configs.add_factor(factor::from_manifestations(
+        "problem_size", worker_thread::problem_sizes::to_vector()));
 }
 
 
@@ -96,11 +98,19 @@ trrojan::result_set trrojan::stream::stream_benchmark::run(
         return true;
     });
 
-    // Problem size
 
     // TODO: remove hack
     //std::cout << "here" << std::endl;
-    worker_thread::crowbar();
+    auto p = std::make_shared<problem>(
+        scalar_type::float32,
+        42,
+        task_type::copy,
+        access_pattern::contiguous,
+        problem::default_problem_size,
+        1);
+    std::array<worker_thread::pointer_type, 1> t;
+    t[0] = worker_thread::create(p, worker_thread::make_barrier(1), 0);
+    worker_thread::join(t.begin(), t.end());
 
     return retval;
 }

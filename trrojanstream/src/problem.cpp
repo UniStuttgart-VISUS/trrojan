@@ -9,9 +9,18 @@
 /*
  * trrojan::stream::problem::problem
  */
-trrojan::stream::problem::problem(const trrojan::stream::scalar_type scalar,
-        const size_t parallelism, const size_t size)
-        : _parallelism(parallelism), _scalar_type(scalar) {
+trrojan::stream::problem::problem(const scalar_type_t scalar,
+        const trrojan::variant& value,
+        const task_type_t task,
+        const access_pattern_t pattern,
+        const size_t size,
+        const size_t parallelism)
+        : _access_pattern(pattern),
+        _parallelism(parallelism),
+        _scalar_size(0),
+        _scalar_type(scalar),
+        _scalar_value(value),
+        _task_type(task) {
     switch (this->_scalar_type) {
         case trrojan::stream::scalar_type::float32:
             this->allocate<trrojan::stream::scalar_type::float32>(size);

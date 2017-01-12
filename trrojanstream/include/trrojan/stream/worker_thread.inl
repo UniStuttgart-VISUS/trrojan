@@ -1,8 +1,7 @@
-#include "worker_thread.h"
 /// <copyright file="worker_thread.inl" company="SFB-TRR 161 Quantitative Methods for Visual Computing">
-/// Copyright � 2016 SFB-TRR 161. Alle Rechte vorbehalten.
+/// Copyright (C) 2016 - 2017 SFB-TRR 161. Alle Rechte vorbehalten.
 /// </copyright>
-/// <author>Christoph M�ller</author>
+/// <author>Christoph Müller</author>
 
 
 
@@ -95,6 +94,40 @@ bool trrojan::stream::worker_thread::verify(const S *a, const S *b, const S *c,
 
 
 /*
+ * trrojan::stream::worker_thread::dispatch
+ */
+template<trrojan::stream::scalar_type S,
+    trrojan::stream::worker_thread::problem_size_type P,
+    trrojan::stream::access_pattern A,
+    trrojan::stream::task_type T,
+    trrojan::stream::task_type... Ts>
+void trrojan::stream::worker_thread::dispatch(
+        trrojan::stream::task_type_list_t<T, Ts...>,
+        const trrojan::stream::task_type t) {
+    if (T == t) {
+        std::cout << "task type " << (int) T << " selected." << std::endl;
+        typedef step<P, S, T> step;
+
+        trrojan::timer timer;
+        timer.start();
+
+        this->synchronise(0);   // TODO: repeat
+        step::apply(this->_problem->a<S>(), this->_problem->b<S>(),
+            this->_problem->c<S>(), this->_problem->s<S>(),
+            access_pattern_traits<A, P>::offset);
+        auto elapsed = timer.elapsed_millis();
+        //auto gigs = ((double)a.size() * sizeof(float)) / trrojan::constants<decltype(elapsed)>::bytes_per_gigabyte;
+
+    } else {
+        this->dispatch<S, P, A>(
+            trrojan::stream::task_type_list_t<Ts...>(),
+            t);
+    }
+}
+
+
+#if 0
+/*
  * trrojan::stream::worker_thread::dispatch<T>::invoke
  */
 template<trrojan::stream::scalar_type T>
@@ -132,3 +165,4 @@ void trrojan::stream::worker_thread::dispatch<T>::invoke(worker_thread *that) {
         //timesCopy[i].second = system_information::get_timer_seconds();
     }
 }
+#endif

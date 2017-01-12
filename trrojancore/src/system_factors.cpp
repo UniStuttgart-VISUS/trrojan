@@ -204,6 +204,14 @@ trrojan::variant trrojan::system_factors::get(const std::string& factor) const {
 
 
 /*
+ * trrojan::system_factors::get
+ */
+void trrojan::system_factors::get(configuration& dst) const {
+    this->get(std::back_inserter(dst));
+}
+
+
+/*
  * trrojan::system_factors::installed_memory
  */
 trrojan::variant trrojan::system_factors::installed_memory(void) const {
