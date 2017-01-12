@@ -49,8 +49,7 @@ namespace opencl {
         /// <param name="raw_data">Reference to a vector where the read raw data
         /// is stored in.</param>
         /// <throws>If one of the files could not be read.</throws
-        void read_files(const std::string dat_file_name,
-                        const std::vector<char> &raw_data);
+        void read_files(const std::string dat_file_name);
 
         /// <summary>
         /// Get the read status of hte objects.
@@ -58,13 +57,11 @@ namespace opencl {
         /// <returns><c>true</c> if raw data has been read, <c>false</c> otherwise.</returns>
         bool has_data() const;
 
+        /// <summary>
+        /// Get the raw data read. This method movs the data.
+        /// </summary>
+        /// <throws>If no raw data has been read.</throws>
         const std::vector<char> &data() const;
-
-        /// <summary>
-        /// Get the size of the raw file in bytes.
-        /// <summary>
-        /// <returns>The size</returns>
-        size_t size();
 
     private:
 
@@ -77,7 +74,10 @@ namespace opencl {
         /// <summary>
         /// Read scalar voxel data from a given raw file.
         /// <summary>
+        /// <remarks>This method does not check for a valid file name except for an assertion
+        /// that it is not empty.</remarks>
         /// <param name="raw_file_name"> Name of the raw data file without the path.</param>
+        /// <throws>If the given file could not be opened or read.</throws>
         void read_raw(const std::string raw_file_name);
 
         /// <summary>

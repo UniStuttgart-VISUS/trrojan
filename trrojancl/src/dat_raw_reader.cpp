@@ -15,8 +15,7 @@
 /*
  * trrojan::opencl::dat_raw_reader::read_files
  */
-void trrojan::opencl::dat_raw_reader::read_files(const std::string dat_file_name,
-                                                 const std::vector<char> &raw_data)
+void trrojan::opencl::dat_raw_reader::read_files(const std::string dat_file_name)
 {
     // check file
     if (!dat_file_name.empty())
@@ -25,7 +24,8 @@ void trrojan::opencl::dat_raw_reader::read_files(const std::string dat_file_name
     }
     else
     {
-        throw "Empty .dat file name.";
+        std::cerr << "Empty .dat file name." << std::endl;
+        throw;
     }
 
     try
@@ -34,7 +34,8 @@ void trrojan::opencl::dat_raw_reader::read_files(const std::string dat_file_name
     }
     catch (...)
     {
-        throw "Error reading .dat file.";
+        std::cerr << "Error reading .dat file." << std::endl;
+        throw;
     }
 
     try
@@ -43,9 +44,9 @@ void trrojan::opencl::dat_raw_reader::read_files(const std::string dat_file_name
     }
     catch (...)
     {
-        throw "Error reading .raw file.";
+        std::cerr << "Error reading .raw file." << std::endl;
+        throw;
     }
-
 }
 
 
@@ -72,16 +73,7 @@ const std::vector<char> & trrojan::opencl::dat_raw_reader::data() const
     {
         throw "No data available";
     }
-    return _raw_data;
-}
-
-
-/*
- * trrojan::opencl::dat_raw_reader::size
- */
-size_t trrojan::opencl::dat_raw_reader::size()
-{
-    return _prop.raw_file_size;
+    return std::move(_raw_data);
 }
 
 
@@ -158,7 +150,11 @@ void trrojan::opencl::dat_raw_reader::read_raw(const std::string raw_file_name)
     assert(!raw_file_name.empty());
     // append .raw file name to .dat file name path
     std::size_t found = _prop.dat_file_name.find_last_of("/\\");
-    std::string name_with_path = _prop.dat_file_name.substr(0, found) + "/\\" + raw_file_name;
+    std::string name_with_path = _prop.dat_file_name;
+    if (found != std::string::npos)
+    {
+        name_with_path = _prop.dat_file_name.substr(0, found) + "/\\" + raw_file_name;
+    }
 
     std::ifstream is(name_with_path, std::ios::in | std::ifstream::binary);
     if (is)

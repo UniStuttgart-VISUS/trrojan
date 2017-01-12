@@ -50,6 +50,11 @@ namespace opencl
         /// </summary>
         virtual result_set run(const configuration_set &configs);
 
+        /// <summary>
+        /// Overrides benchmark run method.
+        /// </summary>
+        virtual result run(const configuration &configs);
+
     private:
         /// <summary>
         /// Setup the raycaster with the given configuration.

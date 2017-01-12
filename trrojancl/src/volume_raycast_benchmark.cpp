@@ -4,6 +4,7 @@
 /// <author>Valentin Bruder</author>
 
 #include "trrojan/opencl/volume_raycast_benchmark.h"
+#include "trrojan/opencl/dat_raw_reader.h"
 
 /*
  * trrojan::opencl::volume_raycast_benchmark::volume_raycast_benchmark
@@ -19,7 +20,9 @@ trrojan::opencl::volume_raycast_benchmark::volume_raycast_benchmark(void)
     // volume and view properties -> basic config
     //
     // volume .dat file name is a required factor
-    this->_default_configs.add_factor(factor::empty("volume_file_name"));
+//    this->_default_configs.add_factor(factor::empty("volume_file_name"));
+    this->_default_configs.add_factor(factor::from_manifestations("volume_file_name",
+                                                                  std::string("bonsai.dat")));
 
     // TODO: remove commented section
 //    // volume resolution from .dat file // TODO: "auto fill factor"
@@ -163,6 +166,15 @@ trrojan::result_set trrojan::opencl::volume_raycast_benchmark::run(
 
 
 /*
+ * trrojan::opencl::volume_raycast_benchmark::run
+ */
+trrojan::result trrojan::opencl::volume_raycast_benchmark::run(const configuration &configs)
+{
+    return trrojan::result();
+}
+
+
+/*
  * setup volume raycaster
  */
 void trrojan::opencl::volume_raycast_benchmark::setup_raycaster(const trrojan::configuration &cfg,
@@ -197,7 +209,22 @@ void trrojan::opencl::volume_raycast_benchmark::load_volume_data(const std::stri
     std::cout << "Loading volume data defined in " << dat_file << std::endl;
 
 
+    // _____TODO_____
+    return;
 
+    dat_raw_reader dr;
+    try
+    {
+        dr.read_files(dat_file);
+    }
+    catch (...)
+    {
+        throw std::runtime_error("Error reading volume data: " + dat_file);
+    }
+
+    std::vector<char> raw_data = dr.data();
+
+    std::cout << raw_data.size() << std::endl;
 
     // TODO
 }
