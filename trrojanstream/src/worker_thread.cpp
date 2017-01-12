@@ -139,7 +139,7 @@ void *trrojan::stream::worker_thread::thunk(void *param) {
     auto that = static_cast<worker_thread *>(param);
     assert(that != nullptr);
     assert(that->_problem != nullptr);
-    scalar_type_dispatch<dispatch>(that->_problem->scalar_type(), that);
+//    scalar_type_dispatch<dispatch>(that->_problem->scalar_type(), that);
     return 0;
 }
 

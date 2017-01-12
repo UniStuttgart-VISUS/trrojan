@@ -47,5 +47,11 @@ namespace stream {
     struct access_pattern_traits<access_pattern::interleaved, P> {
         static const size_t offset = P;
     };
+
+
+    template<access_pattern...> struct access_pattern_list_t { };
+
+    typedef access_pattern_list_t<access_pattern::contiguous,
+        access_pattern::interleaved> access_pattern_list;
 }
 }

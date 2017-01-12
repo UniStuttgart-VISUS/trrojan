@@ -94,6 +94,7 @@ bool trrojan::stream::worker_thread::verify(const S *a, const S *b, const S *c,
 }
 
 
+#if 0
 /*
  * trrojan::stream::worker_thread::dispatch<T>::invoke
  */
@@ -132,3 +133,4 @@ void trrojan::stream::worker_thread::dispatch<T>::invoke(worker_thread *that) {
         //timesCopy[i].second = system_information::get_timer_seconds();
     }
 }
+#endif

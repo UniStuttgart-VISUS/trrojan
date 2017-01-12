@@ -24,6 +24,7 @@
 #endif /* _WIN32 */
 
 #include "trrojan/constants.h"
+#include "trrojan/index_sequence.h"
 #include "trrojan/log.h"
 #include "trrojan/timer.h"
 
@@ -61,6 +62,12 @@ namespace stream {
         /// A pointer to a <see cref="worker_thread" />.
         /// </summary>
         typedef std::shared_ptr<worker_thread> pointer_type;
+
+        /// <summary>
+        /// The list of available problem sizes.
+        /// </summary>
+        typedef trrojan::integer_sequence<std::uint64_t, 2000000, 4000000,
+            8000000> problem_sizes;
 
         /// <summary>
         /// The type of a problem to be processed by a thread.
@@ -129,9 +136,32 @@ namespace stream {
 
     private:
 
-        template<scalar_type T> struct dispatch {
-            static void invoke(worker_thread *that);
-        };
+        template<template<scalar_type> class F, scalar_type T, scalar_type... U,
+            class... P>
+            void dispatch(scalar_type_list_t<T, U...>, const scalar_type type,
+                P&&... params) {
+            if (type == T) {
+                F<T>::invoke(std::forward<P>(params)...);
+            }
+            dispatch<F>(scalar_type_list_t<U...>(), type,
+                std::forward<P>(params)...);
+        }
+
+        template<template<scalar_type> class F, class... P>
+        inline void dispatch(scalar_type_list_t<>, const scalar_type type,
+            P&&... params) { }
+
+        /// <summary>
+        /// Invokes the functor <tparamref name="F" /> for the scalar type
+        /// <paramref name="type" />.
+        /// </summary>
+        /*    template<template<scalar_type> class F, class... P>
+        inline void scalar_type_dispatch(const scalar_type type, P&&... params) {
+        detail::dispatch<F>(detail::scalar_type_list(), type,
+        std::forward<P>(params)...);
+        }
+        */
+
 
         /// <summary>
         /// This functor expands the testing loop at compile time to remove any
