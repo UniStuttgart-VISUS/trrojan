@@ -62,7 +62,7 @@ namespace opencl
         /// </summary>
         /// <param name="dat_file">Name of the .dat-file that contains the information
         /// on the volume data.</param>
-        void load_volume_data(const std::string dat_file);
+        void load_volume_data(const std::string dat_file, uint data_precision);
 
         /// <summary>
         /// Compose and generate the OpenCL kernel source based on the given configuration.

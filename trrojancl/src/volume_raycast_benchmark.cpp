@@ -20,12 +20,15 @@ trrojan::opencl::volume_raycast_benchmark::volume_raycast_benchmark(void)
     //
     // volume .dat file name is a required factor
     this->_default_configs.add_factor(factor::empty("volume_file_name"));
-    // volume resolution from .dat file
-    this->_default_configs.add_factor(factor::empty("volume_res_x"));
-    this->_default_configs.add_factor(factor::empty("volume_res_y"));
-    this->_default_configs.add_factor(factor::empty("volume_res_z"));
-    // data precision from .dat file
-    this->_default_configs.add_factor(factor::empty("data_precision"));
+
+    // TODO: remove commented section
+//    // volume resolution from .dat file // TODO: "auto fill factor"
+//    this->_default_configs.add_factor(factor::empty("volume_res_x"));
+//    this->_default_configs.add_factor(factor::empty("volume_res_y"));
+//    this->_default_configs.add_factor(factor::empty("volume_res_z"));
+//    // data precision from .dat file
+//    this->_default_configs.add_factor(factor::empty("data_precision"));
+
     // transfer function file name, use a provided linear transfer function file as default
     this->_default_configs.add_factor(factor::from_manifestations("tff_file_name",
                                                                   std::string("linear.tff")));
@@ -170,8 +173,13 @@ void trrojan::opencl::volume_raycast_benchmark::setup_raycaster(const trrojan::c
     {
         auto it = std::find_if(cfg.begin(), cfg.end(),
                            [](const named_variant& el){ return el.name() == "volume_file_name";});
-        it->name();
-        load_volume_data(it->value());
+        std::string file_name = it->value();
+
+        it = std::find_if(cfg.begin(), cfg.end(),
+                                   [](const named_variant& el){ return el.name() == "data_precision";});
+        int data_precision = it->value();
+
+        load_volume_data(file_name, data_precision);
     }
     if (changed.count("tff_file_name"))
     {
@@ -183,9 +191,15 @@ void trrojan::opencl::volume_raycast_benchmark::setup_raycaster(const trrojan::c
 /**
  * trrojan::opencl::volume_raycast_benchmark::load_volume_data
  */
-void trrojan::opencl::volume_raycast_benchmark::load_volume_data(const std::string dat_file)
+void trrojan::opencl::volume_raycast_benchmark::load_volume_data(const std::string dat_file,
+                                                                 uint data_precision)
 {
     std::cout << "Loading volume data defined in " << dat_file << std::endl;
+
+
+
+
+    // TODO
 }
 
 
