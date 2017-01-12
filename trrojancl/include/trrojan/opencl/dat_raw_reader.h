@@ -21,37 +21,74 @@ namespace opencl {
     {
         std::string dat_file_name;
         std::string raw_file_name;
-        size_t raw_file_size;
+        size_t raw_file_size = 0;
 
         std::array<uint, 3> volume_res;
-        std::array<uint, 3> slice_thickness;
+        std::array<double, 3> slice_thickness = {{1.0, 1.0, 1.0}};
         std::string format;                     // UCHAR, USHORT,...
     };
 
     /// <summary>
-    /// Dat-raw file reader.
+    /// Dat-raw volume data file reader.
+    /// Based on a description in a text file ".dat", raw voxel data is read from a
+    /// binary file ".raw". The dat-file should contain information on the file name of the
+    /// raw-file, the resolution of the volume, the data format of the scalar data and possibly
+    /// the slice thickness (default is 1.0 in each dimension).
+    /// The raw data is stored in a vector of chars.
     /// </summary>
     class TRROJANCL_API dat_raw_reader
     {
 
     public:
 
+        /// <summary>
+        /// Read the dat file of the given name and based on the content, the raw data.
+        /// Saves volume data set properties and scalar data in member variables.
+        /// </summary>
+        /// <param name="dat_file_name">Name and full path of the dat file</param>
+        /// <param name="raw_data">Reference to a vector where the read raw data
+        /// is stored in.</param>
+        /// <throws>If one of the files could not be read.</throws
         void read_files(const std::string dat_file_name,
-                        const std::vector<unsigned char> &raw_data);
+                        const std::vector<char> &raw_data);
 
-        bool has_data();
+        /// <summary>
+        /// Get the read status of hte objects.
+        /// <summary>
+        /// <returns><c>true</c> if raw data has been read, <c>false</c> otherwise.</returns>
+        bool has_data() const;
 
-        const std::vector<unsigned char> & data();
+        const std::vector<char> &data() const;
+
+        /// <summary>
+        /// Get the size of the raw file in bytes.
+        /// <summary>
+        /// <returns>The size</returns>
+        size_t size();
 
     private:
 
+        /// <summary>
+        /// Read the dat textfile.
+        /// <summary>
+        /// <param name="dat_file_name"> Name and full path of the dat text file.</param>
         void read_dat(const std::string dat_file_name);
 
+        /// <summary>
+        /// Read scalar voxel data from a given raw file.
+        /// <summary>
+        /// <param name="raw_file_name"> Name of the raw data file without the path.</param>
         void read_raw(const std::string raw_file_name);
 
+        /// <summary>
+        /// Properties of the volume data set.
+        /// <summary>
         Properties _prop;
 
-        std::vector<unsigned char> _raw_data;
+        /// <summary>
+        /// The raw voxel data.
+        /// <summary>
+        std::vector<char> _raw_data;
     };
 }
 }
