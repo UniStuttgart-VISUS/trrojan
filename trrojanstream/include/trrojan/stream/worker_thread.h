@@ -28,6 +28,7 @@
 #include "trrojan/log.h"
 #include "trrojan/timer.h"
 
+#include "trrojan/stream/access_pattern.h"
 #include "trrojan/stream/export.h"
 #include "trrojan/stream/problem.h"
 #include "trrojan/stream/scalar_type.h"
@@ -136,6 +137,7 @@ namespace stream {
 
     private:
 
+#if 0
         template<template<scalar_type> class F, scalar_type T, scalar_type... U,
             class... P>
             void dispatch(scalar_type_list_t<T, U...>, const scalar_type type,
@@ -161,6 +163,31 @@ namespace stream {
         std::forward<P>(params)...);
         }
         */
+#endif
+        template<trrojan::stream::scalar_type S,
+            trrojan::stream::scalar_type... Ss,
+            trrojan::stream::access_pattern A,
+            trrojan::stream::access_pattern... As,
+            trrojan::stream::task_type T,
+            trrojan::stream::task_type... Ts>
+        inline void dispatch(scalar_type_list_t<S, Ss...>,
+                access_pattern_list_t<A, As...>,
+                task_type_list_t<T, Ts...>) {
+            if (false) {
+
+            }
+            dispatch(scalar_type_list_t<Ss...>(),
+                access_pattern_list_t<As...>(),
+                task_type_list_t<Ts...>());
+        }
+
+        /// <summary>
+        /// Recursion stop for
+        /// <see cref="trrojan::stream::worker_tread::dispatch" />.
+        /// </summary>
+        inline void dispatch(scalar_type_list_t<>, access_pattern_list_t<>,
+            task_type_list_t<>) { }
+
 
 
         /// <summary>

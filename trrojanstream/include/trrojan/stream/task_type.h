@@ -39,5 +39,10 @@ namespace stream {
         triad
     };
 
+
+    template<task_type...> struct task_type_list_t { };
+
+    typedef task_type_list_t<task_type::add, task_type::copy,
+        task_type::scale, task_type::triad> task_type_list;
 }
 }

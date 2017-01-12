@@ -7,6 +7,7 @@
 
 #include <string>
 
+#include "trrojan/configuration.h"
 #include "trrojan/export.h"
 #include "trrojan/named_variant.h"
 #include "trrojan/variant.h"
@@ -84,6 +85,9 @@ namespace trrojan {
 
         variant get(const std::string& factor) const;
 
+        /// <summary>
+        /// Answer all system factors.
+        /// </summary>
         template<class I> inline void get(I oit) const {
             oit++ = named_variant(factor_bios, this->bios());
             oit++ = named_variant(factor_cpu, this->cpu());
@@ -95,6 +99,16 @@ namespace trrojan {
             oit++ = named_variant(factor_ram, this->ram());
             oit++ = named_variant(factor_system_desc, this->system_desc());
         }
+
+        /// <summary>
+        /// Add all system factors to the given configuration.
+        /// </summary>
+        /// <remarks>
+        /// It is recommended that all benchmarks add all system factors after
+        /// the ran and before they are constructing the result object from
+        /// the configuration.
+        /// </remarks>
+        void get(configuration& dst) const;
 
         variant installed_memory(void) const;
 
