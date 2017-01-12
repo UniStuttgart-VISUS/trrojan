@@ -175,13 +175,13 @@ namespace opencl
         cl::Device get_valid_GLCL_device(cl::Platform platform,
                                          cl_context_properties* properties);
 
-        ///
-        /// \brief Get a OpenCL platform of a specific device type and vendor
-        /// \param type The device type (CPU, GPU, ACCELERATOR)
-        /// \param vendor The device vendor.
-        /// \return The selected OpenCL platform.
-        /// \throws cl::Error if no platform is found with the specified parameters.
-        ///
+        /// <summary>
+        /// Get a OpenCL platform of a specific device type and vendor
+        /// </summary>
+        /// <param name="type">The device type (CPU, GPU, ACCELERATOR)</param>
+        /// <param name="vendor">The device vendor.</param>
+        /// <return>The selected OpenCL platform.</return>
+        /// <throws>cl::Error if no platform is found with the specified parameters.</throws>
         cl::Platform get_platform(cl_device_type type, opencl::vendor vendor, const int platform_no);
 
         ///

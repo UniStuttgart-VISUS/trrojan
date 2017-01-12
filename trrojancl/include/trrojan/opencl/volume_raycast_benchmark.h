@@ -9,6 +9,11 @@
 
 #include "trrojan/opencl/export.h"
 
+#ifdef _WIN32
+    #include <unordered_set>
+#else
+    #include <tr1/unordered_set>
+#endif
 
 namespace trrojan
 {
@@ -30,7 +35,10 @@ namespace opencl
 
     public:
 
-        inline volume_raycast_benchmark(void) : trrojan::benchmark_base("volume_raycast") { }
+        /// <summary>
+        /// Constructor. Default config is defined here.
+        /// </summary>
+        volume_raycast_benchmark(void);
 
         /// <summary>
         /// Destructor.
@@ -40,19 +48,27 @@ namespace opencl
         /// <summary>
         /// Overrides benchmark run method.
         /// </summary>
-        virtual result_set run(const configuration_set& configs);
+        virtual result_set run(const configuration_set &configs);
 
     private:
-
         /// <summary>
         /// Setup the raycaster with the given configuration.
         /// </summary>
-        void setup_raycaster(const configuration_set& configs);
+        void setup_raycaster(const configuration &cfg,
+                             const std::tr1::unordered_set<std::string> changed);
+
+        /// <summary>
+        /// Load volume data based on information from the given .dat file.
+        /// </summary>
+        /// <param name="dat_file">Name of the .dat-file that contains the information
+        /// on the volume data.</param>
+        void load_volume_data(const std::string dat_file);
 
         /// <summary>
         /// Compose and generate the OpenCL kernel source based on the given configuration.
         /// </summary>
-        void compose_kernel(const configuration_set& configs);
+        void compose_kernel(const configuration &cfg,
+                            const std::tr1::unordered_set<std::string> changed);
 
         /// <summary>
         /// Compile the OpenCL kernel source.
@@ -60,9 +76,29 @@ namespace opencl
         void build_kernel();
 
         /// <summary>
+        /// Update runtime kernel arguments.
+        /// </summary>
+        /// \param cfg
+        /// \param changed
+        void update_kernel_args(const configuration &cfg,
+                                const std::tr1::unordered_set<std::string> changed);
+
+        /// <summary>
         /// Run the OpenCL kernel.
         /// </summary>
-        void run_kernel();
+        trrojan::result run_kernel();
+
+        /// <summary>
+        /// Vector containing the names of all factors that are relevent at build time
+        /// of the OpenCL kernel.
+        /// </summary>
+        std::vector<std::string> _kernel_build_factors;
+
+        /// <summary>
+        /// Vector containing the names of all factors that are relevent at run-time
+        /// of the OpenCL kernel.
+        /// </summary>
+        std::vector<std::string> _kernel_run_factors;
     };
 
 }
