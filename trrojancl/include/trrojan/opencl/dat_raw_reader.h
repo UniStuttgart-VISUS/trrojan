@@ -23,7 +23,7 @@ namespace opencl {
         std::string raw_file_name;
         size_t raw_file_size = 0;
 
-        std::array<uint, 3> volume_res;
+        std::array<unsigned int, 3> volume_res;
         std::array<double, 3> slice_thickness = {{1.0, 1.0, 1.0}};
         std::string format;                     // UCHAR, USHORT,...
     };

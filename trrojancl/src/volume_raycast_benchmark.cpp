@@ -204,7 +204,7 @@ void trrojan::opencl::volume_raycast_benchmark::setup_raycaster(const trrojan::c
  * trrojan::opencl::volume_raycast_benchmark::load_volume_data
  */
 void trrojan::opencl::volume_raycast_benchmark::load_volume_data(const std::string dat_file,
-                                                                 uint data_precision)
+                                                                 unsigned int data_precision)
 {
     std::cout << "Loading volume data defined in " << dat_file << std::endl;
 
