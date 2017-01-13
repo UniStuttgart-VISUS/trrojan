@@ -116,14 +116,14 @@ trrojan::result trrojan::stream::stream_benchmark::run(
     //std::cout << "here" << std::endl;
     auto p = std::make_shared<problem>(
         //static_cast<scalar_type>(config,
-        scalar_type::float32,
+        scalar_type::float64,
         42,
-        task_type::copy,
+        task_type::triad,
         access_pattern::contiguous,
         8000000,
-        1);
-    std::array<worker_thread::pointer_type, 1> t;
-    t[0] = worker_thread::create(p, worker_thread::make_barrier(1), 0);
+        5,
+        8);
+    auto t = worker_thread::create(p);
     worker_thread::join(t.begin(), t.end());
 
 

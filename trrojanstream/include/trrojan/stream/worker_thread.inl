@@ -10,6 +10,9 @@
  */
 template<class I>
 void trrojan::stream::worker_thread::join(I begin, I end) {
+    trrojan::log::instance().write(trrojan::log_level::verbose,
+        "Waiting for %u worker threads to exit.\n", std::distance(begin, end));
+
 #ifdef _WIN32
     std::vector<HANDLE> handles;
 
@@ -104,6 +107,8 @@ template<trrojan::stream::scalar_type S,
 void trrojan::stream::worker_thread::dispatch(
         trrojan::stream::task_type_list_t<T, Ts...>,
         const trrojan::stream::task_type t) {
+    assert(this->_problem != nullptr);
+
     if (T == t) {
         typedef access_pattern_traits<A, P> pattern;
         typedef step<P, S, T> step;
@@ -114,17 +119,21 @@ void trrojan::stream::worker_thread::dispatch(
         auto c = this->_problem->c<S>() + offset;
         auto s = this->_problem->s<S>();
         auto o = pattern::step(this->_problem->parallelism());
-
         trrojan::timer timer;
-        this->synchronise(0);   // TODO: repeat
-        timer.start();
-        step::apply(a, b, c, s, o);
-        auto elapsed = timer.elapsed_millis();
-        elapsed /= trrojan::constants<decltype(elapsed)>::millis_per_second;
-        auto gigs = (double)this->_problem->size_in_bytes() / trrojan::constants<decltype(elapsed)>::bytes_per_gigabyte;
-        std::cout << gigs << " GB" << std::endl;
-        std::cout << elapsed << " s" << std::endl;
-        std::cout << (gigs / elapsed) << " GB/s" << std::endl;
+
+        for (size_t i = 0; i < this->_problem->iterations(); ++i) {
+            this->synchronise(i);
+            auto start = timer.start();
+            step::apply(a, b, c, s, o);
+            auto elapsed = timer.elapsed_millis();
+            elapsed /= trrojan::constants<decltype(elapsed)>::millis_per_second;
+            auto gigs = (double)this->_problem->size_in_bytes() / trrojan::constants<decltype(elapsed)>::bytes_per_gigabyte;
+            //std::cout << "Iteration " << i << ", rank " << this->rank << std::endl;
+            //std::cout << gigs << " GB" << std::endl;
+            //std::cout << elapsed << " s" << std::endl;
+            //std::cout << (gigs / elapsed) << " GB/s" << std::endl;
+            std::cout << "Iteration " << i << ", rank " << this->rank << ": " << (gigs / elapsed) << " GB/s" << std::endl;
+        }
 
     } else {
         this->dispatch<S, P, A>(

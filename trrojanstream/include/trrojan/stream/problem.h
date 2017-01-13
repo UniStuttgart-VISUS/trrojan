@@ -45,6 +45,7 @@ namespace stream {
             const task_type_t task,
             const access_pattern_t pattern,
             const size_t size = default_problem_size,
+            const size_t iterations = 10,
             const size_t parallelism = 1);
 
         /// <summary>
@@ -103,6 +104,13 @@ namespace stream {
         template<scalar_type_t T>
         inline typename scalar_type_traits<T>::type *c(void) {
             return this->c<typename scalar_type_traits<T>::type>();
+        }
+
+        /// <summary>
+        /// Answer the number of iterations to perform for the same problem.
+        /// </summary>
+        inline size_t iterations(void) const {
+            return this->_iterations;
         }
 
         /// <summary>
@@ -206,6 +214,11 @@ namespace stream {
         /// The output array.
         /// </summary>
         problem_type _c;
+
+        /// <summary>
+        /// The number of iterations to perform for the same problem.
+        /// </summary>
+        size_t _iterations;
 
         /// <summary>
         /// The number of threads the problem is for.
