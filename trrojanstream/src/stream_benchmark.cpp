@@ -31,6 +31,18 @@ const std::string trrojan::stream::stream_benchmark::access_pattern_interleaved(
     "interleaved");
 
 
+#define _TRROJANSTREAM_DEFINE_FACTOR(f)                                        \
+const std::string trrojan::stream::stream_benchmark::factor_##f(#f);
+
+_TRROJANSTREAM_DEFINE_FACTOR(access_pattern);
+_TRROJANSTREAM_DEFINE_FACTOR(iterations);
+_TRROJANSTREAM_DEFINE_FACTOR(problem_size);
+_TRROJANSTREAM_DEFINE_FACTOR(scalar);
+_TRROJANSTREAM_DEFINE_FACTOR(threads);
+
+#undef _TRROJANSTREAM_DEFINE_FACTOR
+
+
 /*
  * trrojan::stream::stream_benchmark::stream_benchmark
  */
@@ -38,26 +50,27 @@ trrojan::stream::stream_benchmark::stream_benchmark(void)
         : trrojan::benchmark_base("stream") {
     // If no scalar is specified, use a magic number.
     this->_default_configs.add_factor(factor::from_manifestations(
-        "scalar", 42));
+        stream_benchmark::factor_scalar, 42));
 
     // If no access pattern is specified, test all.
     this->_default_configs.add_factor(factor::from_manifestations(
-        "access_pattern", { access_pattern_contiguous,
-        access_pattern_interleaved }));
+        stream_benchmark::factor_access_pattern, 
+        { access_pattern_contiguous, access_pattern_interleaved }));
 
     // If no number of iterations is specified, use a magic number.
     this->_default_configs.add_factor(factor::from_manifestations(
-        "iterations", 10));
+        stream_benchmark::factor_iterations, 10));
 
     // If no number of threads is specifed, use all possible values up
     // to the number of logical processors in the system.
     auto lc = system_factors::instance().logical_cores().as<uint32_t>();
     this->_default_configs.add_factor(factor::from_manifestations(
-        "threads", { 1u, lc }));
+        stream_benchmark::factor_threads, { 1u, lc }));
 
     // If no problem size is given, test all all of them.
     this->_default_configs.add_factor(factor::from_manifestations(
-        "problem_size", worker_thread::problem_sizes::to_vector()));
+        stream_benchmark::factor_problem_size,
+        worker_thread::problem_sizes::to_vector()));
 }
 
 
@@ -117,12 +130,12 @@ trrojan::result trrojan::stream::stream_benchmark::run(
     auto p = std::make_shared<problem>(
         //static_cast<scalar_type>(config,
         scalar_type::float64,
-        42,
+        config.find("scalar")->value(),
         task_type::triad,
         access_pattern::contiguous,
-        8000000,
-        5,
-        8);
+        config.get(factor_problem_size, problem::default_problem_size),
+        config.get(factor_iterations, problem::default_iterations),
+        config.get(factor_threads, 1));
     auto t = worker_thread::create(p);
     worker_thread::join(t.begin(), t.end());
 

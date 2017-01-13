@@ -35,6 +35,14 @@ namespace stream {
         typedef trrojan::stream::scalar_type scalar_type_t;
         typedef trrojan::stream::task_type task_type_t;
 
+        /// <summary>
+        /// The default value for the number of iterations.
+        /// </summary>
+        static const size_t default_iterations = 10;
+
+        /// <summary>
+        /// The default value for the problem size.
+        /// </summary>
         static const size_t default_problem_size = 2000000;
 
         /// <summary>
@@ -45,7 +53,7 @@ namespace stream {
             const task_type_t task,
             const access_pattern_t pattern,
             const size_t size = default_problem_size,
-            const size_t iterations = 10,
+            const size_t iterations = default_iterations,
             const size_t parallelism = 1);
 
         /// <summary>

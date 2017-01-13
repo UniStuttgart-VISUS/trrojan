@@ -10,6 +10,7 @@
 #include <string>
 #include <vector>
 
+#include "trrojan/export.h"
 #include "trrojan/named_variant.h"
 
 
@@ -19,7 +20,7 @@ namespace trrojan {
     /// A configuration, which is defined as a set of manifestations of
     /// (named) factors.
     /// </summary>
-    class configuration {
+    class TRROJANCORE_API configuration {
 
     public:
 
@@ -105,6 +106,17 @@ namespace trrojan {
         /// Find the factor with the specified name.
         /// </summary>
         iterator_type find(const std::string& factor) const;
+
+        /// <summary>
+        /// Get the value of the given factor as type <tparamref name="T" /> or
+        /// return the <paramref name="fallback" /> value if the factor does not
+        /// exist.
+        /// </summary>
+        template<class T>
+        T get(const std::string& factor, const T fallback) const {
+            auto i = this->find(factor);
+            return (i != this->_factors.end()) ? i->value().as<T>() : fallback;
+        }
 
         /// <summary>
         /// Makes sure that the configuration has reserved space for the given
