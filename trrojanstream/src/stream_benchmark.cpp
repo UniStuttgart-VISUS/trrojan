@@ -17,27 +17,15 @@
 #include <iostream>
 
 
-/*
- * trrojan::stream::stream_benchmark::access_pattern_contiguous
- */
-const std::string trrojan::stream::stream_benchmark::access_pattern_contiguous(
-    "contiguous");
-
-
-/*
- * trrojan::stream::stream_benchmark::access_pattern_interleaved
- */
-const std::string trrojan::stream::stream_benchmark::access_pattern_interleaved(
-    "interleaved");
-
-
 #define _TRROJANSTREAM_DEFINE_FACTOR(f)                                        \
-const std::string trrojan::stream::stream_benchmark::factor_##f(#f);
+const std::string trrojan::stream::stream_benchmark::factor_##f(#f)
 
 _TRROJANSTREAM_DEFINE_FACTOR(access_pattern);
 _TRROJANSTREAM_DEFINE_FACTOR(iterations);
 _TRROJANSTREAM_DEFINE_FACTOR(problem_size);
 _TRROJANSTREAM_DEFINE_FACTOR(scalar);
+_TRROJANSTREAM_DEFINE_FACTOR(scalar_type);
+_TRROJANSTREAM_DEFINE_FACTOR(task_type);
 _TRROJANSTREAM_DEFINE_FACTOR(threads);
 
 #undef _TRROJANSTREAM_DEFINE_FACTOR
@@ -48,29 +36,40 @@ _TRROJANSTREAM_DEFINE_FACTOR(threads);
  */
 trrojan::stream::stream_benchmark::stream_benchmark(void)
         : trrojan::benchmark_base("stream") {
+    // If no scalar type is specfieid, use float.
+    this->_default_configs.add_factor(factor::from_manifestations(
+        factor_scalar_type, scalar_type_traits<scalar_type::float32>::name()));
+
     // If no scalar is specified, use a magic number.
     this->_default_configs.add_factor(factor::from_manifestations(
-        stream_benchmark::factor_scalar, 42));
+        factor_scalar, 42));
 
     // If no access pattern is specified, test all.
     this->_default_configs.add_factor(factor::from_manifestations(
-        stream_benchmark::factor_access_pattern, 
-        { access_pattern_contiguous, access_pattern_interleaved }));
+        factor_access_pattern, { ap_traits<access_pattern::contiguous>::name(),
+        ap_traits<access_pattern::interleaved>::name() }));
 
     // If no number of iterations is specified, use a magic number.
     this->_default_configs.add_factor(factor::from_manifestations(
-        stream_benchmark::factor_iterations, 10));
+        factor_iterations, 10));
 
     // If no number of threads is specifed, use all possible values up
     // to the number of logical processors in the system.
     auto lc = system_factors::instance().logical_cores().as<uint32_t>();
     this->_default_configs.add_factor(factor::from_manifestations(
-        stream_benchmark::factor_threads, { 1u, lc }));
+        factor_threads, { 1u, lc }));
 
     // If no problem size is given, test all all of them.
     this->_default_configs.add_factor(factor::from_manifestations(
-        stream_benchmark::factor_problem_size,
+        factor_problem_size,
         worker_thread::problem_sizes::to_vector()));
+
+    // Enable all tasks by default.
+    this->_default_configs.add_factor(factor::from_manifestations(
+        factor_task_type, { task_type_traits<task_type::add>::name(),
+        task_type_traits<task_type::copy>::name(),
+        task_type_traits<task_type::scale>::name(),
+        task_type_traits<task_type::triad>::name() }));
 }
 
 
@@ -127,20 +126,33 @@ trrojan::result trrojan::stream::stream_benchmark::run(
 
     // TODO: remove hack
     //std::cout << "here" << std::endl;
-    auto p = std::make_shared<problem>(
-        //static_cast<scalar_type>(config,
-        scalar_type::float64,
-        config.find("scalar")->value(),
-        task_type::triad,
-        access_pattern::contiguous,
-        config.get(factor_problem_size, problem::default_problem_size),
-        config.get(factor_iterations, problem::default_iterations),
-        config.get(factor_threads, 1));
+    auto p = stream_benchmark::to_problem(config);
     auto t = worker_thread::create(p);
     worker_thread::join(t.begin(), t.end());
 
-
     return retval;
+}
+
+
+/*
+ * trrojan::stream::stream_benchmark::to_problem
+ */
+trrojan::stream::problem::pointer_type
+trrojan::stream::stream_benchmark::to_problem(const configuration& c) {
+    assert(c.contains(factor_scalar_type));
+    assert(c.contains(factor_scalar));
+    assert(c.contains(factor_access_pattern));
+
+    auto scalar = parse_scalar_type(*c.find(factor_scalar_type));
+    auto value = c.find(factor_scalar)->value();
+    auto task = parse_task_type(*c.find(factor_task_type));
+    auto pattern = parse_access_pattern(*c.find(factor_access_pattern));
+    auto size = c.get(factor_problem_size, problem::default_problem_size);
+    auto iterations = c.get(factor_iterations, problem::default_iterations);
+    auto parallelism = c.get(factor_threads, 1);
+
+    return std::make_shared<problem>(scalar, value, task, pattern, size,
+        iterations, parallelism);
 }
 
 

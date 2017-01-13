@@ -40,6 +40,27 @@ namespace stream {
     };
 
 
+    /// <summary>
+    /// A traits class for parsing task types.
+    /// </summary>
+    template<task_type S> struct task_type_traits { };
+
+#define __TRROJANCORE_DECL_TASK_TYPE_TRAITS(t)                                 \
+    template<> struct task_type_traits<task_type::t> {                         \
+        static inline const std::string& name(void) {                          \
+            static const std::string retval(#t);                               \
+            return retval;                                                     \
+        }                                                                      \
+    }
+
+    __TRROJANCORE_DECL_TASK_TYPE_TRAITS(add);
+    __TRROJANCORE_DECL_TASK_TYPE_TRAITS(copy);
+    __TRROJANCORE_DECL_TASK_TYPE_TRAITS(scale);
+    __TRROJANCORE_DECL_TASK_TYPE_TRAITS(triad);
+
+#undef __TRROJANCORE_DECL_TASK_TYPE_TRAITS
+
+
     template<task_type...> struct task_type_list_t { };
 
     typedef task_type_list_t<task_type::add, task_type::copy,

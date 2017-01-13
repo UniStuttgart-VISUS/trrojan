@@ -11,7 +11,10 @@
 #include <atomic>
 #include <memory>
 
+#include "trrojan/enum_parse_helper.h"
+
 #include "trrojan/stream/export.h"
+#include "trrojan/stream/problem.h"
 
 
 namespace trrojan {
@@ -35,14 +38,12 @@ namespace stream {
 
     public:
 
-        static const std::string access_pattern_contiguous;
-
-        static const std::string access_pattern_interleaved;
-
         static const std::string factor_access_pattern;
         static const std::string factor_iterations;
         static const std::string factor_problem_size;
         static const std::string factor_scalar;
+        static const std::string factor_scalar_type;
+        static const std::string factor_task_type;
         static const std::string factor_threads;
 
         stream_benchmark(void);
@@ -55,8 +56,35 @@ namespace stream {
 
     private:
 
-        //bool run0(const trrojan::configuration& cfg);
+        template<access_pattern A>
+        using ap_traits = trrojan::stream::access_pattern_traits<A, 0>;
 
+        static inline access_pattern parse_access_pattern(
+                const trrojan::named_variant& s) {
+            typedef enum_parse_helper<access_pattern, access_pattern_list_t,
+                ap_traits> parser;
+            auto value = s.value().as<std::string>();
+            return parser::parse(access_pattern_list(), value);
+        }
+
+        static inline scalar_type parse_scalar_type(
+                const trrojan::named_variant& s) {
+            typedef enum_parse_helper<scalar_type, scalar_type_list_t,
+                scalar_type_traits> parser;
+            auto value = s.value().as<std::string>();
+            return parser::parse(scalar_type_list(), value);
+        }
+
+        static inline task_type parse_task_type(
+                const trrojan::named_variant& s) {
+            typedef enum_parse_helper<task_type, task_type_list_t,
+                task_type_traits> parser;
+            auto value = s.value().as<std::string>();
+            return parser::parse(task_type_list(), value);
+        }
+
+        static trrojan::stream::problem::pointer_type to_problem(
+            const configuration& c);
     };
 
 }
