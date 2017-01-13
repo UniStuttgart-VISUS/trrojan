@@ -3,6 +3,8 @@
 
 cmake_minimum_required(VERSION 3.1.0)
 
+find_package (Threads)
+
 set(IncludeDirectory "include")
 set(SourceDirectory "src")
 
@@ -21,3 +23,4 @@ add_library(trrojanstream MODULE ${HeaderFiles} ${SourceFiles})
 #add_library(trrojanstream SHARED ${HeaderFiles} ${SourceFiles})
 
 target_link_libraries(trrojanstream LINK_PUBLIC trrojancore)
+target_link_libraries(trrojanstream ${CMAKE_THREAD_LIBS_INIT})

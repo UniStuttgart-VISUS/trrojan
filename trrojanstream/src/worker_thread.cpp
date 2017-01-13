@@ -123,7 +123,7 @@ void trrojan::stream::worker_thread::start(problem_type problem,
     ::pthread_attr_setdetachstate(&attribs, PTHREAD_CREATE_JOINABLE);
 
     if (::pthread_create(&this->hThread, &attribs, worker_thread::thunk,
-        static_cast<void *>(this)) != 0) {
+            static_cast<void *>(this)) != 0) {
         std::error_code ec(errno, std::system_category());
         ::pthread_attr_destroy(&attribs);
         throw std::system_error(ec, "Failed to spawn worker thread.");

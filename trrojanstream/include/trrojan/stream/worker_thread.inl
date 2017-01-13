@@ -11,7 +11,8 @@
 template<class I>
 void trrojan::stream::worker_thread::join(I begin, I end) {
     trrojan::log::instance().write(trrojan::log_level::verbose,
-        "Waiting for %u worker threads to exit.\n", std::distance(begin, end));
+        "Waiting for %u worker thread(s) to exit.\n",
+        std::distance(begin, end));
 
 #ifdef _WIN32
     std::vector<HANDLE> handles;
