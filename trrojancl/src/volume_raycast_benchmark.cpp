@@ -6,6 +6,8 @@
 #include "trrojan/opencl/volume_raycast_benchmark.h"
 #include "trrojan/opencl/dat_raw_reader.h"
 
+#include "trrojan/timer.h"
+
 /*
  * trrojan::opencl::volume_raycast_benchmark::volume_raycast_benchmark
  */
@@ -22,7 +24,7 @@ trrojan::opencl::volume_raycast_benchmark::volume_raycast_benchmark(void)
     // volume .dat file name is a required factor
 //    this->_default_configs.add_factor(factor::empty("volume_file_name"));
     this->_default_configs.add_factor(factor::from_manifestations("volume_file_name",
-                                                                  std::string("bonsai.dat")));
+                                                                  std::string("/media/brudervn/Daten/volTest/vol/chameleon.dat")));
 
     // TODO: remove commented section
 //    // volume resolution from .dat file // TODO: "auto fill factor"
@@ -156,8 +158,9 @@ trrojan::result_set trrojan::opencl::volume_raycast_benchmark::run(
             update_kernel_args(cs, changed);
         }
 
+
         // run the OpenCL kernel, i.e. the actual test
-        retval.push_back(this->run_kernel());
+        retval.push_back(this->run(cs));
         return true;
     });
 
@@ -170,6 +173,9 @@ trrojan::result_set trrojan::opencl::volume_raycast_benchmark::run(
  */
 trrojan::result trrojan::opencl::volume_raycast_benchmark::run(const configuration &configs)
 {
+
+
+    // TODO measure kernel runtime and put that into result
     return trrojan::result();
 }
 
@@ -208,23 +214,22 @@ void trrojan::opencl::volume_raycast_benchmark::load_volume_data(const std::stri
 {
     std::cout << "Loading volume data defined in " << dat_file << std::endl;
 
-
-    // _____TODO_____
-    return;
-
+    trrojan::timer t;
+    t.start();
     dat_raw_reader dr;
     try
     {
         dr.read_files(dat_file);
     }
-    catch (...)
+    catch (std::runtime_error e)
     {
-        throw std::runtime_error("Error reading volume data: " + dat_file);
+        std::cerr << e.what() << std::endl;
+        return;
     }
 
-    std::vector<char> raw_data = dr.data();
+    const std::vector<char> &raw_data = dr.data();
+    std::cout << raw_data.size() << " bytes have been read." << std::endl;
 
-    std::cout << raw_data.size() << std::endl;
 
     // TODO
 }
@@ -259,13 +264,3 @@ void trrojan::opencl::volume_raycast_benchmark::update_kernel_args(const trrojan
     // TODO
 }
 
-
-/**
- * trrojan::opencl::volume_raycast_benchmark::run_kernel
- */
-trrojan::result trrojan::opencl::volume_raycast_benchmark::run_kernel()
-{
-    // TODO
-
-    return trrojan::result();
-}
