@@ -89,11 +89,6 @@ namespace opencl
                                 const std::tr1::unordered_set<std::string> changed);
 
         /// <summary>
-        /// Run the OpenCL kernel.
-        /// </summary>
-        trrojan::result run_kernel();
-
-        /// <summary>
         /// Vector containing the names of all factors that are relevent at build time
         /// of the OpenCL kernel.
         /// </summary>

@@ -80,7 +80,9 @@ namespace trrojan {
 
             for (auto b : bs) {
                 std::cout << "=== " << b->name() << " ===" << std::endl;
-                b->run(ec);
+                // skip stream for testing
+//                if (b->name() != "stream")
+                    b->run(ec);
             }
         }
 

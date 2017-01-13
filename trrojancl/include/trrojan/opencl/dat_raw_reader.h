@@ -24,7 +24,7 @@ namespace opencl {
         size_t raw_file_size = 0;
 
         std::array<unsigned int, 3> volume_res;
-        std::array<double, 3> slice_thickness = {{1.0, 1.0, 1.0}};
+        std::array<double, 3> slice_thickness = {{-1.0, -1.0, -1.0}};
         std::string format;                     // UCHAR, USHORT,...
     };
 
@@ -48,7 +48,7 @@ namespace opencl {
         /// <param name="dat_file_name">Name and full path of the dat file</param>
         /// <param name="raw_data">Reference to a vector where the read raw data
         /// is stored in.</param>
-        /// <throws>If one of the files could not be read.</throws
+        /// <throws>If one of the files could not be found or read.</throws
         void read_files(const std::string dat_file_name);
 
         /// <summary>
@@ -58,9 +58,9 @@ namespace opencl {
         bool has_data() const;
 
         /// <summary>
-        /// Get the raw data read. This method movs the data.
+        /// Get a constant reference to the raw data that has been read.
         /// </summary>
-        /// <throws>If no raw data has been read.</throws>
+        /// <throws>If no raw data has been read before.</throws>
         const std::vector<char> &data() const;
 
     private:
@@ -69,6 +69,7 @@ namespace opencl {
         /// Read the dat textfile.
         /// <summary>
         /// <param name="dat_file_name"> Name and full path of the dat text file.</param>
+        /// <throws>If dat file cannot be opened or properties are missing.</throws>
         void read_dat(const std::string dat_file_name);
 
         /// <summary>
