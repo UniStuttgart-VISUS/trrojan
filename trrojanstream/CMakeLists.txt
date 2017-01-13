@@ -22,5 +22,4 @@ add_library(trrojanstream MODULE ${HeaderFiles} ${SourceFiles})
 #set(TrrojanStreamIncludeDir "${CMAKE_CURRENT_SOURCE_DIR}/${IncludeDirectory}" PARENT_SCOPE)
 #add_library(trrojanstream SHARED ${HeaderFiles} ${SourceFiles})
 
-target_link_libraries(trrojanstream LINK_PUBLIC trrojancore)
-target_link_libraries(trrojanstream ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(trrojanstream LINK_PUBLIC trrojancore ${CMAKE_THREAD_LIBS_INIT})
