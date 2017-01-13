@@ -84,27 +84,22 @@ trrojan::result_set trrojan::stream::stream_benchmark::run(
 
     // Invoke each configuration.
     c.foreach_configuration([&](const trrojan::configuration& c) {
-        changed.clear();
-        this->check_changed_factors(c, std::back_inserter(changed));
-        this->log_run(c);
-        std::cout << std::endl;
-        retval.push_back(this->run(c));
-        return true;
+        //changed.clear();
+        //this->check_changed_factors(c, std::back_inserter(changed));
+        //this->log_run(c);
+        //std::cout << std::endl;
+        //retval.push_back(this->run(c));
+        //return true;
+        // TODO: optimise reallocs.
+        try {
+            this->log_run(c);
+            retval.push_back(std::move(this->run(c)));
+            return true;
+        } catch (const std::exception& ex) {
+            log::instance().write_line(ex);
+            return false;
+        }
     });
-
-
-    // TODO: remove hack
-    //std::cout << "here" << std::endl;
-    auto p = std::make_shared<problem>(
-        scalar_type::float32,
-        42,
-        task_type::copy,
-        access_pattern::contiguous,
-        8000000,
-        1);
-    std::array<worker_thread::pointer_type, 1> t;
-    t[0] = worker_thread::create(p, worker_thread::make_barrier(1), 0);
-    worker_thread::join(t.begin(), t.end());
 
     return retval;
 }
@@ -115,7 +110,24 @@ trrojan::result_set trrojan::stream::stream_benchmark::run(
  */
 trrojan::result trrojan::stream::stream_benchmark::run(
         const configuration& config) {
-    return trrojan::result();
+    trrojan::result retval;
+
+    // TODO: remove hack
+    //std::cout << "here" << std::endl;
+    auto p = std::make_shared<problem>(
+        //static_cast<scalar_type>(config,
+        scalar_type::float32,
+        42,
+        task_type::copy,
+        access_pattern::contiguous,
+        8000000,
+        1);
+    std::array<worker_thread::pointer_type, 1> t;
+    t[0] = worker_thread::create(p, worker_thread::make_barrier(1), 0);
+    worker_thread::join(t.begin(), t.end());
+
+
+    return retval;
 }
 
 

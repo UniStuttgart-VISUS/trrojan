@@ -47,9 +47,8 @@ trrojan::result_set trrojan::benchmark_base::run(
     auto c = configs;
     c.merge(this->_default_configs, false);
 
-    result_set retval;
-
     // Invoke each configuration.
+    result_set retval;
     c.foreach_configuration([this, &retval](const configuration& c) {
         try {
             this->log_run(c);

@@ -33,19 +33,31 @@ namespace stream {
 
 
     /// <summary>
-    /// A traits class for inferring the offset between two steps from the
-    /// <see cref="trrojan::stream::access_pattern" /> and the problem size.
+    /// A traits class for inferring the offset between two threads and the
+    /// offset between two steps from the
+    /// <see cref="trrojan::stream::access_pattern" /> and the problem size
+    /// <tparamref name="P" />.
     /// </summary>
     template<access_pattern A, size_t P> struct access_pattern_traits { };
 
     template<size_t P>
     struct access_pattern_traits<access_pattern::contiguous, P> {
-        static const size_t offset = 1;
+        static inline size_t offset(const size_t rank) {
+            return (rank * P);
+        }
+        static inline size_t step(const size_t parallelism) {
+            return 1;
+        }
     };
 
     template<size_t P>
     struct access_pattern_traits<access_pattern::interleaved, P> {
-        static const size_t offset = P;
+        static inline size_t offset(const size_t rank) {
+            return rank;
+        }
+        static inline size_t step(const size_t parallelism) {
+            return parallelism;
+        }
     };
 
 
