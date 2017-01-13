@@ -7,6 +7,8 @@
 
 #include "trrojan/stream/export.h"
 
+#include <string>
+
 
 namespace trrojan {
 namespace stream {
@@ -48,6 +50,10 @@ namespace stream {
         static inline size_t step(const size_t parallelism) {
             return 1;
         }
+        static inline const std::string& name(void) {
+            static const std::string name("contiguous");
+            return name;
+        }
     };
 
     template<size_t P>
@@ -57,6 +63,10 @@ namespace stream {
         }
         static inline size_t step(const size_t parallelism) {
             return parallelism;
+        }
+        static inline const std::string& name(void) {
+            static const std::string name("interleaved");
+            return name;
         }
     };
 

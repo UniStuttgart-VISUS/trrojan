@@ -134,6 +134,8 @@ void trrojan::stream::worker_thread::start(problem_type problem,
     // TODO: priority
     // TODO: affinity
 
+    log::instance().write(log_level::error, "TODO: IMPLEMENTATION OF AFFINITY MISSING!\n");
+
     // http://eli.thegreenplace.net/2016/c11-threads-affinity-and-hyperthreading/
     /*
     // Create a cpu_set_t object representing a set of CPUs. Clear it and mark
@@ -147,7 +149,6 @@ void trrojan::stream::worker_thread::start(problem_type problem,
     std::cerr << "Error calling pthread_setaffinity_np: " << rc << "\n";
     }
     */
-    throw 1;
 #endif /* _WIN32 */
 }
 

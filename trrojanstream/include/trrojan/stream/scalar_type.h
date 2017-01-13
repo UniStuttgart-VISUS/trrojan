@@ -8,6 +8,7 @@
 #include "trrojan/stream/export.h"
 
 #include <cinttypes>
+#include <string>
 
 
 namespace trrojan {
@@ -46,44 +47,34 @@ namespace stream {
     /// </summary>
     template<scalar_type S> struct scalar_type_traits { };
 
-    template<> struct scalar_type_traits<scalar_type::float32> {
-        typedef float type;
-    };
-
-    template<> struct scalar_type_traits<scalar_type::float64> {
-        typedef double type;
-    };
-
-    template<> struct scalar_type_traits<scalar_type::int32> {
-        typedef std::int32_t type;
-    };
-
-    template<> struct scalar_type_traits<scalar_type::int64> {
-        typedef std::int64_t type;
-    };
-
-
     /// <summary>
     /// A traits class for inferring the
     /// <see cref="trrojan::stream::scalar_type" /> type from a C++ type.
     /// </summary>
     template<class T> struct scalar_reverse_traits { };
 
-    template<> struct scalar_reverse_traits<float> {
-        static const scalar_type type = scalar_type::float32;
-    };
+#define __TRROJANCORE_DECL_SCALAR_TYPE_TRAITS(t0, t1)                          \
+    template<> struct scalar_type_traits<scalar_type::t0> {                    \
+        typedef t1 type;                                                       \
+        static inline const std::string& name(void) {                          \
+            static const std::string retval(#t0);                              \
+            return retval;                                                     \
+        }                                                                      \
+    };                                                                         \
+    template<> struct scalar_reverse_traits<t1> {                              \
+        static const scalar_type type = scalar_type::t0;                       \
+        static inline const std::string& name(void) {                          \
+            static const std::string retval(#t0);                              \
+            return retval;                                                     \
+        }                                                                      \
+    };                                                                         \
 
-    template<> struct scalar_reverse_traits<double> {
-        static const scalar_type type = scalar_type::float64;
-    };
+    __TRROJANCORE_DECL_SCALAR_TYPE_TRAITS(float32, float);
+    __TRROJANCORE_DECL_SCALAR_TYPE_TRAITS(float64, double);
+    __TRROJANCORE_DECL_SCALAR_TYPE_TRAITS(int32, std::int32_t);
+    __TRROJANCORE_DECL_SCALAR_TYPE_TRAITS(int64, std::int64_t);
 
-    template<> struct scalar_reverse_traits<std::int32_t> {
-        static const scalar_type type = scalar_type::int32;
-    };
-
-    template<> struct scalar_reverse_traits<std::int64_t> {
-        static const scalar_type type = scalar_type::int64;
-    };
+#undef __TRROJANCORE_DECL_SCALAR_TYPE_TRAITS
 
 
     template<scalar_type...> struct scalar_type_list_t { };
