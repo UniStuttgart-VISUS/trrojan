@@ -35,7 +35,7 @@ namespace trrojan {
     /// </summary>
     template<class... P> std::string TRROJANCORE_API join(
             const std::string& sep, std::string str, P&&... strs) {
-        int unpack[]{ 0, (str += sep + combine_path(strs), 0)... };
+        int unpack[]{ 0, (str += sep + trrojan::join(strs), 0)... };
         static_cast<void>(unpack);
         return str;
     }
