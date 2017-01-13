@@ -160,6 +160,15 @@ namespace stream {
         }
 
         /// <summary>
+        /// Answer the problem size (in bytes) for a single thread.
+        /// </summary>
+        inline size_t size_in_bytes(void) const {
+            assert(this->_a.size() == this->_b.size());
+            assert(this->_a.size() == this->_c.size());
+            return this->_a.size();
+        }
+
+        /// <summary>
         /// Answer the task to be performed on the memory.
         /// </summary>
         inline task_type_t task_type(void) const {

@@ -65,13 +65,19 @@ namespace trrojan {
         /// <returns></returns>
         /// <exception cref="std::invalid_argument">If not all required factors
         /// are specified in the configuration set.</exception>
-        virtual result_set run(const configuration_set& configs) = 0;
+        virtual result_set run(const configuration_set& configs);
 
         virtual result run(const configuration& config) = 0;
 
         // TODO: define the interface.
 
     protected:
+
+        /// <summary>
+        /// Merges all system factors into <paramref name="c" />.
+        /// </summary>
+        static trrojan::configuration& merge_system_factors(
+            trrojan::configuration& c);
 
         inline benchmark_base(const std::string& name) : _name(name) { }
 
@@ -108,6 +114,12 @@ namespace trrojan {
         /// or raise an exception.
         /// </summary>
         void check_required_factors(const trrojan::configuration_set& cs) const;
+
+        /// <summary>
+        /// Write an informational message to the log that we are now running
+        /// <paramref name="c" />.
+        /// </summary>
+        void log_run(const trrojan::configuration& c) const;
 
         /// <summary>
         /// The default configuration set which is used to find required

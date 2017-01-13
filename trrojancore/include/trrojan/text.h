@@ -21,28 +21,28 @@ namespace trrojan {
     /// <see cref="needle" />.
     /// </summary>
     template<class T>
-    inline bool TRROJANCORE_API ends_with(const std::basic_string<T>& haystack,
-            const std::basic_string<T>& needle) {
-        if (needle.size() > haystack.size()) {
-            return false;
-        } else {
-            return (haystack.substr(haystack.size() - needle.size()) == needle);
-        }
-    }
+    bool TRROJANCORE_API ends_with(const std::basic_string<T>& haystack,
+        const std::basic_string<T>& needle);
+
+    /// <summary>
+    /// Joins a set of strings with the given separator between them.
+    /// </summary>
+    template<class... P> std::string TRROJANCORE_API join(
+        const std::string& sep, std::string str, P&&... strs);
+
+    /// <summary>
+    /// Joins a range of strings with the given separator between them.
+    /// </summary>
+    template<class I> std::string TRROJANCORE_API join(
+        const std::string& sep, I begin, I end);
 
     /// <summary>
     /// Answer whether <paramref name="haystack" /> starts with
     /// <see cref="needle" />.
     /// </summary>
     template<class T>
-    inline bool TRROJANCORE_API starts_with(const std::basic_string<T>& haystack,
-            const std::basic_string<T>& needle) {
-        if (needle.size() > haystack.size()) {
-            return false;
-        } else {
-            return (haystack.substr(0, needle.size()) == needle);
-        }
-    }
+    bool TRROJANCORE_API starts_with(const std::basic_string<T>& haystack,
+        const std::basic_string<T>& needle);
 
     /// <summary>
     /// Remove all leading white-space characters from <paramref name="str" />.
@@ -85,3 +85,5 @@ namespace trrojan {
         return trim_left(trim_right(str));
     }
 }
+
+#include "trrojan/text.inl"

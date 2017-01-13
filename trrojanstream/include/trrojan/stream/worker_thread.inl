@@ -105,18 +105,26 @@ void trrojan::stream::worker_thread::dispatch(
         trrojan::stream::task_type_list_t<T, Ts...>,
         const trrojan::stream::task_type t) {
     if (T == t) {
-        std::cout << "task type " << (int) T << " selected." << std::endl;
+        typedef access_pattern_traits<A, P> pattern;
         typedef step<P, S, T> step;
 
-        trrojan::timer timer;
-        timer.start();
+        auto offset = pattern::offset(this->rank);
+        auto a = this->_problem->a<S>() + offset;
+        auto b = this->_problem->b<S>() + offset;
+        auto c = this->_problem->c<S>() + offset;
+        auto s = this->_problem->s<S>();
+        auto o = pattern::step(this->_problem->parallelism());
 
+        trrojan::timer timer;
         this->synchronise(0);   // TODO: repeat
-        step::apply(this->_problem->a<S>(), this->_problem->b<S>(),
-            this->_problem->c<S>(), this->_problem->s<S>(),
-            access_pattern_traits<A, P>::offset);
+        timer.start();
+        step::apply(a, b, c, s, o);
         auto elapsed = timer.elapsed_millis();
-        //auto gigs = ((double)a.size() * sizeof(float)) / trrojan::constants<decltype(elapsed)>::bytes_per_gigabyte;
+        elapsed /= trrojan::constants<decltype(elapsed)>::millis_per_second;
+        auto gigs = (double)this->_problem->size_in_bytes() / trrojan::constants<decltype(elapsed)>::bytes_per_gigabyte;
+        std::cout << gigs << " GB" << std::endl;
+        std::cout << elapsed << " s" << std::endl;
+        std::cout << (gigs / elapsed) << " GB/s" << std::endl;
 
     } else {
         this->dispatch<S, P, A>(
