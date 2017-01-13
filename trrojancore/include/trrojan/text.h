@@ -31,6 +31,34 @@ namespace trrojan {
     }
 
     /// <summary>
+    /// Joins a set of strings with the given separator between them.
+    /// </summary>
+    template<class... P> std::string TRROJANCORE_API join(
+            const std::string& sep, std::string str, P&&... strs) {
+        int unpack[]{ 0, (str += sep + combine_path(strs), 0)... };
+        static_cast<void>(unpack);
+        return str;
+    }
+
+    /// <summary>
+    /// Joins a range of strings with the given separator between them.
+    /// </summary>
+    template<class I> std::string TRROJANCORE_API join(
+            const std::string& sep, I begin, I end) {
+        bool isFirst = true;
+        std::string retval;
+        for (auto it = begin; it != end; ++it) {
+            if (isFirst) {
+                isFirst = false;
+            } else {
+                retval += sep;
+            }
+            retval += *it;
+        }
+        return retval;
+    }
+
+    /// <summary>
     /// Answer whether <paramref name="haystack" /> starts with
     /// <see cref="needle" />.
     /// </summary>

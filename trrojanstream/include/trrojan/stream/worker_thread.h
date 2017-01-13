@@ -407,6 +407,12 @@ namespace stream {
         static void *thunk(void *param);
 #endif /* _WIN32 */
 
+        /// <summary>
+        /// Synchronises the worker threads using the same
+        /// <see cref="trrojan::stream::worker_thread::barrier" />
+        /// for the <see cref="barrierId" />th iteration using busy
+        /// waiting (spin lock).
+        /// </summary>
         void synchronise(const int barrierId);
 
         /// <summary>

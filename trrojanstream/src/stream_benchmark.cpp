@@ -83,16 +83,10 @@ trrojan::result_set trrojan::stream::stream_benchmark::run(
     c.merge(this->_default_configs, false);
 
     // Invoke each configuration.
-    //c.foreach_configuration(std::bind(&stream_benchmark::run0,
-    //    this, std::placeholders::_1));
-    //c.foreach_configuration(run0);
-
     c.foreach_configuration([&](const trrojan::configuration& c) {
         changed.clear();
         this->check_changed_factors(c, std::back_inserter(changed));
-        for (auto& f : c) {
-            std::cout << f << std::endl;
-        }
+        this->log_run(c);
         std::cout << std::endl;
         retval.push_back(this->run(c));
         return true;
@@ -106,7 +100,7 @@ trrojan::result_set trrojan::stream::stream_benchmark::run(
         42,
         task_type::copy,
         access_pattern::contiguous,
-        problem::default_problem_size,
+        8000000,
         1);
     std::array<worker_thread::pointer_type, 1> t;
     t[0] = worker_thread::create(p, worker_thread::make_barrier(1), 0);

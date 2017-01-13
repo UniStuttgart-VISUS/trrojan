@@ -21,12 +21,15 @@ namespace stream {
     /// The implementation of the memory streaming benchmark.
     /// </summary>
     /// <remarks>
-    /// The implementation of this benchmark is closely related to John
+    /// <para>The implementation of this benchmark is closely related to John
     /// McCalpin's STREAM benchmark (http://www.cs.virginia.edu/stream/), but
     /// uses a different multi-threading model, which hopefully minimises the
     /// variance between the starting time of different threads compared to an
     /// OpenMP-based implementation, which is also dependent on the runtime
-    /// used for the test.
+    /// used for the test.</para>
+    /// <para>Most of the benchmark implementation is located in
+    /// <see cref="trrojan::stream::worker_thread" />. Please refer to this
+    /// class for implementation details of the benchmark.</para>
     /// </remarks>
     class TRROJANSTREAM_API stream_benchmark : public trrojan::benchmark_base {
 

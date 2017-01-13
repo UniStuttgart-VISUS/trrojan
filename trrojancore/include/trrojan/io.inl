@@ -5,19 +5,6 @@
 
 
 /*
- * trrojan::combine_path
- */
-template<class... P>
-std::string TRROJANCORE_API trrojan::combine_path(std::string path,
-        P&&... paths) {
-    int unpack[]{ 0, (path += directory_separator_char
-        + combine_path(paths), 0)... };
-    static_cast<void>(unpack);
-    return path;
-}
-
-
-/*
  *  trrojan::get_file_system_entries
  */
 template<class I, class P>

@@ -109,14 +109,15 @@ void trrojan::stream::worker_thread::dispatch(
         typedef step<P, S, T> step;
 
         trrojan::timer timer;
-        timer.start();
-
         this->synchronise(0);   // TODO: repeat
+        timer.start();
         step::apply(this->_problem->a<S>(), this->_problem->b<S>(),
             this->_problem->c<S>(), this->_problem->s<S>(),
             access_pattern_traits<A, P>::offset);
         auto elapsed = timer.elapsed_millis();
-        //auto gigs = ((double)a.size() * sizeof(float)) / trrojan::constants<decltype(elapsed)>::bytes_per_gigabyte;
+        elapsed /= trrojan::constants<decltype(elapsed)>::millis_per_second;
+        auto gigs = (double)this->_problem->size_in_bytes() / trrojan::constants<decltype(elapsed)>::bytes_per_gigabyte;
+        std::cout << "gigs " << gigs << std::endl;
 
     } else {
         this->dispatch<S, P, A>(

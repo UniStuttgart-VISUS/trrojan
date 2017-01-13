@@ -9,6 +9,9 @@
 #include <sstream>
 #include <stdexcept>
 
+#include "trrojan/log.h"
+#include "trrojan/system_factors.h"
+
 
 /*
  * trrojan::benchmark_base::~benchmark_base
@@ -32,7 +35,6 @@ std::vector<std::string> trrojan::benchmark_base::required_factors(void) const {
 }
 
 
-#if 0
 /*
  * trrojan::benchmark_base::run
  */
@@ -45,21 +47,32 @@ trrojan::result_set trrojan::benchmark_base::run(
     auto c = configs;
     c.merge(this->_default_configs, false);
 
+    result_set retval;
+
     // Invoke each configuration.
-    c.foreach_configuration(std::bind(&benchmark_base::run,
-        this, std::placeholders::_1));
-    //c.foreach_configuration(run0);
+    c.foreach_configuration([this, &retval](const configuration& c) {
+        try {
+            this->log_run(c);
+            retval.push_back(std::move(this->run(c)));
+            return true;
+        } catch (const std::exception& ex) {
+            log::instance().write_line(ex);
+            return false;
+        }
+    });
 
-
-    // Problem size
-
-    // TODO: remove hack
-    //std::cout << "here" << std::endl;
-    worker_thread::crowbar();
-
-    return result_set();
+    return retval;
 }
-#endif
+
+
+/*
+ * trrojan::benchmark_base::merge_system_factors
+ */
+trrojan::configuration& trrojan::benchmark_base::merge_system_factors(
+        trrojan::configuration& c) {
+    trrojan::system_factors::instance().get(c);
+    return c;
+}
 
 
 /*
@@ -75,4 +88,14 @@ void trrojan::benchmark_base::check_required_factors(
             throw std::invalid_argument(msg.str());
         }
     }
+}
+
+
+/*
+ * trrojan::benchmark_base::log_run
+ */
+void trrojan::benchmark_base::log_run(const trrojan::configuration& c) const {
+    auto factors = trrojan::to_string(c);
+    log::instance().write(log_level::information, "Running \"%s\" with %s\n",
+        this->name().c_str(), factors.c_str());
 }
