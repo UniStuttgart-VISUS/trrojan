@@ -67,7 +67,13 @@ namespace opencl
         /// </summary>
         /// <param name="dat_file">Name of the .dat-file that contains the information
         /// on the volume data.</param>
-        void load_volume_data(const std::string dat_file, unsigned int data_precision);
+        configuration load_volume_data(const std::string dat_file);
+
+        template<typename voxel_t>
+        void create_cl_mem()
+        {
+
+        }
 
         /// <summary>
         /// Compose and generate the OpenCL kernel source based on the given configuration.

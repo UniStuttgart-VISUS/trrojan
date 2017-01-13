@@ -24,7 +24,7 @@ void trrojan::opencl::dat_raw_reader::read_files(const std::string dat_file_name
     }
     else
     {
-        throw std::runtime_error("Empty .dat file name.");
+        throw std::invalid_argument("dat file name must not be empty.");
     }
 
     try
@@ -59,6 +59,15 @@ const std::vector<char> & trrojan::opencl::dat_raw_reader::data() const
     }
 //    return std::move(_raw_data);
     return _raw_data;
+}
+
+const trrojan::opencl::Properties &trrojan::opencl::dat_raw_reader::properties() const
+{
+    if (!has_data())
+    {
+        throw std::runtime_error("No properties available.");
+    }
+    return _prop;
 }
 
 
@@ -154,7 +163,7 @@ void trrojan::opencl::dat_raw_reader::read_raw(const std::string raw_file_name)
     assert(!raw_file_name.empty());
     if (raw_file_name.empty())
     {
-        throw std::runtime_error("Raw file name is empty.");
+        throw std::invalid_argument("Raw file name must not be empty.");
     }
 
     // append .raw file name to .dat file name path
@@ -169,6 +178,9 @@ void trrojan::opencl::dat_raw_reader::read_raw(const std::string raw_file_name)
         name_with_path = raw_file_name;
     }
 
+    // use plain old C++ method for file read here that is much faster than iterator
+    // based approaches according to:
+    // http://insanecoding.blogspot.de/2011/11/how-to-read-in-file-in-c.html
     std::ifstream is(name_with_path, std::ios::in | std::ifstream::binary);
     if (is)
     {

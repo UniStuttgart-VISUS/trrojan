@@ -183,21 +183,18 @@ trrojan::result trrojan::opencl::volume_raycast_benchmark::run(const configurati
 /*
  * setup volume raycaster
  */
-void trrojan::opencl::volume_raycast_benchmark::setup_raycaster(const trrojan::configuration &cfg,
-                                                                const std::tr1::unordered_set<std::string> changed)
+void trrojan::opencl::volume_raycast_benchmark::setup_raycaster(
+        const trrojan::configuration &cfg,
+        const std::tr1::unordered_set<std::string> changed)
 {
     // TODO
-    if (changed.count("volume_file_name") || changed.count("data_precision"))
+    if (changed.count("volume_file_name"))
     {
         auto it = std::find_if(cfg.begin(), cfg.end(),
                            [](const named_variant& el){ return el.name() == "volume_file_name";});
         std::string file_name = it->value();
 
-        it = std::find_if(cfg.begin(), cfg.end(),
-                                   [](const named_variant& el){ return el.name() == "data_precision";});
-        int data_precision = it->value();
-
-        load_volume_data(file_name, data_precision);
+        load_volume_data(file_name);
     }
     if (changed.count("tff_file_name"))
     {
@@ -209,13 +206,14 @@ void trrojan::opencl::volume_raycast_benchmark::setup_raycaster(const trrojan::c
 /**
  * trrojan::opencl::volume_raycast_benchmark::load_volume_data
  */
-void trrojan::opencl::volume_raycast_benchmark::load_volume_data(const std::string dat_file,
-                                                                 unsigned int data_precision)
+trrojan::configuration trrojan::opencl::volume_raycast_benchmark::load_volume_data(
+        const std::string dat_file)
 {
     std::cout << "Loading volume data defined in " << dat_file << std::endl;
+    trrojan::configuration static_cfg;
 
-    trrojan::timer t;
-    t.start();
+//    trrojan::timer t;
+
     dat_raw_reader dr;
     try
     {
@@ -224,22 +222,28 @@ void trrojan::opencl::volume_raycast_benchmark::load_volume_data(const std::stri
     catch (std::runtime_error e)
     {
         std::cerr << e.what() << std::endl;
-        return;
+        return static_cfg;
     }
 
     const std::vector<char> &raw_data = dr.data();
     std::cout << raw_data.size() << " bytes have been read." << std::endl;
+    std::cout << dr.properties().to_string() << std::endl;
 
+    static_cfg.push_back(named_variant("data_precision", dr.properties().format));
+    static_cfg.push_back(named_variant("volume_res_x", dr.properties().volume_res[0]));
+    static_cfg.push_back(named_variant("volume_res_x", dr.properties().volume_res[1]));
+    static_cfg.push_back(named_variant("volume_res_x", dr.properties().volume_res[2]));
 
-    // TODO
+    return static_cfg;
 }
 
 
 /*
  * Compose the raycastig kernel source
  */
-void trrojan::opencl::volume_raycast_benchmark::compose_kernel(const trrojan::configuration &cfg,
-                                                               const std::tr1::unordered_set<std::string> changed)
+void trrojan::opencl::volume_raycast_benchmark::compose_kernel(
+        const trrojan::configuration &cfg,
+        const std::tr1::unordered_set<std::string> changed)
 {
     // TODO
 
