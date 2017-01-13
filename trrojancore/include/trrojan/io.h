@@ -64,11 +64,8 @@ namespace trrojan {
     /// Combines <paramref name="paths" /> with
     /// <see cref="trrojan::directory_separator_char" />.
     /// </summary>
-    template<class... P> inline std::string TRROJANCORE_API combine_path(
-            std::string path, P&&... paths) {
-        return trrojan::join(std::string(1, directory_separator_char),
-            path, std::forward<P>(paths)...);
-    }
+    template<class... P> std::string TRROJANCORE_API combine_path(
+        std::string path, P&&... paths);
 
     /// <summary>
     /// Enumerates all file system entries (files and directories) in
