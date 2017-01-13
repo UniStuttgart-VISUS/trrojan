@@ -9,6 +9,8 @@
 
 #include "trrojan/opencl/export.h"
 
+#include "omp.h"
+
 #ifdef _WIN32
     #include <unordered_set>
 #else
@@ -19,7 +21,6 @@ namespace trrojan
 {
 namespace opencl
 {
-
     /// <summary>
     /// The implementation of a basic volume raycasting benchmark.
     /// </summary>
@@ -67,12 +68,60 @@ namespace opencl
         /// </summary>
         /// <param name="dat_file">Name of the .dat-file that contains the information
         /// on the volume data.</param>
-        configuration load_volume_data(const std::string dat_file);
+        configuration load_volume_data(const std::string dat_file,
+                                       const unsigned int sample_precision);
 
-        template<typename voxel_t>
-        void create_cl_mem()
+
+        ///
+        /// deep copy TODO: performance
+        ///
+        template<class From, class To>
+        const std::vector<To> convert_data_precision(const std::vector<char> &volume_data,
+                                                     const size_t voxel_cnt,
+                                                     unsigned int out_precision) const
         {
+            unsigned short voxel_val = 0;
 
+            if (volume_data.size() <= voxel_cnt * sizeof(From))
+            {
+                throw std::invalid_argument(
+                            "Volume data size must correspond to the number of voxels. ");
+            }
+
+            std::vector<To> converted_data(voxel_cnt);
+
+            for(size_t i = 0; i < voxel_cnt; ++i)
+            {
+                voxel_val = ((From*)(volume_data.data()))[i];
+
+                if ((sizeof(From) == 1 && out_precision == 1)
+                        || (sizeof(From) == 2 && out_precision == 2))
+                {
+                    converted_data.at(i) = voxel_val;
+                }
+                else if (sizeof(From) == 1 && out_precision == 2)
+                {
+                    converted_data.at(i) = voxel_val*256;
+                }
+                else if (sizeof(From) == 2 && out_precision == 1)
+                {
+                    converted_data.at(i) = voxel_val/256;
+                }
+                else if (out_precision == 4 || out_precision == 8)
+                {
+                    converted_data.at(i) =
+                            voxel_val / (double)std::numeric_limits<From>::max();
+                }
+                else
+                {
+                    throw std::invalid_argument(
+                                "Precision must be 1, 2, 4 or 8 bytes but is "
+                                + std::to_string(out_precision) + " bytes");
+                }
+            }
+
+            std::cout << "Converted data to " << out_precision << " byte(s)." << std::endl;
+            return converted_data;
         }
 
         /// <summary>

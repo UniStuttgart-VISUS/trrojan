@@ -147,7 +147,7 @@ void trrojan::stream::worker_thread::start(problem_type problem,
     std::cerr << "Error calling pthread_setaffinity_np: " << rc << "\n";
     }
     */
-    throw 1;
+    //throw 1;
 #endif /* _WIN32 */
 }
 
