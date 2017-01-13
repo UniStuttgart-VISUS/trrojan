@@ -7,6 +7,8 @@
 
 #include "trrojan/opencl/environment.h"
 
+#include "trrojan/opencl/volume_raycast_benchmark.h"
+
 
 /// <summary>
 /// Gets a new instance of the plugin descriptor.
@@ -28,7 +30,7 @@ trrojan::opencl::plugin::~plugin(void) { }
  */
 size_t trrojan::opencl::plugin::create_benchmarks(benchmark_list& dst) const
 {
-    //dst.push_back(std::make_shared<opencl_benchmark>());
+    dst.push_back(std::make_shared<volume_raycast_benchmark>());
     return 1;
 }
 

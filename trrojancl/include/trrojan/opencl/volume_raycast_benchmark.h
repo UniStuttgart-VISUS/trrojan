@@ -50,6 +50,11 @@ namespace opencl
         /// </summary>
         virtual result_set run(const configuration_set &configs);
 
+        /// <summary>
+        /// Overrides benchmark run method.
+        /// </summary>
+        virtual result run(const configuration &configs);
+
     private:
         /// <summary>
         /// Setup the raycaster with the given configuration.
@@ -62,7 +67,7 @@ namespace opencl
         /// </summary>
         /// <param name="dat_file">Name of the .dat-file that contains the information
         /// on the volume data.</param>
-        void load_volume_data(const std::string dat_file);
+        void load_volume_data(const std::string dat_file, unsigned int data_precision);
 
         /// <summary>
         /// Compose and generate the OpenCL kernel source based on the given configuration.
