@@ -13,6 +13,7 @@
 #include <cinttypes>
 #include <climits>
 #include <iostream>
+#include <iterator>
 #include <memory>
 #include <stdexcept>
 #include <system_error>
@@ -86,9 +87,17 @@ namespace stream {
         /// </summary>
         typedef std::size_t rank_type;
 
+        /// <summary>
+        /// Creates and starts a new worker thread for the given problem.
+        /// </summary>
         static pointer_type create(problem_type problem, barrier_type barrier,
             const rank_type rank, const uint64_t affinity_mask = 0,
             const uint16_t affinity_group = 0);
+
+        /// <summary>
+        /// Creates an starts the worker threads for the given problem.
+        /// </summary>
+        static std::vector<pointer_type> create(problem_type problem);
 
         /// <summary>
         /// Join all worker threads in the specified range.

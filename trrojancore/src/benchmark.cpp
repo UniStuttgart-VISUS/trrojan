@@ -69,7 +69,7 @@ trrojan::result_set trrojan::benchmark_base::run(
  */
 trrojan::configuration& trrojan::benchmark_base::merge_system_factors(
         trrojan::configuration& c) {
-    trrojan::system_factors::instance().get(c);
+    c.add_system_factors();
     return c;
 }
 

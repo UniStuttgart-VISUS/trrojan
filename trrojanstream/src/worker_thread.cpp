@@ -20,7 +20,29 @@ trrojan::stream::worker_thread::create(problem_type problem,
 
 
 /*
- * trrojan::stream::worker_thread::star
+ * trrojan::stream::worker_thread::create
+ */
+std::vector<trrojan::stream::worker_thread::pointer_type>
+trrojan::stream::worker_thread::create(problem_type problem) {
+    if (problem == nullptr) {
+        throw std::invalid_argument("The problem must not be null.");
+    }
+
+    auto barrier = worker_thread::make_barrier(problem->parallelism());
+
+    std::vector<pointer_type> retval;
+    retval.reserve(problem->parallelism());
+
+    for (size_t i = 0; i < problem->parallelism(); ++i) {
+        retval.push_back(worker_thread::create(problem, barrier, i));
+    }
+
+    return retval;
+}
+
+
+/*
+ * trrojan::stream::worker_thread::start
  */
 void trrojan::stream::worker_thread::start(problem_type problem,
         barrier_type barrier, const rank_type rank,
@@ -39,6 +61,9 @@ void trrojan::stream::worker_thread::start(problem_type problem,
     this->barrier = barrier;
     this->_problem = problem;
     this->rank = rank;
+
+    trrojan::log::instance().write(log_level::verbose, "Starting worker "
+        "thread with rank %u...\n", this->rank);
 
 #ifdef _WIN32
     /* Create suspended thread. */
@@ -98,7 +123,7 @@ void trrojan::stream::worker_thread::start(problem_type problem,
     ::pthread_attr_setdetachstate(&attribs, PTHREAD_CREATE_JOINABLE);
 
     if (::pthread_create(&this->hThread, &attribs, worker_thread::thunk,
-        static_cast<void *>(this)) != 0) {
+            static_cast<void *>(this)) != 0) {
         std::error_code ec(errno, std::system_category());
         ::pthread_attr_destroy(&attribs);
         throw std::system_error(ec, "Failed to spawn worker thread.");

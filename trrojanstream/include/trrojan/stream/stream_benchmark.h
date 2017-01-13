@@ -39,6 +39,12 @@ namespace stream {
 
         static const std::string access_pattern_interleaved;
 
+        static const std::string factor_access_pattern;
+        static const std::string factor_iterations;
+        static const std::string factor_problem_size;
+        static const std::string factor_scalar;
+        static const std::string factor_threads;
+
         stream_benchmark(void);
 
         virtual ~stream_benchmark(void);
