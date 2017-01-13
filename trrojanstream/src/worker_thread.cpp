@@ -106,7 +106,6 @@ void trrojan::stream::worker_thread::start(problem_type problem,
         ::pthread_attr_destroy(&attribs);
     }
 
-
     // TODO: priority
     // TODO: affinity
 
