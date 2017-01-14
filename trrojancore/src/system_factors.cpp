@@ -53,7 +53,7 @@ static const std::string& register_retriever(const std::string& name,
 
 #define __TRROJAN_DEFINE_FACTOR(n)\
 const std::string trrojan::system_factors::factor_##n                          \
-= ::register_retriever(#n, &system_factors::##n)
+= ::register_retriever(#n, &system_factors::n)
 
 __TRROJAN_DEFINE_FACTOR(bios);
 __TRROJAN_DEFINE_FACTOR(computer_name);
