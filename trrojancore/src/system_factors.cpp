@@ -17,10 +17,13 @@
 
 #ifdef _WIN32
 #include <Windows.h>
+#include <lmcons.h>
 #else /* _WIN32 */
+#include <pwd.h>
 #include <unistd.h>
 #include <sys/utsname.h>
 #include <sys/sysinfo.h>
+#include <sys/types.h>
 #endif /* _WIN32 */
 
 #include "trrojan/io.h"
@@ -28,18 +31,43 @@
 #include "trrojan/text.h"
 
 
+/// <summary>
+/// Enables retrieval of a system factor by its name.
+/// </summary>
+/// <remarks>
+/// This must be a static in the .cpp in order to ensure that it is initialised
+/// before <see cref="trrojan::system_factors" />.
+/// </remarks>
+static std::unordered_map<std::string, trrojan::system_factors::retriever_type>
+retrievers;
+
+
+/// <summary>
+/// Registers a system factor for retrieval by name.
+/// </summary>
+static const std::string& register_retriever(const std::string& name,
+        trrojan::system_factors::retriever_type retriever) {
+    ::retrievers[name] = retriever;
+    return name;
+}
+
+
 #define __TRROJAN_DEFINE_FACTOR(n)\
-const std::string trrojan::system_factors::factor_##n(#n)
+const std::string trrojan::system_factors::factor_##n                          \
+= ::register_retriever(#n, &system_factors::n)
 
 __TRROJAN_DEFINE_FACTOR(bios);
+__TRROJAN_DEFINE_FACTOR(computer_name);
 __TRROJAN_DEFINE_FACTOR(cpu);
 __TRROJAN_DEFINE_FACTOR(installed_memory);
 __TRROJAN_DEFINE_FACTOR(logical_cores);
 __TRROJAN_DEFINE_FACTOR(mainboard);
 __TRROJAN_DEFINE_FACTOR(os);
 __TRROJAN_DEFINE_FACTOR(os_version);
+__TRROJAN_DEFINE_FACTOR(process_elevated);
 __TRROJAN_DEFINE_FACTOR(ram);
 __TRROJAN_DEFINE_FACTOR(system_desc);
+__TRROJAN_DEFINE_FACTOR(user_name);
 
 #undef __TRROJAN_DEFINE_FACTOR
 
@@ -65,6 +93,44 @@ trrojan::variant trrojan::system_factors::bios(void) const {
             << e->get_release_date() << ")" << std::ends;
         return variant(value.str());
     }
+}
+
+
+/*
+* trrojan::system_factors::computer_name
+*/
+trrojan::variant trrojan::system_factors::computer_name(void) const {
+#ifdef _WIN32
+    std::vector<char> buffer;
+    buffer.resize(UNLEN + 1);
+    auto oldBufSize = static_cast<DWORD>(buffer.size());
+    auto bufSize = oldBufSize;
+
+    while (!::GetComputerNameA(buffer.data(), &bufSize)) {
+        DWORD le = ::GetLastError();
+        if ((le == ERROR_INSUFFICIENT_BUFFER) && (oldBufSize != bufSize)) {
+            oldBufSize = bufSize;
+            buffer.resize(bufSize);
+
+        } else {
+            std::error_code ec(::GetLastError(), std::system_category());
+            throw std::system_error(ec, "Failed to get computer name.");
+        }
+    }
+
+    return std::string(buffer.data());
+
+#else /* _WIN32 */
+    utsname names;
+
+    if (::uname(&names) < 0) {
+        std::error_code ec(errno, std::system_category());
+        throw std::system_error(ec, "Failed to get computer name.");
+    }
+
+    return std::string(names.nodename);
+
+#endif /* _WIN32 */
 }
 
 
@@ -170,33 +236,9 @@ trrojan::variant trrojan::system_factors::cpu(void) const {
  * trrojan::system_factors::get
  */
 trrojan::variant trrojan::system_factors::get(const std::string& factor) const {
-    if (factor == system_factors::factor_bios) {
-        return system_factors::bios();
-
-    } else if (factor == system_factors::factor_cpu) {
-        return system_factors::cpu();
-
-    } else if (factor == system_factors::factor_installed_memory) {
-        return system_factors::installed_memory();
-
-    } else if (factor == system_factors::factor_mainboard) {
-        return system_factors::mainboard();
-
-    } else if (factor == system_factors::factor_os) {
-        return system_factors::os();
-
-    } else if (factor == system_factors::factor_os_version) {
-        return system_factors::os_version();
-
-    } else if (factor == system_factors::factor_logical_cores) {
-        return system_factors::logical_cores();
-
-    } else if (factor == system_factors::factor_ram) {
-        return system_factors::ram();
-
-    } else if (factor == system_factors::factor_system_desc) {
-        return system_factors::system_desc();
-
+    auto it = ::retrievers.find(factor);
+    if (it != ::retrievers.end()) {
+        return (this->*(it->second))();
     } else {
         return variant();
     }
@@ -414,6 +456,51 @@ trrojan::variant trrojan::system_factors::os_version(void) const {
 
 
 /*
+ * trrojan::system_factors::process_elevated
+ */
+trrojan::variant trrojan::system_factors::process_elevated(void) const {
+#ifdef _WIN32
+    HANDLE hToken = NULL;
+    DWORD size = 0;
+    TOKEN_ELEVATION_TYPE tet;
+
+    if (!::OpenProcessToken(::GetCurrentProcess(), TOKEN_QUERY, &hToken)) {
+        std::error_code ec(::GetLastError(), std::system_category());
+        throw std::system_error(ec, "Failed to get process token.");
+    }
+
+    if (::GetTokenInformation(hToken, TokenElevationType, &tet,
+            sizeof(tet), &size)) {
+        assert(size == sizeof(tet));
+        return (tet == TokenElevationTypeFull);
+
+    } else {
+        std::error_code ec(::GetLastError(), std::system_category());
+        throw std::system_error(ec, "Failed to obtain token information.");
+    }
+
+#else  /* _WIN32*/
+    auto uid = ::getuid();
+    auto euid = ::geteuid();
+
+    // TODO
+    // http://stackoverflow.com/questions/4159910/check-if-user-is-root-in-c:
+    //if ((uid < 0) || (uid != euid)) {
+    //    // We might have elevated privileges beyond that of the user who invoked
+    //    // the program, due to suid bit. Be very careful about trusting any
+    //    // data!
+    //    return true;
+
+    //} else {
+    //    /* Anything goes. */
+    //}
+
+    return (euid == 0);
+#endif /* _WIN32 */
+}
+
+
+/*
  * trrojan::system_factors::ram
  */
 trrojan::variant trrojan::system_factors::ram(void) const {
@@ -487,6 +574,46 @@ trrojan::variant trrojan::system_factors::system_desc(void) const {
         return variant(value.str());
     }
 }
+
+
+/*
+ * trrojan::system_factors::user_name
+ */
+trrojan::variant trrojan::system_factors::user_name(void) const {
+#ifdef _WIN32
+    std::vector<char> buffer;
+    buffer.resize(UNLEN + 1);
+    auto oldBufSize = static_cast<DWORD>(buffer.size());
+    auto bufSize = oldBufSize;
+
+    while (!::GetUserNameA(buffer.data(), &bufSize)) {
+        DWORD le = ::GetLastError();
+        if ((le == ERROR_INSUFFICIENT_BUFFER) && (oldBufSize != bufSize)) {
+            oldBufSize = bufSize;
+            buffer.resize(bufSize);
+
+        } else {
+            std::error_code ec(::GetLastError(), std::system_category());
+            throw std::system_error(ec, "Failed to get user name.");
+        }
+    }
+
+    return std::string(buffer.data());
+
+#else /* _WIN32 */
+    uid_t uid = ::getuid();
+    auto passwd = ::getpwuid(uid);
+
+    if (passwd == nullptr) {
+        std::error_code ec(errno, std::system_category());
+        throw std::system_error(ec, "Failed to get user name.");
+    }
+
+    return std::string(passwd->pw_name);
+
+#endif /* _WIN32 */
+}
+
 
 #if 0
 void trrojan::system_factors::crowbar(void) {
@@ -571,6 +698,16 @@ void trrojan::system_factors::crowbar(void) {
     }
 }
 #endif
+
+
+/*
+ * trrojan::system_factors::get_retrievers
+ */
+const std::unordered_map<std::string, trrojan::system_factors::retriever_type>&
+trrojan::system_factors::get_retrievers(void) {
+    return ::retrievers;
+}
+
 
 /*
  * trrojan::system_factors::system_factors

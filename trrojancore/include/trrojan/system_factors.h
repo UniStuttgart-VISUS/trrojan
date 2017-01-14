@@ -6,6 +6,7 @@
 #pragma once
 
 #include <string>
+#include <unordered_map>
 
 #include "trrojan/export.h"
 #include "trrojan/named_variant.h"
@@ -24,6 +25,12 @@ namespace trrojan {
     public:
 
         /// <summary>
+        /// Type of a pointer-to-member retrieving a system factor from an 
+        /// instance of <see cref="trrojan::system_factors" />.
+        /// </summary>
+        typedef variant(trrojan::system_factors::*retriever_type)(void) const;
+
+        /// <summary>
         /// Answer the only instance of this class.
         /// </summary>
         static const system_factors& instance(void) {
@@ -35,6 +42,11 @@ namespace trrojan {
         /// Name of the built-in factor describing the BIOS.
         /// </summary>
         static const std::string factor_bios;
+
+        /// <summary>
+        /// Name of the built-in factor describing the host name.
+        /// </summary>
+        static const std::string factor_computer_name;
 
         /// <summary>
         /// Name of the built-in factor describing the CPU(s).
@@ -68,6 +80,12 @@ namespace trrojan {
         static const std::string factor_os_version;
 
         /// <summary>
+        /// Name of the built-in factor describing whether the current process
+        /// is elevated.
+        /// </summary>
+        static const std::string factor_process_elevated;
+
+        /// <summary>
         /// Name of the built-in factor describing the memory hardware.
         /// </summary>
         static const std::string factor_ram;
@@ -78,7 +96,14 @@ namespace trrojan {
         /// </summary>
         static const std::string factor_system_desc;
 
+        /// <summary>
+        /// Name of the built-in factor describing the user name.
+        /// </summary>
+        static const std::string factor_user_name;
+
         variant bios(void) const;
+
+        variant computer_name(void) const;
 
         variant cpu(void) const;
 
@@ -88,15 +113,9 @@ namespace trrojan {
         /// Answer all system factors.
         /// </summary>
         template<class I> inline void get(I oit) const {
-            oit++ = named_variant(factor_bios, this->bios());
-            oit++ = named_variant(factor_cpu, this->cpu());
-            oit++ = named_variant(factor_installed_memory, this->installed_memory());
-            oit++ = named_variant(factor_mainboard, this->mainboard());
-            oit++ = named_variant(factor_os, this->os());
-            oit++ = named_variant(factor_os_version, this->os_version());
-            oit++ = named_variant(factor_logical_cores, this->logical_cores());
-            oit++ = named_variant(factor_ram, this->ram());
-            oit++ = named_variant(factor_system_desc, this->system_desc());
+            for (auto r : system_factors::get_retrievers()) {
+                *oit++ = named_variant(r.first, (this->*(r.second))());
+            }
         }
 
         variant installed_memory(void) const;
@@ -107,13 +126,20 @@ namespace trrojan {
 
         variant os_version(void) const;
 
+        variant process_elevated(void) const;
+
         variant logical_cores(void) const;
 
         variant ram(void) const;
 
         variant system_desc(void) const;
 
+        variant user_name(void) const;
+
     private:
+
+        static const std::unordered_map<std::string, retriever_type>&
+        get_retrievers(void);
 
         system_factors(void);
 

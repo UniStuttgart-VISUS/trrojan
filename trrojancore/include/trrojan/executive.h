@@ -13,6 +13,7 @@
 #include <Windows.h>
 #endif /* _WIN32 */
 
+#include "trrojan/csv_output.h"
 #include "trrojan/environment.h"
 #include "trrojan/export.h"
 #include "trrojan/plugin.h"
@@ -82,7 +83,16 @@ namespace trrojan {
                 std::cout << "=== " << b->name() << " ===" << std::endl;
                 // skip stream for testing
 //                if (b->name() != "stream")
-                    b->run(ec);
+
+                auto fn = b->name();
+                fn += std::string(".csv");
+                csv_output writer;
+                writer.open(csv_output_params::create(fn));
+
+                auto res = b->run(ec);
+                (output_base&) writer << res;
+
+                writer.close();
             }
         }
 

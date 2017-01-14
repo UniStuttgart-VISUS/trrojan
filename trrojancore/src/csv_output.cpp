@@ -75,17 +75,19 @@ trrojan::output_base& trrojan::csv_output::operator <<(
 
     if (this->first_line) {
         for (auto& c : result.configuration()) {
-            if (!isFirst) {
-                this->file << sep;
+            if (isFirst) {
                 isFirst = false;
+            } else {
+                this->file << sep;
             }
             this->print(c.name());
         }
 
         for (auto& n : result.result_names()) {
-            if (!isFirst) {
-                this->file << sep;
+            if (isFirst) {
                 isFirst = false;
+            } else {
+                this->file << sep;
             }
             this->print(n);
         }
@@ -97,17 +99,19 @@ trrojan::output_base& trrojan::csv_output::operator <<(
     for (size_t i = 0; i < result.measurements(); ++i) {
         isFirst = true;
         for (auto& c : result.configuration()) {
-            if (!isFirst) {
-                this->file << sep;
+            if (isFirst) {
                 isFirst = false;
+            } else {
+                this->file << sep;
             }
             this->print(c.value());
         }
 
         for (size_t j = 0; j < result.values_per_measurement(); ++j) {
-            if (!isFirst) {
-                this->file << sep;
+            if (isFirst) {
                 isFirst = false;
+            } else {
+                this->file << sep;
             }
             this->print(result.raw_result(i, j));
         }

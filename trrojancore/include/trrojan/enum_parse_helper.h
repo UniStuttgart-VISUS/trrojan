@@ -5,11 +5,11 @@
 
 #pragma once
 
-#include "trrojan/export.h"
-
 #include <sstream>
 #include <stdexcept>
 
+#include "trrojan/enum_dispatch_list.h"
+#include "trrojan/export.h"
 
 
 namespace trrojan {
@@ -18,12 +18,12 @@ namespace trrojan {
     /// Utility class for parsing enumeration values from strings.
     /// </summary>
     /// <tparam name="V">The type of the enumeration to be parsed.</tparam>
+    /// <tparam name="T">The type of a traits class which allows for deriving
+    /// the string representation of an enum member via a parameterless static
+    /// method named <c>name</c>.</tparam>
     /// <tparam name="L">The type of a compile-time list expanding to the
     /// members of <tparamref name="V" /> to be recognised.</tparam>
-    /// <tparam name="T">The type of a traits class which allows for deriving
-    /// the string representation of an enum member via a static method
-    /// named <c>name</c>.</tparam>
-    template<class V, template<V...> class L, template<V> class T>
+    template<class V, template<V> class T, template<V...> class L>
     struct enum_parse_helper {
 
         typedef V enum_type;

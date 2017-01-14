@@ -24,7 +24,7 @@ trrojan::opencl::volume_raycast_benchmark::volume_raycast_benchmark(void)
     // volume .dat file name is a required factor
 //    this->_default_configs.add_factor(factor::empty("volume_file_name"));
     this->_default_configs.add_factor(factor::from_manifestations("volume_file_name",
-                                                                  std::string("/media/brudervn/Daten/volTest/vol/chameleon.dat")));
+                                                                  std::string("/media/brudervn/Daten/volTest/vol/bonsai.dat")));
 
     // TODO: remove commented section
 //    // volume resolution from .dat file // TODO: "auto fill factor"
@@ -130,7 +130,7 @@ trrojan::result_set trrojan::opencl::volume_raycast_benchmark::run(
     cs.foreach_configuration([&](const trrojan::configuration& cs)
     {
         changed.clear();
-        this->check_changed_factors(cs, std::inserter(changed, changed.begin()));
+        this->check_changed_factors(cs, std::inserter(changed, changed.begin())); // TODO after static config merge
         for (auto& f : cs)
         {
             std::cout << f << std::endl;
@@ -183,24 +183,22 @@ trrojan::result trrojan::opencl::volume_raycast_benchmark::run(const configurati
 /*
  * setup volume raycaster
  */
-void trrojan::opencl::volume_raycast_benchmark::setup_raycaster(const trrojan::configuration &cfg,
-                                                                const std::tr1::unordered_set<std::string> changed)
+void trrojan::opencl::volume_raycast_benchmark::setup_raycaster(
+        const trrojan::configuration &cfg,
+        const std::tr1::unordered_set<std::string> changed)
 {
-    // TODO
-    if (changed.count("volume_file_name") || changed.count("data_precision"))
+    // contains the static factors that are defined through the volume data set ".dat" file
+    trrojan::configuration static_cfg;
+
+    if (changed.count("volume_file_name") || changed.count("sample_precision"))
     {
-        auto it = std::find_if(cfg.begin(), cfg.end(),
-                           [](const named_variant& el){ return el.name() == "volume_file_name";});
-        std::string file_name = it->value();
-
-        it = std::find_if(cfg.begin(), cfg.end(),
-                                   [](const named_variant& el){ return el.name() == "data_precision";});
-        int data_precision = it->value();
-
-        load_volume_data(file_name, data_precision);
+        static_cfg = load_volume_data(cfg.find("volume_file_name")->value(),
+                                      cfg.find("sample_precision")->value());
     }
+
     if (changed.count("tff_file_name"))
     {
+        // TODO
         //load_transfer_function(  );
     }
 }
@@ -209,13 +207,15 @@ void trrojan::opencl::volume_raycast_benchmark::setup_raycaster(const trrojan::c
 /**
  * trrojan::opencl::volume_raycast_benchmark::load_volume_data
  */
-void trrojan::opencl::volume_raycast_benchmark::load_volume_data(const std::string dat_file,
-                                                                 unsigned int data_precision)
+trrojan::configuration trrojan::opencl::volume_raycast_benchmark::load_volume_data(
+        const std::string dat_file,
+        const unsigned int sample_precision)
 {
     std::cout << "Loading volume data defined in " << dat_file << std::endl;
+    trrojan::configuration static_cfg;
 
     trrojan::timer t;
-    t.start();
+//t.start();
     dat_raw_reader dr;
     try
     {
@@ -224,22 +224,101 @@ void trrojan::opencl::volume_raycast_benchmark::load_volume_data(const std::stri
     catch (std::runtime_error e)
     {
         std::cerr << e.what() << std::endl;
-        return;
+        return static_cfg;
     }
 
     const std::vector<char> &raw_data = dr.data();
     std::cout << raw_data.size() << " bytes have been read." << std::endl;
+    std::cout << dr.properties().to_string() << std::endl;
 
+    static_cfg.add(named_variant("data_precision", dr.properties().format));
+    static_cfg.add(named_variant("volume_res_x", dr.properties().volume_res[0]));
+    static_cfg.add(named_variant("volume_res_y", dr.properties().volume_res[1]));
+    static_cfg.add(named_variant("volume_res_z", dr.properties().volume_res[2]));
 
-    // TODO
+//std::cout << t.elapsed_millis() << std::endl;
+//t.start();
+    if (dr.properties().format == "USHORT" || sample_precision > 1u)
+    {
+        size_t voxel_cnt = static_cast<size_t>(dr.properties().volume_res[0]) *
+                           static_cast<size_t>(dr.properties().volume_res[1]) *
+                           static_cast<size_t>(dr.properties().volume_res[2]);
+
+        // TODO: find a better solution than this 8 cases cascade...
+        if (dr.properties().format == "UCHAR")
+        {
+            switch (sample_precision)
+            {
+            case 1:
+                // TODO direct cast?
+                convert_data_precision<unsigned char, unsigned char>(
+                            raw_data, voxel_cnt, sample_precision);
+                break;
+            case 2:
+                convert_data_precision<unsigned char, unsigned short>(
+                            raw_data, voxel_cnt, sample_precision);
+                break;
+            case 4:
+                convert_data_precision<unsigned char, float>(
+                            raw_data, voxel_cnt, sample_precision);
+                break;
+            case 8:
+                convert_data_precision<unsigned char, double>(
+                            raw_data, voxel_cnt, sample_precision);
+                break;
+            default:
+                throw std::invalid_argument(
+                            "Precision must be 1, 2, 4 or 8 bytes but is "
+                            + std::to_string(sample_precision) + " bytes");
+                break;
+            }
+
+        }
+        else if (dr.properties().format == "USHORT")
+        {
+            switch (sample_precision)
+            {
+            case 1:
+                convert_data_precision<unsigned short, unsigned char>(
+                            raw_data, voxel_cnt, sample_precision);
+                break;
+            case 2:
+                // TODO direct cast?
+                convert_data_precision<unsigned short, unsigned short>(
+                            raw_data, voxel_cnt, sample_precision);
+                break;
+            case 4:
+                convert_data_precision<unsigned short, float>(
+                            raw_data, voxel_cnt, sample_precision);
+                break;
+            case 8:
+                convert_data_precision<unsigned short, double>(
+                            raw_data, voxel_cnt, sample_precision);
+                break;
+            default:
+                throw std::invalid_argument(
+                            "Precision must be 1, 2, 4 or 8 bytes but is "
+                            + std::to_string(sample_precision) + " bytes");
+                break;
+            }
+        }
+        else
+        {
+            throw std::invalid_argument("Volume data format must be UCHAR or USHORT.");
+        }
+//std::cout << t.elapsed_millis() << std::endl;
+    }
+
+    return static_cfg;
 }
 
 
 /*
  * Compose the raycastig kernel source
  */
-void trrojan::opencl::volume_raycast_benchmark::compose_kernel(const trrojan::configuration &cfg,
-                                                               const std::tr1::unordered_set<std::string> changed)
+void trrojan::opencl::volume_raycast_benchmark::compose_kernel(
+        const trrojan::configuration &cfg,
+        const std::tr1::unordered_set<std::string> changed)
 {
     // TODO
 

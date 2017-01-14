@@ -27,14 +27,21 @@ namespace trrojan {
         /// </summary>
         static const std::string default_separator;
 
+        static inline output_params create(const std::string& path,
+                const std::string& separator = default_separator,
+                const bool quote_strings = true,
+                const std::string& line_break = default_line_break) {
+            return std::make_shared<csv_output_params>(path, separator,
+                quote_strings, line_break);
+        }
+
         /// <summary>
         /// Initialises a new instance.
         /// </summary>
         /// <param name="path">The path of the CSV file to be generated.</param>
         inline csv_output_params(const std::string& path,
-            const std::string& separator = default_separator,
-            const bool quote_strings = true,
-            const std::string& line_break = default_line_break)
+            const std::string& separator, const bool quote_strings,
+            const std::string& line_break)
             : basic_output_params(path), _line_break(line_break),
             _quote_strings(quote_strings), _separator(separator) { }
 

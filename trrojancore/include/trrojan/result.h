@@ -82,6 +82,15 @@ namespace trrojan {
         }
 
         /// <summary>
+        /// Ensure that this result and <paramref name="other" /> contain
+        /// the same configuration and result names or throw an exception.
+        /// </summary>
+        /// <param name="other">The result to be compared.</param>
+        /// <exception cref="std::runtime_error">If the results are not
+        /// consistent.</exception>
+        void check_consistency(const basic_result& other) const;
+
+        /// <summary>
         /// Answer the <see cref="trrojan::configuration" /> the results are for.
         /// </summary>
         /// <returns>The configuration the results are for.</returns>
@@ -102,12 +111,12 @@ namespace trrojan {
         }
 
         /// <summary>
-        /// Answer the <paramref name="v" />th result of the
-        /// <paramref name="n" />th measurement.
+        /// Answer the <paramref name="n" />th result of the
+        /// <paramref name="m" />th measurement.
         /// </summary>
         inline const variant& raw_result(const size_t m,
                 const size_t n) const {
-            return this->_results[m * n + n];
+            return this->_results[m * this->values_per_measurement() + n];
         }
 
         /// <summary>

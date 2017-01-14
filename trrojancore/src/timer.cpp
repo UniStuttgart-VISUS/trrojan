@@ -9,6 +9,19 @@
 
 
 /*
+ * trrojan::timer::millis_since_epoch
+ */
+trrojan::timer::millis_type trrojan::timer::millis_since_epoch(
+        const value_type value) {
+#if (defined(_WIN32) && !defined(TRROJAN_FORCE_STL_CLOCK))
+    return timer::to_millis(value);
+#else /* (defined(_WIN32) && !defined(TRROJAN_FORCE_STL_CLOCK)) */
+    return timer::to_millis(value.time_since_epoch());
+#endif /* (defined(_WIN32) && !defined(TRROJAN_FORCE_STL_CLOCK)) */
+}
+
+
+/*
  * trrojan::timer::to_millis
  */
 trrojan::timer::millis_type trrojan::timer::to_millis(

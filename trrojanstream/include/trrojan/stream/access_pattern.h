@@ -5,9 +5,11 @@
 
 #pragma once
 
-#include "trrojan/stream/export.h"
-
 #include <string>
+
+#include "trrojan/enum_dispatch_list.h"
+
+#include "trrojan/stream/export.h"
 
 
 namespace trrojan {
@@ -71,7 +73,8 @@ namespace stream {
     };
 
 
-    template<access_pattern...> struct access_pattern_list_t { };
+    template<access_pattern... V>
+    using access_pattern_list_t = enum_dispatch_list<access_pattern, V...>;
 
     typedef access_pattern_list_t<access_pattern::contiguous,
         access_pattern::interleaved> access_pattern_list;

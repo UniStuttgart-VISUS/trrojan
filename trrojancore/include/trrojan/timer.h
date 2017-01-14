@@ -69,6 +69,13 @@ namespace trrojan {
         }
 
         /// <summary>
+        /// Converts a point in time to milliseconds since the epoch.
+        /// </summary>
+        /// <param name="value">The value to be converted.</param>
+        /// <returns>The value as milliseconds</returns>
+        static millis_type millis_since_epoch(const value_type value);
+
+        /// <summary>
         /// Converts a time difference to milliseconds.
         /// </summary>
         /// <param name="value">The value to be converted.</param>

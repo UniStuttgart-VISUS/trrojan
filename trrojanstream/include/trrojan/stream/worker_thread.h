@@ -7,6 +7,7 @@
 
 #include "trrojan/benchmark.h"
 
+#include <algorithm>
 #include <array>
 #include <cassert>
 #include <atomic>
@@ -15,6 +16,7 @@
 #include <iostream>
 #include <iterator>
 #include <memory>
+#include <mutex>
 #include <stdexcept>
 #include <system_error>
 #include <vector>
@@ -52,9 +54,27 @@ namespace stream {
     /// <summary>
     /// A worker thread performing the benchmarking.
     /// </summary>
+    /// <remarks>
+    /// </remarks>
     class TRROJANSTREAM_API worker_thread {
 
     public:
+
+        /// <summary>
+        /// The results of a single iteration of a single test.
+        /// </summary>
+        struct iteration_result {
+
+            /// <summary>
+            /// The start time of the specific run.
+            /// </summary>
+            trrojan::timer::value_type start;
+
+            /// <summary>
+            /// The time the test run took (in milliseconds).
+            /// </summary>
+            trrojan::timer::millis_type time;
+        };
 
         /// <summary>
         /// A spin lock used as a barrier to ensure simultaneous memory access.
@@ -86,6 +106,11 @@ namespace stream {
         /// A type to express a thread's rank.
         /// </summary>
         typedef std::size_t rank_type;
+
+        /// <summary>
+        /// The results of all iterations of a single thread.
+        /// </summary>
+        typedef std::vector<iteration_result> results_type;
 
         /// <summary>
         /// Creates and starts a new worker thread for the given problem.
@@ -144,6 +169,25 @@ namespace stream {
 
         worker_thread(const worker_thread&) = delete;
 
+        /// <summary>
+        /// Copy the results of this worker thread to the specified output
+        /// iterator.
+        /// </summary>
+        /// <remarks>
+        /// <para>Results are only available after the thread has been joined.
+        /// Access to the result set is thread-safe.</para>
+        /// <para>The result of the first (warm-up) run is not returned.</para>
+        /// </remarks>
+        template<class I> void copy_results(I oit) const {
+            this->results_lock.lock();
+            assert(this->results.size() > 1);
+            std::copy(this->results.cbegin() + 1, this->results.cend(), oit);
+            this->results_lock.unlock();
+        }
+
+        /// <summary>
+        /// Starts the worker thread.
+        /// </summary>
         void start(problem_type problem, barrier_type barrier,
             const rank_type rank, const uint64_t affinity_mask = 0,
             const uint16_t affinity_group = 0);
@@ -153,117 +197,13 @@ namespace stream {
     private:
 
         /// <summary>
-        /// Selects the specified scalar type <paramref name="s" /> for
-        /// execution and continues with dispatching the problem size.
+        /// The type of a native thread handle.
         /// </summary>
-        template<trrojan::stream::scalar_type S,
-            trrojan::stream::scalar_type... Ss>
-        inline void dispatch(
-                trrojan::stream::scalar_type_list_t<S, Ss...>,
-                const trrojan::stream::scalar_type s,
-                const trrojan::stream::access_pattern a,
-                const problem_size_type p,
-                const trrojan::stream::task_type t) {
-            if (S == s) {
-                //std::cout << "scalar type " << (int) S << " selected." << std::endl;
-                this->dispatch<S>(problem_sizes(), a, p, t);
-            } else {
-                this->dispatch(
-                    trrojan::stream::scalar_type_list_t<Ss...>(),
-                    s, a, p, t);
-            }
-        }
-
-        /// <summary>
-        /// Recursion stop.
-        /// </summary>
-        inline void dispatch(
-            trrojan::stream::scalar_type_list_t<>,
-            const trrojan::stream::scalar_type s,
-            const trrojan::stream::access_pattern a,
-            const problem_size_type p,
-            const trrojan::stream::task_type t) { }
-
-        /// <summary>
-        /// Selects the specified problem size <paramref name="p" /> for
-        /// execution and continues with dispatching the access pattern.
-        /// </summary>
-        template<trrojan::stream::scalar_type S,
-            problem_size_type P, problem_size_type... Ps>
-        inline void dispatch(
-                trrojan::integer_sequence<problem_size_type, P, Ps...>,
-                const trrojan::stream::access_pattern a,
-                const problem_size_type p,
-                const trrojan::stream::task_type t) {
-            if (P == p) {
-                //std::cout << "problem size " << P << " (" << p << ") selected." << std::endl;
-                this->dispatch<S, P>(access_pattern_list(), a, t);
-            } else {
-                this->dispatch<S>(
-                    trrojan::integer_sequence<problem_size_type, Ps...>(),
-                    a, p, t);
-            }
-        }
-
-        /// <summary>
-        /// Recursion stop.
-        /// </summary>
-        template<trrojan::stream::scalar_type S>
-        inline void dispatch(
-            trrojan::integer_sequence<problem_size_type>,
-            const trrojan::stream::access_pattern a,
-            const problem_size_type p,
-            const trrojan::stream::task_type t) { }
-
-        /// <summary>
-        /// Selects the specified access pattern <paramref name="a" /> for
-        /// execution.
-        /// </summary>
-        template<trrojan::stream::scalar_type S, problem_size_type P,
-            trrojan::stream::access_pattern A,
-            trrojan::stream::access_pattern... As>
-        inline void dispatch(trrojan::stream::access_pattern_list_t<A, As...>,
-                const trrojan::stream::access_pattern a,
-                const trrojan::stream::task_type t) {
-            if (A == a) {
-                //std::cout << "access pattern " << (int) A << " selected." << std::endl;
-                this->dispatch<S, P, A>(task_type_list(), t);
-            } else {
-                this->dispatch<S, P>(
-                    trrojan::stream::access_pattern_list_t<As...>(),
-                    a, t);
-            }
-        }
-
-        /// <summary>
-        /// Recursion stop.
-        /// </summary>
-        template<trrojan::stream::scalar_type S, problem_size_type P>
-        inline void dispatch(trrojan::stream::access_pattern_list_t<>,
-            const trrojan::stream::access_pattern a,
-            const trrojan::stream::task_type t) { }
-
-
-        /// <summary>
-        /// Selects the specified task type <paramref name="t" /> for
-        /// execution.
-        /// </summary>
-        template<trrojan::stream::scalar_type S,
-            trrojan::stream::worker_thread::problem_size_type P,
-            trrojan::stream::access_pattern A,
-            trrojan::stream::task_type T,
-            trrojan::stream::task_type... Ts>
-        void dispatch(trrojan::stream::task_type_list_t<T, Ts...>,
-                const trrojan::stream::task_type t);
-
-        /// <summary>
-        /// Recursion stop.
-        /// </summary>
-        template<trrojan::stream::scalar_type S,
-            trrojan::stream::worker_thread::problem_size_type P,
-            trrojan::stream::access_pattern A>
-        inline void dispatch(trrojan::stream::task_type_list_t<>,
-            const trrojan::stream::task_type t) { }
+#ifdef _WIN32
+        typedef HANDLE handle_type;
+#else /* _WIN32 */
+        typedef pthread_t handle_type;
+#endif /* _WIN32 */
 
         /// <summary>
         /// This functor expands the testing loop at compile time to remove any
@@ -387,24 +327,18 @@ namespace stream {
         };
 
         /// <summary>
-        /// The type of a native thread handle.
-        /// </summary>
-#ifdef _WIN32
-        typedef HANDLE handle_type;
-#else /* _WIN32 */
-        typedef pthread_t handle_type;
-#endif /* _WIN32 */
-
-        /// <summary>
-        /// The thread function which selects the actual
-        /// <see cref="trrojan::stream::worker_thread::step" />s to perform.
+        /// The thread function which invokes the
+        /// <see cref="trrojan::stream::worker_thread::dispatch" />
+        /// cascade to to run the actual tests.
         /// </summary>
         /// <remarks>
-        /// This method is only responsible for switching from <c>static</c>
-        /// scope to the scope of <paramref name="param" /> and then invoking
-        /// the begin of the cascade of calls to
+        /// <para>This method is only responsible for switching from
+        /// <c>static</c> scope to the scope of <paramref name="param" /> and
+        /// then invoking the begin of the cascade of calls to
         /// <see cref="trrojan::stream::worker_thread::dispatch" />. The actual
-        /// work is performed in the last step of this cascade.
+        /// work is performed in the last step of this cascade.</para>
+        /// <para>The method also ensures that all required locks are held while
+        /// the dispatch cascade is executed.</para>
         /// </remarks>
         /// <param name="param">A pointer to the
         /// <see cref="trrojan::stream::worker_thread" /> object that holds the
@@ -415,6 +349,120 @@ namespace stream {
 #else /* _WIN32 */
         static void *thunk(void *param);
 #endif /* _WIN32 */
+
+
+        /// <summary>
+        /// Selects the specified scalar type <paramref name="s" /> for
+        /// execution and continues with dispatching the problem size.
+        /// </summary>
+        template<trrojan::stream::scalar_type S,
+            trrojan::stream::scalar_type... Ss>
+        inline void dispatch(
+                trrojan::stream::scalar_type_list_t<S, Ss...>,
+                const trrojan::stream::scalar_type s,
+                const trrojan::stream::access_pattern a,
+                const problem_size_type p,
+                const trrojan::stream::task_type t) {
+            if (S == s) {
+                //std::cout << "scalar type " << (int) S << " selected." << std::endl;
+                this->dispatch<S>(problem_sizes(), a, p, t);
+            } else {
+                this->dispatch(
+                    trrojan::stream::scalar_type_list_t<Ss...>(),
+                    s, a, p, t);
+            }
+        }
+
+        /// <summary>
+        /// Recursion stop.
+        /// </summary>
+        inline void dispatch(
+            trrojan::stream::scalar_type_list_t<>,
+            const trrojan::stream::scalar_type s,
+            const trrojan::stream::access_pattern a,
+            const problem_size_type p,
+            const trrojan::stream::task_type t) { }
+
+        /// <summary>
+        /// Selects the specified problem size <paramref name="p" /> for
+        /// execution and continues with dispatching the access pattern.
+        /// </summary>
+        template<trrojan::stream::scalar_type S,
+            problem_size_type P, problem_size_type... Ps>
+        inline void dispatch(
+                trrojan::integer_sequence<problem_size_type, P, Ps...>,
+                const trrojan::stream::access_pattern a,
+                const problem_size_type p,
+                const trrojan::stream::task_type t) {
+            if (P == p) {
+                //std::cout << "problem size " << P << " (" << p << ") selected." << std::endl;
+                this->dispatch<S, P>(access_pattern_list(), a, t);
+            } else {
+                this->dispatch<S>(
+                    trrojan::integer_sequence<problem_size_type, Ps...>(),
+                    a, p, t);
+            }
+        }
+
+        /// <summary>
+        /// Recursion stop.
+        /// </summary>
+        template<trrojan::stream::scalar_type S>
+        inline void dispatch(
+            trrojan::integer_sequence<problem_size_type>,
+            const trrojan::stream::access_pattern a,
+            const problem_size_type p,
+            const trrojan::stream::task_type t) { }
+
+        /// <summary>
+        /// Selects the specified access pattern <paramref name="a" /> for
+        /// execution.
+        /// </summary>
+        template<trrojan::stream::scalar_type S, problem_size_type P,
+            trrojan::stream::access_pattern A,
+            trrojan::stream::access_pattern... As>
+        inline void dispatch(trrojan::stream::access_pattern_list_t<A, As...>,
+                const trrojan::stream::access_pattern a,
+                const trrojan::stream::task_type t) {
+            if (A == a) {
+                //std::cout << "access pattern " << (int) A << " selected." << std::endl;
+                this->dispatch<S, P, A>(task_type_list(), t);
+            } else {
+                this->dispatch<S, P>(
+                    trrojan::stream::access_pattern_list_t<As...>(),
+                    a, t);
+            }
+        }
+
+        /// <summary>
+        /// Recursion stop.
+        /// </summary>
+        template<trrojan::stream::scalar_type S, problem_size_type P>
+        inline void dispatch(trrojan::stream::access_pattern_list_t<>,
+            const trrojan::stream::access_pattern a,
+            const trrojan::stream::task_type t) { }
+
+
+        /// <summary>
+        /// Selects the specified task type <paramref name="t" /> for
+        /// execution.
+        /// </summary>
+        template<trrojan::stream::scalar_type S,
+            trrojan::stream::worker_thread::problem_size_type P,
+            trrojan::stream::access_pattern A,
+            trrojan::stream::task_type T,
+            trrojan::stream::task_type... Ts>
+        void dispatch(trrojan::stream::task_type_list_t<T, Ts...>,
+                const trrojan::stream::task_type t);
+
+        /// <summary>
+        /// Recursion stop.
+        /// </summary>
+        template<trrojan::stream::scalar_type S,
+            trrojan::stream::worker_thread::problem_size_type P,
+            trrojan::stream::access_pattern A>
+        inline void dispatch(trrojan::stream::task_type_list_t<>,
+            const trrojan::stream::task_type t) { }
 
         /// <summary>
         /// Synchronises the worker threads using the same
@@ -443,6 +491,16 @@ namespace stream {
         /// The rank of the thread, which determines the offset
         /// </summary>
         rank_type rank;
+
+        /// <summary>
+        /// The results of the thread.
+        /// </summary>
+        results_type results;
+
+        /// <summary>
+        /// The lock for <see cref="results" />.
+        /// </summary>
+        mutable std::mutex results_lock;
     };
 
 }

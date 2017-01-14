@@ -26,6 +26,15 @@ namespace trrojan {
     public:
 
         /// <summary>
+        /// Ensure that all results in <paramref name="rs" /> have the same,
+        /// consistent content.
+        /// </summary>
+        /// <param name="rs"></param>
+        /// <exception cref="std::runtime_error">In case there are
+        /// inconsistencies in the result set.</exception>
+        static void check_consistency(const result_set& rs);
+
+        /// <summary>
         /// Finalises the instance.
         /// </summary>
         virtual ~benchmark_base(void);
@@ -72,6 +81,18 @@ namespace trrojan {
         // TODO: define the interface.
 
     protected:
+
+        /// <summary>
+        /// Merge the results from <paramref name="r" /> into
+        /// <paramref name="l" />.
+        /// </summary>
+        static void merge_results(result_set& l, const result_set& r);
+
+        /// <summary>
+        /// Move the results from <paramref name="r" /> into
+        /// <paramref name="l" />.
+        /// </summary>
+        static void merge_results(result_set& l, result_set&& r);
 
         /// <summary>
         /// Merges all system factors into <paramref name="c" />.

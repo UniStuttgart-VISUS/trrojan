@@ -11,6 +11,7 @@
 #include "trrojan/export.h"
 #include "trrojan/output_params.h"
 #include "trrojan/result.h"
+#include "trrojan/result_set.h"
 
 
 namespace trrojan {
@@ -56,6 +57,13 @@ namespace trrojan {
         /// <param name="result"></param>
         /// <returns><c>*this</c></returns>
         output_base& operator <<(const result result);
+
+        /// <summary>
+        /// Stores all results in the given set one after another.
+        /// </summary>
+        /// <param name="results"></param>
+        /// <returns><c>*this</c></returns>
+        output_base& operator <<(const result_set& results);
 
     protected:
 

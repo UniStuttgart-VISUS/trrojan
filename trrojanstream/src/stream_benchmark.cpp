@@ -12,10 +12,6 @@
 #include "trrojan/system_factors.h"
 #include "trrojan/timer.h"
 
-#include "trrojan/stream/worker_thread.h"
-
-#include <iostream>
-
 
 #define _TRROJANSTREAM_DEFINE_FACTOR(f)                                        \
 const std::string trrojan::stream::stream_benchmark::factor_##f(#f)
@@ -29,6 +25,24 @@ _TRROJANSTREAM_DEFINE_FACTOR(task_type);
 _TRROJANSTREAM_DEFINE_FACTOR(threads);
 
 #undef _TRROJANSTREAM_DEFINE_FACTOR
+
+
+#define _TRROJANSTREAM_DEFINE_RES_NAME(r)                                      \
+const std::string trrojan::stream::stream_benchmark::result_name_##r(#r)
+
+_TRROJANSTREAM_DEFINE_RES_NAME(rate_aggregated);
+_TRROJANSTREAM_DEFINE_RES_NAME(rate_average);
+_TRROJANSTREAM_DEFINE_RES_NAME(rate_maximum);
+_TRROJANSTREAM_DEFINE_RES_NAME(rate_minimum);
+_TRROJANSTREAM_DEFINE_RES_NAME(rate_total);
+_TRROJANSTREAM_DEFINE_RES_NAME(range_start);
+_TRROJANSTREAM_DEFINE_RES_NAME(range_total);
+_TRROJANSTREAM_DEFINE_RES_NAME(time_average);
+_TRROJANSTREAM_DEFINE_RES_NAME(time_maximum);
+_TRROJANSTREAM_DEFINE_RES_NAME(time_minimum);
+_TRROJANSTREAM_DEFINE_RES_NAME(time_slowest);
+
+#undef _TRROJANSTREAM_DEFINE_RES_NAME
 
 
 /*
@@ -62,6 +76,7 @@ trrojan::stream::stream_benchmark::stream_benchmark(void)
     // If no problem size is given, test all all of them.
     this->_default_configs.add_factor(factor::from_manifestations(
         factor_problem_size,
+        //8000000));
         worker_thread::problem_sizes::to_vector()));
 
     // Enable all tasks by default.
@@ -122,17 +137,11 @@ trrojan::result_set trrojan::stream::stream_benchmark::run(
  */
 trrojan::result trrojan::stream::stream_benchmark::run(
         const configuration& config) {
-    trrojan::result retval;
-
-    // TODO: remove hack
-    //std::cout << "here" << std::endl;
-    auto p = stream_benchmark::to_problem(config);
-    auto t = worker_thread::create(p);
-    worker_thread::join(t.begin(), t.end());
-
-    // TODO: retrieve and merge results
-
-    return retval;
+    auto problem = stream_benchmark::to_problem(config);
+    auto threads = worker_thread::create(problem);
+    worker_thread::join(threads.begin(), threads.end());
+    return stream_benchmark::collect_results(config, problem, threads.begin(),
+        threads.end());
 }
 
 

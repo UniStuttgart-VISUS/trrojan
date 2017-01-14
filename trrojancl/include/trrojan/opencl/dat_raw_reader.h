@@ -26,6 +26,22 @@ namespace opencl {
         std::array<unsigned int, 3> volume_res;
         std::array<double, 3> slice_thickness = {{-1.0, -1.0, -1.0}};
         std::string format;                     // UCHAR, USHORT,...
+
+        const std::string to_string() const
+        {
+            std::string str("Resolution: ");
+            for (auto v : volume_res)
+            {
+                str += std::to_string(v) + " ";
+            }
+            str += "| Slice Thickness: ";
+            for (auto v : slice_thickness)
+            {
+                str += std::to_string(v) + " ";
+            }
+            str += "| Format: " + format;
+            return str;
+        }
     };
 
     /// <summary>
@@ -62,6 +78,12 @@ namespace opencl {
         /// </summary>
         /// <throws>If no raw data has been read before.</throws>
         const std::vector<char> &data() const;
+
+        /// <summary>
+        /// Get a constant reference to the volume data set properties that have been read.
+        /// </summary>
+        /// <throws>If no data has been read before.</throws>
+        const Properties &properties() const;
 
     private:
 

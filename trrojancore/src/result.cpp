@@ -6,12 +6,36 @@
 #include "trrojan/result.h"
 
 #include <algorithm>
+#include <stdexcept>
 
 
 /*
  * trrojan::basic_result::~basic_result
  */
 trrojan::basic_result::~basic_result(void) { }
+
+
+/*
+ * trrojan::basic_result::check_consistency
+ */
+void trrojan::basic_result::check_consistency(const basic_result& other) const {
+    if (this != std::addressof(other)) {
+        this->_configuration.check_consistency(other.configuration());
+
+        if (this->_result_names.size() != other._result_names.size()) {
+            throw std::runtime_error("The result lists contain a different "
+                "number of result names.");
+        }
+        for (auto& l : this->_result_names) {
+            auto it = std::find(other._result_names.cbegin(),
+                other._result_names.cend(), l);
+            if (it == other._result_names.cend()) {
+                throw std::runtime_error("The result lists contain different "
+                    "types of results.");
+            }
+        }
+    }
+}
 
 
 /*

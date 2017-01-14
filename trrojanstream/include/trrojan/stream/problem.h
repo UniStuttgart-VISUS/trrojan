@@ -12,6 +12,8 @@
 #include <memory>
 #include <vector>
 
+#include "trrojan/constants.h"
+#include "trrojan/timer.h"
 #include "trrojan/variant.h"
 
 #include "trrojan/stream/access_pattern.h"
@@ -115,6 +117,30 @@ namespace stream {
         }
 
         /// <summary>
+        /// Given the size of this problem for a thread, convert the given
+        /// runtime of a thread to MB/s.
+        /// </summary>
+        inline double calc_thread_mb_per_s(const timer::millis_type dt) const {
+            typedef trrojan::constants<double> constants;
+            auto s = dt / constants::millis_per_second;
+            auto m = static_cast<double>(this->size_in_bytes());
+            m /= constants::bytes_per_megabyte;
+            return (m / s);
+        }
+
+        /// <summary>
+        /// Given the size of this problem, convert the given total runtime
+        /// to MB/s.
+        /// </summary>
+        inline double calc_total_mb_per_s(const timer::millis_type dt) const {
+            typedef trrojan::constants<double> constants;
+            auto s = dt / constants::millis_per_second;
+            auto m = static_cast<double>(this->total_size_in_bytes());
+            m /= constants::bytes_per_megabyte;
+            return (m / s);
+        }
+
+        /// <summary>
         /// Answer the number of iterations to perform for the same problem.
         /// </summary>
         inline size_t iterations(void) const {
@@ -167,12 +193,10 @@ namespace stream {
         /// </summary>
         /// <returns></returns>
         inline size_t size(void) const {
-            assert(this->_a.size() == this->_b.size());
-            assert(this->_a.size() == this->_c.size());
-            assert(this->_a.size() % this->_parallelism == 0);
-            assert(this->_a.size() % this->_scalar_size == 0);
-            return (this->_a.size() / (this->_scalar_size
-                * this->_parallelism));
+            auto s = this->total_size_in_bytes();
+            auto sp = (this->_scalar_size * this->_parallelism);
+            assert(s % sp == 0);
+            return (s / sp);
         }
 
         /// <summary>
@@ -181,7 +205,8 @@ namespace stream {
         inline size_t size_in_bytes(void) const {
             assert(this->_a.size() == this->_b.size());
             assert(this->_a.size() == this->_c.size());
-            return this->_a.size();
+            assert(this->_a.size() % this->_parallelism == 0);
+            return (this->_a.size() / this->_parallelism);
         }
 
         /// <summary>
@@ -189,6 +214,25 @@ namespace stream {
         /// </summary>
         inline task_type_t task_type(void) const {
             return this->_task_type;
+        }
+
+        /// <summary>
+        /// Answer the combined problem size for all threads in number of
+        /// elements.
+        /// </summary>
+        inline size_t total_size(void) const {
+            auto s = this->total_size_in_bytes();
+            assert(s % this->_scalar_size == 0);
+            return (s / this->_scalar_size);
+        }
+
+        /// <summary>
+        /// Answer the combined problem size for all threads in bytes.
+        /// </summary>
+        inline size_t total_size_in_bytes(void) const {
+            assert(this->_a.size() == this->_b.size());
+            assert(this->_a.size() == this->_c.size());
+            return this->_a.size();
         }
 
     private:

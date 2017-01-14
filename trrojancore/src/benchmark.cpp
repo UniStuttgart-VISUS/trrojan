@@ -6,11 +6,37 @@
 
 #include "trrojan/benchmark.h"
 
+#include <algorithm>
 #include <sstream>
 #include <stdexcept>
 
 #include "trrojan/log.h"
 #include "trrojan/system_factors.h"
+
+
+
+/*
+ * trrojan::benchmark_base::check_consistency
+ */
+void trrojan::benchmark_base::check_consistency(const result_set& rs) {
+    if (rs.size() > 1) {
+        /* Only a result set with more than one element can be inconsistent. */
+        auto& reference = rs.front();
+        if (reference == nullptr) {
+            throw std::invalid_argument("A result_set must not contain nullptr "
+                "elements.");
+        }
+
+        for (size_t i = 1; i < rs.size(); ++i) {
+            auto& element = rs[i];
+            if (element == nullptr) {
+                throw std::invalid_argument("A result_set must not contain nullptr "
+                    "elements.");
+            }
+            reference->check_consistency(*element);
+        }
+    }
+}
 
 
 /*
@@ -62,6 +88,28 @@ trrojan::result_set trrojan::benchmark_base::run(
 
     return retval;
 }
+
+
+/*
+ * trrojan::benchmark_base::merge_results
+ */
+void trrojan::benchmark_base::merge_results(result_set& l,
+        const result_set& r) {
+    l.reserve(l.size() + r.size());
+    l.insert(l.end(), r.cbegin(), r.cend());
+}
+
+
+/*
+ * trrojan::benchmark_base::merge_results
+ */
+void trrojan::benchmark_base::merge_results(result_set& l, result_set&& r) {
+    l.reserve(l.size() + r.size());
+    for (auto& e : r) {
+        l.push_back(std::move(e));
+    }
+}
+
 
 
 /*

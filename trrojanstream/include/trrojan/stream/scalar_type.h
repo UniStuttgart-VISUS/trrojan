@@ -5,10 +5,12 @@
 
 #pragma once
 
-#include "trrojan/stream/export.h"
-
 #include <cinttypes>
 #include <string>
+
+#include "trrojan/enum_dispatch_list.h"
+
+#include "trrojan/stream/export.h"
 
 
 namespace trrojan {
@@ -77,7 +79,8 @@ namespace stream {
 #undef __TRROJANCORE_DECL_SCALAR_TYPE_TRAITS
 
 
-    template<scalar_type...> struct scalar_type_list_t { };
+    template<scalar_type... V>
+    using scalar_type_list_t = enum_dispatch_list<scalar_type, V...>;
 
     typedef scalar_type_list_t<scalar_type::float32, scalar_type::float64,
         scalar_type::int32, scalar_type::int64> scalar_type_list;
