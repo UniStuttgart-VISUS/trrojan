@@ -109,6 +109,7 @@ void trrojan::stream::worker_thread::dispatch(
         trrojan::stream::task_type_list_t<T, Ts...>,
         const trrojan::stream::task_type t) {
     assert(this->_problem != nullptr);
+    assert(this->results.size() == this->_problem->iterations() + 1);
 
     if (T == t) {
         typedef access_pattern_traits<A, P> pattern;
@@ -120,20 +121,23 @@ void trrojan::stream::worker_thread::dispatch(
         auto c = this->_problem->c<S>() + offset;
         auto s = this->_problem->s<S>();
         auto o = pattern::step(this->_problem->parallelism());
+        auto cnt = this->_problem->iterations();
         trrojan::timer timer;
 
-        for (size_t i = 0; i < this->_problem->iterations(); ++i) {
+        log::instance().write(log_level::verbose, "Worker thread %u is "
+            "performing the following test: size = %u, offset = %u, "
+            "step = %u, task = %i, access pattern = %i, scalar type = %i, "
+            "scalar value = %i, iterations = %u\n", this->rank, P, offset, o,
+            static_cast<int>(T), static_cast<int>(A), static_cast<int>(S),
+            s, cnt);
+
+        for (size_t i = 0; i <= cnt; ++i) {
+            auto& result = this->results[i];
             this->synchronise(i);
-            auto start = timer.start();
+            result.start= timer.start();
             step::apply(a, b, c, s, o);
-            auto elapsed = timer.elapsed_millis();
-            elapsed /= trrojan::constants<decltype(elapsed)>::millis_per_second;
-            auto gigs = (double)this->_problem->size_in_bytes() / trrojan::constants<decltype(elapsed)>::bytes_per_gigabyte;
-            //std::cout << "Iteration " << i << ", rank " << this->rank << std::endl;
-            //std::cout << gigs << " GB" << std::endl;
-            //std::cout << elapsed << " s" << std::endl;
-            //std::cout << (gigs / elapsed) << " GB/s" << std::endl;
-            std::cout << "Iteration " << i << ", rank " << this->rank << ": " << (gigs / elapsed) << " GB/s" << std::endl;
+            result.time = timer.elapsed_millis();
+            // std::cout << "Iteration " << i << ", worker " << this->rank << ": " << this->_problem->calc_mb_per_s(result.time) << " MB/s" << std::endl;
         }
 
     } else {

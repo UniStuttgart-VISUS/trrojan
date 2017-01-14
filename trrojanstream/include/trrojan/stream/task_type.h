@@ -5,6 +5,8 @@
 
 #pragma once
 
+#include "trrojan/enum_dispatch_list.h"
+
 #include "trrojan/stream/export.h"
 
 
@@ -61,7 +63,8 @@ namespace stream {
 #undef __TRROJANCORE_DECL_TASK_TYPE_TRAITS
 
 
-    template<task_type...> struct task_type_list_t { };
+    template<task_type... V>
+    using task_type_list_t = enum_dispatch_list<task_type, V...>;
 
     typedef task_type_list_t<task_type::add, task_type::copy,
         task_type::scale, task_type::triad> task_type_list;

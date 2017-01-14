@@ -22,6 +22,24 @@ void trrojan::configuration::add_system_factors(void) {
 
 
 /*
+ * trrojan::configuration::check_consistency
+ */
+void trrojan::configuration::check_consistency(
+        const configuration& other) const {
+    if (this->_factors.size() != other._factors.size()) {
+        throw std::runtime_error("The configurations contain a different "
+            "number of factors.");
+    }
+    for (auto& l : this->_factors) {
+        if (other.contains(l.name())) {
+            throw std::runtime_error("The configurations contain different "
+                "factors.");
+        }
+    }
+}
+
+
+/*
  * trrojan::configuration::find
  */
 trrojan::configuration::iterator_type trrojan::configuration::find(

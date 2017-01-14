@@ -81,6 +81,15 @@ namespace trrojan {
         }
 
         /// <summary>
+        /// Ensure that this configuration and <paramref name="other" /> contain
+        /// the same factors or throw an exception.
+        /// </summary>
+        /// <param name="other">The configuration to be compared.</param>
+        /// <exception cref="std::runtime_error">If the configurations do not
+        /// hold the same factors.</exception>
+        void check_consistency(const configuration& other) const;
+
+        /// <summary>
         /// Removes all factors from the configuration.
         /// </summary>
         inline void clear(void) {

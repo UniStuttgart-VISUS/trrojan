@@ -62,6 +62,11 @@ void trrojan::stream::worker_thread::start(problem_type problem,
     this->_problem = problem;
     this->rank = rank;
 
+    /* Allocate the result set before starting the thread. */
+    this->results_lock.lock();
+    this->results.resize(this->_problem->iterations() + 1);
+    this->results_lock.unlock();
+
     trrojan::log::instance().write(log_level::verbose, "Starting worker "
         "thread with rank %u...\n", this->rank);
 
@@ -167,11 +172,15 @@ void *trrojan::stream::worker_thread::thunk(void *param) {
     auto that = static_cast<worker_thread *>(param);
     assert(that != nullptr);
     assert(that->_problem != nullptr);
+
+    that->results_lock.lock();
     that->dispatch(scalar_type_list(),
         that->_problem->scalar_type(),
         that->_problem->access_pattern(),
         that->_problem->size(),
         that->_problem->task_type());
+    that->results_lock.unlock();
+
     return 0;
 }
 

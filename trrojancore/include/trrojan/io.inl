@@ -13,6 +13,7 @@ template<class... P> std::string TRROJANCORE_API trrojan::combine_path(
         path, std::forward<P>(paths)...);
 }
 
+
 /*
  *  trrojan::get_file_system_entries
  */
