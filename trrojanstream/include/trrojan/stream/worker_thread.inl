@@ -123,7 +123,8 @@ void trrojan::stream::worker_thread::dispatch(
         trrojan::timer timer;
 
         for (size_t i = 0; i < this->_problem->iterations(); ++i) {
-            this->synchronise(i);
+            assert(i <= INT_MAX);
+            this->synchronise(static_cast<int>(i));
             auto start = timer.start();
             step::apply(a, b, c, s, o);
             auto elapsed = timer.elapsed_millis();

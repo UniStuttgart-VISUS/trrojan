@@ -67,7 +67,7 @@ namespace stream {
             static const std::string retval(#t0);                              \
             return retval;                                                     \
         }                                                                      \
-    };                                                                         \
+    }
 
     __TRROJANCORE_DECL_SCALAR_TYPE_TRAITS(float32, float);
     __TRROJANCORE_DECL_SCALAR_TYPE_TRAITS(float64, double);

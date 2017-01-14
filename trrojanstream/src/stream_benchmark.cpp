@@ -130,6 +130,8 @@ trrojan::result trrojan::stream::stream_benchmark::run(
     auto t = worker_thread::create(p);
     worker_thread::join(t.begin(), t.end());
 
+    // TODO: retrieve and merge results
+
     return retval;
 }
 
@@ -154,14 +156,3 @@ trrojan::stream::stream_benchmark::to_problem(const configuration& c) {
     return std::make_shared<problem>(scalar, value, task, pattern, size,
         iterations, parallelism);
 }
-
-
-///*
-// * trrojan::stream::stream_benchmark::run0
-// */
-//bool trrojan::stream::stream_benchmark::run0(const trrojan::configuration& cfg) {
-//    std::vector<std::string> changed;
-//    this->check_changed_factors(cfg, std::back_inserter(changed));
-//
-//    return true;
-//}
