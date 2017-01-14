@@ -19,6 +19,7 @@
 #include <Windows.h>
 #include <lmcons.h>
 #else /* _WIN32 */
+#include <pwd.h>
 #include <unistd.h>
 #include <sys/utsname.h>
 #include <sys/sysinfo.h>
@@ -601,7 +602,7 @@ trrojan::variant trrojan::system_factors::user_name(void) const {
 
 #else /* _WIN32 */
     uid_t uid = ::getuid();
-    auto passwd =:: getpwuid(uid);
+    auto passwd = ::getpwuid(uid);
 
     if (passwd == nullptr) {
         std::error_code ec(errno, std::system_category());
