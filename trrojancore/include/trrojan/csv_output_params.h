@@ -31,8 +31,8 @@ namespace trrojan {
                 const std::string& separator = default_separator,
                 const bool quote_strings = true,
                 const std::string& line_break = default_line_break) {
-            return std::make_shared<csv_output_params>(path, separator,
-                quote_strings, line_break);
+            return basic_output_params::create<csv_output_params>(path,
+                separator, quote_strings, line_break);
         }
 
         /// <summary>

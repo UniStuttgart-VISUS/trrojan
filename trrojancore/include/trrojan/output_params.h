@@ -22,6 +22,19 @@ namespace trrojan {
     public:
 
         /// <summary>
+        /// Create an instance of the specified derived type
+        /// <tparamref name="T" />.
+        /// </summary>
+        /// <tparam name="T"></tparam>
+        /// <tparam name="P"></tparam>
+        /// <param name="params"></param>
+        /// <returns></returns>
+        template<class T, class... P>
+        static std::shared_ptr<basic_output_params> create(P&&... params) {
+            return std::make_shared<T>(std::forward<P>(params)...);
+        }
+
+        /// <summary>
         /// Finalises the instance.
         /// </summary>
         virtual ~basic_output_params(void);

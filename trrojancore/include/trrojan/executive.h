@@ -15,6 +15,7 @@
 
 #include "trrojan/csv_output.h"
 #include "trrojan/environment.h"
+#include "trrojan/excel_output.h"
 #include "trrojan/export.h"
 #include "trrojan/plugin.h"
 
@@ -86,8 +87,13 @@ namespace trrojan {
 
                 auto fn = b->name();
                 fn += std::string(".csv");
+#ifdef _WIN32
+                excel_output writer;
+                writer.open(excel_output_params::create(fn, true));
+#else 
                 csv_output writer;
                 writer.open(csv_output_params::create(fn));
+#endif
 
                 auto res = b->run(ec);
                 (output_base&) writer << res;

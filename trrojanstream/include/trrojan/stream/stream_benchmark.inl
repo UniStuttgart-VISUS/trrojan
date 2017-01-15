@@ -47,8 +47,8 @@ trrojan::result trrojan::stream::stream_benchmark::collect_results(
     // Combine the results per iteration.
     for (size_t i = 0; i < cntResults; ++i) {
         auto accesses = results[i].memory_accesses; // Consistent over threads!
-        assert(accesses >= 2);
-        assert(accesses <= 3);
+        //assert(accesses >= 2);
+        //assert(accesses <= 3);
         auto minStart = (timer_limits::max)();
         auto maxStart = (timer_limits::min)();
         auto maxStop = (timer_limits::min)();
