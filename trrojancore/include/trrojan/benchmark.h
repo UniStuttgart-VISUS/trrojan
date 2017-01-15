@@ -35,6 +35,18 @@ namespace trrojan {
         static void check_consistency(const result_set& rs);
 
         /// <summary>
+        /// Merge the results from <paramref name="r" /> into
+        /// <paramref name="l" />.
+        /// </summary>
+        static void merge_results(result_set& l, const result_set& r);
+
+        /// <summary>
+        /// Move the results from <paramref name="r" /> into
+        /// <paramref name="l" />.
+        /// </summary>
+        static void merge_results(result_set& l, result_set&& r);
+
+        /// <summary>
         /// Finalises the instance.
         /// </summary>
         virtual ~benchmark_base(void);
@@ -81,18 +93,6 @@ namespace trrojan {
         // TODO: define the interface.
 
     protected:
-
-        /// <summary>
-        /// Merge the results from <paramref name="r" /> into
-        /// <paramref name="l" />.
-        /// </summary>
-        static void merge_results(result_set& l, const result_set& r);
-
-        /// <summary>
-        /// Move the results from <paramref name="r" /> into
-        /// <paramref name="l" />.
-        /// </summary>
-        static void merge_results(result_set& l, result_set&& r);
 
         /// <summary>
         /// Merges all system factors into <paramref name="c" />.

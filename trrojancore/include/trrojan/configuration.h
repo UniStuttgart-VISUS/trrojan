@@ -29,6 +29,15 @@ namespace trrojan {
         typedef container_type::value_type value_type;
 
         /// <summary>
+        /// Create a copy of <paramref name="cfg" /> which contains all
+        /// system factors.
+        /// </summary>
+        static configuration with_system_factors(configuration cfg) {
+            cfg.add_system_factors();
+            return std::move(cfg);
+        }
+
+        /// <summary>
         /// Adds a new factor to the configuation.
         /// </summary>
         inline void add(const named_variant& factor) {

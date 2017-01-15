@@ -24,7 +24,9 @@ trrojan::result trrojan::stream::stream_benchmark::collect_results(
         result_name_rate_aggregated };
     worker_thread::results_type results;
 
-    // Get the results for all iterations of all threads.
+    // Get the results for all iterations of all threads. The array 'results'
+    // will hold the data in the following order: { t1/it1, t1/it2, ..., t1/itn,
+    // t2/it1, t2/it2, ..., t2/it1, t3/it1, ... }
     results.reserve(cntResults * cntThreads);
     cntThreads = 0;
     for (auto it = begin; it != end; ++it) {
@@ -37,10 +39,16 @@ trrojan::result trrojan::stream::stream_benchmark::collect_results(
     //    names.emplace_back(result_name_rate + std::to_string(i));
     //}
 
-    auto retval = std::make_shared<basic_result>(config, std::move(names));
+    auto retval = std::make_shared<basic_result>(
+        config,
+        //std::move(configuration::with_system_factors(config)),
+        std::move(names));
 
     // Combine the results per iteration.
     for (size_t i = 0; i < cntResults; ++i) {
+        auto accesses = results[i].memory_accesses; // Consistent over threads!
+        assert(accesses >= 2);
+        assert(accesses <= 3);
         auto minStart = (timer_limits::max)();
         auto maxStart = (timer_limits::min)();
         auto maxStop = (timer_limits::min)();
@@ -51,6 +59,7 @@ trrojan::result trrojan::stream::stream_benchmark::collect_results(
 
         for (size_t t = 0; t < cntThreads; ++t) {
             auto idx = (t * cntResults) + i;
+            assert(results[idx].memory_accesses == accesses);
             auto start = timer::millis_since_epoch(results[idx].start);
             auto time = results[idx].time;
             auto stop = start + time;
@@ -77,16 +86,16 @@ trrojan::result trrojan::stream::stream_benchmark::collect_results(
             }
 
             sumTime += time;
-            sumRate += problem->calc_thread_mb_per_s(time);
+            sumRate += problem->calc_thread_mb_per_s(time, accesses);
         }
 
         auto rangeStart = maxStart - minStart;
         auto rangeTotal = maxStop - minStart;
         auto avgTime = (sumTime / cntThreads);
-        auto minRate = problem->calc_thread_mb_per_s(maxTime);
+        auto minRate = problem->calc_thread_mb_per_s(maxTime, accesses);
         auto avgRate = (sumRate / cntThreads);
-        auto maxRate = problem->calc_thread_mb_per_s(minTime);
-        auto totalRate = problem->calc_thread_mb_per_s(rangeTotal);
+        auto maxRate = problem->calc_thread_mb_per_s(minTime, accesses);
+        auto totalRate = problem->calc_thread_mb_per_s(rangeTotal, accesses);
 
 #if (defined(DEBUG) || defined(_DEBUG))
         std::cout << "iteration " << i

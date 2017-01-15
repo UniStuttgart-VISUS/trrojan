@@ -39,6 +39,12 @@ namespace trrojan {
         }
 
         /// <summary>
+        /// Answer whether <paramref name="factor" /> designates a system
+        /// factor.
+        /// </summary>
+        static bool is_system_factor(const std::string& factor);
+
+        /// <summary>
         /// Name of the built-in factor describing the BIOS.
         /// </summary>
         static const std::string factor_bios;

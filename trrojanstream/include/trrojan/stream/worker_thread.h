@@ -55,6 +55,26 @@ namespace stream {
     /// A worker thread performing the benchmarking.
     /// </summary>
     /// <remarks>
+    /// <para>The worker thread provides implementations of pre-defined problem
+    /// sizes, which are implemented as templates instantiated at compile time.
+    /// The reason for that is that loops with dynamic (runtime) bounds cannot
+    /// be optimised by the compile in the same way as static ones can.
+    /// Therefore, allowing arbitrary problem sizes would cause significant
+    /// overhead for evaluating the loop conditions (the operations actually
+    /// performed and measured are mostly a few instructions which are quickly
+    /// outweighed by the programme flow control). The problem sizes the
+    /// implementation provides can be controlled by adjusting the
+    /// <see cref="trrojan::stream::problem_sizes" /> instantiation below.
+    /// </para>
+    /// <para>Our implementation of the memory streaming benchmark scales the
+    /// user-defined problem size (number of elements to be copied) by the
+    /// number of threads used (weak scaling). The reason for that is that we
+    /// can ensure this way that the total problem size is always divisible by
+    /// the number of threads and that in turn the threads should need
+    /// approximately the same time to complete the task (minimise load
+    /// imbalance). As we cannot assume that the throughput actually increases
+    /// as the number of cores increases, we think this is a reasonable
+    /// simplification.</para>
     /// </remarks>
     class TRROJANSTREAM_API worker_thread {
 
@@ -64,6 +84,18 @@ namespace stream {
         /// The results of a single iteration of a single test.
         /// </summary>
         struct iteration_result {
+
+            /// <summary>
+            /// The number of memory accesses per step.
+            /// </summary>
+            /// <remarks>
+            /// We pass this back as result, because the worker thread can
+            /// trivially resolve this information from the
+            /// <see cref="trrojan::stream::task_type_traits" /> it uses. The
+            /// post-processing code would need to reimplement this logic if we
+            /// did not return the information here.
+            /// </remarks>
+            size_t memory_accesses;
 
             /// <summary>
             /// The start time of the specific run.
@@ -95,7 +127,7 @@ namespace stream {
         /// The list of available problem sizes.
         /// </summary>
         typedef trrojan::integer_sequence<problem_size_type,
-            1000000, 2000000, 4000000, 8000000> problem_sizes;
+            2000000, 2000000, 10000000, 20000000> problem_sizes;
 
         /// <summary>
         /// The type of a problem to be processed by a thread.
@@ -238,11 +270,12 @@ namespace stream {
                     const scalar_type *b, scalar_type *c, const scalar_type s,
                     const size_t o) {
 #ifdef _MSC_VER
-#pragma loop(hint_parallel(0))
-#pragma loop(ivdep)
+//#pragma loop(hint_parallel(0))
+//#pragma loop(ivdep)
+//#pragma loop(no_vector)
 #endif /* _MSC_VER */
-                for (int i = 0; i < N; ++i) {
-                    step<1, S, T>::apply(a + i * o, b + i * o, c + i * o, s, o);
+                for (int i = 0; i < N; i += o) {
+                    step<1, S, T>::apply(a + i, b + i, c + i, s, o);
                 }
             }
         };

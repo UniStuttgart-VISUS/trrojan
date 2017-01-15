@@ -117,27 +117,41 @@ namespace stream {
         }
 
         /// <summary>
-        /// Given the size of this problem for a thread, convert the given
-        /// runtime of a thread to MB/s.
+        /// Given the size of this problem, convert the given runtime of a
+        /// thread to MB/s under the assumption that the given number of memory
+        /// accesses have been performed for each item.
         /// </summary>
-        inline double calc_thread_mb_per_s(const timer::millis_type dt) const {
+        /// <param name="dt">The time one thread took to complete the benchmark
+        /// (in milliseconds).</param>
+        /// <param name="cnt_accesses">The number of memory accesses (reads and
+        /// writes) per item.</param>
+        /// <returns>The transfer rate in MB/s.</returns>
+        inline double calc_thread_mb_per_s(const timer::millis_type dt,
+                const size_t cnt_accesses) const {
             typedef trrojan::constants<double> constants;
             auto s = dt / constants::millis_per_second;
             auto m = static_cast<double>(this->size_in_bytes());
             m /= constants::bytes_per_megabyte;
-            return (m / s);
+            return (m / s * cnt_accesses);
         }
 
         /// <summary>
-        /// Given the size of this problem, convert the given total runtime
-        /// to MB/s.
+        /// Given the size of this problem, convert the given total runtime to
+        /// MB/s under the assumption that the given number of memory acceses
+        /// have been performed for each item.
         /// </summary>
-        inline double calc_total_mb_per_s(const timer::millis_type dt) const {
+        /// <param name="dt">The time it took to complete the benchmark (in
+        /// milliseconds).</param>
+        /// <param name="cnt_accesses">The number of memory accesses (reads and
+        /// writes) per item.</param>
+        /// <returns>The transfer rate in MB/s.</returns>
+        inline double calc_total_mb_per_s(const timer::millis_type dt,
+                const size_t cnt_accesses) const {
             typedef trrojan::constants<double> constants;
             auto s = dt / constants::millis_per_second;
             auto m = static_cast<double>(this->total_size_in_bytes());
             m /= constants::bytes_per_megabyte;
-            return (m / s);
+            return (m / s * cnt_accesses);
         }
 
         /// <summary>

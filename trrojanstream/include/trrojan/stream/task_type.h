@@ -47,18 +47,19 @@ namespace stream {
     /// </summary>
     template<task_type S> struct task_type_traits { };
 
-#define __TRROJANCORE_DECL_TASK_TYPE_TRAITS(t)                                 \
+#define __TRROJANCORE_DECL_TASK_TYPE_TRAITS(t, a)                              \
     template<> struct task_type_traits<task_type::t> {                         \
+        static const size_t memory_accesses = a;                               \
         static inline const std::string& name(void) {                          \
             static const std::string retval(#t);                               \
             return retval;                                                     \
         }                                                                      \
     }
 
-    __TRROJANCORE_DECL_TASK_TYPE_TRAITS(add);
-    __TRROJANCORE_DECL_TASK_TYPE_TRAITS(copy);
-    __TRROJANCORE_DECL_TASK_TYPE_TRAITS(scale);
-    __TRROJANCORE_DECL_TASK_TYPE_TRAITS(triad);
+    __TRROJANCORE_DECL_TASK_TYPE_TRAITS(add, 3);
+    __TRROJANCORE_DECL_TASK_TYPE_TRAITS(copy, 2);
+    __TRROJANCORE_DECL_TASK_TYPE_TRAITS(scale, 2);
+    __TRROJANCORE_DECL_TASK_TYPE_TRAITS(triad, 3);
 
 #undef __TRROJANCORE_DECL_TASK_TYPE_TRAITS
 

@@ -7,3 +7,5 @@
 /lib/Debug
 /bin/Release
 /lib/Release
+/bin/RelWithDebInfo
+/lib/RelWithDebInfo

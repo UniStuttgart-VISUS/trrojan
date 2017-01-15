@@ -198,7 +198,7 @@ void trrojan::stream::worker_thread::synchronise(const int barrierId) {
     auto expected = static_cast<int>(this->_problem->parallelism());
     expected *= (barrierId + 1);
     ++barrier;
-    while (barrier - barrierId < 0);    // TODO: Should yield if too many threads?
+    while (barrier.load() - barrierId < 0);    // TODO: Should yield if too many threads?
 }
 
 #if 0

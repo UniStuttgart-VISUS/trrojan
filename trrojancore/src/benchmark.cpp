@@ -40,6 +40,27 @@ void trrojan::benchmark_base::check_consistency(const result_set& rs) {
 
 
 /*
+ * trrojan::benchmark_base::merge_results
+ */
+void trrojan::benchmark_base::merge_results(result_set& l,
+        const result_set& r) {
+    l.reserve(l.size() + r.size());
+    l.insert(l.end(), r.cbegin(), r.cend());
+}
+
+
+/*
+ * trrojan::benchmark_base::merge_results
+ */
+void trrojan::benchmark_base::merge_results(result_set& l, result_set&& r) {
+    l.reserve(l.size() + r.size());
+    for (auto& e : r) {
+        l.push_back(std::move(e));
+    }
+}
+
+
+/*
  * trrojan::benchmark_base::~benchmark_base
  */
 trrojan::benchmark_base::~benchmark_base(void) { }
@@ -88,28 +109,6 @@ trrojan::result_set trrojan::benchmark_base::run(
 
     return retval;
 }
-
-
-/*
- * trrojan::benchmark_base::merge_results
- */
-void trrojan::benchmark_base::merge_results(result_set& l,
-        const result_set& r) {
-    l.reserve(l.size() + r.size());
-    l.insert(l.end(), r.cbegin(), r.cend());
-}
-
-
-/*
- * trrojan::benchmark_base::merge_results
- */
-void trrojan::benchmark_base::merge_results(result_set& l, result_set&& r) {
-    l.reserve(l.size() + r.size());
-    for (auto& e : r) {
-        l.push_back(std::move(e));
-    }
-}
-
 
 
 /*

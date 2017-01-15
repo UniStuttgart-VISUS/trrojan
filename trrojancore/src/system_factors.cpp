@@ -52,6 +52,21 @@ static const std::string& register_retriever(const std::string& name,
 }
 
 
+/*
+ * trrojan::system_factors::is_system_factor
+ */
+bool trrojan::system_factors::is_system_factor(const std::string& factor) {
+    for (auto& r : ::retrievers) {
+        if (r.first == factor) {
+            return true;
+        }
+    }
+    /* No match found at this point. */
+
+    return false;
+}
+
+
 #define __TRROJAN_DEFINE_FACTOR(n)\
 const std::string trrojan::system_factors::factor_##n                          \
 = ::register_retriever(#n, &system_factors::n)

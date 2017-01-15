@@ -50,9 +50,9 @@ _TRROJANSTREAM_DEFINE_RES_NAME(time_slowest);
  */
 trrojan::stream::stream_benchmark::stream_benchmark(void)
         : trrojan::benchmark_base("stream") {
-    // If no scalar type is specfieid, use float.
+    // If no scalar type is specfieid, use 64-bit float.
     this->_default_configs.add_factor(factor::from_manifestations(
-        factor_scalar_type, scalar_type_traits<scalar_type::float32>::name()));
+        factor_scalar_type, scalar_type_traits<scalar_type::float64>::name()));
 
     // If no scalar is specified, use a magic number.
     this->_default_configs.add_factor(factor::from_manifestations(
