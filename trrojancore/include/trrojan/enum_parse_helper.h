@@ -43,7 +43,7 @@ namespace trrojan {
             std::stringstream msg;
             msg << "\"" << str << "\" is not a valid enumeration member."
                 << std::ends;
-            throw new std::invalid_argument(msg.str());
+            throw std::invalid_argument(msg.str());
         }
     };
 

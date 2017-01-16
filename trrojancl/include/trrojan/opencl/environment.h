@@ -54,12 +54,12 @@ namespace opencl
     class garbage_collector
     {
     public:
-        void add_mem_object(cl::Memory* mem)
+        void add_mem_object(cl::Memory *mem)
         {
             mem_objects.insert(mem);
         }
 
-        void del_mem_object(cl::Memory* mem)
+        void del_mem_object(cl::Memory *mem)
         {
             mem_objects.erase(mem);
             delete mem;
@@ -133,6 +133,12 @@ namespace opencl
         /// \return size
         ///
         virtual size_t get_devices(device_list& dst);
+
+        /// TODO
+        /// \brief get_context
+        /// \return
+        ///
+        properties &get_properties();
 
         ///
         /// \brief on_initialise

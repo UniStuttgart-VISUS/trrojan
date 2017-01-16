@@ -30,6 +30,11 @@ size_t trrojan::opencl::environment::get_devices(device_list& dst)
     return dst.size();
 }
 
+trrojan::opencl::properties &trrojan::opencl::environment::get_properties()
+{
+    return this->_prop;
+}
+
 /*
  *
  */

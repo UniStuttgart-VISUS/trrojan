@@ -10,13 +10,16 @@
 #include "trrojan/opencl/export.h"
 
 
-namespace trrojan {
-namespace opencl {
+namespace trrojan
+{
+namespace opencl
+{
 
     /// <summary>
     /// Descriptor for the OpenCL plugin.
     /// </summary>
-    class TRROJANCL_API plugin : public trrojan::plugin_base {
+    class TRROJANCL_API plugin : public trrojan::plugin_base
+    {
 
     public:
 

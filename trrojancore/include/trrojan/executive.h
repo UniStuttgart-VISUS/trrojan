@@ -83,25 +83,27 @@ namespace trrojan {
             for (auto b : bs) {
                 std::cout << "=== " << b->name() << " ===" << std::endl;
                 // skip stream for testing
-//                if (b->name() != "stream")
+                if (b->name() != "stream")
+                {
 
-                auto fn = b->name();
+                    auto fn = b->name();
 #ifdef _WIN32
-                fn += std::string(".xslx");
-                excel_output writer;
-                writer.open(excel_output_params::create(fn, true));
-#else 
-                fn += std::string(".csv");
-                csv_output writer;
-                writer.open(csv_output_params::create(fn));
+                    fn += std::string(".xslx");
+                    excel_output writer;
+                    writer.open(excel_output_params::create(fn, true));
+#else
+                    fn += std::string(".csv");
+                    csv_output writer;
+                    writer.open(csv_output_params::create(fn));
 #endif
 
-                b->run(ec, [&writer](result&& r) {
-                    static_cast<output_base&>(writer) << r;
-                    return true;
-                });
+                    b->run(ec, [&writer](result&& r) {
+                        static_cast<output_base&>(writer) << r;
+                        return true;
+                    });
 
-                writer.close();
+                    writer.close();
+                }
             }
         }
 
