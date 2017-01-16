@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include <functional>
 #include <initializer_list>
 #include <memory>
 #include <string>
@@ -24,6 +25,11 @@ namespace trrojan {
     class TRROJANCORE_API benchmark_base {
 
     public:
+
+        /// <summary>
+        /// A callback which is invoked after each run.
+        /// </summary>
+        typedef std::function<bool(result&&)> on_result_callback;
 
         /// <summary>
         /// Ensure that all results in <paramref name="rs" /> have the same,
@@ -80,13 +86,16 @@ namespace trrojan {
         /// <summary>
         /// Run the benchmark for each of the
         /// <see cref="trrojan::configuration" />s of the given set and return
-        /// the results.
+        /// the results to the given callback.
         /// </summary>
         /// <param name="configs"></param>
-        /// <returns></returns>
+        /// <param name="callback"></param>
+        /// <returns>The total number of <see cref="trrojan::result" />s that
+        /// have been returned to <paramref name="callback" />.</returns>
         /// <exception cref="std::invalid_argument">If not all required factors
         /// are specified in the configuration set.</exception>
-        virtual result_set run(const configuration_set& configs);
+        virtual size_t run(const configuration_set& configs,
+            const on_result_callback& callback);
 
         virtual result run(const configuration& config) = 0;
 

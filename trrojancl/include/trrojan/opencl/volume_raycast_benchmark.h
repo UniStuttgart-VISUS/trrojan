@@ -36,6 +36,8 @@ namespace opencl
 
     public:
 
+        typedef benchmark_base::on_result_callback on_result_callback;
+
         /// <summary>
         /// Constructor. Default config is defined here.
         /// </summary>
@@ -49,7 +51,8 @@ namespace opencl
         /// <summary>
         /// Overrides benchmark run method.
         /// </summary>
-        virtual result_set run(const configuration_set &configs);
+        virtual size_t run(const configuration_set &configs,
+            const on_result_callback& callback);
 
         /// <summary>
         /// Overrides benchmark run method.

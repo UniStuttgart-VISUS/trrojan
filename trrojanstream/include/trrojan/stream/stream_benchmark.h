@@ -92,6 +92,8 @@ namespace stream {
 
     public:
 
+        typedef benchmark_base::on_result_callback on_result_callback;
+
         static const std::string factor_access_pattern;
         static const std::string factor_iterations;
         static const std::string factor_problem_size;
@@ -116,7 +118,8 @@ namespace stream {
 
         virtual ~stream_benchmark(void);
 
-        virtual trrojan::result_set run(const configuration_set& configs);
+        virtual size_t run(const configuration_set& configs,
+            const on_result_callback& callback);
 
         virtual trrojan::result run(const configuration& config);
 

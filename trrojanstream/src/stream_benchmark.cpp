@@ -97,10 +97,10 @@ trrojan::stream::stream_benchmark::~stream_benchmark(void) { }
 /*
  * trrojan::stream::stream_benchmark::run
  */
-trrojan::result_set trrojan::stream::stream_benchmark::run(
-        const configuration_set& configs) {
+size_t trrojan::stream::stream_benchmark::run(const configuration_set& configs,
+    const on_result_callback& callback) {
     std::vector<std::string> changed;
-    result_set retval;
+    size_t retval = 0;
 
     // Check that caller has provided all required factors.
     this->check_required_factors(configs);
@@ -120,8 +120,8 @@ trrojan::result_set trrojan::stream::stream_benchmark::run(
         // TODO: optimise reallocs.
         try {
             this->log_run(c);
-            retval.push_back(std::move(this->run(c)));
-            return true;
+            ++retval;
+            return callback(std::move(this->run(c)));
         } catch (const std::exception& ex) {
             log::instance().write_line(ex);
             return false;

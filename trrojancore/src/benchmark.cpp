@@ -85,8 +85,8 @@ std::vector<std::string> trrojan::benchmark_base::required_factors(void) const {
 /*
  * trrojan::benchmark_base::run
  */
-trrojan::result_set trrojan::benchmark_base::run(
-        const configuration_set& configs) {
+size_t trrojan::benchmark_base::run(const configuration_set& configs,
+        const on_result_callback& callback) {
     // Check that caller has provided all required factors.
     this->check_required_factors(configs);
 
@@ -95,12 +95,13 @@ trrojan::result_set trrojan::benchmark_base::run(
     c.merge(this->_default_configs, false);
 
     // Invoke each configuration.
-    result_set retval;
-    c.foreach_configuration([this, &retval](const configuration& c) {
+    size_t retval = 0;
+    c.foreach_configuration([this, &retval, &callback](const configuration& c) {
         try {
             this->log_run(c);
-            retval.push_back(std::move(this->run(c)));
-            return true;
+            auto r = callback(std::move(this->run(c)));
+            ++retval;
+            return r;
         } catch (const std::exception& ex) {
             log::instance().write_line(ex);
             return false;

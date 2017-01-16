@@ -114,11 +114,11 @@ trrojan::opencl::volume_raycast_benchmark::~volume_raycast_benchmark(void)
 /*
  * trrojan::opencl::volume_raycast_benchmark::run
  */
-trrojan::result_set trrojan::opencl::volume_raycast_benchmark::run(
-        const configuration_set& configs)
+size_t trrojan::opencl::volume_raycast_benchmark::run(
+        const configuration_set& configs, const on_result_callback& callback)
 {
     std::tr1::unordered_set<std::string> changed;
-    result_set retval;
+    size_t retval;
 
     // Check that caller has provided all required factors.
     this->check_required_factors(configs);
@@ -160,8 +160,9 @@ trrojan::result_set trrojan::opencl::volume_raycast_benchmark::run(
 
 
         // run the OpenCL kernel, i.e. the actual test
-        retval.push_back(this->run(cs));
-        return true;
+        auto r = callback(this->run(cs));
+        ++retval;
+        return r;
     });
 
     return retval;

@@ -96,8 +96,10 @@ namespace trrojan {
                 writer.open(csv_output_params::create(fn));
 #endif
 
-                auto res = b->run(ec);
-                (output_base&) writer << res;
+                b->run(ec, [&writer](result&& r) {
+                    static_cast<output_base&>(writer) << r;
+                    return true;
+                });
 
                 writer.close();
             }

@@ -136,6 +136,8 @@ void trrojan::excel_output::open(const output_params& params) {
 
     /* Save the workbook to the specified file. */
     this->save(p->path());
+
+    log::instance().write_line(log_level::verbose, "Excellent choice!");
 }
 
 
