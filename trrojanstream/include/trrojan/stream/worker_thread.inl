@@ -132,18 +132,19 @@ void trrojan::stream::worker_thread::dispatch(
             s, cnt);
 
         for (size_t i = 0; i <= cnt; ++i) {
-            volatile auto& result = this->results[i];
+            auto& result = this->results[i];
+            result.memory_accesses = task_type_traits<T>::memory_accesses;
+            // Note: we assign 'memory_accesses' before entering the spin lock,
+            // because it enforces that 'result' is used before the splin lock,
+            // which forces the compiler to initialise the local variable at
+            // the point where it is in the code. Otherwise, some compilers
+            // reorder the operations, because 'result' is not used before the
+            // spin lock was passed.
             this->synchronise(i);
             result.start = timer.start();
             step::apply(a, b, c, s, o);
             result.time = timer.elapsed_millis();
             // std::cout << "Iteration " << i << ", worker " << this->rank << ": " << this->_problem->calc_mb_per_s(result.time) << " MB/s" << std::endl;
-        }
-
-        // Pass on the # of memory accesses in the test.
-        for (size_t i = 0; i <= cnt; ++i) {
-            this->results[i].memory_accesses
-                = task_type_traits<T>::memory_accesses;
         }
 
     } else {

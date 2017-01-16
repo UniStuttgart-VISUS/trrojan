@@ -105,6 +105,12 @@ namespace trrojan {
         void read_value(VARIANT& outValue, const long row, const long col);
 
         /// <summary>
+        /// Save the workbook (at the specified path, if
+        /// <paramref name="path" /> is not empty).
+        /// </summary>
+        void save(const std::string& path);
+
+        /// <summary>
         /// Writes a formula to the specified cell.
         /// </summary>
         void write_formula(const std::wstring formula, const long row,

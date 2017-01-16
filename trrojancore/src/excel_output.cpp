@@ -133,6 +133,9 @@ void trrojan::excel_output::open(const output_params& params) {
             L"ActiveSheet");
         this->sheet = output.pdispVal;
     }
+
+    /* Save the workbook to the specified file. */
+    this->save(p->path());
 }
 
 
@@ -146,6 +149,7 @@ trrojan::output_base& trrojan::excel_output::operator <<(
             "written.");
     }
 
+    static const std::string emptyString;
     long row = this->last_row();
     long col = 0;
 
@@ -170,6 +174,8 @@ trrojan::output_base& trrojan::excel_output::operator <<(
             this->write_value(result.raw_result(i, j), row, col++);
         }
     }
+
+    this->save(emptyString);
 
     return *this;
 }
@@ -295,6 +301,30 @@ void trrojan::excel_output::read_value(VARIANT& outValue,
     /* Get the value. */
     ::VariantInit(&outValue);
     excel_output::invoke(&outValue, DISPATCH_PROPERTYGET, range, L"Value");
+}
+
+
+/*
+ * trrojan::excel_output::save
+ */
+void trrojan::excel_output::save(const std::string& path) {
+    if (path.empty()) {
+        excel_output::invoke(nullptr, DISPATCH_METHOD, this->book, L"Save");
+
+    } else {
+        VARIANT input;
+        ::VariantInit(&input);
+        input.vt = VT_BSTR;
+        input.bstrVal = ::SysAllocString(excel_output::convert(path).c_str());
+        try {
+            excel_output::invoke(nullptr, DISPATCH_METHOD, this->book,
+                L"SaveAs", input);
+            ::VariantClear(&input);
+        } catch (...) {
+            ::VariantClear(&input);
+            throw;
+        }
+    }
 }
 
 

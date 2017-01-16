@@ -86,11 +86,12 @@ namespace trrojan {
 //                if (b->name() != "stream")
 
                 auto fn = b->name();
-                fn += std::string(".csv");
 #ifdef _WIN32
+                fn += std::string(".xslx");
                 excel_output writer;
                 writer.open(excel_output_params::create(fn, true));
 #else 
+                fn += std::string(".csv");
                 csv_output writer;
                 writer.open(csv_output_params::create(fn));
 #endif
