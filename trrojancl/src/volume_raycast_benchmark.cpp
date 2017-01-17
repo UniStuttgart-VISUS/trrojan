@@ -230,16 +230,16 @@ void trrojan::opencl::volume_raycast_benchmark::setup_raycaster(
     // create OpenCL memory object
     if (changed.count(factor_sample_precision))
     {
-//        auto sample_precision = parse_scalar_type(*c.find(factor_sample_precision));
-//        auto data_precision = parse_scalar_type(*c.find(factor_data_precision));
+        auto data_precision = parse_scalar_type(*static_cfg.find(factor_data_precision));
+        auto sample_precision = parse_scalar_type(*cfg.find(factor_sample_precision));
 
         // TODO include the famous enum_pase_helper
-        // TODO: unify factor strings (.dat strings conversion) for precisions
+        // TODO unify factor strings (.dat strings conversion) for precisions
 
-//        create_cl_mem(static_cfg.find(factor_data_precision)->value(),
-//                      cfg.find(factor_sample_precision)->value(),
-//                      raw_data,
-//                      cfg.find(factor_use_buffer)->value());
+        create_cl_mem(data_precision,
+                      sample_precision,
+                      raw_data,
+                      cfg.find(factor_use_buffer)->value());
     }
 
     if (changed.count(factor_tff_file_name))

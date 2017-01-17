@@ -12,6 +12,8 @@
 #include "trrojan/opencl/dat_raw_reader.h"
 #include "trrojan/opencl/environment.h"
 
+#include "trrojan/enum_parse_helper.h"
+
 #ifdef _WIN32
     #include <unordered_set>
 #else
@@ -122,7 +124,7 @@ namespace opencl
             if (S == s)
             {
                 //std::cout << "scalar type " << (int) S << " selected." << std::endl;
-                this->dispatch<S>(scalar_type_list(), s, t, std::forward<P>(params)...);
+                this->dispatch<S>(scalar_type_list(), t, std::forward<P>(params)...);
             }
             else
             {
@@ -155,7 +157,6 @@ namespace opencl
             class... P>
         inline void dispatch(
                 trrojan::opencl::scalar_type_list_t<T, Ts...>,
-                const trrojan::opencl::scalar_type s,
                 const trrojan::opencl::scalar_type t,
                 P&&... params)
         {
@@ -169,7 +170,7 @@ namespace opencl
             else
             {
                 this->dispatch<S>(trrojan::opencl::scalar_type_list_t<Ts...>(),
-                               s, t, std::forward<P>(params)...);
+                               t, std::forward<P>(params)...);
             }
         }
 
@@ -179,7 +180,6 @@ namespace opencl
         /// </summary>
         template<trrojan::opencl::scalar_type S, class... P>
         inline void dispatch(trrojan::opencl::scalar_type_list_t<>,
-                             const trrojan::opencl::scalar_type s,
                              const trrojan::opencl::scalar_type t,
                              P&&... params)
         {
@@ -207,11 +207,11 @@ namespace opencl
                 cl_int err = CL_SUCCESS;
                 if (use_buffer)
                 {
-                    _vol_data = cl::Buffer(_env->get_properties().context,
-                                                CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-                                                converted_data.size(),
-                                                converted_data.data(),
-                                                &err);
+//                    _vol_data = cl::Buffer(_env->get_properties().context,
+//                                                CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+//                                                converted_data.size(),
+//                                                converted_data.data(),
+//                                                &err);
                 }
                 else    // texture
                 {
@@ -222,15 +222,15 @@ namespace opencl
                     format.image_channel_data_type = CL_UNORM_INT16;
                     format.image_channel_data_type = CL_FLOAT;
 
-                    _vol_data = cl::Image3D(_env->get_properties().context,
-                                        CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-                                        format,
-                                        _dr.properties().volume_res[0],
-                                        _dr.properties().volume_res[1],
-                                        _dr.properties().volume_res[2],
-                                        0, 0,
-                                        converted_data.data(),
-                                        &err);
+//                    _vol_data = cl::Image3D(_env->get_properties().context,
+//                                        CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+//                                        format,
+//                                        _dr.properties().volume_res[0],
+//                                        _dr.properties().volume_res[1],
+//                                        _dr.properties().volume_res[2],
+//                                        0, 0,
+//                                        converted_data.data(),
+//                                        &err);
                 }
             }
             catch (cl::Error err)
@@ -239,7 +239,15 @@ namespace opencl
                                           + std::to_string(err.err()) + ")");
             }
             // Add memory object to manual OpenCL memory manager.
-            _env->get_properties().gc.add_mem_object(&_vol_data);
+//            _env->get_properties().gc.add_mem_object(&_vol_data);
+        }
+
+
+        static inline scalar_type parse_scalar_type(const trrojan::named_variant& s)
+        {
+            typedef enum_parse_helper<scalar_type, scalar_type_traits, scalar_type_list_t> parser;
+            auto value = s.value().as<std::string>();
+            return parser::parse(scalar_type_list(), value);
         }
 
         ///
