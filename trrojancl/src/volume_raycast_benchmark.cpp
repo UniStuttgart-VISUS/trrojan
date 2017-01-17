@@ -73,7 +73,7 @@ trrojan::opencl::volume_raycast_benchmark::volume_raycast_benchmark(void)
                                               "/media/brudervn/Daten/volTest/vol/bonsai.dat")));
     // transfer function file name, use a provided linear transfer function file as default
     this->_default_configs.add_factor(factor::from_manifestations(factor_tff_file_name,
-                                                                  std::string("linear.tff")));
+                                                                  std::string("fallback")));
 
     // camera setup -> kernel runtime factors
     //
@@ -235,14 +235,15 @@ void trrojan::opencl::volume_raycast_benchmark::setup_raycaster(
         raw_data = load_volume_data(cfg.find(factor_volume_file_name)->value(), static_cfg);
     }
 
-    // create OpenCL memory object
-    if (changed.count(factor_sample_precision))
+    auto env = cfg.find(factor_environment)->value().as<trrojan::environment>();
+
+    // create OpenCL volume data memory object (either texture or linear buffer)
+    if (changed.count(factor_sample_precision) || !raw_data.empty())
     {
         auto data_precision = parse_scalar_type(*static_cfg.find(factor_data_precision));
         auto sample_precision = parse_scalar_type(*cfg.find(factor_sample_precision));
-        auto env = cfg.find(factor_environment)->value().as<trrojan::environment>();
 
-        create_cl_mem(data_precision,
+        create_vol_mem(data_precision,
                       sample_precision,
                       raw_data,
                       cfg.find(factor_use_buffer)->value(),
@@ -251,8 +252,8 @@ void trrojan::opencl::volume_raycast_benchmark::setup_raycaster(
 
     if (changed.count(factor_tff_file_name))
     {
-        // TODO
-        //load_transfer_function(  );
+        load_transfer_function(cfg.find(factor_tff_file_name)->value(),
+                               std::dynamic_pointer_cast<environment>(env));
     }
 }
 
@@ -266,8 +267,6 @@ const std::vector<char> & trrojan::opencl::volume_raycast_benchmark::load_volume
 {
     std::cout << "Loading volume data defined in " << dat_file << std::endl;
 
-    trrojan::timer t;
-//t.start();
     try
     {
         _dr.read_files(dat_file);
@@ -278,7 +277,6 @@ const std::vector<char> & trrojan::opencl::volume_raycast_benchmark::load_volume
         throw e;
     }
 
-//    raw_data = _dr.data();
     std::cout << _dr.data().size() << " bytes have been read." << std::endl;
     std::cout << _dr.properties().to_string() << std::endl;
 
@@ -304,15 +302,87 @@ const std::vector<char> & trrojan::opencl::volume_raycast_benchmark::load_volume
     return _dr.data();
 }
 
+/**
+ * @brief trrojan::opencl::volume_raycast_benchmark::load_transfer_function
+ */
+void trrojan::opencl::volume_raycast_benchmark::load_transfer_function(
+        const std::string file_name,
+        environment::pointer env)
+{
+    // The size of the transfer function vector (256 * RGBA values).
+    size_t num_values = 256;
+    std::vector<float> values;
+
+    if (file_name == "fallback")
+    {
+        std::cerr << "WARNING: No transfer function defined, falling back to default: "
+                     "linear function in range [0;1]." << std::endl;
+
+        for (size_t i = 0; i < num_values; ++i)
+        {
+            for (int j = 0; j < 4; ++j)
+            {
+                values.push_back(i * (1.0f / static_cast<float>(num_values - 1.0f)));
+            }
+        }
+    }
+    else    // try to read file
+    {
+        std::cout << "Loading transfer funtion data defined in " << file_name << std::endl;
+
+        std::ifstream tff_file(file_name, std::ios::in);
+        float value;
+
+        // read lines from file and split on whitespace
+        if (tff_file.is_open())
+        {
+            while (tff_file >> value)
+            {
+                values.push_back(value);
+            }
+            tff_file.close();
+        }
+        else
+        {
+            throw std::runtime_error("Could not open transfer function file " + file_name);
+        }
+    }
+
+    // Trunctualte if there are too many values respectively fill with zero values.
+    // We multiply by 4 because of the values for RGBA-channels.
+    values.resize(num_values * 4, 0.0f);
+
+    // create OpenCL 2d image representation
+    cl::ImageFormat format;
+    format.image_channel_order = CL_RGBA;
+    format.image_channel_data_type = CL_FLOAT;
+    try
+    {
+        _tff_mem = cl::Image1D(env->get_properties().context,
+                               CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                               format,
+                               num_values,
+                               values.data(),
+                               NULL);
+    }
+    catch (cl::Error err)
+    {
+        throw std::runtime_error( "ERROR: " + std::string(err.what()) + "("
+                                  + util::get_cl_error_str(err.err()) + ")");
+    }
+
+    env->get_garbage_collector().add_mem_object(&_tff_mem);
+}
+
 
 /*
  * trrojan::opencl::volume_raycast_benchmark::create_cl_mem
  */
-void trrojan::opencl::volume_raycast_benchmark::create_cl_mem(const scalar_type data_precision,
-                                                              const scalar_type sample_precision,
-                                                              const std::vector<char> &raw_data,
-                                                              const bool use_buffer,
-                                                              environment::pointer env)
+void trrojan::opencl::volume_raycast_benchmark::create_vol_mem(const scalar_type data_precision,
+                                                               const scalar_type sample_precision,
+                                                               const std::vector<char> &raw_data,
+                                                               const bool use_buffer,
+                                                               environment::pointer env)
 {
     this->dispatch(scalar_type_list(),
                    data_precision,

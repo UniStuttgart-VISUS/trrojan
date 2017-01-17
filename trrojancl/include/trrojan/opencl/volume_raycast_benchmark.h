@@ -125,6 +125,19 @@ namespace opencl
                                                   configuration &static_cfg);
 
         /// <summary>
+        /// Read a transfer function from the file with the given name.
+        /// A transfer function has exactly 256 RGBA floating point values.
+        /// We try to find those in the given input file.
+        /// However, if there are too many values in the file, we trunctuate respectively
+        /// fill with zeros.
+        /// If no trransfer function file is specified (i.e. the factor string is "fallback"),
+        /// we use a default linear function with range [0;1] as fallback.
+        /// </summary>
+        /// <param name="file_name">The name (and path) of the file that contains the
+        /// transfer function in form of numeric values.</param>
+        void load_transfer_function(const std::string file_name, environment::pointer env);
+
+        /// <summary>
         /// Selects the correct source scalar type <paramref name="s" />
         /// and continues with dispatching the target type.
         /// </summary>
@@ -224,14 +237,13 @@ namespace opencl
 
             // convert imput vector to the desired output precision
             std::vector<To> converted_data(s, e);
-            cl::Memory volume_mem;
 
             try
             {
                 cl_int err = CL_SUCCESS;
                 if (use_buffer)
                 {
-                    volume_mem = cl::Buffer(cl_env->get_properties().context,
+                    _volume_mem = cl::Buffer(cl_env->get_properties().context,
                                                 CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
                                                 converted_data.size(),
                                                 converted_data.data(),
@@ -257,7 +269,7 @@ namespace opencl
                         throw std::invalid_argument("Invalid volume data format."); break;
                     }
 
-                    volume_mem = cl::Image3D(cl_env->get_properties().context,
+                    _volume_mem = cl::Image3D(cl_env->get_properties().context,
                                             CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
                                             format,
                                             _dr.properties().volume_res[0],
@@ -274,7 +286,7 @@ namespace opencl
                                           + util::get_cl_error_str(err.err()) + ")");
             }
             // Add memory object to manual OpenCL memory manager.
-            cl_env->get_garbage_collector().add_mem_object(&volume_mem);
+            cl_env->get_garbage_collector().add_mem_object(&_volume_mem);
         }
 
 
@@ -289,7 +301,7 @@ namespace opencl
         /// Create an OpenCL memory object.
         /// </summary>
         /// <param> TODO </param>
-        void create_cl_mem(const scalar_type data_precision,
+        void create_vol_mem(const scalar_type data_precision,
                            const scalar_type sample_precision,
                            const std::vector<char> &raw_data,
                            const bool use_buffer,
@@ -340,7 +352,12 @@ namespace opencl
         /// Volume data as OpenCL memory object.
         /// </summary>
         /// <remarks>Can be represented either as a linear buffer or as a 3d image object.
-        //cl::Memory _vol_data;
+        cl::Memory _volume_mem;
+
+        /// <summary>
+        /// Transfer function memory object as a 1d image representation.
+        /// </summary>
+        cl::Image1D _tff_mem;
     };
 
 }
