@@ -127,12 +127,15 @@ namespace opencl
         /// <summary>
         /// Read a transfer function from the file with the given name.
         /// A transfer function has exactly 256 RGBA floating point values.
-        /// We try to find those in the given input file.
+        /// We try to find those in the given input file by parsing for whitespace separated
+        /// floating point values.
         /// However, if there are too many values in the file, we trunctuate respectively
         /// fill with zeros.
         /// If no trransfer function file is specified (i.e. the factor string is "fallback"),
         /// we use a default linear function with range [0;1] as fallback.
         /// </summary>
+        /// <remarks>The read will fail on the first sign that is neither a numeric value,
+        /// nor a whitespace</remarks>
         /// <param name="file_name">The name (and path) of the file that contains the
         /// transfer function in form of numeric values.</param>
         void load_transfer_function(const std::string file_name, environment::pointer env);
