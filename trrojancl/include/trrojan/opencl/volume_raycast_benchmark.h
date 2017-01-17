@@ -329,6 +329,12 @@ namespace opencl
         void update_kernel_args(const configuration &cfg,
                                 const std::unordered_set<std::string> changed);
 
+        ///
+        /// \brief trrojan::opencl::volume_raycast_benchmark::read_kernel_snippets
+        ///
+        void read_kernel_snippets();
+
+
         /// <summary>
         /// Vector containing the names of all factors that are relevent at build time
         /// of the OpenCL kernel.

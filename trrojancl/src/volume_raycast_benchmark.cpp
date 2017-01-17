@@ -124,6 +124,7 @@ trrojan::opencl::volume_raycast_benchmark::volume_raycast_benchmark(void)
     // add_kernel_run_factor(factor_offset_y, 0);
 }
 
+
 /*
  * trrojan::opencl::volume_raycast_benchmark::~volume_raycast_benchmark
  */
@@ -132,6 +133,9 @@ trrojan::opencl::volume_raycast_benchmark::~volume_raycast_benchmark(void)
 }
 
 
+/*
+ * trrojan::opencl::volume_raycast_benchmark::add_kernel_run_factor
+ */
 void trrojan::opencl::volume_raycast_benchmark::add_kernel_run_factor(std::string name,
                                                                       variant value)
 {
@@ -140,6 +144,9 @@ void trrojan::opencl::volume_raycast_benchmark::add_kernel_run_factor(std::strin
 }
 
 
+/*
+ * trrojan::opencl::volume_raycast_benchmark::add_kernel_build_factor
+ */
 void trrojan::opencl::volume_raycast_benchmark::add_kernel_build_factor(std::string name,
                                                                         variant value)
 {
@@ -400,8 +407,10 @@ void trrojan::opencl::volume_raycast_benchmark::compose_kernel(
         const trrojan::configuration &cfg,
         const std::unordered_set<std::string> changed)
 {
-    // TODO
+    // TODO if not read already
+    read_kernel_snippets();
 
+    // TODO
 }
 
 
@@ -424,3 +433,27 @@ void trrojan::opencl::volume_raycast_benchmark::update_kernel_args(
     // TODO
 }
 
+
+void trrojan::opencl::volume_raycast_benchmark::read_kernel_snippets()
+{
+    const std::string dir_path = "../trrojancl/include/kernel/volume_raycast_snippets/";
+
+//    QDirIterator it(path, QStringList() << "*.cl", QDir::Files, QDirIterator::Subdirectories);
+//    while (it.hasNext())
+//    {
+//        it.next();
+//        //qDebug() << "Reading code snippet from:" << it.next();
+//        QFile f(it.fileInfo().absoluteFilePath());
+//        if (!f.open(QIODevice::ReadOnly | QIODevice::Text))
+//        {
+//            qDebug() << "Could not open" << f.fileName();
+//            continue;
+//        }
+//        QTextStream in(&f);
+//        QString content = in.readAll();
+//        f.close();
+//        m_kernelSourceSnippets[it.fileInfo().baseName()] = content;
+//    }
+
+//    return SDK_SUCCESS;
+}
