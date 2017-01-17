@@ -96,8 +96,18 @@ namespace opencl
 
     private:
 
+        /// <summary>
+        /// Add a factor that is relevant during kernel run-time.
+        /// </summary>
+        /// <param ="name">Name of the factor</param>
+        /// <param name="value">Value of the factor</param>
         void add_kernel_run_factor(std::string name, variant value);
 
+        /// <summary>
+        /// Add a factor that is relevant during kernel build time.
+        /// </summary>
+        /// <param ="name">Name of the factor</param>
+        /// <param name="value">Value of the factor</param>
         void add_kernel_build_factor(std::string name, variant value);
 
         /// <summary>
@@ -194,9 +204,15 @@ namespace opencl
 
 
         /// <summary>
-        /// Convert scalar raw data.
+        /// Convert scalar raw volume data from a given input type to a given output type
+        /// and create an OpenCL memory object with the resulting data.
         /// </summary>
-        ///
+        /// <param name="volume_data">Reference to the scalar input data</param>
+        /// <param name="ue_buffer">Switch parameter to indicate whether a linear buffer
+        /// or a 3d image buffer is to be created in OpenCL.</param>
+        /// <tParam name="From">Data precision of the input scalar volume data.</tParam>
+        /// <tParam name="To">Data precision of the data from which the OpenCL memory objects
+        /// are to be created</tParam>
         template<class From, class To>
         void convert_data_precision(const std::vector<char> &volume_data,
                                     const bool use_buffer,
@@ -269,9 +285,10 @@ namespace opencl
             return parser::parse(scalar_type_list(), value);
         }
 
-        ///
-        /// \brief create_cl_mem
-        ///
+        /// <summary>
+        /// Create an OpenCL memory object.
+        /// </summary>
+        /// <param> TODO </param>
         void create_cl_mem(const scalar_type data_precision,
                            const scalar_type sample_precision,
                            const std::vector<char> &raw_data,
