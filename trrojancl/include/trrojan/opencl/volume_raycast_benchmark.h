@@ -11,14 +11,12 @@
 #include "trrojan/opencl/scalar_type.h"
 #include "trrojan/opencl/dat_raw_reader.h"
 #include "trrojan/opencl/environment.h"
+#include "trrojan/opencl/util.h"
 
 #include "trrojan/enum_parse_helper.h"
 
-#ifdef _WIN32
-    #include <unordered_set>
-#else
-    #include <tr1/unordered_set>
-#endif
+#include <unordered_set>
+
 
 namespace trrojan
 {
@@ -40,6 +38,9 @@ namespace opencl
     public:
 
         typedef benchmark_base::on_result_callback on_result_callback;
+
+        static const std::string factor_environment;
+        static const std::string factor_device;
 
         static const std::string factor_iterations;
         static const std::string factor_volume_file_name;
@@ -94,11 +95,16 @@ namespace opencl
         virtual result run(const configuration &configs);
 
     private:
+
+        void add_kernel_run_factor(std::string name, variant value);
+
+        void add_kernel_build_factor(std::string name, variant value);
+
         /// <summary>
         /// Setup the raycaster with the given configuration.
         /// </summary>
         void setup_raycaster(const configuration &cfg,
-                             const std::tr1::unordered_set<std::string> changed);
+                             const std::unordered_set<std::string> changed);
 
         /// <summary>
         /// Load volume data based on information from the given .dat file.
@@ -192,7 +198,9 @@ namespace opencl
         /// </summary>
         ///
         template<class From, class To>
-        void convert_data_precision(const std::vector<char> &volume_data, const bool use_buffer)
+        void convert_data_precision(const std::vector<char> &volume_data,
+                                    const bool use_buffer,
+                                    environment::pointer cl_env)
         {
             // reinterpret raw data (char) to input format
             auto s = reinterpret_cast<const From *>(volume_data.data());
@@ -200,46 +208,57 @@ namespace opencl
 
             // convert imput vector to the desired output precision
             std::vector<To> converted_data(s, e);
+            cl::Memory volume_mem;
 
-            // TODO
             try
             {
                 cl_int err = CL_SUCCESS;
                 if (use_buffer)
                 {
-//                    _vol_data = cl::Buffer(_env->get_properties().context,
-//                                                CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-//                                                converted_data.size(),
-//                                                converted_data.data(),
-//                                                &err);
+                    volume_mem = cl::Buffer(cl_env->get_properties().context,
+                                                CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                                                converted_data.size(),
+                                                converted_data.data(),
+                                                &err);
                 }
                 else    // texture
                 {
                     cl::ImageFormat format;
                     format.image_channel_order = CL_R;
+                    switch (sizeof(To))
+                    {
+                    case 1:
+                        format.image_channel_data_type = CL_UNORM_INT8; break;
+                    case 2:
+                        format.image_channel_data_type = CL_UNORM_INT16; break;
+                    case 4:
+                        format.image_channel_data_type = CL_FLOAT; break;
+                    case 8:
+                        throw std::invalid_argument(
+                                    "Double precision is not supported for OpenCL image formats.");
+                        break;
+                    default:
+                        throw std::invalid_argument("Invalid volume data format."); break;
+                    }
 
-                    format.image_channel_data_type = CL_UNORM_INT8;
-                    format.image_channel_data_type = CL_UNORM_INT16;
-                    format.image_channel_data_type = CL_FLOAT;
-
-//                    _vol_data = cl::Image3D(_env->get_properties().context,
-//                                        CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-//                                        format,
-//                                        _dr.properties().volume_res[0],
-//                                        _dr.properties().volume_res[1],
-//                                        _dr.properties().volume_res[2],
-//                                        0, 0,
-//                                        converted_data.data(),
-//                                        &err);
+                    volume_mem = cl::Image3D(cl_env->get_properties().context,
+                                            CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                                            format,
+                                            _dr.properties().volume_res[0],
+                                            _dr.properties().volume_res[1],
+                                            _dr.properties().volume_res[2],
+                                            0, 0,
+                                            converted_data.data(),
+                                            &err);
                 }
             }
             catch (cl::Error err)
             {
                 throw std::runtime_error( "ERROR: " + std::string(err.what()) + "("
-                                          + std::to_string(err.err()) + ")");
+                                          + util::get_cl_error_str(err.err()) + ")");
             }
             // Add memory object to manual OpenCL memory manager.
-//            _env->get_properties().gc.add_mem_object(&_vol_data);
+            cl_env->get_garbage_collector().add_mem_object(&volume_mem);
         }
 
 
@@ -256,13 +275,14 @@ namespace opencl
         void create_cl_mem(const scalar_type data_precision,
                            const scalar_type sample_precision,
                            const std::vector<char> &raw_data,
-                           const bool use_buffer);
+                           const bool use_buffer,
+                           environment::pointer env);
 
         /// <summary>
         /// Compose and generate the OpenCL kernel source based on the given configuration.
         /// </summary>
         void compose_kernel(const configuration &cfg,
-                            const std::tr1::unordered_set<std::string> changed);
+                            const std::unordered_set<std::string> changed);
 
         /// <summary>
         /// Compile the OpenCL kernel source.
@@ -275,7 +295,7 @@ namespace opencl
         /// \param cfg
         /// \param changed
         void update_kernel_args(const configuration &cfg,
-                                const std::tr1::unordered_set<std::string> changed);
+                                const std::unordered_set<std::string> changed);
 
         /// <summary>
         /// Vector containing the names of all factors that are relevent at build time
@@ -294,13 +314,16 @@ namespace opencl
         /// </summary>
         dat_raw_reader _dr;
 
-        std::shared_ptr<trrojan::opencl::environment> _env;
+        /// <summary>
+        /// The OpenCL environment.
+        /// </summary>
+        std::shared_ptr<trrojan::opencl::environment> _cl_env;
 
         /// <summary>
         /// Volume data as OpenCL memory object.
         /// </summary>
         /// <remarks>Can be represented either as a linear buffer or as a 3d image object.
-        cl::Memory _vol_data;
+        //cl::Memory _vol_data;
     };
 
 }
