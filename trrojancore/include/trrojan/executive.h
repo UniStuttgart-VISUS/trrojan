@@ -85,7 +85,7 @@ namespace trrojan {
             ec.add_factor(factor::from_manifestations<environment>("environment", es.front()));
             std::vector<device> dst;
             es.front()->get_devices(dst);
-            ec.add_factor(factor::from_manifestations("device", dst.back()));
+            ec.add_factor(factor::from_manifestations("device", dst.front()));
 
             for (auto b : bs) {
                 std::cout << "=== " << b->name() << " ===" << std::endl;

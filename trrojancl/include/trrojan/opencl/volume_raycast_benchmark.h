@@ -316,9 +316,18 @@ namespace opencl
         void compose_kernel(const configuration &cfg);
 
         /// <summary>
-        /// Compile the OpenCL kernel source.
+        /// Compile the OpenCL kernel source for the device referenced by <paramref name="dev" \>
+        /// on the plattform referenced by <paramref name="env" \>.
         /// </summary>
-        void build_kernel(environment::pointer env);
+        /// <param name="env">Smart pointer to a valid OpenCL environment.</param>
+        /// <param name="dev">Smart pointer to a valid OpenCL device on the platform
+        /// <paramref name="env" \>.</param>
+        /// <param name="build_flags">Compiler build flags.</param>
+        /// <throws>Runtime error if program creation, kernel build or initialization
+        /// fail.</throws>
+        void build_kernel(environment::pointer env,
+                          device::pointer dev,
+                          const std::string build_flags = "");
 
         /// <summary>
         /// Update runtime kernel arguments.

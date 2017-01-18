@@ -194,7 +194,10 @@ size_t trrojan::opencl::volume_raycast_benchmark::run(
             compose_kernel(cs);
             // build the kernel file for the current platform (aka environment)
             auto env = cs.find(factor_environment)->value().as<trrojan::environment>();
-            build_kernel(std::dynamic_pointer_cast<environment>(env));
+            auto dev = cs.find(factor_device)->value().as<trrojan::device>();
+            build_kernel(std::dynamic_pointer_cast<environment>(env),
+                         std::dynamic_pointer_cast<device>(dev),
+                         std::string("-DIMAGE_SUPPORT"));
         }
 
         // update the OpenCL kernel arguments according to the changed factors,
@@ -524,23 +527,22 @@ void trrojan::opencl::volume_raycast_benchmark::replace_kernel_snippet(const std
 /*
  * trrojan::opencl::volume_raycast_benchmark::generate_kernel
  */
-void trrojan::opencl::volume_raycast_benchmark::build_kernel(environment::pointer env)
+void trrojan::opencl::volume_raycast_benchmark::build_kernel(environment::pointer env,
+                                                             device::pointer dev,
+                                                             const std::string build_flags)
 {
     cl::Program::Sources source(1, std::make_pair(_kernel_source.data(), _kernel_source.size()));
     try
     {
         env->generate_program(source);
-        std::string flags_str = std::string("-DIMAGE_SUPPORT");
-        // TODO pass current device
-        std::vector<cl::Device> dev;
-        dev.push_back(env->get_properties().devices.front());
+        const std::vector<cl::Device> device = {dev.get()->get()};
 
-        cl_int result = env->get_properties().program.build(dev, flags_str.c_str());
+        cl_int result = env->get_properties().program.build(device, build_flags.c_str());
         if (result == CL_BUILD_PROGRAM_FAILURE)
         {
             // print out compiler output on build error
             std::string str = env->get_properties().program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(
-                        dev.front());
+                        dev.get()->get());
             std::cout << " \n\t\t\tBUILD LOG\n";
             std::cout << " ************************************************\n";
             std::cout << str << std::endl;

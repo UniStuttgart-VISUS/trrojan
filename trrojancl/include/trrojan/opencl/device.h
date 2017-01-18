@@ -27,6 +27,8 @@ namespace opencl {
 
     public:
 
+        typedef std::shared_ptr<device> pointer;
+
         inline device(void) { }
 
         device(cl::Device d);
@@ -34,6 +36,11 @@ namespace opencl {
         virtual ~device(void);
 
         void set_cl_device(cl::Device d);
+
+        inline const cl::Device &get() const
+        {
+            return _cl_device;
+        }
 
     private:
 
