@@ -192,8 +192,6 @@ size_t trrojan::opencl::volume_raycast_benchmark::run(
         {
             // compose the kernel source based on the current config
             compose_kernel(cs);
-
-            std::cout << std::endl << std::endl << _kernel_source << std::endl << std::endl;
             // build the kernel file
             build_kernel();
         }
