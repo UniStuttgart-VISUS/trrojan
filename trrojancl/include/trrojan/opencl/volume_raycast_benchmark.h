@@ -11,14 +11,12 @@
 #include "trrojan/opencl/scalar_type.h"
 #include "trrojan/opencl/dat_raw_reader.h"
 #include "trrojan/opencl/environment.h"
+#include "trrojan/opencl/util.h"
 
 #include "trrojan/enum_parse_helper.h"
 
-#ifdef _WIN32
-    #include <unordered_set>
-#else
-    #include <tr1/unordered_set>
-#endif
+#include <unordered_set>
+#include <unordered_map>
 
 namespace trrojan
 {
@@ -40,6 +38,9 @@ namespace opencl
     public:
 
         typedef benchmark_base::on_result_callback on_result_callback;
+
+        static const std::string factor_environment;
+        static const std::string factor_device;
 
         static const std::string factor_iterations;
         static const std::string factor_volume_file_name;
@@ -94,11 +95,26 @@ namespace opencl
         virtual result run(const configuration &configs);
 
     private:
+
+        /// <summary>
+        /// Add a factor that is relevant during kernel run-time.
+        /// </summary>
+        /// <param ="name">Name of the factor</param>
+        /// <param name="value">Value of the factor</param>
+        void add_kernel_run_factor(std::string name, variant value);
+
+        /// <summary>
+        /// Add a factor that is relevant during kernel build time.
+        /// </summary>
+        /// <param ="name">Name of the factor</param>
+        /// <param name="value">Value of the factor</param>
+        void add_kernel_build_factor(std::string name, variant value);
+
         /// <summary>
         /// Setup the raycaster with the given configuration.
         /// </summary>
         void setup_raycaster(const configuration &cfg,
-                             const std::tr1::unordered_set<std::string> changed);
+                             const std::unordered_set<std::string> changed);
 
         /// <summary>
         /// Load volume data based on information from the given .dat file.
@@ -107,6 +123,22 @@ namespace opencl
         /// on the volume data.</param>
         const std::vector<char> &load_volume_data(const std::string dat_file,
                                                   configuration &static_cfg);
+
+        /// <summary>
+        /// Read a transfer function from the file with the given name.
+        /// A transfer function has exactly 256 RGBA floating point values.
+        /// We try to find those in the given input file by parsing for whitespace separated
+        /// floating point values.
+        /// However, if there are too many values in the file, we trunctuate respectively
+        /// fill with zeros.
+        /// If no trransfer function file is specified (i.e. the factor string is "fallback"),
+        /// we use a default linear function with range [0;1] as fallback.
+        /// </summary>
+        /// <remarks>The read will fail on the first sign that is neither a numeric value,
+        /// nor a whitespace</remarks>
+        /// <param name="file_name">The name (and path) of the file that contains the
+        /// transfer function in form of numeric values.</param>
+        void load_transfer_function(const std::string file_name, environment::pointer env);
 
         /// <summary>
         /// Selects the correct source scalar type <paramref name="s" />
@@ -188,11 +220,19 @@ namespace opencl
 
 
         /// <summary>
-        /// Convert scalar raw data.
+        /// Convert scalar raw volume data from a given input type to a given output type
+        /// and create an OpenCL memory object with the resulting data.
         /// </summary>
-        ///
+        /// <param name="volume_data">Reference to the scalar input data</param>
+        /// <param name="ue_buffer">Switch parameter to indicate whether a linear buffer
+        /// or a 3d image buffer is to be created in OpenCL.</param>
+        /// <tParam name="From">Data precision of the input scalar volume data.</tParam>
+        /// <tParam name="To">Data precision of the data from which the OpenCL memory objects
+        /// are to be created</tParam>
         template<class From, class To>
-        void convert_data_precision(const std::vector<char> &volume_data, const bool use_buffer)
+        void convert_data_precision(const std::vector<char> &volume_data,
+                                    const bool use_buffer,
+                                    environment::pointer cl_env)
         {
             // reinterpret raw data (char) to input format
             auto s = reinterpret_cast<const From *>(volume_data.data());
@@ -201,45 +241,55 @@ namespace opencl
             // convert imput vector to the desired output precision
             std::vector<To> converted_data(s, e);
 
-            // TODO
             try
             {
                 cl_int err = CL_SUCCESS;
                 if (use_buffer)
                 {
-//                    _vol_data = cl::Buffer(_env->get_properties().context,
-//                                                CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-//                                                converted_data.size(),
-//                                                converted_data.data(),
-//                                                &err);
+                    _volume_mem = cl::Buffer(cl_env->get_properties().context,
+                                                CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                                                converted_data.size(),
+                                                converted_data.data(),
+                                                &err);
                 }
                 else    // texture
                 {
                     cl::ImageFormat format;
                     format.image_channel_order = CL_R;
+                    switch (sizeof(To))
+                    {
+                    case 1:
+                        format.image_channel_data_type = CL_UNORM_INT8; break;
+                    case 2:
+                        format.image_channel_data_type = CL_UNORM_INT16; break;
+                    case 4:
+                        format.image_channel_data_type = CL_FLOAT; break;
+                    case 8:
+                        throw std::invalid_argument(
+                                    "Double precision is not supported for OpenCL image formats.");
+                        break;
+                    default:
+                        throw std::invalid_argument("Invalid volume data format."); break;
+                    }
 
-                    format.image_channel_data_type = CL_UNORM_INT8;
-                    format.image_channel_data_type = CL_UNORM_INT16;
-                    format.image_channel_data_type = CL_FLOAT;
-
-//                    _vol_data = cl::Image3D(_env->get_properties().context,
-//                                        CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-//                                        format,
-//                                        _dr.properties().volume_res[0],
-//                                        _dr.properties().volume_res[1],
-//                                        _dr.properties().volume_res[2],
-//                                        0, 0,
-//                                        converted_data.data(),
-//                                        &err);
+                    _volume_mem = cl::Image3D(cl_env->get_properties().context,
+                                            CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                                            format,
+                                            _dr.properties().volume_res[0],
+                                            _dr.properties().volume_res[1],
+                                            _dr.properties().volume_res[2],
+                                            0, 0,
+                                            converted_data.data(),
+                                            &err);
                 }
             }
             catch (cl::Error err)
             {
                 throw std::runtime_error( "ERROR: " + std::string(err.what()) + "("
-                                          + std::to_string(err.err()) + ")");
+                                          + util::get_cl_error_str(err.err()) + ")");
             }
             // Add memory object to manual OpenCL memory manager.
-//            _env->get_properties().gc.add_mem_object(&_vol_data);
+            cl_env->get_garbage_collector().add_mem_object(&_volume_mem);
         }
 
 
@@ -250,19 +300,20 @@ namespace opencl
             return parser::parse(scalar_type_list(), value);
         }
 
-        ///
-        /// \brief create_cl_mem
-        ///
-        void create_cl_mem(const scalar_type data_precision,
+        /// <summary>
+        /// Create an OpenCL memory object.
+        /// </summary>
+        /// <param> TODO </param>
+        void create_vol_mem(const scalar_type data_precision,
                            const scalar_type sample_precision,
                            const std::vector<char> &raw_data,
-                           const bool use_buffer);
+                           const bool use_buffer,
+                           environment::pointer env);
 
         /// <summary>
         /// Compose and generate the OpenCL kernel source based on the given configuration.
         /// </summary>
-        void compose_kernel(const configuration &cfg,
-                            const std::tr1::unordered_set<std::string> changed);
+        void compose_kernel(const configuration &cfg);
 
         /// <summary>
         /// Compile the OpenCL kernel source.
@@ -275,7 +326,39 @@ namespace opencl
         /// \param cfg
         /// \param changed
         void update_kernel_args(const configuration &cfg,
-                                const std::tr1::unordered_set<std::string> changed);
+                                const std::unordered_set<std::string> changed);
+
+        /// <summary>
+        /// Read all kernel snippets that can be found in <paramref name="path" />,
+        /// i.e. all files with the ".cl" extension.
+        /// </summay>
+        /// <param name="path">The directory path containing the kernel snippets.</param>
+        void read_kernel_snippets(const std::string path);
+
+        /// <summary>
+        /// Replace the first keyword <paramref name="keyword" /> string that can be found in
+        /// <paramref name="text" /> with the <paramref name="insert" /> string. Keywords
+        /// in the <paramref name="text" /> have to be surrounded by <paramref name="prefix" />
+        /// and <paramref name="suffix" /> , the defauls are /***keyword***/.
+        /// <param name="keyword">The keyword string that is to be replaced</param>
+        /// <param name="insert">The string that is to be inserted in place of keyword</param>
+        /// <param name="text">Reference to the string that os to be manipulated.</param>
+        /// <param name="prefix">Keyword defining prefix, default is "/***".</param>
+        /// <param name="suffix">Keyword defining suffix, default is "***/".</param>
+        void replace_keyword(const std::string keyword,
+                             const std::string insert,
+                             std::string &text,
+                             const std::string prefix = "/***",
+                             const std::string suffix = "***/");
+
+        /// <summary>
+        /// Replace a keyword in <paramref name="kernel_source" /> with the snipped contained
+        /// in the _kernel_snippets member map, accessed by the <paramref name="keyword" />.
+        /// <param name="keyword">The keyword used as the key to access the snippet in
+        /// _kernel_snippets member variable.</param>
+        /// <param name="kernel_source">Reference to the kernel source that is to be
+        /// manipulated.</param>
+        void replace_kernel_snippet(const std::string keyword, std::string &kernel_source);
 
         /// <summary>
         /// Vector containing the names of all factors that are relevent at build time
@@ -294,13 +377,28 @@ namespace opencl
         /// </summary>
         dat_raw_reader _dr;
 
-        std::shared_ptr<trrojan::opencl::environment> _env;
+        /// <summary>
+        /// Unordered map to store OpenCL kernel snippets.
+        /// </summary>
+        std::unordered_map<std::string, std::string> _kernel_snippets;
+
+        /// <summary>
+        /// The OpenCL environment.
+        /// </summary>
+        std::shared_ptr<trrojan::opencl::environment> _cl_env;
 
         /// <summary>
         /// Volume data as OpenCL memory object.
         /// </summary>
         /// <remarks>Can be represented either as a linear buffer or as a 3d image object.
-        cl::Memory _vol_data;
+        cl::Memory _volume_mem;
+
+        /// <summary>
+        /// Transfer function memory object as a 1d image representation.
+        /// </summary>
+        cl::Image1D _tff_mem;
+
+        std::string _kernel_source;
     };
 
 }

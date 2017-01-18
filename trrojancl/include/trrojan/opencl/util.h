@@ -143,10 +143,10 @@ namespace opencl {
                 return "CL_DEVICE_PARTITION_FAILED_EXT";
             case CL_INVALID_PARTITION_COUNT_EXT:
                 return "CL_INVALID_PARTITION_COUNT_EXT";
-            case CL_INVALID_DEVICE_QUEUE:
-                return "CL_INVALID_DEVICE_QUEUE";
-            case CL_INVALID_PIPE_SIZE:
-                return "CL_INVALID_PIPE_SIZE";
+//            case CL_INVALID_DEVICE_QUEUE:
+//                return "CL_INVALID_DEVICE_QUEUE";
+//            case CL_INVALID_PIPE_SIZE:
+//                return "CL_INVALID_PIPE_SIZE";
 
             default:
                 return "Unknown error code.";

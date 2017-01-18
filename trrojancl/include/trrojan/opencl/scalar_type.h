@@ -25,22 +25,22 @@ namespace opencl
     enum class TRROJANCL_API scalar_type
     {
         /// <summary>
-        /// 1-byte
+        /// 1-byte integer type
         /// </summary>
         uchar,
 
         /// <summary>
-        /// 2-byte
+        /// 2-byte integer type
         /// </summary>
         ushort,
 
         /// <summary>
-        /// 4-byte
+        /// 4-byte floating point type
         /// </summary>
         float32,
 
         /// <summary>
-        /// 8-byte
+        /// 8-byte floating point type (double precision)
         /// </summary>
         float64
     };

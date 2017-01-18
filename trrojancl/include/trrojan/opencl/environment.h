@@ -78,9 +78,8 @@ namespace opencl
             mem_objects.clear();
         }
 
-        ~garbage_collector()
+        virtual ~garbage_collector()
         {
-            del_all();
         }
 
     private:
@@ -94,8 +93,6 @@ namespace opencl
         cl::Context context;
         cl::CommandQueue queue;
         cl::Program program;
-
-        garbage_collector gc;
     };
 
     /// <summary>
@@ -111,6 +108,8 @@ namespace opencl
     public:
 
         typedef environment_base::device_list device_list;
+
+        typedef std::shared_ptr<environment> pointer;
 
         /// <summary>
         /// Returns the number of available OpenCL platforms.
@@ -138,7 +137,12 @@ namespace opencl
         /// \brief get_context
         /// \return
         ///
-        properties &get_properties();
+        const properties &get_properties() const;
+
+        /// <summary>
+        /// Get the garbage collector for OpenCL memory objects.
+        /// </summary>
+        garbage_collector &get_garbage_collector();
 
         ///
         /// \brief on_initialise
@@ -194,7 +198,11 @@ namespace opencl
         /// OpenCL properties
         ///
         properties _prop;
-    };
 
+        /// <summary>
+        /// Manual garbage collector for OpenCL memory objects.
+        /// </summary>
+        mutable garbage_collector _gc;
+    };
 }
 }

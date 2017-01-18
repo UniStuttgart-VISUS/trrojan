@@ -30,9 +30,14 @@ size_t trrojan::opencl::environment::get_devices(device_list& dst)
     return dst.size();
 }
 
-trrojan::opencl::properties &trrojan::opencl::environment::get_properties()
+const trrojan::opencl::properties &trrojan::opencl::environment::get_properties() const
 {
     return this->_prop;
+}
+
+trrojan::opencl::garbage_collector &trrojan::opencl::environment::get_garbage_collector()
+{
+    return _gc;
 }
 
 /*
@@ -219,7 +224,7 @@ cl::Device trrojan::opencl::environment::get_valid_GLCL_device(cl::Platform plat
 
     if(device_size == 0)
     {
-        throw cl::Error(1,"No GLGL devices found for current platform");
+        throw cl::Error(1, "No GLGL devices found for current platform");
     }
 
     if(status != CL_SUCCESS)

@@ -76,9 +76,16 @@ namespace trrojan {
                 {
                     std::cout << d->name() << "  " << d->unique_id() << std::endl;
                 }
+
+                 std::cout << e->name() << std::endl;
                 // TODO: iterate devices    (scripting interaface)
                 // TODO: iterate benchamrks (scripting interaface)
             }
+
+            ec.add_factor(factor::from_manifestations<environment>("environment", es.front()));
+            std::vector<device> dst;
+            es.front()->get_devices(dst);
+            ec.add_factor(factor::from_manifestations("device", dst.back()));
 
             for (auto b : bs) {
                 std::cout << "=== " << b->name() << " ===" << std::endl;
@@ -96,7 +103,6 @@ namespace trrojan {
                     csv_output writer;
                     writer.open(csv_output_params::create(fn));
 #endif
-
                     b->run(ec, [&writer](result&& r) {
                         static_cast<output_base&>(writer) << r;
                         return true;
