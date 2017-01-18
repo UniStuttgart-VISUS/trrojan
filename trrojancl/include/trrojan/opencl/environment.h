@@ -202,8 +202,7 @@ namespace opencl
         /// <summary>
         /// Manual garbage collector for OpenCL memory objects.
         /// </summary>
-        garbage_collector _gc;
+        mutable garbage_collector _gc;
     };
-
 }
 }

@@ -7,6 +7,7 @@
 
 #include <cassert>
 
+#include "trrojan/io.h"
 #include "trrojan/timer.h"
 
 
@@ -407,10 +408,25 @@ void trrojan::opencl::volume_raycast_benchmark::compose_kernel(
         const trrojan::configuration &cfg,
         const std::unordered_set<std::string> changed)
 {
-    // TODO if not read already
-    read_kernel_snippets();
+    // read all kernel snippets if necessary
+    if (_kernel_snippets.empty())
+    {
+        // TODO: remove hard coded directory path
+        const std::string path = "../trrojancl/include/kernel/volume_raycast_snippets/";
+        try
+        {
+            read_kernel_snippets(path);
+        }
+        catch(std::system_error err)
+        {
+            std::cerr << "ERROR while reading from " << path << " :\n\t"
+                      << err.what() << std::endl;
+        }
+    }
 
     // TODO
+
+
 }
 
 
@@ -434,26 +450,19 @@ void trrojan::opencl::volume_raycast_benchmark::update_kernel_args(
 }
 
 
-void trrojan::opencl::volume_raycast_benchmark::read_kernel_snippets()
+/*
+ * trrojan::opencl::volume_raycast_benchmark::read_kernel_snippets
+ */
+void trrojan::opencl::volume_raycast_benchmark::read_kernel_snippets(const std::string path)
 {
-    const std::string dir_path = "../trrojancl/include/kernel/volume_raycast_snippets/";
-
-//    QDirIterator it(path, QStringList() << "*.cl", QDir::Files, QDirIterator::Subdirectories);
-//    while (it.hasNext())
-//    {
-//        it.next();
-//        //qDebug() << "Reading code snippet from:" << it.next();
-//        QFile f(it.fileInfo().absoluteFilePath());
-//        if (!f.open(QIODevice::ReadOnly | QIODevice::Text))
-//        {
-//            qDebug() << "Could not open" << f.fileName();
-//            continue;
-//        }
-//        QTextStream in(&f);
-//        QString content = in.readAll();
-//        f.close();
-//        m_kernelSourceSnippets[it.fileInfo().baseName()] = content;
-//    }
-
-//    return SDK_SUCCESS;
+    std::vector<std::string> paths;
+    get_file_system_entries(std::back_inserter(paths), path, false,
+                            trrojan::has_extension(".cl"));
+    // clear old map entries if any
+    _kernel_snippets.clear();
+    // read new ones
+    for (const auto& path : paths)
+    {
+        _kernel_snippets[get_file_name(path, false)] = read_text_file(path);
+    }
 }

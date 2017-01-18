@@ -16,7 +16,7 @@
 #include "trrojan/enum_parse_helper.h"
 
 #include <unordered_set>
-
+#include <unordered_map>
 
 namespace trrojan
 {
@@ -329,11 +329,12 @@ namespace opencl
         void update_kernel_args(const configuration &cfg,
                                 const std::unordered_set<std::string> changed);
 
-        ///
-        /// \brief trrojan::opencl::volume_raycast_benchmark::read_kernel_snippets
-        ///
-        void read_kernel_snippets();
-
+        /// <summary>
+        /// Read all kernel snippets that can be found in <paramref name="path" />,
+        /// i.e. all files with the ".cl" extension.
+        /// </summay>
+        /// <param name="path">The directory path containing the kernel snippets.</param>
+        void read_kernel_snippets(const std::string path);
 
         /// <summary>
         /// Vector containing the names of all factors that are relevent at build time
@@ -353,6 +354,11 @@ namespace opencl
         dat_raw_reader _dr;
 
         /// <summary>
+        /// Unordered map to store OpenCL kernel snippets.
+        /// </summary>
+        std::unordered_map<std::string, std::string> _kernel_snippets;
+
+        /// <summary>
         /// The OpenCL environment.
         /// </summary>
         std::shared_ptr<trrojan::opencl::environment> _cl_env;
@@ -367,6 +373,8 @@ namespace opencl
         /// Transfer function memory object as a 1d image representation.
         /// </summary>
         cl::Image1D _tff_mem;
+
+
     };
 
 }
