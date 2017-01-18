@@ -190,7 +190,10 @@ size_t trrojan::opencl::volume_raycast_benchmark::run(
         if (std::any_of(_kernel_build_factors.begin(), _kernel_build_factors.end(),
                         [&](std::string s){return changed.count(s);}))
         {
-            compose_kernel(cs, changed);
+            // compose the kernel source based on the current config
+            compose_kernel(cs);
+
+            std::cout << std::endl << std::endl << _kernel_source << std::endl << std::endl;
             // build the kernel file
             build_kernel();
         }
@@ -405,8 +408,7 @@ void trrojan::opencl::volume_raycast_benchmark::create_vol_mem(const scalar_type
  * Compose the raycastig kernel source
  */
 void trrojan::opencl::volume_raycast_benchmark::compose_kernel(
-        const trrojan::configuration &cfg,
-        const std::unordered_set<std::string> changed)
+        const trrojan::configuration &cfg)
 {
     // read all kernel snippets if necessary
     if (_kernel_snippets.empty())
@@ -424,9 +426,99 @@ void trrojan::opencl::volume_raycast_benchmark::compose_kernel(
         }
     }
 
-    // TODO
+    // read base kernel file
+    _kernel_source = read_text_file("../trrojancl/include/kernel/volume_raycast_base.cl");
+    // compose kernel source according to the current config
+    //
+    if (cfg.find(factor_use_buffer)->value())
+    {
+        if (parse_scalar_type(*cfg.find(factor_sample_precision)) == scalar_type::uchar)
+            replace_keyword("PRECISION", "__global const uchar*", _kernel_source);
+        else if (parse_scalar_type(*cfg.find(factor_sample_precision)) == scalar_type::ushort)
+            replace_keyword("PRECISION", "__global const ushort*", _kernel_source);
+        else if (parse_scalar_type(*cfg.find(factor_sample_precision)) == scalar_type::float32)
+            replace_keyword("PRECISION", "__global const float*", _kernel_source);
+        else if (parse_scalar_type(*cfg.find(factor_sample_precision)) == scalar_type::float64)
+            replace_keyword("PRECISION", "__global const double*", _kernel_source);
+    }
+    else
+    {
+        replace_keyword("PRECISION", "__read_only image3d_t ", _kernel_source);
+    }
+
+    // TODO offset for memory pattern test
+
+    if (cfg.find(factor_shuffle)->value())
+        replace_kernel_snippet("SHUFFLE", _kernel_source);
+    if (cfg.find(factor_use_ortho_proj)->value())
+    {
+        // TODO orthogonal camera
+        throw std::runtime_error("Orthogonal camera is not supported yet.");
+    }
+    else
+        replace_keyword("CAMERA", _kernel_snippets["PERSPECTIVE_CAM"], _kernel_source);
+    if (cfg.find(factor_use_buffer)->value())   // use buffer
+    {
+        replace_kernel_snippet("PRECISION_DIV", _kernel_source);
+        replace_keyword("DATA_SOURCE", _kernel_snippets["BUFFER"], _kernel_source);
+        if (cfg.find(factor_use_illumination)->value())
+            replace_keyword("ILLUMINATION", _kernel_snippets["ILLUMINATION_BUF"], _kernel_source);
+    }
+    else    // use texture
+    {
+        replace_keyword("DATA_SOURCE", _kernel_snippets["TEXTURE"], _kernel_source);
+        if (!cfg.find(factor_use_dvr)->value()) // iso surface rendering
+        {
+            replace_kernel_snippet("ISO_SURFACE_TEX", _kernel_source);
+            if (cfg.find(factor_use_illumination)->value())
+                replace_keyword("ILLUMINATION_TEX_ISO", _kernel_snippets["ILLUMINATION_TEX"], _kernel_source);
+        }
+        if (cfg.find(factor_use_illumination)->value()) // DVR, texture, illumination
+            replace_keyword("ILLUMINATION", _kernel_snippets["ILLUMINATION_TEX"], _kernel_source);
+    }
+    if (cfg.find(factor_use_tff)->value())
+        replace_kernel_snippet("TFF_LOOKUP", _kernel_source);
+    if (cfg.find(factor_use_ERT)->value())
+        replace_kernel_snippet("ERT", _kernel_source);
+    if (cfg.find(factor_count_samples)->value())
+        replace_kernel_snippet("SAMPLECNT", _kernel_source);
+}
 
 
+/*
+ * trrojan::opencl::volume_raycast_benchmark::replace_keyword
+ */
+void trrojan::opencl::volume_raycast_benchmark::replace_keyword(const std::string keyword,
+                                                                const std::string insert,
+                                                                std::string &text,
+                                                                const std::string prefix,
+                                                                const std::string suffix)
+{
+    std::string kernel_keyword = std::string(prefix + keyword + suffix);
+    std::size_t pos = text.find(kernel_keyword);
+    std::size_t len = kernel_keyword.length();
+    if (pos != std::string::npos)
+    {
+        text.replace(pos, len, insert);
+    }
+    else
+    {
+        throw std::invalid_argument("Could not find keyword " + keyword);
+    }
+}
+
+
+/*
+ * trrojan::opencl::volume_raycast_benchmark::replace_kernel_snippet
+ */
+void trrojan::opencl::volume_raycast_benchmark::replace_kernel_snippet(const std::string keyword,
+                                                                       std::string &kernel_source)
+{
+    if (_kernel_snippets.empty())
+    {
+        throw std::runtime_error("No kernel snippets where loaded yet.");
+    }
+    replace_keyword(keyword, _kernel_snippets[keyword], kernel_source);
 }
 
 

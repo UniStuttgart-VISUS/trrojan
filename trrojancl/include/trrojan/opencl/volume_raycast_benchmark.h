@@ -313,8 +313,7 @@ namespace opencl
         /// <summary>
         /// Compose and generate the OpenCL kernel source based on the given configuration.
         /// </summary>
-        void compose_kernel(const configuration &cfg,
-                            const std::unordered_set<std::string> changed);
+        void compose_kernel(const configuration &cfg);
 
         /// <summary>
         /// Compile the OpenCL kernel source.
@@ -335,6 +334,31 @@ namespace opencl
         /// </summay>
         /// <param name="path">The directory path containing the kernel snippets.</param>
         void read_kernel_snippets(const std::string path);
+
+        /// <summary>
+        /// Replace the first keyword <paramref name="keyword" /> string that can be found in
+        /// <paramref name="text" /> with the <paramref name="insert" /> string. Keywords
+        /// in the <paramref name="text" /> have to be surrounded by <paramref name="prefix" />
+        /// and <paramref name="suffix" /> , the defauls are /***keyword***/.
+        /// <param name="keyword">The keyword string that is to be replaced</param>
+        /// <param name="insert">The string that is to be inserted in place of keyword</param>
+        /// <param name="text">Reference to the string that os to be manipulated.</param>
+        /// <param name="prefix">Keyword defining prefix, default is "/***".</param>
+        /// <param name="suffix">Keyword defining suffix, default is "***/".</param>
+        void replace_keyword(const std::string keyword,
+                             const std::string insert,
+                             std::string &text,
+                             const std::string prefix = "/***",
+                             const std::string suffix = "***/");
+
+        /// <summary>
+        /// Replace a keyword in <paramref name="kernel_source" /> with the snipped contained
+        /// in the _kernel_snippets member map, accessed by the <paramref name="keyword" />.
+        /// <param name="keyword">The keyword used as the key to access the snippet in
+        /// _kernel_snippets member variable.</param>
+        /// <param name="kernel_source">Reference to the kernel source that is to be
+        /// manipulated.</param>
+        void replace_kernel_snippet(const std::string keyword, std::string &kernel_source);
 
         /// <summary>
         /// Vector containing the names of all factors that are relevent at build time
@@ -374,7 +398,7 @@ namespace opencl
         /// </summary>
         cl::Image1D _tff_mem;
 
-
+        std::string _kernel_source;
     };
 
 }
