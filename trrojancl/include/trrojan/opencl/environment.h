@@ -144,6 +144,12 @@ namespace opencl
         /// </summary>
         garbage_collector &get_garbage_collector();
 
+        /// <summary>
+        /// Generate an OpenCL program from <paramref name="source" />.
+        /// </summary>
+        /// <param name="source">The OpenCL C program source code.</param>
+        void generate_program(const cl::Program::Sources source);
+
         ///
         /// \brief on_initialise
         /// \param cmdLine

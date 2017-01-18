@@ -13,6 +13,7 @@
  */
 trrojan::opencl::environment::~environment(void) { }
 
+
 /*
  * trrojan::opencl::environment::get_devices
  */
@@ -30,15 +31,33 @@ size_t trrojan::opencl::environment::get_devices(device_list& dst)
     return dst.size();
 }
 
+
+/*
+ * trrojan::opencl::environment::get_properties
+ */
 const trrojan::opencl::properties &trrojan::opencl::environment::get_properties() const
 {
     return this->_prop;
 }
 
+
+/**
+ * trrojan::opencl::environment::get_garbage_collector
+ */
 trrojan::opencl::garbage_collector &trrojan::opencl::environment::get_garbage_collector()
 {
     return _gc;
 }
+
+
+/*
+ * trrojan::opencl::environment::generate_program
+ */
+void trrojan::opencl::environment::generate_program(const cl::Program::Sources source)
+{
+    this->_prop.program = cl::Program(this->_prop.context, source, NULL);
+}
+
 
 /*
  *
@@ -55,6 +74,7 @@ size_t trrojan::opencl::environment::get_platform_cnt()
 
     return platforms.size();
 }
+
 
 /**
  * trrojan::opencl::environment::on_initialise

@@ -318,7 +318,7 @@ namespace opencl
         /// <summary>
         /// Compile the OpenCL kernel source.
         /// </summary>
-        void build_kernel();
+        void build_kernel(environment::pointer env);
 
         /// <summary>
         /// Update runtime kernel arguments.
@@ -383,11 +383,6 @@ namespace opencl
         std::unordered_map<std::string, std::string> _kernel_snippets;
 
         /// <summary>
-        /// The OpenCL environment.
-        /// </summary>
-        std::shared_ptr<trrojan::opencl::environment> _cl_env;
-
-        /// <summary>
         /// Volume data as OpenCL memory object.
         /// </summary>
         /// <remarks>Can be represented either as a linear buffer or as a 3d image object.
@@ -398,7 +393,15 @@ namespace opencl
         /// </summary>
         cl::Image1D _tff_mem;
 
+        /// <summary>
+        /// Complete source of the current OpenCL kernel.
+        /// </summary>
         std::string _kernel_source;
+
+        /// <summary>
+        /// The current OpenCL kernel for volume raycasting.
+        /// </summary>
+        cl::Kernel _kernel;
     };
 
 }

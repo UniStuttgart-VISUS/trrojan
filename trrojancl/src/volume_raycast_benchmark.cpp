@@ -192,8 +192,9 @@ size_t trrojan::opencl::volume_raycast_benchmark::run(
         {
             // compose the kernel source based on the current config
             compose_kernel(cs);
-            // build the kernel file
-            build_kernel();
+            // build the kernel file for the current platform (aka environment)
+            auto env = cs.find(factor_environment)->value().as<trrojan::environment>();
+            build_kernel(std::dynamic_pointer_cast<environment>(env));
         }
 
         // update the OpenCL kernel arguments according to the changed factors,
@@ -465,7 +466,7 @@ void trrojan::opencl::volume_raycast_benchmark::compose_kernel(
     else    // use texture
     {
         replace_keyword("DATA_SOURCE", _kernel_snippets["TEXTURE"], _kernel_source);
-        if (!cfg.find(factor_use_dvr)->value()) // iso surface rendering
+        if (!(cfg.find(factor_use_dvr)->value().as<bool>())) // iso surface rendering
         {
             replace_kernel_snippet("ISO_SURFACE_TEX", _kernel_source);
             if (cfg.find(factor_use_illumination)->value())
@@ -523,9 +524,40 @@ void trrojan::opencl::volume_raycast_benchmark::replace_kernel_snippet(const std
 /*
  * trrojan::opencl::volume_raycast_benchmark::generate_kernel
  */
-void trrojan::opencl::volume_raycast_benchmark::build_kernel()
+void trrojan::opencl::volume_raycast_benchmark::build_kernel(environment::pointer env)
 {
-    // TODO
+    cl::Program::Sources source(1, std::make_pair(_kernel_source.data(), _kernel_source.size()));
+    try
+    {
+        env->generate_program(source);
+        std::string flags_str = std::string("-DIMAGE_SUPPORT");
+        // TODO pass current device
+        std::vector<cl::Device> dev;
+        dev.push_back(env->get_properties().devices.front());
+
+        cl_int result = env->get_properties().program.build(dev, flags_str.c_str());
+        if (result == CL_BUILD_PROGRAM_FAILURE)
+        {
+            // print out compiler output on build error
+            std::string str = env->get_properties().program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(
+                        dev.front());
+            std::cout << " \n\t\t\tBUILD LOG\n";
+            std::cout << " ************************************************\n";
+            std::cout << str << std::endl;
+            std::cout << " ************************************************\n";
+        }
+        else
+        {
+            std::cout << "OpenCL kernel successfully built!" << std::endl;
+        }
+
+        _kernel = cl::Kernel(env->get_properties().program, "volumeRender", NULL);
+    }
+    catch (cl::Error err)
+    {
+        throw std::runtime_error( "ERROR: " + std::string(err.what()) + "("
+                                  + util::get_cl_error_str(err.err()) + ")");
+    }
 }
 
 
