@@ -7,6 +7,8 @@
 
 #include <iterator>
 #include <ostream>
+#include <sstream>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -127,14 +129,31 @@ namespace trrojan {
 
         /// <summary>
         /// Get the value of the given factor as type <tparamref name="T" /> or
+        /// raise an exception if the factor does not exist or is incompatible.
+        /// </summary>
+        /// <param name="factor">The name of the factor to retrieve.</param>
+        /// <returns>The value of the requested factor.</returns>
+        /// <tparam name="T">The type of the factor to retrieve.</tparam>
+        /// <exception cref="std::bad_cast">If the factor exists, but has an
+        /// incompatible type.</exception>
+        /// <exception cref="std::runtime_error">If the factor does not exist.
+        /// </exception>
+        template<class T> T get(const std::string& factor) const;
+
+        /// <summary>
+        /// Get the value of the given factor as type <tparamref name="T" /> or
         /// return the <paramref name="fallback" /> value if the factor does not
         /// exist.
         /// </summary>
+        /// <param name="factor">The name of the factor to retrieve.</param>
+        /// <param name="fallback">The value to use of the factor does not exist.
+        /// </param>
+        /// <returns>The value of the requested factor.</returns>
+        /// <tparam name="T">The type of the factor to retrieve.</tparam>
+        /// <exception cref="std::bad_cast">If the factor exists, but has an
+        /// incompatible type.</exception>
         template<class T>
-        T get(const std::string& factor, const T fallback) const {
-            auto i = this->find(factor);
-            return (i != this->_factors.end()) ? i->value().as<T>() : fallback;
-        }
+        T get(const std::string& factor, const T fallback) const;
 
         /// <summary>
         /// Makes sure that the configuration has reserved space for the given
@@ -192,3 +211,5 @@ namespace trrojan {
     /// </summary>
     std::string to_string(const configuration& c);
 }
+
+#include "trrojan/configuration.inl"
