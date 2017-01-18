@@ -6,6 +6,9 @@
 #include "trrojan/opencl/volume_raycast_benchmark.h"
 
 #include <cassert>
+#include <random>
+#include <numeric>
+#define _USE_MATH_DEFINES
 #include <math.h>
 
 #include "trrojan/io.h"
