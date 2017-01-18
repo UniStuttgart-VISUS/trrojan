@@ -11,8 +11,6 @@
 #include <locale>
 #include <string>
 
-#include "trrojan/export.h"
-
 
 namespace trrojan {
 
@@ -21,19 +19,19 @@ namespace trrojan {
     /// <see cref="needle" />.
     /// </summary>
     template<class T>
-    bool TRROJANCORE_API ends_with(const std::basic_string<T>& haystack,
+    bool ends_with(const std::basic_string<T>& haystack,
         const std::basic_string<T>& needle);
 
     /// <summary>
     /// Joins a set of strings with the given separator between them.
     /// </summary>
-    template<class... P> std::string TRROJANCORE_API join(
+    template<class... P> std::string join(
         const std::string& sep, std::string str, P&&... strs);
 
     /// <summary>
     /// Joins a range of strings with the given separator between them.
     /// </summary>
-    template<class I> std::string TRROJANCORE_API join(
+    template<class I> std::string join(
         const std::string& sep, I begin, I end);
 
     /// <summary>
@@ -41,7 +39,7 @@ namespace trrojan {
     /// <see cref="needle" />.
     /// </summary>
     template<class T>
-    bool TRROJANCORE_API starts_with(const std::basic_string<T>& haystack,
+    bool starts_with(const std::basic_string<T>& haystack,
         const std::basic_string<T>& needle);
 
     /// <summary>
@@ -65,7 +63,7 @@ namespace trrojan {
     /// <param name="str"></param>
     /// <tparam name="T"></tparam>
     /// <returns></returns>
-    template<class T> inline std::basic_string<T> TRROJANCORE_API trim_right(
+    template<class T> inline std::basic_string<T> trim_right(
             const std::basic_string<T>& str) {
         // http://stackoverflow.com/questions/216823/whats-the-best-way-to-trim-stdstring
         auto end = std::find_if(str.crbegin(), str.crend(),
@@ -80,7 +78,7 @@ namespace trrojan {
     /// <param name="str"></param>
     /// <tparam name="T"></tparam>
     /// <returns></returns>
-    template<class T> inline std::basic_string<T> TRROJANCORE_API trim(
+    template<class T> inline std::basic_string<T> trim(
             const std::basic_string<T>& str) {
         return trim_left(trim_right(str));
     }

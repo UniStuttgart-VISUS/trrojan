@@ -7,8 +7,7 @@
 /*
  * trrojan::ends_with
  */
-template<class T>
-bool TRROJANCORE_API trrojan::ends_with(const std::basic_string<T>& haystack,
+template<class T> bool trrojan::ends_with(const std::basic_string<T>& haystack,
         const std::basic_string<T>& needle) {
     if (needle.size() > haystack.size()) {
         return false;
@@ -21,8 +20,8 @@ bool TRROJANCORE_API trrojan::ends_with(const std::basic_string<T>& haystack,
 /*
  * trrojan::join
  */
-template<class... P> std::string TRROJANCORE_API trrojan::join(
-        const std::string& sep, std::string str, P&&... strs) {
+template<class... P> std::string trrojan::join(const std::string& sep,
+        std::string str, P&&... strs) {
     int unpack[]{ 0, (str += sep + trrojan::join(sep, strs), 0)... };
     static_cast<void>(unpack);
     return str;
@@ -32,8 +31,8 @@ template<class... P> std::string TRROJANCORE_API trrojan::join(
 /*
  * trrojan::join
  */
-template<class I> std::string TRROJANCORE_API trrojan::join(
-        const std::string& sep, I begin, I end) {
+template<class I> std::string trrojan::join(const std::string& sep,
+        I begin, I end) {
     bool isFirst = true;
     std::string retval;
 
@@ -54,7 +53,7 @@ template<class I> std::string TRROJANCORE_API trrojan::join(
  * trrojan::starts_with
  */
 template<class T>
-bool TRROJANCORE_API trrojan::starts_with(const std::basic_string<T>& haystack,
+bool trrojan::starts_with(const std::basic_string<T>& haystack,
         const std::basic_string<T>& needle) {
     if (needle.size() > haystack.size()) {
         return false;
