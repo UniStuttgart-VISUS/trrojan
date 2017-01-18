@@ -7,8 +7,8 @@
 /*
  * trrojan::combine_path
  */
-template<class... P> std::string TRROJANCORE_API trrojan::combine_path(
-        std::string path, P&&... paths) {
+template<class... P> std::string trrojan::combine_path(std::string path,
+        P&&... paths) {
     return trrojan::join(std::string(1, directory_separator_char),
         path, std::forward<P>(paths)...);
 }
@@ -18,8 +18,8 @@ template<class... P> std::string TRROJANCORE_API trrojan::combine_path(
  *  trrojan::get_file_system_entries
  */
 template<class I, class P>
-void TRROJANCORE_API trrojan::get_file_system_entries(I oit,
-        const std::string& path, const bool isRecursive, P predicate) {
+void trrojan::get_file_system_entries(I oit, const std::string& path,
+        const bool isRecursive, P predicate) {
     typedef std::string string_type;
     typedef std::stack<string_type> stack_type;
 

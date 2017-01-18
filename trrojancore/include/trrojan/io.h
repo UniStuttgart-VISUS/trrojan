@@ -42,7 +42,7 @@ namespace trrojan {
     /// A predicate which determines whether a directory entry has a specific
     /// extension.
     /// </summary>
-    struct has_extension {
+    struct TRROJANCORE_API has_extension {
 
         std::string extension;
 
@@ -57,15 +57,28 @@ namespace trrojan {
                 this->extension);
 #endif /* _WIN32 */
         }
+    };
 
+    /// <summary>
+    /// A predicate which determines whether a file system entry is a directory.
+    /// </summary>
+    struct TRROJANCORE_API is_directory {
+
+        inline bool operator ()(const file_system_entry& fd) {
+#ifdef _WIN32
+            return ((fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0);
+#else /* _WIN32 */
+            return (fd.d_type == DT_DIR);
+#endif /* _WIN32 */
+        }
     };
 
     /// <summary>
     /// Combines <paramref name="paths" /> with
     /// <see cref="trrojan::directory_separator_char" />.
     /// </summary>
-    template<class... P> std::string TRROJANCORE_API combine_path(
-        std::string path, P&&... paths);
+    template<class... P>
+    std::string combine_path(std::string path, P&&... paths);
 
     /// <summary>
     /// Enumerates all file system entries (files and directories) in
@@ -82,15 +95,15 @@ namespace trrojan {
     /// <exception cref="std::system_error">In case the operation failed.
     /// </exception>
     template<class I, class P>
-    void TRROJANCORE_API get_file_system_entries(I oit,
-        const std::string& path, const bool isRecursive, P predicate);
+    void get_file_system_entries(I oit, const std::string& path,
+        const bool isRecursive, P predicate);
 
     /// <summary>
     /// Enumerates all file system entries (files and directories) in
     /// <paramref name="path" />.
     template<class I>
-    inline void TRROJANCORE_API get_file_system_entries(I oit,
-            const std::string& path, const bool isRecursive) {
+    inline void get_file_system_entries(I oit, const std::string& path,
+            const bool isRecursive) {
         get_file_system_entries(oit, path, isRecursive,
             [](file_system_entry&) { return true; });
     }
@@ -101,9 +114,9 @@ namespace trrojan {
     /// <param name="path">The path to extrct the name from.</param>
     /// <param name="with_extension">If <c>true</c>, return the file name with extension,
     /// otherwise remove all characters starting with the last '.'.</param>
-    /// <retruns>The extracted file name.</returns>
+    /// <retruns>The extracted file name.</retruns>
     std::string TRROJANCORE_API get_file_name(const std::string &path,
-                                              const bool with_extension = true);
+        const bool with_extension = true);
 
     /// <summary>
     /// Read a whole binary file at the location designated by
@@ -167,7 +180,7 @@ namespace trrojan {
     /// <summary>
     /// The name of the parent directory (usually "..").
     /// </summary>
-    extern const std::string  TRROJANCORE_API parent_directory_name;
+    extern const std::string TRROJANCORE_API parent_directory_name;
 
     /// <summary>
     /// Specifies the separator character for the path environment variable.

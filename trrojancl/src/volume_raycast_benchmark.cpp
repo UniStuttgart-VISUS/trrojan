@@ -465,7 +465,7 @@ void trrojan::opencl::volume_raycast_benchmark::compose_kernel(
     else    // use texture
     {
         replace_keyword("DATA_SOURCE", _kernel_snippets["TEXTURE"], _kernel_source);
-        if (!cfg.find(factor_use_dvr)->value()) // iso surface rendering
+        if (!cfg.find(factor_use_dvr)->value().as<bool>()) // iso surface rendering
         {
             replace_kernel_snippet("ISO_SURFACE_TEX", _kernel_source);
             if (cfg.find(factor_use_illumination)->value())
