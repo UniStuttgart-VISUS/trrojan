@@ -151,6 +151,13 @@ namespace opencl
         void generate_program(const cl::Program::Sources source);
 
         ///
+        /// \brief generate_queue
+        /// \param dev
+        /// \param prop
+        ///
+        void create_queue(const cl::Device &dev, const cl_command_queue_properties prop);
+
+        ///
         /// \brief on_initialise
         /// \param cmdLine
         ///

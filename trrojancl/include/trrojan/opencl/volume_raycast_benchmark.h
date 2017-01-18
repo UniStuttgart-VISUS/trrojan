@@ -48,12 +48,10 @@ namespace opencl
         static const std::string factor_viewport_width;
         static const std::string factor_viewport_height;
         static const std::string factor_step_size_factor;
-        static const std::string factor_view_rot_x;
-        static const std::string factor_view_rot_y;
-        static const std::string factor_view_rot_z;
-        static const std::string factor_view_pos_x;
-        static const std::string factor_view_pos_y;
-        static const std::string factor_view_pos_z;
+        static const std::string factor_roll;
+        static const std::string factor_pitch;
+        static const std::string factor_yaw;
+        static const std::string factor_zoom;
 
         static const std::string factor_sample_precision;
         static const std::string factor_use_lerp;
@@ -111,10 +109,20 @@ namespace opencl
         void add_kernel_build_factor(std::string name, variant value);
 
         /// <summary>
-        /// Setup the raycaster with the given configuration.
+        /// Set-up basic raycaster configuration.
         /// </summary>
-        void setup_raycaster(const configuration &cfg,
-                             const std::unordered_set<std::string> changed);
+        /// <remarks>Normally, this method only needs to be invoked once
+        /// before the first run.</remarks>
+        /// <param name="cfg">The currently active configuration.</param>
+        void setup_raycaster(const configuration &cfg);
+
+        /// <summary>
+        /// Setup the volume data set with the given configuration <paramref name="cfg" />.
+        /// </summary>
+        /// <param name="cfg">Refenrence to the configuration that is to be set-up.</param>
+        /// <param name="changed">Set of factor names that have changed since the last run</param>
+        void setup_volume_data(const configuration &cfg,
+                               const std::unordered_set<std::string> changed);
 
         /// <summary>
         /// Load volume data based on information from the given .dat file.
@@ -369,6 +377,18 @@ namespace opencl
         /// manipulated.</param>
         void replace_kernel_snippet(const std::string keyword, std::string &kernel_source);
 
+        ///
+        /// \brief update_view_mat
+        /// \param roll
+        /// \param pitch
+        /// \param yaw
+        /// \param zoom
+        /// <remarks>Right handed coordinate system.</remarks>
+        /// <remarks>Assuming radians as input angles!</remarks>
+        /// \return
+        ///
+        std::array<float, 16> update_view_mat(double roll, double pitch, double yaw, double zoom);
+
         /// <summary>
         /// Vector containing the names of all factors that are relevent at build time
         /// of the OpenCL kernel.
@@ -401,6 +421,16 @@ namespace opencl
         /// Transfer function memory object as a 1d image representation.
         /// </summary>
         cl::Image1D _tff_mem;
+
+        /// <summary>
+        /// OpenCL buffer object for view matrix.
+        /// </summary>
+        cl::Buffer _view_mat;
+
+        /// <summary>
+        /// OpenCL buffer object for suffled ray IDs.
+        /// </summary>
+        cl::Buffer _ray_ids;
 
         /// <summary>
         /// Complete source of the current OpenCL kernel.

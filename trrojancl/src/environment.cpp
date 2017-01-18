@@ -58,6 +58,12 @@ void trrojan::opencl::environment::generate_program(const cl::Program::Sources s
     this->_prop.program = cl::Program(this->_prop.context, source, NULL);
 }
 
+void trrojan::opencl::environment::create_queue(const cl::Device &dev,
+                                                const cl_command_queue_properties prop)
+{
+    this->_prop.queue = cl::CommandQueue(this->_prop.context, dev, prop);
+}
+
 
 /*
  *

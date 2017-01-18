@@ -6,6 +6,7 @@
 #include "trrojan/opencl/volume_raycast_benchmark.h"
 
 #include <cassert>
+#include <math.h>
 
 #include "trrojan/io.h"
 #include "trrojan/timer.h"
@@ -23,12 +24,10 @@ _TRROJANSTREAM_DEFINE_FACTOR(tff_file_name);
 _TRROJANSTREAM_DEFINE_FACTOR(viewport_width);
 _TRROJANSTREAM_DEFINE_FACTOR(viewport_height);
 _TRROJANSTREAM_DEFINE_FACTOR(step_size_factor);
-_TRROJANSTREAM_DEFINE_FACTOR(view_rot_x);
-_TRROJANSTREAM_DEFINE_FACTOR(view_rot_y);
-_TRROJANSTREAM_DEFINE_FACTOR(view_rot_z);
-_TRROJANSTREAM_DEFINE_FACTOR(view_pos_x);
-_TRROJANSTREAM_DEFINE_FACTOR(view_pos_y);
-_TRROJANSTREAM_DEFINE_FACTOR(view_pos_z);
+_TRROJANSTREAM_DEFINE_FACTOR(roll);
+_TRROJANSTREAM_DEFINE_FACTOR(pitch);
+_TRROJANSTREAM_DEFINE_FACTOR(yaw);
+_TRROJANSTREAM_DEFINE_FACTOR(zoom);
 
 _TRROJANSTREAM_DEFINE_FACTOR(sample_precision);
 _TRROJANSTREAM_DEFINE_FACTOR(use_lerp);
@@ -81,12 +80,10 @@ trrojan::opencl::volume_raycast_benchmark::volume_raycast_benchmark(void)
     add_kernel_run_factor(factor_viewport_width, 1024);
     add_kernel_run_factor(factor_viewport_height, 1024);
     add_kernel_run_factor(factor_step_size_factor, 0.5);
-    add_kernel_run_factor(factor_view_rot_x, 0.0);
-    add_kernel_run_factor(factor_view_rot_y, 0.0);
-    add_kernel_run_factor(factor_view_rot_z, 0.0);
-    add_kernel_run_factor(factor_view_pos_x, 0.0);
-    add_kernel_run_factor(factor_view_pos_y, 0.0);
-    add_kernel_run_factor(factor_view_pos_z, -2.0);
+    add_kernel_run_factor(factor_roll, 0.0);
+    add_kernel_run_factor(factor_pitch, 0.0);
+    add_kernel_run_factor(factor_yaw, 0.0);
+    add_kernel_run_factor(factor_zoom, 2.0);
 
     // rendering modes -> kernel build factors
     //
@@ -182,8 +179,14 @@ size_t trrojan::opencl::volume_raycast_benchmark::run(
         }
         std::cout << std::endl;
 
+        if (cs.size() == changed.size())
+        {
+            std::cout << "__FIRST RUN__" << std::endl;
+            setup_raycaster(cs);
+        }
+
         // change the setup according to changed factors that are relevant
-        setup_raycaster(cs, changed);
+        setup_volume_data(cs, changed);
 
         // compose the OpenCL kernel according to the changed factors,
         // if at least one relevant factor changed
@@ -232,9 +235,56 @@ trrojan::result trrojan::opencl::volume_raycast_benchmark::run(const configurati
 
 
 /*
+ * setup_raycaster
+ */
+void trrojan::opencl::volume_raycast_benchmark::setup_raycaster(const configuration &cfg)
+{
+    environment::pointer env = std::dynamic_pointer_cast<environment>(
+                                cfg.find(factor_environment)->value().as<trrojan::environment>());
+    device::pointer dev = std::dynamic_pointer_cast<device>(
+                            cfg.find(factor_device)->value().as<trrojan::device>());
+
+    // set up buffer objects for the view matrix and shuffled IDs
+    try
+    {
+        std::array<float, 16> zero_mat;
+        zero_mat.fill(0);
+        _view_mat = cl::Buffer(env->get_properties().context,
+                               CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                               16 * sizeof(cl_float),
+                               zero_mat.data());
+
+        int pixel_cnt = cfg.find(factor_viewport_width)->value().as<int>() *
+                        cfg.find(factor_viewport_height)->value().as<int>();
+        // shuffeld ray id array
+        std::vector<int> shuffled_ids(pixel_cnt);
+        std::iota(std::begin(shuffled_ids), std::end(shuffled_ids), 0);
+        unsigned int seed = 42;
+        std::shuffle(shuffled_ids.begin(),
+                     shuffled_ids.end(),
+                     std::default_random_engine(seed));
+        _ray_ids = cl::Buffer(env->get_properties().context,
+                              CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                              pixel_cnt * sizeof(cl_int),
+                              shuffled_ids.data());
+
+        // create OpenCL command queue
+        cl_command_queue_properties prop = 0;
+        prop |= CL_QUEUE_PROFILING_ENABLE;
+        env->create_queue(dev->get(), prop);
+    }
+    catch (cl::Error err)
+    {
+        throw std::runtime_error( "ERROR: " + std::string(err.what()) + "("
+                                  + util::get_cl_error_str(err.err()) + ")");
+    }
+
+}
+
+/*
  * setup volume raycaster
  */
-void trrojan::opencl::volume_raycast_benchmark::setup_raycaster(
+void trrojan::opencl::volume_raycast_benchmark::setup_volume_data(
         const trrojan::configuration &cfg,
         const std::unordered_set<std::string> changed)
 {
@@ -570,9 +620,82 @@ void trrojan::opencl::volume_raycast_benchmark::update_kernel_args(
         const trrojan::configuration &cfg,
         const std::unordered_set<std::string> changed)
 {
+    auto env = cfg.find(factor_environment)->value().as<trrojan::environment>();
+    environment::pointer env_ptr = std::dynamic_pointer_cast<environment>(env);
+
+    // camera parameter changed
+    if (changed.count(factor_roll) + changed.count(factor_pitch) + changed.count(factor_yaw)
+            + changed.count(factor_zoom))
+    {
+        std::array<float, 16> view_mat;
+        view_mat = update_view_mat(cfg.find(factor_roll)->value(),
+                                   cfg.find(factor_pitch)->value(),
+                                   cfg.find(factor_yaw)->value(),
+                                   cfg.find(factor_zoom)->value());
+
+        try
+        {
+            cl::Event write_evt;
+            // upload inverse view mat
+            env_ptr->get_properties().queue.enqueueWriteBuffer(_view_mat,
+                                                               CL_FALSE,
+                                                               0,
+                                                               16*sizeof(float),
+                                                               view_mat.data(),
+                                                               NULL,
+                                                               &write_evt);
+            env_ptr->get_properties().queue.flush();
+            cl_int event_status = CL_QUEUED;
+            while(event_status != CL_COMPLETE)
+            {
+                write_evt.getInfo<cl_int>(CL_EVENT_COMMAND_EXECUTION_STATUS, &event_status);
+            }
+        }
+        catch (cl::Error err)
+        {
+            throw std::runtime_error( "ERROR: " + std::string(err.what()) + "("
+                                      + util::get_cl_error_str(err.err()) + ")");
+        }
+    }
+
     // TODO
 }
 
+
+std::array<float, 16> trrojan::opencl::volume_raycast_benchmark::update_view_mat(double roll,
+                                                                                 double pitch,
+                                                                                 double yaw,
+                                                                                 double zoom)
+{
+    // We use a right handed coordinate system here!
+    // Assuming radians (not degrees)!
+    if (roll > M_PI*2.0 || pitch > M_PI*2.0 || yaw > M_PI*2.0)
+    {
+        std::cerr << "WARNING: One or more rotation parameters are greater than 2*pi. "
+                     "Rotation parameters are always interpreted as radians!" << std::endl;
+    }
+
+    float zoom_f = static_cast<float>(zoom);
+    // We first rotate yaw degrees around the y-axis and then pitch degrees around the x-axis.
+    // TODO Lastly, we rotate roll degrees around the z-axis.
+    float cos_pitch = static_cast<float>(cos(pitch));
+    float sin_pitch = static_cast<float>(sin(pitch));
+    float cos_yaw = static_cast<float>(cos(yaw));
+    float sin_yaw = static_cast<float>(sin(yaw));
+//    float cos_roll = static_cast<float>(cos(roll));
+//    float sin_roll = static_cast<float>(sin(roll));
+
+    std::array<float, 3> x_axis = {cos_yaw, 0, -sin_yaw};
+    std::array<float, 3> y_axis = {sin_yaw * sin_pitch, cos_pitch, cos_yaw * sin_pitch };
+    std::array<float, 3> z_axis = {sin_yaw * cos_pitch, -sin_pitch, cos_pitch * cos_yaw };
+
+    return std::array<float, 16>{{
+                                      x_axis[0],         y_axis[0],         z_axis[0],     0,
+                                      x_axis[1],         y_axis[1],         z_axis[1],     0,
+                                      x_axis[2],         y_axis[2],         z_axis[2],     0,
+                                  -x_axis[2]*zoom_f, -y_axis[2]*zoom_f, -z_axis[2]*zoom_f, 1
+                                }};
+}
 
 /*
  * trrojan::opencl::volume_raycast_benchmark::read_kernel_snippets

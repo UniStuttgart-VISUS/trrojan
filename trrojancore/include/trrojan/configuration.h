@@ -171,6 +171,13 @@ namespace trrojan {
         }
 
         /// <summary>
+        /// Answer the number of factors.
+        /// </summary>
+        inline const std::size_t size(void) const {
+            return this->_factors.size();
+        }
+
+        /// <summary>
         /// Write a <see cref="trrojan::configuration" /> to a stream.
         /// </summary>
         /// <param name="lhs">The left-hand side operand (the stream to
