@@ -101,7 +101,7 @@ namespace opencl
         /// <summary>
         /// Overrides benchmark run method.
         /// </summary>
-        virtual result run(const configuration &configs);
+        virtual result run(const configuration &cfg);
 
     private:
 
@@ -140,8 +140,7 @@ namespace opencl
         /// </summary>
         /// <param name="dat_file">Name of the .dat-file that contains the information
         /// on the volume data.</param>
-        const std::vector<char> &load_volume_data(const std::string dat_file,
-                                                  configuration &static_cfg);
+        const std::vector<char> &load_volume_data(const std::string dat_file);
 
         /// <summary>
         /// Read a transfer function from the file with the given name.
@@ -419,6 +418,12 @@ namespace opencl
         void log_cl_error(cl::Error error);
 
         /// <summary>
+        /// Member to hold 'passive' configuration factors (i.e. they have no influence on tests),
+        /// that are read from the volume data set ".dat" file.
+        /// </summary>
+        trrojan::configuration _passive_cfg;
+
+        /// <summary>
         /// Vector containing the names of all factors that are relevent at build time
         /// of the OpenCL kernel.
         /// </summary>
@@ -447,6 +452,11 @@ namespace opencl
         cl::Memory _volume_mem;
 
         /// <summary>
+        /// The rendering output image.
+        /// </summary>
+        cl::Image2D _output_mem;
+
+        /// <summary>
         /// Transfer function memory object as a 1d image representation.
         /// </summary>
         cl::Image1D _tff_mem;
@@ -462,19 +472,19 @@ namespace opencl
         cl::Buffer _ray_ids;
 
         /// <summary>
-        /// Complete source of the current OpenCL kernel.
-        /// </summary>
-        std::string _kernel_source;
-
-        /// <summary>
         /// The current OpenCL kernel for volume raycasting.
         /// </summary>
         cl::Kernel _kernel;
 
         /// <summary>
-        /// The rendering output image.
+        /// Complete source of the current OpenCL kernel.
         /// </summary>
-        cl::Image2D _output;
+        std::string _kernel_source;
+
+        /// <summary>
+        /// Vector for storing the rendered output data (2d image).
+        /// </summary>
+        std::vector<cl_float4> _output_data;
     };
 
 }

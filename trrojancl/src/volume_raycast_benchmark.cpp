@@ -175,7 +175,7 @@ size_t trrojan::opencl::volume_raycast_benchmark::run(
     cs.foreach_configuration([&](const trrojan::configuration& cs)
     {
         changed.clear();
-        this->check_changed_factors(cs, std::inserter(changed, changed.begin())); // TODO after static config merge
+        this->check_changed_factors(cs, std::inserter(changed, changed.begin()));
         for (auto& f : cs)
         {
             std::cout << f << std::endl;
@@ -228,11 +228,66 @@ size_t trrojan::opencl::volume_raycast_benchmark::run(
 /*
  * trrojan::opencl::volume_raycast_benchmark::run
  */
-trrojan::result trrojan::opencl::volume_raycast_benchmark::run(const configuration &configs)
+trrojan::result trrojan::opencl::volume_raycast_benchmark::run(const configuration &cfg)
 {
+    auto env = cfg.find(factor_environment)->value().as<trrojan::environment>();
+    environment::pointer env_ptr = std::dynamic_pointer_cast<environment>(env);
+    double time = 0;
 
+    try // opencl scope
+    {
+        cl::NDRange global_threads(cfg.find(factor_viewport_width)->value(),
+                                   cfg.find(factor_viewport_height)->value());
+        cl::Event ndr_evt;
+        env_ptr->get_properties().queue.enqueueNDRangeKernel(_kernel,
+                                                             cl::NullRange,
+                                                             global_threads,
+                                                             cl::NullRange,
+                                                             NULL,
+                                                             &ndr_evt);
+        env_ptr->get_properties().queue.flush();    // global sync
+        cl_int evt_status = CL_QUEUED;
+        while(evt_status != CL_COMPLETE)
+        {
+            ndr_evt.getInfo<cl_int>(CL_EVENT_COMMAND_EXECUTION_STATUS, &evt_status);
+        }
+        cl_ulong start = 0;
+        cl_ulong end = 0;
+        ndr_evt.getProfilingInfo(CL_PROFILING_COMMAND_START, &start);
+        ndr_evt.getProfilingInfo(CL_PROFILING_COMMAND_END, &end);
+        time = static_cast<double>(end - start)*1e-9;
 
-    // TODO measure kernel runtime and put that into result
+        if (cfg.find(factor_img_output)->value().as<bool>())    // output resulting image
+        {
+            cl::Event read_evt;
+            cl::size_t<3> origin;
+            cl::size_t<3> region;
+            region[0] = cfg.find(factor_viewport_width)->value();
+            region[1] = cfg.find(factor_viewport_height)->value();
+            region[2] = 1;
+            env_ptr->get_properties().queue.enqueueReadImage(_output_mem,
+                                                             CL_TRUE,
+                                                             origin,
+                                                             region,
+                                                             0,
+                                                             0,
+                                                             _output_data.data(),
+                                                             NULL,
+                                                             &read_evt);
+            env_ptr->get_properties().queue.flush();    // global sync
+            evt_status = CL_QUEUED;
+            while(evt_status != CL_COMPLETE)
+            {
+                read_evt.getInfo<cl_int>(CL_EVENT_COMMAND_EXECUTION_STATUS, &evt_status);
+            }
+        }
+    }
+    catch (cl::Error err)
+    {
+        log_cl_error(err);
+    }
+
+    // TODO build a result
     return trrojan::result();
 }
 
@@ -290,14 +345,11 @@ void trrojan::opencl::volume_raycast_benchmark::setup_volume_data(
         const trrojan::configuration &cfg,
         const std::unordered_set<std::string> changed)
 {
-    // contains the static factors that are defined through the volume data set ".dat" file
-    trrojan::configuration static_cfg;
     std::vector<char> raw_data;
-
     // load volume data from dat-raw-file
     if (changed.count(factor_volume_file_name))
     {
-        raw_data = load_volume_data(cfg.find(factor_volume_file_name)->value(), static_cfg);
+        raw_data = load_volume_data(cfg.find(factor_volume_file_name)->value());
     }
 
     auto env = cfg.find(factor_environment)->value().as<trrojan::environment>();
@@ -305,7 +357,7 @@ void trrojan::opencl::volume_raycast_benchmark::setup_volume_data(
     // create OpenCL volume data memory object (either texture or linear buffer)
     if (changed.count(factor_sample_precision) || !raw_data.empty())
     {
-        auto data_precision = parse_scalar_type(*static_cfg.find(factor_data_precision));
+        auto data_precision = parse_scalar_type(*_passive_cfg.find(factor_data_precision));
         auto sample_precision = parse_scalar_type(*cfg.find(factor_sample_precision));
 
         create_vol_mem(data_precision,
@@ -327,8 +379,7 @@ void trrojan::opencl::volume_raycast_benchmark::setup_volume_data(
  * trrojan::opencl::volume_raycast_benchmark::load_volume_data
  */
 const std::vector<char> & trrojan::opencl::volume_raycast_benchmark::load_volume_data(
-        const std::string dat_file,
-        trrojan::configuration &static_cfg)
+        const std::string dat_file)
 {
     std::cout << "Loading volume data defined in " << dat_file << std::endl;
 
@@ -344,15 +395,16 @@ const std::vector<char> & trrojan::opencl::volume_raycast_benchmark::load_volume
 
     std::cout << _dr.data().size() << " bytes have been read." << std::endl;
     std::cout << _dr.properties().to_string() << std::endl;
-
+    // update static config
+    _passive_cfg.clear();
     if (_dr.properties().format == "UCHAR")
     {
-        static_cfg.add(named_variant(factor_data_precision,
+        _passive_cfg.add(named_variant(factor_data_precision,
                                      scalar_type_traits<scalar_type::uchar>::name()));
     }
     else if (_dr.properties().format == "USHORT")
     {
-        static_cfg.add(named_variant(factor_data_precision,
+        _passive_cfg.add(named_variant(factor_data_precision,
                                      scalar_type_traits<scalar_type::ushort>::name()));
     }
     else
@@ -360,9 +412,9 @@ const std::vector<char> & trrojan::opencl::volume_raycast_benchmark::load_volume
         throw std::invalid_argument("Unsupported volume data format defined in dat file.");
     }
 
-    static_cfg.add(named_variant(factor_volume_res_x, _dr.properties().volume_res[0]));
-    static_cfg.add(named_variant(factor_volume_res_y, _dr.properties().volume_res[1]));
-    static_cfg.add(named_variant(factor_volume_res_z, _dr.properties().volume_res[2]));
+    _passive_cfg.add(named_variant(factor_volume_res_x, _dr.properties().volume_res[0]));
+    _passive_cfg.add(named_variant(factor_volume_res_y, _dr.properties().volume_res[1]));
+    _passive_cfg.add(named_variant(factor_volume_res_z, _dr.properties().volume_res[2]));
 
     return _dr.data();
 }
@@ -582,6 +634,7 @@ void trrojan::opencl::volume_raycast_benchmark::build_kernel(environment::pointe
                                                              device::pointer dev,
                                                              const std::string build_flags)
 {
+//    std::cout << _kernel_source << std::endl;
     cl::Program::Sources source(1, std::make_pair(_kernel_source.data(), _kernel_source.size()));
     try
     {
@@ -703,14 +756,18 @@ void trrojan::opencl::volume_raycast_benchmark::update_kernel_args(
         format.image_channel_data_type = CL_FLOAT;
         try
         {
-            _output = cl::Image2D(env_ptr->get_properties().context,
+            _output_mem = cl::Image2D(env_ptr->get_properties().context,
                                   CL_MEM_WRITE_ONLY,
                                   format,
                                   cfg.find(factor_viewport_height)->value(),
                                   cfg.find(factor_viewport_width)->value(),
                                   0);
-            env_ptr->get_garbage_collector().add_mem_object((cl::Memory *)&_output);
-            _kernel.setArg(OUTPUT, _output);
+            env_ptr->get_garbage_collector().add_mem_object((cl::Memory *)&_output_mem);
+            _kernel.setArg(OUTPUT, _output_mem);
+
+            _output_data.resize(cfg.find(factor_viewport_height)->value().as<int>()
+                                * cfg.find(factor_viewport_width)->value().as<int>(),
+                                cl_float4());
         }
         catch (cl::Error err)
         {
@@ -726,12 +783,12 @@ void trrojan::opencl::volume_raycast_benchmark::update_kernel_args(
             log_cl_error(err);
         }
     }
-    if (changed.count(factor_volume_res_x) || changed.count(factor_volume_res_y) ||
-            changed.count(factor_volume_res_z))
+    if (changed.count(factor_volume_file_name))
     {
-        cl_int3 resolution = {{cfg.find(factor_volume_res_x)->value(),
-                               cfg.find(factor_volume_res_x)->value(),
-                               cfg.find(factor_volume_res_x)->value()}};
+        // TODO from static config -> merge
+        cl_int3 resolution = {{_passive_cfg.find(factor_volume_res_x)->value(),
+                               _passive_cfg.find(factor_volume_res_y)->value(),
+                               _passive_cfg.find(factor_volume_res_z)->value()}};
 
         try{
             _kernel.setArg(RESOLUTION, resolution);
