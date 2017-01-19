@@ -34,9 +34,7 @@ namespace opencl
     /// </remarks>
     class TRROJANCL_API volume_raycast_benchmark : public trrojan::benchmark_base
     {
-
     public:
-
         typedef benchmark_base::on_result_callback on_result_callback;
 
         static const std::string factor_environment;
@@ -70,6 +68,19 @@ namespace opencl
         static const std::string factor_volume_res_x;
         static const std::string factor_volume_res_y;
         static const std::string factor_volume_res_z;
+
+        enum kernel_arg
+        {
+            VOLUME = 0,     // volume data set      memory object
+            OUTPUT,         // output image         memory object
+            TFF,            // transfer function    memory object
+            VIEW,           // view matrix          memory object
+            ID,             // shuffled ray IDs     memory object
+            STEP_SIZE,      // step size factor     cl_float
+            RESOLUTION,     // volume resolution    cl_int3
+            SAMPLER         // image data sampler   cl::Sampler
+            // OFFSET       // TODO: ID offset      cl_int2
+        };
 
         /// <summary>
         /// Constructor. Default config is defined here.
@@ -300,7 +311,11 @@ namespace opencl
             cl_env->get_garbage_collector().add_mem_object(&_volume_mem);
         }
 
-
+        /// <summary>
+        /// Parse a named variant for a scalar type.
+        /// </summary>
+        /// <param name="s">Refenrence to the named variant that is to be parsed.</param>
+        /// <returns>The scalar type</returns>
         static inline scalar_type parse_scalar_type(const trrojan::named_variant& s)
         {
             typedef enum_parse_helper<scalar_type, scalar_type_traits, scalar_type_list_t> parser;
@@ -338,10 +353,16 @@ namespace opencl
                           const std::string build_flags = "");
 
         /// <summary>
-        /// Update runtime kernel arguments.
+        /// Set all constant kernel arguments such as the memory objects.
         /// </summary>
-        /// \param cfg
-        /// \param changed
+        void set_kernel_args();
+
+        /// <summary>
+        /// Update arguments that are relavant for kernel execution during runtime.
+        /// </summary>
+        /// <param name="cfg">The current configuration.</param>
+        /// <param name="changed">List of all configuration parameter names that have changed
+        /// since the last run.</param>
         void update_kernel_args(const configuration &cfg,
                                 const std::unordered_set<std::string> changed);
 
@@ -377,17 +398,25 @@ namespace opencl
         /// manipulated.</param>
         void replace_kernel_snippet(const std::string keyword, std::string &kernel_source);
 
-        ///
-        /// \brief update_view_mat
-        /// \param roll
-        /// \param pitch
-        /// \param yaw
-        /// \param zoom
+        /// <summary>
+        /// Create a right handed view matrix from roll, pitch, yaw and camera distance.
+        /// <param name="yaw">Rotation around the y-axis in radians.</param>
+        /// <param name="pitch">Rotation around the x-axis in radians.</param>
+        /// <param name="roll">Rotation around the z-axis in radians.</param>
+        /// <param name="zoom">Distance of the camera from the origin
+        /// (where the volume is centered)</param>
         /// <remarks>Right handed coordinate system.</remarks>
-        /// <remarks>Assuming radians as input angles!</remarks>
-        /// \return
-        ///
-        std::array<float, 16> update_view_mat(double roll, double pitch, double yaw, double zoom);
+        /// <remarks>Assuming radians as input angles.</remarks>
+        /// <returns>The updated RH view matrix.</returns>
+        std::array<float, 16> create_view_mat(double roll, double pitch, double yaw, double zoom);
+
+        /// <summary>
+        /// Interpret an OpenCL error <paramref name="error" /> and throw.
+        /// TODO: log to file.
+        /// </summary>
+        /// <param name="error">The OpenCL error objects.</param>
+        /// <throws>Runtime error.</throws>
+        void log_cl_error(cl::Error error);
 
         /// <summary>
         /// Vector containing the names of all factors that are relevent at build time
@@ -441,6 +470,11 @@ namespace opencl
         /// The current OpenCL kernel for volume raycasting.
         /// </summary>
         cl::Kernel _kernel;
+
+        /// <summary>
+        /// The rendering output image.
+        /// </summary>
+        cl::Image2D _output;
     };
 
 }

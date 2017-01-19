@@ -278,8 +278,7 @@ void trrojan::opencl::volume_raycast_benchmark::setup_raycaster(const configurat
     }
     catch (cl::Error err)
     {
-        throw std::runtime_error( "ERROR: " + std::string(err.what()) + "("
-                                  + util::get_cl_error_str(err.err()) + ")");
+        log_cl_error(err);
     }
 
 }
@@ -433,8 +432,7 @@ void trrojan::opencl::volume_raycast_benchmark::load_transfer_function(
     }
     catch (cl::Error err)
     {
-        throw std::runtime_error( "ERROR: " + std::string(err.what()) + "("
-                                  + util::get_cl_error_str(err.err()) + ")");
+        log_cl_error(err);
     }
 
     env->get_garbage_collector().add_mem_object(&_tff_mem);
@@ -607,11 +605,31 @@ void trrojan::opencl::volume_raycast_benchmark::build_kernel(environment::pointe
         }
 
         _kernel = cl::Kernel(env->get_properties().program, "volumeRender", NULL);
+        // set default kernel arguments and buffer
+        set_kernel_args();
     }
     catch (cl::Error err)
     {
-        throw std::runtime_error( "ERROR: " + std::string(err.what()) + "("
-                                  + util::get_cl_error_str(err.err()) + ")");
+        log_cl_error(err);
+    }
+}
+
+
+/**
+ * trrojan::opencl::volume_raycast_benchmark::set_kernel_args
+ */
+void trrojan::opencl::volume_raycast_benchmark::set_kernel_args()
+{
+    try
+    {
+        _kernel.setArg(VOLUME, _volume_mem);
+        _kernel.setArg(TFF, _tff_mem);
+        _kernel.setArg(VIEW, _view_mat);
+        _kernel.setArg(ID, _ray_ids);
+    }
+    catch (cl::Error err)
+    {
+        log_cl_error(err);
     }
 }
 
@@ -631,11 +649,10 @@ void trrojan::opencl::volume_raycast_benchmark::update_kernel_args(
             + changed.count(factor_zoom))
     {
         std::array<float, 16> view_mat;
-        view_mat = update_view_mat(cfg.find(factor_roll)->value(),
+        view_mat = create_view_mat(cfg.find(factor_roll)->value(),
                                    cfg.find(factor_pitch)->value(),
                                    cfg.find(factor_yaw)->value(),
                                    cfg.find(factor_zoom)->value());
-
         try
         {
             cl::Event write_evt;
@@ -656,16 +673,100 @@ void trrojan::opencl::volume_raycast_benchmark::update_kernel_args(
         }
         catch (cl::Error err)
         {
-            throw std::runtime_error( "ERROR: " + std::string(err.what()) + "("
-                                      + util::get_cl_error_str(err.err()) + ")");
+            log_cl_error(err);
         }
     }
+    // interpolation
+    if (changed.count(factor_use_lerp))
+    {
+        cl::Sampler sampler;
+        if (cfg.find(factor_use_lerp)->value().as<bool>()) // linear
+        {
+            sampler = cl::Sampler(env_ptr->get_properties().context,
+                                  CL_TRUE, CL_ADDRESS_CLAMP, CL_FILTER_LINEAR);
+        }
+        else // nearest
+        {
+            sampler = cl::Sampler(env_ptr->get_properties().context,
+                                  CL_TRUE, CL_ADDRESS_CLAMP, CL_FILTER_NEAREST);
+        }
+        try{
+            _kernel.setArg(SAMPLER, sampler);
+        } catch (cl::Error err) {
+            log_cl_error(err);
+        }
+    }
+    if (changed.count(factor_viewport_height) || changed.count(factor_viewport_width))
+    {
+        cl::ImageFormat format;
+        format.image_channel_order = CL_RGBA;
+        format.image_channel_data_type = CL_FLOAT;
+        try
+        {
+            _output = cl::Image2D(env_ptr->get_properties().context,
+                                  CL_MEM_WRITE_ONLY,
+                                  format,
+                                  cfg.find(factor_viewport_height)->value(),
+                                  cfg.find(factor_viewport_width)->value(),
+                                  0);
+            env_ptr->get_garbage_collector().add_mem_object((cl::Memory *)&_output);
+            _kernel.setArg(OUTPUT, _output);
+        }
+        catch (cl::Error err)
+        {
+            log_cl_error(err);
+        }
+    }
+    if (changed.count(factor_step_size_factor))
+    {
+        try{
+            _kernel.setArg(STEP_SIZE,
+                           static_cast<cl_float>(cfg.find(factor_step_size_factor)->value()));
+        } catch (cl::Error err) {
+            log_cl_error(err);
+        }
+    }
+    if (changed.count(factor_volume_res_x) || changed.count(factor_volume_res_y) ||
+            changed.count(factor_volume_res_z))
+    {
+        cl_int3 resolution = {{cfg.find(factor_volume_res_x)->value(),
+                               cfg.find(factor_volume_res_x)->value(),
+                               cfg.find(factor_volume_res_x)->value()}};
 
+        try{
+            _kernel.setArg(RESOLUTION, resolution);
+        } catch (cl::Error err) {
+            log_cl_error(err);
+        }
+    }
     // TODO
+//    if (changed.count(factor_offset_x) || changed.count(factor_offset_y))
+//    {
+//        cl_int2 offset = {{cfg.find(factor_offset_x)->value(), cfg.find(factor_offset_y)->value()}};
+//        try{
+//            _kernel.setArg(OFFSET, offset);
+//        } catch (cl::Error err) {
+//            log_cl_error(err);
+//        }
+//    }
 }
 
 
-std::array<float, 16> trrojan::opencl::volume_raycast_benchmark::update_view_mat(double roll,
+/**
+ * trrojan::opencl::volume_raycast_benchmark::log_cl_error
+ */
+void trrojan::opencl::volume_raycast_benchmark::log_cl_error(cl::Error error)
+{
+    // TODO: logging
+    throw std::runtime_error( "ERROR: " + std::string(error.what()) + "("
+                              + util::get_cl_error_str(error.err()) + ")");
+}
+
+
+/*
+ * trrojan::opencl::volume_raycast_benchmark::create_view_mat
+ */
+std::array<float, 16> trrojan::opencl::volume_raycast_benchmark::create_view_mat(double roll,
                                                                                  double pitch,
                                                                                  double yaw,
                                                                                  double zoom)
@@ -679,8 +780,8 @@ std::array<float, 16> trrojan::opencl::volume_raycast_benchmark::update_view_mat
     }
 
     float zoom_f = static_cast<float>(zoom);
-    // We first rotate yaw degrees around the y-axis and then pitch degrees around the x-axis.
-    // TODO Lastly, we rotate roll degrees around the z-axis.
+    // We first rotate yaw radians around the y-axis and then pitch radians around the x-axis.
+    // TODO Lastly, we rotate roll radians around the z-axis.
     float cos_pitch = static_cast<float>(cos(pitch));
     float sin_pitch = static_cast<float>(sin(pitch));
     float cos_yaw = static_cast<float>(cos(yaw));
