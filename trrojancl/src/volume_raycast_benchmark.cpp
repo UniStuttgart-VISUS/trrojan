@@ -288,8 +288,20 @@ trrojan::result trrojan::opencl::volume_raycast_benchmark::run(const configurati
         log_cl_error(err);
     }
 
-    // TODO build a result
-    return trrojan::result();
+    // TODO: move to own method
+    // generate result
+    trrojan::configuration result_cfg = cfg;
+    for (auto& a : _passive_cfg)
+    {
+        result_cfg.add(a);
+    }
+    result_cfg.add_system_factors();
+    std::vector<std::string> result_names;
+    result_names.push_back("execution_time");
+    auto retval = std::make_shared<basic_result>(result_cfg, std::move(result_names));
+    retval->add({ time });
+
+    return retval;
 }
 
 

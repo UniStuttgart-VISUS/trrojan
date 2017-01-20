@@ -349,6 +349,17 @@ namespace detail {
 
     /// <summary>
     /// Specialisation of the <see cref="variant::print" /> functor for
+    /// <see cref="trrojan::device" />, which prints the environemnt name.
+    /// </summary>
+    template<> struct print<variant_type::device> {
+        static inline void invoke(trrojan::device& v,
+                std::ostream& stream) {
+            stream << ((v != nullptr) ? v->name() : "null");
+        }
+    };
+
+    /// <summary>
+    /// Specialisation of the <see cref="variant::print" /> functor for
     /// <see cref="trrojan::environment" />, which prints the environemnt name.
     /// </summary>
     template<> struct print<variant_type::environment> {
