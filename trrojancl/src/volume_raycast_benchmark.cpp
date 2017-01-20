@@ -113,7 +113,7 @@ trrojan::opencl::volume_raycast_benchmark::volume_raycast_benchmark(void)
     // debug and misc testing configurations
     //
     // output a rendered image to file (PNG) -> basic config
-    this->_default_configs.add_factor(factor::from_manifestations(factor_img_output, false));
+    this->_default_configs.add_factor(factor::from_manifestations(factor_img_output, true));
     // count all samples taken along rays -> kernel build factor
     add_kernel_build_factor(factor_count_samples, false);
 
@@ -123,6 +123,10 @@ trrojan::opencl::volume_raycast_benchmark::volume_raycast_benchmark(void)
     // pixel offset
     // add_kernel_run_factor(factor_offset_x, 0);
     // add_kernel_run_factor(factor_offset_y, 0);
+
+    // new environment (OpenCL platform) requires new kernel build
+    _kernel_build_factors.push_back(factor_environment);
+    _kernel_run_factors.push_back(factor_environment);
 }
 
 
@@ -182,9 +186,12 @@ size_t trrojan::opencl::volume_raycast_benchmark::run(
         }
         std::cout << std::endl;
 
-        if (cs.size() == changed.size())
+        // setup raycast if OpenCL platform (aka environment) changed
+        if (changed.count(factor_environment))
         {
-            std::cout << "__FIRST RUN__" << std::endl;
+            std::cout << "___First run on " <<
+                         cs.find(factor_environment)->value()
+                      << "___" << std::endl << std::endl;
             setup_raycaster(cs);
         }
 
@@ -256,7 +263,7 @@ trrojan::result trrojan::opencl::volume_raycast_benchmark::run(const configurati
         ndr_evt.getProfilingInfo(CL_PROFILING_COMMAND_START, &start);
         ndr_evt.getProfilingInfo(CL_PROFILING_COMMAND_END, &end);
         time = static_cast<double>(end - start)*1e-9;
-        std::cout << "Kernel time: " << time << std::endl;
+        std::cout << "Kernel time: " << time << std::endl << std::endl;
 
         if (cfg.find(factor_img_output)->value().as<bool>())    // output resulting image
         {
@@ -281,6 +288,9 @@ trrojan::result trrojan::opencl::volume_raycast_benchmark::run(const configurati
             {
                 read_evt.getInfo<cl_int>(CL_EVENT_COMMAND_EXECUTION_STATUS, &evt_status);
             }
+
+            // TODO write output image to file
+
         }
     }
     catch (cl::Error err)
@@ -360,7 +370,7 @@ void trrojan::opencl::volume_raycast_benchmark::setup_volume_data(
 {
     std::vector<char> raw_data;
     // load volume data from dat-raw-file
-    if (changed.count(factor_volume_file_name))
+    if (changed.count(factor_volume_file_name) || changed.count(factor_environment))
     {
         raw_data = load_volume_data(cfg.find(factor_volume_file_name)->value());
     }
@@ -368,7 +378,8 @@ void trrojan::opencl::volume_raycast_benchmark::setup_volume_data(
     auto env = cfg.find(factor_environment)->value().as<trrojan::environment>();
 
     // create OpenCL volume data memory object (either texture or linear buffer)
-    if (changed.count(factor_sample_precision) || !raw_data.empty())
+    if (changed.count(factor_sample_precision) || !raw_data.empty() ||
+            changed.count(factor_environment))
     {
         auto data_precision = parse_scalar_type(*_passive_cfg.find(factor_data_precision));
         auto sample_precision = parse_scalar_type(*cfg.find(factor_sample_precision));
@@ -380,7 +391,7 @@ void trrojan::opencl::volume_raycast_benchmark::setup_volume_data(
                       std::dynamic_pointer_cast<environment>(env));
     }
 
-    if (changed.count(factor_tff_file_name))
+    if (changed.count(factor_tff_file_name) || changed.count(factor_environment))
     {
         load_transfer_function(cfg.find(factor_tff_file_name)->value(),
                                std::dynamic_pointer_cast<environment>(env));
@@ -433,19 +444,19 @@ const std::vector<char> & trrojan::opencl::volume_raycast_benchmark::load_volume
 }
 
 /**
- * @brief trrojan::opencl::volume_raycast_benchmark::load_transfer_function
+ * trrojan::opencl::volume_raycast_benchmark::load_transfer_function
  */
 void trrojan::opencl::volume_raycast_benchmark::load_transfer_function(
         const std::string file_name,
         environment::pointer env)
 {
-    // The size of the transfer function vector (256 * RGBA values).
-    size_t num_values = 256;
+    // The size of the transfer function vector (64 * RGBA values).
+    size_t num_values = 64;
     std::vector<float> values;
 
     if (file_name == "fallback")
     {
-        std::cerr << "WARNING: No transfer function defined, falling back to default: "
+        std::cerr << "WARNING: No transfer function file defined, falling back to default: "
                      "linear function in range [0;1]." << std::endl;
 
         for (size_t i = 0; i < num_values; ++i)
@@ -485,7 +496,7 @@ void trrojan::opencl::volume_raycast_benchmark::load_transfer_function(
     // create OpenCL 2d image representation
     cl::ImageFormat format;
     format.image_channel_order = CL_RGBA;
-    format.image_channel_data_type = CL_FLOAT;
+    format.image_channel_data_type = CL_FLOAT; // seems like intel IGP cannot do float textures
     try
     {
         _tff_mem = cl::Image1D(env->get_properties().context,

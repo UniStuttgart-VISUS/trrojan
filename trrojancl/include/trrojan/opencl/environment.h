@@ -115,12 +115,12 @@ namespace opencl
         /// <summary>
         /// Returns the number of available OpenCL platforms.
         /// </summary>
-        static size_t get_platform_cnt();
+        static size_t get_platform_names(std::vector<std::string> &names);
 
         /// <summary>
         /// Initialises a new instance.
         /// </summary>
-        inline environment(void) : environment_base("opencl") { }
+        inline environment(std::string name) : environment_base(name) { }
 
         /// <summary>
         /// Finalises the instance.

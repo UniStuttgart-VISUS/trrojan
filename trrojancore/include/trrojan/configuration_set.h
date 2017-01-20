@@ -42,6 +42,11 @@ namespace trrojan {
         void add_factor(const factor& factor);
 
         /// <summary>
+        /// Add an additional factor. If the facor already exsits, replace the existing one.
+        /// </summary>
+        void replace_factor(const factor& factor);
+
+        /// <summary>
         /// Answer whether the configuration set contains a factor with the
         /// specified name.
         /// </summary>

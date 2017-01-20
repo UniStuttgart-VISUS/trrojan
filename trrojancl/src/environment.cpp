@@ -68,16 +68,18 @@ void trrojan::opencl::environment::create_queue(const cl::Device &dev,
 /*
  *
  */
-size_t trrojan::opencl::environment::get_platform_cnt()
+size_t trrojan::opencl::environment::get_platform_names(std::vector<std::string> &names)
 {
     std::vector<cl::Platform> platforms;
     cl::Platform::get(&platforms);
-
     if (platforms.size() == 0)
     {
         throw cl::Error(1, "No OpenCL platforms were found.");
     }
-
+    for (auto& p : platforms)
+    {
+        names.push_back(p.getInfo<CL_PLATFORM_NAME>());
+    }
     return platforms.size();
 }
 

@@ -70,47 +70,63 @@ namespace trrojan {
             // iterate environments
             for (auto e : es)
             {
+                ec.replace_factor(factor::from_manifestations<environment>("environment", e));
                 std::vector<device> dst;
                 e->get_devices(dst);
-                for (auto d : dst)
+                // skip intel IGP for now (apparently problmes with float prcision textures)
+                // TODO: adaption based on device capabilities
+                if (e->name().find("Intel") == std::string::npos)
                 {
-                    std::cout << d->name() << "  " << d->unique_id() << std::endl;
-                }
+                    for (auto d : dst)
+                    {
+                        ec.replace_factor(factor::from_manifestations<device>("device", d));
+                        std::cout << std::endl << "=== " << d->name() << " ===" << std::endl;
 
-                 std::cout << e->name() << std::endl;
-                // TODO: iterate devices    (scripting interaface)
-                // TODO: iterate benchamrks (scripting interaface)
-            }
-
-            ec.add_factor(factor::from_manifestations<environment>("environment", es.front()));
-            environment_base::device_list dst;
-            es.front()->get_devices(dst);
-            ec.add_factor(factor::from_manifestations<device>("device", dst.front()));
-
-            for (auto b : bs) {
-                std::cout << "=== " << b->name() << " ===" << std::endl;
-                // skip stream for testing
-                if (b->name() != "stream")
-                {
-
-                    auto fn = b->name();
+                        for (auto b : bs)
+                        {
+                            // skip stream bech for testing volume raycast bench
+                            if (b->name() != "stream")
+                            {
+                                auto fn = b->name();
 #ifdef _WIN32
-                    fn += std::string(".xslx");
-                    excel_output writer;
-                    writer.open(excel_output_params::create(fn, true));
+                                fn += std::string(".xslx");
+                                excel_output writer;
+                                writer.open(excel_output_params::create(fn, true));
 #else
-                    fn += std::string(".csv");
-                    csv_output writer;
-                    writer.open(csv_output_params::create(fn));
+                                fn += std::string(".csv");
+                                csv_output writer;
+                                writer.open(csv_output_params::create(fn));
 #endif
-                    b->run(ec, [&writer](result&& r) {
-                        static_cast<output_base&>(writer) << r;
-                        return true;
-                    });
-
-                    writer.close();
+                                b->run(ec, [&writer](result&& r) {
+                                    static_cast<output_base&>(writer) << r;
+                                    return true;
+                                });
+                            }
+                        }
+                    }
                 }
             }
+
+
+//            for (auto b : bs) {
+//                std::cout << "=== " << b->name() << " ===" << std::endl;
+//                auto fn = b->name();
+//#ifdef _WIN32
+//                fn += std::string(".xslx");
+//                excel_output writer;
+//                writer.open(excel_output_params::create(fn, true));
+//#else
+//                fn += std::string(".csv");
+//                csv_output writer;
+//                writer.open(csv_output_params::create(fn));
+//#endif
+//                b->run(ec, [&writer](result&& r) {
+//                    static_cast<output_base&>(writer) << r;
+//                    return true;
+//                });
+
+//                writer.close();
+//            }
         }
 
     private:

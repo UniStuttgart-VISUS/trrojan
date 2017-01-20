@@ -42,11 +42,13 @@ size_t trrojan::opencl::plugin::create_environments(environment_list& dst) const
 {
     // create one environment per OpenCL platform that is found
     cmd_line l;
-    for (size_t i = 0; i < environment::get_platform_cnt(); ++i)
+    std::vector<std::string> names;
+    size_t platform_cnt = environment::get_platform_names(names);
+    for (size_t i = 0; i < platform_cnt; ++i)
     {
-        environment e;
+        environment e(names.at(i));
         e.on_initialize(l, i);
         dst.push_back(std::make_shared<environment>(e));
     }
-    return environment::get_platform_cnt();
+    return platform_cnt;
 }

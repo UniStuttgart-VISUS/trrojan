@@ -2,6 +2,7 @@
 /// Copyright © 2016 SFB-TRR 161. Alle Rechte vorbehalten.
 /// </copyright>
 /// <author>Christoph Müller</author>
+/// <author>Valentin Bruder</author>
 
 #include "trrojan/configuration_set.h"
 
@@ -26,6 +27,21 @@ void trrojan::configuration_set::add_factor(const factor& factor) {
     }
 
     this->_factors.push_back(factor);
+}
+
+
+/*
+ * trrojan::configuration_set::replace_factor
+ */
+void trrojan::configuration_set::replace_factor(const factor& factor) {
+    if (this->contains_factor(factor.name())) {
+        auto it = this->find_factor(factor.name());
+        std::replace(this->_factors.begin(), this->_factors.end(), *it, factor);
+    }
+    else
+    {
+        add_factor(factor);
+    }
 }
 
 

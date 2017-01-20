@@ -349,7 +349,7 @@ namespace opencl
                           const std::string build_flags = "");
 
         /// <summary>
-        /// Set all constant kernel arguments such as the memory objects.
+        /// Set all constant kernel arguments such as the OpenCL memory objects.
         /// </summary>
         void set_kernel_args();
 
