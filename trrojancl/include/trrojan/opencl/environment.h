@@ -80,6 +80,7 @@ namespace opencl
 
         virtual ~garbage_collector()
         {
+            del_all();
         }
 
     private:

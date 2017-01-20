@@ -256,6 +256,7 @@ trrojan::result trrojan::opencl::volume_raycast_benchmark::run(const configurati
         ndr_evt.getProfilingInfo(CL_PROFILING_COMMAND_START, &start);
         ndr_evt.getProfilingInfo(CL_PROFILING_COMMAND_END, &end);
         time = static_cast<double>(end - start)*1e-9;
+        std::cout << "Kernel time: " << time << std::endl;
 
         if (cfg.find(factor_img_output)->value().as<bool>())    // output resulting image
         {
@@ -309,7 +310,7 @@ void trrojan::opencl::volume_raycast_benchmark::setup_raycaster(const configurat
         zero_mat.fill(0);
         _view_mat = cl::Buffer(env->get_properties().context,
                                CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-                               16 * sizeof(cl_float),
+                               zero_mat.size() * sizeof(cl_float),
                                zero_mat.data());
 
         int pixel_cnt = cfg.find(factor_viewport_width)->value().as<int>() *
@@ -323,7 +324,7 @@ void trrojan::opencl::volume_raycast_benchmark::setup_raycaster(const configurat
                      std::default_random_engine(seed));
         _ray_ids = cl::Buffer(env->get_properties().context,
                               CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-                              pixel_cnt * sizeof(cl_int),
+                              shuffled_ids.size() * sizeof(cl_int),
                               shuffled_ids.data());
 
         // create OpenCL command queue
@@ -479,15 +480,14 @@ void trrojan::opencl::volume_raycast_benchmark::load_transfer_function(
                                CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
                                format,
                                num_values,
-                               values.data(),
-                               NULL);
+                               values.data());
     }
     catch (cl::Error err)
     {
         log_cl_error(err);
     }
 
-    env->get_garbage_collector().add_mem_object(&_tff_mem);
+    //env->get_garbage_collector().add_mem_object(&_tff_mem);
 }
 
 
@@ -548,7 +548,7 @@ void trrojan::opencl::volume_raycast_benchmark::compose_kernel(
     }
     else
     {
-        replace_keyword("PRECISION", "__read_only image3d_t ", _kernel_source);
+        replace_keyword("PRECISION", "__read_only image3d_t", _kernel_source);
     }
 
     // TODO offset for memory pattern test
@@ -634,7 +634,7 @@ void trrojan::opencl::volume_raycast_benchmark::build_kernel(environment::pointe
                                                              device::pointer dev,
                                                              const std::string build_flags)
 {
-//    std::cout << _kernel_source << std::endl;
+//    std::cout << _kernel_source << std::endl; // DEBUG: print out composed kernel source
     cl::Program::Sources source(1, std::make_pair(_kernel_source.data(), _kernel_source.size()));
     try
     {
@@ -732,20 +732,22 @@ void trrojan::opencl::volume_raycast_benchmark::update_kernel_args(
     // interpolation
     if (changed.count(factor_use_lerp))
     {
-        cl::Sampler sampler;
-        if (cfg.find(factor_use_lerp)->value().as<bool>()) // linear
+        try
         {
-            sampler = cl::Sampler(env_ptr->get_properties().context,
-                                  CL_TRUE, CL_ADDRESS_CLAMP, CL_FILTER_LINEAR);
+            if (cfg.find(factor_use_lerp)->value().as<bool>()) // linear
+            {
+                _sampler = cl::Sampler(env_ptr->get_properties().context,
+                                      CL_TRUE, CL_ADDRESS_CLAMP, CL_FILTER_LINEAR);
+            }
+            else // nearest
+            {
+                _sampler = cl::Sampler(env_ptr->get_properties().context,
+                                      CL_TRUE, CL_ADDRESS_CLAMP, CL_FILTER_NEAREST);
+            }
+            _kernel.setArg(SAMPLER, _sampler);
         }
-        else // nearest
+        catch (cl::Error err)
         {
-            sampler = cl::Sampler(env_ptr->get_properties().context,
-                                  CL_TRUE, CL_ADDRESS_CLAMP, CL_FILTER_NEAREST);
-        }
-        try{
-            _kernel.setArg(SAMPLER, sampler);
-        } catch (cl::Error err) {
             log_cl_error(err);
         }
     }
@@ -757,12 +759,11 @@ void trrojan::opencl::volume_raycast_benchmark::update_kernel_args(
         try
         {
             _output_mem = cl::Image2D(env_ptr->get_properties().context,
-                                  CL_MEM_WRITE_ONLY,
-                                  format,
-                                  cfg.find(factor_viewport_height)->value(),
-                                  cfg.find(factor_viewport_width)->value(),
-                                  0);
-            env_ptr->get_garbage_collector().add_mem_object((cl::Memory *)&_output_mem);
+                                      CL_MEM_WRITE_ONLY,
+                                      format,
+                                      cfg.find(factor_viewport_height)->value(),
+                                      cfg.find(factor_viewport_width)->value());
+//            env_ptr->get_garbage_collector().add_mem_object((cl::Memory *)&_output_mem);
             _kernel.setArg(OUTPUT, _output_mem);
 
             _output_data.resize(cfg.find(factor_viewport_height)->value().as<int>()
@@ -786,9 +787,10 @@ void trrojan::opencl::volume_raycast_benchmark::update_kernel_args(
     if (changed.count(factor_volume_file_name))
     {
         // TODO from static config -> merge
-        cl_int3 resolution = {{_passive_cfg.find(factor_volume_res_x)->value(),
+        cl_int4 resolution = {{_passive_cfg.find(factor_volume_res_x)->value(),
                                _passive_cfg.find(factor_volume_res_y)->value(),
-                               _passive_cfg.find(factor_volume_res_z)->value()}};
+                               _passive_cfg.find(factor_volume_res_z)->value(),
+                               0}};
 
         try{
             _kernel.setArg(RESOLUTION, resolution);

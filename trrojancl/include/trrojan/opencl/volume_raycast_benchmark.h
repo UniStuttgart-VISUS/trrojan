@@ -78,7 +78,7 @@ namespace opencl
             ID,             // shuffled ray IDs     memory object
             STEP_SIZE,      // step size factor     cl_float
             RESOLUTION,     // volume resolution    cl_int3
-            SAMPLER         // image data sampler   cl::Sampler
+            SAMPLER,        // image data sampler   cl::Sampler
             // OFFSET       // TODO: ID offset      cl_int2
         };
 
@@ -261,14 +261,12 @@ namespace opencl
 
             try
             {
-                cl_int err = CL_SUCCESS;
                 if (use_buffer)
                 {
                     _volume_mem = cl::Buffer(cl_env->get_properties().context,
                                                 CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
                                                 converted_data.size(),
-                                                converted_data.data(),
-                                                &err);
+                                                converted_data.data());
                 }
                 else    // texture
                 {
@@ -291,14 +289,13 @@ namespace opencl
                     }
 
                     _volume_mem = cl::Image3D(cl_env->get_properties().context,
-                                            CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-                                            format,
-                                            _dr.properties().volume_res[0],
-                                            _dr.properties().volume_res[1],
-                                            _dr.properties().volume_res[2],
-                                            0, 0,
-                                            converted_data.data(),
-                                            &err);
+                                              CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                                              format,
+                                              _dr.properties().volume_res[0],
+                                              _dr.properties().volume_res[1],
+                                              _dr.properties().volume_res[2],
+                                              0, 0,
+                                              converted_data.data());
                 }
             }
             catch (cl::Error err)
@@ -307,7 +304,7 @@ namespace opencl
                                           + util::get_cl_error_str(err.err()) + ")");
             }
             // Add memory object to manual OpenCL memory manager.
-            cl_env->get_garbage_collector().add_mem_object(&_volume_mem);
+//            cl_env->get_garbage_collector().add_mem_object(&_volume_mem);
         }
 
         /// <summary>
@@ -470,6 +467,11 @@ namespace opencl
         /// OpenCL buffer object for suffled ray IDs.
         /// </summary>
         cl::Buffer _ray_ids;
+
+        /// <summary>
+        /// Sampler for images in OpenCL kernel.
+        /// </summary>
+        cl::Sampler _sampler;
 
         /// <summary>
         /// The current OpenCL kernel for volume raycasting.
