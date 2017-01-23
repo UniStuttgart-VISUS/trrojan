@@ -264,9 +264,9 @@ namespace opencl
                 if (use_buffer)
                 {
                     _volume_mem = cl::Buffer(cl_env->get_properties().context,
-                                                CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-                                                converted_data.size(),
-                                                converted_data.data());
+                                             CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                                             converted_data.size(),
+                                             converted_data.data());
                 }
                 else    // texture
                 {
@@ -395,7 +395,9 @@ namespace opencl
         void replace_kernel_snippet(const std::string keyword, std::string &kernel_source);
 
         /// <summary>
-        /// Create a right handed view matrix from roll, pitch, yaw and camera distance.
+        /// Create a right handed, transposed view matrix from <paramref name="roll" />,
+        /// <paramref name="pitch" />, <paramref name="yaw" /> rotatians as well as the
+        /// camera distance (<paramref name="zoom />").
         /// <param name="yaw">Rotation around the y-axis in radians.</param>
         /// <param name="pitch">Rotation around the x-axis in radians.</param>
         /// <param name="roll">Rotation around the z-axis in radians.</param>
@@ -486,7 +488,7 @@ namespace opencl
         /// <summary>
         /// Vector for storing the rendered output data (2d image).
         /// </summary>
-        std::vector<cl_float4> _output_data;
+        std::vector<float> _output_data;
     };
 
 }

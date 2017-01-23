@@ -13,6 +13,7 @@
 
 #include "trrojan/io.h"
 #include "trrojan/timer.h"
+#include "trrojan/cimg_helper.h"
 
 
 #define _TRROJANSTREAM_DEFINE_FACTOR(f)                                        \
@@ -83,10 +84,10 @@ trrojan::opencl::volume_raycast_benchmark::volume_raycast_benchmark(void)
     add_kernel_run_factor(factor_viewport_width, 1024);
     add_kernel_run_factor(factor_viewport_height, 1024);
     add_kernel_run_factor(factor_step_size_factor, 0.5);
-    add_kernel_run_factor(factor_roll, 0.0);
-    add_kernel_run_factor(factor_pitch, 0.0);
-    add_kernel_run_factor(factor_yaw, 0.0);
-    add_kernel_run_factor(factor_zoom, 2.0);
+    add_kernel_run_factor(factor_roll, 0.0*CL_M_PI);
+    add_kernel_run_factor(factor_pitch, 0.0*CL_M_PI);
+    add_kernel_run_factor(factor_yaw, 0.0*CL_M_PI);
+    add_kernel_run_factor(factor_zoom, -3.0);
 
     // rendering modes -> kernel build factors
     //
@@ -240,11 +241,13 @@ trrojan::result trrojan::opencl::volume_raycast_benchmark::run(const configurati
     auto env = cfg.find(factor_environment)->value().as<trrojan::environment>();
     environment::pointer env_ptr = std::dynamic_pointer_cast<environment>(env);
     double time = 0;
+    std::array<int, 3> img_dim = { {cfg.find(factor_viewport_width)->value(),
+                                    cfg.find(factor_viewport_height)->value(),
+                                    1} };
 
     try // opencl scope
     {
-        cl::NDRange global_threads(cfg.find(factor_viewport_width)->value(),
-                                   cfg.find(factor_viewport_height)->value());
+        cl::NDRange global_threads(img_dim.at(0), img_dim.at(1));
         cl::Event ndr_evt;
         env_ptr->get_properties().queue.enqueueNDRangeKernel(_kernel,
                                                              cl::NullRange,
@@ -288,15 +291,16 @@ trrojan::result trrojan::opencl::volume_raycast_benchmark::run(const configurati
             {
                 read_evt.getInfo<cl_int>(CL_EVENT_COMMAND_EXECUTION_STATUS, &evt_status);
             }
-
-            // TODO write output image to file
-
         }
     }
     catch (cl::Error err)
     {
         log_cl_error(err);
     }
+
+    // FIXME: PNG w/ linux (+ jpg, tif...)
+    // lib import problem? - currently only nativ CImg formats (bmp...) seem to work
+    cimg_write("test.bmp", _output_data.data(), img_dim, 4);
 
     // TODO: move to own method
     // generate result
@@ -385,10 +389,10 @@ void trrojan::opencl::volume_raycast_benchmark::setup_volume_data(
         auto sample_precision = parse_scalar_type(*cfg.find(factor_sample_precision));
 
         create_vol_mem(data_precision,
-                      sample_precision,
-                      raw_data,
-                      cfg.find(factor_use_buffer)->value(),
-                      std::dynamic_pointer_cast<environment>(env));
+                       sample_precision,
+                       raw_data,
+                       cfg.find(factor_use_buffer)->value(),
+                       std::dynamic_pointer_cast<environment>(env));
     }
 
     if (changed.count(factor_tff_file_name) || changed.count(factor_environment))
@@ -663,22 +667,8 @@ void trrojan::opencl::volume_raycast_benchmark::build_kernel(environment::pointe
     {
         env->generate_program(source);
         const std::vector<cl::Device> device = {dev.get()->get()};
-
-        cl_int result = env->get_properties().program.build(device, build_flags.c_str());
-        if (result == CL_BUILD_PROGRAM_FAILURE)
-        {
-            // print out compiler output on build error
-            std::string str = env->get_properties().program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(
-                        dev.get()->get());
-            std::cout << " \n\t\t\tBUILD LOG\n";
-            std::cout << " ************************************************\n";
-            std::cout << str << std::endl;
-            std::cout << " ************************************************\n";
-        }
-        else
-        {
-            std::cout << "OpenCL kernel successfully built!" << std::endl;
-        }
+        env->get_properties().program.build(device, build_flags.c_str());
+        std::cout << "OpenCL kernel successfully built!" << std::endl;
 
         _kernel = cl::Kernel(env->get_properties().program, "volumeRender", NULL);
         // set default kernel arguments and buffer
@@ -686,7 +676,18 @@ void trrojan::opencl::volume_raycast_benchmark::build_kernel(environment::pointe
     }
     catch (cl::Error err)
     {
-        log_cl_error(err);
+        if (err.err() == CL_BUILD_PROGRAM_FAILURE)
+        {
+            std::cout << "Error building volume raycasting kernel." << std::endl;
+            // print out compiler output on build error
+            std::string str = env->get_properties().program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(
+                        dev.get()->get());
+            std::cout << " ***************** BUILD LOG *******************\n";
+            std::cout << str << std::endl;
+            std::cout << " ***********************************************\n";
+        }
+        else
+            log_cl_error(err);
     }
 }
 
@@ -736,7 +737,7 @@ void trrojan::opencl::volume_raycast_benchmark::update_kernel_args(
             env_ptr->get_properties().queue.enqueueWriteBuffer(_view_mat,
                                                                CL_FALSE,
                                                                0,
-                                                               16*sizeof(float),
+                                                               16*sizeof(cl_float),
                                                                view_mat.data(),
                                                                NULL,
                                                                &write_evt);
@@ -790,8 +791,8 @@ void trrojan::opencl::volume_raycast_benchmark::update_kernel_args(
             _kernel.setArg(OUTPUT, _output_mem);
 
             _output_data.resize(cfg.find(factor_viewport_height)->value().as<int>()
-                                * cfg.find(factor_viewport_width)->value().as<int>(),
-                                cl_float4());
+                                * cfg.find(factor_viewport_width)->value().as<int>() * 4,
+                                0.0f);
         }
         catch (cl::Error err)
         {
@@ -855,7 +856,7 @@ std::array<float, 16> trrojan::opencl::volume_raycast_benchmark::create_view_mat
 {
     // We use a right handed coordinate system here!
     // Assuming radians (not degrees)!
-    if (roll > M_PI*2.0 || pitch > M_PI*2.0 || yaw > M_PI*2.0)
+    if (roll > CL_M_PI*2.0 || pitch > CL_M_PI*2.0 || yaw > CL_M_PI*2.0)
     {
         std::cerr << "WARNING: One or more rotation parameters are greater than 2*pi. "
                      "Rotation parameters are always interpreted as radians!" << std::endl;
@@ -863,23 +864,28 @@ std::array<float, 16> trrojan::opencl::volume_raycast_benchmark::create_view_mat
 
     float zoom_f = static_cast<float>(zoom);
     // We first rotate yaw radians around the y-axis and then pitch radians around the x-axis.
-    // TODO Lastly, we rotate roll radians around the z-axis.
+    // Lastly, we rotate roll radians around the z-axis.
     float cos_pitch = static_cast<float>(cos(pitch));
     float sin_pitch = static_cast<float>(sin(pitch));
     float cos_yaw = static_cast<float>(cos(yaw));
     float sin_yaw = static_cast<float>(sin(yaw));
-//    float cos_roll = static_cast<float>(cos(roll));
-//    float sin_roll = static_cast<float>(sin(roll));
+    float cos_roll = static_cast<float>(cos(roll));
+    float sin_roll = static_cast<float>(sin(roll));
 
-    std::array<float, 3> x_axis = {cos_yaw, 0, -sin_yaw};
-    std::array<float, 3> y_axis = {sin_yaw * sin_pitch, cos_pitch, cos_yaw * sin_pitch };
-    std::array<float, 3> z_axis = {sin_yaw * cos_pitch, -sin_pitch, cos_pitch * cos_yaw };
+    // This matrix is already transposed!
+    std::array<float, 3> x_axis = {cos_yaw * cos_roll, cos_yaw * sin_roll, -sin_yaw};
+    std::array<float, 3> y_axis = {-cos_pitch*sin_roll + sin_pitch*sin_yaw*cos_roll,
+                                    cos_pitch*cos_roll + sin_pitch*sin_yaw*sin_roll,
+                                    cos_yaw*sin_pitch};
+    std::array<float, 3> z_axis = {sin_pitch*sin_yaw + cos_pitch*sin_yaw*cos_roll,
+                                   -sin_pitch*cos_roll + cos_pitch*sin_yaw*sin_roll,
+                                   cos_yaw*cos_pitch};
 
     return std::array<float, 16>{{
-                                      x_axis[0],         y_axis[0],         z_axis[0],     0,
-                                      x_axis[1],         y_axis[1],         z_axis[1],     0,
-                                      x_axis[2],         y_axis[2],         z_axis[2],     0,
-                                  -x_axis[2]*zoom_f, -y_axis[2]*zoom_f, -z_axis[2]*zoom_f, 1
+                                      x_axis[0], x_axis[1], x_axis[2], -x_axis[2]*zoom_f,
+                                      y_axis[0], y_axis[1], y_axis[2], -y_axis[2]*zoom_f,
+                                      z_axis[0], z_axis[1], z_axis[2], -z_axis[2]*zoom_f,
+                                          0,         0,         0,              1
                                 }};
 }
 
