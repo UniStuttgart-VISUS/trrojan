@@ -43,8 +43,7 @@ FIND_PACKAGE(PkgConfig)
 PKG_CHECK_MODULES(MAGICK Magick++)
 
 #Path of CImg.h file relative to this file path
-set(CIMG_H_PATH ${PROJECT_SOURCE_DIR}/lib/)
-include_directories( ${PROJECT_SOURCE_DIR} )
+set(CIMG_H_PATH ${CMAKE_SOURCE_DIR}/lib/)
 include_directories( ${CIMG_H_PATH} )
 
 if(NOT WIN32)
@@ -82,7 +81,7 @@ if (ZLIB_FOUND)
   if(PNG_FOUND)
     SET(CIMG_CFLAGS "${CIMG_CFLAGS} ${CIMG_PNG_CCFLAGS}")
     #link_directories(${PNG_LIB_DIRS})
-    include_directories(${PNG_INCLUDE_DIR} )
+    include_directories(${PNG_INCLUDE_DIR})
     target_link_libraries(trrojan LINK_PUBLIC ${PNG_LIBRARY})
     SET( SYSTEM_LIBS ${SYSTEM_LIBS} ${PNG_LIBRARIES} )
   endif()
