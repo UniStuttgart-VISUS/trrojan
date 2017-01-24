@@ -245,8 +245,8 @@ namespace opencl
         /// <param name="ue_buffer">Switch parameter to indicate whether a linear buffer
         /// or a 3d image buffer is to be created in OpenCL.</param>
         /// <tParam name="From">Data precision of the input scalar volume data.</tParam>
-        /// <tParam name="To">Data precision of the data from which the OpenCL memory objects
-        /// are to be created</tParam>
+        /// <tParam name="To">Data precision of the data from which the OpenCL memory
+        /// objects are to be created</tParam>
         template<class From, class To>
         void convert_data_precision(const std::vector<char> &volume_data,
                                     const bool use_buffer,
@@ -254,7 +254,8 @@ namespace opencl
         {
             // reinterpret raw data (char) to input format
             auto s = reinterpret_cast<const From *>(volume_data.data());
-            auto e = reinterpret_cast<const From *>(volume_data.data() + volume_data.size());
+            auto e = reinterpret_cast<const From *>(volume_data.data() +
+                                                    sizeof(From)*volume_data.size());
 
             // convert imput vector to the desired output precision
             std::vector<To> converted_data(s, e);
@@ -265,7 +266,7 @@ namespace opencl
                 {
                     _volume_mem = cl::Buffer(cl_env->get_properties().context,
                                              CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-                                             converted_data.size(),
+                                             converted_data.size()*sizeof(To),
                                              converted_data.data());
                 }
                 else    // texture
@@ -275,11 +276,11 @@ namespace opencl
                     switch (sizeof(To))
                     {
                     case 1:
-                        format.image_channel_data_type = CL_UNORM_INT8; break;
+                        format.image_channel_data_type = CL_UNSIGNED_INT8; break;
                     case 2:
-                        format.image_channel_data_type = CL_UNORM_INT16; break;
+                        format.image_channel_data_type = CL_UNSIGNED_INT16; break;
                     case 4:
-                        format.image_channel_data_type = CL_FLOAT; break;
+                        format.image_channel_data_type = CL_UNSIGNED_INT32; break;
                     case 8:
                         throw std::invalid_argument(
                                     "Double precision is not supported for OpenCL image formats.");

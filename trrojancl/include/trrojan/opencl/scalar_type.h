@@ -35,6 +35,16 @@ namespace opencl
         ushort,
 
         /// <summary>
+        /// 4-byte integer type
+        /// </summary>
+        uint32,
+
+        /// <summary>
+        /// 8-byte integer type
+        /// </summary>
+        uint64,
+
+        /// <summary>
         /// 4-byte floating point type
         /// </summary>
         float32,
@@ -76,6 +86,8 @@ namespace opencl
 
     __TRROJANCORE_DECL_SCALAR_TYPE_TRAITS(uchar, unsigned char);
     __TRROJANCORE_DECL_SCALAR_TYPE_TRAITS(ushort, unsigned short);
+    __TRROJANCORE_DECL_SCALAR_TYPE_TRAITS(uint32, unsigned int);
+    __TRROJANCORE_DECL_SCALAR_TYPE_TRAITS(uint64, uint64_t);
     __TRROJANCORE_DECL_SCALAR_TYPE_TRAITS(float32, float);
     __TRROJANCORE_DECL_SCALAR_TYPE_TRAITS(float64, double);
 
@@ -85,8 +97,8 @@ namespace opencl
     template<scalar_type... V>
     using scalar_type_list_t = enum_dispatch_list<scalar_type, V...>;
 
-    typedef scalar_type_list_t<scalar_type::uchar, scalar_type::ushort,
-        scalar_type::float32, scalar_type::float64> scalar_type_list;
+    typedef scalar_type_list_t<scalar_type::uchar, scalar_type::ushort, scalar_type::uint32,
+                scalar_type::uint64, scalar_type::float32, scalar_type::float64> scalar_type_list;
 
 } /* end namespace stream */
 } /* end namespace trrojan */

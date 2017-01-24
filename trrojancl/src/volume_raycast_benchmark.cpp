@@ -107,7 +107,7 @@ trrojan::opencl::volume_raycast_benchmark::volume_raycast_benchmark(void)
     // use a linear buffer as volume data structure (instead of a texture)
     add_kernel_build_factor(factor_use_buffer, false);
     // use a simple illumination technique
-    add_kernel_build_factor(factor_use_illumination, false);
+    add_kernel_build_factor(factor_use_illumination, true);
     // use an orthographic camera projection (instead of a perspective one)
     add_kernel_build_factor(factor_use_ortho_proj, false);
 
@@ -244,7 +244,7 @@ trrojan::result trrojan::opencl::volume_raycast_benchmark::run(const configurati
     std::array<int, 3> img_dim = { {cfg.find(factor_viewport_width)->value(),
                                     cfg.find(factor_viewport_height)->value(),
                                     1} };
-
+    cl_int evt_status = CL_QUEUED;
     try // opencl scope
     {
         cl::NDRange global_threads(img_dim.at(0), img_dim.at(1));
@@ -256,7 +256,6 @@ trrojan::result trrojan::opencl::volume_raycast_benchmark::run(const configurati
                                                              NULL,
                                                              &ndr_evt);
         env_ptr->get_properties().queue.flush();    // global sync
-        cl_int evt_status = CL_QUEUED;
         while(evt_status != CL_COMPLETE)
         {
             ndr_evt.getInfo<cl_int>(CL_EVENT_COMMAND_EXECUTION_STATUS, &evt_status);
@@ -267,8 +266,14 @@ trrojan::result trrojan::opencl::volume_raycast_benchmark::run(const configurati
         ndr_evt.getProfilingInfo(CL_PROFILING_COMMAND_END, &end);
         time = static_cast<double>(end - start)*1e-9;
         std::cout << "Kernel time: " << time << std::endl << std::endl;
-
-        if (cfg.find(factor_img_output)->value().as<bool>())    // output resulting image
+    }
+    catch (cl::Error err)
+    {
+        log_cl_error(err);
+    }
+    if (cfg.find(factor_img_output)->value().as<bool>())    // output resulting image
+    {
+        try
         {
             cl::Event read_evt;
             cl::size_t<3> origin;
@@ -292,10 +297,10 @@ trrojan::result trrojan::opencl::volume_raycast_benchmark::run(const configurati
                 read_evt.getInfo<cl_int>(CL_EVENT_COMMAND_EXECUTION_STATUS, &evt_status);
             }
         }
-    }
-    catch (cl::Error err)
-    {
-        log_cl_error(err);
+        catch (cl::Error err)
+        {
+            log_cl_error(err);
+        }
     }
 
     // FIXME: PNG w/ linux (+ jpg, tif...)
@@ -568,10 +573,10 @@ void trrojan::opencl::volume_raycast_benchmark::compose_kernel(
             replace_keyword("PRECISION", "__global const uchar*", _kernel_source);
         else if (parse_scalar_type(*cfg.find(factor_sample_precision)) == scalar_type::ushort)
             replace_keyword("PRECISION", "__global const ushort*", _kernel_source);
-        else if (parse_scalar_type(*cfg.find(factor_sample_precision)) == scalar_type::float32)
-            replace_keyword("PRECISION", "__global const float*", _kernel_source);
-        else if (parse_scalar_type(*cfg.find(factor_sample_precision)) == scalar_type::float64)
-            replace_keyword("PRECISION", "__global const double*", _kernel_source);
+        else if (parse_scalar_type(*cfg.find(factor_sample_precision)) == scalar_type::uint32)
+            replace_keyword("PRECISION", "__global const uint*", _kernel_source);
+        else if (parse_scalar_type(*cfg.find(factor_sample_precision)) == scalar_type::uint64)
+            replace_keyword("PRECISION", "__global const ulong*", _kernel_source);
     }
     else
     {
@@ -591,7 +596,6 @@ void trrojan::opencl::volume_raycast_benchmark::compose_kernel(
         replace_keyword("CAMERA", _kernel_snippets["PERSPECTIVE_CAM"], _kernel_source);
     if (cfg.find(factor_use_buffer)->value())   // use buffer
     {
-        replace_kernel_snippet("PRECISION_DIV", _kernel_source);
         replace_keyword("DATA_SOURCE", _kernel_snippets["BUFFER"], _kernel_source);
         if (cfg.find(factor_use_illumination)->value())
             replace_keyword("ILLUMINATION", _kernel_snippets["ILLUMINATION_BUF"], _kernel_source);
