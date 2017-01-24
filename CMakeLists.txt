@@ -54,6 +54,11 @@ FIND_PACKAGE(BLAS)
 FIND_PACKAGE(PkgConfig)
 PKG_CHECK_MODULES(MAGICK Magick++)
 
+#Path of CImg.h file relative to this file path
+set(CIMG_H_PATH ${PROJECT_SOURCE_DIR}/lib/)
+include_directories( ${PROJECT_SOURCE_DIR} )
+include_directories( ${CIMG_H_PATH} )
+
 if(NOT WIN32)
   FIND_PACKAGE(X11)
   FIND_PACKAGE(Threads REQUIRED)
