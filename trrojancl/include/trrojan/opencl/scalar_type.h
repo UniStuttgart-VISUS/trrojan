@@ -1,7 +1,7 @@
 /// <copyright file="scalar_type.h" company="SFB-TRR 161 Quantitative Methods for Visual Computing">
-/// Copyright © 2016 SFB-TRR 161. Alle Rechte vorbehalten.
+/// Copyright ? 2016 SFB-TRR 161. Alle Rechte vorbehalten.
 /// </copyright>
-/// <author>Christoph Müller</author>
+/// <author>Christoph M?ller</author>
 /// <author>Valentin Bruder</author>
 
 #pragma once
@@ -18,7 +18,6 @@ namespace trrojan
 {
 namespace opencl
 {
-
     /// <summary>
     /// Possible types of scalars to be used in the streaming benchmark.
     /// </summary>
@@ -85,7 +84,7 @@ namespace opencl
     }
 
     __TRROJANCORE_DECL_SCALAR_TYPE_TRAITS(uchar, unsigned char);
-    __TRROJANCORE_DECL_SCALAR_TYPE_TRAITS(ushort, unsigned short);
+    __TRROJANCORE_DECL_SCALAR_TYPE_TRAITS(ushort, unsigned short int);
     __TRROJANCORE_DECL_SCALAR_TYPE_TRAITS(uint32, unsigned int);
     __TRROJANCORE_DECL_SCALAR_TYPE_TRAITS(uint64, uint64_t);
     __TRROJANCORE_DECL_SCALAR_TYPE_TRAITS(float32, float);

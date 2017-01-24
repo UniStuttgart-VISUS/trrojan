@@ -93,7 +93,7 @@ trrojan::opencl::volume_raycast_benchmark::volume_raycast_benchmark(void)
     //
     // sample precision in bytes, if not specified, use uchar (1 byte)
     add_kernel_build_factor(factor_sample_precision,
-                            scalar_type_traits<scalar_type::uchar>::name());
+                            scalar_type_traits<scalar_type::uint32>::name());
     // use linear interpolation (not nearest neighbor interpolation)
     add_kernel_build_factor(factor_use_lerp, true);
     // use early ray termination
@@ -107,7 +107,7 @@ trrojan::opencl::volume_raycast_benchmark::volume_raycast_benchmark(void)
     // use a linear buffer as volume data structure (instead of a texture)
     add_kernel_build_factor(factor_use_buffer, false);
     // use a simple illumination technique
-    add_kernel_build_factor(factor_use_illumination, true);
+    add_kernel_build_factor(factor_use_illumination, false);
     // use an orthographic camera projection (instead of a perspective one)
     add_kernel_build_factor(factor_use_ortho_proj, false);
 
@@ -209,8 +209,16 @@ size_t trrojan::opencl::volume_raycast_benchmark::run(
             // build the kernel file for the current platform (aka environment)
             auto env = cs.find(factor_environment)->value().as<trrojan::environment>();
             auto dev = cs.find(factor_device)->value().as<trrojan::device>();
+            auto data_precision = parse_scalar_type(*_passive_cfg.find(factor_data_precision));
+            auto sample_precision = parse_scalar_type(*cs.find(factor_sample_precision));
+            float precision_div = 65535.0f; // 2**16 - 1
+            if (sample_precision == scalar_type::uchar || data_precision == scalar_type::uchar)
+            {
+                precision_div = 255.0f; // 2**8 - 1
+            }
             build_kernel(std::dynamic_pointer_cast<environment>(env),
                          std::dynamic_pointer_cast<device>(dev),
+                         precision_div,
                          std::string("-DIMAGE_SUPPORT"));
         }
 
@@ -472,7 +480,7 @@ void trrojan::opencl::volume_raycast_benchmark::load_transfer_function(
         {
             for (int j = 0; j < 4; ++j)
             {
-                values.push_back(i * (1.0f / static_cast<float>(num_values - 1.0f)));
+                values.push_back(i * (0.1f / static_cast<float>(num_values - 1.0f)));
             }
         }
     }
@@ -663,6 +671,7 @@ void trrojan::opencl::volume_raycast_benchmark::replace_kernel_snippet(const std
  */
 void trrojan::opencl::volume_raycast_benchmark::build_kernel(environment::pointer env,
                                                              device::pointer dev,
+                                                             const float precision_div,
                                                              const std::string build_flags)
 {
 //    std::cout << _kernel_source << std::endl; // DEBUG: print out composed kernel source
@@ -676,7 +685,7 @@ void trrojan::opencl::volume_raycast_benchmark::build_kernel(environment::pointe
 
         _kernel = cl::Kernel(env->get_properties().program, "volumeRender", NULL);
         // set default kernel arguments and buffer
-        set_kernel_args();
+        set_kernel_args(precision_div);
     }
     catch (cl::Error err)
     {
@@ -699,7 +708,7 @@ void trrojan::opencl::volume_raycast_benchmark::build_kernel(environment::pointe
 /**
  * trrojan::opencl::volume_raycast_benchmark::set_kernel_args
  */
-void trrojan::opencl::volume_raycast_benchmark::set_kernel_args()
+void trrojan::opencl::volume_raycast_benchmark::set_kernel_args(const float precision_div)
 {
     try
     {
@@ -707,6 +716,7 @@ void trrojan::opencl::volume_raycast_benchmark::set_kernel_args()
         _kernel.setArg(TFF, _tff_mem);
         _kernel.setArg(VIEW, _view_mat);
         _kernel.setArg(ID, _ray_ids);
+        _kernel.setArg(PRECISION, precision_div);
     }
     catch (cl::Error err)
     {

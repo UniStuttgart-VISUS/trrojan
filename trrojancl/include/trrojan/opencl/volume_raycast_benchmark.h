@@ -79,6 +79,7 @@ namespace opencl
             STEP_SIZE,      // step size factor     cl_float
             RESOLUTION,     // volume resolution    cl_int3
             SAMPLER,        // image data sampler   cl::Sampler
+            PRECISION,      // precision divisor    cl_float
             // OFFSET       // TODO: ID offset      cl_int2
         };
 
@@ -259,7 +260,6 @@ namespace opencl
 
             // convert imput vector to the desired output precision
             std::vector<To> converted_data(s, e);
-
             try
             {
                 if (use_buffer)
@@ -342,17 +342,19 @@ namespace opencl
         /// <param name="env">Smart pointer to a valid OpenCL environment.</param>
         /// <param name="dev">Smart pointer to a valid OpenCL device on the platform
         /// <paramref name="env" \>.</param>
+        /// <param name="precision_div">Precision based devisor for kernel argument.</param>
         /// <param name="build_flags">Compiler build flags.</param>
         /// <throws>Runtime error if program creation, kernel build or initialization
         /// fail.</throws>
         void build_kernel(environment::pointer env,
                           device::pointer dev,
+                          const float precision_div = 255.0f,
                           const std::string build_flags = "");
 
         /// <summary>
         /// Set all constant kernel arguments such as the OpenCL memory objects.
         /// </summary>
-        void set_kernel_args();
+        void set_kernel_args(const float precision_div);
 
         /// <summary>
         /// Update arguments that are relavant for kernel execution during runtime.

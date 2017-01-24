@@ -54,7 +54,8 @@ __kernel void volumeRender(
                            __global const int *shuffledIds,
                            const float stepSizeFactor,
                            const int4 volRes,
-                           const sampler_t sampler
+                           const sampler_t sampler,
+                           const float precisionDiv
                            //const int viewChange,               // == 1 if view is rotated, 0 else
                            /***OFFSET_ARGS***/
                         )
