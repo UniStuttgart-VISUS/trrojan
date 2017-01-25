@@ -40,6 +40,7 @@ namespace opencl
         // TODO remove hard coded paths
         static const std::string kernel_source_path;
         static const std::string kernel_snippet_path;
+        static const std::string test_volume;
 
         // factor strings
         static const std::string factor_environment;
