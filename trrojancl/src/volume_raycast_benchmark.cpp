@@ -616,6 +616,7 @@ void trrojan::opencl::volume_raycast_benchmark::compose_kernel(
     {
         // TODO orthogonal camera
         throw std::runtime_error("Orthogonal camera is not supported yet.");
+        //replace_keyword("CAMERA", _kernel_snippets["ORTHO_CAM"], _kernel_source);
     }
     else
         replace_keyword("CAMERA", _kernel_snippets["PERSPECTIVE_CAM"], _kernel_source);
@@ -761,6 +762,9 @@ void trrojan::opencl::volume_raycast_benchmark::update_kernel_args(
                                    cfg.find(factor_pitch)->value(),
                                    cfg.find(factor_yaw)->value(),
                                    cfg.find(factor_zoom)->value());
+//        for (auto &a : view_mat)
+//            std::cout << a << " " << std::endl;
+
         try
         {
             cl::Event write_evt;
@@ -902,9 +906,8 @@ std::array<float, 16> trrojan::opencl::volume_raycast_benchmark::create_view_mat
     std::valarray<double> thickness(_dr.properties().slice_thickness.data(),
                                     _dr.properties().slice_thickness.size());
     s *= thickness*(1.0/thickness[0]);
-    s = s.max()/s;
-    std::cout << "Scaling volume: ("
-              << s[0] << ", " << s[1] << ", " << s[2] << ")" << std::endl;
+    s = s.max() / s;
+    std::cout << "Scaling volume: (" << s[0] << ", " << s[1] << ", " << s[2] << ")" << std::endl;
 
     float zoom_f = static_cast<float>(zoom);
     // The order of rotation is Roll -> Yaw -> Pitch (Rx*Ry*Rz)
