@@ -10,14 +10,17 @@
 #include <system_error>
 #include <vector>
 
+#include <errno.h>
+
 
 /*
  * trrojan::get_module_file_name
  */
 std::string TRROJANCORE_API trrojan::get_module_file_name(void) {
     typedef decltype(get_module_file_name()) string_type;
-#ifdef _WIN32
     std::vector<string_type::value_type> retval;
+
+#ifdef _WIN32
     DWORD error = ERROR_SUCCESS;
     DWORD bufLen = MAX_PATH + 1;
     DWORD strLen = 0;
@@ -36,21 +39,19 @@ std::string TRROJANCORE_API trrojan::get_module_file_name(void) {
     return std::move(string_type(retval.data(), strLen));
 
 #else /* _WIN32 */
-    string_type::value_type *arg = nullptr;
-    string_type retval;
-    size_t size = 0;
+    retval.resize(512);
+    ssizet_t size = 0;
 
-    auto fp = ::fopen("/proc/self/cmdline", "rb");
-    if (fp != nullptr) {
-        while (::getdelim(&arg, &size, 0, fp) != -1) {
-            retval.append(arg, size);
-            retval.append(" ");
+    do {
+        size = ::readlink("/proc/self/exe", retval.data(), retval.size());
+        if (size == -1) {
+            std::error_code ec(errno, std::system_category());
+            throw std::system_error(ec, "GetModuleFileName failed.");
         }
-        ::free(arg);
-        ::fclose(fp);
-    }
+        retval.resize(retval.size() * 2);
+    } while (retval.size() <= size);
 
-    return std::move(retval);
+    return std::move(string_type(retval.data(), size));
 #endif /* _WIN32 */
 }
 
