@@ -1,0 +1,12 @@
+opencl::volume_raycast {
+    uint32 viewport_width = 800; 1024
+    uint32 viewport_height = 512; 600; 1024
+    boolean use_ERT = true; false
+    boolean use_tff = false
+}
+
+stream::stream_benchmark{
+    string task_type = add; triad
+}
+
+stream::stream_benchmark {}

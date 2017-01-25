@@ -38,7 +38,6 @@
 #include "trrojan/stream/scalar_type.h"
 #include "trrojan/stream/task_type.h"
 
-
 #if defined(_MSC_VER)
 #define TRROJANSTREAM_FORCE_INLINE __forceinline
 #elif defined (__GNUC__)

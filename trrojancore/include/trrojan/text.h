@@ -9,7 +9,9 @@
 #include <cctype>
 #include <functional>
 #include <locale>
+#include <sstream>
 #include <string>
+#include <stdexcept>
 
 
 namespace trrojan {
@@ -35,12 +37,69 @@ namespace trrojan {
         const std::string& sep, I begin, I end);
 
     /// <summary>
+    /// Parses the given string <paramref name="str" /> as type
+    /// <tparamref name="R" />.
+    /// </summary>
+    /// <param name="str">The string to be parsed.</param>
+    /// <returns>The parsed value.</returns>
+    /// <exception cref="std::invalid_argument">If the string could
+    /// not be parsed or if <paramref name="str" /> is <c>nullptr</c>.</param>
+    template<class R, class T> R parse(const T *str);
+
+    /// <summary>
+    /// Parses the given string <paramref name="str" /> as type
+    /// <tparamref name="R" />.
+    /// </summary>
+    /// <param name="str">The string to be parsed.</param>
+    /// <returns>The parsed value.</returns>
+    /// <exception cref="std::invalid_argument">If the string could
+    /// not be parsed.</param>
+    template<class R, class C, class T, class A>
+    inline R parse(const std::basic_string<C, T, A>& str) {
+        return parse<R, C>(str.c_str());
+    }
+
+    /// <summary>
+    /// Parses the given string <paramref name="str" /> as type Boolean
+    /// value ("true", "false" or numeric value).
+    /// </summary>
+    template<class T> bool parse_bool(const T *str);
+
+    /// <summary>
+    /// Parses the given string <paramref name="str" /> as type Boolean
+    /// value ("true", "false" or numeric value).
+    /// </summary>
+    template<class C, class T, class A>
+    inline bool parse_bool(const std::basic_string<C, T, A>& str) {
+        return parse_bool<C>(str.c_str());
+    }
+
+    /// <summary>
     /// Answer whether <paramref name="haystack" /> starts with
     /// <see cref="needle" />.
     /// </summary>
     template<class T>
     bool starts_with(const std::basic_string<T>& haystack,
         const std::basic_string<T>& needle);
+
+    /// <summary>
+    /// Convert <paramref name="str" /> to lower-case.
+    /// </summary>
+    template<class T> std::basic_string<T> tolower(const T *str) {
+        std::basic_string<T> retval(str);
+        std::transform(retval.begin(), retval.end(), retval.begin(), ::tolower);
+        return retval;
+    }
+
+    /// <summary>
+    /// Convert <paramref name="str" /> to lower-case.
+    /// </summary>
+    template<class T>
+    std::basic_string<T> tolower(const std::basic_string<T>& str) {
+        std::basic_string<T> retval;
+        std::transform(str.cbegin(), str.cend(), retval.begin(), ::tolower);
+        return retval;
+    }
 
     /// <summary>
     /// Remove all leading white-space characters from <paramref name="str" />.
