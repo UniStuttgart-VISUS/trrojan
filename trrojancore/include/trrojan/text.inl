@@ -1,3 +1,4 @@
+#include "text.h"
 /// <copyright file="text.inl" company="SFB-TRR 161 Quantitative Methods for Visual Computing">
 /// Copyright © 2017 SFB-TRR 161. Alle Rechte vorbehalten.
 /// </copyright>
@@ -46,6 +47,52 @@ template<class I> std::string trrojan::join(const std::string& sep,
     }
 
     return retval;
+}
+
+
+/*
+ * trrojan::parse
+ */
+ template<class R, class T> R trrojan::parse(const T *str) {
+    if (str == nullptr) {
+        throw std::invalid_argument("The string to be parsed must not be "
+            "nullptr.");
+    }
+
+    std::basic_stringstream<T> input(str);
+    R retval;
+
+    if (!(input >> retval)) {
+        std::basic_stringstream<T> msg;
+        msg << "\"" << str << "\" cannot be parsed as " << typeid(R).name()
+            << std::ends;
+        throw std::invalid_argument(msg.str());
+    }
+
+    return retval;
+}
+
+
+/*
+ * trrojan::parse_bool
+ */
+template<class T> bool trrojan::parse_bool(const T *str) {
+    if (str == nullptr) {
+        throw std::invalid_argument("The string to be parsed must not be "
+            "nullptr.");
+    }
+
+    auto s = trrojan::tolower(str);
+
+    if ((s == "true") || (s == "yes")) {
+        return true;
+
+    } else if ((s == "false") || (s == "no")) {
+        return false;
+
+    } else {
+        return (trrojan::parse<int>(str) != 0);
+    }
 }
 
 

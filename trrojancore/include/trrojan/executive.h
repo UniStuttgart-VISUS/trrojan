@@ -18,6 +18,7 @@
 #include "trrojan/excel_output.h"
 #include "trrojan/export.h"
 #include "trrojan/plugin.h"
+#include "trrojan/trroll_parser.h"
 
 
 namespace trrojan {
@@ -57,6 +58,12 @@ namespace trrojan {
 
         // TODO: remove this
         void crowbar() {
+            try {
+                trroll_parser::parse("test.trroll");
+            } catch (std::exception& ex) {
+                std::cerr << ex.what() << std::endl;
+            }
+
             configuration_set ec;
             plugin_base::benchmark_list bs;
             plugin_base::environment_list es;

@@ -190,6 +190,16 @@ namespace detail {
         variant_type::environment /* Add new members here. */>
         variant_type_list;
 
+    /// <summary>
+    /// <see cref="variant_types" /> which of the values can be automatically
+    /// parsed using <see cref="trrojan::parse" />.
+    /// </summary>
+    typedef variant_type_list_t<variant_type::int8, variant_type::int16,
+        variant_type::int32, variant_type::int64, variant_type::uint8,
+        variant_type::uint16, variant_type::uint32, variant_type::uint64,
+        variant_type::float32, variant_type::float64>
+        auto_parsable_variant_type_list;
+
 } /* end namespace detail */
 
 
@@ -224,6 +234,10 @@ namespace detail {
         inline static const type *get(const detail::variant& v) {              \
             return &v.val_##t;                                                 \
         }                                                                      \
+        static inline const std::string& name(void) {                          \
+            static const std::string retval(#t);                               \
+            return retval;                                                     \
+        }                                                                      \
     };                                                                         \
     template<> struct TRROJANCORE_API variant_reverse_traits<                  \
             decltype(trrojan::detail::variant::val_##t)> {                     \
@@ -235,6 +249,10 @@ namespace detail {
         inline static const decltype(trrojan::detail::variant::val_##t) *get(  \
                 const detail::variant& v) {                                    \
             return &v.val_##t;                                                 \
+        }                                                                      \
+        static inline const std::string& name(void) {                          \
+            static const std::string retval(#t);                               \
+            return retval;                                                     \
         }                                                                      \
     }
 
