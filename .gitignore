@@ -9,3 +9,8 @@
 /lib/Release
 /bin/RelWithDebInfo
 /lib/RelWithDebInfo
+/bin/.vs/TRRojan/v14/.suo
+/bin/TRRojan.VC.VC.opendb
+/bin/TRRojan.VC.db
+/bin/TRRojan.sln
+/trrojancore/include/CImg.h
