@@ -10,7 +10,10 @@
 #include <system_error>
 #include <vector>
 
+#ifndef _WIN32
+#include <sys/types.h>
 #include <errno.h>
+#endif /* _WIN32 */
 
 
 /*
