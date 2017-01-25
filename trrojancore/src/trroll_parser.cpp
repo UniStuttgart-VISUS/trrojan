@@ -10,7 +10,6 @@
 #include <stdexcept>
 
 #include "trrojan/io.h"
-#include "trrojan/text.h"
 #include "trrojan/enum_parse_helper.h"
 #include "trrojan/smbios_information.h"
 

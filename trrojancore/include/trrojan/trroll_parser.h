@@ -11,6 +11,7 @@
 #include <vector>
 
 #include "trrojan/configuration_set.h"
+#include "trrojan/text.h"
 #include "trrojan/variant.h"
 
 
