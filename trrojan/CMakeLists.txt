@@ -17,19 +17,19 @@ target_link_libraries(trrojan LINK_PUBLIC trrojancore)
 #target_link_libraries(trrojan LINK_PUBLIC trrojanstream)
 
 
-# CImg related
-# Flags to enable native support for JPEG image files, using the JPEG library.
-# ( http://www.ijg.org/ )
-SET(CIMG_JPEG_CCFLAGS  -Dcimg_use_jpeg)
-# Flags to enable native support for TIFF image files, using the TIFF library.
-# ( http://www.libtiff.org/ )
-SET(CIMG_TIFF_CCFLAGS  -Dcimg_use_tiff)
-# Flags to enable native support for PNG image files, using the PNG library.
-# ( http://www.libpng.org/ )
-SET(CIMG_PNG_CCFLAGS -Dcimg_use_png)
-# Flags to enable native support of most classical image file formats, using the Magick++ library.
-# ( http://www.imagemagick.org/Magick++/ )
-SET(CIMG_MAGICK_CCFLAGS -Dcimg_use_magick)
+## CImg related
+## Flags to enable native support for JPEG image files, using the JPEG library.
+## ( http://www.ijg.org/ )
+#SET(CIMG_JPEG_CCFLAGS  -Dcimg_use_jpeg)
+## Flags to enable native support for TIFF image files, using the TIFF library.
+## ( http://www.libtiff.org/ )
+#SET(CIMG_TIFF_CCFLAGS  -Dcimg_use_tiff)
+## Flags to enable native support for PNG image files, using the PNG library.
+## ( http://www.libpng.org/ )
+#SET(CIMG_PNG_CCFLAGS -Dcimg_use_png)
+## Flags to enable native support of most classical image file formats, using the Magick++ library.
+## ( http://www.imagemagick.org/Magick++/ )
+#SET(CIMG_MAGICK_CCFLAGS -Dcimg_use_magick)
 
 #### Search Additional Libraries ##########
 FIND_PACKAGE(JPEG)

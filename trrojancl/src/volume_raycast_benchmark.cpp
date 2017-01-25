@@ -52,6 +52,18 @@ _TRROJANSTREAM_DEFINE_FACTOR(volume_res_z);
 
 #undef _TRROJANSTREAM_DEFINE_FACTOR
 
+// FIXME: OS dependent paths
+#ifdef WIN32
+const std::string trrojan::opencl::volume_raycast_benchmark::kernel_snippet_path =
+    "..\\..\\trrojancl\\include\\kernel\\volume_raycast_snippets";
+const std::string trrojan::opencl::volume_raycast_benchmark::kernel_source_path =
+    "..\\..\\trrojancl\\include\\kernel\\volume_raycast_base.cl";
+#else   // UNIX
+const std::string trrojan::opencl::volume_raycast_benchmark::kernel_snippet_path =
+    "../trrojancl/include/kernel/volume_raycast_snippets";
+const std::string trrojan::opencl::volume_raycast_benchmark::kernel_source_path =
+    "../trrojancl/include/kernel/volume_raycast_base.cl";
+#endif
 
 /*
  * trrojan::opencl::volume_raycast_benchmark::volume_raycast_benchmark
@@ -59,6 +71,7 @@ _TRROJANSTREAM_DEFINE_FACTOR(volume_res_z);
 trrojan::opencl::volume_raycast_benchmark::volume_raycast_benchmark(void)
     : trrojan::benchmark_base("volume_raycast")
 {
+
     // default config
     //
     // TODO: @christoph empty factors (aka required factor)
@@ -74,7 +87,7 @@ trrojan::opencl::volume_raycast_benchmark::volume_raycast_benchmark(void)
     this->_default_configs.add_factor(factor::from_manifestations(
                                           factor_volume_file_name,
                                           std::string(
-                                              "/media/brudervn/Daten/volTest/vol/bonsai.dat")));
+                                              "\\\\trr161store.visus.uni-stuttgart.de\\SFB-TRR 161\\A02\\data\\volumes\\bonsai.dat")));
     // transfer function file name, use a provided linear transfer function file as default
     this->_default_configs.add_factor(factor::from_manifestations(factor_tff_file_name,
                                                                   std::string("fallback")));
@@ -558,21 +571,19 @@ void trrojan::opencl::volume_raycast_benchmark::compose_kernel(
     // read all kernel snippets if necessary
     if (_kernel_snippets.empty())
     {
-        // TODO: remove hard coded directory path
-        const std::string path = "../trrojancl/include/kernel/volume_raycast_snippets/";
         try
         {
-            read_kernel_snippets(path);
+            read_kernel_snippets(kernel_snippet_path);
         }
         catch(std::system_error err)
         {
-            std::cerr << "ERROR while reading from " << path << " :\n\t"
+            std::cerr << "ERROR while reading from " << kernel_snippet_path << " :\n\t"
                       << err.what() << std::endl;
         }
     }
 
     // read base kernel file
-    _kernel_source = read_text_file("../trrojancl/include/kernel/volume_raycast_base.cl");
+    _kernel_source = read_text_file(kernel_source_path);
     // compose kernel source according to the current config
     //
     if (cfg.find(factor_use_buffer)->value())

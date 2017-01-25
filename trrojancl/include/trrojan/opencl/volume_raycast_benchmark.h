@@ -37,6 +37,11 @@ namespace opencl
     public:
         typedef benchmark_base::on_result_callback on_result_callback;
 
+        // TODO remove hard coded paths
+        static const std::string kernel_source_path;
+        static const std::string kernel_snippet_path;
+
+        // factor strings
         static const std::string factor_environment;
         static const std::string factor_device;
 

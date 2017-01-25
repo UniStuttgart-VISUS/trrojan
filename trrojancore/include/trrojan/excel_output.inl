@@ -20,7 +20,7 @@ void trrojan::excel_output::invoke(VARIANT *outResult, const int automationType,
 
     /* Initialise variable argument list. */
     /* Get DISPID for name input. */
-    hr = dispatch->GetIDsOfNames(IID_NULL, &name, 1, 0x0407, //LOCALE_USER_DEFAULT,
+    hr = dispatch->GetIDsOfNames(IID_NULL, &name, 1, 0x040, //LOCALE_USER_DEFAULT,
         &dispID);
     if (FAILED(hr)) {
         std::stringstream msg;
@@ -42,7 +42,7 @@ void trrojan::excel_output::invoke(VARIANT *outResult, const int automationType,
     }
 
     /* Make the call. */
-    hr = dispatch->Invoke(dispID, IID_NULL, 0x0407, //LOCALE_SYSTEM_DEFAULT, 
+    hr = dispatch->Invoke(dispID, IID_NULL, LOCALE_SYSTEM_DEFAULT, 
         automationType, &dp, outResult, nullptr, nullptr);
     if (FAILED(hr)) {
         std::stringstream msg;

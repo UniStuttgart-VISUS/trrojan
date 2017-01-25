@@ -8,8 +8,7 @@
 
 #include <cstdlib>
 #define cimg_display 0
-#define cimg_use_png
-#include <CImg.h>
+#include "CImg.h"
 #include <string>
 #include <vector>
 #include <cassert>
@@ -97,7 +96,7 @@ void cimg_write(std::string filename,
     std::vector<unsigned char> d(dim.at(0)*dim.at(1)*dim.at(2)*channels);
     for (int i = 0; i < dim.at(0)*dim.at(1)*dim.at(2)*channels; ++i)
     {
-        const unsigned char v = std::max(0.0, std::min(data[i] + 0.5, 255.0));
+        const unsigned char v = (std::max)(0.0, (std::min)(data[i] + 0.5, 255.0));
         d.at(i) = v;
     }
     cimg_write(filename, &d[0], dim, channels, flip, out_dim);
