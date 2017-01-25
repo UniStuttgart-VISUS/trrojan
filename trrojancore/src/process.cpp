@@ -43,7 +43,7 @@ std::string TRROJANCORE_API trrojan::get_module_file_name(void) {
 
 #else /* _WIN32 */
     retval.resize(512);
-    ssizet_t size = 0;
+    ssize_t size = 0;
 
     do {
         size = ::readlink("/proc/self/exe", retval.data(), retval.size());
