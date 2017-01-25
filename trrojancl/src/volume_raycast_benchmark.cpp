@@ -906,6 +906,7 @@ std::array<float, 16> trrojan::opencl::volume_raycast_benchmark::create_view_mat
     std::valarray<double> thickness(_dr.properties().slice_thickness.data(),
                                     _dr.properties().slice_thickness.size());
     s *= thickness*(1.0/thickness[0]);
+#undef max  // don't get the error here if I don't undef max
     s = s.max() / s;
     std::cout << "Scaling volume: (" << s[0] << ", " << s[1] << ", " << s[2] << ")" << std::endl;
 
@@ -925,9 +926,9 @@ std::array<float, 16> trrojan::opencl::volume_raycast_benchmark::create_view_mat
 
     return std::array<float, 16>{
         {
-        s[0]*x_axis[0], s[0]*x_axis[1], s[0]*x_axis[2], -x_axis[2]*zoom_f*s[0],
-        s[1]*y_axis[0], s[1]*y_axis[1], s[1]*y_axis[2], -y_axis[2]*zoom_f*s[1],
-        s[2]*z_axis[0], s[2]*z_axis[1], s[2]*z_axis[2], -z_axis[2]*zoom_f*s[2],
+            (float)s[0]*x_axis[0], (float)s[0]*x_axis[1], (float)s[0]*x_axis[2], -x_axis[2]*zoom_f*(float)s[0],
+            (float)s[1]*y_axis[0], (float)s[1]*y_axis[1], (float)s[1]*y_axis[2], -y_axis[2]*zoom_f*(float)s[1],
+            (float)s[2]*z_axis[0], (float)s[2]*z_axis[1], (float)s[2]*z_axis[2], -z_axis[2]*zoom_f*(float)s[2],
                 0,              0,              0,                  1
         }};
 }
