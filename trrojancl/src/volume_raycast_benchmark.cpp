@@ -10,6 +10,8 @@
 #include <numeric>
 #define _USE_MATH_DEFINES
 #include <math.h>
+#include <array>
+#include <valarray>
 
 #include "trrojan/io.h"
 #include "trrojan/timer.h"
@@ -53,16 +55,21 @@ _TRROJANSTREAM_DEFINE_FACTOR(volume_res_z);
 #undef _TRROJANSTREAM_DEFINE_FACTOR
 
 // FIXME: OS dependent paths
-#ifdef WIN32
+#ifdef _WIN32
 const std::string trrojan::opencl::volume_raycast_benchmark::kernel_snippet_path =
     "..\\..\\trrojancl\\include\\kernel\\volume_raycast_snippets";
 const std::string trrojan::opencl::volume_raycast_benchmark::kernel_source_path =
     "..\\..\\trrojancl\\include\\kernel\\volume_raycast_base.cl";
+const std::string trrojan::opencl::volume_raycast_benchmark::test_volume =
+    "\\\\trr161store.visus.uni-stuttgart.de\\SFB-TRR 161\\A02\\data\\volumes\\bonsai.dat";
 #else   // UNIX
 const std::string trrojan::opencl::volume_raycast_benchmark::kernel_snippet_path =
     "../trrojancl/include/kernel/volume_raycast_snippets";
 const std::string trrojan::opencl::volume_raycast_benchmark::kernel_source_path =
     "../trrojancl/include/kernel/volume_raycast_base.cl";
+const std::string trrojan::opencl::volume_raycast_benchmark::test_volume =
+    "/home/brudervn/netshare/trrstore/A02/data/volumes/bonsai.dat";
+//    "//trr161store.visus.uni-stuttgart.de/SFB-TRR 161/A02/data/volumes/bonsai.dat";
 #endif
 
 /*
@@ -86,8 +93,7 @@ trrojan::opencl::volume_raycast_benchmark::volume_raycast_benchmark(void)
 //    this->_default_configs.add_factor(factor::empty("volume_file_name"));
     this->_default_configs.add_factor(factor::from_manifestations(
                                           factor_volume_file_name,
-                                          std::string(
-                                              "\\\\trr161store.visus.uni-stuttgart.de\\SFB-TRR 161\\A02\\data\\volumes\\bonsai.dat")));
+                                          test_volume));
     // transfer function file name, use a provided linear transfer function file as default
     this->_default_configs.add_factor(factor::from_manifestations(factor_tff_file_name,
                                                                   std::string("fallback")));
@@ -99,14 +105,14 @@ trrojan::opencl::volume_raycast_benchmark::volume_raycast_benchmark(void)
     add_kernel_run_factor(factor_step_size_factor, 0.5);
     add_kernel_run_factor(factor_roll, 0.0*CL_M_PI);
     add_kernel_run_factor(factor_pitch, 0.0*CL_M_PI);
-    add_kernel_run_factor(factor_yaw, 0.0*CL_M_PI);
+    add_kernel_run_factor(factor_yaw, 0.5*CL_M_PI);
     add_kernel_run_factor(factor_zoom, -3.0);
 
     // rendering modes -> kernel build factors
     //
     // sample precision in bytes, if not specified, use uchar (1 byte)
     add_kernel_build_factor(factor_sample_precision,
-                            scalar_type_traits<scalar_type::uint32>::name());
+                            scalar_type_traits<scalar_type::ushort>::name());
     // use linear interpolation (not nearest neighbor interpolation)
     add_kernel_build_factor(factor_use_lerp, true);
     // use early ray termination
@@ -493,7 +499,7 @@ void trrojan::opencl::volume_raycast_benchmark::load_transfer_function(
         {
             for (int j = 0; j < 4; ++j)
             {
-                values.push_back(i * (0.1f / static_cast<float>(num_values - 1.0f)));
+                values.push_back(i * (0.05f / static_cast<float>(num_values - 1.0f)));
             }
         }
     }
@@ -610,6 +616,7 @@ void trrojan::opencl::volume_raycast_benchmark::compose_kernel(
     {
         // TODO orthogonal camera
         throw std::runtime_error("Orthogonal camera is not supported yet.");
+        //replace_keyword("CAMERA", _kernel_snippets["ORTHO_CAM"], _kernel_source);
     }
     else
         replace_keyword("CAMERA", _kernel_snippets["PERSPECTIVE_CAM"], _kernel_source);
@@ -755,6 +762,9 @@ void trrojan::opencl::volume_raycast_benchmark::update_kernel_args(
                                    cfg.find(factor_pitch)->value(),
                                    cfg.find(factor_yaw)->value(),
                                    cfg.find(factor_zoom)->value());
+//        for (auto &a : view_mat)
+//            std::cout << a << " " << std::endl;
+
         try
         {
             cl::Event write_evt;
@@ -847,7 +857,7 @@ void trrojan::opencl::volume_raycast_benchmark::update_kernel_args(
             log_cl_error(err);
         }
     }
-    // TODO
+    // TODO: include optional ray id offsets
 //    if (changed.count(factor_offset_x) || changed.count(factor_offset_y))
 //    {
 //        cl_int2 offset = {{cfg.find(factor_offset_x)->value(), cfg.find(factor_offset_y)->value()}};
@@ -879,7 +889,8 @@ std::array<float, 16> trrojan::opencl::volume_raycast_benchmark::create_view_mat
                                                                                  double yaw,
                                                                                  double zoom)
 {
-    // We use a right handed coordinate system here!
+    // Convert Euler Angles(roll, pitch, yaw) to axes(x, y, z).
+    // We use a right handed coordinate system.
     // Assuming radians (not degrees)!
     if (roll > CL_M_PI*2.0 || pitch > CL_M_PI*2.0 || yaw > CL_M_PI*2.0)
     {
@@ -887,31 +898,38 @@ std::array<float, 16> trrojan::opencl::volume_raycast_benchmark::create_view_mat
                      "Rotation parameters are always interpreted as radians!" << std::endl;
     }
 
+    std::valarray<double> s(_dr.properties().volume_res.size());
+    for (size_t i = 0; i < _dr.properties().volume_res.size(); ++i)
+    {
+        s[i] = _dr.properties().volume_res.at(i);
+    }
+    std::valarray<double> thickness(_dr.properties().slice_thickness.data(),
+                                    _dr.properties().slice_thickness.size());
+    s *= thickness*(1.0/thickness[0]);
+    s = s.max() / s;
+    std::cout << "Scaling volume: (" << s[0] << ", " << s[1] << ", " << s[2] << ")" << std::endl;
+
     float zoom_f = static_cast<float>(zoom);
-    // We first rotate yaw radians around the y-axis and then pitch radians around the x-axis.
-    // Lastly, we rotate roll radians around the z-axis.
-    float cos_pitch = static_cast<float>(cos(pitch));
-    float sin_pitch = static_cast<float>(sin(pitch));
-    float cos_yaw = static_cast<float>(cos(yaw));
-    float sin_yaw = static_cast<float>(sin(yaw));
-    float cos_roll = static_cast<float>(cos(roll));
-    float sin_roll = static_cast<float>(sin(roll));
+    // The order of rotation is Roll -> Yaw -> Pitch (Rx*Ry*Rz)
+    float cx = static_cast<float>(cos(pitch));
+    float sx = static_cast<float>(sin(pitch));
+    float cy = static_cast<float>(cos(yaw));
+    float sy = static_cast<float>(sin(yaw));
+    float cz = static_cast<float>(cos(roll));
+    float sz = static_cast<float>(sin(roll));
 
-    // This matrix is already transposed!
-    std::array<float, 3> x_axis = {cos_yaw * cos_roll, cos_yaw * sin_roll, -sin_yaw};
-    std::array<float, 3> y_axis = {-cos_pitch*sin_roll + sin_pitch*sin_yaw*cos_roll,
-                                    cos_pitch*cos_roll + sin_pitch*sin_yaw*sin_roll,
-                                    cos_yaw*sin_pitch};
-    std::array<float, 3> z_axis = {sin_pitch*sin_yaw + cos_pitch*sin_yaw*cos_roll,
-                                   -sin_pitch*cos_roll + cos_pitch*sin_yaw*sin_roll,
-                                   cos_yaw*cos_pitch};
+    // The resulting matrix is already transposed (!)
+    std::array<float, 3> x_axis = {cy*cz, sx*sy*cz + cx*sz, -cx*sy*cz + sx*sz};
+    std::array<float, 3> y_axis = {-cy*sz, -sx*sy*sz + cx*cz, cx*sy*sz + sx*cz};
+    std::array<float, 3> z_axis = {sy, -sx*cy, cx*cy};
 
-    return std::array<float, 16>{{
-                                      x_axis[0], x_axis[1], x_axis[2], -x_axis[2]*zoom_f,
-                                      y_axis[0], y_axis[1], y_axis[2], -y_axis[2]*zoom_f,
-                                      z_axis[0], z_axis[1], z_axis[2], -z_axis[2]*zoom_f,
-                                          0,         0,         0,              1
-                                }};
+    return std::array<float, 16>{
+        {
+        s[0]*x_axis[0], s[0]*x_axis[1], s[0]*x_axis[2], -x_axis[2]*zoom_f*s[0],
+        s[1]*y_axis[0], s[1]*y_axis[1], s[1]*y_axis[2], -y_axis[2]*zoom_f*s[1],
+        s[2]*z_axis[0], s[2]*z_axis[1], s[2]*z_axis[2], -z_axis[2]*zoom_f*s[2],
+                0,              0,              0,                  1
+        }};
 }
 
 /*
