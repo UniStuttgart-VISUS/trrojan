@@ -7,8 +7,10 @@
 
 #pragma once
 
+#include <array>
 #include <cassert>
 #include <cstdlib>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
