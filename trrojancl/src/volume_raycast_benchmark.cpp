@@ -13,9 +13,11 @@
 #include <array>
 #include <valarray>
 
+#include "trrojan/image_helper.h"
 #include "trrojan/io.h"
+#include "trrojan/process.h"
 #include "trrojan/timer.h"
-#include "trrojan/cimg_helper.h"
+
 
 #define _TRROJANSTREAM_DEFINE_FACTOR(f)                                        \
 const std::string trrojan::opencl::volume_raycast_benchmark::factor_##f(#f)

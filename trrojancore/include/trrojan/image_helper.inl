@@ -29,7 +29,8 @@ void trrojan::save_image(const std::string& fileName, const T *data,
         ::CoUninitialize();
         throw;
     }
+
 #else
-#error "TRRojan required Cimg or Windows to save images."
+    throw std::logic_error("No implementation is available for saving images.");
 #endif
 }
