@@ -56,6 +56,8 @@ std::string TRROJANCORE_API trrojan::get_module_file_name(void) {
 
     return std::move(string_type(retval.data(), size));
 #endif /* _WIN32 */
+
+    // Other platforms: http://stackoverflow.com/questions/1023306/finding-current-executables-path-without-proc-self-exe
 }
 
 
