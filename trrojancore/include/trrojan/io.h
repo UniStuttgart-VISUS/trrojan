@@ -115,15 +115,15 @@ namespace trrojan {
     /// <param name="with_extension">If <c>true</c>, return the file name with extension,
     /// otherwise remove all characters starting with the last '.'.</param>
     /// <retruns>The extracted file name.</retruns>
-    const std::string get_file_name(const std::string &path,
-        const bool with_extension = true);
+    std::string TRROJANCORE_API get_file_name(const std::string &path,
+                                              const bool with_extension = true);
 
     /// <summary>
     /// Returns the path of the file. This does not include the file name.
     /// </summary>
     /// <param name="file_path">The file path to extract the path from.</param>
     /// <retruns>The extracted path.</retruns>
-    const std::string get_path(const std::string &file_path);
+    std::string TRROJANCORE_API get_path(const std::string &file_path);
 
     /// <summary>
     /// Read a whole binary file at the location designated by

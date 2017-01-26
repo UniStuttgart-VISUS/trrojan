@@ -80,7 +80,7 @@ namespace trrojan {
                 ec.replace_factor(factor::from_manifestations<environment>("environment", e));
                 std::vector<device> dst;
                 e->get_devices(dst);
-                // skip intel IGP for now (apparently problmes with float precision textures)
+                // skip intel IGP for now (apparently problems with float precision textures)
                 // TODO: adaption based on device capabilities
                 if (e->name().find("Intel") == std::string::npos)
                 {
