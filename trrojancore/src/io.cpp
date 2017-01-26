@@ -2,6 +2,7 @@
 /// Copyright © 2016 SFB-TRR 161. Alle Rechte vorbehalten.
 /// </copyright>
 /// <author>Christoph Müller</author>
+/// <author>Valentin Bruder</author>
 
 #include "trrojan/io.h"
 
@@ -69,7 +70,7 @@ std::string TRROJANCORE_API trrojan::read_text_file(const char *path) {
 /*
  * trrojan::get_file_name
  */
-std::string TRROJANCORE_API trrojan::get_file_name(const std::string &path,
+const std::string TRROJANCORE_API trrojan::get_file_name(const std::string &path,
                                                    const bool with_extension)
 {
     std::string retval = path.substr(path.find_last_of(directory_separator_char) + 1);
@@ -78,6 +79,15 @@ std::string TRROJANCORE_API trrojan::get_file_name(const std::string &path,
         retval = retval.substr(0, retval.find_last_of("."));
     }
     return retval;
+}
+
+
+/*
+ * trrojan::get_path
+ */
+const std::string TRROJANCORE_API trrojan::get_path(const std::string &file_path)
+{
+    return file_path.substr(0, file_path.find_last_of(directory_separator_char));
 }
 
 

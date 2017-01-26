@@ -16,7 +16,7 @@
 #include "trrojan/io.h"
 #include "trrojan/timer.h"
 #include "trrojan/cimg_helper.h"
-
+#include "trrojan/process.h"
 
 #define _TRROJANSTREAM_DEFINE_FACTOR(f)                                        \
 const std::string trrojan::opencl::volume_raycast_benchmark::factor_##f(#f)
@@ -57,16 +57,16 @@ _TRROJANSTREAM_DEFINE_FACTOR(volume_res_z);
 // FIXME: OS dependent paths
 #ifdef _WIN32
 const std::string trrojan::opencl::volume_raycast_benchmark::kernel_snippet_path =
-    "..\\..\\trrojancl\\include\\kernel\\volume_raycast_snippets";
+    "\\..\\..\\trrojancl\\include\\kernel\\volume_raycast_snippets";
 const std::string trrojan::opencl::volume_raycast_benchmark::kernel_source_path =
-    "..\\..\\trrojancl\\include\\kernel\\volume_raycast_base.cl";
+    "\\..\\..\\trrojancl\\include\\kernel\\volume_raycast_base.cl";
 const std::string trrojan::opencl::volume_raycast_benchmark::test_volume =
     "\\\\trr161store.visus.uni-stuttgart.de\\SFB-TRR 161\\A02\\data\\volumes\\bonsai.dat";
 #else   // UNIX
 const std::string trrojan::opencl::volume_raycast_benchmark::kernel_snippet_path =
-    "../trrojancl/include/kernel/volume_raycast_snippets";
+    "/../trrojancl/include/kernel/volume_raycast_snippets";
 const std::string trrojan::opencl::volume_raycast_benchmark::kernel_source_path =
-    "../trrojancl/include/kernel/volume_raycast_base.cl";
+    "/../trrojancl/include/kernel/volume_raycast_base.cl";
 const std::string trrojan::opencl::volume_raycast_benchmark::test_volume =
     "/home/brudervn/netshare/trrstore/A02/data/volumes/bonsai.dat";
 //    "//trr161store.visus.uni-stuttgart.de/SFB-TRR 161/A02/data/volumes/bonsai.dat";
@@ -105,8 +105,8 @@ trrojan::opencl::volume_raycast_benchmark::volume_raycast_benchmark(void)
     add_kernel_run_factor(factor_step_size_factor, 0.5);
     add_kernel_run_factor(factor_roll, 0.0*CL_M_PI);
     add_kernel_run_factor(factor_pitch, 0.0*CL_M_PI);
-    add_kernel_run_factor(factor_yaw, 0.5*CL_M_PI);
-    add_kernel_run_factor(factor_zoom, -3.0);
+    add_kernel_run_factor(factor_yaw, 0.0*CL_M_PI);
+    add_kernel_run_factor(factor_zoom, -2.0);
 
     // rendering modes -> kernel build factors
     //
@@ -574,22 +574,23 @@ void trrojan::opencl::volume_raycast_benchmark::create_vol_mem(const scalar_type
 void trrojan::opencl::volume_raycast_benchmark::compose_kernel(
         const trrojan::configuration &cfg)
 {
+    std::string path = trrojan::get_path(trrojan::get_module_file_name());
     // read all kernel snippets if necessary
     if (_kernel_snippets.empty())
     {
         try
         {
-            read_kernel_snippets(kernel_snippet_path);
+            read_kernel_snippets(path + kernel_snippet_path);
         }
         catch(std::system_error err)
         {
-            std::cerr << "ERROR while reading from " << kernel_snippet_path << " :\n\t"
-                      << err.what() << std::endl;
+            std::cerr << "ERROR while reading from " << path << kernel_snippet_path
+                      << " :\n\t" << err.what() << std::endl;
         }
     }
 
     // read base kernel file
-    _kernel_source = read_text_file(kernel_source_path);
+    _kernel_source = read_text_file(path + kernel_source_path);
     // compose kernel source according to the current config
     //
     if (cfg.find(factor_use_buffer)->value())
@@ -615,8 +616,8 @@ void trrojan::opencl::volume_raycast_benchmark::compose_kernel(
     if (cfg.find(factor_use_ortho_proj)->value())
     {
         // TODO orthogonal camera
-        throw std::runtime_error("Orthogonal camera is not supported yet.");
-        //replace_keyword("CAMERA", _kernel_snippets["ORTHO_CAM"], _kernel_source);
+        //throw std::runtime_error("Orthogonal camera is not supported yet.");
+        replace_keyword("CAMERA", _kernel_snippets["ORTHO_CAM"], _kernel_source);
     }
     else
         replace_keyword("CAMERA", _kernel_snippets["PERSPECTIVE_CAM"], _kernel_source);
@@ -762,6 +763,7 @@ void trrojan::opencl::volume_raycast_benchmark::update_kernel_args(
                                    cfg.find(factor_pitch)->value(),
                                    cfg.find(factor_yaw)->value(),
                                    cfg.find(factor_zoom)->value());
+        // DEBUG only
 //        for (auto &a : view_mat)
 //            std::cout << a << " " << std::endl;
 
