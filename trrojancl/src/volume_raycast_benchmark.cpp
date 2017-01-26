@@ -22,7 +22,10 @@
 const std::string trrojan::opencl::volume_raycast_benchmark::factor_##f(#f)
 
 _TRROJANSTREAM_DEFINE_FACTOR(environment);
+_TRROJANSTREAM_DEFINE_FACTOR(environment_vendor);
 _TRROJANSTREAM_DEFINE_FACTOR(device);
+_TRROJANSTREAM_DEFINE_FACTOR(device_type);
+_TRROJANSTREAM_DEFINE_FACTOR(device_vendor);
 
 _TRROJANSTREAM_DEFINE_FACTOR(iterations);
 _TRROJANSTREAM_DEFINE_FACTOR(volume_file_name);
@@ -84,6 +87,13 @@ trrojan::opencl::volume_raycast_benchmark::volume_raycast_benchmark(void)
     // TODO: @christoph empty factors (aka required factor)
 //    this->_default_configs.add_factor(factor::empty("environment"));
 //    this->_default_configs.add_factor(factor::empty("device"));
+
+    this->_default_configs.add_factor(factor::from_manifestations(
+        factor_environment_vendor, static_cast<int>(VENDOR_ANY)));
+    this->_default_configs.add_factor(
+        factor::from_manifestations(factor_device_type, static_cast<int>(TYPE_ANY)));
+    this->_default_configs.add_factor(
+        factor::from_manifestations(factor_device_vendor, static_cast<int>(VENDOR_NVIDIA)));
 
     // if no number of test iterations is specified, use a magic number
     this->_default_configs.add_factor(factor::from_manifestations(factor_iterations, 5));
@@ -209,10 +219,41 @@ size_t trrojan::opencl::volume_raycast_benchmark::run(
         // setup raycast if OpenCL platform (aka environment) changed
         if (changed.count(factor_environment))
         {
+            setup_raycaster(cs);
+
+            // check vendor and device type
+            auto env = cs.find(factor_environment)->value().as<trrojan::environment>();
+            environment::pointer env_ptr = std::dynamic_pointer_cast<environment>(env);
+            int env_vendor = cs.find(factor_environment_vendor)->value().as<int>();
+            if (env_ptr->get_properties().vendor != VENDOR_ANY 
+                && env_ptr->get_properties().vendor != env_vendor
+                && env_vendor != VENDOR_ANY)
+            {
+                std::cout << "skipping environment vendor " << env_vendor
+                    << env_ptr->get_properties().vendor << std::endl;
+                return false;
+            }
+            auto dev = cs.find(factor_device)->value().as<trrojan::device>();
+            device::pointer dev_ptr = std::dynamic_pointer_cast<device>(dev);
+            int dev_vendor = cs.find(factor_device_vendor)->value().as<int>();
+            int dev_type = cs.find(factor_device_type)->value().as<int>();
+            // FIXME
+            if ((dev_ptr->get_vendor() != VENDOR_ANY
+                && dev_ptr->get_vendor() != dev_vendor
+                && dev_vendor != VENDOR_ANY)
+                ||
+                (dev_ptr->get_type() != TYPE_ANY
+                 && dev_ptr->get_type() != dev_type
+                && dev_type != TYPE_ANY))
+            {
+                std::cout << "skipping device vendor "
+                    << dev_vendor << dev_type << std::endl;
+                return false;
+            }
+
             std::cout << "___First run on " <<
                          cs.find(factor_environment)->value()
                       << "___" << std::endl << std::endl;
-            setup_raycaster(cs);
         }
 
         // change the setup according to changed factors that are relevant
@@ -710,13 +751,13 @@ void trrojan::opencl::volume_raycast_benchmark::build_kernel(environment::pointe
     {
         if (err.err() == CL_BUILD_PROGRAM_FAILURE)
         {
-            std::cout << "Error building volume raycasting kernel." << std::endl;
+            std::cerr << "Error building volume raycasting kernel." << std::endl;
             // print out compiler output on build error
             std::string str = env->get_properties().program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(
                         dev.get()->get());
-            std::cout << " ***************** BUILD LOG *******************\n";
-            std::cout << str << std::endl;
-            std::cout << " ***********************************************\n";
+            std::cerr << " ***************** BUILD LOG *******************\n";
+            std::cerr << str << std::endl;
+            std::cerr << " ***********************************************\n";
         }
         else
             log_cl_error(err);
