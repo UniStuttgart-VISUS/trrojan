@@ -49,13 +49,15 @@ std::string TRROJANCORE_API trrojan::get_module_file_name(void) {
         size = ::readlink("/proc/self/exe", retval.data(), retval.size());
         if (size == -1) {
             std::error_code ec(errno, std::system_category());
-            throw std::system_error(ec, "GetModuleFileName failed.");
+            throw std::system_error(ec, "readlink to /proc/self/exe failed.");
         }
         retval.resize(retval.size() * 2);
     } while (retval.size() <= size);
 
     return std::move(string_type(retval.data(), size));
 #endif /* _WIN32 */
+
+    // Other platforms: http://stackoverflow.com/questions/1023306/finding-current-executables-path-without-proc-self-exe
 }
 
 
