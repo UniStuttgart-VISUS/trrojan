@@ -17,6 +17,7 @@
 #include "trrojan/environment.h"
 #include "trrojan/excel_output.h"
 #include "trrojan/export.h"
+#include "trrojan/image_helper.h"
 #include "trrojan/plugin.h"
 #include "trrojan/trroll_parser.h"
 
@@ -63,6 +64,19 @@ namespace trrojan {
             } catch (std::exception& ex) {
                 std::cerr << ex.what() << std::endl;
             }
+
+            //try {
+            //    auto width = 800;
+            //    auto height = 600;
+            //    auto channels = 3;
+            //    std::vector<char> image(width * height * channels);
+            //    std::srand(std::time(nullptr));
+            //    std::generate(image.begin(), image.end(), std::rand);
+            //    trrojan::save_image("test.png", image.data(),
+            //        width, height, channels);
+            //} catch (std::exception& ex) {
+            //    std::cerr << ex.what() << std::endl;
+            //}
 
             configuration_set ec;
             plugin_base::benchmark_list bs;
