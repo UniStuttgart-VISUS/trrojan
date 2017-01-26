@@ -38,18 +38,8 @@ namespace trrojan
 namespace opencl
 {
     /// <summary>
-    /// The hardware vendor enum.
-    /// </summary>
-    enum vendor
-    {
-        VENDOR_ANY,
-        VENDOR_NVIDIA,
-        VENDOR_AMD,
-        VENDOR_INTEL
-    };
-
-    /// <summary>
     /// Garbage collector class for OpenCL memory objects.
+    /// TODO: remove?
     /// </summary>
     class garbage_collector
     {
@@ -89,6 +79,7 @@ namespace opencl
 
     struct properties
     {
+        opencl::vendor vendor;
         cl::Platform platform;
         std::vector<cl::Device> devices;
         cl::Context context;

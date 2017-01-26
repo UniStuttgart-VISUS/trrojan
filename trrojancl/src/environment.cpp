@@ -151,6 +151,7 @@ cl::Context trrojan::opencl::environment::create_context(cl_device_type type,
     try
     {
         _prop.context = cl::Context(type, cps);
+        _prop.vendor = vendor;
         return _prop.context;
     }
     catch (cl::Error error)

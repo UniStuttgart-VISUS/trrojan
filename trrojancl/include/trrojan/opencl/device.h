@@ -9,8 +9,9 @@
 
 #include "trrojan/opencl/export.h"
 
-#define __CL_ENABLE_EXCEPTIONS
+//#include "trrojan/opencl/environment.h"
 
+#define __CL_ENABLE_EXCEPTIONS
 #if defined(__APPLE__) || defined(__MACOSX)
     #include "OpenCL/cl.hpp"
 #else
@@ -19,6 +20,30 @@
 
 namespace trrojan {
 namespace opencl {
+
+    /// <summary>
+    /// The hardware vendor enum.
+    /// </summary>
+    enum vendor
+    {
+        VENDOR_UNKNOWN,
+        VENDOR_NVIDIA,
+        VENDOR_AMD,
+        VENDOR_INTEL,
+        VENDOR_ANY,
+    };
+
+    /// <summary>
+    /// The hardware type enum.
+    /// </summary>
+    enum hardware_type
+    {
+        TYPE_OTHER,
+        TYPE_GPU,
+        TYPE_CPU,
+        TYPE_ACCELERATOR,
+        TYPE_ANY,
+    };
 
     /// <summary>
     /// Representation of an OpenCL device.
@@ -42,12 +67,18 @@ namespace opencl {
             return _cl_device;
         }
 
+        trrojan::opencl::vendor get_vendor() const;
+
+        trrojan::opencl::hardware_type get_type() const;
+
     private:
 
         ///
         /// \brief The OpenCL device.
         ///
         cl::Device _cl_device;
+        trrojan::opencl::vendor _vendor;
+        trrojan::opencl::hardware_type _type;
     };
 
 }

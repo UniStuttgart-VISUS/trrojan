@@ -44,7 +44,10 @@ namespace opencl
 
         // factor strings
         static const std::string factor_environment;
+        static const std::string factor_environment_vendor;
         static const std::string factor_device;
+        static const std::string factor_device_type;
+        static const std::string factor_device_vendor;
 
         static const std::string factor_iterations;
         static const std::string factor_volume_file_name;

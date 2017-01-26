@@ -94,9 +94,10 @@ namespace trrojan {
                 ec.replace_factor(factor::from_manifestations<environment>("environment", e));
                 std::vector<device> dst;
                 e->get_devices(dst);
-                // skip intel IGP for now (apparently problmes with float prcision textures)
+                // skip intel IGP for now (apparently problems with float precision textures)
                 // TODO: adaption based on device capabilities
-                if (e->name().find("Intel") == std::string::npos)
+                if (e->name().find("Intel") == std::string::npos 
+                    && e->name().find("AMD") == std::string::npos)
                 {
                     for (auto d : dst)
                     {
@@ -109,7 +110,7 @@ namespace trrojan {
                             if (b->name() != "stream")
                             {
                                 auto fn = b->name();
-#ifdef _WIN32
+#ifdef _WIN32f
                                 fn += std::string(".xslx");
                                 excel_output writer;
                                 writer.open(excel_output_params::create(fn, true));

@@ -15,14 +15,16 @@
 
 #include "trrojan/io.h"
 #include "trrojan/timer.h"
-#include "trrojan/image_helper.h"
-
+#include "trrojan/cimg_helper.h"
 
 #define _TRROJANSTREAM_DEFINE_FACTOR(f)                                        \
 const std::string trrojan::opencl::volume_raycast_benchmark::factor_##f(#f)
 
 _TRROJANSTREAM_DEFINE_FACTOR(environment);
+_TRROJANSTREAM_DEFINE_FACTOR(environment_vendor);
 _TRROJANSTREAM_DEFINE_FACTOR(device);
+_TRROJANSTREAM_DEFINE_FACTOR(device_type);
+_TRROJANSTREAM_DEFINE_FACTOR(device_vendor);
 
 _TRROJANSTREAM_DEFINE_FACTOR(iterations);
 _TRROJANSTREAM_DEFINE_FACTOR(volume_file_name);
@@ -57,16 +59,16 @@ _TRROJANSTREAM_DEFINE_FACTOR(volume_res_z);
 // FIXME: OS dependent paths
 #ifdef _WIN32
 const std::string trrojan::opencl::volume_raycast_benchmark::kernel_snippet_path =
-    "..\\..\\trrojancl\\include\\kernel\\volume_raycast_snippets";
+    "\\..\\..\\trrojancl\\include\\kernel\\volume_raycast_snippets";
 const std::string trrojan::opencl::volume_raycast_benchmark::kernel_source_path =
-    "..\\..\\trrojancl\\include\\kernel\\volume_raycast_base.cl";
+    "\\..\\..\\trrojancl\\include\\kernel\\volume_raycast_base.cl";
 const std::string trrojan::opencl::volume_raycast_benchmark::test_volume =
     "\\\\trr161store.visus.uni-stuttgart.de\\SFB-TRR 161\\A02\\data\\volumes\\bonsai.dat";
 #else   // UNIX
 const std::string trrojan::opencl::volume_raycast_benchmark::kernel_snippet_path =
-    "../trrojancl/include/kernel/volume_raycast_snippets";
+    "/../trrojancl/include/kernel/volume_raycast_snippets";
 const std::string trrojan::opencl::volume_raycast_benchmark::kernel_source_path =
-    "../trrojancl/include/kernel/volume_raycast_base.cl";
+    "/../trrojancl/include/kernel/volume_raycast_base.cl";
 const std::string trrojan::opencl::volume_raycast_benchmark::test_volume =
     "/home/brudervn/netshare/trrstore/A02/data/volumes/bonsai.dat";
 //    "//trr161store.visus.uni-stuttgart.de/SFB-TRR 161/A02/data/volumes/bonsai.dat";
@@ -84,6 +86,13 @@ trrojan::opencl::volume_raycast_benchmark::volume_raycast_benchmark(void)
     // TODO: @christoph empty factors (aka required factor)
 //    this->_default_configs.add_factor(factor::empty("environment"));
 //    this->_default_configs.add_factor(factor::empty("device"));
+
+    this->_default_configs.add_factor(factor::from_manifestations(
+        factor_environment_vendor, static_cast<int>(VENDOR_ANY)));
+    this->_default_configs.add_factor(
+        factor::from_manifestations(factor_device_type, static_cast<int>(TYPE_ANY)));
+    this->_default_configs.add_factor(
+        factor::from_manifestations(factor_device_vendor, static_cast<int>(VENDOR_NVIDIA)));
 
     // if no number of test iterations is specified, use a magic number
     this->_default_configs.add_factor(factor::from_manifestations(factor_iterations, 5));
@@ -105,8 +114,8 @@ trrojan::opencl::volume_raycast_benchmark::volume_raycast_benchmark(void)
     add_kernel_run_factor(factor_step_size_factor, 0.5);
     add_kernel_run_factor(factor_roll, 0.0*CL_M_PI);
     add_kernel_run_factor(factor_pitch, 0.0*CL_M_PI);
-    add_kernel_run_factor(factor_yaw, 0.5*CL_M_PI);
-    add_kernel_run_factor(factor_zoom, -3.0);
+    add_kernel_run_factor(factor_yaw, 0.0*CL_M_PI);
+    add_kernel_run_factor(factor_zoom, -2.0);
 
     // rendering modes -> kernel build factors
     //
@@ -209,10 +218,41 @@ size_t trrojan::opencl::volume_raycast_benchmark::run(
         // setup raycast if OpenCL platform (aka environment) changed
         if (changed.count(factor_environment))
         {
+            setup_raycaster(cs);
+
+            // check vendor and device type
+            auto env = cs.find(factor_environment)->value().as<trrojan::environment>();
+            environment::pointer env_ptr = std::dynamic_pointer_cast<environment>(env);
+            int env_vendor = cs.find(factor_environment_vendor)->value().as<int>();
+            if (env_ptr->get_properties().vendor != VENDOR_ANY 
+                && env_ptr->get_properties().vendor != env_vendor
+                && env_vendor != VENDOR_ANY)
+            {
+                std::cout << "skipping environment vendor " << env_vendor
+                    << env_ptr->get_properties().vendor << std::endl;
+                return false;
+            }
+            auto dev = cs.find(factor_device)->value().as<trrojan::device>();
+            device::pointer dev_ptr = std::dynamic_pointer_cast<device>(dev);
+            int dev_vendor = cs.find(factor_device_vendor)->value().as<int>();
+            int dev_type = cs.find(factor_device_type)->value().as<int>();
+            // FIXME
+            if ((dev_ptr->get_vendor() != VENDOR_ANY
+                && dev_ptr->get_vendor() != dev_vendor
+                && dev_vendor != VENDOR_ANY)
+                ||
+                (dev_ptr->get_type() != TYPE_ANY
+                 && dev_ptr->get_type() != dev_type
+                && dev_type != TYPE_ANY))
+            {
+                std::cout << "skipping device vendor "
+                    << dev_vendor << dev_type << std::endl;
+                return false;
+            }
+
             std::cout << "___First run on " <<
                          cs.find(factor_environment)->value()
                       << "___" << std::endl << std::endl;
-            setup_raycaster(cs);
         }
 
         // change the setup according to changed factors that are relevant
@@ -575,22 +615,23 @@ void trrojan::opencl::volume_raycast_benchmark::create_vol_mem(const scalar_type
 void trrojan::opencl::volume_raycast_benchmark::compose_kernel(
         const trrojan::configuration &cfg)
 {
+    std::string path = trrojan::get_path(trrojan::get_module_file_name());
     // read all kernel snippets if necessary
     if (_kernel_snippets.empty())
     {
         try
         {
-            read_kernel_snippets(kernel_snippet_path);
+            read_kernel_snippets(path + kernel_snippet_path);
         }
         catch(std::system_error err)
         {
-            std::cerr << "ERROR while reading from " << kernel_snippet_path << " :\n\t"
-                      << err.what() << std::endl;
+            std::cerr << "ERROR while reading from " << path << kernel_snippet_path
+                      << " :\n\t" << err.what() << std::endl;
         }
     }
 
     // read base kernel file
-    _kernel_source = read_text_file(kernel_source_path);
+    _kernel_source = read_text_file(path + kernel_source_path);
     // compose kernel source according to the current config
     //
     if (cfg.find(factor_use_buffer)->value())
@@ -616,8 +657,8 @@ void trrojan::opencl::volume_raycast_benchmark::compose_kernel(
     if (cfg.find(factor_use_ortho_proj)->value())
     {
         // TODO orthogonal camera
-        throw std::runtime_error("Orthogonal camera is not supported yet.");
-        //replace_keyword("CAMERA", _kernel_snippets["ORTHO_CAM"], _kernel_source);
+        //throw std::runtime_error("Orthogonal camera is not supported yet.");
+        replace_keyword("CAMERA", _kernel_snippets["ORTHO_CAM"], _kernel_source);
     }
     else
         replace_keyword("CAMERA", _kernel_snippets["PERSPECTIVE_CAM"], _kernel_source);
@@ -710,13 +751,13 @@ void trrojan::opencl::volume_raycast_benchmark::build_kernel(environment::pointe
     {
         if (err.err() == CL_BUILD_PROGRAM_FAILURE)
         {
-            std::cout << "Error building volume raycasting kernel." << std::endl;
+            std::cerr << "Error building volume raycasting kernel." << std::endl;
             // print out compiler output on build error
             std::string str = env->get_properties().program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(
                         dev.get()->get());
-            std::cout << " ***************** BUILD LOG *******************\n";
-            std::cout << str << std::endl;
-            std::cout << " ***********************************************\n";
+            std::cerr << " ***************** BUILD LOG *******************\n";
+            std::cerr << str << std::endl;
+            std::cerr << " ***********************************************\n";
         }
         else
             log_cl_error(err);
@@ -763,6 +804,7 @@ void trrojan::opencl::volume_raycast_benchmark::update_kernel_args(
                                    cfg.find(factor_pitch)->value(),
                                    cfg.find(factor_yaw)->value(),
                                    cfg.find(factor_zoom)->value());
+        // DEBUG only
 //        for (auto &a : view_mat)
 //            std::cout << a << " " << std::endl;
 

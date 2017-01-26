@@ -1,7 +1,7 @@
 /// <copyright file="io.h" company="SFB-TRR 161 Quantitative Methods for Visual Computing">
-/// Copyright © 2016 SFB-TRR 161. Alle Rechte vorbehalten.
+/// Copyright ï¿½ 2016 SFB-TRR 161. Alle Rechte vorbehalten.
 /// </copyright>
-/// <author>Christoph Müller</author>
+/// <author>Christoph Mï¿½ller</author>
 
 #pragma once
 
@@ -117,12 +117,19 @@ namespace trrojan {
     /// <summary>
     /// Returns the base name of the file without the path.
     /// </summary>
-    /// <param name="path">The path to extrct the name from.</param>
+    /// <param name="path">The path to extract the name from.</param>
     /// <param name="with_extension">If <c>true</c>, return the file name with extension,
     /// otherwise remove all characters starting with the last '.'.</param>
     /// <retruns>The extracted file name.</retruns>
     std::string TRROJANCORE_API get_file_name(const std::string &path,
-        const bool with_extension = true);
+                                              const bool with_extension = true);
+
+    /// <summary>
+    /// Returns the path of the file. This does not include the file name.
+    /// </summary>
+    /// <param name="file_path">The file path to extract the path from.</param>
+    /// <retruns>The extracted path.</retruns>
+    std::string TRROJANCORE_API get_path(const std::string &file_path);
 
     /// <summary>
     /// Read a whole binary file at the location designated by
