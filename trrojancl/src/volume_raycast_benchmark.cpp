@@ -375,7 +375,7 @@ trrojan::result trrojan::opencl::volume_raycast_benchmark::run(const configurati
     // FIXME: PNG w/ linux (+ jpg, tif...)
     // lib import problem? - currently only nativ CImg formats (bmp...) seem to work
     //cimg_write("test.bmp", _output_data.data(), img_dim, 4);
-    trrojan::save_image("test.bmp", _output_data.data(), imgWidth, imgHeight, 4);
+    trrojan::save_image("test.png", _output_data.data(), imgWidth, imgHeight, 4);
 
     // TODO: move to own method
     // generate result
