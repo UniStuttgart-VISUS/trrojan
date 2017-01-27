@@ -64,6 +64,108 @@ const GUID trrojan::detail::wic_format_traits<float>::id(
 
 #ifdef _WIN32
 /*
+ * trrojan::get_wic_bitmap
+ */
+ATL::CComPtr<IWICBitmapSource> TRROJANCORE_API trrojan::get_wic_bitmap(
+        IWICImagingFactory *wic, const void *data, const size_t width,
+        const size_t height, const GUID& fmtData, size_t stride,
+        GUID fmtBitmap) {
+    ATL::CComPtr<IWICBitmap> bmp;
+    ATL::CComPtr<IWICFormatConverter> conv;
+    BYTE *dst = nullptr;
+    UINT dstSize = 0;
+    UINT dstStride = 0;
+    HRESULT hr = S_OK;
+    ATL::CComPtr<IWICBitmapLock> lock;
+
+    if (wic == nullptr) {
+        throw std::invalid_argument("'wic' must not be nullptr.");
+    }
+
+    /* Compute stride if not specified. */
+    if (stride == 0) {
+        stride = trrojan::get_wic_bpp(wic, fmtData);
+        assert((stride % CHAR_BIT) == 0);
+        stride /= CHAR_BIT;
+        stride = (width * stride + 3) & ~3;
+    }
+
+    /* Assume no conversion if no target format was given. */
+    if (::IsEqualGUID(fmtBitmap, ::GUID_NULL)) {
+        fmtBitmap = fmtData;
+    }
+
+    /* Create the bitmap */
+    hr = wic->CreateBitmap(width, height, fmtData, WICBitmapCacheOnDemand,
+        &bmp);
+    if (FAILED(hr)) {
+        std::stringstream msg;
+        msg << "Failed to instantiate WIC bitmap converter with error code "
+            << hr << "." << std::ends;
+        throw std::runtime_error(msg.str());
+    }
+
+    /* Update the data. */
+    hr = bmp->Lock(nullptr, WICBitmapLockWrite, &lock);
+    if (FAILED(hr)) {
+        std::stringstream msg;
+        msg << "Failed to lock bitmap with error code "
+            << hr << "." << std::ends;
+        throw std::runtime_error(msg.str());
+    }
+
+    hr = lock->GetStride(&dstStride);
+    if (FAILED(hr)) {
+        std::stringstream msg;
+        msg << "Failed to obtain data stride for bitmap with error code "
+            << hr << "." << std::ends;
+        throw std::runtime_error(msg.str());
+    }
+
+    hr = lock->GetDataPointer(&dstSize, &dst);
+    if (FAILED(hr)) {
+        std::stringstream msg;
+        msg << "Failed to obtain data pointer for bitmap with error code "
+            << hr << "." << std::ends;
+        throw std::runtime_error(msg.str());
+    }
+
+    for (size_t y = 0; y < height; ++y) {
+        auto s = static_cast<const BYTE *>(data) + y * stride;
+        ::memcpy(dst + y * dstStride, s, stride);
+    }
+
+    lock = nullptr;
+
+    /* Add conversion as requested. */
+    if (!::IsEqualGUID(fmtBitmap, fmtData)) {
+        hr = wic->CreateFormatConverter(&conv);
+        if (FAILED(hr)) {
+            std::stringstream msg;
+            msg << "Failed to instantiate WIC format converter with error code "
+                << hr << "." << std::ends;
+            throw std::runtime_error(msg.str());
+        }
+
+        hr = conv->Initialize(bmp, fmtBitmap, WICBitmapDitherTypeNone, nullptr,
+            0.0, WICBitmapPaletteTypeCustom);
+        if (FAILED(hr)) {
+            std::stringstream msg;
+            msg << "Failed to initialise WIC format converter with error code "
+                << hr << "." << std::ends;
+            throw std::runtime_error(msg.str());
+        }
+
+        return conv;
+    } else {
+        return bmp;
+    }
+}
+#endif /* _WIN32 */
+
+
+#ifdef _WIN32
+/*
  * trrojan::get_wic_bpp
  */
 size_t TRROJANCORE_API trrojan::get_wic_bpp(IWICImagingFactory *wic,
@@ -185,6 +287,7 @@ void TRROJANCORE_API trrojan::wic_save(IWICImagingFactory *wic,
         GUID fmtFile) {
     USES_CONVERSION;
     ATL::CComPtr<IWICBitmapEncoder> encoder;
+    GUID fmtFrame = fmtData;
     ATL::CComPtr<IWICBitmapFrameEncode> frame;
     HRESULT hr = S_OK;
     ATL::CComPtr<IWICStream> stream;
@@ -268,7 +371,7 @@ void TRROJANCORE_API trrojan::wic_save(IWICImagingFactory *wic,
         throw std::runtime_error(msg.str());
     }
 
-    hr = frame->SetPixelFormat(const_cast<GUID *>(&fmtData));
+    hr = frame->SetPixelFormat(&fmtFrame);
     if (FAILED(hr)) {
         std::stringstream msg;
         msg << "Failed to set format of frame with error code "
@@ -276,10 +379,18 @@ void TRROJANCORE_API trrojan::wic_save(IWICImagingFactory *wic,
         throw std::runtime_error(msg.str());
     }
 
-    hr = frame->WritePixels(static_cast<UINT>(height),
-        static_cast<UINT>(stride),
-        static_cast<UINT>(height * stride),
-        const_cast<BYTE *>(static_cast<const BYTE *>(data)));
+    if (fmtFrame == fmtData) {
+        // Encoder supports input format, can write directly.
+        hr = frame->WritePixels(static_cast<UINT>(height),
+            static_cast<UINT>(stride),
+            static_cast<UINT>(height * stride),
+            const_cast<BYTE *>(static_cast<const BYTE *>(data)));
+    } else {
+        // We need a conversion step.
+        auto bmp = trrojan::get_wic_bitmap(wic, data, width, height, fmtData,
+            stride, fmtFrame);
+        hr = frame->WriteSource(bmp, nullptr);
+    }
     if (FAILED(hr)) {
         std::stringstream msg;
         msg << "Failed to write to frame with error code "

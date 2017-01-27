@@ -233,6 +233,17 @@ namespace detail {
 
 #ifdef _WIN32
     /// <summary>
+    /// Get a WIC bitmap for the specified raw data.
+    /// </summary>
+    ATL::CComPtr<IWICBitmapSource> TRROJANCORE_API get_wic_bitmap(
+        IWICImagingFactory *wic, const void *data, const size_t width,
+        const size_t height, const GUID& fmtData, size_t stride = 0,
+        GUID fmtBitmap = ::GUID_NULL);
+#endif /* _WIN32*/
+
+
+#ifdef _WIN32
+    /// <summary>
     /// Gets the bits per pixel for the given format.
     /// </summary>
     /// <param name="wic"></param>
