@@ -1,12 +1,12 @@
 /*SHUFFLE*/
-    if (gId >= IMG_RES*IMG_RES)
+    if (gId >= get_global_size(0)*get_global_size(1))
     {
         return;
     }
     gId = shuffledIds[gId];
     idX = (int)(gId % get_global_size(0));
     idY = (int)(gId / get_global_size(0));
-	if (idX > IMG_RES || idY > IMG_RES)
-	{
-		return;
-	}
+    if (idX > get_global_size(0) || idY > get_global_size(1))
+    {
+        return;
+    }

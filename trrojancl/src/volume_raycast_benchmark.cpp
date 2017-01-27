@@ -71,7 +71,8 @@ const std::string trrojan::opencl::volume_raycast_benchmark::kernel_snippet_path
 const std::string trrojan::opencl::volume_raycast_benchmark::kernel_source_path =
     "/../trrojancl/include/kernel/volume_raycast_base.cl";
 const std::string trrojan::opencl::volume_raycast_benchmark::test_volume =
-    "/home/brudervn/netshare/trrstore/A02/data/volumes/bonsai.dat";
+//      "/home/brudervn/netshare/trrstore/A02/data/volumes/bonsai.dat";
+    "/media/brudervn/Daten/volTest/vol/bonsai.dat";
 //    "//trr161store.visus.uni-stuttgart.de/SFB-TRR 161/A02/data/volumes/bonsai.dat";
 #endif
 
@@ -91,9 +92,9 @@ trrojan::opencl::volume_raycast_benchmark::volume_raycast_benchmark(void)
     this->_default_configs.add_factor(factor::from_manifestations(
         factor_environment_vendor, static_cast<int>(VENDOR_ANY)));
     this->_default_configs.add_factor(
-        factor::from_manifestations(factor_device_type, static_cast<int>(TYPE_ANY)));
+        factor::from_manifestations(factor_device_type, static_cast<int>(TYPE_ALL)));
     this->_default_configs.add_factor(
-        factor::from_manifestations(factor_device_vendor, static_cast<int>(VENDOR_NVIDIA)));
+        factor::from_manifestations(factor_device_vendor, static_cast<int>(VENDOR_ANY)));
 
     // if no number of test iterations is specified, use a magic number
     this->_default_configs.add_factor(factor::from_manifestations(factor_iterations, 5));
@@ -122,7 +123,7 @@ trrojan::opencl::volume_raycast_benchmark::volume_raycast_benchmark(void)
     //
     // sample precision in bytes, if not specified, use uchar (1 byte)
     add_kernel_build_factor(factor_sample_precision,
-                            scalar_type_traits<scalar_type::ushort>::name());
+                            scalar_type_traits<scalar_type::uchar>::name());
     // use linear interpolation (not nearest neighbor interpolation)
     add_kernel_build_factor(factor_use_lerp, true);
     // use early ray termination
@@ -224,33 +225,33 @@ size_t trrojan::opencl::volume_raycast_benchmark::run(
             // check vendor and device type
             auto env = cs.find(factor_environment)->value().as<trrojan::environment>();
             environment::pointer env_ptr = std::dynamic_pointer_cast<environment>(env);
-            int env_vendor = cs.find(factor_environment_vendor)->value().as<int>();
-            if (env_ptr->get_properties().vendor != VENDOR_ANY 
-                && env_ptr->get_properties().vendor != env_vendor
-                && env_vendor != VENDOR_ANY)
+            int env_vendor_factor = cs.find(factor_environment_vendor)->value().as<int>();
+            if (env_ptr->get_properties().vendor != VENDOR_ANY
+                    && env_vendor_factor != VENDOR_ANY
+                    && env_ptr->get_properties().vendor != env_vendor_factor)
             {
-                std::cout << "skipping environment vendor " << env_vendor
+                std::cout << "Skipping environment vendor " << env_vendor_factor
                     << env_ptr->get_properties().vendor << std::endl;
                 return false;
             }
             auto dev = cs.find(factor_device)->value().as<trrojan::device>();
             device::pointer dev_ptr = std::dynamic_pointer_cast<device>(dev);
-            int dev_vendor = cs.find(factor_device_vendor)->value().as<int>();
-            int dev_type = cs.find(factor_device_type)->value().as<int>();
-            // FIXME
-            if ((dev_ptr->get_vendor() != VENDOR_ANY
-                && dev_ptr->get_vendor() != dev_vendor
-                && dev_vendor != VENDOR_ANY)
-                ||
-                (dev_ptr->get_type() != TYPE_ANY
-                 && dev_ptr->get_type() != dev_type
-                && dev_type != TYPE_ANY))
+            int dev_vendor_factor = cs.find(factor_device_vendor)->value().as<int>();
+            unsigned dev_type_factor = cs.find(factor_device_type)->value().as<unsigned>();
+            if (dev_ptr->get_vendor() != VENDOR_ANY && dev_vendor_factor != VENDOR_ANY
+                    && dev_ptr->get_vendor() != dev_vendor_factor)
             {
-                std::cout << "skipping device vendor "
-                    << dev_vendor << dev_type << std::endl;
+                std::cout << "Skipping device vendor "
+                    << dev_vendor_factor << std::endl;
                 return false;
             }
-
+            if (dev_ptr->get_type() != TYPE_ALL && dev_type_factor != TYPE_ALL
+                    && dev_ptr->get_type() != dev_type_factor)
+            {
+                std::cout << "Skipping device type "
+                    << dev_type_factor << std::endl;
+                return false;
+            }
             std::cout << "___First run on " <<
                          cs.find(factor_environment)->value()
                       << "___" << std::endl << std::endl;
@@ -373,7 +374,7 @@ trrojan::result trrojan::opencl::volume_raycast_benchmark::run(const configurati
 
     // FIXME: PNG w/ linux (+ jpg, tif...)
     // lib import problem? - currently only nativ CImg formats (bmp...) seem to work
-    cimg_write("test.bmp", _output_data.data(), img_dim, 4);
+    cimg_write("test.png", _output_data.data(), img_dim, 4);
 
     // TODO: move to own method
     // generate result
@@ -586,8 +587,6 @@ void trrojan::opencl::volume_raycast_benchmark::load_transfer_function(
     {
         log_cl_error(err);
     }
-
-    //env->get_garbage_collector().add_mem_object(&_tff_mem);
 }
 
 
@@ -863,13 +862,12 @@ void trrojan::opencl::volume_raycast_benchmark::update_kernel_args(
             _output_mem = cl::Image2D(env_ptr->get_properties().context,
                                       CL_MEM_WRITE_ONLY,
                                       format,
-                                      cfg.find(factor_viewport_height)->value(),
-                                      cfg.find(factor_viewport_width)->value());
-//            env_ptr->get_garbage_collector().add_mem_object((cl::Memory *)&_output_mem);
+                                      cfg.find(factor_viewport_width)->value(),
+                                      cfg.find(factor_viewport_height)->value());
             _kernel.setArg(OUTPUT, _output_mem);
 
-            _output_data.resize(cfg.find(factor_viewport_height)->value().as<int>()
-                                * cfg.find(factor_viewport_width)->value().as<int>() * 4,
+            _output_data.resize(cfg.find(factor_viewport_width)->value().as<int>()
+                                * cfg.find(factor_viewport_height)->value().as<int>() * 4,
                                 0.0f);
         }
         catch (cl::Error err)

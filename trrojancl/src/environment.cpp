@@ -41,15 +41,6 @@ const trrojan::opencl::properties &trrojan::opencl::environment::get_properties(
 }
 
 
-/**
- * trrojan::opencl::environment::get_garbage_collector
- */
-trrojan::opencl::garbage_collector &trrojan::opencl::environment::get_garbage_collector()
-{
-    return _gc;
-}
-
-
 /*
  * trrojan::opencl::environment::generate_program
  */

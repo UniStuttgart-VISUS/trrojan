@@ -1,5 +1,3 @@
-#define IMG_RES 1024
-
 constant sampler_t linearSmp = CLK_NORMALIZED_COORDS_TRUE | CLK_ADDRESS_CLAMP |
                                 CLK_FILTER_LINEAR;
 constant sampler_t nearestSmp = CLK_NORMALIZED_COORDS_TRUE | CLK_ADDRESS_CLAMP |
@@ -56,7 +54,6 @@ __kernel void volumeRender(
                            const int4 volRes,
                            const sampler_t sampler,
                            const float precisionDiv
-                           //const int viewChange,               // == 1 if view is rotated, 0 else
                            /***OFFSET_ARGS***/
                         )
 {
@@ -72,9 +69,16 @@ __kernel void volumeRender(
     /***SHUFFLE***/
 
     int2 texCoords = (int2)(idX, idY);
+    float aspectRatio = native_divide((float)get_global_size(1), (float)(get_global_size(0)));
+    aspectRatio = min(aspectRatio, native_divide((float)get_global_size(0), (float)(get_global_size(1))));
+    int maxSize = max(get_global_size(0), get_global_size(1));
     float2 imgCoords;
-    imgCoords.x = native_divide(((float)idX + 0.5f), (float)(get_global_size(0))) * 2.0f - 1.0f;
-    imgCoords.y = native_divide(((float)idY + 0.5f), (float)(get_global_size(1))) * 2.0f - 1.0f;
+    imgCoords.x = native_divide(((float)idX + 0.5f), (float)(maxSize)) * 2.0f;
+    imgCoords.y = native_divide(((float)idY + 0.5f), (float)(maxSize)) * 2.0f;
+    // calculate correct offset based on aspect ratio
+    imgCoords -= get_global_size(0) > get_global_size(1) ? 
+                        (float2)(1.0f, aspectRatio) : (float2)(aspectRatio, 1.0);
+    
     // flip y-coordinate to point in right direction
     imgCoords.y *= -1.0f;
 
@@ -108,6 +112,7 @@ __kernel void volumeRender(
     uint i = 0;
     float t = 0.0f;
 
+    // raycasting loop
     while (true)
     {
         t = (tnear + stepSize*i);
