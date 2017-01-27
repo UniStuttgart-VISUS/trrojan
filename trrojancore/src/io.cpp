@@ -68,6 +68,19 @@ std::string TRROJANCORE_API trrojan::read_text_file(const char *path) {
 
 
 /*
+ * trrojan::get_extension
+ */
+std::string trrojan::get_extension(const std::string& path) {
+    auto idx = path.find_last_of(extension_separator_char);
+    if (idx == std::string::npos) {
+        return std::string();
+    } else {
+        return path.substr(idx);
+    }
+}
+
+
+/*
  * trrojan::get_file_name
  */
 std::string TRROJANCORE_API trrojan::get_file_name(const std::string &path,

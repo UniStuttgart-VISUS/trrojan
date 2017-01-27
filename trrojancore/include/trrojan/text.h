@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <cctype>
 #include <functional>
+#include <iterator>
 #include <locale>
 #include <sstream>
 #include <string>
@@ -97,7 +98,8 @@ namespace trrojan {
     template<class T>
     std::basic_string<T> tolower(const std::basic_string<T>& str) {
         std::basic_string<T> retval;
-        std::transform(str.cbegin(), str.cend(), retval.begin(), ::tolower);
+        std::transform(str.cbegin(), str.cend(), std::back_inserter(retval),
+            ::tolower);
         return retval;
     }
 

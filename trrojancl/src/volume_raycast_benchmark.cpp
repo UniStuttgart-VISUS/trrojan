@@ -13,10 +13,11 @@
 #include <array>
 #include <valarray>
 
+#include "trrojan/image_helper.h"
 #include "trrojan/io.h"
-#include "trrojan/timer.h"
-#include "trrojan/cimg_helper.h"
 #include "trrojan/process.h"
+#include "trrojan/timer.h"
+
 
 #define _TRROJANSTREAM_DEFINE_FACTOR(f)                                        \
 const std::string trrojan::opencl::volume_raycast_benchmark::factor_##f(#f)
@@ -310,9 +311,9 @@ trrojan::result trrojan::opencl::volume_raycast_benchmark::run(const configurati
     auto env = cfg.find(factor_environment)->value().as<trrojan::environment>();
     environment::pointer env_ptr = std::dynamic_pointer_cast<environment>(env);
     double time = 0;
-    std::array<int, 3> img_dim = { {cfg.find(factor_viewport_width)->value(),
-                                    cfg.find(factor_viewport_height)->value(),
-                                    1} };
+    auto imgWidth = cfg.get<int>(factor_viewport_width);
+    auto imgHeight = cfg.get<int>(factor_viewport_height);
+    std::array<int, 3> img_dim = { { imgWidth, imgHeight, 1} };
     cl_int evt_status = CL_QUEUED;
     try // opencl scope
     {
@@ -374,7 +375,8 @@ trrojan::result trrojan::opencl::volume_raycast_benchmark::run(const configurati
 
     // FIXME: PNG w/ linux (+ jpg, tif...)
     // lib import problem? - currently only nativ CImg formats (bmp...) seem to work
-    cimg_write("test.png", _output_data.data(), img_dim, 4);
+    trrojan::save_image("test.png", _output_data.data(), imgWidth, imgHeight, 4);
+
 
     // TODO: move to own method
     // generate result

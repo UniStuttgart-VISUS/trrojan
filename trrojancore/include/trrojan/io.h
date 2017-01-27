@@ -81,6 +81,12 @@ namespace trrojan {
     std::string combine_path(std::string path, P&&... paths);
 
     /// <summary>
+    /// Gets the file name extension of <paramref name="path" /> including the
+    /// leading <see cref="trrojan::extension_separator_char" />.
+    /// </summary>
+    std::string get_extension(const std::string& path);
+
+    /// <summary>
     /// Enumerates all file system entries (files and directories) in
     /// <paramref name="path" /> that match the given pattern and the given
     /// predicate.
