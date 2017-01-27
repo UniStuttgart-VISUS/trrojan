@@ -92,7 +92,7 @@ trrojan::opencl::volume_raycast_benchmark::volume_raycast_benchmark(void)
     this->_default_configs.add_factor(factor::from_manifestations(
         factor_environment_vendor, static_cast<int>(VENDOR_ANY)));
     this->_default_configs.add_factor(
-        factor::from_manifestations(factor_device_type, static_cast<int>(TYPE_ALL)));
+        factor::from_manifestations(factor_device_type, static_cast<int>(TYPE_GPU)));
     this->_default_configs.add_factor(
         factor::from_manifestations(factor_device_vendor, static_cast<int>(VENDOR_ANY)));
 
@@ -133,7 +133,7 @@ trrojan::opencl::volume_raycast_benchmark::volume_raycast_benchmark(void)
     // use direct volume rendering (not inderect aka iso-surface rendering)
     add_kernel_build_factor(factor_use_dvr, true);
     // shuffle ray IDs pseudo randomly
-    add_kernel_build_factor(factor_shuffle, false);
+    add_kernel_build_factor(factor_shuffle, true);
     // use a linear buffer as volume data structure (instead of a texture)
     add_kernel_build_factor(factor_use_buffer, false);
     // use a simple illumination technique
@@ -831,7 +831,7 @@ void trrojan::opencl::volume_raycast_benchmark::update_kernel_args(
         }
     }
     // interpolation
-    if (changed.count(factor_use_lerp))
+    if (changed.count(factor_use_lerp) || changed.count(factor_device))
     {
         try
         {
@@ -852,7 +852,8 @@ void trrojan::opencl::volume_raycast_benchmark::update_kernel_args(
             log_cl_error(err);
         }
     }
-    if (changed.count(factor_viewport_height) || changed.count(factor_viewport_width))
+    if (changed.count(factor_viewport_height) || changed.count(factor_viewport_width)
+            || changed.count(factor_device))
     {
         cl::ImageFormat format;
         format.image_channel_order = CL_RGBA;
@@ -875,7 +876,7 @@ void trrojan::opencl::volume_raycast_benchmark::update_kernel_args(
             log_cl_error(err);
         }
     }
-    if (changed.count(factor_step_size_factor))
+    if (changed.count(factor_step_size_factor) || changed.count(factor_device))
     {
         try{
             _kernel.setArg(STEP_SIZE,
@@ -884,7 +885,7 @@ void trrojan::opencl::volume_raycast_benchmark::update_kernel_args(
             log_cl_error(err);
         }
     }
-    if (changed.count(factor_volume_file_name))
+    if (changed.count(factor_volume_file_name) || changed.count(factor_device))
     {
         // TODO from static config -> merge
         cl_int4 resolution = {{_passive_cfg.find(factor_volume_res_x)->value(),

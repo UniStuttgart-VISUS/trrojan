@@ -86,6 +86,8 @@ namespace trrojan {
                     ec.replace_factor(factor::from_manifestations<device>("device", d));
                     if (e->name().find("Intel") != std::string::npos)
                     {
+                        // skip intel iGPU
+                        continue;
                         ec.replace_factor(factor::from_manifestations("device_type", 1 << 1));
                     }
                     std::cout << std::endl << "=== " << d->name() << " ===" << std::endl;
