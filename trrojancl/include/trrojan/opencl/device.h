@@ -9,66 +9,12 @@
 #include "trrojan/device.h"
 
 #include "trrojan/opencl/export.h"
+#include "trrojan/opencl/util.h"
 
-//#include "trrojan/opencl/environment.h"
-
-#define __CL_ENABLE_EXCEPTIONS
-#if defined(__APPLE__) || defined(__MACOSX)
-    #include "OpenCL/cl.hpp"
-#else
-    #include <CL/cl.hpp>
-#endif
-
-#include <map>
-
-namespace trrojan {
-namespace opencl {
-
-    /// <summary>
-    /// The hardware vendor enum.
-    /// </summary>
-    enum vendor
-    {
-        VENDOR_UNKNOWN  = (1 << 0),
-        VENDOR_AMD      = (1 << 1),
-        VENDOR_INTEL    = (1 << 2),
-        VENDOR_NVIDIA   = (1 << 3),
-        VENDOR_ANY      = (1 << 4),
-    };
-
-    /// <summary>
-    /// The hardware type enum.
-    /// </summary>
-    enum hardware_type
-    {
-        TYPE_DEFAULT        = (1 << 0),     // CL_DEVICE_TYPE_DEFAULT
-        TYPE_CPU            = (1 << 1),     // CL_DEVICE_TYPE_CPU
-        TYPE_GPU            = (1 << 2),     // CL_DEVICE_TYPE_GPU
-        TYPE_ACCELERATOR    = (1 << 3),     // CL_DEVICE_TYPE_ACCELERATOR
-        TYPE_CUSTOM         = (1 << 4),     // CL_DEVICE_TYPE_CUSTOM
-        TYPE_ALL            = 0xFFFFFFFF,   // CL_DEVICE_TYPE_ALL
-    };
-
-    /// <summary>
-    /// Helper struct for map initialization.
-    /// </summary>
-    /// <see href="http://stackoverflow.com/questions/207976/how-to-easily-map-c-enums-to-strings" />
-    template<typename T> struct map_init_helper
-    {
-        T& data;
-        map_init_helper(T& d) : data(d) {}
-
-        /// <summary>
-        /// Returning *this from operator() allows the chaining of operator(),
-        /// like operator<< on std::ostream s.
-        /// </summary>
-        map_init_helper& operator() (typename T::key_type const& key,
-                                     typename T::mapped_type const& value)
-        {
-            data[key] = value;
-            return *this;
-        }
-    };
+namespace trrojan
+{
+namespace opencl
+{
 
     /// <summary>
     /// Representation of an OpenCL device.
@@ -151,24 +97,6 @@ namespace opencl {
         /// The OpenCL device type.
         /// </summary>
         trrojan::opencl::hardware_type _type;
-
-        /// <summary>
-        /// Returns a <see cref="trrojan::map_init_helper" />.
-        /// </summary>
-        template<typename T> map_init_helper<T> map_init(T& item)
-        {
-            return map_init_helper<T>(item);
-        }
-
-        /// <summary>
-        /// Map of vendor names.
-        /// </summary>
-        std::map<vendor, const char*> _vendor_names;
-
-        /// <summary>
-        /// Map of type names.
-        /// </summary>
-        std::map<hardware_type, const char*> _type_names;
     };
 
 }

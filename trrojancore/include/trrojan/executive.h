@@ -98,12 +98,12 @@ namespace trrojan {
                 for (auto d : dst)
                 {
                     ec.replace_factor(factor::from_manifestations<device>("device", d));
-                    if (e->name().find("Intel") != std::string::npos)
-                    {
-                        // skip intel iGPU
-                        continue;
-                        ec.replace_factor(factor::from_manifestations("device_type", 1 << 1));
-                    }
+//                    if (e->name().find("Intel") != std::string::npos)
+//                    {
+//                        // skip intel iGPU
+//                        //continue;
+//                        ec.replace_factor(factor::from_manifestations("device_type", 1 << 1));
+//                    }
                     std::cout << std::endl << "=== " << d->name() << " ===" << std::endl;
 
                     for (auto b : bs)
@@ -128,9 +128,7 @@ namespace trrojan {
                         }
                     }
                 }
-
             }
-
 
 //            for (auto b : bs) {
 //                std::cout << "=== " << b->name() << " ===" << std::endl;

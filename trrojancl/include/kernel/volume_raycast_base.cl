@@ -92,7 +92,7 @@ __kernel void volumeRender(
     
     if (!hit)
     {
-        // write output color: transparent white
+        // write output color: transparent black
         float4 color = (float4)(0.0f, 0.0f, 0.0f, 0.0f);
         write_imagef(outData, texCoords, color);
         return;
@@ -137,5 +137,12 @@ __kernel void volumeRender(
 
     color *= (float4)(255.0f, 255.0f, 255.0f, 255.0f);
     write_imagef(outData, texCoords, color);
+    
+//     uint4 colorui;
+//     colorui.x = (uint)floor(color.x);
+//     colorui.y = (uint)floor(color.y);
+//     colorui.z = (uint)floor(color.z);
+//     colorui.w = (uint)floor(color.w);
+//     write_imageui(outData, texCoords, colorui);
 }
 

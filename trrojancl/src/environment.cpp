@@ -57,7 +57,7 @@ void trrojan::opencl::environment::create_queue(const cl::Device &dev,
 
 
 /*
- *
+ * trrojan::opencl::environment::get_platform_names
  */
 size_t trrojan::opencl::environment::get_platform_names(std::vector<std::string> &names)
 {
@@ -142,7 +142,8 @@ cl::Context trrojan::opencl::environment::create_context(cl_device_type type,
     try
     {
         _prop.context = cl::Context(type, cps);
-        _prop.vendor = vendor;
+        std::string vendor_name = platform.getInfo<CL_PLATFORM_VENDOR>();
+        _prop.vendor = util::get_vendor_from_string(vendor_name);
         return _prop.context;
     }
     catch (cl::Error error)
@@ -180,8 +181,7 @@ cl::Context trrojan::opencl::environment::create_CLGL_context(cl_device_type typ
           (cl_context_properties)(platform)(),
           0
       };
-  #else
-      // Linux
+  #else // UNIX
       cl_context_properties cps[] = {
           CL_GL_CONTEXT_KHR,
           (cl_context_properties)glXGetCurrentContext(),

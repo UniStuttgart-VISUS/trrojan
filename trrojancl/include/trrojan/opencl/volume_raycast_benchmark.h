@@ -77,6 +77,7 @@ namespace opencl
         static const std::string factor_volume_res_x;
         static const std::string factor_volume_res_y;
         static const std::string factor_volume_res_z;
+        static const std::string factor_volume_scaling;
 
         enum kernel_arg
         {
@@ -248,6 +249,44 @@ namespace opencl
 
 
         /// <summary>
+        /// Scale the volume <paramref name="data" /> by <paramref name="factor" /> in each
+        /// dimension.
+        /// </summary>
+        /// <param name="dara">The volume data.</param>
+        /// <param name="factor">The scaling factor.</param>
+        /// <param name="volume_res">The volume data set reolution.</param>
+        template<class T>
+        void scale_data(std::vector<T> &data,
+                        const double factor,
+                        const std::array<unsigned, 3> volume_res)
+        {
+            size_t voxel_cnt = 0;
+            std::array<unsigned, 3> new_res;
+            for (size_t i = 0; i < volume_res.size(); ++i)
+            {
+                new_res[i] = _dr.properties().volume_res[i] * factor;
+            }
+            voxel_cnt = new_res[0] * new_res[1] * new_res[2];
+
+            std::vector<T> data_scaled(voxel_cnt, 0);
+            for (size_t z = 0; z < new_res[2]; ++z)
+            {
+                for (size_t y = 0; y < new_res[1]; ++y)
+                {
+                    for (size_t x = 0; x < new_res[0]; ++x)
+                    {
+                        size_t data_id = floor(x/factor) + volume_res[0]*(y/factor)
+                                + volume_res[0]*volume_res[1]*floor(z/factor);
+                        data_scaled.at(x + new_res[0]*y + new_res[0]*new_res[1]*z) =
+                                data.at(data_id);
+                    }
+                }
+            }
+            data = data_scaled;
+        }
+
+
+        /// <summary>
         /// Convert scalar raw volume data from a given input type to a given output type
         /// and create an OpenCL memory object with the resulting data.
         /// </summary>
@@ -260,7 +299,8 @@ namespace opencl
         template<class From, class To>
         void convert_data_precision(const std::vector<char> &volume_data,
                                     const bool use_buffer,
-                                    environment::pointer cl_env)
+                                    environment::pointer cl_env,
+                                    const double scaling_factor = 1.0)
         {
             // reinterpret raw data (char) to input format
             auto s = reinterpret_cast<const From *>(volume_data.data());
@@ -269,6 +309,10 @@ namespace opencl
 
             // convert imput vector to the desired output precision
             std::vector<To> converted_data(s, e);
+
+            if (scaling_factor != 1)
+                scale_data(converted_data, scaling_factor, _dr.properties().volume_res);
+
             try
             {
                 if (use_buffer)
@@ -313,8 +357,6 @@ namespace opencl
                 throw std::runtime_error( "ERROR: " + std::string(err.what()) + "("
                                           + util::get_cl_error_str(err.err()) + ")");
             }
-            // Add memory object to manual OpenCL memory manager.
-//            cl_env->get_garbage_collector().add_mem_object(&_volume_mem);
         }
 
         /// <summary>
@@ -337,7 +379,8 @@ namespace opencl
                            const scalar_type sample_precision,
                            const std::vector<char> &raw_data,
                            const bool use_buffer,
-                           environment::pointer env);
+                           environment::pointer env,
+                           const double scaling_factor = 1.0);
 
         /// <summary>
         /// Compose and generate the OpenCL kernel source based on the given configuration.

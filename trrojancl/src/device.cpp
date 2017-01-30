@@ -12,13 +12,6 @@
  */
 trrojan::opencl::device::device()
 {
-    map_init(_vendor_names)
-            (VENDOR_ANY, "any")
-            (VENDOR_AMD, "AMD")
-            (VENDOR_NVIDIA, "NVIDIA")
-            (VENDOR_INTEL, "Intel")
-            (VENDOR_UNKNOWN, "unknown");
-
     _vendor = VENDOR_UNKNOWN;
     _type = TYPE_ALL;
 }
@@ -157,20 +150,6 @@ void trrojan::opencl::device::create_id(vendor vendor, cl::Device dev)
 void trrojan::opencl::device::set_device_props(cl::Device dev)
 {
     std::string vendor = dev.getInfo<CL_DEVICE_VENDOR>();
-    for (auto &a : _vendor_names)
-    {
-        if (vendor.find(a.second) != std::string::npos)
-        {
-            _vendor = a.first;
-            break;
-        }
-        else if (vendor.find("Advanced Micro Devices") != std::string::npos)
-        {
-            _vendor = VENDOR_AMD;
-            break;
-        }
-        else
-            _vendor = VENDOR_UNKNOWN;
-    }
+    _vendor = util::get_vendor_from_string(vendor);
     _type = static_cast<hardware_type>(dev.getInfo<CL_DEVICE_TYPE>());
 }
