@@ -129,7 +129,7 @@ trrojan::opencl::volume_raycast_benchmark::volume_raycast_benchmark(void)
     add_kernel_build_factor(factor_sample_precision,
                             scalar_type_traits<scalar_type::ushort>::name());
     // use linear interpolation (not nearest neighbor interpolation)
-    add_kernel_build_factor(factor_use_lerp, true);
+    add_kernel_build_factor(factor_use_lerp, false);
     // use early ray termination
     add_kernel_build_factor(factor_use_ERT, true);
     // make a transfer function lookups
@@ -930,14 +930,11 @@ void trrojan::opencl::volume_raycast_benchmark::update_kernel_args(
             log_cl_error(err);
         }
     }
-    if (changed.count(factor_volume_file_name) || changed.count(factor_device))
+    if (changed.count(factor_volume_file_name) || changed.count(factor_device)
+            || changed.count(factor_volume_scaling))
     {
         // TODO from static config -> merge
-        cl_int4 resolution = {{_passive_cfg.find(factor_volume_res_x)->value(),
-                               _passive_cfg.find(factor_volume_res_y)->value(),
-                               _passive_cfg.find(factor_volume_res_z)->value(),
-                               0}};
-
+        cl_int4 resolution = {{_volume_res[0], _volume_res[1], _volume_res[2], 0}};
         try{
             _kernel.setArg(RESOLUTION, resolution);
         } catch (cl::Error err) {
