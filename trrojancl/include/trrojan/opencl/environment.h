@@ -41,41 +41,41 @@ namespace opencl
     /// Garbage collector class for OpenCL memory objects.
     /// TODO: remove?
     /// </summary>
-    class garbage_collector
-    {
-    public:
-        void add_mem_object(cl::Memory *mem)
-        {
-            mem_objects.insert(mem);
-        }
+//    class garbage_collector
+//    {
+//    public:
+//        void add_mem_object(cl::Memory *mem)
+//        {
+//            mem_objects.insert(mem);
+//        }
 
-        void del_mem_object(cl::Memory *mem)
-        {
-            mem_objects.erase(mem);
-            delete mem;
-            mem = NULL;
-        }
+//        void del_mem_object(cl::Memory *mem)
+//        {
+//            mem_objects.erase(mem);
+//            delete mem;
+//            mem = NULL;
+//        }
 
-        void del_all()
-        {
-            std::set<cl::Memory *>::iterator it;
-            for(it = mem_objects.begin(); it != mem_objects.end(); ++it)
-            {
-                cl::Memory* mem = *it;
-                delete (mem);
-                mem = NULL;
-            }
-            mem_objects.clear();
-        }
+//        void del_all()
+//        {
+//            std::set<cl::Memory *>::iterator it;
+//            for(it = mem_objects.begin(); it != mem_objects.end(); ++it)
+//            {
+//                cl::Memory* mem = *it;
+//                delete (mem);
+//                mem = NULL;
+//            }
+//            mem_objects.clear();
+//        }
 
-        virtual ~garbage_collector()
-        {
-            del_all();
-        }
+//        virtual ~garbage_collector()
+//        {
+//            del_all();
+//        }
 
-    private:
-        std::set<cl::Memory*> mem_objects;
-    };
+//    private:
+//        std::set<cl::Memory*> mem_objects;
+//    };
 
     struct properties
     {
@@ -130,11 +130,6 @@ namespace opencl
         /// \return
         ///
         const properties &get_properties() const;
-
-        /// <summary>
-        /// Get the garbage collector for OpenCL memory objects.
-        /// </summary>
-        garbage_collector &get_garbage_collector();
 
         /// <summary>
         /// Generate an OpenCL program from <paramref name="source" />.
@@ -207,7 +202,7 @@ namespace opencl
         /// <summary>
         /// Manual garbage collector for OpenCL memory objects.
         /// </summary>
-        mutable garbage_collector _gc;
+//        mutable garbage_collector _gc;
     };
 }
 }

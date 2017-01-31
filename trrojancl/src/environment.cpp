@@ -41,15 +41,6 @@ const trrojan::opencl::properties &trrojan::opencl::environment::get_properties(
 }
 
 
-/**
- * trrojan::opencl::environment::get_garbage_collector
- */
-trrojan::opencl::garbage_collector &trrojan::opencl::environment::get_garbage_collector()
-{
-    return _gc;
-}
-
-
 /*
  * trrojan::opencl::environment::generate_program
  */
@@ -58,6 +49,10 @@ void trrojan::opencl::environment::generate_program(const cl::Program::Sources s
     this->_prop.program = cl::Program(this->_prop.context, source, NULL);
 }
 
+
+/**
+ * trrojan::opencl::environment::create_queue
+ */
 void trrojan::opencl::environment::create_queue(const cl::Device &dev,
                                                 const cl_command_queue_properties prop)
 {
@@ -66,7 +61,7 @@ void trrojan::opencl::environment::create_queue(const cl::Device &dev,
 
 
 /*
- *
+ * trrojan::opencl::environment::get_platform_names
  */
 size_t trrojan::opencl::environment::get_platform_names(std::vector<std::string> &names)
 {
@@ -151,7 +146,8 @@ cl::Context trrojan::opencl::environment::create_context(cl_device_type type,
     try
     {
         _prop.context = cl::Context(type, cps);
-        _prop.vendor = vendor;
+        std::string vendor_name = platform.getInfo<CL_PLATFORM_VENDOR>();
+        _prop.vendor = util::get_vendor_from_string(vendor_name);
         return _prop.context;
     }
     catch (cl::Error error)
@@ -189,8 +185,7 @@ cl::Context trrojan::opencl::environment::create_CLGL_context(cl_device_type typ
           (cl_context_properties)(platform)(),
           0
       };
-  #else
-      // Linux
+  #else // UNIX
       cl_context_properties cps[] = {
           CL_GL_CONTEXT_KHR,
           (cl_context_properties)glXGetCurrentContext(),

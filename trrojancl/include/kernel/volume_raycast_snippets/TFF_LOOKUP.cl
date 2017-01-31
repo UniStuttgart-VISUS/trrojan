@@ -1,2 +1,2 @@
 /*TFF_LOOKUP*/
-        tfColor = read_imagef(tfColors, linearSmp, sample);
+        tfColor = read_imagef(tffData, linearSmp, sample);

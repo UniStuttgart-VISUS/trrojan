@@ -45,7 +45,7 @@ namespace trrojan {
         /// executable.
         /// </remarks>
         /// <returns>The unique id of the device.</returns>
-        inline const std::string& unique_id(void) const {
+        inline const unsigned int& unique_id(void) const {
             return this->_unique_id;
         }
 
@@ -59,7 +59,7 @@ namespace trrojan {
         /// <summary>
         /// The unique id, specifying this unique device.
         /// </summary>
-        std::string _unique_id;
+        unsigned int _unique_id;
     };
 
     /// <summary>

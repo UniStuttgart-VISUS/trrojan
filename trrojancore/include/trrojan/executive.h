@@ -94,41 +94,41 @@ namespace trrojan {
                 ec.replace_factor(factor::from_manifestations<environment>("environment", e));
                 std::vector<device> dst;
                 e->get_devices(dst);
-                // skip intel IGP for now (apparently problems with float precision textures)
-                // TODO: adaption based on device capabilities
-                if (e->name().find("Intel") == std::string::npos 
-                    && e->name().find("AMD") == std::string::npos)
-                {
-                    for (auto d : dst)
-                    {
-                        ec.replace_factor(factor::from_manifestations<device>("device", d));
-                        std::cout << std::endl << "=== " << d->name() << " ===" << std::endl;
 
-                        for (auto b : bs)
+                for (auto d : dst)
+                {
+                    ec.replace_factor(factor::from_manifestations<device>("device", d));
+//                    if (e->name().find("Intel") != std::string::npos)
+//                    {
+//                        // skip intel iGPU
+//                        //continue;
+//                        ec.replace_factor(factor::from_manifestations("device_type", 1 << 1));
+//                    }
+                    std::cout << std::endl << "=== " << d->name() << " ===" << std::endl;
+
+                    for (auto b : bs)
+                    {
+                        // skip stream bech for testing volume raycast bench
+                        if (b->name() != "stream")
                         {
-                            // skip stream bech for testing volume raycast bench
-                            if (b->name() != "stream")
-                            {
-                                auto fn = b->name();
+                            auto fn = b->name();
 #ifdef _WIN32f
-                                fn += std::string(".xslx");
-                                excel_output writer;
-                                writer.open(excel_output_params::create(fn, true));
+                            fn += std::string(".xslx");
+                            excel_output writer;
+                            writer.open(excel_output_params::create(fn, true));
 #else
-                                fn += std::string(".csv");
-                                csv_output writer;
-                                writer.open(csv_output_params::create(fn));
+                            fn += std::string(".csv");
+                            csv_output writer;
+                            writer.open(csv_output_params::create(fn));
 #endif
-                                b->run(ec, [&writer](result&& r) {
-                                    static_cast<output_base&>(writer) << r;
-                                    return true;
-                                });
-                            }
+                            b->run(ec, [&writer](result&& r) {
+                                static_cast<output_base&>(writer) << r;
+                                return true;
+                            });
                         }
                     }
                 }
             }
-
 
 //            for (auto b : bs) {
 //                std::cout << "=== " << b->name() << " ===" << std::endl;
