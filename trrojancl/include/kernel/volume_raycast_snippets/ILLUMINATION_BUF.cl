@@ -20,7 +20,7 @@
         id = clamp(iCoords.x + iCoords.y * volRes.x + (iCoords.z + 1u) * volRes.x * volRes.y, 0u, numVoxels - 1u);
         s2.z = native_divide(((float)volData[id]), precisionDiv);
 
-        float3 n = fast_normalize(s2 - s1);
+        float3 n = fast_normalize(s2 - s1); // use normalize() for Intel IGP
 
         illumColor = shading(n, (fast_normalize((float4)(1.0f, -1.0f, -1.0f, 0.0f) - pos)).xyz, rayDir.xyz);
         tfColor.xyz = mix(tfColor.xyz, illumColor.xyz, 0.5f);
