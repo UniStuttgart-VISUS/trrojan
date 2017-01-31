@@ -310,6 +310,16 @@ namespace opencl
             // convert imput vector to the desired output precision
             std::vector<To> converted_data(s, e);
 
+            // manual downcast if necessary
+            if (sizeof(To) < sizeof(From))
+            {
+                double div = pow(2.0, (sizeof(From) - sizeof(To))*8);
+                for (size_t i = 0; i < converted_data.size(); ++i)
+                {
+                    converted_data.at(i) = s[i] / div;
+                }
+            }
+
             if (scaling_factor != 1)
                 scale_data(converted_data, scaling_factor, _dr.properties().volume_res);
 
@@ -329,11 +339,11 @@ namespace opencl
                     switch (sizeof(To))
                     {
                     case 1:
-                        format.image_channel_data_type = CL_UNSIGNED_INT8; break;
+                        format.image_channel_data_type = CL_UNORM_INT8; break;
                     case 2:
-                        format.image_channel_data_type = CL_UNSIGNED_INT16; break;
+                        format.image_channel_data_type = CL_UNORM_INT16; break;
                     case 4:
-                        format.image_channel_data_type = CL_UNSIGNED_INT32; break;
+                        format.image_channel_data_type = CL_FLOAT; break;
                     case 8:
                         throw std::invalid_argument(
                                     "Double precision is not supported for OpenCL image formats.");

@@ -1,6 +1,8 @@
-constant sampler_t linearSmp = CLK_NORMALIZED_COORDS_TRUE | CLK_ADDRESS_CLAMP |
+#pragma OPENCL EXTENSION cl_khr_fp64 : enable
+
+constant sampler_t linearSmp = CLK_NORMALIZED_COORDS_TRUE | CLK_ADDRESS_CLAMP_TO_EDGE |
                                 CLK_FILTER_LINEAR;
-constant sampler_t nearestSmp = CLK_NORMALIZED_COORDS_TRUE | CLK_ADDRESS_CLAMP |
+constant sampler_t nearestSmp = CLK_NORMALIZED_COORDS_TRUE | CLK_ADDRESS_CLAMP_TO_EDGE |
                                 CLK_FILTER_NEAREST;
 
 // Lambert shading
@@ -47,7 +49,7 @@ int intersectBox(float4 rayOrig,
 __kernel void volumeRender(
                            /***PRECISION***/ volData,
                            __write_only image2d_t outData,
-                           __read_only image1d_t tfColors,     // constant transfer function values
+                           __read_only image1d_t tffData,     // constant transfer function values
                            __constant float *viewMat,
                            __global const int *shuffledIds,
                            const float stepSizeFactor,
@@ -57,7 +59,7 @@ __kernel void volumeRender(
                            /***OFFSET_ARGS***/
                         )
 {
-    float stepSize = native_divide(stepSizeFactor, max(volRes.x, max(volRes.y, volRes.z)));
+    float stepSize = native_divide(stepSizeFactor, (float)max(volRes.x, max(volRes.y, volRes.z)));
     stepSize *= 8.0f; // normalization to octile
 
     uint idX = get_global_id(0);
@@ -106,7 +108,7 @@ __kernel void volumeRender(
     float alpha = 0.0f;
     float4 pos = (float4)(0.0f, 0.0f, 0.0f, 0.0f);
     float sample = 0.0f;
-    uint4 sample4;
+    float4 sample4;
     float4 tfColor = (float4)(0.0f, 0.0f, 0.0f, 0.0f);
     float opacity = 0.0f;
     uint i = 0;

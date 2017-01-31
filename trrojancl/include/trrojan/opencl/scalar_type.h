@@ -96,8 +96,9 @@ namespace opencl
     template<scalar_type... V>
     using scalar_type_list_t = enum_dispatch_list<scalar_type, V...>;
 
-    typedef scalar_type_list_t<scalar_type::uchar, scalar_type::ushort, scalar_type::uint32,
-                scalar_type::uint64, scalar_type::float32, scalar_type::float64> scalar_type_list;
+    typedef scalar_type_list_t<scalar_type::uchar, scalar_type::ushort,
+    scalar_type::uint32, scalar_type::uint64, scalar_type::float32,
+    scalar_type::float64> scalar_type_list;
 
 } /* end namespace stream */
 } /* end namespace trrojan */

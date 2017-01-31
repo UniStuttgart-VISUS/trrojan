@@ -127,9 +127,9 @@ trrojan::opencl::volume_raycast_benchmark::volume_raycast_benchmark(void)
     //
     // sample precision in bytes, if not specified, use uchar (1 byte)
     add_kernel_build_factor(factor_sample_precision,
-                            scalar_type_traits<scalar_type::uchar>::name());
+                            scalar_type_traits<scalar_type::ushort>::name());
     // use linear interpolation (not nearest neighbor interpolation)
-    add_kernel_build_factor(factor_use_lerp, false);
+    add_kernel_build_factor(factor_use_lerp, true);
     // use early ray termination
     add_kernel_build_factor(factor_use_ERT, true);
     // make a transfer function lookups
@@ -280,10 +280,32 @@ size_t trrojan::opencl::volume_raycast_benchmark::run(
             auto dev = cs.find(factor_device)->value().as<trrojan::device>();
             auto data_precision = parse_scalar_type(*_passive_cfg.find(factor_data_precision));
             auto sample_precision = parse_scalar_type(*cs.find(factor_sample_precision));
-            float precision_div = 65535.0f; // 2**16 - 1
-            if (sample_precision == scalar_type::uchar || data_precision == scalar_type::uchar)
+            bool use_buffer = cs.find(factor_use_buffer)->value().as<bool>();
+            float precision_div = static_cast<float>(1.0/255.0);        // uchar -> float
+            if (!use_buffer)
             {
-                precision_div = 255.0f; // 2**8 - 1
+                if (sample_precision <= data_precision)
+                {
+                    precision_div = 1.0f;
+                }
+                else if (data_precision == scalar_type::uchar
+                         && sample_precision == scalar_type::ushort)    // uchar -> ushort
+                {
+                    precision_div = 255.0f; // 2**8 - 1
+                }
+                else if (data_precision == scalar_type::ushort
+                         && sample_precision == scalar_type::float32)   // ushort -> float
+                {
+                    precision_div = 1.0f/65535.0f; // 2**16 - 1
+                }
+            }
+            else
+            {
+                if (data_precision == scalar_type::uchar ||
+                        sample_precision == scalar_type::uchar)
+                {
+                    precision_div = 1.0f;
+                }
             }
             build_kernel(std::dynamic_pointer_cast<environment>(env),
                          std::dynamic_pointer_cast<device>(dev),
@@ -473,7 +495,7 @@ void trrojan::opencl::volume_raycast_benchmark::setup_volume_data(
 
     // create OpenCL volume data memory object (either texture or linear buffer)
     if (changed.count(factor_sample_precision) || changed.count(factor_volume_scaling)
-            || changed.count(factor_environment) || changed.count(factor_device))
+            || changed.count(factor_environment))
     {
         auto data_precision = parse_scalar_type(*_passive_cfg.find(factor_data_precision));
         auto sample_precision = parse_scalar_type(*cfg.find(factor_sample_precision));
@@ -558,7 +580,7 @@ void trrojan::opencl::volume_raycast_benchmark::load_transfer_function(
         {
             for (int j = 0; j < 4; ++j)
             {
-                values.push_back(i); // * (0.05f / static_cast<float>(num_values - 1.0f)));
+                values.push_back(i / 8);
             }
         }
     }
@@ -586,13 +608,13 @@ void trrojan::opencl::volume_raycast_benchmark::load_transfer_function(
 
     // Trunctualte if there are too many values respectively fill with zero values.
     // We multiply by 4 because of the values for RGBA-channels.
-    values.resize(num_values * 4, 0);//0.0f);
+    values.resize(num_values * 4, 0);
 
     // create OpenCL 2d image representation
     cl::ImageFormat format;
     format.image_channel_order = CL_RGBA;
     // Seems like intel IGP does not support float textures as input: use uint8 here.
-    format.image_channel_data_type = CL_UNSIGNED_INT8;
+    format.image_channel_data_type = CL_UNORM_INT8;
     try
     {
         _tff_mem = cl::Image1D(env->get_properties().context,
@@ -659,10 +681,10 @@ void trrojan::opencl::volume_raycast_benchmark::compose_kernel(
             replace_keyword("PRECISION", "__global const uchar*", _kernel_source);
         else if (parse_scalar_type(*cfg.find(factor_sample_precision)) == scalar_type::ushort)
             replace_keyword("PRECISION", "__global const ushort*", _kernel_source);
-        else if (parse_scalar_type(*cfg.find(factor_sample_precision)) == scalar_type::uint32)
-            replace_keyword("PRECISION", "__global const uint*", _kernel_source);
-        else if (parse_scalar_type(*cfg.find(factor_sample_precision)) == scalar_type::uint64)
-            replace_keyword("PRECISION", "__global const ulong*", _kernel_source);
+        else if (parse_scalar_type(*cfg.find(factor_sample_precision)) == scalar_type::float32)
+            replace_keyword("PRECISION", "__global const float*", _kernel_source);
+        else if (parse_scalar_type(*cfg.find(factor_sample_precision)) == scalar_type::float64)
+            replace_keyword("PRECISION", "__global const double*", _kernel_source);
     }
     else
     {
@@ -760,6 +782,9 @@ void trrojan::opencl::volume_raycast_benchmark::build_kernel(environment::pointe
         env->generate_program(source);
         const std::vector<cl::Device> device = {dev.get()->get()};
         env->get_properties().program.build(device, build_flags.c_str());
+        std::string str = env->get_properties().program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(
+                    dev.get()->get());
+        std::cout << str << std::endl;
         std::cout << "OpenCL kernel successfully built!" << std::endl;
 
         _kernel = cl::Kernel(env->get_properties().program, "volumeRender", NULL);
@@ -858,12 +883,12 @@ void trrojan::opencl::volume_raycast_benchmark::update_kernel_args(
             if (cfg.find(factor_use_lerp)->value().as<bool>()) // linear
             {
                 _sampler = cl::Sampler(env_ptr->get_properties().context,
-                                      CL_TRUE, CL_ADDRESS_CLAMP, CL_FILTER_LINEAR);
+                                      CL_TRUE, CL_ADDRESS_CLAMP_TO_EDGE, CL_FILTER_LINEAR);
             }
             else // nearest
             {
                 _sampler = cl::Sampler(env_ptr->get_properties().context,
-                                      CL_TRUE, CL_ADDRESS_CLAMP, CL_FILTER_NEAREST);
+                                      CL_TRUE, CL_ADDRESS_CLAMP_TO_EDGE, CL_FILTER_NEAREST);
             }
             _kernel.setArg(SAMPLER, _sampler);
         }
