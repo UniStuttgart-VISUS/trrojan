@@ -257,27 +257,30 @@ namespace opencl
         /// <param name="volume_res">The volume data set reolution.</param>
         template<class T>
         void scale_data(std::vector<T> &data,
-                        const double factor,
-                        const std::array<unsigned, 3> volume_res)
+                        std::array<unsigned, 3> &volume_res,
+                        const double factor)
         {
             size_t voxel_cnt = 0;
-            std::array<unsigned, 3> new_res;
+            std::array<unsigned, 3> native_res;
             for (size_t i = 0; i < volume_res.size(); ++i)
             {
-                new_res[i] = _dr.properties().volume_res[i] * factor;
+                native_res[i] = volume_res[i];
+                volume_res[i] *= factor;
             }
-            voxel_cnt = new_res[0] * new_res[1] * new_res[2];
+            voxel_cnt = volume_res[0] * volume_res[1] * volume_res[2];
 
             std::vector<T> data_scaled(voxel_cnt, 0);
-            for (size_t z = 0; z < new_res[2]; ++z)
+#pragma omp parallel for
+            for (int z = 0; z < volume_res[2]; ++z)
             {
-                for (size_t y = 0; y < new_res[1]; ++y)
+                for (int y = 0; y < volume_res[1]; ++y)
                 {
-                    for (size_t x = 0; x < new_res[0]; ++x)
+                    for (int x = 0; x < volume_res[0]; ++x)
                     {
-                        size_t data_id = floor(x/factor) + volume_res[0]*(y/factor)
-                                + volume_res[0]*volume_res[1]*floor(z/factor);
-                        data_scaled.at(x + new_res[0]*y + new_res[0]*new_res[1]*z) =
+                        size_t data_id = floor(x/factor)
+                                + native_res[0]*floor(y/factor)
+                                + native_res[0]*native_res[1]*floor(z/factor);
+                        data_scaled.at(x + volume_res[0]*y + volume_res[0]*volume_res[1]*z) =
                                 data.at(data_id);
                     }
                 }
@@ -320,8 +323,12 @@ namespace opencl
                 }
             }
 
+            _volume_res = _dr.properties().volume_res;
             if (scaling_factor != 1)
-                scale_data(converted_data, scaling_factor, _dr.properties().volume_res);
+            {
+                scale_data(converted_data, _volume_res, scaling_factor);
+                std::cout << "Volume data scaled by factor " << scaling_factor << std::endl;
+            }
 
             try
             {
@@ -355,9 +362,9 @@ namespace opencl
                     _volume_mem = cl::Image3D(cl_env->get_properties().context,
                                               CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
                                               format,
-                                              _dr.properties().volume_res[0],
-                                              _dr.properties().volume_res[1],
-                                              _dr.properties().volume_res[2],
+                                              _volume_res[0],
+                                              _volume_res[1],
+                                              _volume_res[2],
                                               0, 0,
                                               converted_data.data());
                 }
@@ -554,6 +561,11 @@ namespace opencl
         /// Vector for storing the rendered output data (2d image).
         /// </summary>
         std::vector<float> _output_data;
+
+        /// <summary>
+        /// The volume data resolution <b>after</b> scaling.
+        /// </summary>
+        std::array<unsigned, 3> _volume_res;
     };
 
 }
