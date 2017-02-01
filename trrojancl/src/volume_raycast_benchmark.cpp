@@ -92,7 +92,7 @@ trrojan::opencl::volume_raycast_benchmark::volume_raycast_benchmark(void)
 //    this->_default_configs.add_factor(factor::empty("device"));
 
     this->_default_configs.add_factor(factor::from_manifestations(
-        factor_environment_vendor, static_cast<int>(VENDOR_ANY)));
+        factor_environment_vendor, static_cast<int>(VENDOR_INTEL | VENDOR_NVIDIA)));
     this->_default_configs.add_factor(
         factor::from_manifestations(factor_device_type, static_cast<int>(TYPE_ALL)));
     this->_default_configs.add_factor(
@@ -222,18 +222,15 @@ size_t trrojan::opencl::volume_raycast_benchmark::run(
         if (changed.count(factor_environment) || changed.count(factor_device))
         {
             setup_raycaster(cs);
-
             // check vendor and device type
             auto env = cs.find(factor_environment)->value().as<trrojan::environment>();
             environment::pointer env_ptr = std::dynamic_pointer_cast<environment>(env);
             int env_vendor_factor = cs.find(factor_environment_vendor)->value().as<int>();
-            if (env_ptr->get_properties().vendor != VENDOR_ANY
-                    && env_vendor_factor != VENDOR_ANY
-                    && env_ptr->get_properties().vendor != env_vendor_factor)
+            if (((env_ptr->get_properties().vendor | VENDOR_ANY) & env_vendor_factor) == 0)
             {
-                std::cout << "Skipping platform vendor " <<
-                             util::_vendor_names.find(
-                                 static_cast<vendor>(env_ptr->get_properties().vendor))->second
+                std::cout << "Skipping platform vendor " 
+                          << util::_vendor_names.find(
+                             static_cast<vendor>(env_ptr->get_properties().vendor))->second
                           << std::endl;
                 return false;
             }
@@ -241,20 +238,20 @@ size_t trrojan::opencl::volume_raycast_benchmark::run(
             device::pointer dev_ptr = std::dynamic_pointer_cast<device>(dev);
             int dev_vendor_factor = cs.find(factor_device_vendor)->value().as<int>();
             unsigned dev_type_factor = cs.find(factor_device_type)->value().as<unsigned>();
-            if (dev_ptr->get_vendor() != VENDOR_ANY && dev_vendor_factor != VENDOR_ANY
-                    && dev_ptr->get_vendor() != dev_vendor_factor)
+            if (((dev_ptr->get_vendor() | VENDOR_ANY) & dev_vendor_factor) == 0)
             {
                 std::cout << "Skipping device vendor "
-                    << util::_vendor_names.find(static_cast<vendor>(dev_vendor_factor))->second
-                    << std::endl;
+                          << util::_vendor_names.find(
+                             static_cast<vendor>(dev_vendor_factor))->second
+                          << std::endl;
                 return false;
             }
-            if (dev_ptr->get_type() != TYPE_ALL && dev_type_factor != TYPE_ALL
-                    && dev_ptr->get_type() != dev_type_factor)
+            if (((dev_ptr->get_type() | TYPE_ALL) & dev_type_factor) == 0)
             {
                 std::cout << "Skipping device type "
-                    << util::_type_names.find(static_cast<hardware_type>(dev_ptr->get_type()))->second
-                    << std::endl;
+                          << util::_type_names.find(
+                             static_cast<hardware_type>(dev_ptr->get_type()))->second
+                          << std::endl;
                 return false;
             }
         }

@@ -180,3 +180,8 @@
 /bin/trrojan/test.png
 *.png
 *.user
+/bin/CMakeFiles/FindOpenMP/ompver.c
+/bin/CMakeFiles/FindOpenMP/ompver.cpp
+/bin/CMakeFiles/FindOpenMP/ompver_C.bin
+/bin/CMakeFiles/FindOpenMP/ompver_CXX.bin
+*.bmp
