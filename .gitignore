@@ -178,3 +178,5 @@
 *.log
 *.csv
 /bin/trrojan/test.png
+*.png
+*.user
