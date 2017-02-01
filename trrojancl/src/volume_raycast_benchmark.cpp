@@ -931,7 +931,7 @@ void trrojan::opencl::volume_raycast_benchmark::update_kernel_args(
             || changed.count(factor_volume_scaling))
     {
         // TODO from static config -> merge
-        cl_int4 resolution = {{_volume_res[0], _volume_res[1], _volume_res[2], 0}};
+        cl_uint4 resolution = {{_volume_res[0], _volume_res[1], _volume_res[2], 0}};
         try{
             _kernel.setArg(RESOLUTION, resolution);
         } catch (cl::Error err) {

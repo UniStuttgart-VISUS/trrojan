@@ -271,11 +271,11 @@ namespace opencl
 
             std::vector<T> data_scaled(voxel_cnt, 0);
 #pragma omp parallel for
-            for (int z = 0; z < volume_res[2]; ++z)
+            for (int z = 0; z < (int)volume_res[2]; ++z)
             {
-                for (int y = 0; y < volume_res[1]; ++y)
+                for (int y = 0; y < (int)volume_res[1]; ++y)
                 {
-                    for (int x = 0; x < volume_res[0]; ++x)
+                    for (int x = 0; x < (int)volume_res[0]; ++x)
                     {
                         size_t data_id = floor(x/factor)
                                 + native_res[0]*floor(y/factor)
