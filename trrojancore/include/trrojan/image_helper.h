@@ -22,7 +22,6 @@
 #endif /* _WIN32 */
 
 #ifdef TRROJAN_WITH_CIMG
-#define cimg_display 0
 #include "CImg.h"
 #endif /* TRROJAN_WITH_CIMG */
 
