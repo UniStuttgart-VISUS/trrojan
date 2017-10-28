@@ -27,7 +27,25 @@ trrojan::executive::~executive(void) {
     }
 
     for (auto e : this->environments) {
+        assert(e.second != nullptr);
         e.second->on_finalise();
+    }
+    this->environments.clear();
+}
+
+
+/*
+ * trrojan::executive::
+ */
+trrojan::plugin trrojan::executive::find_plugin(const std::string& name) {
+    auto it = std::find_if(this->plugins.begin(), this->plugins.end(),
+        [&name](const plugin p) { return p->name() == name; });
+    if (it != this->plugins.end()) {
+        return *it;
+    } else {
+        log::instance().write(log_level::warning, "The plugin named \"%s\" "
+            "does not exist or was not loaded.\n", name.c_str());
+        return nullptr;
     }
 }
 
@@ -35,7 +53,7 @@ trrojan::executive::~executive(void) {
 /*
  * trrojan::executive::load_plugins
  */
-void trrojan::executive::load_plugins(void) {
+void trrojan::executive::load_plugins(const cmd_line& cmdLine) {
     try {
         std::vector<std::string> paths;
 
@@ -87,9 +105,62 @@ void trrojan::executive::load_plugins(void) {
                 log::instance().write_line(ex);
             }
         }
+
+        log::instance().write(log_level::verbose, "%u plugin(s) have been "
+            "loaded. Retrieving execution environments from them ...\n", 
+            this->plugins.size());
+
+        for (auto p : this->plugins) {
+            std::vector<environment> envs;
+            p->create_environments(envs);
+
+            for (auto e : envs) {
+                // First, handle potential violations of the contract with the
+                // plugin. If the plugin returns invalid stuff, just skip it.
+                if (e == nullptr) {
+                    log::instance().write(log_level::debug, "The plugin \"%s\" "
+                        "returned a nullptr as environment.\n",
+                        p->name().c_str());
+                    continue;
+                }
+
+                auto qn = p->qualify_name(e->name());
+                if (this->environments.find(qn) != this->environments.end()) {
+                    log::instance().write(log_level::debug, "The plugin \"%s\" "
+                        "returned the environment \"%s\", which conflicts with "
+                        "an already loaded environment.\n", p->name().c_str(),
+                        qn.c_str());
+                    continue;
+                }
+
+                // Secon, initialise the plugin and add it to the map.
+                try {
+                    e->on_initialise(cmdLine);
+                    this->environments.insert(std::make_pair(qn, e));
+                    log::instance().write(log_level::verbose, "The "
+                        "environment \"%s\" was successfully initialised.\n",
+                        qn.c_str());
+
+                } catch (std::exception& ex) {
+                    log::instance().write_line(ex);
+                }
+            }
+        }
+
     } catch (std::exception& ex) {
         log::instance().write_line(ex);
     }
+}
+
+
+/*
+ * trrojan::executive::trroll
+ */
+void trrojan::executive::trroll(const std::string& path, output_base& output) {
+    auto troll = trroll_parser::parse(path);
+
+
+
 }
 
 

@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <map>
 #include <memory>
 #include <unordered_map>
 #include <vector>
@@ -61,17 +62,24 @@ namespace trrojan {
             return (this->environments.find(name) != this->environments.cend());
         }
 
+        /// <summary>
+        /// Loads all plugins in the current directory, retrieves their
+        /// environments and initialises those with the given command line.
+        /// </summary>
+        /// <param name="cmdLine">The command line arguments passed to the
+        /// environments.</param>
         void load_plugins(const cmd_line& cmdLine);
 
         /// <summary>
         /// Runs the benchmarks in the given TRROLL script writing the results
         // to the given <paramref name="output" />.
         /// </summary>
-        void trroll(const char *path, output_base& output);
+        void trroll(const std::string& path, output_base& output);
 
         executive operator =(const executive&) = delete;
 
 
+#if 0
         // TODO: remove this
         void crowbar() {
             try {
@@ -165,6 +173,7 @@ namespace trrojan {
 //                writer.close();
 //            }
         }
+#endif
 
     private:
 
@@ -283,7 +292,7 @@ namespace trrojan {
         /// Holds all execution environments, indexed by their plugin-qualfied
         /// name.
         /// </summary>
-        std::unordered_map<std::string, environment> environments;
+        std::map<std::string, environment> environments;
 
         /// <summary>
         /// Holds the libraries of all plugins that the application has found.
