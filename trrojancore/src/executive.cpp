@@ -213,18 +213,21 @@ void trrojan::executive::trroll(const std::string& path, output_base& output) {
  * trrojan::executive::enable_environment
  */
 void trrojan::executive::enable_environment(const std::string& name) {
-    if (this->cur_environment != nullptr) {
+    if ((this->cur_environment != nullptr)
+            && (this->cur_environment->name() != name)) {
         this->cur_environment->on_deactivate();
+        this->cur_environment = nullptr;
     }
 
-    auto it = this->environments.find(name);
-    if (it != this->environments.end()) {
-        this->cur_environment = it->second;
-        this->cur_environment->on_activate();
+    if (this->cur_environment == nullptr) {
+        auto it = this->environments.find(name);
+        if (it != this->environments.end()) {
+            this->cur_environment = it->second;
+            this->cur_environment->on_activate();
 
-    } else {
-        this->cur_environment = nullptr;
-        throw std::invalid_argument("Environment does not exist.");
+        } else {
+            throw std::invalid_argument("Environment does not exist.");
+        }
     }
 }
 
