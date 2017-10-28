@@ -13,15 +13,16 @@
 /*
  * trrojan::d3d11::device::device
  */
-trrojan::d3d11::device::device(ATL::CComPtr<ID3D11Device> d) : _device(d) {
+trrojan::d3d11::device::device(ATL::CComPtr<ID3D11Device> d3dDevice) 
+        : d3dDevice(d3dDevice) {
     assert(this->_device != nullptr);
     ATL::CComPtr<IDXGIAdapter> adapter;
     DXGI_ADAPTER_DESC desc;
     ATL::CComPtr<IDXGIDevice> dxgi;
-    HRESULT hr = (this->_device != nullptr) ? S_OK : E_POINTER;
+    HRESULT hr = (this->d3dDevice != nullptr) ? S_OK : E_POINTER;
 
     if (SUCCEEDED(hr)) {
-        hr = this->_device->QueryInterface(&dxgi);
+        hr = this->d3dDevice->QueryInterface(&dxgi);
     }
 
     if (SUCCEEDED(hr)) {
@@ -36,6 +37,10 @@ trrojan::d3d11::device::device(ATL::CComPtr<ID3D11Device> d) : _device(d) {
         std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
         this->_name = conv.to_bytes(desc.Description);
         this->_unique_id = desc.DeviceId;
+    }
+
+    if (SUCCEEDED(hr)) {
+        this->d3dDevice->GetImmediateContext(&this->d3dContext);
     }
 }
 

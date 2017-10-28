@@ -31,18 +31,33 @@ namespace d3d11 {
         /// <summary>
         /// Initialises a new instance representing the given D3D device.
         /// </summary>
-        /// <param name="d">The Direct3D device to be represented by this
-        /// instance. This must not be <c>nullptr</c>.</param>
-        explicit device(ATL::CComPtr<ID3D11Device> d);
+        /// <param name="d3dDevice">The Direct3D device to be represented by
+        /// this instance. This must not be <c>nullptr</c>.</param>
+        explicit device(ATL::CComPtr<ID3D11Device> d3dDevice);
 
         /// <summary>
         /// Finalises the instance.
         /// </summary>
         virtual ~device(void);
 
+        /// <summary>
+        /// Answer the immediate context of the underlying Direct3D device.
+        /// </summary>
+        inline ATL::CComPtr<ID3D11DeviceContext>& d3d_context(void) {
+            return this->d3dContext;
+        }
+
+        /// <summary>
+        /// Answer the underlying Direct3D device.
+        /// </summary>
+        inline ATL::CComPtr<ID3D11Device>& d3d_device(void) {
+            return this->d3dDevice;
+        }
+
     private:
 
-        ATL::CComPtr<ID3D11Device> _device;
+        ATL::CComPtr<ID3D11DeviceContext> d3dContext;
+        ATL::CComPtr<ID3D11Device> d3dDevice;
 
     };
 }
