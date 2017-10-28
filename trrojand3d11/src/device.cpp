@@ -15,7 +15,7 @@
  */
 trrojan::d3d11::device::device(ATL::CComPtr<ID3D11Device> d3dDevice) 
         : d3dDevice(d3dDevice) {
-    assert(this->_device != nullptr);
+    assert(this->d3dDevice != nullptr);
     ATL::CComPtr<IDXGIAdapter> adapter;
     DXGI_ADAPTER_DESC desc;
     ATL::CComPtr<IDXGIDevice> dxgi;
