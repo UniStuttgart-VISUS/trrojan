@@ -157,10 +157,55 @@ void trrojan::executive::load_plugins(const cmd_line& cmdLine) {
  * trrojan::executive::trroll
  */
 void trrojan::executive::trroll(const std::string& path, output_base& output) {
-    auto troll = trroll_parser::parse(path);
+    typedef trroll_parser::benchmark_configs bcs;
+    auto bcss = trroll_parser::parse(path);
+    std::vector<benchmark> benchmarks;
+    plugin curPlugin;
 
+    // Make sure that the benchmark configurations are grouped.
+    std::stable_sort(bcss.begin(), bcss.end(), [](const bcs& l, const bcs& r) {
+        return (l.plugin.compare(r.plugin) < 0);
+    });
+    std::stable_sort(bcss.begin(), bcss.end(), [](const bcs& l, const bcs& r) {
+        return (l.benchmark.compare(r.benchmark) < 0);
+    });
 
+    for (auto b : bcss) {
+        if ((curPlugin == nullptr) || (curPlugin->name() != b.plugin)) {
+            curPlugin = this->find_plugin(b.plugin);
+            if (curPlugin != nullptr) {
+                benchmarks.clear();
+                curPlugin->create_benchmarks(benchmarks);
 
+            } else {
+                log::instance().write(log_level::warning, "The plugin \"%s\" "
+                    "required for the benchmark \"%s\" does not exist or was "
+                    "not loaded. The benchmark will be skipped.\n",
+                    b.plugin.c_str(), b.benchmark.c_str());
+            }
+        }
+
+        if (curPlugin != nullptr) {
+            auto it = std::find_if(benchmarks.begin(), benchmarks.end(),
+                [&b](const benchmark m) { return m->name() == b.benchmark; });
+            if (it != benchmarks.end() && (*it != nullptr)) {
+                log::instance().write(log_level::information, "Running "
+                    "benchmark \"%s\" from plugin \"%s\".\n",
+                    b.benchmark.c_str(), b.plugin.c_str());
+
+                // TODO: need to enable env?!
+                (**it).run(b.configs, [&output](result&& r) {
+                    output << r;
+                    return true;
+                });
+
+            } else {
+                log::instance().write(log_level::warning, "No benchmark named "
+                    "\"%s\" was found in plugin \"%s\". The benchmark will be "
+                    "skipped.\n", b.benchmark.c_str(), b.plugin.c_str());
+            }
+        }
+    } /* end for (auto b : bcss) */
 }
 
 
@@ -171,8 +216,16 @@ void trrojan::executive::enable_environment(const std::string& name) {
     if (this->cur_environment != nullptr) {
         this->cur_environment->on_deactivate();
     }
-    this->cur_environment = this->environments[name];
-    this->cur_environment->on_activate();
+
+    auto it = this->environments.find(name);
+    if (it != this->environments.end()) {
+        this->cur_environment = it->second;
+        this->cur_environment->on_activate();
+
+    } else {
+        this->cur_environment = nullptr;
+        throw std::invalid_argument("Environment does not exist.");
+    }
 }
 
 
