@@ -52,6 +52,11 @@ namespace trrojan {
     protected:
 
         /// <summary>
+        /// Initialises a new instance.
+        /// </summary>
+        inline device_base(void) : _unique_id(0) { }
+
+        /// <summary>
         /// The name (i.e. 'type') of the device.
         /// </summary>
         std::string _name;

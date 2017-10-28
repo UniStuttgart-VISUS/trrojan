@@ -103,7 +103,12 @@ namespace trrojan {
         /// <param name="cmdLine"> The command line of the application
         /// invocation.</param>
         virtual void on_initialise(const cmd_line& cmdLine);
-        virtual void on_initialize(const cmd_line& cmdLine) {on_initialise(cmdLine);}
+
+#ifdef TRROJANCORE_WITH_SPELLING_ERRORS
+        inline void on_initialize(const cmd_line& cmdLine) {
+            this->on_initialise(cmdLine);
+        }
+#endif /* TRROJANCORE_WITH_SPELLING_ERRORS */
 
     protected:
 

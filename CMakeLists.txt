@@ -65,5 +65,8 @@ add_subdirectory(trrojancl)
 # Build the RAM stream plugin
 add_subdirectory(trrojanstream)
 
+# Build the D3D plugin
+add_subdirectory(trrojand3d11)
+
 # Build the executable
 add_subdirectory(trrojan)

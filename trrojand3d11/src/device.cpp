@@ -1,0 +1,46 @@
+/// <copyright file="device.cpp" company="SFB-TRR 161 Quantitative Methods for Visual Computing">
+/// Copyright © 2017 SFB-TRR 161. Alle Rechte vorbehalten.
+/// </copyright>
+/// <author>Christoph Müller</author>
+
+#include "trrojan/d3d11/device.h"
+
+#include <cassert>
+#include <codecvt>
+#include <locale>
+
+
+/*
+ * trrojan::d3d11::device::device
+ */
+trrojan::d3d11::device::device(ATL::CComPtr<ID3D11Device> d) : _device(d) {
+    assert(this->_device != nullptr);
+    ATL::CComPtr<IDXGIAdapter> adapter;
+    DXGI_ADAPTER_DESC desc;
+    ATL::CComPtr<IDXGIDevice> dxgi;
+    HRESULT hr = (this->_device != nullptr) ? S_OK : E_POINTER;
+
+    if (SUCCEEDED(hr)) {
+        hr = this->_device->QueryInterface(&dxgi);
+    }
+
+    if (SUCCEEDED(hr)) {
+        hr = dxgi->GetAdapter(&adapter);
+    }
+
+    if (SUCCEEDED(hr)) {
+        hr = adapter->GetDesc(&desc);
+    }
+
+    if (SUCCEEDED(hr)) {
+        std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
+        this->_name = conv.to_bytes(desc.Description);
+        this->_unique_id = desc.DeviceId;
+    }
+}
+
+
+/*
+ * trrojan::d3d11::device::~device
+ */
+trrojan::d3d11::device::~device(void) { }
