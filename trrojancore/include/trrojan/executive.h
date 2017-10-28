@@ -45,6 +45,14 @@ namespace trrojan {
         ~executive(void);
 
         /// <summary>
+        /// Search for the plugin with the specified name.
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns>A pointer to the respective plugin or <c>nullptr</c> if the
+        /// plugin was not found.</returns>
+        plugin find_plugin(const std::string& name);
+
+        /// <summary>
         /// Answer whether an environment with the given name is available.
         /// </summary>
         /// <param name="name"></param>
@@ -53,9 +61,16 @@ namespace trrojan {
             return (this->environments.find(name) != this->environments.cend());
         }
 
-        void load_plugins(void);
+        void load_plugins(const cmd_line& cmdLine);
+
+        /// <summary>
+        /// Runs the benchmarks in the given TRROLL script writing the results
+        // to the given <paramref name="output" />.
+        /// </summary>
+        void trroll(const char *path, output_base& output);
 
         executive operator =(const executive&) = delete;
+
 
         // TODO: remove this
         void crowbar() {
@@ -255,6 +270,8 @@ namespace trrojan {
         /// Enables the environment with the specified name.
         /// </summary>
         /// <param name="name"></param>
+        /// <exception cref="std::invalid_argument>If the specified environment
+        /// does not exist.</exception>
         void enable_environment(const std::string& name);
 
         /// <summary>
@@ -263,7 +280,8 @@ namespace trrojan {
         environment cur_environment;
 
         /// <summary>
-        /// Holds all execution environments, indexed by their name.
+        /// Holds all execution environments, indexed by their plugin-qualfied
+        /// name.
         /// </summary>
         std::unordered_map<std::string, environment> environments;
 
