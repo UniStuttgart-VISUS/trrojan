@@ -30,7 +30,6 @@ set_property(SOURCE ${PixelShaderFiles} PROPERTY VS_SHADER_TYPE Pixel)
 file(GLOB_RECURSE ShaderHeaderFiles RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${IncludeDirectory}/*.hlsli" "${SourceDirectory}/*.hlsli")
 set(ShaderFiles ${ShaderHeaderFiles} ${ShaderFiles})
 
-
 include_directories("${IncludeDirectory}")
 include_directories("${TrrojanCoreIncludeDir}")
 
@@ -40,4 +39,8 @@ if(WIN32)
 	add_library(trrojand3d11 MODULE ${HeaderFiles} ${SourceFiles} ${ShaderFiles})
 	target_link_libraries(trrojand3d11 trrojancore)
 	target_link_libraries(trrojand3d11 d3d11 dxgi dxguid)
+
+	# Group all HLSL into a new filter (cf. https://stackoverflow.com/questions/33808087/cmake-how-to-create-visual-studio-filters)
+	source_group("Shader Files" FILES ${ShaderFiles})
+
 endif(WIN32)
