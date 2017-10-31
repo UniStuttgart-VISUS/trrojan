@@ -19,7 +19,7 @@ set(ShaderFiles ${VertexShaderFiles} ${GeometryShaderFiles} ${PixelShaderFiles})
 # Configure fxc
 set_property(SOURCE ${ShaderFiles} PROPERTY VS_SHADER_ENTRYPOINT Main)
 set_property(SOURCE ${ShaderFiles} PROPERTY VS_SHADER_MODEL 5.0)
-set_property(SOURCE ${ShaderFiles} PROPERTY VS_SHADER_FLAGS "/Fh \"$(OutDir)%(Filename).h\" /Vn \"%(Filename)Bytes\"")
+set_property(SOURCE ${ShaderFiles} PROPERTY VS_SHADER_FLAGS "/Fh \"$(IntDir)%(Filename).h\" /Vn \"%(Filename)Bytes\"")
 
 # Configure shader types
 set_property(SOURCE ${VertexShaderFiles} PROPERTY VS_SHADER_TYPE Vertex)
@@ -32,6 +32,7 @@ set(ShaderFiles ${ShaderHeaderFiles} ${ShaderFiles})
 
 include_directories("${IncludeDirectory}")
 include_directories("${TrrojanCoreIncludeDir}")
+include_directories("\\\\?\\$(IntDir)")    # Required for shader byte code; cf. https://stackoverflow.com/questions/35232068/referencing-visual-studio-variables-from-cmake for wild hack
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTRROJAND3D11_EXPORTS")
 

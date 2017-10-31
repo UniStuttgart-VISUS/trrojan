@@ -12,6 +12,8 @@
 #include "trrojan/system_factors.h"
 #include "trrojan/timer.h"
 
+//#include "SphereVertexShader.h"
+
 
 /*
  * trrojan::d3d11::mmpld_benchmark::to_d3d11

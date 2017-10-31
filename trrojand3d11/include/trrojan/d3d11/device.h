@@ -29,6 +29,33 @@ namespace d3d11 {
         typedef std::shared_ptr<device> pointer;
 
         /// <summary>
+        /// Gets the DXGI adapter for the given D3D device.
+        /// </summary>
+        /// <param name="device">The D3D device to get the DXGI adapter for. It
+        /// is safe to pass <c>nullptr</c>.</param>
+        /// <returns>The adapter the device is running on.</returns>
+        static ATL::CComPtr<IDXGIAdapter> get_dxgi_adapter(
+            ATL::CComPtr<ID3D11Device> device);
+
+        /// <summary>
+        /// Gets the DXGI device for the given D3D device.
+        /// </summary>
+        /// <param name="device">The D3D device to get the DXGI device for. It
+        /// is safe to pass <c>nullptr</c>.</param>
+        /// <returns>The underlying DXGI device.</returns>
+        static ATL::CComPtr<IDXGIDevice> get_dxgi_device(
+            ATL::CComPtr<ID3D11Device> device);
+
+        /// <summary>
+        /// Gets the DXGI factory that was used to create the given D3D device.
+        /// </summary>
+        /// <param name="device">The D3D device to get the DXGI factory for. It
+        /// is safe to pass <c>nullptr</c>.</param>
+        /// <returns>The underlying DXGI factory.</returns>
+        static ATL::CComPtr<IDXGIFactory> get_dxgi_factory(
+            ATL::CComPtr<ID3D11Device> device);
+
+        /// <summary>
         /// Initialises a new instance representing the given D3D device.
         /// </summary>
         /// <param name="d3dDevice">The Direct3D device to be represented by
