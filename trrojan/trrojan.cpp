@@ -64,6 +64,5 @@ int main(const int argc, const char **argv) {
 
     std::cout << "elapsed: " << t.elapsed_millis() << std::endl;
 
-
     return 0;
 }

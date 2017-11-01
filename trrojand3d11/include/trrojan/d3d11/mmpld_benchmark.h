@@ -15,7 +15,7 @@
 #include "trrojan/mmpld_reader.h"
 #include "trrojan/timer.h"
 
-#include "trrojan/d3d11/export.h"
+#include "trrojan/d3d11/debugable.h"
 
 
 namespace trrojan {
@@ -24,7 +24,8 @@ namespace d3d11 {
     /// <summary>
     /// Implements a particle rendering benchmark using MMPLD files.
     /// </summary>
-    class TRROJAND3D11_API mmpld_benchmark : public trrojan::benchmark_base {
+    class TRROJAND3D11_API mmpld_benchmark : public trrojan::benchmark_base,
+            public debugable {
 
     public:
 
@@ -37,6 +38,14 @@ namespace d3d11 {
         mmpld_benchmark(void);
 
         virtual ~mmpld_benchmark(void);
+
+        virtual void draw_debug_view(ATL::CComPtr<ID3D11Device> device,
+            ATL::CComPtr<ID3D11DeviceContext> deviceContext);
+
+        virtual void on_debug_view_resized(ATL::CComPtr<ID3D11Device> device,
+            const unsigned int width, const unsigned int height);
+
+        virtual void on_debug_view_resizing(void);
 
         virtual size_t run(const configuration_set& configs,
             const on_result_callback& callback);

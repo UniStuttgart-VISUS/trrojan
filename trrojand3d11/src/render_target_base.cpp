@@ -5,6 +5,8 @@
 
 #include "trrojan/d3d11/render_target_base.h"
 
+#include <cassert>
+
 #include "trrojan/log.h"
 
 
@@ -19,6 +21,12 @@ trrojan::d3d11::render_target_base::~render_target_base(void) { }
  */
 void trrojan::d3d11::render_target_base::resize(const unsigned int width,
         const unsigned int height) {
+    ATL::CComPtr<ID3D11Texture2D> backBuffer;
+
+    // Make sure that alll existing views are released before resizing.
+    this->dtv = nullptr;
+    this->rtv = nullptr;
+
     if (this->swapChain == nullptr) {
         // Have no swap chain yet, so create one.
         if (this->device == nullptr) {
@@ -71,6 +79,24 @@ void trrojan::d3d11::render_target_base::resize(const unsigned int width,
                     "swap chain (error 0x%x).\n", hr);
                 throw std::runtime_error("Failed to resize swap chain.");
             }
+        }
+    }
+    assert(this->swapChain != nullptr);
+
+    {
+        auto hr = this->swapChain->GetBuffer(0, IID_ID3D11Texture2D,
+            reinterpret_cast<void **>(&backBuffer));
+        if (FAILED(hr)) {
+            throw std::runtime_error("Failed to retrieve back buffer from "
+                "swap chain.");
+        }
+    }
+
+    {
+        auto hr = this->device->CreateRenderTargetView(backBuffer, nullptr,
+            &this->rtv);
+        if (FAILED(hr)) {
+            throw std::runtime_error("Failed to create render target view.");
         }
     }
 }

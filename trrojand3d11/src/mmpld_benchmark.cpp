@@ -5,6 +5,7 @@
 
 #include "trrojan/d3d11/mmpld_benchmark.h"
 
+#include <cassert>
 #include <cinttypes>
 
 #include "trrojan/factor_enum.h"
@@ -133,6 +134,35 @@ trrojan::d3d11::mmpld_benchmark::mmpld_benchmark(void)
  * trrojan::d3d11::mmpld_benchmark::~mmpld_benchmark
  */
 trrojan::d3d11::mmpld_benchmark::~mmpld_benchmark(void) { }
+
+
+/*
+ * trrojan::d3d11::mmpld_benchmark::draw_debug_view
+ */
+void trrojan::d3d11::mmpld_benchmark::draw_debug_view(
+        ATL::CComPtr<ID3D11Device> device,
+        ATL::CComPtr<ID3D11DeviceContext> deviceContext) {
+    assert(device != nullptr);
+    assert(deviceContext != nullptr);
+
+    //deviceContext->ClearRenderTargetView()
+}
+
+
+/*
+ * trrojan::d3d11::mmpld_benchmark::on_debug_view_resized
+ */
+void trrojan::d3d11::mmpld_benchmark::on_debug_view_resized(
+        ATL::CComPtr<ID3D11Device> device,
+        const unsigned int width, const unsigned int height) {
+}
+
+
+/*
+ * trrojan::d3d11::mmpld_benchmark::on_debug_view_resizing
+ */
+void trrojan::d3d11::mmpld_benchmark::on_debug_view_resizing(void) {
+}
 
 
 /*
