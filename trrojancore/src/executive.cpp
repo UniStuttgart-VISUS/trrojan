@@ -124,25 +124,30 @@ void trrojan::executive::load_plugins(const cmd_line& cmdLine) {
                     continue;
                 }
 
-                auto qn = p->qualify_name(e->name());
-                if (this->environments.find(qn) != this->environments.end()) {
+                auto name = e->name();
+                if (this->environments.find(name) != this->environments.end()) {
                     log::instance().write(log_level::debug, "The plugin \"%s\" "
                         "returned the environment \"%s\", which conflicts with "
-                        "an already loaded environment.\n", p->name().c_str(),
-                        qn.c_str());
+                        "an already loaded environment. The new environment "
+                        "will be ignored.\n", p->name().c_str(), name.c_str());
                     continue;
                 }
 
                 // Secon, initialise the plugin and add it to the map.
                 try {
                     e->on_initialise(cmdLine);
-                    this->environments.insert(std::make_pair(qn, e));
+                    this->environments.insert(std::make_pair(name, e));
                     log::instance().write(log_level::verbose, "The "
-                        "environment \"%s\" was successfully initialised.\n",
-                        qn.c_str());
+                        "environment \"%s\", provided by plugin \"%s\", was "
+                        "successfully initialised.\n", name.c_str(),
+                        p->name().c_str());
 
                 } catch (std::exception& ex) {
                     log::instance().write_line(ex);
+                    log::instance().write(log_level::verbose, "The "
+                        "environment \"%s\", provided by plugin \"%s\", failed "
+                        "to initialise. The environment will be ignored.\n",
+                        name.c_str(), p->name().c_str());
                 }
             }
         }

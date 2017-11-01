@@ -272,7 +272,6 @@ namespace trrojan {
             /// The DLL handle if any.
             /// </summary>
             handle_type handle;
-
         };
 
         /// <summary>
@@ -289,8 +288,7 @@ namespace trrojan {
         environment cur_environment;
 
         /// <summary>
-        /// Holds all execution environments, indexed by their plugin-qualfied
-        /// name.
+        /// Holds all execution environments, indexed by their name.
         /// </summary>
         std::map<std::string, environment> environments;
 

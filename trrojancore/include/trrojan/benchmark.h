@@ -79,9 +79,14 @@ namespace trrojan {
         /// <see cref="trrojan::configuration" /> passed to the benchmark must
         /// at least contain.
         /// </summary>
+        /// <remarks>
+        /// This implementation returns all factors specified in the default
+        /// configurations. Subclasses might want to change this behaviour by
+        /// overriding this method.
+        /// </remarks>
         /// <returns>The names of the factor which are required for the
         /// benchmark to run</returns>
-        std::vector<std::string> required_factors(void) const;
+        virtual std::vector<std::string> required_factors(void) const;
 
         /// <summary>
         /// Run the benchmark for each of the
@@ -109,8 +114,20 @@ namespace trrojan {
         static trrojan::configuration& merge_system_factors(
             trrojan::configuration& c);
 
+        /// <summary>
+        /// Initialises a new instance.
+        /// </summary>
+        /// <param name="name">The name of the benchmark, which must be unique
+        /// within its plugin.</param>
         inline benchmark_base(const std::string& name) : _name(name) { }
 
+        /// <summary>
+        /// Initialises a new instance.
+        /// </summary>
+        /// <param name="name">The name of the benchmark, which must be unique
+        /// within its plugin.</param>
+        /// <param name="default_configs">The default configurations to be
+        /// tested.</param>
         inline benchmark_base(const std::string& name,
             trrojan::configuration_set default_configs)
             : _default_configs(default_configs), _name(name) { }
@@ -143,7 +160,13 @@ namespace trrojan {
         /// Check whether the given configuration set has all required factors
         /// or raise an exception.
         /// </summary>
-        void check_required_factors(const trrojan::configuration_set& cs) const;
+        /// <remarks>
+        /// This implementation considers the factors provided by the
+        /// <see cref="required_factors" /> method. Subclasses can change this 
+        /// behaviour by overriding this method.
+        /// </remarks>
+        virtual void check_required_factors(
+            const trrojan::configuration_set& cs) const;
 
         /// <summary>
         /// Write an informational message to the log that we are now running

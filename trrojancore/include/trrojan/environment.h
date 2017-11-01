@@ -16,6 +16,10 @@
 
 namespace trrojan {
 
+    /* Forward declarations. */
+    class configuration;
+
+
     /// <summary>
     /// This class defines the interface for and some default implementation of
     /// an execution environment.
@@ -110,12 +114,34 @@ namespace trrojan {
         }
 #endif /* TRROJANCORE_WITH_SPELLING_ERRORS */
 
+        /// <summary>
+        /// Convert a device name to an actual device if a device factor is in
+        /// the configuration.
+        /// </summary>
+        /// <remarks>
+        /// <para>The implementation searches <paramref name="config" /> for a
+        /// string factor with the name specified as <param name="name" /> and
+        /// adds, if not already present, a new factor called
+        /// <param name="device" /> with the actual device returned by the
+        /// <paramref name="get_devices" /> having the given name. If no such
+        /// device is found, an exception is thrown.</para>
+        /// <para>Subclasses might want to override this method to provide a
+        /// custom and/or more efficient implementation.</para>
+        /// <remarks>
+        /// <param name="config">The configuration to be processed.</param>
+        /// <param name="name">The name of the factor holding the device
+        /// name. This defaults to &quot;device;&quot.</param>
+        virtual void translate_device(configuration& config,
+            const std::string& name = "device_name",
+            const std::string& device = "device");
+
     protected:
 
         /// <summary>
         /// Initialises a new instance.
         /// </summary>
-        /// <param name="name">The name of the environment</param>
+        /// <param name="name">The name of the environment. Note that this name
+        /// must be globally unique.</param>
         inline environment_base(const std::string& name) : _name(name) { }
 
     private:

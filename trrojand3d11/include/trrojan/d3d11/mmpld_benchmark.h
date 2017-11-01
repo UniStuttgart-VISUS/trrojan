@@ -29,6 +29,11 @@ namespace d3d11 {
 
     public:
 
+        static const std::string factor_data_set;
+        static const std::string factor_device;
+        static const std::string factor_viewport_height;
+        static const std::string factor_viewport_width;
+
         /// <summary>
         /// Creates a vector descriptor for the given MMPLD list header.
         /// </summary>
@@ -47,10 +52,19 @@ namespace d3d11 {
 
         virtual void on_debug_view_resizing(void);
 
+        /// <inheritdoc />
+        virtual std::vector<std::string> required_factors(void) const;
+
         virtual size_t run(const configuration_set& configs,
             const on_result_callback& callback);
 
         virtual trrojan::result run(const configuration& config);
+
+    protected:
+
+    private:
+
+        typedef trrojan::benchmark_base base;
     };
 
 }

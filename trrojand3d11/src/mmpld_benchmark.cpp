@@ -16,6 +16,17 @@
 //#include "SphereVertexShader.h"
 
 
+#define _MMPLD_BENCH_DEFINE_FACTOR(f)                                          \
+const std::string trrojan::d3d11::mmpld_benchmark::factor_##f(#f)
+
+_MMPLD_BENCH_DEFINE_FACTOR(data_set);
+_MMPLD_BENCH_DEFINE_FACTOR(device);
+_MMPLD_BENCH_DEFINE_FACTOR(viewport_height);
+_MMPLD_BENCH_DEFINE_FACTOR(viewport_width);
+
+#undef _MMPLD_BENCH_DEFINE_FACTOR
+
+
 /*
  * trrojan::d3d11::mmpld_benchmark::to_d3d11
  */
@@ -92,41 +103,13 @@ std::vector<D3D11_INPUT_ELEMENT_DESC> trrojan::d3d11::mmpld_benchmark::to_d3d11(
  */
 trrojan::d3d11::mmpld_benchmark::mmpld_benchmark(void)
         : trrojan::benchmark_base("mmpld-raycaster") {
-    //// If no scalar type is specfieid, use 64-bit float.
-    //this->_default_configs.add_factor(factor::from_manifestations(
-    //    factor_scalar_type, scalar_type_traits<scalar_type::float64>::name()));
+    // If no viewport height is specified, use 1024 pixels.
+    this->_default_configs.add_factor(factor::from_manifestations(
+        factor_viewport_height, static_cast<unsigned int>(1024)));
 
-    //// If no scalar is specified, use a magic number.
-    //this->_default_configs.add_factor(factor::from_manifestations(
-    //    factor_scalar, 42));
-
-    //// If no access pattern is specified, test all.
-    //this->_default_configs.add_factor(factor::from_manifestations(
-    //    factor_access_pattern, { ap_traits<access_pattern::contiguous>::name(),
-    //    ap_traits<access_pattern::interleaved>::name() }));
-
-    //// If no number of iterations is specified, use a magic number.
-    //this->_default_configs.add_factor(factor::from_manifestations(
-    //    factor_iterations, 10));
-
-    //// If no number of threads is specifed, use all possible values up
-    //// to the number of logical processors in the system.
-    //auto lc = system_factors::instance().logical_cores().as<uint32_t>();
-    //this->_default_configs.add_factor(factor::from_manifestations(
-    //    factor_threads, { 1u, lc }));
-
-    //// If no problem size is given, test all all of them.
-    //this->_default_configs.add_factor(factor::from_manifestations(
-    //    factor_problem_size,
-    //    //8000000));
-    //    worker_thread::problem_sizes::to_vector()));
-
-    //// Enable all tasks by default.
-    //this->_default_configs.add_factor(factor::from_manifestations(
-    //    factor_task_type, { task_type_traits<task_type::add>::name(),
-    //    task_type_traits<task_type::copy>::name(),
-    //    task_type_traits<task_type::scale>::name(),
-    //    task_type_traits<task_type::triad>::name() }));
+    // If no viewport width is specified, use 1024 pixels.
+    this->_default_configs.add_factor(factor::from_manifestations(
+        factor_viewport_width, static_cast<unsigned int>(1024)));
 }
 
 
@@ -166,6 +149,17 @@ void trrojan::d3d11::mmpld_benchmark::on_debug_view_resizing(void) {
 
 
 /*
+ * trrojan::d3d11::mmpld_benchmark::required_factors
+ */
+std::vector<std::string> trrojan::d3d11::mmpld_benchmark::required_factors(
+        void) const {
+    static const std::vector<std::string> retval = { factor_data_set,
+        factor_device };
+    return retval;
+}
+
+
+/*
  * trrojan::d3d11::mmpld_benchmark::run
  */
 size_t trrojan::d3d11::mmpld_benchmark::run(const configuration_set& configs,
@@ -173,10 +167,10 @@ size_t trrojan::d3d11::mmpld_benchmark::run(const configuration_set& configs,
     std::vector<std::string> changed;
     size_t retval = 0;
 
-#if 0
     // Check that caller has provided all required factors.
     this->check_required_factors(configs);
 
+#if 0
     // Merge missing factors from default configuration.
     auto c = configs;
     c.merge(this->_default_configs, false);
