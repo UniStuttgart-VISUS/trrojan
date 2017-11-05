@@ -110,6 +110,26 @@ namespace trrojan {
         /// this configuration set will be kept unmodified.</param>
         void merge(const configuration_set& other, const bool overwrite);
 
+        /// <summary>
+        /// Reorder the factors in the configuration set such that the ones in
+        /// <paramref name="factors" /> are at the beginning.
+        /// </summary>
+        /// <remarks>
+        /// <para>When calling <see cref="foreach_configuration" />, the factors
+        /// at the beginning of the list will be switched at the lowest rated.
+        /// It is therefore desirable to have factors which of the change is
+        /// computationally expensive are at the beginning of the list, which
+        /// can be achieved with this method.</para>
+        /// <para>Names of factors which are not in the configuration set will
+        /// be silently ignored.</para>
+        /// <para>The implementation of the method itself is not very efficient,
+        /// wherefore it should be called only once before using the
+        /// configuration set.</para>
+        /// </remarks>
+        /// <param name="factors">The names of the factors at the begin of the
+        /// list.</param>.
+        void optimise_order(const std::vector<std::string>& factors);
+
     private:
 
         inline factor_list::iterator findFactor(const std::string& name) {
