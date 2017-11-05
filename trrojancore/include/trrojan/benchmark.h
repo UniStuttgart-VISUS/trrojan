@@ -60,6 +60,26 @@ namespace trrojan {
         static void merge_results(result_set& l, result_set&& r);
 
         /// <summary>
+        /// The string &quot;device&quot; for identifying a
+        /// <see cref="trrojan::device" /> as factor.
+        /// </summary>
+        /// <remarks>
+        /// Bechmarks should use this constant to make sure that built-in
+        /// functionality referencing devices is working as intended.
+        /// </remarks>
+        static const std::string factor_device;
+
+        /// <summary>
+        /// The string &quot;device&quot; for identifying an
+        /// <see cref="trrojan::environment" /> as factor.
+        /// </summary>
+        /// <remarks>
+        /// Bechmarks should use this constant to make sure that built-in
+        /// functionality referencing environments is working as intended.
+        /// </remarks>
+        static const std::string factor_environment;
+
+        /// <summary>
         /// Finalises the instance.
         /// </summary>
         virtual ~benchmark_base(void);
@@ -96,6 +116,17 @@ namespace trrojan {
         inline const std::string& name(void) const {
             return this->_name;
         }
+
+        /// <summary>
+        /// Optimises the order of configuration factors such that the overhead
+        /// of switching them is minimal for the benchmark.
+        /// </summary>
+        /// <remarks>
+        /// The default implementation does nothing.
+        /// </remarks>
+        /// <param name="inOutConfs">The configuration set to be optimised.
+        /// </param>
+        virtual void optimise_order(configuration_set& inOutConfs);
 
         /// <summary>
         /// Answer the names of the factors which a

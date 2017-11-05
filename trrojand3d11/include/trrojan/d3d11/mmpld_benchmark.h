@@ -31,7 +31,6 @@ namespace d3d11 {
     public:
 
         static const std::string factor_data_set;
-        static const std::string factor_device;
         static const std::string factor_viewport_height;
         static const std::string factor_viewport_width;
 
@@ -55,6 +54,8 @@ namespace d3d11 {
             const unsigned int width, const unsigned int height);
 
         virtual void on_debug_view_resizing(void);
+
+        virtual void optimise_order(configuration_set& inOutConfs);
 
         /// <inheritdoc />
         virtual std::vector<std::string> required_factors(void) const;

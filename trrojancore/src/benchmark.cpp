@@ -61,6 +61,18 @@ void trrojan::benchmark_base::merge_results(result_set& l, result_set&& r) {
 
 
 /*
+ * trrojan::benchmark_base::factor_device
+ */
+const std::string trrojan::benchmark_base::factor_device("device");
+
+
+/*
+ * trrojan::benchmark_base::factor_environment
+ */
+const std::string trrojan::benchmark_base::factor_environment("environment");
+
+
+/*
  * trrojan::benchmark_base::~benchmark_base
  */
 trrojan::benchmark_base::~benchmark_base(void) { }
@@ -73,6 +85,12 @@ bool trrojan::benchmark_base::can_run(environment env,
         device device) const noexcept {
     return true;
 }
+
+
+/*
+ * trrojan::benchmark_base::optimise_order
+ */
+void trrojan::benchmark_base::optimise_order(configuration_set& inOutConfs) { }
 
 
 /*

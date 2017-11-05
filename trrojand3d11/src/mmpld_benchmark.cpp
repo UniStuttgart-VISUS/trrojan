@@ -20,7 +20,6 @@
 const std::string trrojan::d3d11::mmpld_benchmark::factor_##f(#f)
 
 _MMPLD_BENCH_DEFINE_FACTOR(data_set);
-_MMPLD_BENCH_DEFINE_FACTOR(device);
 _MMPLD_BENCH_DEFINE_FACTOR(viewport_height);
 _MMPLD_BENCH_DEFINE_FACTOR(viewport_width);
 
@@ -155,6 +154,15 @@ void trrojan::d3d11::mmpld_benchmark::on_debug_view_resized(
  * trrojan::d3d11::mmpld_benchmark::on_debug_view_resizing
  */
 void trrojan::d3d11::mmpld_benchmark::on_debug_view_resizing(void) {
+}
+
+
+/*
+ * trrojan::d3d11::mmpld_benchmark::optimise_order
+ */
+void trrojan::d3d11::mmpld_benchmark::optimise_order(
+        configuration_set& inOutConfs) {
+    inOutConfs.optimise_order({ factor_device });
 }
 
 
