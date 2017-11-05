@@ -34,14 +34,29 @@ void trrojan::configuration_set::add_factor(const factor& factor) {
  * trrojan::configuration_set::replace_factor
  */
 void trrojan::configuration_set::replace_factor(const factor& factor) {
+    if (factor.size() < 1) {
+        throw std::invalid_argument("A factor must have at least one "
+            "manifestation.");
+    }
+
     if (this->contains_factor(factor.name())) {
-        auto it = this->find_factor(factor.name());
+        assert(!factor.name().empty());
+        auto it = this->findFactor(factor.name());
+        assert(it != this->_factors.end());
         std::replace(this->_factors.begin(), this->_factors.end(), *it, factor);
+
+    } else {
+        this->add_factor(factor);
     }
-    else
-    {
-        add_factor(factor);
-    }
+}
+
+/*
+ * trrojan::configuration_set::find_factor
+ */
+const trrojan::factor *trrojan::configuration_set::find_factor(
+        const std::string& name) const {
+    auto it = this->findFactor(name);
+    return (it != this->_factors.cend()) ? &(*it) : nullptr;
 }
 
 
@@ -86,7 +101,7 @@ void trrojan::configuration_set::merge(const configuration_set& other,
         const bool overwrite) {
     for (auto& f : other._factors) {
         assert(f.size() > 0);
-        auto it = this->find_factor(f.name());
+        auto it = this->findFactor(f.name());
         if (it != this->_factors.cend() && overwrite) {
             this->_factors.erase(it);
             this->_factors.push_back(f);

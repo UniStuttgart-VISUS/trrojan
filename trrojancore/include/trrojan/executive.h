@@ -275,12 +275,73 @@ namespace trrojan {
         };
 
         /// <summary>
+        /// If <paramref name="inOutCs" /> does not hold any factor named
+        /// &quot;environment&quot;, add all factors from
+        /// <see cref="enivornments" />. If such a factor exists, but is a
+        /// string factor, replace the names with the actual environment
+        /// objects.
+        /// </summary>
+        /// <param name="inOutCs"></param>
+        /// <exception cref="std::invalid_argument>If the a requested
+        /// environment does not exist.</exception>
+        configuration_set& assign_environments(configuration_set& inOutCs);
+
+        /// <summary>
         /// Enables the environment with the specified name.
         /// </summary>
+        /// <remarks>
+        /// Any previously enabled environment stored at
+        /// <see cref="cur_environment" /> will be properly deactivated by the
+        /// method.
+        /// </remarks>
         /// <param name="name"></param>
         /// <exception cref="std::invalid_argument>If the specified environment
         /// does not exist.</exception>
         void enable_environment(const std::string& name);
+
+        /// <summary>
+        /// Enables the given environment.
+        /// </summary>
+        /// <remarks>
+        /// Any previously enabled environment stored at
+        /// <see cref="cur_environment" /> will be properly deactivated by the
+        /// method.
+        /// </remarks>
+        /// <param name="env"></param>
+        /// <exception cref="std::invalid_argument>If <paramref name="env" /> is
+        /// <c>nullptr</c>.</exception>
+        void enable_environment(environment env);
+
+        /// <summary>
+        /// Enables the environment identified by the given name or pointer.
+        /// </summary>
+        /// <remarks>
+        /// Any previously enabled environment stored at
+        /// <see cref="cur_environment" /> will be properly deactivated by the
+        /// method.
+        /// </remarks>
+        /// <param name="v"></param>
+        /// <exception cref="std::invalid_argument>If <paramref name="v" /> does
+        /// not contain a valid environment name or actual environment pointer.
+        /// </exception>
+        void enable_environment(const variant& v);
+
+        /// <summary>
+        /// Alias for <see cref="enable_environment" />, which allows for use
+        /// with <see cref="std::bind" />.
+        /// </summary>
+        inline void enable_environment0(const variant& v) {
+            this->enable_environment(v);
+        }
+
+        /// <summary>
+        /// Finds the environment designated by the given string variant, or
+        /// return the environment if the variant specified an actual
+        /// environment pointer.
+        /// </summary>
+        /// <param name="v"></param>
+        /// <returns></returns>
+        environment find_environment(const variant& v);
 
         /// <summary>
         /// Stores the currently active environment.

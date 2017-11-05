@@ -16,6 +16,7 @@
 #include "trrojan/timer.h"
 
 #include "trrojan/d3d11/debugable.h"
+#include "trrojan/d3d11/device.h"
 
 
 namespace trrojan {
@@ -43,6 +44,9 @@ namespace d3d11 {
         mmpld_benchmark(void);
 
         virtual ~mmpld_benchmark(void);
+
+        virtual bool can_run(trrojan::environment env,
+            trrojan::device device) const noexcept;
 
         virtual void draw_debug_view(ATL::CComPtr<ID3D11Device> device,
             ATL::CComPtr<ID3D11DeviceContext> deviceContext);

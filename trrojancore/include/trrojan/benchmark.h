@@ -13,6 +13,8 @@
 #include <vector>
 
 #include "trrojan/configuration_set.h"
+#include "trrojan/device.h"
+#include "trrojan/environment.h"
 #include "trrojan/export.h"
 #include "trrojan/result_set.h"
 
@@ -25,6 +27,11 @@ namespace trrojan {
     class TRROJANCORE_API benchmark_base {
 
     public:
+
+        /// <summary>
+        /// A callback which is used to enable an environment from a factor.
+        /// </summary>
+        typedef std::function<void(const variant&)> enable_environment_callback;
 
         /// <summary>
         /// A callback which is invoked after each run.
@@ -56,6 +63,22 @@ namespace trrojan {
         /// Finalises the instance.
         /// </summary>
         virtual ~benchmark_base(void);
+
+        /// <summary>
+        /// Answer whether the benchmark can run under the given environment on
+        /// the given device.
+        /// </summary>
+        /// <remarks>
+        /// <para>Subclasses should override this method to implement
+        /// restrictions on the environment and devices they can run with.
+        /// </para>
+        /// <para>The default implementation of the <see cref="run" /> method
+        /// uses this information to skip unsupported configurations.</para>
+        /// </remarks>
+        /// <param name="env">A benchmarking environment to be tested.</param>
+        /// <param name="device">A device to be tested.</param>
+        /// <returns><c>true</c>, unconditionally.</returns>
+        virtual bool can_run(environment env, device device) const noexcept;
 
         /// <summary>
         /// Answer the default factors to be tested if not specified by the

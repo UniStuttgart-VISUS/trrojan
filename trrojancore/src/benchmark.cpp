@@ -67,6 +67,15 @@ trrojan::benchmark_base::~benchmark_base(void) { }
 
 
 /*
+ * trrojan::benchmark_base::can_run
+ */
+bool trrojan::benchmark_base::can_run(environment env,
+        device device) const noexcept {
+    return true;
+}
+
+
+/*
  * trrojan::benchmark_base::required_factors
  */
 std::vector<std::string> trrojan::benchmark_base::required_factors(void) const {

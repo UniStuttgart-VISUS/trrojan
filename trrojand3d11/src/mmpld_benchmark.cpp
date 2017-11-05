@@ -120,6 +120,16 @@ trrojan::d3d11::mmpld_benchmark::~mmpld_benchmark(void) { }
 
 
 /*
+ * trrojan::d3d11::mmpld_benchmark::can_run
+ */
+bool trrojan::d3d11::mmpld_benchmark::can_run(trrojan::environment env,
+        trrojan::device device) const noexcept {
+    auto d = std::dynamic_pointer_cast<trrojan::d3d11::device>(device);
+    return (d != nullptr);
+}
+
+
+/*
  * trrojan::d3d11::mmpld_benchmark::draw_debug_view
  */
 void trrojan::d3d11::mmpld_benchmark::draw_debug_view(
