@@ -30,7 +30,7 @@ ENDIF (${CMAKE_COMPILER_IS_GNUCXX})
 
 
 if (${PNG_FOUND})
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Dcimg_use_png")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Dcimg_use_png")
 endif (${PNG_FOUND})
 
 if (${JPEG_FOUND})
@@ -46,7 +46,7 @@ if (${ZLIB_FOUND})
 endif (${ZLIB_FOUND})
 
 if (NOT WIN32 OR ${PNG_FOUND})
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTRROJAN_WITH_CIMG -Dcimg_display=0")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTRROJAN_WITH_CIMG -Dcimg_display=0 -Dcimg_use_png")
 endif (NOT WIN32 OR ${PNG_FOUND})
 
  find_package(OpenMP)

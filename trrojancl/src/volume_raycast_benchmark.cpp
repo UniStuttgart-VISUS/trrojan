@@ -437,12 +437,13 @@ void trrojan::opencl::volume_raycast_benchmark::setup_raycaster(const configurat
     // set up buffer objects for the view matrix and shuffled IDs
     try
     {
-        std::array<float, 16> zero_mat;
-        zero_mat.fill(0);
-        _view_mat = cl::Buffer(env->get_properties().context,
-                               CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-                               zero_mat.size() * sizeof(cl_float),
-                               zero_mat.data());
+//        std::array<float, 16> zero_mat;
+//        zero_mat.fill(0);
+        _view_mat = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+//                cl::Buffer(env->get_properties().context,
+//                               CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+//                               zero_mat.size() * sizeof(cl_float),
+//                               zero_mat.data());
 
         int pixel_cnt = cfg.find(factor_viewport_width)->value().as<int>() *
                         cfg.find(factor_viewport_height)->value().as<int>();
@@ -564,8 +565,8 @@ void trrojan::opencl::volume_raycast_benchmark::load_transfer_function(
         const std::string file_name,
         environment::pointer env)
 {
-    // The size of the transfer function vector (64 * RGBA values).
-    size_t num_values = 64;
+    // The size of the transfer function vector (256 * RGBA values).
+    size_t num_values = 256*4;
     std::vector<unsigned char> values;
 
     if (file_name == "fallback")
@@ -575,9 +576,12 @@ void trrojan::opencl::volume_raycast_benchmark::load_transfer_function(
 
         for (size_t i = 0; i < num_values; ++i)
         {
-            for (int j = 0; j < 4; ++j)
+            for (int j = 0; j < 1; ++j)
             {
-                values.push_back(i / 8);
+                values.push_back(i);
+                values.push_back(0);
+                values.push_back(0);
+                values.push_back(i);
             }
         }
     }
@@ -607,7 +611,7 @@ void trrojan::opencl::volume_raycast_benchmark::load_transfer_function(
     // We multiply by 4 because of the values for RGBA-channels.
     values.resize(num_values * 4, 0);
 
-    // create OpenCL 2d image representation
+    // create OpenCL 1d image representation
     cl::ImageFormat format;
     format.image_channel_order = CL_RGBA;
     // Seems like intel IGP does not support float textures as input: use uint8 here.
@@ -840,7 +844,7 @@ void trrojan::opencl::volume_raycast_benchmark::update_kernel_args(
     if (changed.count(factor_roll) + changed.count(factor_pitch) + changed.count(factor_yaw)
             + changed.count(factor_zoom) + changed.count(factor_device))
     {
-        std::array<float, 16> view_mat;
+        cl_float16 view_mat;
         view_mat = create_view_mat(cfg.find(factor_roll)->value(),
                                    cfg.find(factor_pitch)->value(),
                                    cfg.find(factor_yaw)->value(),
@@ -851,21 +855,22 @@ void trrojan::opencl::volume_raycast_benchmark::update_kernel_args(
 
         try
         {
-            cl::Event write_evt;
-            // upload inverse view mat
-            env_ptr->get_properties().queue.enqueueWriteBuffer(_view_mat,
-                                                               CL_FALSE,
-                                                               0,
-                                                               16*sizeof(cl_float),
-                                                               view_mat.data(),
-                                                               NULL,
-                                                               &write_evt);
-            env_ptr->get_properties().queue.flush();
-            cl_int event_status = CL_QUEUED;
-            while(event_status != CL_COMPLETE)
-            {
-                write_evt.getInfo<cl_int>(CL_EVENT_COMMAND_EXECUTION_STATUS, &event_status);
-            }
+            _kernel.setArg(VIEW, view_mat);
+//            cl::Event write_evt;
+//            // upload inverse view mat
+//            env_ptr->get_properties().queue.enqueueWriteBuffer(_view_mat,
+//                                                               CL_FALSE,
+//                                                               0,
+//                                                               16*sizeof(cl_float),
+//                                                               view_mat.data(),
+//                                                               NULL,
+//                                                               &write_evt);
+//            env_ptr->get_properties().queue.flush();
+//            cl_int event_status = CL_QUEUED;
+//            while(event_status != CL_COMPLETE)
+//            {
+//                write_evt.getInfo<cl_int>(CL_EVENT_COMMAND_EXECUTION_STATUS, &event_status);
+//            }
         }
         catch (cl::Error err)
         {
@@ -965,10 +970,10 @@ void trrojan::opencl::volume_raycast_benchmark::log_cl_error(cl::Error error)
 /*
  * trrojan::opencl::volume_raycast_benchmark::create_view_mat
  */
-std::array<float, 16> trrojan::opencl::volume_raycast_benchmark::create_view_mat(double roll,
-                                                                                 double pitch,
-                                                                                 double yaw,
-                                                                                 double zoom)
+cl_float16 trrojan::opencl::volume_raycast_benchmark::create_view_mat(double roll,
+                                                                      double pitch,
+                                                                      double yaw,
+                                                                      double zoom)
 {
     // Convert Euler Angles(roll, pitch, yaw) to axes(x, y, z).
     // We use a right handed coordinate system.
@@ -987,7 +992,7 @@ std::array<float, 16> trrojan::opencl::volume_raycast_benchmark::create_view_mat
     std::valarray<double> thickness(_dr.properties().slice_thickness.data(),
                                     _dr.properties().slice_thickness.size());
     s *= thickness*(1.0/thickness[0]);
-#undef max  // don't get the error here if I don't undef max
+#undef max  // error here if I don't undef max
     s = s.max() / s;
     std::cout << "Scaling volume: (" << s[0] << ", " << s[1] << ", " << s[2] << ")" << std::endl;
 
@@ -1005,13 +1010,13 @@ std::array<float, 16> trrojan::opencl::volume_raycast_benchmark::create_view_mat
     std::array<float, 3> y_axis = {-cy*sz, -sx*sy*sz + cx*cz, cx*sy*sz + sx*cz};
     std::array<float, 3> z_axis = {sy, -sx*cy, cx*cy};
 
-    return std::array<float, 16>{
-        {
-            (float)s[0]*x_axis[0], (float)s[0]*x_axis[1], (float)s[0]*x_axis[2], -x_axis[2]*zoom_f*(float)s[0],
-            (float)s[1]*y_axis[0], (float)s[1]*y_axis[1], (float)s[1]*y_axis[2], -y_axis[2]*zoom_f*(float)s[1],
-            (float)s[2]*z_axis[0], (float)s[2]*z_axis[1], (float)s[2]*z_axis[2], -z_axis[2]*zoom_f*(float)s[2],
+    return cl_float16
+    {{
+        (float)s[0]*x_axis[0], (float)s[0]*x_axis[1], (float)s[0]*x_axis[2], -x_axis[2]*zoom_f*(float)s[0],
+        (float)s[1]*y_axis[0], (float)s[1]*y_axis[1], (float)s[1]*y_axis[2], -y_axis[2]*zoom_f*(float)s[1],
+        (float)s[2]*z_axis[0], (float)s[2]*z_axis[1], (float)s[2]*z_axis[2], -z_axis[2]*zoom_f*(float)s[2],
                 0,              0,              0,                  1
-        }};
+    }};
 }
 
 /*
