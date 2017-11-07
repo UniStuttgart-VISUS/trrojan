@@ -4,6 +4,8 @@
 /// <author>Christoph Müller</author>
 
 #include "trrojan/mmpld_reader.h"
+#include <climits>
+#include <cstring>
 
 
 /*

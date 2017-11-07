@@ -94,7 +94,7 @@ trrojan::opencl::volume_raycast_benchmark::volume_raycast_benchmark(void)
     this->_default_configs.add_factor(factor::from_manifestations(
         factor_environment_vendor, static_cast<int>(VENDOR_INTEL | VENDOR_NVIDIA)));
     this->_default_configs.add_factor(
-        factor::from_manifestations(factor_device_type, static_cast<int>(TYPE_ALL)));
+        factor::from_manifestations(factor_device_type, static_cast<int>(TYPE_GPU)));
     this->_default_configs.add_factor(
         factor::from_manifestations(factor_device_vendor, static_cast<int>(VENDOR_ANY)));
 
@@ -431,23 +431,20 @@ void trrojan::opencl::volume_raycast_benchmark::setup_raycaster(const configurat
 {
     environment::pointer env = std::dynamic_pointer_cast<environment>(
                                 cfg.find(factor_environment)->value().as<trrojan::environment>());
-    device::pointer dev = std::dynamic_pointer_cast<device>(
+
+//    auto f = cfg.find(factor_device);
+//    auto d = cfg.find(factor_device)->value().as<trrojan::device>();
+
+    opencl::device::pointer dev = std::dynamic_pointer_cast<opencl::device>(
                             cfg.find(factor_device)->value().as<trrojan::device>());
 
     // set up buffer objects for the view matrix and shuffled IDs
     try
     {
-//        std::array<float, 16> zero_mat;
-//        zero_mat.fill(0);
         _view_mat = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-//                cl::Buffer(env->get_properties().context,
-//                               CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-//                               zero_mat.size() * sizeof(cl_float),
-//                               zero_mat.data());
-
         int pixel_cnt = cfg.find(factor_viewport_width)->value().as<int>() *
                         cfg.find(factor_viewport_height)->value().as<int>();
-        // shuffeld ray id array
+        // shuffeled ray id array
         std::vector<int> shuffled_ids(pixel_cnt);
         std::iota(std::begin(shuffled_ids), std::end(shuffled_ids), 0);
         unsigned int seed = 42;
