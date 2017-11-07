@@ -5,11 +5,13 @@ cmake_minimum_required(VERSION 3.1.0)
 
 set(IncludeDirectory "include")
 set(SourceDirectory "src")
+set(LibraryDirectory "lib")
 
 file(GLOB_RECURSE HeaderFiles RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${IncludeDirectory}/*.h" "${SourceDirectory}/*.h" "${IncludeDirectory}/*.inl" "${SourceDirectory}/*.inl")
 file(GLOB_RECURSE SourceFiles RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${SourceDirectory}/*.cpp")
 
 include_directories("${IncludeDirectory}")
+include_directories("${LibraryDirectory}")
 
 set(TrrojanCoreIncludeDir "${CMAKE_CURRENT_SOURCE_DIR}/${IncludeDirectory}" PARENT_SCOPE)
 
