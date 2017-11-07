@@ -23,7 +23,8 @@ trrojan::trroll_parser::parse(const std::string& path) {
     static const char NL[] = { '\r', '\n' };
     static const std::string NS("::");
     std::vector<benchmark_configs> retval;
-    const auto trroll = trrojan::trim(trrojan::read_text_file(path));
+    const auto content = trrojan::read_text_file(path);
+    const auto trroll = trrojan::trim(content);
 
 //    const auto trroll = trrojan::trim(std::string("\
 //opencl::volume_raycast{\n\

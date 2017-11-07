@@ -39,11 +39,16 @@ int main(const int argc, const char **argv) {
     });
 
 
-    {
+    try {
         std::cout << "executive" << std::endl;
         trrojan::executive te;
-        te.load_plugins();
-        te.crowbar();
+        te.load_plugins(cmdLine);
+        trrojan::csv_output output;
+        output.open(trrojan::csv_output_params::create("test.csv"));
+        te.trroll("test.trroll", output);
+        //te.crowbar();
+    } catch (std::exception& ex) {
+        std::cout << ex.what() << std::endl;
     }
 
     {
@@ -58,7 +63,6 @@ int main(const int argc, const char **argv) {
 
 
     std::cout << "elapsed: " << t.elapsed_millis() << std::endl;
-
 
     return 0;
 }

@@ -61,9 +61,36 @@ void trrojan::benchmark_base::merge_results(result_set& l, result_set&& r) {
 
 
 /*
+ * trrojan::benchmark_base::factor_device
+ */
+const std::string trrojan::benchmark_base::factor_device("device");
+
+
+/*
+ * trrojan::benchmark_base::factor_environment
+ */
+const std::string trrojan::benchmark_base::factor_environment("environment");
+
+
+/*
  * trrojan::benchmark_base::~benchmark_base
  */
 trrojan::benchmark_base::~benchmark_base(void) { }
+
+
+/*
+ * trrojan::benchmark_base::can_run
+ */
+bool trrojan::benchmark_base::can_run(environment env,
+        device device) const noexcept {
+    return true;
+}
+
+
+/*
+ * trrojan::benchmark_base::optimise_order
+ */
+void trrojan::benchmark_base::optimise_order(configuration_set& inOutConfs) { }
 
 
 /*
@@ -127,11 +154,14 @@ trrojan::configuration& trrojan::benchmark_base::merge_system_factors(
  */
 void trrojan::benchmark_base::check_required_factors(
         const trrojan::configuration_set& cs) const {
-    for (auto& f : this->_default_configs.factors()) {
-        if ((f.size() == 0) && !cs.contains_factor(f.name())) {
+    auto fs = this->required_factors();
+    for (auto& f : fs) {
+        log::instance().write(log_level::verbose, "Checking availability of "
+            "factor \"%s\" in the given configuration ...\n", f.c_str());
+        if ((f.size() == 0) && !cs.contains_factor(f)) {
             std::stringstream msg;
             msg << "The given configuration_set does not contain the required "
-                "factor \"" << f.name() << "\"." << std::ends;
+                "factor \"" << f << "\"." << std::ends;
             throw std::invalid_argument(msg.str());
         }
     }

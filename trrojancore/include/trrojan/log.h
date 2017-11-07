@@ -66,6 +66,10 @@ namespace trrojan {
             ::printf("%s\n", str);  // TODO: preliminary implementation
         }
 
+        inline void write_line(const log_level level, const std::string& str) {
+            ::printf("%s\n", str.c_str());  // TODO: preliminary implementation
+        }
+
         inline void write_line(const log_level level,
                 const std::exception& ex) {
             this->write(level, "%s\n", ex.what());

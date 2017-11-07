@@ -6,6 +6,7 @@
 
 #include "trrojan/io.h"
 
+#include <cassert>
 #include <fstream>
 #include <sstream>
 #include <stdexcept>
@@ -50,20 +51,21 @@ std::string TRROJANCORE_API trrojan::read_text_file(const char *path) {
     }
 
     std::ifstream file(path, std::ios::in | std::ios::ate);
-    if (!file) {
+    if (file) {
+        std::string retval;
+        retval.reserve(file.tellg());
+        file.seekg(0, std::ios::beg);
+
+        retval.assign((std::istreambuf_iterator<char>(file)),
+            std::istreambuf_iterator<char>());
+
+        return retval;
+
+    } else {
         std::stringstream msg;
-        msg << "Failed to open \"" << path << "\"" << std::ends;
+        msg << "Failed to open \"" << path << "\"." << std::ends;
         throw std::runtime_error(msg.str());
     }
-
-    std::string retval;
-    retval.reserve(file.tellg());
-    file.seekg(0, std::ios::beg);
-
-    retval.assign((std::istreambuf_iterator<char>(file)),
-        std::istreambuf_iterator<char>());
-
-    return retval;
 }
 
 

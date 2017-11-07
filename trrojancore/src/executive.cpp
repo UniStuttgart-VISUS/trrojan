@@ -6,6 +6,9 @@
 #include "trrojan/executive.h"
 
 #include <algorithm>
+#if (!defined(__GNUC__) || (__GNUC__ >= 5))
+#include <codecvt>
+#endif /* (!defined(__GNUC__) || (__GNUC__ >= 5)) */
 #include <iostream>
 #include <iterator>
 #include <stdexcept>
@@ -27,7 +30,25 @@ trrojan::executive::~executive(void) {
     }
 
     for (auto e : this->environments) {
+        assert(e.second != nullptr);
         e.second->on_finalise();
+    }
+    this->environments.clear();
+}
+
+
+/*
+ * trrojan::executive::
+ */
+trrojan::plugin trrojan::executive::find_plugin(const std::string& name) {
+    auto it = std::find_if(this->plugins.begin(), this->plugins.end(),
+        [&name](const plugin p) { return p->name() == name; });
+    if (it != this->plugins.end()) {
+        return *it;
+    } else {
+        log::instance().write(log_level::warning, "The plugin named \"%s\" "
+            "does not exist or was not loaded.\n", name.c_str());
+        return nullptr;
     }
 }
 
@@ -35,7 +56,7 @@ trrojan::executive::~executive(void) {
 /*
  * trrojan::executive::load_plugins
  */
-void trrojan::executive::load_plugins(void) {
+void trrojan::executive::load_plugins(const cmd_line& cmdLine) {
     try {
         std::vector<std::string> paths;
 
@@ -87,6 +108,53 @@ void trrojan::executive::load_plugins(void) {
                 log::instance().write_line(ex);
             }
         }
+
+        log::instance().write(log_level::verbose, "%u plugin(s) have been "
+            "loaded. Retrieving execution environments from them ...\n", 
+            this->plugins.size());
+
+        for (auto p : this->plugins) {
+            std::vector<environment> envs;
+            p->create_environments(envs);
+
+            for (auto e : envs) {
+                // First, handle potential violations of the contract with the
+                // plugin. If the plugin returns invalid stuff, just skip it.
+                if (e == nullptr) {
+                    log::instance().write(log_level::debug, "The plugin \"%s\" "
+                        "returned a nullptr as environment.\n",
+                        p->name().c_str());
+                    continue;
+                }
+
+                auto name = e->name();
+                if (this->environments.find(name) != this->environments.end()) {
+                    log::instance().write(log_level::debug, "The plugin \"%s\" "
+                        "returned the environment \"%s\", which conflicts with "
+                        "an already loaded environment. The new environment "
+                        "will be ignored.\n", p->name().c_str(), name.c_str());
+                    continue;
+                }
+
+                // Secon, initialise the plugin and add it to the map.
+                try {
+                    e->on_initialise(cmdLine);
+                    this->environments.insert(std::make_pair(name, e));
+                    log::instance().write(log_level::verbose, "The "
+                        "environment \"%s\", provided by plugin \"%s\", was "
+                        "successfully initialised.\n", name.c_str(),
+                        p->name().c_str());
+
+                } catch (std::exception& ex) {
+                    log::instance().write_line(ex);
+                    log::instance().write(log_level::verbose, "The "
+                        "environment \"%s\", provided by plugin \"%s\", failed "
+                        "to initialise. The environment will be ignored.\n",
+                        name.c_str(), p->name().c_str());
+                }
+            }
+        }
+
     } catch (std::exception& ex) {
         log::instance().write_line(ex);
     }
@@ -94,14 +162,213 @@ void trrojan::executive::load_plugins(void) {
 
 
 /*
+ * trrojan::executive::trroll
+ */
+void trrojan::executive::trroll(const std::string& path, output_base& output) {
+    typedef trroll_parser::benchmark_configs bcs;
+    auto bcss = trroll_parser::parse(path);
+    std::vector<benchmark> benchmarks;
+    plugin curPlugin;
+    auto enableEnv = std::bind(&executive::enable_environment0, std::ref(*this),
+        std::placeholders::_1);
+
+    // Before doing anything else, make sure we have the environments needed for
+    // the benchmarks. This will ensure that the application fails right at the
+    // beginning rather than sometime into the tests when it might not be
+    // immediately noticed that the configuration is wrong or unsupported on the
+    // current machine.
+    for (auto& b : bcss) {
+        this->assign_environments(b.configs);
+    }
+
+    // Make sure that the benchmark configurations are grouped. This will ensure
+    // that we are not repeatedly retrieving benchmarks from the plugins when
+    // switching them.
+    std::stable_sort(bcss.begin(), bcss.end(), [](const bcs& l, const bcs& r) {
+        return (l.benchmark.compare(r.benchmark) < 0);
+    });
+    std::stable_sort(bcss.begin(), bcss.end(), [](const bcs& l, const bcs& r) {
+        return (l.plugin.compare(r.plugin) < 0);
+    });
+
+    for (auto& b : bcss) {
+        // First, make sure to find the requested plugin and instantiate the
+        // benchmarks requested from this plugin.
+        if ((curPlugin == nullptr) || (curPlugin->name() != b.plugin)) {
+            curPlugin = this->find_plugin(b.plugin);
+            if (curPlugin != nullptr) {
+                benchmarks.clear();
+                curPlugin->create_benchmarks(benchmarks);
+
+            } else {
+                log::instance().write(log_level::warning, "The plugin \"%s\" "
+                    "required for the benchmark \"%s\" does not exist or was "
+                    "not loaded. The benchmark will be skipped.\n",
+                    b.plugin.c_str(), b.benchmark.c_str());
+            }
+        }
+
+        // If the required plugin was loaded, make sure that the requested
+        // benchmarks exist in this plugin.
+        if (curPlugin != nullptr) {
+            auto it = std::find_if(benchmarks.begin(), benchmarks.end(),
+                [&b](const benchmark m) { return m->name() == b.benchmark; });
+            if (it != benchmarks.end() && (*it != nullptr)) {
+                log::instance().write(log_level::information, "Running "
+                    "benchmark \"%s\" from plugin \"%s\".\n",
+                    b.benchmark.c_str(), b.plugin.c_str());
+
+                // TODO: replace device strings with actual devices.
+                (**it).run(b.configs, [&output](result&& r) {
+                    output << r;
+                    return true;
+                });
+
+            } else {
+                log::instance().write(log_level::warning, "No benchmark named "
+                    "\"%s\" was found in plugin \"%s\". The benchmark will be "
+                    "skipped.\n", b.benchmark.c_str(), b.plugin.c_str());
+            }
+        }
+    } /* end for (auto b : bcss) */
+}
+
+
+/*
+ * trrojan::executive::assign_environments
+ */
+trrojan::configuration_set& trrojan::executive::assign_environments(
+        configuration_set& inOutCs) {
+    auto envs = inOutCs.find_factor("environment");
+    std::vector<environment> manifestations;
+
+    if ((envs != nullptr) && (envs->size() > 0)) {
+        // A restriction on environments was specified, translate those
+        // into actual environments.
+        manifestations.reserve(envs->size());
+
+        for (size_t i = 0; i < envs->size(); ++i) {
+            auto env = this->find_environment((*envs)[i]);
+            if (env != nullptr) {
+                manifestations.push_back(env);
+            }
+        }
+
+    } else {
+        // No environments are given, so use all we know.
+        manifestations.reserve(this->environments.size());
+        for (auto& e : this->environments) {
+            manifestations.push_back(e.second);
+        }
+    }
+
+    inOutCs.replace_factor(factor::from_manifestations("environment",
+        manifestations));
+
+    return inOutCs;
+}
+
+
+/*
  * trrojan::executive::enable_environment
  */
 void trrojan::executive::enable_environment(const std::string& name) {
-    if (this->cur_environment != nullptr) {
-        this->cur_environment->on_deactivate();
+    auto it = this->environments.find(name);
+    if (it != this->environments.end()) {
+        this->enable_environment(it->second);
+
+    } else {
+        std::stringstream msg;
+        msg << "The environment \"" << name << "\" does not exist or has not "
+            "been loaded." << std::ends;
+        throw std::invalid_argument(msg.str());
     }
-    this->cur_environment = this->environments[name];
-    this->cur_environment->on_activate();
+}
+
+
+/*
+ * trrojan::executive::enable_environment
+ */
+void trrojan::executive::enable_environment(environment env) {
+    if (env == nullptr) {
+        throw std::invalid_argument("The environment to be activated must be "
+            "a valid pointer");
+    }
+
+    if ((this->cur_environment != nullptr) && (this->cur_environment != env)) {
+        this->cur_environment->on_deactivate();
+        this->cur_environment = nullptr;
+    }
+
+    if (this->cur_environment == nullptr) {
+        this->cur_environment = env;
+        log::instance().write(log_level::information, "Enabling enviornment "
+            "\"%s\" ...\n", env->name().c_str());
+        this->cur_environment->on_activate();
+    }
+}
+
+
+/*
+ * trrojan::executive::enable_environment
+ */
+void trrojan::executive::enable_environment(const variant& v) {
+    switch (v.type()) {
+        case variant_type::string:
+        case variant_type::wstring:
+        case variant_type::environment:
+            this->enable_environment(this->find_environment(v));
+            break;
+
+        default:
+            throw std::invalid_argument("The given variant does not designate "
+                "a valid environment");
+    }
+}
+
+
+/*
+ * trrojan::executive::find_environment
+ */
+trrojan::environment trrojan::executive::find_environment(const variant& v) {
+    auto retval = this->environments.end();
+
+    if (v.type() == variant_type::string) {
+        auto name = v.as<std::string>();
+        retval = this->environments.find(name);
+        if (retval == this->environments.end()) {
+            log::instance().write(log_level::error, "The environment "
+                "\"%s\" does not exist.\n", name.c_str());
+        }
+
+    } else if (v.type() == variant_type::wstring) {
+        auto wname = v.as<std::wstring>();
+        std::string name;
+#if (!defined(__GNUC__) || (__GNUC__ >= 5))
+        static std::wstring_convert<std::codecvt_utf8<wchar_t>> cvt;
+        name = cvt.to_bytes(wname);
+#else /* (!defined(__GNUC__) || (__GNUC__ >= 5)) */
+        for (auto c : wname) {
+            name += static_cast<char>(c);
+        }
+#endif /* (!defined(__GNUC__) || (__GNUC__ >= 5)) */
+
+        retval = this->environments.find(name);
+        if (retval == this->environments.end()) {
+            log::instance().write(log_level::error, "The environment "
+                "\"%s\" does not exist.\n", name.c_str());
+        }
+
+    } else if (v.type() == variant_type::environment) {
+        return v.as<environment>();
+
+    } else {
+        log::instance().write(log_level::warning, "The variant specifying "
+            "an environment name is not a string and will therefore be "
+            "ignored.\n");
+    }
+
+    return (retval != this->environments.end()) ? retval->second : nullptr;
 }
 
 

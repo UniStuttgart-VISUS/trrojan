@@ -10,3 +10,8 @@ stream::stream_benchmark{
 }
 
 stream::stream_benchmark {}
+
+d3d11::mmpld-raycaster {
+    uint32 viewport_width = 800
+    uint32 viewport_height = 600
+}

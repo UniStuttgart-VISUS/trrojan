@@ -13,6 +13,8 @@
 #include <vector>
 
 #include "trrojan/configuration_set.h"
+#include "trrojan/device.h"
+#include "trrojan/environment.h"
 #include "trrojan/export.h"
 #include "trrojan/result_set.h"
 
@@ -25,6 +27,11 @@ namespace trrojan {
     class TRROJANCORE_API benchmark_base {
 
     public:
+
+        /// <summary>
+        /// A callback which is used to enable an environment from a factor.
+        /// </summary>
+        typedef std::function<void(const variant&)> enable_environment_callback;
 
         /// <summary>
         /// A callback which is invoked after each run.
@@ -53,9 +60,45 @@ namespace trrojan {
         static void merge_results(result_set& l, result_set&& r);
 
         /// <summary>
+        /// The string &quot;device&quot; for identifying a
+        /// <see cref="trrojan::device" /> as factor.
+        /// </summary>
+        /// <remarks>
+        /// Bechmarks should use this constant to make sure that built-in
+        /// functionality referencing devices is working as intended.
+        /// </remarks>
+        static const std::string factor_device;
+
+        /// <summary>
+        /// The string &quot;device&quot; for identifying an
+        /// <see cref="trrojan::environment" /> as factor.
+        /// </summary>
+        /// <remarks>
+        /// Bechmarks should use this constant to make sure that built-in
+        /// functionality referencing environments is working as intended.
+        /// </remarks>
+        static const std::string factor_environment;
+
+        /// <summary>
         /// Finalises the instance.
         /// </summary>
         virtual ~benchmark_base(void);
+
+        /// <summary>
+        /// Answer whether the benchmark can run under the given environment on
+        /// the given device.
+        /// </summary>
+        /// <remarks>
+        /// <para>Subclasses should override this method to implement
+        /// restrictions on the environment and devices they can run with.
+        /// </para>
+        /// <para>The default implementation of the <see cref="run" /> method
+        /// uses this information to skip unsupported configurations.</para>
+        /// </remarks>
+        /// <param name="env">A benchmarking environment to be tested.</param>
+        /// <param name="device">A device to be tested.</param>
+        /// <returns><c>true</c>, unconditionally.</returns>
+        virtual bool can_run(environment env, device device) const noexcept;
 
         /// <summary>
         /// Answer the default factors to be tested if not specified by the
@@ -75,13 +118,29 @@ namespace trrojan {
         }
 
         /// <summary>
+        /// Optimises the order of configuration factors such that the overhead
+        /// of switching them is minimal for the benchmark.
+        /// </summary>
+        /// <remarks>
+        /// The default implementation does nothing.
+        /// </remarks>
+        /// <param name="inOutConfs">The configuration set to be optimised.
+        /// </param>
+        virtual void optimise_order(configuration_set& inOutConfs);
+
+        /// <summary>
         /// Answer the names of the factors which a
         /// <see cref="trrojan::configuration" /> passed to the benchmark must
         /// at least contain.
         /// </summary>
+        /// <remarks>
+        /// This implementation returns all factors specified in the default
+        /// configurations. Subclasses might want to change this behaviour by
+        /// overriding this method.
+        /// </remarks>
         /// <returns>The names of the factor which are required for the
         /// benchmark to run</returns>
-        std::vector<std::string> required_factors(void) const;
+        virtual std::vector<std::string> required_factors(void) const;
 
         /// <summary>
         /// Run the benchmark for each of the
@@ -109,8 +168,20 @@ namespace trrojan {
         static trrojan::configuration& merge_system_factors(
             trrojan::configuration& c);
 
+        /// <summary>
+        /// Initialises a new instance.
+        /// </summary>
+        /// <param name="name">The name of the benchmark, which must be unique
+        /// within its plugin.</param>
         inline benchmark_base(const std::string& name) : _name(name) { }
 
+        /// <summary>
+        /// Initialises a new instance.
+        /// </summary>
+        /// <param name="name">The name of the benchmark, which must be unique
+        /// within its plugin.</param>
+        /// <param name="default_configs">The default configurations to be
+        /// tested.</param>
         inline benchmark_base(const std::string& name,
             trrojan::configuration_set default_configs)
             : _default_configs(default_configs), _name(name) { }
@@ -143,7 +214,13 @@ namespace trrojan {
         /// Check whether the given configuration set has all required factors
         /// or raise an exception.
         /// </summary>
-        void check_required_factors(const trrojan::configuration_set& cs) const;
+        /// <remarks>
+        /// This implementation considers the factors provided by the
+        /// <see cref="required_factors" /> method. Subclasses can change this 
+        /// behaviour by overriding this method.
+        /// </remarks>
+        virtual void check_required_factors(
+            const trrojan::configuration_set& cs) const;
 
         /// <summary>
         /// Write an informational message to the log that we are now running

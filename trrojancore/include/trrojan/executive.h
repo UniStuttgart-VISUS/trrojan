@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <map>
 #include <memory>
 #include <unordered_map>
 #include <vector>
@@ -45,6 +46,14 @@ namespace trrojan {
         ~executive(void);
 
         /// <summary>
+        /// Search for the plugin with the specified name.
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns>A pointer to the respective plugin or <c>nullptr</c> if the
+        /// plugin was not found.</returns>
+        plugin find_plugin(const std::string& name);
+
+        /// <summary>
         /// Answer whether an environment with the given name is available.
         /// </summary>
         /// <param name="name"></param>
@@ -53,10 +62,24 @@ namespace trrojan {
             return (this->environments.find(name) != this->environments.cend());
         }
 
-        void load_plugins(void);
+        /// <summary>
+        /// Loads all plugins in the current directory, retrieves their
+        /// environments and initialises those with the given command line.
+        /// </summary>
+        /// <param name="cmdLine">The command line arguments passed to the
+        /// environments.</param>
+        void load_plugins(const cmd_line& cmdLine);
+
+        /// <summary>
+        /// Runs the benchmarks in the given TRROLL script writing the results
+        // to the given <paramref name="output" />.
+        /// </summary>
+        void trroll(const std::string& path, output_base& output);
 
         executive operator =(const executive&) = delete;
 
+
+#if 0
         // TODO: remove this
         void crowbar() {
             try {
@@ -150,6 +173,7 @@ namespace trrojan {
 //                writer.close();
 //            }
         }
+#endif
 
     private:
 
@@ -248,14 +272,76 @@ namespace trrojan {
             /// The DLL handle if any.
             /// </summary>
             handle_type handle;
-
         };
+
+        /// <summary>
+        /// If <paramref name="inOutCs" /> does not hold any factor named
+        /// &quot;environment&quot;, add all factors from
+        /// <see cref="enivornments" />. If such a factor exists, but is a
+        /// string factor, replace the names with the actual environment
+        /// objects.
+        /// </summary>
+        /// <param name="inOutCs"></param>
+        /// <exception cref="std::invalid_argument>If the a requested
+        /// environment does not exist.</exception>
+        configuration_set& assign_environments(configuration_set& inOutCs);
 
         /// <summary>
         /// Enables the environment with the specified name.
         /// </summary>
+        /// <remarks>
+        /// Any previously enabled environment stored at
+        /// <see cref="cur_environment" /> will be properly deactivated by the
+        /// method.
+        /// </remarks>
         /// <param name="name"></param>
+        /// <exception cref="std::invalid_argument>If the specified environment
+        /// does not exist.</exception>
         void enable_environment(const std::string& name);
+
+        /// <summary>
+        /// Enables the given environment.
+        /// </summary>
+        /// <remarks>
+        /// Any previously enabled environment stored at
+        /// <see cref="cur_environment" /> will be properly deactivated by the
+        /// method.
+        /// </remarks>
+        /// <param name="env"></param>
+        /// <exception cref="std::invalid_argument>If <paramref name="env" /> is
+        /// <c>nullptr</c>.</exception>
+        void enable_environment(environment env);
+
+        /// <summary>
+        /// Enables the environment identified by the given name or pointer.
+        /// </summary>
+        /// <remarks>
+        /// Any previously enabled environment stored at
+        /// <see cref="cur_environment" /> will be properly deactivated by the
+        /// method.
+        /// </remarks>
+        /// <param name="v"></param>
+        /// <exception cref="std::invalid_argument>If <paramref name="v" /> does
+        /// not contain a valid environment name or actual environment pointer.
+        /// </exception>
+        void enable_environment(const variant& v);
+
+        /// <summary>
+        /// Alias for <see cref="enable_environment" />, which allows for use
+        /// with <see cref="std::bind" />.
+        /// </summary>
+        inline void enable_environment0(const variant& v) {
+            this->enable_environment(v);
+        }
+
+        /// <summary>
+        /// Finds the environment designated by the given string variant, or
+        /// return the environment if the variant specified an actual
+        /// environment pointer.
+        /// </summary>
+        /// <param name="v"></param>
+        /// <returns></returns>
+        environment find_environment(const variant& v);
 
         /// <summary>
         /// Stores the currently active environment.
@@ -265,7 +351,7 @@ namespace trrojan {
         /// <summary>
         /// Holds all execution environments, indexed by their name.
         /// </summary>
-        std::unordered_map<std::string, environment> environments;
+        std::map<std::string, environment> environments;
 
         /// <summary>
         /// Holds the libraries of all plugins that the application has found.

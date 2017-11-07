@@ -73,6 +73,15 @@ namespace trrojan {
             return this->_name;
         }
 
+        /// <summary>
+        /// Qualify a benchmark or environment name with the plugin name.
+        /// </summary>
+        /// <param name="name">The benchmark or environment name.</param>
+        /// <returns>The qualified name.</returns>
+        inline std::string qualify_name(const std::string& name) const {
+            return this->name() + "::" + name;
+        }
+
     protected:
 
         /// <summary>
