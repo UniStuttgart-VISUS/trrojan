@@ -1,5 +1,5 @@
 /// <copyright file="volume_raycast_benchmark.h" company="SFB-TRR 161 Quantitative Methods for Visual Computing">
-/// Copyright © 2017 SFB-TRR 161. Alle Rechte vorbehalten.
+/// Copyright ï¿½ 2017 SFB-TRR 161. Alle Rechte vorbehalten.
 /// </copyright>
 /// <author>Valentin Bruder</author>
 
@@ -307,8 +307,7 @@ namespace opencl
         {
             // reinterpret raw data (char) to input format
             auto s = reinterpret_cast<const From *>(volume_data.data());
-            auto e = reinterpret_cast<const From *>(volume_data.data() +
-                                                    sizeof(From)*volume_data.size());
+            auto e = reinterpret_cast<const From *>(volume_data.data() + volume_data.size());
 
             // convert imput vector to the desired output precision
             std::vector<To> converted_data(s, e);
@@ -317,7 +316,8 @@ namespace opencl
             if (sizeof(To) < sizeof(From))
             {
                 double div = pow(2.0, (sizeof(From) - sizeof(To))*8);
-                for (size_t i = 0; i < converted_data.size(); ++i)
+#pragma omp parallel for
+                for (long long int i = 0; i < converted_data.size(); ++i)
                 {
                     converted_data.at(i) = s[i] / div;
                 }
@@ -478,7 +478,7 @@ namespace opencl
         /// <remarks>Right handed coordinate system.</remarks>
         /// <remarks>Assuming radians as input angles.</remarks>
         /// <returns>The updated RH view matrix.</returns>
-        std::array<float, 16> create_view_mat(double roll, double pitch, double yaw, double zoom);
+        cl_float16 create_view_mat(double roll, double pitch, double yaw, double zoom);
 
         /// <summary>
         /// Interpret an OpenCL error <paramref name="error" /> and throw.
@@ -533,9 +533,9 @@ namespace opencl
         cl::Image1D _tff_mem;
 
         /// <summary>
-        /// OpenCL buffer object for view matrix.
+        /// OpenCL view matrix.
         /// </summary>
-        cl::Buffer _view_mat;
+        cl_float16 _view_mat;
 
         /// <summary>
         /// OpenCL buffer object for suffled ray IDs.

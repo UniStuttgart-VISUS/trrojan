@@ -99,7 +99,7 @@ namespace trrojan {
             /// <summary>
             /// The type of per-vertex colours in the list.
             /// </summary>
-            colour_type colour_type;
+            trrojan::mmpld_reader::colour_type colour_type;
 
             /// <summary>
             /// The maximum intensity found in the list if
@@ -129,7 +129,7 @@ namespace trrojan {
             /// <summary>
             /// The type of position data per vertex.
             /// </summary>
-            vertex_type vertex_type;
+            trrojan::mmpld_reader::vertex_type vertex_type;
         };
 
         /// <summary>
