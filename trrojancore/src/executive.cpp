@@ -90,8 +90,10 @@ void trrojan::executive::load_plugins(const cmd_line& cmdLine) {
                 auto dll = plugin_dll::open(path);
                 auto ep = dll.find_entry_point();
                 if (ep == nullptr) {
-                    throw std::runtime_error("Plugin entry point was not "
-                        "found.");
+                    std::stringstream msg;
+                    msg << "Plugin entry point was not found in \"" << path
+                        << "\".";
+                    throw std::runtime_error(msg.str());
                 }
 
                 log::instance().write(log_level::verbose, "Found a plugin "
@@ -416,8 +418,10 @@ trrojan::executive::plugin_dll trrojan::executive::plugin_dll::open(
     ::SetErrorMode(oldErrorMode);
 
     if (retval.handle == plugin_dll::invalid_handle) {
+        std::stringstream msg;
+        msg << "Failed opening DLL \"" << path << "\"." << std::ends;
         std::error_code ec(nec, std::system_category());
-        throw std::system_error(ec, "Failed to open DLL.");
+        throw std::system_error(ec, msg.str());
     }
 #else /* _WIN32 */
     retval.handle = ::dlopen(path.c_str(), RTLD_LAZY | RTLD_GLOBAL);
