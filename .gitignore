@@ -185,3 +185,4 @@
 /bin/CMakeFiles/FindOpenMP/ompver_C.bin
 /bin/CMakeFiles/FindOpenMP/ompver_CXX.bin
 *.bmp
+/include/Debug
