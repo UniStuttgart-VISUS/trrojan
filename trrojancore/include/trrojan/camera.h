@@ -12,6 +12,7 @@
 
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
+#include "glm/gtc/quaternion.hpp"
 
 namespace trrojan
 {
@@ -38,6 +39,8 @@ public:
            float far_plane = 10000.0f);
     virtual ~camera() = default;
     camera(const camera& other) = default;
+
+    void set_look(vec3 from, vec3 to, vec3 up);
 
     const vec3& get_look_from() const;
     void set_look_from(vec3 val);
@@ -172,6 +175,14 @@ protected:
 inline const vec3& camera::get_look_from() const { return _look_from; }
 inline const vec3& camera::get_look_to() const { return _look_to; }
 inline const vec3& camera::get_look_up() const { return _look_up; }
+
+inline void camera::set_look(glm::vec3 from, glm::vec3 to, glm::vec3 up)
+{
+    _look_from = from;
+    _look_to = to;
+    _look_up = up;
+    invalidate_view_mx();
+}
 
 inline void camera::set_look_from(vec3 val)
 {
