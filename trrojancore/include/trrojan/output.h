@@ -79,4 +79,13 @@ namespace trrojan {
     /// An output handler.
     /// </summary>
     typedef std::shared_ptr<output_base> output;
+
+
+    /// <summary>
+    /// Instantiates an output depending on the file name extension of the
+    /// given path.
+    /// </summary>
+    /// <param name="path">The path to the output file.</param>
+    /// <returns>An output handler.</returns>
+    output TRROJANCORE_API make_output(const std::string& path);
 }

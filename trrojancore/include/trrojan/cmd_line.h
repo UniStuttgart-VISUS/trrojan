@@ -77,4 +77,22 @@ namespace trrojan {
         auto retval = find_switch(name, begin, end, matchCase);
         return (retval != end) ? ++retval : retval;
     }
+
+    /// <summary>
+    /// Find the first occurrence of an argument with the specified switch name
+    /// in a range of command line arguments.
+    /// </summary>
+    /// <param name="name"></param>
+    /// <param name="begin"></param>
+    /// <param name="end"></param>
+    /// <param name="matchCase"></param>
+    /// <tparam name="T"></tparam>
+    /// <tparam name="I"></tparam>
+    /// <returns>An iterator of the first element after the switch ifself, or 
+    /// <paramref name="end" /> if the respective argument has not been found.
+    template<class T, class I>
+    inline I find_argument(const T *name, I begin, I end,
+            const bool matchCase = false) {
+        return find_argument(std::basic_string<T>(name), begin, end, matchCase);
+    }
 }

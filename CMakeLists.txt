@@ -23,10 +23,13 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/bin")
 
 
 # Configure the compiler.
-IF (${CMAKE_COMPILER_IS_GNUCXX})
+if (${CMAKE_COMPILER_IS_GNUCXX})
 	add_definitions(-pedantic -fPIC -DUNIX )
 	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -DDEBUG -D_DEBUG -ggdb")
-ENDIF (${CMAKE_COMPILER_IS_GNUCXX})
+endif (${CMAKE_COMPILER_IS_GNUCXX})
+if (${MSVC})
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_DEBUG} -DNOMINMAX")
+endif (${MSVC})
 
 
 if (${PNG_FOUND})
@@ -55,8 +58,18 @@ if (OPENMP_FOUND)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 endif()
 
-# Build glm
-add_subdirectory(glm)
+## Build glm
+#set(GLM_STATIC_LIBRARY_ENABLE "YES")
+#set(GLM_TEST_ENABLE "NO")
+#add_subdirectory(glm)
+
+# Build spdlog
+set(SPDLOG_BUILD_TESTING "NO")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DSPDLOG_FMT_PRINTF")
+add_subdirectory(spdlog)
+
+include_directories("glm")
+include_directories("spdlog/include")
 
 # Build the core library
 add_subdirectory(trrojancore)

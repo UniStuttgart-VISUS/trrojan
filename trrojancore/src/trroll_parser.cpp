@@ -177,5 +177,5 @@ trrojan::variant trrojan::trroll_parser::parse_value(
     msg << "Unable to parse variant value \"" << str << "\" as "
         << trroll_parser::to_string(detail::variant_type_list(), type)
         << "." << std::ends;
-    throw std::logic_error(msg.str());
+    throw std::runtime_error(msg.str());
 }

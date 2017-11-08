@@ -8,6 +8,8 @@
 #include <cstdio>
 #include <iostream>
 
+#include <spdlog/spdlog.h>
+
 #include "trrojan/export.h"
 
 
@@ -16,12 +18,13 @@ namespace trrojan {
     /// <summary>
     /// Defines possible log levels which can be filtered.
     /// </summary>
-    enum class log_level {
-        debug,
-        verbose,
-        information,
-        warning,
-        error
+    enum class log_level : std::underlying_type<
+            spdlog::level::level_enum>::type {
+        debug = spdlog::level::trace,
+        verbose = spdlog::level::debug,
+        information = spdlog::level::info,
+        warning = spdlog::level::warn,
+        error = spdlog::level::err
     };
 
 
@@ -46,12 +49,15 @@ namespace trrojan {
         ~log(void);
 
         inline void write(const log_level level, const char *str) {
-            ::printf("%s", str);  // TODO: preliminary implementation
+            this->logger->log(static_cast<spdlog::level::level_enum>(level),
+                str);
         }
 
         template<class... P>
-        inline void write(const log_level level, const char *fmt, P... params) {
-            ::printf(fmt, params...);   // TODO: preliminary implementation
+        inline void write(const log_level level, const char *fmt,
+                P... params) {
+            this->logger->log(static_cast<spdlog::level::level_enum>(level),
+                fmt, params...);
         }
 
         inline void write(const log_level level, const std::exception& ex) {
@@ -62,12 +68,21 @@ namespace trrojan {
             this->write(log_level::error, ex);
         }
 
-        inline void write_line(const log_level level, const char *str) {
-            ::printf("%s\n", str);  // TODO: preliminary implementation
+        template<class... P>
+        inline void write_line(const log_level level, const char *fmt,
+                P... params) {
+            std::string f(fmt);
+            f += "\n";
+            this->logger->log(static_cast<spdlog::level::level_enum>(level),
+                f.c_str(), params...);
         }
 
-        inline void write_line(const log_level level, const std::string& str) {
-            ::printf("%s\n", str.c_str());  // TODO: preliminary implementation
+        template<class... P>
+        inline void write_line(const log_level level, std::string fmt,
+                P... params) {
+            fmt += "\n";
+            this->logger->log(static_cast<spdlog::level::level_enum>(level),
+                fmt.c_str(), params...);
         }
 
         inline void write_line(const log_level level,
@@ -84,7 +99,13 @@ namespace trrojan {
         /// <summary>
         /// Initialises a new instance.
         /// </summary>
-        inline log(void) { }
+        inline log(void) : logger(spdlog::stdout_color_mt("console")) {
+#if (defined(DEBUG) || defined(_DEBUG))
+            spdlog::set_level(spdlog::level::trace);
+#endif /* (defined(DEBUG) || defined(_DEBUG)) */
+        }
+
+        std::shared_ptr<spdlog::logger> logger;
 
     };
 }
