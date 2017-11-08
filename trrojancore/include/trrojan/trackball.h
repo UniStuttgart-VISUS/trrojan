@@ -32,7 +32,6 @@ public:
     /// </summary>
     ~trackball() = default;
 
-protected:
     /// <summary>
     /// Rotate around the focus based on a quaternion.
     /// </summary>
@@ -56,6 +55,10 @@ protected:
     /// </summary>
     void reset();
 
+protected:
+    /// <summary>
+    /// The camera to manipulate.
+    /// </summary>
     std::shared_ptr<camera> _cam;
 };
 

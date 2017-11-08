@@ -6,6 +6,8 @@
 #pragma once
 
 #include "trrojan/benchmark.h"
+#include "trrojan/camera.h"
+#include "trrojan/trackball.h"
 
 #include "trrojan/opencl/export.h"
 #include "trrojan/opencl/scalar_type.h"
@@ -55,10 +57,14 @@ namespace opencl
         static const std::string factor_viewport_width;
         static const std::string factor_viewport_height;
         static const std::string factor_step_size_factor;
+        // TODO: replace with position + orientation
         static const std::string factor_roll;
         static const std::string factor_pitch;
         static const std::string factor_yaw;
         static const std::string factor_zoom;
+
+        static const std::string factor_cam_position;
+        static const std::string factor_cam_rotation;
 
         static const std::string factor_sample_precision;
         static const std::string factor_use_lerp;
@@ -533,11 +539,6 @@ namespace opencl
         cl::Image1D _tff_mem;
 
         /// <summary>
-        /// OpenCL view matrix.
-        /// </summary>
-        cl_float16 _view_mat;
-
-        /// <summary>
         /// OpenCL buffer object for suffled ray IDs.
         /// </summary>
         cl::Buffer _ray_ids;
@@ -566,6 +567,11 @@ namespace opencl
         /// The volume data resolution <b>after</b> scaling.
         /// </summary>
         std::array<unsigned, 3> _volume_res;
+
+        /// <summary>
+        /// The camera.
+        /// </summary>
+        trrojan::perspective_camera _camera;
     };
 
 }

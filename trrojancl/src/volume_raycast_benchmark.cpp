@@ -18,6 +18,7 @@
 #include "trrojan/process.h"
 #include "trrojan/timer.h"
 
+#include <glm/gtc/type_ptr.hpp>
 
 #define _TRROJANSTREAM_DEFINE_FACTOR(f)                                        \
 const std::string trrojan::opencl::volume_raycast_benchmark::factor_##f(#f)
@@ -34,10 +35,13 @@ _TRROJANSTREAM_DEFINE_FACTOR(tff_file_name);
 _TRROJANSTREAM_DEFINE_FACTOR(viewport_width);
 _TRROJANSTREAM_DEFINE_FACTOR(viewport_height);
 _TRROJANSTREAM_DEFINE_FACTOR(step_size_factor);
+// TODO: replace cam factors
 _TRROJANSTREAM_DEFINE_FACTOR(roll);
 _TRROJANSTREAM_DEFINE_FACTOR(pitch);
 _TRROJANSTREAM_DEFINE_FACTOR(yaw);
 _TRROJANSTREAM_DEFINE_FACTOR(zoom);
+_TRROJANSTREAM_DEFINE_FACTOR(cam_position);
+_TRROJANSTREAM_DEFINE_FACTOR(cam_rotation);
 
 _TRROJANSTREAM_DEFINE_FACTOR(sample_precision);
 _TRROJANSTREAM_DEFINE_FACTOR(use_lerp);
@@ -123,6 +127,10 @@ trrojan::opencl::volume_raycast_benchmark::volume_raycast_benchmark(void)
     add_kernel_run_factor(factor_yaw, 0.25*CL_M_PI);
     add_kernel_run_factor(factor_zoom, -2.0);
 
+    //TODO: add cam pos + orientation factors
+    // add_kernel_run_factor(factor_cam_position, vec3(0,0,2));
+    // add_kernel_run_factor(factor_cam_rotation, quat(1,0,0,0));
+
     // rendering modes -> kernel build factors
     //
     // sample precision in bytes, if not specified, use uchar (1 byte)
@@ -164,6 +172,9 @@ trrojan::opencl::volume_raycast_benchmark::volume_raycast_benchmark(void)
     _kernel_run_factors.push_back(factor_environment);
     _kernel_build_factors.push_back(factor_device);
     _kernel_run_factors.push_back(factor_device);
+
+    // set up camera
+    _camera = trrojan::perspective_camera();
 }
 
 
@@ -398,10 +409,9 @@ trrojan::result trrojan::opencl::volume_raycast_benchmark::run(const configurati
         }
     }
 
-    // FIXME: PNG w/ linux (+ jpg, tif...)
-    // lib import problem? - currently only nativ CImg formats (bmp...) seem to work
     if (cfg.find(factor_img_output)->value().as<bool>())
     {
+        // write output as image
         auto dev = cfg.find(factor_device)->value().as<trrojan::device>();
         device::pointer dev_ptr = std::dynamic_pointer_cast<device>(dev);
         trrojan::save_image(dev_ptr->name() + ".png", _output_data.data(), imgWidth, imgHeight, 4);
@@ -438,7 +448,6 @@ void trrojan::opencl::volume_raycast_benchmark::setup_raycaster(const configurat
     // set up buffer objects for the view matrix and shuffled IDs
     try
     {
-        _view_mat = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
         int pixel_cnt = cfg.find(factor_viewport_width)->value().as<int>() *
                         cfg.find(factor_viewport_height)->value().as<int>();
         // shuffeled ray id array
@@ -813,7 +822,8 @@ void trrojan::opencl::volume_raycast_benchmark::set_kernel_args(const float prec
     {
         _kernel.setArg(VOLUME, _volume_mem);
         _kernel.setArg(TFF, _tff_mem);
-        _kernel.setArg(VIEW, _view_mat);
+        cl_float16 view_mat = {1, 0, 0, 0,  0, 1, 0, 0,  0, 0, 1, 0,  0, 0, 0, 1};
+        _kernel.setArg(VIEW, view_mat);
         _kernel.setArg(ID, _ray_ids);
         _kernel.setArg(PRECISION, precision_div);
     }
@@ -834,19 +844,38 @@ void trrojan::opencl::volume_raycast_benchmark::update_kernel_args(
     auto env = cfg.find(factor_environment)->value().as<trrojan::environment>();
     environment::pointer env_ptr = std::dynamic_pointer_cast<environment>(env);
 
+    // TODO: test new camera handling with factors 'position (vec3)' and 'rotation (quat)'
+    if (changed.count(factor_cam_position) + changed.count(factor_cam_rotation))
+    {
+        trrojan::trackball t(std::make_shared<trrojan::perspective_camera>(_camera));
+        t.rotate(cfg.find(factor_cam_rotation)->value());
+        _camera.set_look_from(cfg.find(factor_cam_position)->value());
+        glm::mat4 view = _camera.get_view_mx();
+        // TODO: column or row major?
+        cl_float16 view_mat = {view[0][0], view[1][0], view[2][0], view[3][0],
+                               view[0][1], view[1][1], view[2][1], view[3][1],
+                               view[0][2], view[1][2], view[2][2], view[3][2],
+                               view[0][3], view[1][3], view[2][3], view[3][3]};
+        try
+        {
+            _kernel.setArg(VIEW, view_mat);
+        }
+        catch (cl::Error err)
+        {
+            log_cl_error(err);
+        }
+    }
     // camera parameter changed
     if (changed.count(factor_roll) + changed.count(factor_pitch) + changed.count(factor_yaw)
             + changed.count(factor_zoom) + changed.count(factor_device))
     {
-        cl_float16 view_mat;
-        view_mat = create_view_mat(cfg.find(factor_roll)->value(),
-                                   cfg.find(factor_pitch)->value(),
-                                   cfg.find(factor_yaw)->value(),
-                                   cfg.find(factor_zoom)->value());
+        cl_float16 view_mat = create_view_mat(cfg.find(factor_roll)->value(),
+                                              cfg.find(factor_pitch)->value(),
+                                              cfg.find(factor_yaw)->value(),
+                                              cfg.find(factor_zoom)->value());
         // DEBUG only
-//        for (auto &a : view_mat)
-//            std::cout << a << " " << std::endl;
-
+        //        for (auto &a : view_mat)
+        //            std::cout << a << " " << std::endl;
         try
         {
             _kernel.setArg(VIEW, view_mat);
@@ -878,6 +907,7 @@ void trrojan::opencl::volume_raycast_benchmark::update_kernel_args(
             log_cl_error(err);
         }
     }
+    // viewport or device (generate output image)
     if (changed.count(factor_viewport_height) || changed.count(factor_viewport_width)
             || changed.count(factor_device))
     {
