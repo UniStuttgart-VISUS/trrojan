@@ -1,16 +1,58 @@
+/// <copyright file="trrojan.cpp" company="SFB-TRR 161 Quantitative Methods for Visual Computing">
+/// Copyright © 2016 - 2017 SFB-TRR 161. Alle Rechte vorbehalten.
+/// </copyright>
+/// <author>Christoph Müller</author>
+
 #include <iostream>
 #include <numeric>
 
-#include "trrojan/configuration_set.h"
+#include "trrojan/cmd_line.h"
 #include "trrojan/executive.h"
-#include "trrojan/result.h"
-#include "trrojan/system_factors.h"
-#include "trrojan/timer.h"
+#include "trrojan/log.h"
 
 
 int main(const int argc, const char **argv) {
-    trrojan::cmd_line cmdLine(argv, argv + argc);
+    const trrojan::cmd_line cmdLine(argv, argv + argc);
 
+    try {
+        trrojan::executive exe;
+        trrojan::output output;
+
+        exe.load_plugins(cmdLine);
+
+        {
+            auto it = trrojan::find_argument("--output", cmdLine.begin(),
+                cmdLine.end());
+            if (it != cmdLine.end()) {
+                output = std::make_shared<trrojan::csv_output>();
+                output->open(trrojan::csv_output_params::create(*it));
+            } else {
+                trrojan::log::instance().write_line(trrojan::log_level::warning,
+                    "You have not specified an output file. Please to so using "
+                    "the --output option.");
+            }
+        }
+
+        {
+            auto it = trrojan::find_argument("--trroll", cmdLine.begin(),
+                cmdLine.end());
+            if (it != cmdLine.end()) {
+                trrojan::log::instance().write_line(
+                    trrojan::log_level::information, "Running benchmarks "
+                    "configured in TRROLL script \"%s\"...", *it);
+                exe.trroll(*it, *output);
+            }
+        }
+
+        return 0;
+
+    } catch (std::exception& ex) {
+        std::cout << ex.what() << std::endl;
+        return -1;
+    }
+
+
+#if 0
     trrojan::timer t;
     t.start();
 
@@ -64,5 +106,6 @@ int main(const int argc, const char **argv) {
 
     std::cout << "elapsed: " << t.elapsed_millis() << std::endl;
 
+#endif
     return 0;
 }
