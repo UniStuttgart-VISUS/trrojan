@@ -58,10 +58,10 @@ if (OPENMP_FOUND)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 endif()
 
-# Build glm
-set(GLM_STATIC_LIBRARY_ENABLE "YES")
-set(GLM_TEST_ENABLE "NO")
-add_subdirectory(glm)
+## Build glm
+#set(GLM_STATIC_LIBRARY_ENABLE "YES")
+#set(GLM_TEST_ENABLE "NO")
+#add_subdirectory(glm)
 
 # Build spdlog
 set(SPDLOG_BUILD_TESTING "NO")

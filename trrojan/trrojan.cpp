@@ -24,8 +24,8 @@ int main(const int argc, const char **argv) {
             auto it = trrojan::find_argument("--output", cmdLine.begin(),
                 cmdLine.end());
             if (it != cmdLine.end()) {
-                output = std::make_shared<trrojan::csv_output>();
-                output->open(trrojan::csv_output_params::create(*it));
+                output = trrojan::make_output(*it);
+                output->open(trrojan::csv_output_params::create(*it));  // TODO: customise
             } else {
                 trrojan::log::instance().write_line(trrojan::log_level::warning,
                     "You have not specified an output file. Please to so using "
