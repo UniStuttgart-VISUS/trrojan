@@ -432,9 +432,6 @@ void trrojan::opencl::volume_raycast_benchmark::setup_raycaster(const configurat
     environment::pointer env = std::dynamic_pointer_cast<environment>(
                                 cfg.find(factor_environment)->value().as<trrojan::environment>());
 
-//    auto f = cfg.find(factor_device);
-//    auto d = cfg.find(factor_device)->value().as<trrojan::device>();
-
     opencl::device::pointer dev = std::dynamic_pointer_cast<opencl::device>(
                             cfg.find(factor_device)->value().as<trrojan::device>());
 
@@ -853,21 +850,6 @@ void trrojan::opencl::volume_raycast_benchmark::update_kernel_args(
         try
         {
             _kernel.setArg(VIEW, view_mat);
-//            cl::Event write_evt;
-//            // upload inverse view mat
-//            env_ptr->get_properties().queue.enqueueWriteBuffer(_view_mat,
-//                                                               CL_FALSE,
-//                                                               0,
-//                                                               16*sizeof(cl_float),
-//                                                               view_mat.data(),
-//                                                               NULL,
-//                                                               &write_evt);
-//            env_ptr->get_properties().queue.flush();
-//            cl_int event_status = CL_QUEUED;
-//            while(event_status != CL_COMPLETE)
-//            {
-//                write_evt.getInfo<cl_int>(CL_EVENT_COMMAND_EXECUTION_STATUS, &event_status);
-//            }
         }
         catch (cl::Error err)
         {

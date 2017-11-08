@@ -46,8 +46,10 @@ trrojan::output TRROJANCORE_API trrojan::make_output(const std::string& path) {
 
     if ((ext == ".csv") || (ext == ".txt")) {
         return std::make_shared<csv_output>();
+#ifdef _WIN32
     } else if (ext == ".xslx") {
         return std::make_shared<excel_output>();
+#endif /* _WIN32 */
     } else {
         log::instance().write_line(log_level::warning, "The file name "
             "extension \"%s\" of path \"%s\" cannot be use to determine "
