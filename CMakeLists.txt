@@ -81,7 +81,9 @@ add_subdirectory(trrojancl)
 add_subdirectory(trrojanstream)
 
 # Build the D3D plugin
-add_subdirectory(trrojand3d11)
+if (WIN32)
+	add_subdirectory(trrojand3d11)
+endif (WIN32)
 
 # Build the executable
 add_subdirectory(trrojan)
