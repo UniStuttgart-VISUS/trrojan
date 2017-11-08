@@ -11,9 +11,9 @@
  * trrojan::opencl::device::device
  */
 trrojan::opencl::device::device()
+    : _vendor(VENDOR_UNKNOWN)
+    , _type(TYPE_ALL)
 {
-    _vendor = VENDOR_UNKNOWN;
-    _type = TYPE_ALL;
 }
 
 
@@ -21,8 +21,8 @@ trrojan::opencl::device::device()
  * trrojan::opencl::device::device
  */
 trrojan::opencl::device::device(cl::Device d)
+    : _cl_device(d)
 {
-    _cl_device = d;
     _name = d.getInfo<CL_DEVICE_NAME>();
 
 //    std::string vendor = d.getInfo<CL_DEVICE_VENDOR>();
