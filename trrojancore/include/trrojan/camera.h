@@ -21,7 +21,7 @@ namespace trrojan
     using glm::vec4;
     using glm::mat4;
 /// <summary>
-/// Base class for camera.
+/// Base class for a camera.
 /// </summary>
 class TRROJANCORE_API camera
 {
