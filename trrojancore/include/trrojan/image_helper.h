@@ -108,10 +108,10 @@ namespace trrojan
                     const std::array<I3, 3> &dim,
                     int channels,
                     unsigned char flip = 0,
-                    const std::array<I3, 3> &out_dim = make_array<3>(0))
+                    const std::array<I3, 3> &out_dim = make_array<3>((size_t)0))
     {
         std::vector<unsigned char> d(dim.at(0)*dim.at(1)*dim.at(2)*channels);
-        for (int i = 0; i < dim.at(0)*dim.at(1)*dim.at(2)*channels; ++i)
+        for (size_t i = 0; i < dim.at(0)*dim.at(1)*dim.at(2)*channels; ++i)
         {
             const unsigned char v = (std::max)(0.0, (std::min)(data[i] + 0.5, 255.0));
             d.at(i) = v;

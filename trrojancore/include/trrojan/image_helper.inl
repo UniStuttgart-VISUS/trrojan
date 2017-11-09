@@ -11,7 +11,7 @@ template<class T>
 void trrojan::save_image(const std::string& fileName, const T *data,
         const size_t width, const size_t height, const size_t channels) {
 #if defined(TRROJAN_WITH_CIMG)
-    std::array<int, 3> dim = { width, height, 1 };
+    std::array<size_t, 3> dim = { width, height, 1 };
     cimg_write(fileName, data, dim, channels);
 
 #elif defined(_WIN32)

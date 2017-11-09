@@ -41,6 +41,10 @@ public:
     camera(const camera& other) = default;
 
     void set_look(vec3 from, vec3 to, vec3 up);
+    /// <summary>
+    /// Reset look to default parameters.
+    /// </summary>
+    void reset_look();
 
     const vec3& get_look_from() const;
     void set_look_from(vec3 val);
@@ -181,6 +185,14 @@ inline void camera::set_look(glm::vec3 from, glm::vec3 to, glm::vec3 up)
     _look_from = from;
     _look_to = to;
     _look_up = up;
+    invalidate_view_mx();
+}
+
+inline void camera::reset_look()
+{
+    _look_from = vec3(0.0f, 0.0f, 2.0f);
+    _look_to = vec3(0.0f);
+    _look_up = vec3(0.0f, 1.0f, 0.0f);
     invalidate_view_mx();
 }
 
