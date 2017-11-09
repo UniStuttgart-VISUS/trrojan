@@ -124,6 +124,7 @@ size_t trrojan::benchmark_base::run(const configuration_set& configs,
     // Invoke each configuration.
     size_t retval = 0;
     c.foreach_configuration([this, &retval, &callback](const configuration& c) {
+
         try {
             this->log_run(c);
             auto r = callback(std::move(this->run(c)));

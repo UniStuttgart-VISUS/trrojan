@@ -38,9 +38,28 @@ namespace trrojan {
         typedef std::vector<device> device_list;
 
         /// <summary>
+        /// The default name of an environment factor, which is
+        /// &quot;environment&quot;.
+        /// </summary>
+        static const char *factor_name;
+
+        /// <summary>
         /// Finalises the instance.
         /// </summary>
         virtual ~environment_base(void);
+
+        /// <summary>
+        /// Answer the compute device with the specified name.
+        /// </summary>
+        /// <remarks>
+        /// The default implementation uses the device names returned by
+        /// the results of <see cref="get_devices" />. Subclasses might want
+        /// to override this behaviour, eg to identify a device via its unqiue
+        /// device ID of PCIe location.
+        /// </remarks>
+        /// <param name="name">The name of the device to search</param>
+        /// <returns>The device or <c>nullptr</c> if not found.</returns>
+        virtual device get_device(const std::string& name);
 
         /// <summary>
         /// Answer the (compute) devices the environment supports.
@@ -121,19 +140,20 @@ namespace trrojan {
         /// <remarks>
         /// <para>The implementation searches <paramref name="config" /> for a
         /// string factor with the name specified as <param name="name" /> and
-        /// adds, if not already present, a new factor called
-        /// <param name="device" /> with the actual device returned by the
-        /// <paramref name="get_devices" /> having the given name. If no such
-        /// device is found, an exception is thrown.</para>
+        /// adds, if found, replaces the device with the actual device instance.
+        /// If no device is found, an exception is thrown. If the factor does
+        /// not exist or is not a string factor, nothing is done.</para>
         /// <para>Subclasses might want to override this method to provide a
         /// custom and/or more efficient implementation.</para>
         /// <remarks>
         /// <param name="config">The configuration to be processed.</param>
         /// <param name="name">The name of the factor holding the device
-        /// name. This defaults to &quot;device;&quot.</param>
-        virtual void translate_device(configuration& config,
-            const std::string& name = "device_name",
-            const std::string& device = "device");
+        /// name. This defaults to <see cref="device_base::factor_name" />.
+        /// </param>
+        /// <returns><c>true</c> if a translation was made, <c>false</c> if no
+        /// factor named <paramref name="name" /> was found.</returns>
+        virtual bool translate_device(configuration& config,
+            const std::string& name = device_base::factor_name);
 
     protected:
 

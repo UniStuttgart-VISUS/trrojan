@@ -276,15 +276,20 @@ namespace trrojan {
 
         /// <summary>
         /// If <paramref name="inOutCs" /> does not hold any factor named
-        /// &quot;environment&quot;, add all factors from
-        /// <see cref="enivornments" />. If such a factor exists, but is a
-        /// string factor, replace the names with the actual environment
-        /// objects.
+        /// <paramref name="factor" />, add all factors from
+        /// <see cref="executive::environments" />. If such a factor exists and
+        /// if said factor is a string factor, replace the names with the actual
+        /// <see cref="environment" /> objects. Otherwise, assume that it
+        /// already is an <see cref="environment" /> object and do nothing.
         /// </summary>
-        /// <param name="inOutCs"></param>
+        /// <param name="inOutCs">The configuration set to be modified.</param>
+        /// <param name="factor">The name of the factor used for the
+        /// environment, which defaults to
+        /// <see cref="environment_base::factor_name" />.</param>
         /// <exception cref="std::invalid_argument>If the a requested
         /// environment does not exist.</exception>
-        configuration_set& assign_environments(configuration_set& inOutCs);
+        configuration_set& assign_environments(configuration_set& inOutCs,
+            const std::string& factor = environment_base::factor_name);
 
         /// <summary>
         /// Enables the environment with the specified name.

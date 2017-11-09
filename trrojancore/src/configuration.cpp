@@ -50,7 +50,46 @@ trrojan::configuration::iterator_type trrojan::configuration::find(
 
 
 /*
- * trrojan::configuration::add
+ * trrojan::configuration::replace
+ */
+void trrojan::configuration::replace(const std::string& name,
+        const trrojan::variant& value) {
+    auto it = this->find0(name);
+    if (it != this->_factors.end()) {
+        *it = named_variant(name, value);
+    } else {
+        this->add(name, value);
+    }
+}
+
+
+/*
+ * trrojan::configuration::replace
+ */
+void trrojan::configuration::replace(const std::string& name,
+        trrojan::variant&& value) {
+    auto it = this->find0(name);
+    if (it != this->_factors.end()) {
+        *it = named_variant(name, std::move(value));
+    } else {
+        this->add(name, std::move(value));
+    }
+}
+
+
+/*
+ * trrojan::to_string
+ */
+std::string trrojan::to_string(const configuration& c) {
+    std::stringstream retval;
+    retval << c << std::ends;
+    return retval.str();
+}
+
+
+
+/*
+ * trrojan::configuration::check_duplicate
  */
 void trrojan::configuration::check_duplicate(const std::string& name) {
     if (this->contains(name)) {
@@ -63,10 +102,10 @@ void trrojan::configuration::check_duplicate(const std::string& name) {
 
 
 /*
- * trrojan::to_string
+ * trrojan::configuration::find0
  */
-std::string trrojan::to_string(const configuration& c) {
-    std::stringstream retval;
-    retval << c << std::ends;
-    return retval.str();
+trrojan::configuration::container_type::iterator trrojan::configuration::find0(
+        const std::string& factor) {
+    return std::find_if(this->_factors.begin(), this->_factors.end(),
+        [&factor](const named_variant& v) { return (v.name() == factor); });
 }

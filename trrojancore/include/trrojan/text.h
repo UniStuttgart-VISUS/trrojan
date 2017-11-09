@@ -7,6 +7,9 @@
 
 #include <algorithm>
 #include <cctype>
+#if (!defined(__GNUC__) || (__GNUC__ >= 5))
+#include <codecvt>
+#endif /* (!defined(__GNUC__) || (__GNUC__ >= 5)) */
 #include <functional>
 #include <iterator>
 #include <locale>
@@ -101,6 +104,22 @@ namespace trrojan {
         std::transform(str.cbegin(), str.cend(), std::back_inserter(retval),
             ::tolower);
         return retval;
+    }
+
+    /// <summary>
+    /// Convert a wide string to a UTF-8 string.
+    /// </summary>
+    inline std::string to_utf8(const std::wstring& str) {
+#if (!defined(__GNUC__) || (__GNUC__ >= 5))
+        static std::wstring_convert<std::codecvt_utf8<wchar_t>> cvt;
+        return cvt.to_bytes(str);
+#else /* (!defined(__GNUC__) || (__GNUC__ >= 5)) */
+        std::string retval;
+        for (auto c : str) {
+            retval += static_cast<char>(c);
+        }
+        return retval;
+#endif /* (!defined(__GNUC__) || (__GNUC__ >= 5)) */
     }
 
     /// <summary>

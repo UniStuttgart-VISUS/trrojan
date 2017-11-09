@@ -6,9 +6,6 @@
 #include "trrojan/executive.h"
 
 #include <algorithm>
-#if (!defined(__GNUC__) || (__GNUC__ >= 5))
-#include <codecvt>
-#endif /* (!defined(__GNUC__) || (__GNUC__ >= 5)) */
 #include <iostream>
 #include <iterator>
 #include <stdexcept>
@@ -19,6 +16,7 @@
 
 #include "trrojan/io.h"
 #include "trrojan/log.h"
+#include "trrojan/text.h"
 
 
 /*
@@ -38,7 +36,7 @@ trrojan::executive::~executive(void) {
 
 
 /*
- * trrojan::executive::
+ * trrojan::executive::find_plugin
  */
 trrojan::plugin trrojan::executive::find_plugin(const std::string& name) {
     auto it = std::find_if(this->plugins.begin(), this->plugins.end(),
@@ -220,6 +218,8 @@ void trrojan::executive::trroll(const std::string& path, output_base& output) {
                     "benchmark \"%s\" from plugin \"%s\".\n",
                     b.benchmark.c_str(), b.plugin.c_str());
 
+
+
                 // TODO: replace device strings with actual devices.
                 (**it).run(b.configs, [&output](result&& r) {
                     output << r;
@@ -240,8 +240,8 @@ void trrojan::executive::trroll(const std::string& path, output_base& output) {
  * trrojan::executive::assign_environments
  */
 trrojan::configuration_set& trrojan::executive::assign_environments(
-        configuration_set& inOutCs) {
-    auto envs = inOutCs.find_factor("environment");
+        configuration_set& inOutCs, const std::string& factor) {
+    auto envs = inOutCs.find_factor(factor);
     std::vector<environment> manifestations;
 
     if ((envs != nullptr) && (envs->size() > 0)) {
@@ -344,16 +344,7 @@ trrojan::environment trrojan::executive::find_environment(const variant& v) {
         }
 
     } else if (v.type() == variant_type::wstring) {
-        auto wname = v.as<std::wstring>();
-        std::string name;
-#if (!defined(__GNUC__) || (__GNUC__ >= 5))
-        static std::wstring_convert<std::codecvt_utf8<wchar_t>> cvt;
-        name = cvt.to_bytes(wname);
-#else /* (!defined(__GNUC__) || (__GNUC__ >= 5)) */
-        for (auto c : wname) {
-            name += static_cast<char>(c);
-        }
-#endif /* (!defined(__GNUC__) || (__GNUC__ >= 5)) */
+        auto name = trrojan::to_utf8(v.as<std::wstring>());
 
         retval = this->environments.find(name);
         if (retval == this->environments.end()) {

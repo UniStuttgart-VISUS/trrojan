@@ -22,6 +22,12 @@ namespace trrojan {
     public:
 
         /// <summary>
+        /// The default name of an environment factor, which is
+        /// &quot;device&quot;.
+        /// </summary>
+        static const char *factor_name;
+
+        /// <summary>
         /// Finalises the instance.
         /// </summary>
         virtual ~device_base(void);
