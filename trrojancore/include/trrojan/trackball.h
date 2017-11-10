@@ -25,7 +25,7 @@ public:
     /// Initialises a new instance.
     /// </summary>
     /// <parameter name="cam">The camera to operate on.</parameter>
-    trackball(std::shared_ptr<camera> cam);
+    trackball(const std::shared_ptr<camera> &cam);
 
     /// <summary>
     /// Finalises the instance.
@@ -36,7 +36,7 @@ public:
     /// Rotate around the focus based on a quaternion.
     /// </summary>
     /// <parameter name="q">The quaternion defining the rotation.</parameter>
-    void rotate(glm::quat q);
+    void rotate(const std::shared_ptr<perspective_camera> cam, const glm::quat q);
 
     /// <summary>
     /// Zoom in/out.
@@ -48,7 +48,7 @@ public:
     /// Pan the camera in horizontal/vertical direction.
     /// </summary>
     /// <parameter name="pan">The horizontal/vertical distance to pan.</parameter>
-    void pan(glm::vec2 direction);
+    void pan(const glm::vec2 direction);
 
     /// <summary>
     /// Reset the trackball.
@@ -59,7 +59,7 @@ protected:
     /// <summary>
     /// The camera to manipulate.
     /// </summary>
-    std::shared_ptr<camera> _cam;
+    const std::shared_ptr<camera> &_cam;
 
     glm::vec3 _last_ndc;
 };

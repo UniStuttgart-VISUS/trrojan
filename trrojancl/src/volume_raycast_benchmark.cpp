@@ -20,6 +20,8 @@
 #include "trrojan/log.h"
 
 #include <glm/gtc/type_ptr.hpp>
+#define GLM_ENABLE_EXPERIMENTAL
+#include "glm/gtx/quaternion.hpp"
 
 #define _TRROJANSTREAM_DEFINE_FACTOR(f)                                        \
 const std::string trrojan::opencl::volume_raycast_benchmark::factor_##f(#f)
@@ -94,10 +96,11 @@ trrojan::opencl::volume_raycast_benchmark::volume_raycast_benchmark(void)
     //
     // TODO: @christoph empty factors (aka required factor)
 //    this->_default_configs.add_factor(factor::empty("environment"));
-//    this->_default_configs.add_factor(factor::empty("device"));
+//    this->_default_configs.add_factor(factor::from_manifestations(factor_device,
+//                                                                  std::string("device")));
 
     this->_default_configs.add_factor(factor::from_manifestations(
-        factor_environment_vendor, static_cast<int>(VENDOR_INTEL | VENDOR_NVIDIA)));
+        factor_environment_vendor, static_cast<int>(VENDOR_NVIDIA)));
     this->_default_configs.add_factor(
         factor::from_manifestations(factor_device_type, static_cast<int>(TYPE_GPU)));
     this->_default_configs.add_factor(
@@ -129,8 +132,8 @@ trrojan::opencl::volume_raycast_benchmark::volume_raycast_benchmark(void)
     add_kernel_run_factor(factor_zoom, -2.0);
 
     //TODO: add cam pos + orientation factors
-    // add_kernel_run_factor(factor_cam_position, vec3(0,0,2));
-    // add_kernel_run_factor(factor_cam_rotation, quat(1,0,0,0));
+//    add_kernel_run_factor(factor_cam_position, vec3(0,0,2));
+//    add_kernel_run_factor(factor_cam_rotation, glm::quat(1,0,0,0));
 
     // rendering modes -> kernel build factors
     //
@@ -212,8 +215,9 @@ void trrojan::opencl::volume_raycast_benchmark::add_kernel_build_factor(std::str
 /*
  * trrojan::opencl::volume_raycast_benchmark::run
  */
-size_t trrojan::opencl::volume_raycast_benchmark::run(
-        const configuration_set& configs, const on_result_callback& callback)
+size_t trrojan::opencl::volume_raycast_benchmark::run(const configuration_set& configs,
+                                                      const enable_environment_callback& env_callback,
+                                                      const on_result_callback& result_callback)
 {
     std::unordered_set<std::string> changed;
     size_t retval;
@@ -225,7 +229,7 @@ size_t trrojan::opencl::volume_raycast_benchmark::run(
     auto cs = configs;
     cs.merge(this->_default_configs, false);
 
-    cs.foreach_configuration([&](const trrojan::configuration& cs)
+    cs.foreach_configuration([&](trrojan::configuration& cs) -> bool
     {
         changed.clear();
         this->check_changed_factors(cs, std::inserter(changed, changed.begin()));
@@ -233,6 +237,7 @@ size_t trrojan::opencl::volume_raycast_benchmark::run(
         // setup raycast if OpenCL platform (aka environment) or device changed
         if (changed.count(factor_environment) || changed.count(factor_device))
         {
+            this->enable_environment_device(cs, env_callback, factor_device);
             setup_raycaster(cs);
             // check vendor and device type
             auto env = cs.find(factor_environment)->value().as<trrojan::environment>();
@@ -331,7 +336,7 @@ size_t trrojan::opencl::volume_raycast_benchmark::run(
         }
 
         // run the OpenCL kernel, i.e. the actual test
-        auto r = callback(this->run(cs));
+        auto r = result_callback(std::move(this->run(cs)));
         ++retval;
         return r;
     });
@@ -372,7 +377,9 @@ trrojan::result trrojan::opencl::volume_raycast_benchmark::run(const configurati
         ndr_evt.getProfilingInfo(CL_PROFILING_COMMAND_START, &start);
         ndr_evt.getProfilingInfo(CL_PROFILING_COMMAND_END, &end);
         time = static_cast<double>(end - start)*1e-9;
-        std::cout << "Kernel time: " << time << std::endl << std::endl;
+        std::ostringstream os;
+        os << "Kernel time: " << time << std::endl;
+        log::instance().write(log_level::information, os.str().c_str());
     }
     catch (cl::Error err)
     {
@@ -443,8 +450,11 @@ void trrojan::opencl::volume_raycast_benchmark::setup_raycaster(const configurat
     environment::pointer env = std::dynamic_pointer_cast<environment>(
                                 cfg.find(factor_environment)->value().as<trrojan::environment>());
 
-    opencl::device::pointer dev = std::dynamic_pointer_cast<opencl::device>(
-                            cfg.find(factor_device)->value().as<trrojan::device>());
+    auto f = cfg.find(factor_device);
+    auto dev_o = f->value().as<trrojan::device>();
+    opencl::device::pointer dev = std::dynamic_pointer_cast<trrojan::opencl::device>(dev_o);
+//    opencl::device::pointer dev = std::dynamic_pointer_cast<trrojan::opencl::device>(
+//                            cfg.find(factor_device)->value().as<trrojan::device>());
 
     // set up buffer objects for the view matrix and shuffled IDs
     try
@@ -524,7 +534,9 @@ void trrojan::opencl::volume_raycast_benchmark::setup_volume_data(
 const std::vector<char> & trrojan::opencl::volume_raycast_benchmark::load_volume_data(
         const std::string dat_file)
 {
-    std::cout << "Loading volume data defined in " << dat_file << std::endl;
+    std::ostringstream os;
+    os << "Loading volume data defined in " << dat_file;
+    log::instance().write(log_level::information, os.str().c_str());
 
     try
     {
@@ -532,12 +544,14 @@ const std::vector<char> & trrojan::opencl::volume_raycast_benchmark::load_volume
     }
     catch (std::runtime_error e)
     {
-        std::cerr << e.what() << std::endl;
-        throw e;
+        log::instance().write(log_level::error, e);
+//        throw e;
     }
 
-    std::cout << _dr.data().size() << " bytes have been read." << std::endl;
-    std::cout << _dr.properties().to_string() << std::endl;
+    os = std::ostringstream();
+    os << _dr.data().size() << " bytes have been read: " << _dr.properties().to_string();
+    log::instance().write_line(log_level::information, os.str().c_str());
+
     // update static config
     _passive_cfg.clear();
     if (_dr.properties().format == "UCHAR")
@@ -575,9 +589,8 @@ void trrojan::opencl::volume_raycast_benchmark::load_transfer_function(
 
     if (file_name == "fallback")
     {
-        std::cerr << "WARNING: No transfer function file defined, falling back to default: "
-                     "linear function in range [0;1]." << std::endl;
-
+        log::instance().write_line(log_level::warning, "No transfer function file defined, falling back"
+                                                  " to default: linear function in range [0;1].");
         for (size_t i = 0; i < num_values; ++i)
         {
             for (int j = 0; j < 1; ++j)
@@ -789,8 +802,9 @@ void trrojan::opencl::volume_raycast_benchmark::build_kernel(environment::pointe
         env->get_properties().program.build(device, build_flags.c_str());
         std::string str = env->get_properties().program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(
                     dev.get()->get());
-        std::cout << str << std::endl;
-        std::cout << "OpenCL kernel successfully built!" << std::endl;
+        log::instance().write(log_level::information, "OpenCL kernel successfully built.");
+        if (!(str.length() > 0))
+            log::instance().write(log_level::information, str.c_str());
 
         _kernel = cl::Kernel(env->get_properties().program, "volumeRender", NULL);
         // set default kernel arguments and buffer
@@ -800,13 +814,16 @@ void trrojan::opencl::volume_raycast_benchmark::build_kernel(environment::pointe
     {
         if (err.err() == CL_BUILD_PROGRAM_FAILURE)
         {
-            std::cerr << "Error building volume raycasting kernel." << std::endl;
+            std::ostringstream os;
+            os << "Error building volume raycasting kernel." << std::endl;
             // print out compiler output on build error
             std::string str = env->get_properties().program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(
                         dev.get()->get());
-            std::cerr << " ***************** BUILD LOG *******************\n";
-            std::cerr << str << std::endl;
-            std::cerr << " ***********************************************\n";
+            os << " ***************** BUILD LOG *******************\n";
+            os << str << std::endl;
+            os << " ***********************************************\n";
+
+            log::instance().write(log_level::error, os.str().c_str());
         }
         else
             log_cl_error(err);
@@ -849,7 +866,7 @@ void trrojan::opencl::volume_raycast_benchmark::update_kernel_args(
     if (changed.count(factor_cam_position) + changed.count(factor_cam_rotation))
     {
         trrojan::trackball t(std::make_shared<trrojan::perspective_camera>(_camera));
-        t.rotate(cfg.find(factor_cam_rotation)->value());
+//        t.rotate(cfg.find(factor_cam_rotation)->value());
         _camera.set_look_from(cfg.find(factor_cam_position)->value());
         glm::mat4 view = _camera.get_view_mx();
         // TODO: column major?
@@ -870,10 +887,28 @@ void trrojan::opencl::volume_raycast_benchmark::update_kernel_args(
     if (changed.count(factor_roll) + changed.count(factor_pitch) + changed.count(factor_yaw)
             + changed.count(factor_zoom) + changed.count(factor_device))
     {
-        cl_float16 view_mat = create_view_mat(cfg.find(factor_roll)->value(),
-                                              cfg.find(factor_pitch)->value(),
-                                              cfg.find(factor_yaw)->value(),
-                                              cfg.find(factor_zoom)->value());
+//        const auto to = _camera.get_look_to();
+//        const auto from = _camera.get_look_from();
+//        const auto up = _camera.get_look_up();
+
+//        const auto rot = glm::half_pi<float>() * glm::vec2(0.2f, 0.f);
+//        const auto Pa = glm::normalize(from - to);
+//        const auto Pc = glm::rotate(glm::rotate(Pa, rot.y, glm::cross(Pa, up)), rot.x, &up);
+//        glm::quat q = glm::quat(Pc, Pa);
+//        _camera.rotate(q);
+
+        //        _camera.set_look_from(glm::vec3(0,0,-2));
+        glm::mat4 view = _camera.get_view_mx();
+        // TODO: column major?
+        cl_float16 view_mat = {view[0][0], view[1][0], view[2][0], view[3][0],
+                               view[0][1], view[1][1], view[2][1], view[3][1],
+                               view[0][2], view[1][2], view[2][2], view[3][2],
+                               view[0][3], view[1][3], view[2][3], view[3][3]};
+
+//        cl_float16 view_mat = create_view_mat(cfg.find(factor_roll)->value(),
+//                                              cfg.find(factor_pitch)->value(),
+//                                              cfg.find(factor_yaw)->value(),
+//                                              cfg.find(factor_zoom)->value());
         // DEBUG only
         //        for (auto &a : view_mat)
         //            std::cout << a << " " << std::endl;
@@ -974,8 +1009,6 @@ void trrojan::opencl::volume_raycast_benchmark::log_cl_error(cl::Error error)
     log::instance().write(log_level::error, std::runtime_error(
                               std::string(error.what()) + "(" +
                               util::get_cl_error_str(error.err()) + ")"));
-    throw std::runtime_error( "ERROR: " + std::string(error.what()) + "("
-                              + util::get_cl_error_str(error.err()) + ")");
 }
 
 
@@ -1006,7 +1039,9 @@ cl_float16 trrojan::opencl::volume_raycast_benchmark::create_view_mat(double rol
     s *= thickness*(1.0/thickness[0]);
 #undef max  // error here if I don't undef max
     s = s.max() / s;
-    std::cout << "Scaling volume: (" << s[0] << ", " << s[1] << ", " << s[2] << ")" << std::endl;
+    std::ostringstream os;
+    os << "Scaling volume: (" << s[0] << ", " << s[1] << ", " << s[2] << ")";
+    log::instance().write(log_level::information, os.str().c_str());
 
     float zoom_f = static_cast<float>(zoom);
     // The order of rotation is Roll -> Yaw -> Pitch (Rx*Ry*Rz)

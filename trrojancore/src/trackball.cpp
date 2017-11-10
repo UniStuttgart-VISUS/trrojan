@@ -8,19 +8,20 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include "glm/gtx/quaternion.hpp"
 
-trrojan::trackball::trackball(std::shared_ptr<camera> cam)
+trrojan::trackball::trackball(const std::shared_ptr<camera> &cam)
     : _cam(cam)
     , _last_ndc(0.0f)
 {
 }
 
-void trrojan::trackball::rotate(glm::quat q)
+void trrojan::trackball::rotate(const std::shared_ptr<trrojan::perspective_camera> cam,
+                                const glm::quat q)
 {
-    const auto& to = _cam->get_look_to();
-    const auto& from = _cam->get_look_from();
-    const auto& up = _cam->get_look_up();
+    const auto& to = cam->get_look_to();
+    const auto& from = cam->get_look_from();
+    const auto& up = cam->get_look_up();
 
-    _cam->set_look(_cam->get_look_to() + glm::rotate(q, from - to), to, glm::rotate(q, up));
+    cam->set_look(cam->get_look_to() + glm::rotate(q, from - to), to, glm::rotate(q, up));
 }
 
 void trrojan::trackball::zoom(float delta)
@@ -40,7 +41,7 @@ void trrojan::trackball::zoom(float delta)
     }
 }
 
-void trrojan::trackball::pan(glm::vec2 direction)
+void trrojan::trackball::pan(const glm::vec2 direction)
 {
     const auto prevWorldPos = _cam->get_world_pos_from_ndc(_last_ndc);
     const auto worldPos = _cam->get_world_pos_from_ndc(glm::vec3(direction, 0.f));

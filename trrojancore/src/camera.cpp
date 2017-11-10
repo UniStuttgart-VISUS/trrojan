@@ -5,6 +5,8 @@
 
 #include "trrojan/camera.h"
 
+#define GLM_ENABLE_EXPERIMENTAL
+#include "glm/gtx/quaternion.hpp"
 
 trrojan::camera::camera(vec3 look_from, vec3 look_to, vec3 look_up, float near_plane,
                         float far_plane)
@@ -76,6 +78,11 @@ glm::vec3 trrojan::camera::get_ndc_from_normalized_screen_at_focus_point_depth(
     return vec3(2.f * normalized_screen_coords - 1.f, look_to_clip_coords.z / look_to_clip_coords.w);
 }
 
+void trrojan::camera::rotate(const glm::quat q)
+{
+    this->set_look(_look_to + glm::rotate(q, _look_from - _look_to), _look_to,
+                   glm::rotate(q, _look_up));
+}
 
 // Perspective camera
 trrojan::perspective_camera::perspective_camera(vec3 look_from, vec3 look_to, vec3 look_up,
