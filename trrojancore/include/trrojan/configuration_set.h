@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "trrojan/configuration.h"
+#include "trrojan/environment.h"
 #include "trrojan/export.h"
 #include "trrojan/factor.h"
 
@@ -92,7 +93,7 @@ namespace trrojan {
         /// is reached or until the first invocation returns <c>false</c>
         /// </remarks>
         bool foreach_configuration(
-            std::function<bool(const configuration&)> cb) const;
+            std::function<bool(configuration&)> cb) const;
 
         /// <summary>
         /// Merge <paramref name="other" /> into this configuration set.

@@ -28,8 +28,11 @@ trrojan::executive::~executive(void) {
     }
 
     for (auto e : this->environments) {
-        assert(e.second != nullptr);
-        e.second->on_finalise();
+        if (e.second != nullptr) {
+            // Finalise only valid environments. The "any" environment is
+            // actually a nullptr.
+            e.second->on_finalise();
+        }
     }
     this->environments.clear();
 }
@@ -57,6 +60,13 @@ trrojan::plugin trrojan::executive::find_plugin(const std::string& name) {
 void trrojan::executive::load_plugins(const cmd_line& cmdLine) {
     try {
         std::vector<std::string> paths;
+
+        log::instance().write_line(log_level::verbose, "Clearing old "
+            "environments and adding the \"none\" environment before loading "
+            "plugins ...");
+        this->environments.clear();
+        this->environments[environment_base::none_name]
+            = trrojan::environment();
 
         log::instance().write(log_level::verbose, "Considering plugins "
             "from the current working directory.\n");
@@ -169,7 +179,7 @@ void trrojan::executive::trroll(const std::string& path, output_base& output) {
     auto bcss = trroll_parser::parse(path);
     std::vector<benchmark> benchmarks;
     plugin curPlugin;
-    auto enableEnv = std::bind(&executive::enable_environment0, std::ref(*this),
+    auto envEnabler = std::bind(&executive::enable_environment0, std::ref(*this),
         std::placeholders::_1);
 
     // Before doing anything else, make sure we have the environments needed for
@@ -218,10 +228,7 @@ void trrojan::executive::trroll(const std::string& path, output_base& output) {
                     "benchmark \"%s\" from plugin \"%s\".\n",
                     b.benchmark.c_str(), b.plugin.c_str());
 
-
-
-                // TODO: replace device strings with actual devices.
-                (**it).run(b.configs, [&output](result&& r) {
+                (**it).run(b.configs, envEnabler, [&output](result&& r) {
                     output << r;
                     return true;
                 });
@@ -326,6 +333,15 @@ void trrojan::executive::enable_environment(const variant& v) {
             throw std::invalid_argument("The given variant does not designate "
                 "a valid environment");
     }
+}
+
+
+/*
+ * trrojan::executive::enable_environment0
+ */
+trrojan::environment trrojan::executive::enable_environment0(const variant& v) {
+    this->enable_environment(v);
+    return this->cur_environment;
 }
 
 

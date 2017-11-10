@@ -31,7 +31,8 @@ namespace trrojan {
         /// <summary>
         /// A callback which is used to enable an environment from a factor.
         /// </summary>
-        typedef std::function<void(const variant&)> enable_environment_callback;
+        typedef std::function<environment(const variant&)>
+            enable_environment_callback;
 
         /// <summary>
         /// A callback which is invoked after each run.
@@ -148,13 +149,15 @@ namespace trrojan {
         /// the results to the given callback.
         /// </summary>
         /// <param name="configs"></param>
-        /// <param name="callback"></param>
+        /// <param name="envCallback"></param>
+        /// <param name="resultCallback"></param>
         /// <returns>The total number of <see cref="trrojan::result" />s that
         /// have been returned to <paramref name="callback" />.</returns>
         /// <exception cref="std::invalid_argument">If not all required factors
         /// are specified in the configuration set.</exception>
         virtual size_t run(const configuration_set& configs,
-            const on_result_callback& callback);
+            const enable_environment_callback& envCallback,
+            const on_result_callback& resultCallback);
 
         virtual result run(const configuration& config) = 0;
 
@@ -221,6 +224,21 @@ namespace trrojan {
         /// </remarks>
         virtual void check_required_factors(
             const trrojan::configuration_set& cs) const;
+
+        /// <summary>
+        /// Uses the given <paramref cref="envEnabler" /> callback to enable the
+        /// environment specified in <paramref name="conf" />, and translates
+        /// device factors in <paramref name="conf" /> if the environment
+        /// enabled is a valid one.
+        /// </summary>
+        /// <param name="conf"></param>
+        /// <param name="envEnabler"></param>
+        /// <param name="deviceFactor"></param>
+        /// <exception cref="std::invalid_argument">If
+        /// <paramref cref="envEnabler" /> is <c>nullptr</c>.</exception>
+        virtual void enable_environment_device(configuration& conf,
+            const enable_environment_callback& envEnabler,
+            const std::string& deviceFactor = device_base::factor_name);
 
         /// <summary>
         /// Write an informational message to the log that we are now running

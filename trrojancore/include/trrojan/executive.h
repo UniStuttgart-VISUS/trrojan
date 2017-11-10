@@ -335,9 +335,10 @@ namespace trrojan {
         /// Alias for <see cref="enable_environment" />, which allows for use
         /// with <see cref="std::bind" />.
         /// </summary>
-        inline void enable_environment0(const variant& v) {
-            this->enable_environment(v);
-        }
+        /// <param name="v"></param>
+        /// <returns>The environment which is now enabled. This might be
+        /// <c>nullptr</c>.</returns>
+        environment enable_environment0(const variant& v);
 
         /// <summary>
         /// Finds the environment designated by the given string variant, or

@@ -44,6 +44,11 @@ namespace trrojan {
         static const char *factor_name;
 
         /// <summary>
+        /// The name of the inexistent environment &quot;none&quot;.
+        /// </summary>
+        static const char *none_name;
+
+        /// <summary>
         /// Finalises the instance.
         /// </summary>
         virtual ~environment_base(void);
@@ -63,7 +68,7 @@ namespace trrojan {
 
         /// <summary>
         /// Answer the (compute) devices the environment supports.
-        /// </summary>
+        /// </summar>
         /// <param name="dst">A <see cref="device_list" /> to append the
         /// devices to.</param>
         /// <returns>The number of devices which have been appended to

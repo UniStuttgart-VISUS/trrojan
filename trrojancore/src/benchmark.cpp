@@ -7,6 +7,7 @@
 #include "trrojan/benchmark.h"
 
 #include <algorithm>
+#include <cassert>
 #include <sstream>
 #include <stdexcept>
 
@@ -113,7 +114,8 @@ std::vector<std::string> trrojan::benchmark_base::required_factors(void) const {
  * trrojan::benchmark_base::run
  */
 size_t trrojan::benchmark_base::run(const configuration_set& configs,
-        const on_result_callback& callback) {
+        const enable_environment_callback& envCallback,
+        const on_result_callback& resultCallback) {
     // Check that caller has provided all required factors.
     this->check_required_factors(configs);
 
@@ -123,13 +125,15 @@ size_t trrojan::benchmark_base::run(const configuration_set& configs,
 
     // Invoke each configuration.
     size_t retval = 0;
-    c.foreach_configuration([this, &retval, &callback](const configuration& c) {
+    c.foreach_configuration([&](configuration& c) -> bool {
 
         try {
+            this->enable_environment_device(c, envCallback);
             this->log_run(c);
-            auto r = callback(std::move(this->run(c)));
+            auto r = resultCallback(std::move(this->run(c)));
             ++retval;
             return r;
+
         } catch (const std::exception& ex) {
             log::instance().write_line(ex);
             return false;
@@ -165,6 +169,31 @@ void trrojan::benchmark_base::check_required_factors(
                 "factor \"" << f << "\"." << std::ends;
             throw std::invalid_argument(msg.str());
         }
+    }
+}
+
+
+/*
+ * trrojan::benchmark_base::enable_environment_device
+ */
+void trrojan::benchmark_base::enable_environment_device(configuration& conf,
+        const enable_environment_callback& envEnabler,
+        const std::string& deviceFactor) {
+    environment env = nullptr;
+
+    if (!envEnabler) {
+        throw std::invalid_argument("envEnabler");
+    }
+
+    try {
+        env = envEnabler(*conf.find(environment_base::factor_name));
+    } catch (...) {
+        /* Ignore it, failure is OK. */
+        assert(env == nullptr);
+    }
+
+    if (env != nullptr) {
+        env->translate_device(conf, deviceFactor);
     }
 }
 

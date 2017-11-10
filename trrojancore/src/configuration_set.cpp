@@ -64,7 +64,7 @@ const trrojan::factor *trrojan::configuration_set::find_factor(
  * trrojan::configuration_set::foreach_configuration
  */
 bool trrojan::configuration_set::foreach_configuration(
-        std::function<bool(const configuration&)> cb) const {
+        std::function<bool(configuration&)> cb) const {
     bool retval = true;
 
     if (!this->_factors.empty() && cb) {

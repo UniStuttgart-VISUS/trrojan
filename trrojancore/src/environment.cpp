@@ -21,6 +21,12 @@ const char *trrojan::environment_base::factor_name = "environment";
 
 
 /*
+ * trrojan::environment_base::none_name
+ */
+const char *trrojan::environment_base::none_name = "none";
+
+
+/*
  * trrojan::environment_base::~environment_base
  */
 trrojan::environment_base::~environment_base(void) { }
