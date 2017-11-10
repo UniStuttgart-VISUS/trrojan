@@ -113,13 +113,20 @@ namespace opencl
         /// Overrides benchmark run method.
         /// </summary>
         virtual size_t run(const configuration_set &configs,
-                           const enable_environment_callback &env_callback,
                            const on_result_callback& result_callback);
 
         /// <summary>
         /// Overrides benchmark run method.
         /// </summary>
         virtual result run(const configuration &cfg);
+
+        ///
+        /// \brief can_run
+        /// \param env
+        /// \param device
+        /// \return
+        ///
+        virtual bool can_run(trrojan::environment env, trrojan::device device) const noexcept;
 
     private:
 

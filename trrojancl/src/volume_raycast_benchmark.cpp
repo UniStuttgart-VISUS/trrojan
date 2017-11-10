@@ -191,6 +191,16 @@ trrojan::opencl::volume_raycast_benchmark::~volume_raycast_benchmark(void)
 
 
 /*
+ * trrojan::opencl::volume_raycast_benchmark::can_run
+ */
+bool trrojan::opencl::volume_raycast_benchmark::can_run(trrojan::environment env,
+        trrojan::device device) const noexcept {
+    auto d = std::dynamic_pointer_cast<trrojan::opencl::device>(device);
+    return (d != nullptr);
+}
+
+
+/*
  * trrojan::opencl::volume_raycast_benchmark::add_kernel_run_factor
  */
 void trrojan::opencl::volume_raycast_benchmark::add_kernel_run_factor(std::string name,
@@ -216,7 +226,6 @@ void trrojan::opencl::volume_raycast_benchmark::add_kernel_build_factor(std::str
  * trrojan::opencl::volume_raycast_benchmark::run
  */
 size_t trrojan::opencl::volume_raycast_benchmark::run(const configuration_set& configs,
-                                                      const enable_environment_callback& env_callback,
                                                       const on_result_callback& result_callback)
 {
     std::unordered_set<std::string> changed;
@@ -231,13 +240,23 @@ size_t trrojan::opencl::volume_raycast_benchmark::run(const configuration_set& c
 
     cs.foreach_configuration([&](trrojan::configuration& cs) -> bool
     {
+        auto e = cs.get<trrojan::environment>(environment_base::factor_name);
+        auto d = cs.get<trrojan::device>(device_base::factor_name);
+
+        if (!this->can_run(e, d))
+        {
+            log::instance().write_line(log_level::information, "A "
+                                       "benchmark cannot run with the specified combination of "
+                                       "environment and device. Skipping it ...");
+            return true;
+        }
+
         changed.clear();
         this->check_changed_factors(cs, std::inserter(changed, changed.begin()));
 
         // setup raycast if OpenCL platform (aka environment) or device changed
         if (changed.count(factor_environment) || changed.count(factor_device))
         {
-            this->enable_environment_device(cs, env_callback, factor_device);
             setup_raycaster(cs);
             // check vendor and device type
             auto env = cs.find(factor_environment)->value().as<trrojan::environment>();
