@@ -180,7 +180,7 @@ void trrojan::executive::trroll(const std::string& path, output_base& output) {
     std::vector<benchmark> benchmarks;
     plugin curPlugin;
     auto envEnabler = std::bind(&executive::enable_environment0, std::ref(*this),
-        std::placeholders::_1);
+        std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
 
     // Before doing anything else, make sure we have the environments needed for
     // the benchmarks. This will ensure that the application fails right at the
@@ -339,8 +339,19 @@ void trrojan::executive::enable_environment(const variant& v) {
 /*
  * trrojan::executive::enable_environment0
  */
-trrojan::environment trrojan::executive::enable_environment0(const variant& v) {
-    this->enable_environment(v);
+trrojan::environment trrojan::executive::enable_environment0(
+        configuration& c, const std::string& factorEnv,
+        const std::string& factorDev) {
+    auto fe = c.find(factorEnv);
+    if (fe != c.end()) {
+        this->enable_environment(*fe);
+    } else {
+        this->enable_environment(static_cast<environment>(nullptr));
+    }
+
+    //if (this->cur_environment != nullptr) {
+    //    auto fd = c.find(factorDev);
+    //}
     return this->cur_environment;
 }
 

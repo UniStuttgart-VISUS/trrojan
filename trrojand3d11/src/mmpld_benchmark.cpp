@@ -227,5 +227,9 @@ trrojan::result trrojan::d3d11::mmpld_benchmark::run(
     //worker_thread::join(threads.begin(), threads.end());
     //return stream_benchmark::collect_results(config, problem, threads.begin(),
     //    threads.end());
-    throw 1;
+    auto fd = config.find(device_base::factor_name);
+    //auto dev = fd->value.get<trrojan::device>();
+
+    result r;
+    return r;
 }

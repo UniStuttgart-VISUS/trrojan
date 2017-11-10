@@ -178,7 +178,7 @@ void trrojan::benchmark_base::check_required_factors(
  */
 void trrojan::benchmark_base::enable_environment_device(configuration& conf,
         const enable_environment_callback& envEnabler,
-        const std::string& deviceFactor) {
+        const std::string& factorEnv, const std::string& factorDev) {
     environment env = nullptr;
 
     if (!envEnabler) {
@@ -186,14 +186,14 @@ void trrojan::benchmark_base::enable_environment_device(configuration& conf,
     }
 
     try {
-        env = envEnabler(*conf.find(environment_base::factor_name));
+        env = envEnabler(conf, factorEnv, factorDev);
     } catch (...) {
         /* Ignore it, failure is OK. */
         assert(env == nullptr);
     }
 
     if (env != nullptr) {
-        env->translate_device(conf, deviceFactor);
+        env->translate_device(conf, factorDev);
     }
 }
 

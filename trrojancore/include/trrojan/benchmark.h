@@ -31,8 +31,8 @@ namespace trrojan {
         /// <summary>
         /// A callback which is used to enable an environment from a factor.
         /// </summary>
-        typedef std::function<environment(const variant&)>
-            enable_environment_callback;
+        typedef std::function<environment(configuration&, const std::string&,
+            const std::string&)> enable_environment_callback;
 
         /// <summary>
         /// A callback which is invoked after each run.
@@ -233,12 +233,14 @@ namespace trrojan {
         /// </summary>
         /// <param name="conf"></param>
         /// <param name="envEnabler"></param>
-        /// <param name="deviceFactor"></param>
+        /// <param name="factorEnv"></param>
+        /// <param name="factorDev"></param>
         /// <exception cref="std::invalid_argument">If
         /// <paramref cref="envEnabler" /> is <c>nullptr</c>.</exception>
         virtual void enable_environment_device(configuration& conf,
             const enable_environment_callback& envEnabler,
-            const std::string& deviceFactor = device_base::factor_name);
+            const std::string& factorEnv = environment_base::factor_name,
+            const std::string& factorDev = device_base::factor_name);
 
         /// <summary>
         /// Write an informational message to the log that we are now running
