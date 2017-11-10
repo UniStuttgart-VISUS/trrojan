@@ -60,6 +60,8 @@ protected:
     /// The camera to manipulate.
     /// </summary>
     std::shared_ptr<camera> _cam;
+
+    glm::vec3 _last_ndc;
 };
 
 }   // namespace trrojan

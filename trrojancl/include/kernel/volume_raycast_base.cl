@@ -61,7 +61,7 @@ __kernel void volumeRender(
                            const float16 viewMat,
                            __global const int *shuffledIds,
                            const float stepSizeFactor,
-                           const uint4 volRes,
+                           const uint3 volRes,
                            const sampler_t sampler,
                            const float precisionDiv
                            /***OFFSET_ARGS***/

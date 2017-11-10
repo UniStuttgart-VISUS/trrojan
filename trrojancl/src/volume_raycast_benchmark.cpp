@@ -17,6 +17,7 @@
 #include "trrojan/io.h"
 #include "trrojan/process.h"
 #include "trrojan/timer.h"
+#include "trrojan/log.h"
 
 #include <glm/gtc/type_ptr.hpp>
 
@@ -160,7 +161,7 @@ trrojan::opencl::volume_raycast_benchmark::volume_raycast_benchmark(void)
     // count all samples taken along rays -> kernel build factor
     add_kernel_build_factor(factor_count_samples, false);
 
-    // TODO: parameters for memory pattern test
+    // NOTE: parameters for memory pattern test
     // perform a test for memory patterns
     // add_kernel_build_factor(factor_test_memory_patterns, false);
     // pixel offset
@@ -382,8 +383,8 @@ trrojan::result trrojan::opencl::volume_raycast_benchmark::run(const configurati
         try
         {
             cl::Event read_evt;
-            cl::size_t<3> origin;
-            cl::size_t<3> region;
+            std::array<size_t, 3> origin = {0, 0, 0};
+            std::array<size_t, 3> region;
             region[0] = cfg.find(factor_viewport_width)->value();
             region[1] = cfg.find(factor_viewport_height)->value();
             region[2] = 1;
@@ -695,14 +696,13 @@ void trrojan::opencl::volume_raycast_benchmark::compose_kernel(
         replace_keyword("PRECISION", "__read_only image3d_t", _kernel_source);
     }
 
-    // TODO offset for memory pattern test
+    // TODO implement offset for memory pattern test
 
     if (cfg.find(factor_shuffle)->value())
         replace_kernel_snippet("SHUFFLE", _kernel_source);
     if (cfg.find(factor_use_ortho_proj)->value())
     {
-        // TODO orthogonal camera
-        //throw std::runtime_error("Orthogonal camera is not supported yet.");
+        // TODO: orthogonal camera scaling as zoom
         replace_keyword("CAMERA", _kernel_snippets["ORTHO_CAM"], _kernel_source);
     }
     else
@@ -780,7 +780,8 @@ void trrojan::opencl::volume_raycast_benchmark::build_kernel(environment::pointe
                                                              const std::string build_flags)
 {
 //    std::cout << _kernel_source << std::endl; // DEBUG: print out composed kernel source
-    cl::Program::Sources source(1, std::make_pair(_kernel_source.data(), _kernel_source.size()));
+    cl::Program::Sources source; // (1, std::make_pair(_kernel_source.data(), _kernel_source.size()));
+    source.push_back(_kernel_source);
     try
     {
         env->generate_program(source);
@@ -851,7 +852,7 @@ void trrojan::opencl::volume_raycast_benchmark::update_kernel_args(
         t.rotate(cfg.find(factor_cam_rotation)->value());
         _camera.set_look_from(cfg.find(factor_cam_position)->value());
         glm::mat4 view = _camera.get_view_mx();
-        // TODO: column or row major?
+        // TODO: column major?
         cl_float16 view_mat = {view[0][0], view[1][0], view[2][0], view[3][0],
                                view[0][1], view[1][1], view[2][1], view[3][1],
                                view[0][2], view[1][2], view[2][2], view[3][2],
@@ -945,7 +946,7 @@ void trrojan::opencl::volume_raycast_benchmark::update_kernel_args(
             || changed.count(factor_volume_scaling))
     {
         // TODO from static config -> merge
-        cl_uint4 resolution = {{_volume_res[0], _volume_res[1], _volume_res[2], 0}};
+        cl_uint3 resolution = {{_volume_res[0], _volume_res[1], _volume_res[2]}};
         try{
             _kernel.setArg(RESOLUTION, resolution);
         } catch (cl::Error err) {
@@ -970,7 +971,9 @@ void trrojan::opencl::volume_raycast_benchmark::update_kernel_args(
  */
 void trrojan::opencl::volume_raycast_benchmark::log_cl_error(cl::Error error)
 {
-    // TODO: logging
+    log::instance().write(log_level::error, std::runtime_error(
+                              std::string(error.what()) + "(" +
+                              util::get_cl_error_str(error.err()) + ")"));
     throw std::runtime_error( "ERROR: " + std::string(error.what()) + "("
                               + util::get_cl_error_str(error.err()) + ")");
 }

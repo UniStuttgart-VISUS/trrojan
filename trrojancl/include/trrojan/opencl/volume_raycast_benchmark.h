@@ -323,7 +323,7 @@ namespace opencl
             {
                 double div = pow(2.0, (sizeof(From) - sizeof(To))*8);
 #pragma omp parallel for
-                for (long long int i = 0; i < converted_data.size(); ++i)
+                for (long long int i = 0; i < (long long int)converted_data.size(); ++i)
                 {
                     converted_data.at(i) = s[i] / div;
                 }

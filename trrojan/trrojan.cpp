@@ -28,7 +28,7 @@ int main(const int argc, const char **argv) {
                 output->open(trrojan::csv_output_params::create(*it));  // TODO: customise
             } else {
                 trrojan::log::instance().write_line(trrojan::log_level::warning,
-                    "You have not specified an output file. Please to so using "
+                    "You have not specified an output file. Please do so using "
                     "the --output option.");
             }
         }

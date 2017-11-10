@@ -10,6 +10,7 @@
 
 trrojan::trackball::trackball(std::shared_ptr<camera> cam)
     : _cam(cam)
+    , _last_ndc(0.0f)
 {
 }
 
@@ -41,8 +42,7 @@ void trrojan::trackball::zoom(float delta)
 
 void trrojan::trackball::pan(glm::vec2 direction)
 {
-    // TODO: panning relativ to ndc position
-    const auto prevWorldPos = _cam->get_world_pos_from_ndc(glm::vec3(0.f));
+    const auto prevWorldPos = _cam->get_world_pos_from_ndc(_last_ndc);
     const auto worldPos = _cam->get_world_pos_from_ndc(glm::vec3(direction, 0.f));
     const auto translation = worldPos - prevWorldPos;
 
@@ -50,12 +50,12 @@ void trrojan::trackball::pan(glm::vec2 direction)
     const auto& from = _cam->get_look_from();
     const auto& up = _cam->get_look_up();
     _cam->set_look(from - translation, to - translation, up);
+    _last_ndc = glm::vec3(direction, 0.f);
 }
 
 void trrojan::trackball::reset()
 {
-    // TODO: implement proper reset functions in camera(s)
-    _cam->set_look(glm::vec3(0.0f, 0.0f, 2.0f), glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    _cam->reset_look();
 }
 
 
