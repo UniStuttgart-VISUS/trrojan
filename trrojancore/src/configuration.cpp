@@ -49,32 +49,32 @@ trrojan::configuration::iterator_type trrojan::configuration::find(
 }
 
 
-/*
- * trrojan::configuration::replace
- */
-void trrojan::configuration::replace(const std::string& name,
-        const trrojan::variant& value) {
-    auto it = this->find0(name);
-    if (it != this->_factors.end()) {
-        *it = named_variant(name, value);
-    } else {
-        this->add(name, value);
-    }
-}
-
-
-/*
- * trrojan::configuration::replace
- */
-void trrojan::configuration::replace(const std::string& name,
-        trrojan::variant&& value) {
-    auto it = this->find0(name);
-    if (it != this->_factors.end()) {
-        *it = named_variant(name, std::move(value));
-    } else {
-        this->add(name, std::move(value));
-    }
-}
+///*
+// * trrojan::configuration::replace
+// */
+//void trrojan::configuration::replace(const std::string& name,
+//        const trrojan::variant& value) {
+//    auto it = this->find0(name);
+//    if (it != this->_factors.end()) {
+//        *it = named_variant(name, value);
+//    } else {
+//        this->add(name, value);
+//    }
+//}
+//
+//
+///*
+// * trrojan::configuration::replace
+// */
+//void trrojan::configuration::replace(const std::string& name,
+//        trrojan::variant&& value) {
+//    auto it = this->find0(name);
+//    if (it != this->_factors.end()) {
+//        *it = named_variant(name, std::move(value));
+//    } else {
+//        this->add(name, std::move(value));
+//    }
+//}
 
 
 /*

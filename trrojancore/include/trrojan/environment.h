@@ -138,28 +138,6 @@ namespace trrojan {
         }
 #endif /* TRROJANCORE_WITH_SPELLING_ERRORS */
 
-        /// <summary>
-        /// Convert a device name to an actual device if a device factor is in
-        /// the configuration.
-        /// </summary>
-        /// <remarks>
-        /// <para>The implementation searches <paramref name="config" /> for a
-        /// string factor with the name specified as <param name="name" /> and
-        /// adds, if found, replaces the device with the actual device instance.
-        /// If no device is found, an exception is thrown. If the factor does
-        /// not exist or is not a string factor, nothing is done.</para>
-        /// <para>Subclasses might want to override this method to provide a
-        /// custom and/or more efficient implementation.</para>
-        /// <remarks>
-        /// <param name="config">The configuration to be processed.</param>
-        /// <param name="name">The name of the factor holding the device
-        /// name. This defaults to <see cref="device_base::factor_name" />.
-        /// </param>
-        /// <returns><c>true</c> if a translation was made, <c>false</c> if no
-        /// factor named <paramref name="name" /> was found.</returns>
-        virtual bool translate_device(configuration& config,
-            const std::string& name = device_base::factor_name);
-
     protected:
 
         /// <summary>

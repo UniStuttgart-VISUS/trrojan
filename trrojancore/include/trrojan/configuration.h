@@ -155,25 +155,25 @@ namespace trrojan {
         template<class T>
         T get(const std::string& factor, const T fallback) const;
 
-        /// <summary>
-        /// Replaces the factor with the given name.
-        /// </summary>
-        /// <remarks>
-        /// This method is intended for instantiating environments or devices
-        /// identified by strings with actual in-memory instances. If the
-        /// specified factor does not exist, it will be added.
-        /// </remarks>
-        void replace(const std::string& name, const trrojan::variant& value);
+        ///// <summary>
+        ///// Replaces the factor with the given name.
+        ///// </summary>
+        ///// <remarks>
+        ///// This method is intended for instantiating environments or devices
+        ///// identified by strings with actual in-memory instances. If the
+        ///// specified factor does not exist, it will be added.
+        ///// </remarks>
+        //void replace(const std::string& name, const trrojan::variant& value);
 
-        /// <summary>
-        /// Replaces the factor with the given name.
-        /// </summary>
-        /// <remarks>
-        /// This method is intended for instantiating environments or devices
-        /// identified by strings with actual in-memory instances. If the
-        /// specified factor does not exist, it will be added.
-        /// </remarks>
-        void replace(const std::string& name, trrojan::variant&& value);
+        ///// <summary>
+        ///// Replaces the factor with the given name.
+        ///// </summary>
+        ///// <remarks>
+        ///// This method is intended for instantiating environments or devices
+        ///// identified by strings with actual in-memory instances. If the
+        ///// specified factor does not exist, it will be added.
+        ///// </remarks>
+        //void replace(const std::string& name, trrojan::variant&& value);
 
         /// <summary>
         /// Makes sure that the configuration has reserved space for the given

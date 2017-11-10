@@ -182,13 +182,15 @@ std::vector<std::string> trrojan::d3d11::mmpld_benchmark::required_factors(
  */
 size_t trrojan::d3d11::mmpld_benchmark::run(const configuration_set& configs,
         const on_result_callback& callback) {
+    return benchmark_base::run(configs, callback);
+#if 0
     std::vector<std::string> changed;
     size_t retval = 0;
 
     // Check that caller has provided all required factors.
     this->check_required_factors(configs);
 
-#if 0
+
     // Merge missing factors from default configuration.
     auto c = configs;
     c.merge(this->_default_configs, false);
@@ -211,9 +213,9 @@ size_t trrojan::d3d11::mmpld_benchmark::run(const configuration_set& configs,
             return false;
         }
     });
-#endif
 
     return retval;
+#endif
 }
 
 
@@ -227,5 +229,9 @@ trrojan::result trrojan::d3d11::mmpld_benchmark::run(
     //worker_thread::join(threads.begin(), threads.end());
     //return stream_benchmark::collect_results(config, problem, threads.begin(),
     //    threads.end());
-    throw 1;
+    auto fd = config.find(device_base::factor_name);
+    //auto dev = fd->value.get<trrojan::device>();
+
+    result r;
+    return r;
 }

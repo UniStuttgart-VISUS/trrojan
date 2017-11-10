@@ -3,14 +3,7 @@ opencl::volume_raycast {
     uint32 viewport_height = 512
     boolean use_ERT = true
     boolean use_tff = false
-
 }
-
-stream::stream_benchmark{
-    string task_type = add; triad
-}
-
-stream::stream_benchmark {}
 
 d3d11::mmpld-raycaster {
     uint32 viewport_width = 800

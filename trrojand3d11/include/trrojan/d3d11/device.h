@@ -22,7 +22,7 @@ namespace d3d11 {
     /// <summary>
     /// Base class for devices to be tested.
     /// </summary>
-    class TRROJAND3D11_API device : trrojan::device_base {
+    class TRROJAND3D11_API device : public trrojan::device_base {
 
     public:
 

@@ -178,6 +178,23 @@ namespace trrojan {
     private:
 
         /// <summary>
+        /// Holds a possible combination of an environment and devices to be
+        /// tested.
+        /// </summary>
+        /// <remarks>
+        /// There might be restrictions on which environment is acce
+        /// </remarks>
+        struct env_dev_set {
+            trrojan::environment environment;
+            std::vector<trrojan::device> devices;
+
+            inline env_dev_set(void) { }
+
+            inline env_dev_set(trrojan::environment&& e, decltype(devices)&& d)
+                : environment(std::move(e)), devices(std::move(d)) { }
+        };
+
+        /// <summary>
         /// Abstraction of a plugin DLL.
         /// </summary>
         class plugin_dll {
@@ -275,23 +292,6 @@ namespace trrojan {
         };
 
         /// <summary>
-        /// If <paramref name="inOutCs" /> does not hold any factor named
-        /// <paramref name="factor" />, add all factors from
-        /// <see cref="executive::environments" />. If such a factor exists and
-        /// if said factor is a string factor, replace the names with the actual
-        /// <see cref="environment" /> objects. Otherwise, assume that it
-        /// already is an <see cref="environment" /> object and do nothing.
-        /// </summary>
-        /// <param name="inOutCs">The configuration set to be modified.</param>
-        /// <param name="factor">The name of the factor used for the
-        /// environment, which defaults to
-        /// <see cref="environment_base::factor_name" />.</param>
-        /// <exception cref="std::invalid_argument>If the a requested
-        /// environment does not exist.</exception>
-        configuration_set& assign_environments(configuration_set& inOutCs,
-            const std::string& factor = environment_base::factor_name);
-
-        /// <summary>
         /// Enables the environment with the specified name.
         /// </summary>
         /// <remarks>
@@ -318,29 +318,6 @@ namespace trrojan {
         void enable_environment(environment env);
 
         /// <summary>
-        /// Enables the environment identified by the given name or pointer.
-        /// </summary>
-        /// <remarks>
-        /// Any previously enabled environment stored at
-        /// <see cref="cur_environment" /> will be properly deactivated by the
-        /// method.
-        /// </remarks>
-        /// <param name="v"></param>
-        /// <exception cref="std::invalid_argument>If <paramref name="v" /> does
-        /// not contain a valid environment name or actual environment pointer.
-        /// </exception>
-        void enable_environment(const variant& v);
-
-        /// <summary>
-        /// Alias for <see cref="enable_environment" />, which allows for use
-        /// with <see cref="std::bind" />.
-        /// </summary>
-        /// <param name="v"></param>
-        /// <returns>The environment which is now enabled. This might be
-        /// <c>nullptr</c>.</returns>
-        environment enable_environment0(const variant& v);
-
-        /// <summary>
         /// Finds the environment designated by the given string variant, or
         /// return the environment if the variant specified an actual
         /// environment pointer.
@@ -348,6 +325,15 @@ namespace trrojan {
         /// <param name="v"></param>
         /// <returns></returns>
         environment find_environment(const variant& v);
+
+        /// <summary>
+        /// Prepare all possible combinations of <see cref="environment" /> and
+        /// <see cref="device"> honouring any restrictions make in in
+        /// <paramref name="cs" />.
+        /// </summary>
+        std::vector<env_dev_set> prepare_env_devs(const configuration_set& cs,
+            const std::string& factorEnv = environment_base::factor_name,
+            const std::string& factorDev = device_base::factor_name);
 
         /// <summary>
         /// Stores the currently active environment.

@@ -114,7 +114,6 @@ std::vector<std::string> trrojan::benchmark_base::required_factors(void) const {
  * trrojan::benchmark_base::run
  */
 size_t trrojan::benchmark_base::run(const configuration_set& configs,
-        const enable_environment_callback& envCallback,
         const on_result_callback& resultCallback) {
     // Check that caller has provided all required factors.
     this->check_required_factors(configs);
@@ -126,13 +125,21 @@ size_t trrojan::benchmark_base::run(const configuration_set& configs,
     // Invoke each configuration.
     size_t retval = 0;
     c.foreach_configuration([&](configuration& c) -> bool {
-
         try {
-            this->enable_environment_device(c, envCallback);
-            this->log_run(c);
-            auto r = resultCallback(std::move(this->run(c)));
-            ++retval;
-            return r;
+            auto e = c.get<trrojan::environment>(environment_base::factor_name);
+            auto d= c.get<trrojan::device>(device_base::factor_name);
+
+            if (this->can_run(e, d)) {
+                this->log_run(c);
+                auto r = resultCallback(std::move(this->run(c)));
+                ++retval;
+                return r;
+            } else {
+                log::instance().write_line(log_level::information, "A "
+                    "benchmark cannot run with the specified combination of "
+                    "environment and device. Skipping it ...");
+                return true;
+            }
 
         } catch (const std::exception& ex) {
             log::instance().write_line(ex);
@@ -169,31 +176,6 @@ void trrojan::benchmark_base::check_required_factors(
                 "factor \"" << f << "\"." << std::ends;
             throw std::invalid_argument(msg.str());
         }
-    }
-}
-
-
-/*
- * trrojan::benchmark_base::enable_environment_device
- */
-void trrojan::benchmark_base::enable_environment_device(configuration& conf,
-        const enable_environment_callback& envEnabler,
-        const std::string& deviceFactor) {
-    environment env = nullptr;
-
-    if (!envEnabler) {
-        throw std::invalid_argument("envEnabler");
-    }
-
-    try {
-        env = envEnabler(*conf.find(environment_base::factor_name));
-    } catch (...) {
-        /* Ignore it, failure is OK. */
-        assert(env == nullptr);
-    }
-
-    if (env != nullptr) {
-        env->translate_device(conf, deviceFactor);
     }
 }
 
