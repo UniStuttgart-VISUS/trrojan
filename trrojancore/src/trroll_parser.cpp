@@ -21,6 +21,7 @@ std::vector<trrojan::trroll_parser::benchmark_configs>
 trrojan::trroll_parser::parse(const std::string& path) {
     static const char NF[] = { ';' };
     static const char NL[] = { '\r', '\n' };
+    static const char CL = '#';
     static const std::string NS("::");
     std::vector<benchmark_configs> retval;
     const auto content = trrojan::read_text_file(path);
@@ -75,6 +76,9 @@ trrojan::trroll_parser::parse(const std::string& path) {
 
             if (bol == eol) {
                 break;  // Skip empty line.
+            }
+            if (std::find(bol, eol, CL) == eol) {
+                break;  // Skip comment line.
             }
 
             auto c = bol;
