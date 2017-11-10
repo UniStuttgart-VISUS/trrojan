@@ -77,7 +77,7 @@ trrojan::trroll_parser::parse(const std::string& path) {
             if (bol == eol) {
                 break;  // Skip empty line.
             }
-            if (std::find(bol, eol, CL) == eol) {
+            if (*bol == CL) {
                 break;  // Skip comment line.
             }
 
