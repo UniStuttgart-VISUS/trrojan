@@ -100,7 +100,7 @@ trrojan::opencl::volume_raycast_benchmark::volume_raycast_benchmark(void)
 //                                                                  std::string("device")));
 
     this->_default_configs.add_factor(factor::from_manifestations(
-        factor_environment_vendor, static_cast<int>(VENDOR_NVIDIA)));
+        factor_environment_vendor, static_cast<int>(VENDOR_ANY)));
     this->_default_configs.add_factor(
         factor::from_manifestations(factor_device_type, static_cast<int>(TYPE_GPU)));
     this->_default_configs.add_factor(
@@ -264,10 +264,10 @@ size_t trrojan::opencl::volume_raycast_benchmark::run(const configuration_set& c
             int env_vendor_factor = cs.find(factor_environment_vendor)->value().as<int>();
             if (((env_ptr->get_properties().vendor | VENDOR_ANY) & env_vendor_factor) == 0)
             {
-                std::cout << "Skipping platform vendor " 
-                          << util::_vendor_names.find(
-                             static_cast<vendor>(env_ptr->get_properties().vendor))->second
-                          << std::endl;
+                std::ostringstream os;
+                os << "Skipping platform vendor " << util::_vendor_names.find(
+                          static_cast<vendor>(env_ptr->get_properties().vendor))->second;
+                log::instance().write(log_level::information, os.str().c_str());
                 return false;
             }
             auto dev = cs.find(factor_device)->value().as<trrojan::device>();
@@ -276,27 +276,28 @@ size_t trrojan::opencl::volume_raycast_benchmark::run(const configuration_set& c
             unsigned dev_type_factor = cs.find(factor_device_type)->value().as<unsigned>();
             if (((dev_ptr->get_vendor() | VENDOR_ANY) & dev_vendor_factor) == 0)
             {
-                std::cout << "Skipping device vendor "
-                          << util::_vendor_names.find(
-                             static_cast<vendor>(dev_vendor_factor))->second
-                          << std::endl;
+                std::ostringstream os;
+                os << "Skipping device vendor " << util::_vendor_names.find(
+                             static_cast<vendor>(dev_vendor_factor))->second;
+                log::instance().write(log_level::information, os.str().c_str());
                 return false;
             }
             if (((dev_ptr->get_type() | TYPE_ALL) & dev_type_factor) == 0)
             {
-                std::cout << "Skipping device type "
-                          << util::_type_names.find(
-                             static_cast<hardware_type>(dev_ptr->get_type()))->second
-                          << std::endl;
+                std::ostringstream os;
+                os << "Skipping device type " << util::_type_names.find(
+                             static_cast<hardware_type>(dev_ptr->get_type()))->second;
+                log::instance().write(log_level::information, os.str().c_str());
                 return false;
             }
         }
+        std::ostringstream os;
         for (auto& f : cs)
         {
             // output current config
-            std::cout << f << std::endl;
+            os << f << ", ";
         }
-        std::cout << std::endl;
+        log::instance().write(log_level::information, os.str().c_str());
 
         // change the setup according to changed factors that are relevant
         setup_volume_data(cs, changed);
