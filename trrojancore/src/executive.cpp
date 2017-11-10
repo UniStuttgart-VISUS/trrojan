@@ -179,17 +179,6 @@ void trrojan::executive::trroll(const std::string& path, output_base& output) {
     auto bcss = trroll_parser::parse(path);
     std::vector<benchmark> benchmarks;
     plugin curPlugin;
-    auto envEnabler = std::bind(&executive::enable_environment0, std::ref(*this),
-        std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
-
-    // Before doing anything else, make sure we have the environments needed for
-    // the benchmarks. This will ensure that the application fails right at the
-    // beginning rather than sometime into the tests when it might not be
-    // immediately noticed that the configuration is wrong or unsupported on the
-    // current machine.
-    for (auto& b : bcss) {
-        this->assign_environments(b.configs);
-    }
 
     // Make sure that the benchmark configurations are grouped. This will ensure
     // that we are not repeatedly retrieving benchmarks from the plugins when
@@ -228,10 +217,23 @@ void trrojan::executive::trroll(const std::string& path, output_base& output) {
                     "benchmark \"%s\" from plugin \"%s\".\n",
                     b.benchmark.c_str(), b.plugin.c_str());
 
-                (**it).run(b.configs, envEnabler, [&output](result&& r) {
-                    output << r;
-                    return true;
-                });
+                auto eds = this->prepare_env_devs(b.configs);
+
+                for (auto e : eds) {
+                    this->enable_environment(e.environment);
+                    b.configs.replace_factor(factor::from_manifestations(
+                        environment_base::factor_name, e.environment));
+
+                    for (auto d : e.devices) {
+                        b.configs.replace_factor(factor::from_manifestations(
+                            device_base::factor_name, d));
+
+                        (**it).run(b.configs, [&output](result&& r) {
+                            output << r;
+                            return true;
+                        });
+                    }
+                }
 
             } else {
                 log::instance().write(log_level::warning, "No benchmark named "
@@ -240,41 +242,6 @@ void trrojan::executive::trroll(const std::string& path, output_base& output) {
             }
         }
     } /* end for (auto b : bcss) */
-}
-
-
-/*
- * trrojan::executive::assign_environments
- */
-trrojan::configuration_set& trrojan::executive::assign_environments(
-        configuration_set& inOutCs, const std::string& factor) {
-    auto envs = inOutCs.find_factor(factor);
-    std::vector<environment> manifestations;
-
-    if ((envs != nullptr) && (envs->size() > 0)) {
-        // A restriction on environments was specified, translate those
-        // into actual environments.
-        manifestations.reserve(envs->size());
-
-        for (size_t i = 0; i < envs->size(); ++i) {
-            auto env = this->find_environment((*envs)[i]);
-            if (env != nullptr) {
-                manifestations.push_back(env);
-            }
-        }
-
-    } else {
-        // No environments are given, so use all we know.
-        manifestations.reserve(this->environments.size());
-        for (auto& e : this->environments) {
-            manifestations.push_back(e.second);
-        }
-    }
-
-    inOutCs.replace_factor(factor::from_manifestations("environment",
-        manifestations));
-
-    return inOutCs;
 }
 
 
@@ -299,60 +266,25 @@ void trrojan::executive::enable_environment(const std::string& name) {
  * trrojan::executive::enable_environment
  */
 void trrojan::executive::enable_environment(environment env) {
-    if (env == nullptr) {
-        throw std::invalid_argument("The environment to be activated must be "
-            "a valid pointer");
-    }
-
     if ((this->cur_environment != nullptr) && (this->cur_environment != env)) {
+        log::instance().write_line(log_level::information, "Disabling "
+            "environment \"%s\" ...", this->cur_environment->name().c_str());
         this->cur_environment->on_deactivate();
         this->cur_environment = nullptr;
     }
 
     if (this->cur_environment == nullptr) {
         this->cur_environment = env;
-        log::instance().write(log_level::information, "Enabling enviornment "
-            "\"%s\" ...\n", env->name().c_str());
-        this->cur_environment->on_activate();
+
+        if (this->cur_environment != nullptr) {
+            log::instance().write_line(log_level::information, "Enabling "
+                "environment \"%s\" ...", env->name().c_str());
+            this->cur_environment->on_activate();
+        } else {
+            log::instance().write_line(log_level::information, "Enabling "
+                "empty environment ...");
+        }
     }
-}
-
-
-/*
- * trrojan::executive::enable_environment
- */
-void trrojan::executive::enable_environment(const variant& v) {
-    switch (v.type()) {
-        case variant_type::string:
-        case variant_type::wstring:
-        case variant_type::environment:
-            this->enable_environment(this->find_environment(v));
-            break;
-
-        default:
-            throw std::invalid_argument("The given variant does not designate "
-                "a valid environment");
-    }
-}
-
-
-/*
- * trrojan::executive::enable_environment0
- */
-trrojan::environment trrojan::executive::enable_environment0(
-        configuration& c, const std::string& factorEnv,
-        const std::string& factorDev) {
-    auto fe = c.find(factorEnv);
-    if (fe != c.end()) {
-        this->enable_environment(*fe);
-    } else {
-        this->enable_environment(static_cast<environment>(nullptr));
-    }
-
-    //if (this->cur_environment != nullptr) {
-    //    auto fd = c.find(factorDev);
-    //}
-    return this->cur_environment;
 }
 
 
@@ -389,6 +321,81 @@ trrojan::environment trrojan::executive::find_environment(const variant& v) {
     }
 
     return (retval != this->environments.end()) ? retval->second : nullptr;
+}
+
+
+/*
+ * trrojan::executive::prepare_env_devs
+ */
+std::vector<trrojan::executive::env_dev_set>
+trrojan::executive::prepare_env_devs(const configuration_set& cs,
+        const std::string& factorEnv, const std::string& factorDev) {
+    std::vector<device> devices;
+    std::vector<environment> environments;
+    std::vector<trrojan::executive::env_dev_set> retval;
+    auto restrictions = cs.find_factor(factorEnv);
+
+    /* Determine which environments to use. */
+    if ((restrictions != nullptr) && (restrictions->size() > 0)) {
+        // A restriction on environments was specified, translate each of
+        // those into a real environment.
+        environments.reserve(restrictions->size());
+
+        for (size_t i = 0; i < restrictions->size(); ++i) {
+            auto env = this->find_environment((*restrictions)[i]);
+            if (env != nullptr) {
+                environments.push_back(std::move(env));
+            }
+        }
+
+    } else {
+        // No environments are given, so use all we know.
+        environments.reserve(this->environments.size());
+        for (auto& e : this->environments) {
+            environments.push_back(e.second);
+        }
+    }
+
+    /* Determine which devices to use for each environment. */
+    for (auto e : environments) {
+        assert(devices.empty());
+        restrictions = cs.find_factor(factorDev);
+
+        if (e == nullptr) {
+            // The default environment should have only a default device.
+            devices.push_back(static_cast<device>(nullptr));
+
+        } else if ((restrictions != nullptr) && (restrictions->size() > 0)) {
+            // A restriction on devices was specified, translate each of
+            // those into a real device.
+            devices.reserve(restrictions->size());
+
+            this->enable_environment(e);
+            for (size_t i = 0; i < restrictions->size(); ++i) {
+                auto dev = e->get_device((*restrictions)[i]);
+                if (dev != nullptr) {
+                    devices.push_back(std::move(dev));
+                }
+            }
+
+        } else {
+            // No environments are given, so use all the environment has or
+            // at least one empty device to make sure that device-free
+            // benchmarks can run.
+            this->enable_environment(e);
+            e->get_devices(devices);
+            if (devices.empty()) {
+                log::instance().write_line(log_level::verbose, "The "
+                    "environment \"%s\" has no devices, so use an empty dummy.",
+                    e->name().c_str());
+                devices.push_back(static_cast<device>(nullptr));
+            }
+        }
+
+        retval.emplace_back(std::move(e), std::move(devices));
+    }
+
+    return retval;
 }
 
 

@@ -5,6 +5,7 @@
 
 #include "trrojan/d3d11/environment.h"
 
+#include <cassert>
 #include <iterator>
 #include <memory>
 
@@ -23,9 +24,11 @@ trrojan::d3d11::environment::~environment(void) { }
  * trrojan::d3d11::environment::get_devices
  */
 size_t trrojan::d3d11::environment::get_devices(device_list& dst) {
-    std::transform(this->devices.cbegin(), this->devices.cend(),
-        std::back_inserter(dst), [](device::pointer d) {
-        return std::dynamic_pointer_cast<trrojan::device_base>(d); });
+    for (auto d : this->devices) {
+        auto dd = std::dynamic_pointer_cast<trrojan::device_base>(d);
+        assert(dd != nullptr);
+        dst.push_back(std::move(dd));
+    }
     return this->devices.size();
 }
 
