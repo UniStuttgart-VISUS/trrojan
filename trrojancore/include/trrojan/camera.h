@@ -129,9 +129,9 @@ protected:
 class TRROJANCORE_API perspective_camera : public camera
 {
 public:
-    perspective_camera(vec3 look_from = vec3(0.0f, 0.0f, -2.0f), vec3 look_to = vec3(0.0f),
+    perspective_camera(vec3 look_from = vec3(0.0f, 0.0f, 2.0f), vec3 look_to = vec3(0.0f),
                        vec3 look_up = vec3(0.0f, 1.0f, 0.0f), float near_plane = 0.01f,
-                       float far_plane = 10000.0f, float field_of_view = 60.f, float aspect_ratio = 1.f);
+                       float far_plane = 10000.0f, float field_of_view = 90.f, float aspect_ratio = 1.f);
     virtual ~perspective_camera() = default;
     perspective_camera(const perspective_camera& other) = default;
 
@@ -154,7 +154,7 @@ protected:
 class TRROJANCORE_API orthographic_camera : public camera
 {
 public:
-    orthographic_camera(vec3 _look_from = vec3(0.0f, 0.0f, -2.0f), vec3 _look_to = vec3(0.0f),
+    orthographic_camera(vec3 _look_from = vec3(0.0f, 0.0f, 2.0f), vec3 _look_to = vec3(0.0f),
                         vec3 _look_up = vec3(0.0f, 1.0f, 0.0f), float _near_plane = 0.01f,
                         float _far_plane = 10000.0f, vec4 frustum = vec4(-01, 10, -10, 10));
     virtual ~orthographic_camera() = default;
@@ -192,7 +192,7 @@ inline void camera::set_look(glm::vec3 from, glm::vec3 to, glm::vec3 up)
 
 inline void camera::reset_look()
 {
-    _look_from = vec3(0.0f, 0.0f, -2.0f);
+    _look_from = vec3(0.0f, 0.0f, 2.0f);
     _look_to = vec3(0.0f);
     _look_up = vec3(0.0f, 1.0f, 0.0f);
     invalidate_view_mx();

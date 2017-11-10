@@ -885,7 +885,7 @@ void trrojan::opencl::volume_raycast_benchmark::update_kernel_args(
     // TODO: test new camera handling with factors 'position (vec3)' and 'rotation (quat)'
     if (changed.count(factor_cam_position) + changed.count(factor_cam_rotation))
     {
-        trrojan::trackball t(std::make_shared<trrojan::perspective_camera>(_camera));
+//        trrojan::trackball t(std::make_shared<trrojan::perspective_camera>(_camera));
 //        t.rotate(cfg.find(factor_cam_rotation)->value());
         _camera.set_look_from(cfg.find(factor_cam_position)->value());
         glm::mat4 view = _camera.get_view_mx();
@@ -917,9 +917,9 @@ void trrojan::opencl::volume_raycast_benchmark::update_kernel_args(
 //        glm::quat q = glm::quat(Pc, Pa);
 //        _camera.rotate(q);
 
-        //        _camera.set_look_from(glm::vec3(0,0,-2));
+        _camera.set_look_from(glm::vec3(0.0f,0.f,2.f));
         glm::mat4 view = _camera.get_view_mx();
-        // TODO: column major?
+        // GLM uses column major order
         cl_float16 view_mat = {view[0][0], view[1][0], view[2][0], view[3][0],
                                view[0][1], view[1][1], view[2][1], view[3][1],
                                view[0][2], view[1][2], view[2][2], view[3][2],
