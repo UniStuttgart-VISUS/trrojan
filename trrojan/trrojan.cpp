@@ -51,7 +51,6 @@ int main(const int argc, const char **argv) {
         return -1;
     }
 
-
 #if 0
     trrojan::timer t;
     t.start();

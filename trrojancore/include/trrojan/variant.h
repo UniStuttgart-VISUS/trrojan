@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <array>
 #include <cassert>
 #if (!defined(__GNUC__) || (__GNUC__ >= 5))
 #include <codecvt>
@@ -27,7 +28,6 @@ namespace trrojan {
 
     /* Forward declarations */
     class TRROJANCORE_API variant;
-
 
     /// <summary>
     /// Possible data types <see cref="trrojan::variant" /> can hold.
@@ -129,13 +129,37 @@ namespace trrojan {
         /// <summary>
         /// The variant holds a <see cref="trrojan::environment" />.
         /// </summary>
-        environment
+        environment,
+
+#define __TRROJAN_VARIANT_VEC(type, dim) type##vec##dim
+#define __TRROJAN_VARIANT_VECS(type)                                           \
+    __TRROJAN_VARIANT_VEC(type, 2),                                            \
+    __TRROJAN_VARIANT_VEC(type, 3),                                            \
+    __TRROJAN_VARIANT_VEC(type, 4)
+
+        __TRROJAN_VARIANT_VECS(int8),
+        __TRROJAN_VARIANT_VECS(int16),
+        __TRROJAN_VARIANT_VECS(int32),
+        __TRROJAN_VARIANT_VECS(int64),
+
+        __TRROJAN_VARIANT_VECS(uint8),
+        __TRROJAN_VARIANT_VECS(uint16),
+        __TRROJAN_VARIANT_VECS(uint32),
+        __TRROJAN_VARIANT_VECS(uint64),
+
+        __TRROJAN_VARIANT_VECS(float32),
+        __TRROJAN_VARIANT_VECS(float64)
+
+#undef __TRROJAN_VARIANT_VEC
+#undef __TRROJAN_VARIANT_VECS
+
 
         // Add new members here.
     };
 
 
 namespace detail {
+
     /// <summary>
     //// Actual storage structure for <see cref="trrojan::variant" />.
     /// </summary>
@@ -163,6 +187,32 @@ namespace detail {
         std::wstring val_wstring;
         device val_device;
         environment val_environment;
+
+#define __TRROJAN_VARIANT_VEC(type, dim) val_##type##vec##dim
+#define __TRROJAN_VARIANT_IVECS(type)                                          \
+    std::array<std::##type##_t, 2> __TRROJAN_VARIANT_VEC(type, 2);             \
+    std::array<std::##type##_t, 3> __TRROJAN_VARIANT_VEC(type, 3);             \
+    std::array<std::##type##_t, 4> __TRROJAN_VARIANT_VEC(type, 4)
+#define __TRROJAN_VARIANT_XVECS(type, name)                                     \
+    std::array<type, 2> __TRROJAN_VARIANT_VEC(name, 2);                        \
+    std::array<type, 3> __TRROJAN_VARIANT_VEC(name, 3);                        \
+    std::array<type, 4> __TRROJAN_VARIANT_VEC(name, 4)
+
+        __TRROJAN_VARIANT_IVECS(int8);
+        __TRROJAN_VARIANT_IVECS(int16);
+        __TRROJAN_VARIANT_IVECS(int32);
+        __TRROJAN_VARIANT_IVECS(int64);
+        __TRROJAN_VARIANT_IVECS(uint8);
+        __TRROJAN_VARIANT_IVECS(uint16);
+        __TRROJAN_VARIANT_IVECS(uint32);
+        __TRROJAN_VARIANT_IVECS(uint64);
+        __TRROJAN_VARIANT_XVECS(float, float32);
+        __TRROJAN_VARIANT_XVECS(double, float64);
+
+#undef __TRROJAN_VARIANT_VEC
+#undef __TRROJAN_VARIANT_IVECS
+#undef __TRROJAN_VARIANT_XVECS
+
         // Add new members here (must be val_[variant_type name]).
 
         inline variant(void) { }
@@ -174,6 +224,9 @@ namespace detail {
     /// A list of variant types to expand.
     /// </summary>
     template<trrojan::variant_type...> struct variant_type_list_t { };
+
+#define __TRROJAN_VARIANT_VECS(type) variant_type::type##vec##2,                \
+    variant_type::type##vec##3, variant_type::type##vec##4
 
     /// <summary>
     /// The actual type list we use in 
@@ -187,7 +240,12 @@ namespace detail {
         variant_type::uint8, variant_type::uint16, variant_type::uint32,
         variant_type::uint64, variant_type::float32, variant_type::float64,
         variant_type::string, variant_type::wstring, variant_type::device,
-        variant_type::environment /* Add new members here. */>
+        variant_type::environment, __TRROJAN_VARIANT_VECS(int8),
+        __TRROJAN_VARIANT_VECS(int16), __TRROJAN_VARIANT_VECS(int32),
+        __TRROJAN_VARIANT_VECS(int64), __TRROJAN_VARIANT_VECS(uint8),
+        __TRROJAN_VARIANT_VECS(uint16), __TRROJAN_VARIANT_VECS(uint32),
+        __TRROJAN_VARIANT_VECS(uint64), __TRROJAN_VARIANT_VECS(float32),
+        __TRROJAN_VARIANT_VECS(float64) /* Add new members here. */>
         variant_type_list;
 
     /// <summary>
@@ -199,6 +257,8 @@ namespace detail {
         variant_type::uint16, variant_type::uint32, variant_type::uint64,
         variant_type::float32, variant_type::float64>
         auto_parsable_variant_type_list;
+
+#undef __TRROJAN_VARIANT_VECS
 
 } /* end namespace detail */
 
@@ -271,6 +331,24 @@ namespace detail {
     __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(wstring);
     __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(device);
     __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(environment);
+
+#define __TRROJANCORE_DECL_VARIANT_VEC_TYPE_TRAITS(type)                       \
+    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(type##vec##2);                      \
+    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(type##vec##3);                      \
+    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(type##vec##4)
+
+    __TRROJANCORE_DECL_VARIANT_VEC_TYPE_TRAITS(int8);
+    __TRROJANCORE_DECL_VARIANT_VEC_TYPE_TRAITS(int16);
+    __TRROJANCORE_DECL_VARIANT_VEC_TYPE_TRAITS(int32);
+    __TRROJANCORE_DECL_VARIANT_VEC_TYPE_TRAITS(int64);
+    __TRROJANCORE_DECL_VARIANT_VEC_TYPE_TRAITS(uint8);
+    __TRROJANCORE_DECL_VARIANT_VEC_TYPE_TRAITS(uint16);
+    __TRROJANCORE_DECL_VARIANT_VEC_TYPE_TRAITS(uint32);
+    __TRROJANCORE_DECL_VARIANT_VEC_TYPE_TRAITS(uint64);
+    __TRROJANCORE_DECL_VARIANT_VEC_TYPE_TRAITS(float32);
+    __TRROJANCORE_DECL_VARIANT_VEC_TYPE_TRAITS(float64);
+
+#undef __TRROJANCORE_DECL_VARIANT_VEC_TYPE_TRAITS
     // Add new specialisations here here.
 
 #undef __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS
@@ -386,6 +464,7 @@ namespace detail {
             stream << ((v != nullptr) ? v->name() : "null");
         }
     };
+
 } /* end namespace detail */
 
 
@@ -636,7 +715,8 @@ namespace detail {
         /// <returns><paramref name="lhs" />.</returns>
         friend inline std::ostream& operator <<(std::ostream& lhs,
                 const variant& rhs) {
-            rhs.conditional_invoke<detail::print>(lhs);
+            lhs << "TODO: array hack";
+            //rhs.conditional_invoke<detail::print>(lhs);
             return lhs;
         }
 
@@ -739,3 +819,6 @@ namespace detail {
 }
 
 #include "trrojan/variant.inl"
+
+#undef __TRROJAN_VARIANT_VEC
+
