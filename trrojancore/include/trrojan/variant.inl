@@ -5,6 +5,22 @@
 
 
 /*
+ * trrojan::detail::operator <<
+ */
+template<class T, size_t S>
+std::ostream& trrojan::detail::operator <<(std::ostream& lhs,
+        const std::array<T, S>& rhs) {
+    for (size_t i = 0; i < S; ++i) {
+        if (i > 0) {
+            lhs << " ";
+        }
+        lhs << rhs[i];
+    }
+    return lhs;
+}
+
+
+/*
  * trrojan::detail::copy_to::invoke
  */
 template<trrojan::variant_type T>

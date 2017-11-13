@@ -355,6 +355,32 @@ namespace detail {
 
 
 namespace detail {
+
+    /// <summary>
+    /// Output of an <see cref="std::array" /> to an <see cref="std::ostream" />.
+    /// </summary>
+    template<class T, size_t S>
+    std::ostream& operator <<(std::ostream& lhs, const std::array<T, S>& rhs);
+
+    /// <summary>
+    /// Output of an <see cref="std::wstring" /> to an
+    /// <see cref="std::ostream" />.
+    /// </summary>
+    std::ostream& operator <<(std::ostream& lhs, const std::wstring& rhs);
+
+    /// <summary>
+    /// Output of a <see cref="trrojan::device" /> to an
+    /// <see cref="std::ostream" />.
+    /// </summary>
+    std::ostream& operator <<(std::ostream& lhs, const trrojan::device& rhs);
+
+    /// <summary>
+    /// Output of a <see cref="trrojan::environment" /> to an
+    /// <see cref="std::ostream" />.
+    /// </summary>
+    std::ostream& operator <<(std::ostream& lhs,
+        const trrojan::environment& rhs);
+
     /// <summary>
     /// Functor which tries casting the value of the variant to a specific
     /// type and returning it.
@@ -422,46 +448,6 @@ namespace detail {
         typedef typename variant_type_traits<T>::type type;
         static inline void invoke(type& v, std::ostream& stream) {
             stream << v;
-        }
-    };
-
-    /// <summary>
-    /// Specialisation of the <see cref="variant::print" /> functor for
-    /// <see cref="std::wstring" />, which performs the necessary string
-    /// conversion before output.
-    /// </summary>
-    template<> struct print<variant_type::wstring> {
-        static inline void invoke(std::wstring& v, std::ostream& stream) {
-#if (!defined(__GNUC__) || (__GNUC__ >= 5))
-            static std::wstring_convert<std::codecvt_utf8<wchar_t>> cvt;
-            stream << cvt.to_bytes(v);
-#else /* (!defined(__GNUC__) || (__GNUC__ >= 5)) */
-            for (auto c : v) {
-                stream << static_cast<char>(c);
-            }
-#endif /* (!defined(__GNUC__) || (__GNUC__ >= 5)) */
-        }
-    };
-
-    /// <summary>
-    /// Specialisation of the <see cref="variant::print" /> functor for
-    /// <see cref="trrojan::device" />, which prints the environemnt name.
-    /// </summary>
-    template<> struct print<variant_type::device> {
-        static inline void invoke(trrojan::device& v,
-                std::ostream& stream) {
-            stream << ((v != nullptr) ? v->name() : "null");
-        }
-    };
-
-    /// <summary>
-    /// Specialisation of the <see cref="variant::print" /> functor for
-    /// <see cref="trrojan::environment" />, which prints the environemnt name.
-    /// </summary>
-    template<> struct print<variant_type::environment> {
-        static inline void invoke(trrojan::environment& v,
-                std::ostream& stream) {
-            stream << ((v != nullptr) ? v->name() : "null");
         }
     };
 
@@ -715,8 +701,8 @@ namespace detail {
         /// <returns><paramref name="lhs" />.</returns>
         friend inline std::ostream& operator <<(std::ostream& lhs,
                 const variant& rhs) {
-            lhs << "TODO: array hack";
-            //rhs.conditional_invoke<detail::print>(lhs);
+            //lhs << "TODO: array hack";
+            rhs.conditional_invoke<detail::print>(lhs);
             return lhs;
         }
 

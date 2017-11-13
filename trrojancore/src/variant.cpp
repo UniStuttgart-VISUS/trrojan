@@ -13,6 +13,43 @@
 
 
 /*
+ * trrojan::detail::operator <<
+ */
+std::ostream& trrojan::detail::operator <<(std::ostream& lhs,
+        const std::wstring& rhs) {
+#if (!defined(__GNUC__) || (__GNUC__ >= 5))
+    static std::wstring_convert<std::codecvt_utf8<wchar_t>> cvt;
+    lhs << cvt.to_bytes(rhs);
+#else /* (!defined(__GNUC__) || (__GNUC__ >= 5)) */
+    for (auto c : rhs) {
+        lhs << static_cast<char>(c);
+    }
+#endif /* (!defined(__GNUC__) || (__GNUC__ >= 5)) */
+    return lhs;
+}
+
+
+/*
+ * trrojan::detail::operator <<
+ */
+std::ostream& trrojan::detail::operator <<(std::ostream& lhs,
+        const trrojan::device& rhs) {
+    lhs << ((rhs != nullptr) ? rhs->name() : "null");
+    return lhs;
+}
+
+
+/*
+ * trrojan::detail::operator <<
+ */
+std::ostream& trrojan::detail::operator <<(std::ostream& lhs,
+        const trrojan::environment& rhs) {
+    lhs << ((rhs != nullptr) ? rhs->name() : "null");
+    return lhs;
+}
+
+
+/*
  * trrojan::variant::~variant
  */
 trrojan::variant::~variant(void) {
