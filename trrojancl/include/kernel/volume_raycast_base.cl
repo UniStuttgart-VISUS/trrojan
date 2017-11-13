@@ -55,15 +55,15 @@ int intersectBox(float4 rayOrig,
 
 
 __kernel void volumeRender(
-                           /***PRECISION***/ volData,
-                           __write_only image2d_t outData,
-                           __read_only image1d_t tffData,     // constant transfer function values
-                           const float16 viewMat,
-                           __global const int *shuffledIds,
-                           const float stepSizeFactor,
-                           const uint3 volRes,
-                           const sampler_t sampler,
-                           const float precisionDiv
+                           /***PRECISION***/ volData
+                           , __write_only image2d_t outData
+                           , __read_only image1d_t tffData     // constant transfer function value
+                           , const float16 viewMat
+                           , __global const int *shuffledIds
+                           , const float stepSizeFactor
+                           , const uint3 volRes
+                           , const sampler_t sampler
+                           , const float precisionDiv
                            /***OFFSET_ARGS***/
                         )
 {

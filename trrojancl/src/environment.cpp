@@ -5,6 +5,7 @@
 /// <author>Christoph Müller</author>
 
 #include "trrojan/opencl/environment.h"
+#include "trrojan/log.h"
 
 #include <assert.h>
 
@@ -273,7 +274,7 @@ cl::Platform trrojan::opencl::environment::get_platform(cl_device_type type,
     }
 
     int platform_id = -1;
-    if (vendor != VENDOR_ANY)
+    if (vendor != VENDOR_ANY)   // find specified vendor
     {
         std::string find;
         switch (vendor)
@@ -311,12 +312,12 @@ cl::Platform trrojan::opencl::environment::get_platform(cl_device_type type,
         }
     }
 
-    if (platform_id == -1)
+    if (platform_id == -1)  // if none of the specified vendors were found try to find others
     {
         if (vendor != VENDOR_ANY)
         {
-            std::cout << "No platform of the specified vendor found. Trying other available platforms."
-                      << std::endl;
+            log::instance().write_line(log_level::warning, "No platform of the specified vendor"
+                                       "found. Trying other available platforms.");
         }
         assert(platform_no < static_cast<int>(platforms.size()));
         for (size_t i = platform_no; i < platforms.size(); ++i)
@@ -336,12 +337,9 @@ cl::Platform trrojan::opencl::environment::get_platform(cl_device_type type,
     }
 
     if (platform_id == -1)
-    {
         throw cl::Error(1, "No compatible OpenCL platform found.");
-    }
 
     cl::Platform platform = platforms[platform_id];
-    std::cout << "Using platform vendor: " << platform.getInfo<CL_PLATFORM_VENDOR>() << std::endl;
     return platform;
 }
 

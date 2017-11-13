@@ -1,11 +1,13 @@
 /// <copyright file="device.cpp" company="SFB-TRR 161 Quantitative Methods for Visual Computing">
 /// Copyright � 2016 SFB-TRR 161. Alle Rechte vorbehalten.
 /// </copyright>
+/// <author>Valentin Bruder</author>
 /// <author>Christoph M�ller</author>
 
 #include "trrojan/opencl/device.h"
+#include "trrojan/log.h"
 
-#include <iostream>
+#include <sstream>
 
 /*
  * trrojan::opencl::device::device
@@ -141,7 +143,10 @@ void trrojan::opencl::device::create_id(vendor vendor, cl::Device dev)
         break;
     }
     }
-    std::cout << "INFO: Topology: " << _unique_id << std::endl;
+
+    std::ostringstream os;
+    os << "OpenCL device topology (PCI bus & device): " << _unique_id;
+    log::instance().write_line(log_level::information, os.str().c_str());
 }
 
 /**
