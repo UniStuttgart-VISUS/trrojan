@@ -15,7 +15,7 @@
 /*
  * trrojan::detail::operator <<
  */
-std::ostream& trrojan::detail::operator <<(std::ostream& lhs,
+TRROJANCORE_API std::ostream& trrojan::detail::operator <<(std::ostream& lhs,
         const std::wstring& rhs) {
 #if (!defined(__GNUC__) || (__GNUC__ >= 5))
     static std::wstring_convert<std::codecvt_utf8<wchar_t>> cvt;
@@ -32,7 +32,7 @@ std::ostream& trrojan::detail::operator <<(std::ostream& lhs,
 /*
  * trrojan::detail::operator <<
  */
-std::ostream& trrojan::detail::operator <<(std::ostream& lhs,
+TRROJANCORE_API std::ostream& trrojan::detail::operator <<(std::ostream& lhs,
         const trrojan::device& rhs) {
     lhs << ((rhs != nullptr) ? rhs->name() : "null");
     return lhs;
@@ -42,7 +42,7 @@ std::ostream& trrojan::detail::operator <<(std::ostream& lhs,
 /*
  * trrojan::detail::operator <<
  */
-std::ostream& trrojan::detail::operator <<(std::ostream& lhs,
+TRROJANCORE_API std::ostream& trrojan::detail::operator <<(std::ostream& lhs,
         const trrojan::environment& rhs) {
     lhs << ((rhs != nullptr) ? rhs->name() : "null");
     return lhs;

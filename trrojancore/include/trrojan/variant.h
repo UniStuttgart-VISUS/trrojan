@@ -366,19 +366,21 @@ namespace detail {
     /// Output of an <see cref="std::wstring" /> to an
     /// <see cref="std::ostream" />.
     /// </summary>
-    std::ostream& operator <<(std::ostream& lhs, const std::wstring& rhs);
+    TRROJANCORE_API std::ostream& operator <<(std::ostream& lhs,
+        const std::wstring& rhs);
 
     /// <summary>
     /// Output of a <see cref="trrojan::device" /> to an
     /// <see cref="std::ostream" />.
     /// </summary>
-    std::ostream& operator <<(std::ostream& lhs, const trrojan::device& rhs);
+    TRROJANCORE_API std::ostream& operator <<(std::ostream& lhs,
+        const trrojan::device& rhs);
 
     /// <summary>
     /// Output of a <see cref="trrojan::environment" /> to an
     /// <see cref="std::ostream" />.
     /// </summary>
-    std::ostream& operator <<(std::ostream& lhs,
+    TRROJANCORE_API std::ostream& operator <<(std::ostream& lhs,
         const trrojan::environment& rhs);
 
     /// <summary>
