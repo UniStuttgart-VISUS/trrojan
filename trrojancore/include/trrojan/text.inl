@@ -1,8 +1,33 @@
-#include "text.h"
 /// <copyright file="text.inl" company="SFB-TRR 161 Quantitative Methods for Visual Computing">
 /// Copyright © 2017 SFB-TRR 161. Alle Rechte vorbehalten.
 /// </copyright>
 /// <author>Christoph Müller</author>
+
+
+namespace trrojan {
+namespace detail {
+
+    /// <summary>
+    /// Supports parsing space-separated arrays from strings.
+    /// </summary>
+    template<class C, class T, size_t S>
+    std::basic_stringstream<C>& operator >>(std::basic_stringstream<C>& lhs,
+            std::array<T, S>& rhs) {
+        for (size_t i = 0; i < S; ++i) {
+            while (std::isspace(lhs.get()));
+            lhs.unget();
+            if (!(lhs >> rhs[i])) {
+                std::stringstream msg;
+                msg << "An array element could not be parsed as "
+                    << typeid(T).name() << std::ends;
+                throw std::invalid_argument(msg.str());
+            }
+        }
+        return lhs;
+    }
+
+} /* end namespace detail */
+} /* end namespace trrojan */
 
 
 /*
@@ -53,7 +78,8 @@ template<class I> std::string trrojan::join(const std::string& sep,
 /*
  * trrojan::parse
  */
- template<class R, class T> R trrojan::parse(const T *str) {
+template<class R, class T> R trrojan::parse(const T *str) {
+    using namespace trrojan::detail;
     if (str == nullptr) {
         throw std::invalid_argument("The string to be parsed must not be "
             "nullptr.");
@@ -63,7 +89,7 @@ template<class I> std::string trrojan::join(const std::string& sep,
     R retval;
 
     if (!(input >> retval)) {
-        std::basic_stringstream<T> msg;
+        std::stringstream msg;
         msg << "\"" << str << "\" cannot be parsed as " << typeid(R).name()
             << std::ends;
         throw std::invalid_argument(msg.str());

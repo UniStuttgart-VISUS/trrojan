@@ -31,8 +31,7 @@ namespace d3d11 {
     public:
 
         static const std::string factor_data_set;
-        static const std::string factor_viewport_height;
-        static const std::string factor_viewport_width;
+        static const std::string factor_viewport;
 
         /// <summary>
         /// Creates a vector descriptor for the given MMPLD list header.

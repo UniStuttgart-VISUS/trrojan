@@ -255,7 +255,12 @@ namespace detail {
     typedef variant_type_list_t<variant_type::int8, variant_type::int16,
         variant_type::int32, variant_type::int64, variant_type::uint8,
         variant_type::uint16, variant_type::uint32, variant_type::uint64,
-        variant_type::float32, variant_type::float64>
+        variant_type::float32, variant_type::float64,
+        __TRROJAN_VARIANT_VECS(int8), __TRROJAN_VARIANT_VECS(int16),
+        __TRROJAN_VARIANT_VECS(int32), __TRROJAN_VARIANT_VECS(int64),
+        __TRROJAN_VARIANT_VECS(uint8), __TRROJAN_VARIANT_VECS(uint16),
+        __TRROJAN_VARIANT_VECS(uint32), __TRROJAN_VARIANT_VECS(uint64),
+        __TRROJAN_VARIANT_VECS(float32), __TRROJAN_VARIANT_VECS(float64)>
         auto_parsable_variant_type_list;
 
 #undef __TRROJAN_VARIANT_VECS

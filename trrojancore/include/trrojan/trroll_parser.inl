@@ -1,4 +1,3 @@
-#include "trroll_parser.h"
 /// <copyright file="trroll_parser.inl" company="SFB-TRR 161 Quantitative Methods for Visual Computing">
 /// Copyright © 2017 SFB-TRR 161. Alle Rechte vorbehalten.
 /// </copyright>

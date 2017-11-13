@@ -47,7 +47,7 @@ int main(const int argc, const char **argv) {
         return 0;
 
     } catch (std::exception& ex) {
-        std::cout << ex.what() << std::endl;
+        trrojan::log::instance().write_line(ex);
         return -1;
     }
 

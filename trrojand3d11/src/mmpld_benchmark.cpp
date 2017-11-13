@@ -20,8 +20,7 @@
 const std::string trrojan::d3d11::mmpld_benchmark::factor_##f(#f)
 
 _MMPLD_BENCH_DEFINE_FACTOR(data_set);
-_MMPLD_BENCH_DEFINE_FACTOR(viewport_height);
-_MMPLD_BENCH_DEFINE_FACTOR(viewport_width);
+_MMPLD_BENCH_DEFINE_FACTOR(viewport);
 
 #undef _MMPLD_BENCH_DEFINE_FACTOR
 
@@ -102,13 +101,15 @@ std::vector<D3D11_INPUT_ELEMENT_DESC> trrojan::d3d11::mmpld_benchmark::to_d3d11(
  */
 trrojan::d3d11::mmpld_benchmark::mmpld_benchmark(void)
         : trrojan::benchmark_base("mmpld-raycaster") {
-    // If no viewport height is specified, use 1024 pixels.
-    this->_default_configs.add_factor(factor::from_manifestations(
-        factor_viewport_height, static_cast<unsigned int>(1024)));
+    // Mark data set as required.
+    //this->_default_configs.add_factor(factor::empty(factor_data_set));
 
-    // If no viewport width is specified, use 1024 pixels.
-    this->_default_configs.add_factor(factor::from_manifestations(
-        factor_viewport_width, static_cast<unsigned int>(1024)));
+    // If no viewport is specified, use 1024² pixels.
+    {
+        auto dftViewport = std::array<unsigned int, 2> { 1024, 1024 };
+        this->_default_configs.add_factor(factor::from_manifestations(
+            factor_viewport, dftViewport));
+    }
 }
 
 
