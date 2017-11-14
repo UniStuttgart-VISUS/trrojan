@@ -78,6 +78,13 @@ glm::vec3 trrojan::camera::get_ndc_from_normalized_screen_at_focus_point_depth(
     return vec3(2.f * normalized_screen_coords - 1.f, look_to_clip_coords.z / look_to_clip_coords.w);
 }
 
+glm::mat4 trrojan::camera::get_view_arcball(const glm::quat q, const float distance)
+{
+    glm::mat4 qmat = glm::mat4_cast(q);
+    qmat = glm::translate(qmat, glm::vec3(0, 0, distance));
+    return qmat;
+}
+
 void trrojan::camera::rotate(const glm::quat q)
 {
     this->set_look(_look_to + glm::rotate(q, _look_from - _look_to), _look_to,

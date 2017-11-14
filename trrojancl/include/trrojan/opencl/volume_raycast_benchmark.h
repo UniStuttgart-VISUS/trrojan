@@ -54,8 +54,7 @@ namespace opencl
         static const std::string factor_iterations;
         static const std::string factor_volume_file_name;
         static const std::string factor_tff_file_name;
-        static const std::string factor_viewport_width;
-        static const std::string factor_viewport_height;
+        static const std::string factor_viewport;
         static const std::string factor_step_size_factor;
         // TODO: replace with position + orientation
         static const std::string factor_roll;

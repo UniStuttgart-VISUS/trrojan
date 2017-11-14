@@ -41,6 +41,7 @@ public:
     camera(const camera& other) = default;
 
     void set_look(vec3 from, vec3 to, vec3 up);
+
     /// <summary>
     /// Reset look to default parameters.
     /// </summary>
@@ -99,6 +100,15 @@ public:
 
     vec3 get_ndc_from_normalized_screen_at_focus_point_depth(
             const vec2& normalized_screen_coords) const;
+
+    /// <summary>
+    /// Calculate the view matrix of a arcball camera (center at (0,0,0)) based on
+    /// rotation and distance to the center.
+    /// </summary>
+    /// <param name="q">Quaternion representing the rotation.</param>
+    /// <param name="translation">The transation distance to the center.</param>
+    /// <return>the view matrix.<return>
+    glm::mat4 get_view_arcball(const glm::quat q, const float distance);
 
     void rotate(const glm::quat q);
 

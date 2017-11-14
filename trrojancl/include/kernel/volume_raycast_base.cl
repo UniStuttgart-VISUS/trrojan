@@ -6,12 +6,22 @@ constant sampler_t nearestSmp = CLK_NORMALIZED_COORDS_TRUE | CLK_ADDRESS_CLAMP_T
                                 CLK_FILTER_NEAREST;
 
 
+inline float3 transformPoint3(const float16 m, const float3 x)
+{
+     return (float3)(dot(m.s048, x)+m.sc, dot(m.s159, x)+m.sd, dot(m.s26a, x)+m.se);
+}
 
 inline float4 transformPoint(const float16 m, const float4 v)
 {
+//     return (float4)( dot(m.s048c, v), dot(m.s159d, v), dot(m.s26ae, v), dot(m.s37bf, v) );
      return (float4)(dot(m.s0123, v), dot(m.s4567, v), dot(m.s89ab, v), dot(m.scdef, v));
 }
 
+// Transform and project
+inline float3 transformPointW(const float16 m, const float3 x)
+{
+    return transformPoint3(m, x)/(dot(m.s37b, x)+m.sf);
+}
 
 // Lambert shading
 float4 shading(const float3 n, const float3 l, const float3 v)
@@ -89,10 +99,10 @@ __kernel void volumeRender(
     int maxSize = max(get_global_size(0), get_global_size(1));
 
     float2 imgCoords;
-    imgCoords.x = native_divide(((float)globalId.x + 0.5f), (float)(get_global_size(0))) * 2.0f;
-    imgCoords.y = native_divide(((float)globalId.y + 0.5f), (float)(get_global_size(1))) * 2.0f;
+    imgCoords.x = native_divide(((float)globalId.x + 0.5f), convert_float(maxSize)) * 2.0f;
+    imgCoords.y = native_divide(((float)globalId.y + 0.5f), convert_float(maxSize)) * 2.0f;
     // calculate correct offset based on aspect ratio
-    imgCoords -= get_global_size(0) > get_global_size(1) ? 
+    imgCoords -= get_global_size(0) > get_global_size(1) ?
                         (float2)(1.0f, aspectRatio) : (float2)(aspectRatio, 1.0);
     // flip y-coordinate to point in right direction
     imgCoords.y *= -1.0f;
@@ -108,7 +118,7 @@ __kernel void volumeRender(
     if (!hit)
     {
         // write output color: transparent black
-        float4 color = (float4)(0.0f, 0.0f, 0.0f, 0.0f);
+        float4 color = (float4)(0.0f);
         write_imagef(outData, texCoords, color);
         return;
     }

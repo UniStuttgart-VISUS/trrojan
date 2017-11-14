@@ -35,8 +35,7 @@ _TRROJANSTREAM_DEFINE_FACTOR(device_vendor);
 _TRROJANSTREAM_DEFINE_FACTOR(iterations);
 _TRROJANSTREAM_DEFINE_FACTOR(volume_file_name);
 _TRROJANSTREAM_DEFINE_FACTOR(tff_file_name);
-_TRROJANSTREAM_DEFINE_FACTOR(viewport_width);
-_TRROJANSTREAM_DEFINE_FACTOR(viewport_height);
+_TRROJANSTREAM_DEFINE_FACTOR(viewport);
 _TRROJANSTREAM_DEFINE_FACTOR(step_size_factor);
 // TODO: replace cam factors
 _TRROJANSTREAM_DEFINE_FACTOR(roll);
@@ -123,8 +122,8 @@ trrojan::opencl::volume_raycast_benchmark::volume_raycast_benchmark(void)
 
     // camera setup -> kernel runtime factors
     //
-    add_kernel_run_factor(factor_viewport_width, 1024);
-    add_kernel_run_factor(factor_viewport_height, 1024);
+    auto viewport = std::array<unsigned int, 2> { 1024, 1024 };
+    add_kernel_run_factor(factor_viewport, viewport);
     add_kernel_run_factor(factor_step_size_factor, 0.5);
     add_kernel_run_factor(factor_roll, 0.0*CL_M_PI);
     add_kernel_run_factor(factor_pitch, 0.0*CL_M_PI);
@@ -373,9 +372,8 @@ trrojan::result trrojan::opencl::volume_raycast_benchmark::run(const configurati
     auto env = cfg.find(factor_environment)->value().as<trrojan::environment>();
     environment::pointer env_ptr = std::dynamic_pointer_cast<environment>(env);
     double time = 0;
-    auto imgWidth = cfg.get<int>(factor_viewport_width);
-    auto imgHeight = cfg.get<int>(factor_viewport_height);
-    std::array<int, 3> img_dim = { {imgWidth, imgHeight, 1} };
+    auto imgSize = cfg.find(factor_viewport)->value().as<std::array<unsigned int, 2>>();
+    std::array<int, 3> img_dim = { {imgSize.at(0), imgSize.at(1), 1} };
     cl_int evt_status = CL_QUEUED;
     try // opencl scope
     {
@@ -412,8 +410,8 @@ trrojan::result trrojan::opencl::volume_raycast_benchmark::run(const configurati
             cl::Event read_evt;
             std::array<size_t, 3> origin = {0, 0, 0};
             std::array<size_t, 3> region;
-            region[0] = cfg.find(factor_viewport_width)->value();
-            region[1] = cfg.find(factor_viewport_height)->value();
+            region[0] = imgSize.at(0);
+            region[1] = imgSize.at(1);
             region[2] = 1;
             env_ptr->get_properties().queue.enqueueReadImage(_output_mem,
                                                              CL_TRUE,
@@ -442,7 +440,7 @@ trrojan::result trrojan::opencl::volume_raycast_benchmark::run(const configurati
         // write output as image
         auto dev = cfg.find(factor_device)->value().as<trrojan::device>();
         device::pointer dev_ptr = std::dynamic_pointer_cast<device>(dev);
-        trrojan::save_image(dev_ptr->name() + ".png", _output_data.data(), imgWidth, imgHeight, 4);
+        trrojan::save_image(dev_ptr->name() + ".png", _output_data.data(), imgSize.at(0), imgSize.at(1), 4);
     }
 
     // TODO: move to own method
@@ -479,8 +477,8 @@ void trrojan::opencl::volume_raycast_benchmark::setup_raycaster(const configurat
     // set up buffer objects for the view matrix and shuffled IDs
     try
     {
-        int pixel_cnt = cfg.find(factor_viewport_width)->value().as<int>() *
-                        cfg.find(factor_viewport_height)->value().as<int>();
+        auto imgSize = cfg.find(factor_viewport)->value().as<std::array<unsigned int, 2>>();
+        int pixel_cnt = imgSize.at(0) * imgSize.at(1);
         // shuffeled ray id array
         std::vector<int> shuffled_ids(pixel_cnt);
         std::iota(std::begin(shuffled_ids), std::end(shuffled_ids), 0);
@@ -917,8 +915,14 @@ void trrojan::opencl::volume_raycast_benchmark::update_kernel_args(
 //        glm::quat q = glm::quat(Pc, Pa);
 //        _camera.rotate(q);
 
-        _camera.set_look_from(glm::vec3(0.0f,0.f,2.f));
-        glm::mat4 view = _camera.get_view_mx();
+        _camera.set_look_from(glm::vec3(0.f,0.f,2.f));
+        _camera.set_look_to(glm::vec3(0.f,0.f,0.f));
+//        _camera.rotate(glm::quat(1.f,0,0.2f,0));
+        glm::quat q = glm::rotate(glm::quat(1.f,0,0,0), 0.4f, glm::vec3(0,1,0));
+        glm::mat4 view = _camera.get_view_arcball(q, 3.0f);
+
+//        view = _camera.get_inverse_view_mx() * _camera.get_inverse_projection_mx();
+//        glm::mat4 view = _camera.get_view_mx();
         // GLM uses column major order
         cl_float16 view_mat = {view[0][0], view[1][0], view[2][0], view[3][0],
                                view[0][1], view[1][1], view[2][1], view[3][1],
@@ -964,24 +968,22 @@ void trrojan::opencl::volume_raycast_benchmark::update_kernel_args(
         }
     }
     // viewport or device (generate output image)
-    if (changed.count(factor_viewport_height) || changed.count(factor_viewport_width)
-            || changed.count(factor_device))
+    if (changed.count(factor_viewport) || changed.count(factor_device))
     {
         cl::ImageFormat format;
         format.image_channel_order = CL_RGBA;
         format.image_channel_data_type = CL_FLOAT;
         try
         {
+            auto imgSize = cfg.find(factor_viewport)->value().as<std::array<unsigned int, 2>>();
             _output_mem = cl::Image2D(env_ptr->get_properties().context,
                                       CL_MEM_WRITE_ONLY,
                                       format,
-                                      cfg.find(factor_viewport_width)->value(),
-                                      cfg.find(factor_viewport_height)->value());
+                                      imgSize.at(0),
+                                      imgSize.at(1));
             _kernel.setArg(OUTPUT, _output_mem);
 
-            _output_data.resize(cfg.find(factor_viewport_width)->value().as<int>()
-                                * cfg.find(factor_viewport_height)->value().as<int>() * 4,
-                                0);
+            _output_data.resize(imgSize.at(0) * imgSize.at(1) * 4, 0);
         }
         catch (cl::Error err)
         {
