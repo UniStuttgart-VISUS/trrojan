@@ -10,6 +10,7 @@
 
 #include "trrojan/export.h"
 
+#define GLM_SWIZZLE
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/quaternion.hpp"
@@ -32,7 +33,7 @@ public:
     /// with X = (1, 0, 0), Y = (0, 1, 0), Z = (0, 0, -1)
     /// </summary>
     /// <param name="_look_from">Camera position (eye).</param>
-    /// <param name="look_to"> Camera focus point (center).</param>
+    /// <param name="_look_to"> Camera focus point (center).</param>
     /// <param name="_look_up">Camera up direction.</param>
     camera(vec3 look_from = vec3(0.0f, 0.0f, -2.0f), vec3 look_to = vec3(0.0f),
            vec3 look_up = vec3(0.0f, 1.0f, 0.0f), float near_plane = 0.01f,
@@ -110,7 +111,21 @@ public:
     /// <return>the view matrix.<return>
     glm::mat4 get_view_arcball(const glm::quat q, const float distance);
 
-    void rotate(const glm::quat q);
+    glm::vec3 get_eye_ray(float x, float y);
+
+    /// <summary>
+    /// Rotate the camera around a fixed look_to position.
+    /// Note that the resulting vector is not normalized.
+    /// </summary>
+    /// <param name="q">The quaternion used for rotation</param>
+    void rotate_fixed_to(const glm::quat q);
+
+    /// <summary>
+    /// Rotate the camera direction, with a fixed camera look_from position.
+    /// Note that the resulting vector is not normalized.
+    /// </summary>
+    /// <param name="q">The quaternion used for rotation</param>
+    void rotate_fixed_from(const glm::quat q);
 
 protected:
     virtual mat4 calc_projection_mx() const = 0;

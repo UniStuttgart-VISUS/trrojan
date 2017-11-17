@@ -8,7 +8,8 @@ constant sampler_t nearestSmp = CLK_NORMALIZED_COORDS_TRUE | CLK_ADDRESS_CLAMP_T
 
 inline float3 transformPoint3(const float16 m, const float3 x)
 {
-     return (float3)(dot(m.s048, x)+m.sc, dot(m.s159, x)+m.sd, dot(m.s26a, x)+m.se);
+//    return (float3)(dot(m.s012, x)+m.s3, dot(m.s456, x)+m.s7, dot(m.s89a, x)+m.sb);
+    return (float3)(dot(m.s048, x)+m.sc, dot(m.s159, x)+m.sd, dot(m.s26a, x)+m.se);
 }
 
 inline float4 transformPoint(const float16 m, const float4 v)
@@ -98,23 +99,23 @@ __kernel void volumeRender(
     aspectRatio = min(aspectRatio, native_divide((float)get_global_size(0), (float)(get_global_size(1))));
     int maxSize = max(get_global_size(0), get_global_size(1));
 
-    float2 imgCoords;
-    imgCoords.x = native_divide(((float)globalId.x + 0.5f), convert_float(maxSize)) * 2.0f;
-    imgCoords.y = native_divide(((float)globalId.y + 0.5f), convert_float(maxSize)) * 2.0f;
+    float2 pixelScreenSpace;    // [-1,1]
+    pixelScreenSpace.x = native_divide(((float)globalId.x + 0.5f), convert_float(maxSize)) * 2.0f;
+    pixelScreenSpace.y = native_divide(((float)globalId.y + 0.5f), convert_float(maxSize)) * 2.0f;
     // calculate correct offset based on aspect ratio
-    imgCoords -= get_global_size(0) > get_global_size(1) ?
+    pixelScreenSpace -= get_global_size(0) > get_global_size(1) ?
                         (float2)(1.0f, aspectRatio) : (float2)(aspectRatio, 1.0);
     // flip y-coordinate to point in right direction
-    imgCoords.y *= -1.0f;
+    pixelScreenSpace.y *= -1.0f;
 
     float3 rayDir = (float3)(0.0f);
     float tnear = 0.0f;
-    float tfar = 1.0f;
+    float tfar = 1.f;// FLT_MAX;
     int hit = 0;
     
     /***CAMERA***/
     /***ORTHO_NEAR***/
-    
+
     if (!hit)
     {
         // write output color: transparent black
@@ -135,7 +136,7 @@ __kernel void volumeRender(
     float4 tfColor = (float4)(0.0f);
     float opacity = 0.0f;
     uint i = 0;
-    float t = 0.0f;
+    float t = tnear;
 
     // raycasting loop
     while (true)

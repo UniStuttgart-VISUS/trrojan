@@ -56,14 +56,13 @@ namespace opencl
         static const std::string factor_tff_file_name;
         static const std::string factor_viewport;
         static const std::string factor_step_size_factor;
-        // TODO: replace with position + orientation
-        static const std::string factor_roll;
-        static const std::string factor_pitch;
-        static const std::string factor_yaw;
-        static const std::string factor_zoom;
 
         static const std::string factor_cam_position;
         static const std::string factor_cam_rotation;
+//        static const std::string factor_roll;
+//        static const std::string factor_pitch;
+//        static const std::string factor_yaw;
+//        static const std::string factor_zoom;
 
         static const std::string factor_sample_precision;
         static const std::string factor_use_lerp;

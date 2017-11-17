@@ -19,8 +19,9 @@
 #include "trrojan/timer.h"
 #include "trrojan/log.h"
 
-#include <glm/gtc/type_ptr.hpp>
+#include "glm/gtc/type_ptr.hpp"
 #define GLM_ENABLE_EXPERIMENTAL
+#include "glm/gtx/rotate_vector.hpp"
 #include "glm/gtx/quaternion.hpp"
 
 #define _TRROJANSTREAM_DEFINE_FACTOR(f)                                        \
@@ -37,11 +38,11 @@ _TRROJANSTREAM_DEFINE_FACTOR(volume_file_name);
 _TRROJANSTREAM_DEFINE_FACTOR(tff_file_name);
 _TRROJANSTREAM_DEFINE_FACTOR(viewport);
 _TRROJANSTREAM_DEFINE_FACTOR(step_size_factor);
-// TODO: replace cam factors
-_TRROJANSTREAM_DEFINE_FACTOR(roll);
-_TRROJANSTREAM_DEFINE_FACTOR(pitch);
-_TRROJANSTREAM_DEFINE_FACTOR(yaw);
-_TRROJANSTREAM_DEFINE_FACTOR(zoom);
+
+//_TRROJANSTREAM_DEFINE_FACTOR(roll);
+//_TRROJANSTREAM_DEFINE_FACTOR(pitch);
+//_TRROJANSTREAM_DEFINE_FACTOR(yaw);
+//_TRROJANSTREAM_DEFINE_FACTOR(zoom);
 _TRROJANSTREAM_DEFINE_FACTOR(cam_position);
 _TRROJANSTREAM_DEFINE_FACTOR(cam_rotation);
 
@@ -125,14 +126,15 @@ trrojan::opencl::volume_raycast_benchmark::volume_raycast_benchmark(void)
     auto viewport = std::array<unsigned int, 2> { 1024, 1024 };
     add_kernel_run_factor(factor_viewport, viewport);
     add_kernel_run_factor(factor_step_size_factor, 0.5);
-    add_kernel_run_factor(factor_roll, 0.0*CL_M_PI);
-    add_kernel_run_factor(factor_pitch, 0.0*CL_M_PI);
-    add_kernel_run_factor(factor_yaw, 0.25*CL_M_PI);
-    add_kernel_run_factor(factor_zoom, -2.0);
+//    add_kernel_run_factor(factor_roll, 0.0*CL_M_PI);
+//    add_kernel_run_factor(factor_pitch, 0.0*CL_M_PI);
+//    add_kernel_run_factor(factor_yaw, 0.25*CL_M_PI);
+//    add_kernel_run_factor(factor_zoom, -2.0);
 
-    //TODO: add cam pos + orientation factors
-//    add_kernel_run_factor(factor_cam_position, vec3(0,0,2));
-//    add_kernel_run_factor(factor_cam_rotation, glm::quat(1,0,0,0));
+    auto pos = std::array<float, 4> {0, 0, 0, -2.f};
+    add_kernel_run_factor(factor_cam_position, pos);
+    auto rotation = std::array<float, 4> {1, 0, 0, 0};
+    add_kernel_run_factor(factor_cam_rotation, rotation);
 
     // rendering modes -> kernel build factors
     //
@@ -880,14 +882,14 @@ void trrojan::opencl::volume_raycast_benchmark::update_kernel_args(
     auto env = cfg.find(factor_environment)->value().as<trrojan::environment>();
     environment::pointer env_ptr = std::dynamic_pointer_cast<environment>(env);
 
-    // TODO: test new camera handling with factors 'position (vec3)' and 'rotation (quat)'
-    if (changed.count(factor_cam_position) + changed.count(factor_cam_rotation))
+    if (changed.count(factor_cam_position) + changed.count(factor_cam_rotation)
+            + changed.count(factor_device))
     {
-//        trrojan::trackball t(std::make_shared<trrojan::perspective_camera>(_camera));
-//        t.rotate(cfg.find(factor_cam_rotation)->value());
-        _camera.set_look_from(cfg.find(factor_cam_position)->value());
-        glm::mat4 view = _camera.get_view_mx();
-        // TODO: column major?
+        auto pos = cfg.find(factor_cam_position)->value().as<std::array<float, 3>>();
+        _camera.set_look_from(glm::vec3(pos.at(0), pos.at(1), pos.at(2)));
+        auto rot = cfg.find(factor_cam_rotation)->value().as<std::array<float, 4>>();
+        _camera.rotate_fixed_to(glm::quat(rot.at(0), rot.at(1), rot.at(2), rot.at(3)));
+        glm::mat4 view = _camera.get_inverse_view_mx();
         cl_float16 view_mat = {view[0][0], view[1][0], view[2][0], view[3][0],
                                view[0][1], view[1][1], view[2][1], view[3][1],
                                view[0][2], view[1][2], view[2][2], view[3][2],
@@ -902,49 +904,37 @@ void trrojan::opencl::volume_raycast_benchmark::update_kernel_args(
         }
     }
     // camera parameter changed
-    if (changed.count(factor_roll) + changed.count(factor_pitch) + changed.count(factor_yaw)
-            + changed.count(factor_zoom) + changed.count(factor_device))
-    {
-//        const auto to = _camera.get_look_to();
-//        const auto from = _camera.get_look_from();
-//        const auto up = _camera.get_look_up();
+//    if (changed.count(factor_roll) + changed.count(factor_pitch) + changed.count(factor_yaw)
+//            + changed.count(factor_zoom) + changed.count(factor_device))
+//    {
+//        _camera.set_look_from(glm::vec3(0.0f,0.0f,-2.0f));
+//        _camera.set_look_to(glm::vec3(0.0f,0.0f,0.0f));
+//        _camera.rotate_fixed_to(glm::quat(1.f,0,0.4f,0));
+////        _camera.rotate_fixed_from(glm::quat(0.7071f,0,0.7071f,0));
+//        glm::mat4 view = _camera.get_inverse_view_mx();
 
-//        const auto rot = glm::half_pi<float>() * glm::vec2(0.2f, 0.f);
-//        const auto Pa = glm::normalize(from - to);
-//        const auto Pc = glm::rotate(glm::rotate(Pa, rot.y, glm::cross(Pa, up)), rot.x, &up);
-//        glm::quat q = glm::quat(Pc, Pa);
-//        _camera.rotate(q);
+//        // GLM uses column major order
+//        cl_float16 view_mat = {view[0][0], view[1][0], view[2][0], view[3][0],
+//                               view[0][1], view[1][1], view[2][1], view[3][1],
+//                               view[0][2], view[1][2], view[2][2], view[3][2],
+//                               view[0][3], view[1][3], view[2][3], view[3][3]};
 
-        _camera.set_look_from(glm::vec3(0.f,0.f,2.f));
-        _camera.set_look_to(glm::vec3(0.f,0.f,0.f));
-//        _camera.rotate(glm::quat(1.f,0,0.2f,0));
-        glm::quat q = glm::rotate(glm::quat(1.f,0,0,0), 0.4f, glm::vec3(0,1,0));
-        glm::mat4 view = _camera.get_view_arcball(q, 3.0f);
-
-//        view = _camera.get_inverse_view_mx() * _camera.get_inverse_projection_mx();
-//        glm::mat4 view = _camera.get_view_mx();
-        // GLM uses column major order
-        cl_float16 view_mat = {view[0][0], view[1][0], view[2][0], view[3][0],
-                               view[0][1], view[1][1], view[2][1], view[3][1],
-                               view[0][2], view[1][2], view[2][2], view[3][2],
-                               view[0][3], view[1][3], view[2][3], view[3][3]};
-
-//        cl_float16 view_mat = create_view_mat(cfg.find(factor_roll)->value(),
-//                                              cfg.find(factor_pitch)->value(),
-//                                              cfg.find(factor_yaw)->value(),
-//                                              cfg.find(factor_zoom)->value());
-        // DEBUG only
-        //        for (auto &a : view_mat)
-        //            std::cout << a << " " << std::endl;
-        try
-        {
-            _kernel.setArg(VIEW, view_mat);
-        }
-        catch (cl::Error err)
-        {
-            log_cl_error(err);
-        }
-    }
+////        cl_float16 view_mat = create_view_mat(cfg.find(factor_roll)->value(),
+////                                              cfg.find(factor_pitch)->value(),
+////                                              cfg.find(factor_yaw)->value(),
+////                                              cfg.find(factor_zoom)->value());
+//        // DEBUG only
+//        //        for (auto &a : view_mat)
+//        //            std::cout << a << " " << std::endl;
+//        try
+//        {
+//            _kernel.setArg(VIEW, view_mat);
+//        }
+//        catch (cl::Error err)
+//        {
+//            log_cl_error(err);
+//        }
+//    }
     // interpolation
     if (changed.count(factor_use_lerp) || changed.count(factor_device))
     {

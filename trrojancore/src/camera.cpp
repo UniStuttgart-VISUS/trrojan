@@ -85,9 +85,25 @@ glm::mat4 trrojan::camera::get_view_arcball(const glm::quat q, const float dista
     return qmat;
 }
 
-void trrojan::camera::rotate(const glm::quat q)
+
+glm::vec3 trrojan::camera::get_eye_ray(float x, float y)
+{
+    glm::vec4 tmp(x, y, 0.01f, 1.f);
+    tmp = this->get_inverse_projection_mx() * tmp;
+    tmp /= tmp.w;
+    glm::vec3 ray = glm::vec3(tmp) - this->_look_from;
+    return ray;
+}
+
+void trrojan::camera::rotate_fixed_to(const glm::quat q)
 {
     this->set_look(_look_to + glm::rotate(q, _look_from - _look_to), _look_to,
+                   glm::rotate(q, _look_up));
+}
+
+void trrojan::camera::rotate_fixed_from(const glm::quat q)
+{
+    this->set_look(_look_from, glm::rotate(q, this->_look_to - this->_look_from),
                    glm::rotate(q, _look_up));
 }
 
