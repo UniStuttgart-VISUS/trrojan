@@ -348,6 +348,10 @@ size_t trrojan::opencl::volume_raycast_benchmark::run(const configuration_set& c
                          std::string("-DIMAGE_SUPPORT"));
         }
 
+        // reset volume kernel argument if volume data changed
+        if (changed.count(factor_volume_file_name))
+            _kernel.setArg(VOLUME, _volume_mem);
+
         // update the OpenCL kernel arguments according to the changed factors,
         // if at least one relevant factor changed
         if (std::any_of(_kernel_run_factors.begin(), _kernel_run_factors.end(),
@@ -373,37 +377,41 @@ trrojan::result trrojan::opencl::volume_raycast_benchmark::run(const configurati
 {
     auto env = cfg.find(factor_environment)->value().as<trrojan::environment>();
     environment::pointer env_ptr = std::dynamic_pointer_cast<environment>(env);
-    double time = 0;
+    std::vector<double> times(cfg.find(factor_iterations)->value(), 0.0);
     auto imgSize = cfg.find(factor_viewport)->value().as<std::array<unsigned int, 2>>();
-    std::array<int, 3> img_dim = { {imgSize.at(0), imgSize.at(1), 1} };
+    std::array<unsigned int, 3> img_dim = { {imgSize.at(0), imgSize.at(1), 1u} };
     cl_int evt_status = CL_QUEUED;
-    try // opencl scope
+    for (int i = 0; i < cfg.find(factor_iterations)->value().as<int>(); ++i)
     {
-        cl::NDRange global_threads(img_dim.at(0), img_dim.at(1));
-        cl::Event ndr_evt;
-        env_ptr->get_properties().queue.enqueueNDRangeKernel(_kernel,
-                                                             cl::NullRange,
-                                                             global_threads,
-                                                             cl::NullRange,
-                                                             NULL,
-                                                             &ndr_evt);
-        env_ptr->get_properties().queue.flush();    // global sync
-        while(evt_status != CL_COMPLETE)
+        cl_int evt_status = CL_QUEUED;
+        try // opencl scope
         {
-            ndr_evt.getInfo<cl_int>(CL_EVENT_COMMAND_EXECUTION_STATUS, &evt_status);
+            cl::NDRange global_threads(img_dim.at(0), img_dim.at(1));
+            cl::Event ndr_evt;
+            env_ptr->get_properties().queue.enqueueNDRangeKernel(_kernel,
+                                                                 cl::NullRange,
+                                                                 global_threads,
+                                                                 cl::NullRange,
+                                                                 NULL,
+                                                                 &ndr_evt);
+            env_ptr->get_properties().queue.flush();    // global sync
+            while(evt_status != CL_COMPLETE)
+            {
+                ndr_evt.getInfo<cl_int>(CL_EVENT_COMMAND_EXECUTION_STATUS, &evt_status);
+            }
+            cl_ulong start = 0;
+            cl_ulong end = 0;
+            ndr_evt.getProfilingInfo(CL_PROFILING_COMMAND_START, &start);
+            ndr_evt.getProfilingInfo(CL_PROFILING_COMMAND_END, &end);
+            times.at(i) = static_cast<double>(end - start)*1e-9;
+            std::ostringstream os;
+            os << "Kernel time: " << times.at(i) << std::endl;
+            log::instance().write(log_level::information, os.str().c_str());
         }
-        cl_ulong start = 0;
-        cl_ulong end = 0;
-        ndr_evt.getProfilingInfo(CL_PROFILING_COMMAND_START, &start);
-        ndr_evt.getProfilingInfo(CL_PROFILING_COMMAND_END, &end);
-        time = static_cast<double>(end - start)*1e-9;
-        std::ostringstream os;
-        os << "Kernel time: " << time << std::endl;
-        log::instance().write(log_level::information, os.str().c_str());
-    }
-    catch (cl::Error err)
-    {
-        log_cl_error(err);
+        catch (cl::Error err)
+        {
+            log_cl_error(err);
+        }
     }
     if (cfg.find(factor_img_output)->value().as<bool>())    // output resulting image
     {
@@ -442,7 +450,10 @@ trrojan::result trrojan::opencl::volume_raycast_benchmark::run(const configurati
         // write output as image
         auto dev = cfg.find(factor_device)->value().as<trrojan::device>();
         device::pointer dev_ptr = std::dynamic_pointer_cast<device>(dev);
-        trrojan::save_image(dev_ptr->name() + ".png", _output_data.data(), imgSize.at(0), imgSize.at(1), 4);
+        auto file = cfg.find(factor_volume_file_name)->value().as<std::string>();
+        std::size_t found = file.find_last_of("/\\");
+        trrojan::save_image(dev_ptr->name() + "_" + file.substr(found + 1) + ".png",
+                            _output_data.data(), imgSize.at(0), imgSize.at(1), 4);
     }
 
     // TODO: move to own method
@@ -456,7 +467,11 @@ trrojan::result trrojan::opencl::volume_raycast_benchmark::run(const configurati
     std::vector<std::string> result_names;
     result_names.push_back("execution_time");
     auto retval = std::make_shared<basic_result>(result_cfg, std::move(result_names));
-    retval->add({ time });
+
+    // calc median of execution times of all runs
+    std::sort(times.begin(), times.end());
+    double median = times.at(times.size() / 2);
+    retval->add({ median });
 
     return retval;
 }
@@ -526,8 +541,8 @@ void trrojan::opencl::volume_raycast_benchmark::setup_volume_data(
     auto env = cfg.find(factor_environment)->value().as<trrojan::environment>();
 
     // create OpenCL volume data memory object (either texture or linear buffer)
-    if (changed.count(factor_sample_precision) || changed.count(factor_volume_scaling)
-            || changed.count(factor_environment))
+    if (changed.count(factor_volume_file_name) || changed.count(factor_sample_precision) ||
+            changed.count(factor_volume_scaling) || changed.count(factor_environment))
     {
         auto data_precision = parse_scalar_type(*_passive_cfg.find(factor_data_precision));
         auto sample_precision = parse_scalar_type(*cfg.find(factor_sample_precision));
@@ -565,7 +580,6 @@ const std::vector<char> & trrojan::opencl::volume_raycast_benchmark::load_volume
     catch (std::runtime_error e)
     {
         log::instance().write(log_level::error, e);
-//        throw e;
     }
 
     os = std::ostringstream();
@@ -586,7 +600,9 @@ const std::vector<char> & trrojan::opencl::volume_raycast_benchmark::load_volume
     }
     else
     {
-        throw std::invalid_argument("Unsupported volume data format defined in dat file.");
+        log::instance().write_line(log_level::error,
+                                   std::invalid_argument(
+                                       "Unsupported volume data format defined in dat file."));
     }
 
     _passive_cfg.add(named_variant(factor_volume_res_x, _dr.properties().volume_res[0]));
@@ -609,8 +625,9 @@ void trrojan::opencl::volume_raycast_benchmark::load_transfer_function(
 
     if (file_name == "fallback")
     {
-        log::instance().write_line(log_level::warning, "No transfer function file defined, falling back"
-                                                  " to default: linear function in range [0;1].");
+        log::instance().write_line(log_level::warning,
+                                   "No transfer function file defined, falling back"
+                                   " to default: linear function in range [0;1].");
         for (size_t i = 0; i < num_values; ++i)
         {
             for (int j = 0; j < 1; ++j)
@@ -624,7 +641,9 @@ void trrojan::opencl::volume_raycast_benchmark::load_transfer_function(
     }
     else    // try to read file
     {
-        std::cout << "Loading transfer funtion data defined in " << file_name << std::endl;
+        std::ostringstream os;
+        os << "Loading transfer funtion data defined in " << file_name << std::endl;
+        log::instance().write(log_level::information, os.str().c_str());
 
         std::ifstream tff_file(file_name, std::ios::in);
         unsigned char value;
@@ -640,7 +659,9 @@ void trrojan::opencl::volume_raycast_benchmark::load_transfer_function(
         }
         else
         {
-            throw std::runtime_error("Could not open transfer function file " + file_name);
+            log::instance().write_line(log_level::error,
+                                       std::runtime_error(
+                                           "Could not open transfer function file " + file_name));
         }
     }
 

@@ -160,11 +160,11 @@ void trrojan::opencl::dat_raw_reader::read_dat(const std::string dat_file_name)
  */
 void trrojan::opencl::dat_raw_reader::read_raw(const std::string raw_file_name)
 {
-    assert(!raw_file_name.empty());
     if (raw_file_name.empty())
     {
         throw std::invalid_argument("Raw file name must not be empty.");
     }
+    assert(!raw_file_name.empty());
 
     // append .raw file name to .dat file name path
     std::size_t found = _prop.dat_file_name.find_last_of("/\\");
