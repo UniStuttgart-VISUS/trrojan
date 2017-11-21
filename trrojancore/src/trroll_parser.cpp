@@ -75,10 +75,10 @@ trrojan::trroll_parser::parse(const std::string& path) {
             std::vector<variant> manifestations;        // Manifestations.
 
             if (bol == eol) {
-                break;  // Skip empty line.
+                continue;  // Skip empty line.
             }
             if (*bol == CL) {
-                break;  // Skip comment line.
+                continue;  // Skip comment line.
             }
 
             auto c = bol;
