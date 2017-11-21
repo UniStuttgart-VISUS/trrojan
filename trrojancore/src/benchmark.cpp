@@ -127,7 +127,7 @@ size_t trrojan::benchmark_base::run(const configuration_set& configs,
     c.foreach_configuration([&](configuration& c) -> bool {
         try {
             auto e = c.get<trrojan::environment>(environment_base::factor_name);
-            auto d= c.get<trrojan::device>(device_base::factor_name);
+            auto d = c.get<trrojan::device>(device_base::factor_name);
 
             if (this->can_run(e, d)) {
                 this->log_run(c);

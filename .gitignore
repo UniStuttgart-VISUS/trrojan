@@ -186,3 +186,6 @@
 /bin/CMakeFiles/FindOpenMP/ompver_CXX.bin
 *.bmp
 /include/Debug
+/SphereVertexShader.h
+/SpherePixelShader.h
+/SphereGeometryShader.h

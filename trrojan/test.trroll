@@ -5,7 +5,6 @@ opencl::volume_raycast {
     boolean use_tff = false
 }
 
-d3d11::mmpld-raycaster {
-    uint32 viewport_width = 800
-    uint32 viewport_height = 600
+d3d11::sphere-raycaster {
+    uint32vec2 viewport = 800 600
 }

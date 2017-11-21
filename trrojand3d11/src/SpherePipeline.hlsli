@@ -3,10 +3,26 @@
 /// </copyright>
 /// <author>Christoph Müller</author>
 
+#include "hlsltypemapping.hlsli"
+
+#ifdef _MSC_VER
+#pragma once
+#else /* _MSC_VER */
+
+#define INPUT_POSITION_XYZR 1
+#define INPUT_COLOUR 1
 
 struct VsInput {
+#ifdef INPUT_POSITION_XYZ
+    float3 Position : POSITION;
+#elif INPUT_POSITION_XYZR
     float4 Position : POSITION;
+#else  /* INPUT_POSITION_XYZ */
+#error No format was specified for the input position.
+#endif /* INPUT_POSITION_XYZ */
+#ifdef INPUT_COLOUR
     float4 Colour : COLOR;
+#endif /* INPUT_COLOUR */
 };
 
 struct GsInput {
@@ -14,7 +30,6 @@ struct GsInput {
     float4 Colour : COLOR;
     float Radius : FOG;
 };
-
 
 struct PsInput {
     float4 Position : SV_POSITION;
@@ -33,17 +48,12 @@ struct PsOutput {
     float Depth : SV_DEPTH;
 };
 
+#endif /* _MSC_VER */
 
 cbuffer Constants : register(b0) {
-    matrix ProjMatrix;
-    matrix ViewMatrix;
-    matrix ViewInvMatrix;
-    matrix ViewProjMatrix;
-    matrix ViewProjInvMatrix;
+    float4x4 ViewProjMatrix;
+    float4x4 ViewInvMatrix;
+    float4x4 ViewProjInvMatrix;
     float4 Viewport;
-    // TODO: Remove the following
-    float4 CamPos;
-    float4 CamDir;
-    float4 CamUp;
 };
 

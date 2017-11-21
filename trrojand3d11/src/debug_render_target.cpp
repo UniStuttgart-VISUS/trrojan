@@ -23,9 +23,12 @@ trrojan::d3d11::debug_render_target::~debug_render_target(void) {
  */
 void trrojan::d3d11::debug_render_target::resize(const unsigned int width,
         const unsigned int height) {
+    ATL::CComPtr<ID3D11Texture2D> backBuffer;
+
     if (this->swapChain == nullptr) {
-        assert(this->device == nullptr);
-        assert(this->deviceContext == nullptr);
+        /* Create window and swap chain. */
+        assert(this->device() == nullptr);
+        assert(this->device_context() == nullptr);
         assert(this->hWnd == NULL);
 
         auto hInstance = ::GetModuleHandle(NULL);
@@ -76,20 +79,57 @@ void trrojan::d3d11::debug_render_target::resize(const unsigned int width,
                 "debug render target.");
         }
 
+        ATL::CComPtr<ID3D11Device> device;
         auto hr = ::D3D11CreateDeviceAndSwapChain(nullptr,
             D3D_DRIVER_TYPE_HARDWARE, NULL, 0, nullptr, 0, D3D11_SDK_VERSION,
-            nullptr, &this->swapChain, &this->device, nullptr,
-            &this->deviceContext);
+            nullptr, &this->swapChain, &device, nullptr, nullptr);
         if (FAILED(hr)) {
             log::instance().write(log_level::error, "Failed to create Direct3D "
                 "11 with swap chain (error 0x%x).\n", hr);
             throw std::runtime_error("Failed to create device and swap chain.");
         }
+        this->set_device(device.p);
 
     } else {
-        render_target_base::resize(width, height);
+        /* Resize existing swap chain. */
+        assert(this->hWnd != NULL);
+        DXGI_SWAP_CHAIN_DESC desc;
+
+        // Release existing views.
+        this->_rtv = nullptr;
+        this->_dsv = nullptr;
+
+        {
+            auto hr = this->swapChain->GetDesc(&desc);
+            if (FAILED(hr)) {
+                log::instance().write(log_level::error, "Failed to retrieve "
+                    "description of existing swap chain (error 0x%x).\n", hr);
+                throw std::runtime_error("Failed to swap chain description.");
+            }
+        }
+
+        {
+            auto hr = this->swapChain->ResizeBuffers(desc.BufferCount,
+                width, height, desc.BufferDesc.Format, 0);
+            if (FAILED(hr)) {
+                log::instance().write(log_level::error, "Failed to resize "
+                    "swap chain (error 0x%x).\n", hr);
+                throw std::runtime_error("Failed to resize swap chain.");
+            }
+        }
+    } /* end if (this->swapChain == nullptr) */
+    assert(this->swapChain != nullptr);
+
+    {
+        auto hr = this->swapChain->GetBuffer(0, IID_ID3D11Texture2D,
+            reinterpret_cast<void **>(&backBuffer));
+        if (FAILED(hr)) {
+            throw std::runtime_error("Failed to retrieve back buffer from "
+                "swap chain.");
+        }
     }
 
+    this->set_back_buffer(backBuffer.p);
 }
 
 
@@ -106,9 +146,9 @@ int trrojan::d3d11::debug_render_target::run(debugable object) {
                 ::DispatchMessage(&msg);
 
             } else {
-                this->deviceContext->ClearRenderTargetView(this->rtv, { 0 });
-                this->object->draw_debug_view(this->device,
-                    this->deviceContext);
+                this->clear();
+                this->object->draw_debug_view(this->device(),
+                    this->device_context());
                 this->swapChain->Present(0, 0);
             }
         }
