@@ -9,10 +9,11 @@
 #include <memory>
 #include <thread>
 
+#include <atlbase.h>
 #include <Windows.h>
 
 #include "trrojan/d3d11/debugable.h"
-#include "trrojan/d3d11/render_target_base.h"
+#include "trrojan/d3d11/render_target.h"
 
 
 namespace trrojan {
@@ -111,6 +112,11 @@ namespace d3d11 {
         /// The object to be shown.
         /// </summary>
         debugable object;
+
+        /// <summary>
+        /// The swap chain for the window.
+        /// </summary>
+        ATL::CComPtr<IDXGISwapChain> swapChain;
     };
 }
 }

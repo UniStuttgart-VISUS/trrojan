@@ -9,21 +9,14 @@
 
 void ReconstructCamera(out float4 pos, out float4 dir, out float4 up,
         out float4 right, const in matrix viewInvMatrix) {
-    float4 tmp;
-
     // calculate cam position
     pos = viewInvMatrix._41_42_43_44; // (C) by Christoph
 
-                                      // camera coordinate system in object space
-    tmp = viewInvMatrix._41_42_43_44 + viewInvMatrix._31_32_33_34;
-    dir = normalize(tmp);
-
-    tmp = viewInvMatrix._41_42_43_44 + viewInvMatrix._21_22_23_24;
-    up = normalize(tmp);
-
+    dir = float4(normalize(viewInvMatrix._31_32_33_34.xyz), 0.0);
+    up = normalize(viewInvMatrix._21_22_23_24);
     right = float4(normalize(cross(dir.xyz, up.xyz)), 0.0);
 
-    up = float4(normalize(cross(dir.xyz, right.xyz)), 0.0);
+    up = float4(normalize(cross(right.xyz, dir.xyz)), 0.0);
 }
 
 
@@ -32,7 +25,7 @@ void ReconstructCamera(out float4 pos, out float4 dir, out float4 up,
 /// </summary>
 [maxvertexcount(4)]
 void Main(point GsInput input[1], inout TriangleStream<PsInput> triStream) {
-    PsInput v = (PsInput) 0;
+    PsInput v = (PsInput)0;
 
     //// Take a sample directly in the middle of the pixel at 0, 0, which is 0 / Width + 1 / (Width * 2)
     //// Note: We changed NVIDIA's linear sampler to a point sampler, so we can
@@ -41,7 +34,8 @@ void Main(point GsInput input[1], inout TriangleStream<PsInput> triStream) {
     //v.EyeSeparation = stereoParms.x;
     //v.Convergence = stereoParms.y;
 
-    matrix mvp = ViewProjMatrix;
+    //uint eye = input[0].Eye;
+    float4x4 mvp = ViewProjMatrix;
     float rad = input[0].Radius;
 
     //#define MAJOR_DOWELING_RADIUS
@@ -54,6 +48,7 @@ void Main(point GsInput input[1], inout TriangleStream<PsInput> triStream) {
     objPos.w = 1.0;
     v.Colour = input[0].Colour;
     v.SphereParams = float4(input[0].Position.xyz, rad);
+    //v.Eye = eye;
 
     // Reconstruct camera system.
     ReconstructCamera(v.CameraPosition, v.CameraDirection, v.CameraUp,
@@ -61,7 +56,8 @@ void Main(point GsInput input[1], inout TriangleStream<PsInput> triStream) {
 
     // Transform camera to glyph space and undo stereo transform.
     v.CameraPosition.xyz -= objPos.xyz;
-    v.CameraPosition.xyz += v.CameraRight * v.EyeSeparation;
+    //have separate matrices on hololens to replace the following:
+    //v.CameraPosition.xyz += v.CameraRight * v.EyeSeparation;
 
     // SphereParams-Touch-Plane-Approach™
     float2 winHalf = 2.0 / Viewport.zw; // window size
@@ -75,20 +71,21 @@ void Main(point GsInput input[1], inout TriangleStream<PsInput> triStream) {
 #endif // HALO
 
 #if 0
+#define DUEBEL 1.5f
     //bottom left
-    v.Position = mul(objPos - v.CameraUp * 1.5 * rad - v.CameraRight * 1.5 * rad, mvp);
-    triStream.Append(v);
-
-    //top left
-    v.Position = mul(objPos + v.CameraUp * 1.5 * rad - v.CameraRight * 1.5 * rad, mvp);
+    v.Position = mul(objPos - v.CameraUp * DUEBEL * rad - v.CameraRight * DUEBEL * rad, mvp);
     triStream.Append(v);
 
     //bottom right
-    v.Position = mul(objPos - v.CameraUp * 1.5 * rad + v.CameraRight * 1.5 * rad, mvp);
+    v.Position = mul(objPos - v.CameraUp * DUEBEL * rad + v.CameraRight * DUEBEL * rad, mvp);
+    triStream.Append(v);
+
+    //top left
+    v.Position = mul(objPos + v.CameraUp * DUEBEL * rad - v.CameraRight * DUEBEL * rad, mvp);
     triStream.Append(v);
 
     //top right
-    v.Position = mul(objPos + v.CameraUp * 1.5 * rad + v.CameraRight * 1.5 * rad, mvp);
+    v.Position = mul(objPos + v.CameraUp * DUEBEL * rad + v.CameraRight * DUEBEL * rad, mvp);
     triStream.Append(v);
 
     triStream.RestartStrip();

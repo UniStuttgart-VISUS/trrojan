@@ -78,7 +78,14 @@ void trrojan::d3d11::environment::on_initialise(const cmd_line& cmdLine) {
     // the SDK being not installed is wrong. See
     // http://stackoverflow.com/questions/32809169/use-d3d11-debug-layer-with-vs2013-on-windows-10
 #if (defined(DEBUG) || defined(_DEBUG))
-    deviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
+    {
+        auto hr = D3D11CreateDevice(nullptr, D3D_DRIVER_TYPE_NULL, 0,
+            D3D11_CREATE_DEVICE_DEBUG, nullptr, 0, D3D11_SDK_VERSION, nullptr,
+            nullptr, nullptr);
+        if (SUCCEEDED(hr)) {
+            deviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
+        }
+    }
 #endif /* (defined(DEBUG) || defined(_DEBUG)) */
 
     for (UINT a = 0; SUCCEEDED(hr) || (hr != DXGI_ERROR_NOT_FOUND); ++a) {
