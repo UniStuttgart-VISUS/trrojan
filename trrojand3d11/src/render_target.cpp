@@ -32,6 +32,15 @@ void trrojan::d3d11::render_target_base::clear(void) {
 
 
 /*
+ * trrojan::d3d11::render_target_base::enable
+ */
+void trrojan::d3d11::render_target_base::enable(void) {
+    assert(this->_device_context != nullptr);
+    this->_device_context->OMSetRenderTargets(1, &this->_rtv.p, this->_dsv.p);
+}
+
+
+/*
  * trrojan::d3d11::render_target_base::render_target_base
  */
 trrojan::d3d11::render_target_base::render_target_base(
@@ -48,11 +57,29 @@ trrojan::d3d11::render_target_base::render_target_base(
  * trrojan::d3d11::render_target_base::set_back_buffer
  */
 void trrojan::d3d11::render_target_base::set_back_buffer(
-        ID3D11Texture2D *backBuffer) {
+        ID3D11Texture2D *backBuffer, bool createStagingTexture) {
     assert(this->_dsv == nullptr);
     assert(this->_rtv == nullptr);
     assert(backBuffer != nullptr);
     ATL::CComPtr<ID3D11Texture2D> depthBuffer;
+
+    this->backBuffer = nullptr;
+    if (createStagingTexture) {
+        D3D11_TEXTURE2D_DESC texDesc;
+        backBuffer->GetDesc(&texDesc);
+        texDesc.BindFlags = 0;
+        texDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+        texDesc.Usage = D3D11_USAGE_STAGING;
+
+        auto hr = this->_device->CreateTexture2D(&texDesc, nullptr,
+            &depthBuffer);
+        if (FAILED(hr)) {
+            std::stringstream msg;
+            msg << "Failed to allocate staging texture for back buffer "
+                << backBuffer << " with error code " << hr << "." << std::ends;
+            throw std::runtime_error(msg.str());
+        }
+    }
 
     {
         auto hr = this->_device->CreateRenderTargetView(backBuffer, nullptr,

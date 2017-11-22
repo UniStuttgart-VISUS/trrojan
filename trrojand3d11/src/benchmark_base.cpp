@@ -5,8 +5,6 @@
 
 #include "trrojan/d3d11/benchmark_base.h"
 
-#include <cassert>
-
 #include "trrojan/factor.h"
 #include "trrojan/log.h"
 
@@ -90,8 +88,6 @@ trrojan::result trrojan::d3d11::benchmark_base::run(const configuration& c) {
         log::instance().write_line(log_level::verbose, "The D3D device has "
             "changed. Reallocating all graphics resources ...");
         this->benchTarget = std::make_shared<bench_render_target>(device);
-        this->on_device_changed(*device, c);
-
         // If the device has changed, force the viewport to be re-created:
         changed.push_back(factor_viewport);
     }
@@ -124,7 +120,53 @@ trrojan::result trrojan::d3d11::benchmark_base::run(const configuration& c) {
     }
 
     this->benchTarget->clear();
-    return this->on_run(*device, c);
+    this->benchTarget->enable();
+    return this->on_run(*device, c, changed);
+}
+
+
+/*
+ * trrojan::d3d11::benchmark_base::contains
+ */
+bool trrojan::d3d11::benchmark_base::contains(const std::string& needle,
+        const std::vector<std::string>& haystack) {
+    auto it = std::find(haystack.begin(), haystack.end(), needle);
+    return (it != haystack.end());
+}
+
+
+/*
+ * trrojan::d3d11::benchmark_base::create_buffer
+ */
+ATL::CComPtr<ID3D11Buffer> trrojan::d3d11::benchmark_base::create_buffer(
+        d3d11::device& device, const D3D11_USAGE usage,
+        const D3D11_BIND_FLAG binding, const void *data, const UINT cntData,
+        const UINT cpuAccess) {
+    assert(device.d3d_device() != nullptr);
+    D3D11_BUFFER_DESC bufferDesc;
+    D3D11_SUBRESOURCE_DATA id;
+    ATL::CComPtr<ID3D11Buffer> retval;
+
+    ::ZeroMemory(&bufferDesc, sizeof(bufferDesc));
+    bufferDesc.ByteWidth = static_cast<UINT>(cntData);
+    bufferDesc.Usage = usage;
+    bufferDesc.BindFlags = binding;
+    bufferDesc.CPUAccessFlags = cpuAccess;
+
+    if (data != nullptr) {
+        ::ZeroMemory(&id, sizeof(id));
+        id.pSysMem = data;
+    }
+
+    auto hr = device.d3d_device()->CreateBuffer(&bufferDesc,
+        (data != nullptr) ? &id : nullptr, &retval);
+    if (FAILED(hr)) {
+        std::stringstream msg;
+        msg << "Failed to create buffer with error " << hr << std::ends;
+        throw std::runtime_error(msg.str());
+    }
+
+    return retval;
 }
 
 

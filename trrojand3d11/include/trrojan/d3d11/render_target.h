@@ -59,6 +59,12 @@ namespace d3d11 {
         }
 
         /// <summary>
+        /// Sets the render target as active target of the output merger of its
+        /// associated device.
+        /// </summary>
+        void enable(void);
+
+        /// <summary>
         /// Resizes the swap chain of the render target to the given dimension.
         /// </summary>
         /// <param name="width">The new width of the render target in pixels.
@@ -87,12 +93,18 @@ namespace d3d11 {
         /// <see cref="_dsv" /> and <see cref="_rtv" /> must have been deleted
         /// before this method can be called.
         /// </remarks>
-        void set_back_buffer(ID3D11Texture2D *backBuffer);
+        void set_back_buffer(ID3D11Texture2D *backBuffer,
+            bool createStagingTexture = false);
 
         /// <summary>
         /// Sets the D3D device and updates the immediate context.
         /// </summary>
         void set_device(ID3D11Device *device);
+
+        /// <summary>
+        /// A staging texture to be used for downloading the back buffer image.
+        /// </summary>
+        ATL::CComPtr<ID3D11Texture2D> backBuffer;
 
         /// <summary>
         /// The depth/stencil view.

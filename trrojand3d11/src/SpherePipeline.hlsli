@@ -50,7 +50,7 @@ struct PsOutput {
 
 #endif /* _MSC_VER */
 
-cbuffer Constants : register(b0) {
+cbuffer SphereConstants CBUFFER(0) {
     float4x4 ViewProjMatrix;
     float4x4 ViewInvMatrix;
     float4x4 ViewProjInvMatrix;

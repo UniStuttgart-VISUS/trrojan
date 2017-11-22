@@ -5,10 +5,13 @@
 
 #include "trrojan/mmpld_reader.h"
 
+#include <cinttypes>
 #include <climits>
 #include <cstring>
 #include <fstream>
 #include <stdexcept>
+
+#include "trrojan/log.h"
 
 
 /*
@@ -57,81 +60,6 @@ std::uint64_t trrojan::mmpld_reader::calc_stride(const list_header& header) {
 }
 
 
-///*
-// * mmpld_reader::ParseListHeader
-// */
-//std::vector<D3D11_INPUT_ELEMENT_DESC> mmpld_reader::ParseListHeader(
-//        const ListHeader& header) {
-//    D3D11_INPUT_ELEMENT_DESC element;
-//    UINT offset = 0;
-//    std::vector<D3D11_INPUT_ELEMENT_DESC> retval;
-//
-//    the::zero_memory(&element);
-//    element.SemanticName = "POSITION";
-//    element.AlignedByteOffset = offset;
-//    element.InputSlotClass
-//        = D3D11_INPUT_CLASSIFICATION::D3D11_INPUT_PER_VERTEX_DATA;
-//
-//    switch (header.Types.vertex_type) {
-//        case vertex_type::FLOAT_XYZ:
-//            element.Format = DXGI_FORMAT::DXGI_FORMAT_R32G32B32_FLOAT;
-//            offset += 3 * sizeof(float);
-//            retval.push_back(element);
-//            break;
-//
-//        case vertex_type::FLOAT_XYZR:
-//            element.Format = DXGI_FORMAT::DXGI_FORMAT_R32G32B32A32_FLOAT;
-//            offset += 4 * sizeof(float);
-//            retval.push_back(element);
-//            break;
-//
-//        case vertex_type::SHORT_XYZ:
-//            THROW_THE_EXCEPTION(the::argument_exception, _T("SHORT_XYZ is")
-//                _T("unsupported."));
-//            break;
-//    }
-//
-//    the::zero_memory(&element);
-//    element.SemanticName = "COLOR";
-//    element.AlignedByteOffset = offset;
-//    element.InputSlotClass
-//        = D3D11_INPUT_CLASSIFICATION::D3D11_INPUT_PER_VERTEX_DATA;
-//
-//    switch (header.Types.colour_type) {
-//        case colour_type::FLOAT_I:
-//            element.Format = DXGI_FORMAT::DXGI_FORMAT_R32_FLOAT;
-//            offset += 1 * sizeof(float);
-//            retval.push_back(element);
-//            break;
-//
-//        case colour_type::FLOAT_RGB:
-//            element.Format = DXGI_FORMAT::DXGI_FORMAT_R32G32B32_FLOAT;
-//            offset += 3 * sizeof(float);
-//            retval.push_back(element);
-//            break;
-//
-//        case colour_type::FLOAT_RGBA:
-//            element.Format = DXGI_FORMAT::DXGI_FORMAT_R32G32B32A32_FLOAT;
-//            offset += 4 * sizeof(float);
-//            retval.push_back(element);
-//            break;
-//
-//        case colour_type::UINT8_RGB:
-//            THROW_THE_EXCEPTION(the::argument_exception, _T("UINT8_RGB is")
-//                _T("unsupported."));
-//            break;
-//
-//        case colour_type::UINT8_RGBA:
-//            element.Format = DXGI_FORMAT::DXGI_FORMAT_R8G8B8A8_UNORM;
-//            offset += 4 * sizeof(float);
-//            retval.push_back(element);
-//            break;
-//    }
-//
-//    return std::move(retval);
-//}
-
-
 /*
  * trrojan::mmpld_reader::parse_version
  */
@@ -165,6 +93,16 @@ std::ifstream trrojan::mmpld_reader::read_file_header(file_header& outHeader,
             "MMPLD header.");
     }
 
+    log::instance().write_line(log_level::verbose, "Read MMPLD version %hu; "
+        "%u frames; data within (%f, %f, %f) - (%f, %f, %f); clipping box "
+        "(%f, %f, %f) - (%f, %f, %f)", outHeader.version, outHeader.frames,
+        outHeader.bounding_box[0], outHeader.bounding_box[1],
+        outHeader.bounding_box[2], outHeader.bounding_box[3],
+        outHeader.bounding_box[4], outHeader.bounding_box[5],
+        outHeader.clipping_box[0], outHeader.clipping_box[1],
+        outHeader.clipping_box[2], outHeader.clipping_box[3],
+        outHeader.clipping_box[4], outHeader.clipping_box[5]);
+
     // Read the seek table.
     outSeekTable.clear();
     outSeekTable.reserve(outHeader.frames);
@@ -178,20 +116,40 @@ std::ifstream trrojan::mmpld_reader::read_file_header(file_header& outHeader,
 
 
 /*
+ * trrojan::mmpld_reader::read_frame_header
+ */
+void trrojan::mmpld_reader::read_frame_header(frame_header& outHeader,
+        std::ifstream& file, const std::uint16_t version) {
+    int major, minor;
+    mmpld_reader::parse_version(major, minor, version);
+
+    ::memset(&outHeader, 0, sizeof(outHeader));
+
+    if (minor >= 2) {
+        mmpld_reader::read(outHeader.timestamp, file);
+    }
+
+    mmpld_reader::read(outHeader.lists, file);
+
+    log::instance().write_line(log_level::verbose, "Read MMPLD frame header: "
+        "%i lists; timestamp %f", outHeader.lists, outHeader.timestamp);
+}
+
+
+/*
  * trrojan::mmpld_reader::read_list_header
  */
 void trrojan::mmpld_reader::read_list_header(list_header& outHeader,
         std::ifstream& file) {
-    file.read(reinterpret_cast<char *>(&outHeader.vertex_type),
-        sizeof(outHeader.vertex_type));
-    file.read(reinterpret_cast<char *>(&outHeader.colour_type),
-        sizeof(outHeader.colour_type));
+    ::memset(&outHeader, 0, sizeof(outHeader));
+
+    mmpld_reader::read(outHeader.vertex_type, file);
+    mmpld_reader::read(outHeader.colour_type, file);
 
     switch (outHeader.vertex_type) {
         case vertex_type::float_xyz:
         case vertex_type::short_xyz:
-            file.read(reinterpret_cast<char *>(&outHeader.radius),
-                sizeof(outHeader.radius));
+            mmpld_reader::read(outHeader.radius, file);
             break;
 
         default:
@@ -202,7 +160,7 @@ void trrojan::mmpld_reader::read_list_header(list_header& outHeader,
     switch (outHeader.colour_type) {
         case colour_type::none: {
             std::uint8_t rgba[4];
-            file.read(reinterpret_cast<char *>(rgba), sizeof(rgba));
+            mmpld_reader::read(rgba, file);
             for (size_t i = 0; i < 4; ++i) {
                 outHeader.colour[i] = static_cast<float>(rgba[i])
                     / static_cast<float>(UCHAR_MAX);
@@ -213,10 +171,8 @@ void trrojan::mmpld_reader::read_list_header(list_header& outHeader,
 
         case colour_type::float_i:
             ::memset(&outHeader.colour, 0, sizeof(outHeader.colour));
-            file.read(reinterpret_cast<char *>(&outHeader.min_intensity),
-                sizeof(outHeader.min_intensity));
-            file.read(reinterpret_cast<char *>(&outHeader.max_intensity),
-                sizeof(outHeader.max_intensity));
+            mmpld_reader::read(outHeader.min_intensity, file);
+            mmpld_reader::read(outHeader.max_intensity, file);
             break;
 
         default:
@@ -226,6 +182,13 @@ void trrojan::mmpld_reader::read_list_header(list_header& outHeader,
             break;
     }
 
-    file.read(reinterpret_cast<char *>(&outHeader.particles),
-        sizeof(outHeader.particles));
+    mmpld_reader::read(outHeader.particles, file);
+
+    log::instance().write_line(log_level::verbose, "Read MMPLD list header: %"
+        PRIu64 " particles; position type %d; colour type %d; constant colour "
+        "(%f, %f, %f, %f); intensity range %f - %f; constant radius %f",
+        outHeader.particles, static_cast<int>(outHeader.vertex_type),
+        static_cast<int>(outHeader.colour_type), outHeader.colour[0],
+        outHeader.colour[1], outHeader.colour[2], outHeader.colour[3],
+        outHeader.min_intensity, outHeader.max_intensity, outHeader.radius);
 }

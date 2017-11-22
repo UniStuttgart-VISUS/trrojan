@@ -85,6 +85,21 @@ namespace trrojan {
             "is one byte.");
 
         /// <summary>
+        /// The descriptor of a frame, which might comprise multiple lists.
+        /// </summary>
+        struct frame_header {
+            /// <summary>
+            /// The number of lists in the frame.
+            /// </summary>
+            std::int32_t lists;
+
+            /// <summary>
+            /// The (optional) timestamp of the frame.
+            /// </summary>
+            float timestamp;
+        };
+
+        /// <summary>
         /// The descriptor of the content of a particle list.
         /// </summary>
         struct list_header {
@@ -164,6 +179,13 @@ namespace trrojan {
             seek_table& outSeekTable, const char *path);
 
         /// <summary>
+        /// Reads the frame header (of the specified file version) from the
+        /// current position in the file.
+        /// </summary>
+        static void read_frame_header(frame_header& outHeader,
+            std::ifstream& file, const std::uint16_t version);
+
+        /// <summary>
         /// Read a <see cref="list_header" /> from the current position in the
         /// file stream.
         /// </summary>
@@ -173,6 +195,15 @@ namespace trrojan {
         mmpld_reader(void) = delete;
 
         ~mmpld_reader(void) = delete;
+
+    private:
+
+        template<class T> static inline T& read(T& dst, std::ifstream& file) {
+            auto cnt = sizeof(T);
+            file.read(reinterpret_cast<char *>(&dst), cnt);
+            return dst;
+        }
+
     };
 
 }

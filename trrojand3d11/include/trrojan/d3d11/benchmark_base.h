@@ -5,6 +5,9 @@
 
 #pragma once
 
+#include <cassert>
+#include <sstream>
+#include <stdexcept>
 #include <vector>
 
 #include <Windows.h>
@@ -62,27 +65,40 @@ namespace d3d11 {
 
     protected:
 
-        /// <summary>
-        /// Minimal set of per-device resources we expect.
-        /// </summary>
-        struct resources {
-            ATL::CComPtr<ID3D11InputLayout> input_layout;
-            ATL::CComPtr<ID3D11PixelShader> pixel_shader;
-            ATL::CComPtr<ID3D11VertexShader> vertex_shader;
-        };
+        static bool contains(const std::string& needle,
+            const std::vector<std::string>& haystack);
+
+        static ATL::CComPtr<ID3D11Buffer> create_buffer(d3d11::device& device,
+            const D3D11_USAGE usage, const D3D11_BIND_FLAG binding,
+            const void *data, const UINT cntData, const UINT cpuAccess = 0);
+
+        template<size_t N>
+        static ATL::CComPtr<ID3D11DomainShader> create_domain_shader(
+            d3d11::device& device, const BYTE(&byteCode)[N]);
+
+        template<size_t N>
+        static ATL::CComPtr<ID3D11GeometryShader> create_geometry_shader(
+            d3d11::device& device, const BYTE(&byteCode)[N]);
+
+        template<size_t N>
+        static ATL::CComPtr<ID3D11HullShader> create_hull_shader(
+            d3d11::device& device, const BYTE(&byteCode)[N]);
+
+        template<size_t N>
+        static ATL::CComPtr<ID3D11InputLayout> create_input_layout(
+            d3d11::device& device,
+            const std::vector<D3D11_INPUT_ELEMENT_DESC>& elements,
+            const BYTE(&byteCode)[N]);
+
+        template<size_t N>
+        static ATL::CComPtr<ID3D11PixelShader> create_pixel_shader(
+            d3d11::device& device, const BYTE(&byteCode)[N]);
+
+        template<size_t N>
+        static ATL::CComPtr<ID3D11VertexShader> create_vertex_shader(
+            d3d11::device& device, const BYTE(& byteCode)[N]);
 
         benchmark_base(const std::string& name);
-
-        /// <summary>
-        /// This method is called if a change of devices was found between two
-        /// configurations.
-        /// </summary>
-        /// <param name="device">The device to use. It is guaranteed that the
-        /// device is obtained from <paramref name="config" />.</param>
-        /// <param name="config">The full configuration, which can be used to
-        /// allocated the right resources.</param>
-        virtual void on_device_changed(d3d11::device& device,
-            const configuration& config) = 0;
 
         /// <summary>
         /// Performs the actual test on behalf of the <see cref="run" /> method.
@@ -90,9 +106,12 @@ namespace d3d11 {
         /// <param name="device">The device to use. It is guaranteed that the
         /// device is obtained from <paramref name="config" />.</param>
         /// <param name="config">The configuration to run.</param>
+        /// <param name="changed">The names of the factors that have been
+        /// changed since the last test run.</param>
         /// <returns>The test results.</returns>
         virtual trrojan::result on_run(d3d11::device& device,
-            const configuration& config) = 0;
+            const configuration& config,
+            const std::vector<std::string>& changed) = 0;
 
     private:
 
@@ -105,3 +124,5 @@ namespace d3d11 {
 
 } /* end namespace d3d11 */
 } /* end namespace trrojan */
+
+#include "trrojan/d3d11/benchmark_base.inl"
