@@ -189,3 +189,5 @@
 /SphereVertexShader.h
 /SpherePixelShader.h
 /SphereGeometryShader.h
+/DebugVertexShader.h
+/DebugPixelShader.h

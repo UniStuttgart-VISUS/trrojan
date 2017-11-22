@@ -87,7 +87,7 @@ trrojan::result trrojan::d3d11::benchmark_base::run(const configuration& c) {
             != changed.end()) {
         log::instance().write_line(log_level::verbose, "The D3D device has "
             "changed. Reallocating all graphics resources ...");
-        this->benchTarget = std::make_shared<bench_render_target>(device);
+        this->render_target = std::make_shared<bench_render_target>(device);
         // If the device has changed, force the viewport to be re-created:
         changed.push_back(factor_viewport);
     }
@@ -98,7 +98,7 @@ trrojan::result trrojan::d3d11::benchmark_base::run(const configuration& c) {
         auto vp = c.get<viewport_type>(factor_viewport);
         log::instance().write_line(log_level::verbose, "Resizing the "
             "benchmarking render target to %d × %d px ...", vp[0], vp[1]);
-        this->benchTarget->resize(vp[0], vp[1]);
+        this->render_target->resize(vp[0], vp[1]);
     }
 
     // Find out whether we need to start the debug view.
@@ -106,21 +106,17 @@ trrojan::result trrojan::d3d11::benchmark_base::run(const configuration& c) {
         auto dv = c.get<bool>(factor_debug_view);
         log::instance().write_line(log_level::verbose, "Configuring the "
             "debug view to be %s ...", dv ? "on" : "off");
-        if (dv) {
-            if (this->debugTarget == nullptr) {
-                this->debugTarget = std::make_shared<debug_render_target>();
-            }
-
-            // TODO
-            //this->debugTarget->start(this);
-
-        } else if (this->debugTarget != nullptr) {
-            this->debugTarget->stop();
-        }
+        //if (true||dv) {
+        //    if (this->debugView == nullptr) {
+        //        this->debugView = std::make_shared<debug_view>();
+        //    }
+        //} else {
+        //    this->debugView = nullptr;
+        //}
     }
 
-    this->benchTarget->clear();
-    this->benchTarget->enable();
+    this->render_target->clear();
+    this->render_target->enable();
     return this->on_run(*device, c, changed);
 }
 
@@ -132,41 +128,6 @@ bool trrojan::d3d11::benchmark_base::contains(const std::string& needle,
         const std::vector<std::string>& haystack) {
     auto it = std::find(haystack.begin(), haystack.end(), needle);
     return (it != haystack.end());
-}
-
-
-/*
- * trrojan::d3d11::benchmark_base::create_buffer
- */
-ATL::CComPtr<ID3D11Buffer> trrojan::d3d11::benchmark_base::create_buffer(
-        d3d11::device& device, const D3D11_USAGE usage,
-        const D3D11_BIND_FLAG binding, const void *data, const UINT cntData,
-        const UINT cpuAccess) {
-    assert(device.d3d_device() != nullptr);
-    D3D11_BUFFER_DESC bufferDesc;
-    D3D11_SUBRESOURCE_DATA id;
-    ATL::CComPtr<ID3D11Buffer> retval;
-
-    ::ZeroMemory(&bufferDesc, sizeof(bufferDesc));
-    bufferDesc.ByteWidth = static_cast<UINT>(cntData);
-    bufferDesc.Usage = usage;
-    bufferDesc.BindFlags = binding;
-    bufferDesc.CPUAccessFlags = cpuAccess;
-
-    if (data != nullptr) {
-        ::ZeroMemory(&id, sizeof(id));
-        id.pSysMem = data;
-    }
-
-    auto hr = device.d3d_device()->CreateBuffer(&bufferDesc,
-        (data != nullptr) ? &id : nullptr, &retval);
-    if (FAILED(hr)) {
-        std::stringstream msg;
-        msg << "Failed to create buffer with error " << hr << std::ends;
-        throw std::runtime_error(msg.str());
-    }
-
-    return retval;
 }
 
 

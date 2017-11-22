@@ -7,6 +7,7 @@
 
 #include "trrojan/environment.h"
 
+#include "trrojan/d3d11/debug_view.h"
 #include "trrojan/d3d11/device.h"
 #include "trrojan/d3d11/export.h"
 
@@ -52,7 +53,10 @@ namespace d3d11 {
 
     private:
 
+        std::shared_ptr<debug_view> debug_view;
+
         std::vector<device::pointer> devices;
+
     };
 }
 }

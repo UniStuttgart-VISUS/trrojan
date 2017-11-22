@@ -36,13 +36,17 @@ size_t trrojan::d3d11::environment::get_devices(device_list& dst) {
 /*
  * trrojan::d3d11::environment::on_activate
  */
-void trrojan::d3d11::environment::on_activate(void) { }
+void trrojan::d3d11::environment::on_activate(void) {
+    this->debug_view = std::make_shared<d3d11::debug_view>();
+}
 
 
 /*
  * trrojan::d3d11::environment::on_deactivate
  */
-void trrojan::d3d11::environment::on_deactivate(void)  noexcept { }
+void trrojan::d3d11::environment::on_deactivate(void) noexcept {
+    this->debug_view.reset();
+}
 
 
 /*

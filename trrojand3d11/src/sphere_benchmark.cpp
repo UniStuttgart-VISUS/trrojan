@@ -17,6 +17,8 @@
 #include "trrojan/system_factors.h"
 #include "trrojan/timer.h"
 
+#include "trrojan/d3d11/utilities.h"
+
 #include "SphereGeometryShader.h"
 #include "SpherePipeline.hlsli"
 #include "SpherePixelShader.h"
@@ -123,14 +125,14 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
     if (isNewDevice) {
         log::instance().write_line(log_level::verbose, "Preparing GPU "
             "resources for device \"%s\" ...", device.name().c_str());
-        this->geometry_shader = create_geometry_shader(device,
+        this->geometry_shader = create_geometry_shader(device.d3d_device(),
             ::SphereGeometryShaderBytes);
-        this->pixel_shader = create_pixel_shader(device,
+        this->pixel_shader = create_pixel_shader(device.d3d_device(),
             ::SpherePixelShaderBytes);
-        this->vertex_shader = create_vertex_shader(device,
+        this->vertex_shader = create_vertex_shader(device.d3d_device(),
             ::SphereVertexShaderBytes);
-        this->constant_buffer = this->create_buffer(device, D3D11_USAGE_DEFAULT,
-            D3D11_BIND_CONSTANT_BUFFER, nullptr,
+        this->constant_buffer = create_buffer(device.d3d_device(),
+            D3D11_USAGE_DEFAULT, D3D11_BIND_CONSTANT_BUFFER, nullptr,
             static_cast<UINT>(sizeof(SphereConstants)));
     }
 
@@ -147,8 +149,8 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
         log::instance().write_line(log_level::verbose, "Loading MMPLD frame "
             "%u ...", frame);
         this->vertex_buffer = this->read_mmpld_frame(dev, frame);
-        this->input_layout = create_input_layout(device, this->mmpld_layout,
-            ::SphereVertexShaderBytes);
+        this->input_layout = create_input_layout(device.d3d_device(),
+            this->mmpld_layout, ::SphereVertexShaderBytes);
     }
 
     {

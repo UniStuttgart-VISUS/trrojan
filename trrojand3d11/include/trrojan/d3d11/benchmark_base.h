@@ -15,7 +15,6 @@
 
 #include "trrojan/benchmark.h"
 
-#include "trrojan/d3d11/debug_render_target.h"
 #include "trrojan/d3d11/debugable.h"
 #include "trrojan/d3d11/device.h"
 #include "trrojan/d3d11/hash.h"
@@ -68,36 +67,6 @@ namespace d3d11 {
         static bool contains(const std::string& needle,
             const std::vector<std::string>& haystack);
 
-        static ATL::CComPtr<ID3D11Buffer> create_buffer(d3d11::device& device,
-            const D3D11_USAGE usage, const D3D11_BIND_FLAG binding,
-            const void *data, const UINT cntData, const UINT cpuAccess = 0);
-
-        template<size_t N>
-        static ATL::CComPtr<ID3D11DomainShader> create_domain_shader(
-            d3d11::device& device, const BYTE(&byteCode)[N]);
-
-        template<size_t N>
-        static ATL::CComPtr<ID3D11GeometryShader> create_geometry_shader(
-            d3d11::device& device, const BYTE(&byteCode)[N]);
-
-        template<size_t N>
-        static ATL::CComPtr<ID3D11HullShader> create_hull_shader(
-            d3d11::device& device, const BYTE(&byteCode)[N]);
-
-        template<size_t N>
-        static ATL::CComPtr<ID3D11InputLayout> create_input_layout(
-            d3d11::device& device,
-            const std::vector<D3D11_INPUT_ELEMENT_DESC>& elements,
-            const BYTE(&byteCode)[N]);
-
-        template<size_t N>
-        static ATL::CComPtr<ID3D11PixelShader> create_pixel_shader(
-            d3d11::device& device, const BYTE(&byteCode)[N]);
-
-        template<size_t N>
-        static ATL::CComPtr<ID3D11VertexShader> create_vertex_shader(
-            d3d11::device& device, const BYTE(& byteCode)[N]);
-
         benchmark_base(const std::string& name);
 
         /// <summary>
@@ -117,12 +86,8 @@ namespace d3d11 {
 
         typedef trrojan::benchmark_base base;
 
-        render_target benchTarget;
-
-        std::shared_ptr<debug_render_target> debugTarget;
+        render_target render_target;
     };
 
 } /* end namespace d3d11 */
 } /* end namespace trrojan */
-
-#include "trrojan/d3d11/benchmark_base.inl"
