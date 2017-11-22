@@ -85,6 +85,22 @@ void trrojan::d3d11::debug_view::resize(const unsigned int width,
 
 
 /*
+ * trrojan::d3d11::debug_view::show
+ */
+void trrojan::d3d11::debug_view::show(debugable& content) {
+    auto hRes = content.get_debug_staging_texture();
+    if (hRes != nullptr) {
+        this->content = nullptr;
+        
+        auto hr = this->device()->OpenSharedResource(hRes, IID_ID3D11Texture2D, reinterpret_cast<void **>(&this->content));
+        if (SUCCEEDED(hr)) {
+            ::ShowWindow(this->hWnd, SW_SHOW);
+        }
+    }
+}
+
+
+/*
  * trrojan::d3d11::debug_view::WINDOW_CLASS
  */
 const TCHAR *trrojan::d3d11::debug_view::WINDOW_CLASS

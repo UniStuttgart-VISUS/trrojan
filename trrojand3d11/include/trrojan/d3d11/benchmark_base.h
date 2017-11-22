@@ -52,13 +52,7 @@ namespace d3d11 {
         virtual bool can_run(trrojan::environment env,
             trrojan::device device) const noexcept;
 
-        virtual void draw_debug_view(ATL::CComPtr<ID3D11Device> device,
-            ATL::CComPtr<ID3D11DeviceContext> deviceContext);
-
-        virtual void on_debug_view_resized(ATL::CComPtr<ID3D11Device> device,
-            const unsigned int width, const unsigned int height);
-
-        virtual void on_debug_view_resizing(void);
+        virtual HANDLE get_debug_staging_texture(void);
 
         virtual trrojan::result run(const configuration& c);
 

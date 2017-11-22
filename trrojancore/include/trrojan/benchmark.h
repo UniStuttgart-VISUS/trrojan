@@ -93,7 +93,7 @@ namespace trrojan {
         /// <param name="env">A benchmarking environment to be tested.</param>
         /// <param name="device">A device to be tested.</param>
         /// <returns><c>true</c>, unconditionally.</returns>
-        virtual bool can_run(environment env, device device) const noexcept;
+        virtual bool can_run(environment env, device device) const;
 
         /// <summary>
         /// Answer the default factors to be tested if not specified by the

@@ -74,6 +74,14 @@ namespace d3d11 {
         virtual void resize(const unsigned int width,
             const unsigned int height) = 0;
 
+        /// <summary>
+        /// Answer, if any, the staging buffer used to share the results with an
+        /// on-screen view.
+        /// </summary>
+        inline ATL::CComPtr<ID3D11Texture2D> staging_buffer(void) {
+            return this->_staging_buffer;
+        }
+
         render_target_base& operator =(const render_target_base&) = delete;
 
     protected:
@@ -102,11 +110,6 @@ namespace d3d11 {
         void set_device(ID3D11Device *device);
 
         /// <summary>
-        /// A staging texture to be used for downloading the back buffer image.
-        /// </summary>
-        ATL::CComPtr<ID3D11Texture2D> backBuffer;
-
-        /// <summary>
         /// The depth/stencil view.
         /// </summary>
         ATL::CComPtr<ID3D11DepthStencilView> _dsv;
@@ -127,6 +130,11 @@ namespace d3d11 {
         /// The immediate context of <see cref="_device" />.
         /// </summary>
         ATL::CComPtr<ID3D11DeviceContext> _device_context;
+
+        /// <summary>
+        /// Holds a staging buffer for sharing the back buffer.
+        /// </summary>
+        ATL::CComPtr<ID3D11Texture2D> _staging_buffer;
     };
 
 

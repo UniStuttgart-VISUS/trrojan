@@ -8,7 +8,9 @@
 #include "trrojan/factor.h"
 #include "trrojan/log.h"
 
+#include "trrojan/d3d11/environment.h"
 #include "trrojan/d3d11/bench_render_target.h"
+#include "trrojan/d3d11/utilities.h"
 
 
 #define _D3D_BENCH_DEFINE_FACTOR(f)                                         \
@@ -37,31 +39,17 @@ bool trrojan::d3d11::benchmark_base::can_run(trrojan::environment env,
 
 
 /*
- * trrojan::d3d11::benchmark_base::draw_debug_view
+ * trrojan::d3d11::benchmark_base::get_debug_staging_texture
  */
-void trrojan::d3d11::benchmark_base::draw_debug_view(
-        ATL::CComPtr<ID3D11Device> device,
-        ATL::CComPtr<ID3D11DeviceContext> deviceContext) {
-    assert(device != nullptr);
-    assert(deviceContext != nullptr);
-
-    //deviceContext->ClearRenderTargetView()
-}
-
-
-/*
- * trrojan::d3d11::benchmark_base::on_debug_view_resized
- */
-void trrojan::d3d11::benchmark_base::on_debug_view_resized(
-        ATL::CComPtr<ID3D11Device> device,
-        const unsigned int width, const unsigned int height) {
-}
-
-
-/*
- * trrojan::d3d11::benchmark_base::on_debug_view_resizing
- */
-void trrojan::d3d11::benchmark_base::on_debug_view_resizing(void) {
+HANDLE trrojan::d3d11::benchmark_base::get_debug_staging_texture(void) {
+    if (this->render_target != nullptr) {
+        auto sb = this->render_target->staging_buffer();
+        if (sb != nullptr) {
+            return get_shared_handle(sb.p);
+        }
+    }
+    
+    return NULL;
 }
 
 
@@ -83,8 +71,7 @@ trrojan::result trrojan::d3d11::benchmark_base::run(const configuration& c) {
     // Check whether the device has been changed. This should always be done
     // first, because all GPU resources, which depend on the content of 'c',
     // depend on the device as their storage location.
-    if (std::find(changed.begin(), changed.end(), factor_device)
-            != changed.end()) {
+    if (contains(factor_device, changed)) {
         log::instance().write_line(log_level::verbose, "The D3D device has "
             "changed. Reallocating all graphics resources ...");
         this->render_target = std::make_shared<bench_render_target>(device);
@@ -93,8 +80,7 @@ trrojan::result trrojan::d3d11::benchmark_base::run(const configuration& c) {
     }
 
     // Resize the render target if the viewport has changed.
-    if (std::find(changed.begin(), changed.end(), factor_viewport)
-            != changed.end()) {
+    if (contains(factor_viewport, changed)) {
         auto vp = c.get<viewport_type>(factor_viewport);
         log::instance().write_line(log_level::verbose, "Resizing the "
             "benchmarking render target to %d × %d px ...", vp[0], vp[1]);
@@ -104,6 +90,10 @@ trrojan::result trrojan::d3d11::benchmark_base::run(const configuration& c) {
     // Find out whether we need to start the debug view.
     {
         auto dv = c.get<bool>(factor_debug_view);
+        auto env = c.get<trrojan::environment>(factor_environment);
+        auto d3dEnv = std::dynamic_pointer_cast<d3d11::environment>(env);
+        d3dEnv->show_debug_view(*this);
+
         log::instance().write_line(log_level::verbose, "Configuring the "
             "debug view to be %s ...", dv ? "on" : "off");
         //if (true||dv) {

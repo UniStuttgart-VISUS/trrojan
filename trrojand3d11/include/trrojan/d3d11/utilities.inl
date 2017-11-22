@@ -15,10 +15,7 @@ ATL::CComPtr<ID3D11DomainShader> trrojan::d3d11::create_domain_shader(
 
     auto hr = device->CreateDomainShader(byteCode, N, nullptr, &retval);
     if (FAILED(hr)) {
-        std::stringstream msg;
-        msg << "Failed to create domain shader with error " << hr
-            << std::ends;
-        throw std::runtime_error(msg.str());
+        throw ATL::CAtlException(hr);
     }
 
     return retval;
@@ -36,10 +33,7 @@ ATL::CComPtr<ID3D11GeometryShader> trrojan::d3d11::create_geometry_shader(
 
     auto hr = device->CreateGeometryShader(byteCode, N, nullptr, &retval);
     if (FAILED(hr)) {
-        std::stringstream msg;
-        msg << "Failed to create geometry shader with error " << hr
-            << std::ends;
-        throw std::runtime_error(msg.str());
+        throw ATL::CAtlException(hr);
     }
 
     return retval;
@@ -57,10 +51,7 @@ ATL::CComPtr<ID3D11HullShader> trrojan::d3d11::create_hull_shader(
 
     auto hr = device->CreateHullShader(byteCode, N, nullptr, &retval);
     if (FAILED(hr)) {
-        std::stringstream msg;
-        msg << "Failed to create hull shader with error " << hr
-            << std::ends;
-        throw std::runtime_error(msg.str());
+        throw ATL::CAtlException(hr);
     }
 
     return retval;
@@ -81,10 +72,7 @@ ATL::CComPtr<ID3D11InputLayout> trrojan::d3d11::create_input_layout(
     auto hr = device->CreateInputLayout(elements.data(),
         static_cast<UINT>(elements.size()), byteCode, N, &retval);
     if (FAILED(hr)) {
-        std::stringstream msg;
-        msg << "Failed to create input layout with error " << hr
-            << std::ends;
-        throw std::runtime_error(msg.str());
+        throw ATL::CAtlException(hr);
     }
 
     return retval;
@@ -102,10 +90,7 @@ ATL::CComPtr<ID3D11PixelShader> trrojan::d3d11::create_pixel_shader(
 
     auto hr = device->CreatePixelShader(byteCode, N, nullptr, &retval);
     if (FAILED(hr)) {
-        std::stringstream msg;
-        msg << "Failed to create pixel shader with error " << hr
-            << std::ends;
-        throw std::runtime_error(msg.str());
+        throw ATL::CAtlException(hr);
     }
 
     return retval;
@@ -123,10 +108,7 @@ ATL::CComPtr<ID3D11VertexShader> trrojan::d3d11::create_vertex_shader(
 
     auto hr = device->CreateVertexShader(byteCode, N, nullptr, &retval);
     if (FAILED(hr)) {
-        std::stringstream msg;
-        msg << "Failed to create vertex shader with error " << hr
-            << std::ends;
-        throw std::runtime_error(msg.str());
+        throw ATL::CAtlException(hr);
     }
 
     return retval;

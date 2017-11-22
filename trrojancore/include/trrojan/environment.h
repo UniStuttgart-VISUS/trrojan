@@ -102,7 +102,7 @@ namespace trrojan {
         /// <para>The default implementation does nothing.</para>
         /// <para>This method should not throw!</para>
         /// </remarks>
-        virtual void on_deactivate(void) noexcept;
+        virtual void on_deactivate(void);
 
         /// <summary>
         /// The <see cref="trrojan::executive" /> calls this method to undo
@@ -114,7 +114,7 @@ namespace trrojan {
         /// has been called. All resources should be freed in the call.</para>
         /// <para>This method should not throw!</para>
         /// </remarks>
-        virtual void on_finalise(void) noexcept;
+        virtual void on_finalise(void);
 
         /// <summary>
         /// The <see cref="trrojan::executive" /> calls this method for one-time

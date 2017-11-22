@@ -28,11 +28,6 @@ namespace d3d11 {
     public:
 
         /// <summary>
-        /// Pointer to an object that can be displayed using this target.
-        /// </summary>
-        typedef std::shared_ptr<trrojan::d3d11::debugable> debugable;
-
-        /// <summary>
         /// Initialises a new instance.
         /// </summary>
         debug_view(void);
@@ -65,9 +60,7 @@ namespace d3d11 {
         /// <summary>
         /// Shows the debug window.
         /// </summary>
-        inline void show(void) {
-            ::ShowWindow(this->hWnd, SW_SHOW);
-        }
+        void show(d3d11::debugable& content);
 
     private:
 
@@ -92,6 +85,8 @@ namespace d3d11 {
         /// Runs the message dispatcher.
         /// </summary>
         void message_loop(void);
+
+        ATL::CComPtr<ID3D11Texture2D> content;
 
         /// <summary>
         /// The handle of the debug window.

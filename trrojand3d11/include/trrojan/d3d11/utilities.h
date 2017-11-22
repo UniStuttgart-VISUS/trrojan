@@ -20,6 +20,8 @@
 namespace trrojan {
 namespace d3d11 {
 
+    HANDLE TRROJAND3D11_API get_shared_handle(ID3D11Resource *resource);
+
     ATL::CComPtr<ID3D11Buffer> TRROJAND3D11_API create_buffer(
         ID3D11Device *device, const D3D11_USAGE usage,
         const D3D11_BIND_FLAG binding, const void *data, const UINT cntData,

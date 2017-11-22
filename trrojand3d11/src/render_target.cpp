@@ -6,7 +6,6 @@
 #include "trrojan/d3d11/render_target.h"
 
 #include <cassert>
-#include <sstream>
 
 #include "trrojan/log.h"
 
@@ -63,21 +62,18 @@ void trrojan::d3d11::render_target_base::set_back_buffer(
     assert(backBuffer != nullptr);
     ATL::CComPtr<ID3D11Texture2D> depthBuffer;
 
-    this->backBuffer = nullptr;
+    this->_staging_buffer = nullptr;
     if (createStagingTexture) {
         D3D11_TEXTURE2D_DESC texDesc;
         backBuffer->GetDesc(&texDesc);
-        texDesc.BindFlags = 0;
-        texDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
-        texDesc.Usage = D3D11_USAGE_STAGING;
+        texDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+        texDesc.MiscFlags = D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX;
+        texDesc.Usage = D3D11_USAGE_DEFAULT;
 
         auto hr = this->_device->CreateTexture2D(&texDesc, nullptr,
-            &depthBuffer);
+            &this->_staging_buffer);
         if (FAILED(hr)) {
-            std::stringstream msg;
-            msg << "Failed to allocate staging texture for back buffer "
-                << backBuffer << " with error code " << hr << "." << std::ends;
-            throw std::runtime_error(msg.str());
+            throw ATL::CAtlException(hr);
         }
     }
 
@@ -85,10 +81,7 @@ void trrojan::d3d11::render_target_base::set_back_buffer(
         auto hr = this->_device->CreateRenderTargetView(backBuffer, nullptr,
             &this->_rtv);
         if (FAILED(hr)) {
-            std::stringstream msg;
-            msg << "Failed to create render target view of back buffer "
-                << backBuffer << " with error code " << hr << "." << std::ends;
-            throw std::runtime_error(msg.str());
+            throw ATL::CAtlException(hr);
         }
     }
 
@@ -101,10 +94,7 @@ void trrojan::d3d11::render_target_base::set_back_buffer(
         auto hr = this->_device->CreateTexture2D(&texDesc, nullptr,
             &depthBuffer);
         if (FAILED(hr)) {
-            std::stringstream msg;
-            msg << "Failed to allocate depth buffer with error code " << hr
-                << "." << std::ends;
-            throw std::runtime_error(msg.str());
+            throw ATL::CAtlException(hr);
         }
     }
 
@@ -112,11 +102,7 @@ void trrojan::d3d11::render_target_base::set_back_buffer(
         auto hr = this->_device->CreateDepthStencilView(depthBuffer, nullptr,
             &this->_dsv);
         if (FAILED(hr)) {
-            std::stringstream msg;
-            msg << "Failed to create depth/stencil view of depth buffer "
-                << depthBuffer.p << " with error code " << hr << "."
-                << std::ends;
-            throw std::runtime_error(msg.str());
+            throw ATL::CAtlException(hr);
         }
     }
 }

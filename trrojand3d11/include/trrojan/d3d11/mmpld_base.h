@@ -5,9 +5,6 @@
 
 #pragma once
 
-#include <istream>
-#include <vector>
-
 #include <atlbase.h>
 #include <Windows.h>
 #include <d3d11.h>
@@ -98,8 +95,7 @@ namespace d3d11 {
         /// good. Otherwise, its content might be bogus.
         /// </remarks>
         mmpld_reader::seek_table mmpld_seek_table;
-
     };
 
-}
-}
+} /* end namespace d3d11 */
+} /* end namespace trrojan */

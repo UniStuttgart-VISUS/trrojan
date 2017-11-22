@@ -43,19 +43,26 @@ namespace d3d11 {
         virtual void on_activate(void);
 
         /// <inheritdoc />
-        virtual void on_deactivate(void) noexcept;
+        virtual void on_deactivate(void);
 
         /// <inheritdoc />
-        virtual void on_finalise(void) noexcept;
+        virtual void on_finalise(void);
 
         /// <inheritdoc />
         virtual void on_initialise(const cmd_line& cmdLine);
 
+        /// <summary>
+        /// Enables the debug view and displays the given content.
+        /// </summary>
+        inline void show_debug_view(d3d11::debugable& content) {
+            this->_debug_view->show(content);
+        }
+
     private:
 
-        std::shared_ptr<debug_view> debug_view;
+        std::shared_ptr<debug_view> _debug_view;
 
-        std::vector<device::pointer> devices;
+        std::vector<device::pointer> _devices;
 
     };
 }

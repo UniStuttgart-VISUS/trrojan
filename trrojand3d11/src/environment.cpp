@@ -24,12 +24,12 @@ trrojan::d3d11::environment::~environment(void) { }
  * trrojan::d3d11::environment::get_devices
  */
 size_t trrojan::d3d11::environment::get_devices(device_list& dst) {
-    for (auto d : this->devices) {
+    for (auto d : this->_devices) {
         auto dd = std::dynamic_pointer_cast<trrojan::device_base>(d);
         assert(dd != nullptr);
         dst.push_back(std::move(dd));
     }
-    return this->devices.size();
+    return this->_devices.size();
 }
 
 
@@ -37,23 +37,23 @@ size_t trrojan::d3d11::environment::get_devices(device_list& dst) {
  * trrojan::d3d11::environment::on_activate
  */
 void trrojan::d3d11::environment::on_activate(void) {
-    this->debug_view = std::make_shared<d3d11::debug_view>();
+    this->_debug_view = std::make_shared<d3d11::debug_view>();
 }
 
 
 /*
  * trrojan::d3d11::environment::on_deactivate
  */
-void trrojan::d3d11::environment::on_deactivate(void) noexcept {
-    this->debug_view.reset();
+void trrojan::d3d11::environment::on_deactivate(void) {
+    this->_debug_view.reset();
 }
 
 
 /*
  * trrojan::d3d11::environment::on_finalise
  */
-void trrojan::d3d11::environment::on_finalise(void)  noexcept {
-    this->devices.clear();
+void trrojan::d3d11::environment::on_finalise(void) {
+    this->_devices.clear();
 }
 
 
@@ -103,7 +103,7 @@ void trrojan::d3d11::environment::on_initialise(const cmd_line& cmdLine) {
                 &featureLevel, nullptr);//&immediateContext);
         }
         if (SUCCEEDED(hr)) {
-            this->devices.push_back(std::make_shared<d3d11::device>(device));
+            this->_devices.push_back(std::make_shared<d3d11::device>(device));
         }
     }
 
