@@ -1,0 +1,17 @@
+opencl::volume_raycast {
+    uint32vec2 viewport = 1024 1024;512 512   
+    boolean use_ERT = true
+    boolean use_tff = true
+    string tff_file_name = [VALENTIN]
+    float32 step_size_factor = 2.; 1.; 0.5; 0.25
+    boolean shuffle = true; false
+    boolean use_illumination = true; false
+    boolean use_ortho_proj = true; false
+    string volume_file_name = [VALENTIN]
+    int device_type = 4
+    [VALENTIN CAMERA]
+}
+
+d3d11::sphere-raycaster {
+    uint32vec2 viewport = 800 600
+}
