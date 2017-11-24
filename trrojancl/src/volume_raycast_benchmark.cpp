@@ -164,7 +164,7 @@ trrojan::opencl::volume_raycast_benchmark::volume_raycast_benchmark(void)
     // debug and misc testing configurations
     //
     // output a rendered image to file (PNG) -> basic config
-    this->_default_configs.add_factor(factor::from_manifestations(factor_img_output, true));
+    this->_default_configs.add_factor(factor::from_manifestations(factor_img_output, false));
     // count all samples taken along rays -> kernel build factor
     add_kernel_build_factor(factor_count_samples, false);
 
