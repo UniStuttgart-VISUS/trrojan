@@ -65,6 +65,14 @@ namespace d3d11 {
         void enable(void);
 
         /// <summary>
+        /// Performs cleanup operations once a frame was completed.
+        /// </summary>
+        /// <remarks>
+        /// The default implementation does nothing.
+        /// </remarks>
+        virtual void present(void);
+
+        /// <summary>
         /// Resizes the swap chain of the render target to the given dimension.
         /// </summary>
         /// <param name="width">The new width of the render target in pixels.
@@ -73,20 +81,6 @@ namespace d3d11 {
         /// </param>
         virtual void resize(const unsigned int width,
             const unsigned int height) = 0;
-
-        /// <summary>
-        /// Answer, if any, the staging buffer used to share the results with an
-        /// on-screen view.
-        /// </summary>
-        inline ATL::CComPtr<ID3D11Texture2D> staging_buffer(void) {
-            return this->_staging_buffer;
-        }
-
-        /// <summary>
-        /// If available, fill the staging buffer with the content of the back
-        /// buffer.
-        /// </summary>
-        void update_staging_buffer(void);
 
         render_target_base& operator =(const render_target_base&) = delete;
 
@@ -107,8 +101,7 @@ namespace d3d11 {
         /// <see cref="_dsv" /> and <see cref="_rtv" /> must have been deleted
         /// before this method can be called.
         /// </remarks>
-        void set_back_buffer(ID3D11Texture2D *backBuffer,
-            bool createStagingTexture = false);
+        void set_back_buffer(ID3D11Texture2D *backBuffer);
 
         /// <summary>
         /// Sets the D3D device and updates the immediate context.
@@ -128,11 +121,6 @@ namespace d3d11 {
     private:
 
         /// <summary>
-        /// Preserves the back buffer texture.
-        /// </summary>
-        ATL::CComPtr<ID3D11Texture2D> _back_buffer;
-
-        /// <summary>
         /// The device the render target lives on.
         /// </summary>
         ATL::CComPtr<ID3D11Device> _device;
@@ -141,16 +129,6 @@ namespace d3d11 {
         /// The immediate context of <see cref="_device" />.
         /// </summary>
         ATL::CComPtr<ID3D11DeviceContext> _device_context;
-
-        /// <summary>
-        /// Holds a staging buffer for sharing the back buffer.
-        /// </summary>
-        ATL::CComPtr<ID3D11Texture2D> _staging_buffer;
-
-        /// <summary>
-        /// The staging buffer lock for writing stuff to the buffer.
-        /// </summary>
-        ATL::CComPtr<IDXGIKeyedMutex> _staging_buffer_lock;
     };
 
 

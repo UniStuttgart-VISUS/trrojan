@@ -23,7 +23,7 @@ void trrojan::d3d11::render_target_base::clear(void) {
     assert(this->_device_context != nullptr);
     assert(this->_dsv != nullptr);
     assert(this->_rtv != nullptr);
-    static const FLOAT CLEAR_COLOUR[] = { 0.0f, 0.0f, 0.0f, 0.0f };
+    static const FLOAT CLEAR_COLOUR[] = { 0.0f, 0.0f, 0.0f, 0.0f }; // TODO
     this->_device_context->ClearRenderTargetView(this->_rtv, CLEAR_COLOUR);
     this->_device_context->ClearDepthStencilView(this->_dsv, D3D11_CLEAR_DEPTH,
         1.0f, 0);
@@ -40,19 +40,9 @@ void trrojan::d3d11::render_target_base::enable(void) {
 
 
 /*
- * trrojan::d3d11::render_target_base::update_staging_buffer
+ * trrojan::d3d11::render_target_base::present
  */
-void trrojan::d3d11::render_target_base::update_staging_buffer(void) {
-    if (this->_staging_buffer_lock != nullptr) {
-        assert(this->_back_buffer != nullptr);
-        assert(this->_staging_buffer != nullptr);
-        this->_staging_buffer_lock->AcquireSync(0, INFINITE);
-        this->_device_context->CopyResource(this->_staging_buffer,
-            this->_back_buffer);
-        this->_staging_buffer_lock->ReleaseSync(0);
-    }
-}
-
+void trrojan::d3d11::render_target_base::present(void) { }
 
 
 /*
@@ -72,63 +62,44 @@ trrojan::d3d11::render_target_base::render_target_base(
  * trrojan::d3d11::render_target_base::set_back_buffer
  */
 void trrojan::d3d11::render_target_base::set_back_buffer(
-        ID3D11Texture2D *backBuffer, bool createStagingTexture) {
+        ID3D11Texture2D *backBuffer) {
     assert(this->_dsv == nullptr);
     assert(this->_rtv == nullptr);
     assert(backBuffer != nullptr);
     ATL::CComPtr<ID3D11Texture2D> depthBuffer;
+    HRESULT hr = S_OK;
+    D3D11_TEXTURE2D_DESC texDesc;
+    D3D11_VIEWPORT viewport;
 
-    this->_back_buffer = backBuffer;
-
-    this->_staging_buffer = nullptr;
-    this->_staging_buffer_lock = nullptr;
-    if (createStagingTexture) {
-        D3D11_TEXTURE2D_DESC texDesc;
-        backBuffer->GetDesc(&texDesc);
-        texDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-        texDesc.MiscFlags = D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX;
-        texDesc.Usage = D3D11_USAGE_DEFAULT;
-
-        auto hr = this->_device->CreateTexture2D(&texDesc, nullptr,
-            &this->_staging_buffer);
-        if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
-        }
-
-        hr = this->_staging_buffer->QueryInterface(&this->_staging_buffer_lock);
-        if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
-        }
+    hr = this->_device->CreateRenderTargetView(backBuffer, nullptr,
+        &this->_rtv);
+    if (FAILED(hr)) {
+        throw ATL::CAtlException(hr);
     }
 
-    {
-        auto hr = this->_device->CreateRenderTargetView(this->_back_buffer,
-            nullptr, &this->_rtv);
-        if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
-        }
+    backBuffer->GetDesc(&texDesc);
+    texDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+    texDesc.Format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT;
+
+    hr = this->_device->CreateTexture2D(&texDesc, nullptr, &depthBuffer);
+    if (FAILED(hr)) {
+        throw ATL::CAtlException(hr);
     }
 
-    {
-        D3D11_TEXTURE2D_DESC texDesc;
-        this->_back_buffer->GetDesc(&texDesc);
-        texDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
-        texDesc.Format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT;
-
-        auto hr = this->_device->CreateTexture2D(&texDesc, nullptr,
-            &depthBuffer);
-        if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
-        }
-    }
-
-    {
-        auto hr = this->_device->CreateDepthStencilView(depthBuffer, nullptr,
+    hr = this->_device->CreateDepthStencilView(depthBuffer, nullptr,
             &this->_dsv);
-        if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
-        }
+    if (FAILED(hr)) {
+        throw ATL::CAtlException(hr);
     }
+
+    viewport.TopLeftX = 0.0f;
+    viewport.TopLeftY = 0.0f;
+    viewport.Width = static_cast<float>(texDesc.Width);
+    viewport.Height = static_cast<float>(texDesc.Height);
+    viewport.MinDepth = 0.0f;
+    viewport.MaxDepth = 1.0f;
+
+    this->_device_context->RSSetViewports(1, &viewport);
 }
 
 

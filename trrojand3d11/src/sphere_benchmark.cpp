@@ -168,7 +168,12 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
         auto projection = DirectX::XMMatrixPerspectiveFovRH(60.0f,
             static_cast<float>(viewport.Width) / static_cast<float>(viewport.Height),
             0.1f, 10.0f);
-        auto view = DirectX::XMMatrixTranslation(0.0f, 0.0f, 3.0f);
+
+        auto eye = DirectX::XMFLOAT4(0, 0, 5, 0);
+        auto lookAt = DirectX::XMFLOAT4(0, 0, 0, 0);
+        auto up = DirectX::XMFLOAT4(0, 1, 0, 0);
+        auto view = DirectX::XMMatrixLookAtRH(DirectX::XMLoadFloat4(&eye),
+            DirectX::XMLoadFloat4(&lookAt), DirectX::XMLoadFloat4(&up));
 
         auto viewDet = DirectX::XMMatrixDeterminant(view);
         auto viewInv = DirectX::XMMatrixInverse(&viewDet, view);

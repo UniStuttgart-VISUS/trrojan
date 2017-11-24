@@ -52,6 +52,23 @@ namespace d3d11 {
     ATL::CComPtr<ID3D11VertexShader> create_vertex_shader(ID3D11Device *device,
         const BYTE(& byteCode)[N]);
 
+    /// <summary>
+    /// Determines whether the debug layers are installed on Windows 10.
+    /// </summary>
+    /// <remarks>
+    /// If not available, the debug layers can be installed using
+    /// <pre>
+    /// Dism /online /add-capability /capabilityname:Tools.Graphics.DirectX~~~~0.0.1.0
+    /// </pre>
+    /// in an elevated command prompt.
+    /// </remarks>
+    inline bool supports_debug_layer(void) {
+        auto hr = D3D11CreateDevice(nullptr, D3D_DRIVER_TYPE_NULL, 0,
+            D3D11_CREATE_DEVICE_DEBUG, nullptr, 0, D3D11_SDK_VERSION, nullptr,
+            nullptr, nullptr);
+        return SUCCEEDED(hr);
+    }
+
 } /* end namespace d3d11 */
 } /* end namespace trrojan */
 

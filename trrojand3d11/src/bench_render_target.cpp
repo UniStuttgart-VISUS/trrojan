@@ -53,6 +53,6 @@ void trrojan::d3d11::bench_render_target::resize(
     // Update the back buffer and all of its views.
     this->_dsv = nullptr;
     this->_rtv = nullptr;
-    this->set_back_buffer(backBuffer.p, true);
+    this->set_back_buffer(backBuffer.p);
 
 }

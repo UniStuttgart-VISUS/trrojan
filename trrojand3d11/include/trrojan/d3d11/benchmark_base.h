@@ -15,7 +15,6 @@
 
 #include "trrojan/benchmark.h"
 
-#include "trrojan/d3d11/debugable.h"
 #include "trrojan/d3d11/device.h"
 #include "trrojan/d3d11/hash.h"
 #include "trrojan/d3d11/render_target.h"
@@ -27,8 +26,7 @@ namespace d3d11 {
     /// <summary>
     /// Base class for D3D11 benchmarks.
     /// </summary>
-    class TRROJAND3D11_API benchmark_base : public trrojan::benchmark_base,
-            public debugable {
+    class TRROJAND3D11_API benchmark_base : public trrojan::benchmark_base {
 
     public:
 
@@ -52,8 +50,6 @@ namespace d3d11 {
         virtual bool can_run(trrojan::environment env,
             trrojan::device device) const noexcept;
 
-        virtual HANDLE get_debug_staging_texture(void);
-
         virtual trrojan::result run(const configuration& c);
 
     protected:
@@ -72,8 +68,6 @@ namespace d3d11 {
         virtual trrojan::result on_run(d3d11::device& device,
             const configuration& config,
             const std::vector<std::string>& changed) = 0;
-
-        virtual void update_debug_staging_texture(void);
 
     private:
 
