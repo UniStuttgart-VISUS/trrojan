@@ -23,6 +23,8 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include "glm/gtx/rotate_vector.hpp"
 #include "glm/gtx/quaternion.hpp"
+#include "glm/gtx/component_wise.hpp"
+#include "glm/gtc/matrix_inverse.hpp"
 
 #define _TRROJANSTREAM_DEFINE_FACTOR(f)                                        \
 const std::string trrojan::opencl::volume_raycast_benchmark::factor_##f(#f)
@@ -90,6 +92,7 @@ const std::string trrojan::opencl::volume_raycast_benchmark::test_volume =
  */
 trrojan::opencl::volume_raycast_benchmark::volume_raycast_benchmark(void)
     : trrojan::benchmark_base("volume_raycast")
+    , _model_scale(glm::vec3(1.f))
 {
 
     // default config
@@ -131,7 +134,7 @@ trrojan::opencl::volume_raycast_benchmark::volume_raycast_benchmark(void)
 //    add_kernel_run_factor(factor_yaw, 0.25*CL_M_PI);
 //    add_kernel_run_factor(factor_zoom, -2.0);
 
-    auto pos = std::array<float, 4> {0, 0, 0, -2.f};
+    auto pos = std::array<float, 3> {0, 0, 2};
     add_kernel_run_factor(factor_cam_position, pos);
     auto rotation = std::array<float, 4> {1, 0, 0, 0};
     add_kernel_run_factor(factor_cam_rotation, rotation);
@@ -346,11 +349,17 @@ size_t trrojan::opencl::volume_raycast_benchmark::run(const configuration_set& c
                          std::dynamic_pointer_cast<device>(dev),
                          precision_div,
                          std::string("-DIMAGE_SUPPORT"));
+            // set the kernel args for the new kernel
+            update_all_kernel_args(cs, changed, precision_div);
         }
 
         // reset volume kernel argument if volume data changed
         if (changed.count(factor_volume_file_name))
+        {
             _kernel.setArg(VOLUME, _volume_mem);
+            cl_float3 model_scale = {_model_scale.x, _model_scale.y, _model_scale.z};
+            _kernel.setArg(MODEL_SCALE, model_scale);
+        }
 
         // update the OpenCL kernel arguments according to the changed factors,
         // if at least one relevant factor changed
@@ -556,7 +565,7 @@ void trrojan::opencl::volume_raycast_benchmark::setup_volume_data(
                        std::dynamic_pointer_cast<environment>(env),
                        cfg.find(factor_volume_scaling)->value());
     }
-
+    // transfer function factor changed
     if (changed.count(factor_tff_file_name) || changed.count(factor_environment))
     {
         auto file_name = cfg.find(factor_tff_file_name)->value().as<std::string>();
@@ -564,6 +573,23 @@ void trrojan::opencl::volume_raycast_benchmark::setup_volume_data(
     }
 }
 
+/**
+ * VolumeRenderCL::calcScaling
+ */
+void trrojan::opencl::volume_raycast_benchmark::calcScaling()
+{
+    if (!_dr.has_data())
+        return;
+
+    glm::vec3 thickness;
+    for (size_t i = 0; i < _dr.properties().volume_res.size(); ++i)
+    {
+        _model_scale[i] = (float)_dr.properties().volume_res.at(i);
+        thickness[i] = (float)_dr.properties().slice_thickness.at(i);
+    }
+    _model_scale *= thickness*(1.f/thickness[0]);
+    _model_scale = glm::compMax(_model_scale) / _model_scale;
+}
 
 /*
  * trrojan::opencl::volume_raycast_benchmark::load_volume_data
@@ -587,6 +613,7 @@ const std::vector<char> & trrojan::opencl::volume_raycast_benchmark::load_volume
     os = std::ostringstream();
     os << _dr.data().size() << " bytes have been read: " << _dr.properties().to_string();
     log::instance().write_line(log_level::information, os.str().c_str());
+    calcScaling();
 
     // update static config
     _passive_cfg.clear();
@@ -651,7 +678,7 @@ void trrojan::opencl::volume_raycast_benchmark::load_transfer_function(
         {
             while (tff_file >> value)
             {
-                values.push_back((char)floor(value*255));
+                values.push_back((char)value);
             }
             tff_file.close();
         }
@@ -673,8 +700,9 @@ void trrojan::opencl::volume_raycast_benchmark::load_transfer_function(
         _tff_mem = cl::Image1D(env->get_properties().context,
                                CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
                                format,
-                               values.size(),
+                               values.size() / 4,
                                values.data());
+        _kernel.setArg(TFF, _tff_mem);
     }
     catch (cl::Error err)
     {
@@ -879,12 +907,69 @@ void trrojan::opencl::volume_raycast_benchmark::set_kernel_args(const float prec
         _kernel.setArg(VIEW, view_mat);
         _kernel.setArg(ID, _ray_ids);
         _kernel.setArg(PRECISION, precision_div);
+        cl_float3 model_scale = {_model_scale.x, _model_scale.y, _model_scale.z};
+        _kernel.setArg(MODEL_SCALE, model_scale);
     }
     catch (cl::Error err)
     {
         log_cl_error(err);
     }
 }
+
+/**
+ * trrojan::opencl::volume_raycast_benchmark::update_all_kernel_args
+ */
+void trrojan::opencl::volume_raycast_benchmark::update_all_kernel_args(
+        const trrojan::configuration &cfg,
+        const std::unordered_set<std::string> changed,
+        const float precision_div)
+{
+    auto env = cfg.find(factor_environment)->value().as<trrojan::environment>();
+    environment::pointer env_ptr = std::dynamic_pointer_cast<environment>(env);
+    try
+    {
+        _kernel.setArg(VOLUME, _volume_mem);
+        _kernel.setArg(OUTPUT, _output_mem);
+        _kernel.setArg(TFF, _tff_mem);
+//        cl_float16 view_mat = {1, 0, 0, 0,  0, 1, 0, 0,  0, 0, 1, 0,  0, 0, 0, 1};
+//        _kernel.setArg(VIEW, view_mat);
+        _kernel.setArg(ID, _ray_ids);
+        _kernel.setArg(STEP_SIZE, static_cast<cl_float>(cfg.find(factor_step_size_factor)->value()));
+        cl_uint3 resolution = {{_volume_res[0], _volume_res[1], _volume_res[2]}};
+        _kernel.setArg(RESOLUTION, resolution);
+
+        if (cfg.find(factor_use_lerp)->value().as<bool>()) // linear
+            _sampler = cl::Sampler(env_ptr->get_properties().context,
+                                  CL_TRUE, CL_ADDRESS_CLAMP_TO_EDGE, CL_FILTER_LINEAR);
+        else // nearest
+            _sampler = cl::Sampler(env_ptr->get_properties().context,
+                                  CL_TRUE, CL_ADDRESS_CLAMP_TO_EDGE, CL_FILTER_NEAREST);
+        _kernel.setArg(SAMPLER, _sampler);
+
+        _kernel.setArg(PRECISION, precision_div);
+        cl_float3 model_scale = {_model_scale.x, _model_scale.y, _model_scale.z};
+        _kernel.setArg(MODEL_SCALE, model_scale);
+
+
+        auto pos = cfg.find(factor_cam_position)->value().as<std::array<float, 3>>();
+        _camera.set_look_from(glm::vec3(pos.at(0), pos.at(1), pos.at(2)));
+        auto rot = cfg.find(factor_cam_rotation)->value().as<std::array<float, 4>>();
+        _camera.rotate_fixed_to(glm::quat(rot.at(0), rot.at(1), rot.at(2), rot.at(3)));
+        glm::mat4 view = _camera.get_inverse_view_mx();
+
+        cl_float16 view_mat = {view[0][0], view[1][0], view[2][0], view[3][0],
+                               view[0][1], view[1][1], view[2][1], view[3][1],
+                               view[0][2], view[1][2], view[2][2], view[3][2],
+                               view[0][3], view[1][3], view[2][3], view[3][3]};
+        _kernel.setArg(VIEW, view_mat);
+
+    }
+    catch (cl::Error err)
+    {
+        log_cl_error(err);
+    }
+}
+
 
 
 /**
@@ -905,6 +990,7 @@ void trrojan::opencl::volume_raycast_benchmark::update_kernel_args(
         auto rot = cfg.find(factor_cam_rotation)->value().as<std::array<float, 4>>();
         _camera.rotate_fixed_to(glm::quat(rot.at(0), rot.at(1), rot.at(2), rot.at(3)));
         glm::mat4 view = _camera.get_inverse_view_mx();
+
         cl_float16 view_mat = {view[0][0], view[1][0], view[2][0], view[3][0],
                                view[0][1], view[1][1], view[2][1], view[3][1],
                                view[0][2], view[1][2], view[2][2], view[3][2],
@@ -918,38 +1004,6 @@ void trrojan::opencl::volume_raycast_benchmark::update_kernel_args(
             log_cl_error(err);
         }
     }
-    // camera parameter changed
-//    if (changed.count(factor_roll) + changed.count(factor_pitch) + changed.count(factor_yaw)
-//            + changed.count(factor_zoom) + changed.count(factor_device))
-//    {
-//        _camera.set_look_from(glm::vec3(0.0f,0.0f,-2.0f));
-//        _camera.set_look_to(glm::vec3(0.0f,0.0f,0.0f));
-//        _camera.rotate_fixed_to(glm::quat(1.f,0,0.4f,0));
-////        _camera.rotate_fixed_from(glm::quat(0.7071f,0,0.7071f,0));
-//        glm::mat4 view = _camera.get_inverse_view_mx();
-
-//        // GLM uses column major order
-//        cl_float16 view_mat = {view[0][0], view[1][0], view[2][0], view[3][0],
-//                               view[0][1], view[1][1], view[2][1], view[3][1],
-//                               view[0][2], view[1][2], view[2][2], view[3][2],
-//                               view[0][3], view[1][3], view[2][3], view[3][3]};
-
-////        cl_float16 view_mat = create_view_mat(cfg.find(factor_roll)->value(),
-////                                              cfg.find(factor_pitch)->value(),
-////                                              cfg.find(factor_yaw)->value(),
-////                                              cfg.find(factor_zoom)->value());
-//        // DEBUG only
-//        //        for (auto &a : view_mat)
-//        //            std::cout << a << " " << std::endl;
-//        try
-//        {
-//            _kernel.setArg(VIEW, view_mat);
-//        }
-//        catch (cl::Error err)
-//        {
-//            log_cl_error(err);
-//        }
-//    }
     // interpolation
     if (changed.count(factor_use_lerp) || changed.count(factor_device))
     {

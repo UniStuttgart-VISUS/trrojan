@@ -24,20 +24,49 @@ inline float3 transformPointW(const float16 m, const float3 x)
     return transformPoint3(m, x)/(dot(m.s37b, x)+m.sf);
 }
 
-// Lambert shading
-float4 shading(const float3 n, const float3 l, const float3 v)
+// Compute gradient using central difference: f' = ( f(x+h)-f(x-h) ) / 2*h
+float3 gradientCentralDiff(read_only image3d_t vol, const float4 pos)
 {
-    float4 ambient = (float4)(1.0f, 1.0f, 1.0f, 0.2f);
-    float4 diffuse = (float4)(1.0f, 1.0f, 1.0f, 0.8f);
-
-    float intensity = fabs(dot(n, l)) * diffuse.w;
-    diffuse *= intensity;
-
-    float4 color4 = (float4)(0.0f, 0.0f, 0.0f, 0.0f);
-    color4.xyz = ambient.xyz * ambient.w + diffuse.xyz;
-    return color4;
+    float3 volResf = convert_float3(get_image_dim(vol).xyz);
+    float3 offset = native_divide((float3)(1.0f, 1.0f, 1.0f), volResf);
+    float3 s1;
+    float3 s2;
+    s1.x = read_imagef(vol, nearestSmp, pos + (float4)(-offset.x, 0, 0, 0)).x;
+    s2.x = read_imagef(vol, nearestSmp, pos + (float4)(+offset.x, 0, 0, 0)).x;
+    s1.y = read_imagef(vol, nearestSmp, pos + (float4)(0, -offset.y, 0, 0)).x;
+    s2.y = read_imagef(vol, nearestSmp, pos + (float4)(0, +offset.y, 0, 0)).x;
+    s1.z = read_imagef(vol, nearestSmp, pos + (float4)(0, 0, -offset.z, 0)).x;
+    s2.z = read_imagef(vol, nearestSmp, pos + (float4)(0, 0, +offset.z, 0)).x;
+    return (s2 - s1) / (2.f * offset);
 }
 
+// specular part of blinn-phong shading model
+float3 specularBlinnPhong(float3 lightColor, float specularExp, float3 materialColor,
+                          float3 normal, float3 toLightDir, float3 toCameraDir)
+{
+    float3 h = toCameraDir + toLightDir;
+
+    // check for special case where the light source is exactly opposite
+    // to the view direction, i.e. the length of the halfway vector is zero
+    if (dot(h, h) < 1.e-6f) // check for squared length
+        return (float3)(0.0f);
+
+    h = normalize(h);
+    return materialColor * lightColor * native_powr(max(dot(normal, h), 0.f), specularExp);
+}
+
+// simple illumination based on central differences
+float3 illumination(read_only image3d_t vol, const float4 pos, float3 diffuse,float3 toCameraDir)
+{
+    float3 n = fast_normalize(gradientCentralDiff(vol, pos));
+    float3 l = fast_normalize((float3)(20.0f, 100.0f, 20.0f) - pos.xyz);
+
+    float3 amb = diffuse;
+    float3 diff = diffuse * max(0.f, dot(n, l));
+    float3 spec = specularBlinnPhong((float3)(1.f), 100.f, (float3)(1.f), n, l, toCameraDir);
+
+    return (amb + diff + spec) * 0.5f;
+}
 // intersect ray with a box
 // http://www.siggraph.org/education/materials/HyperGraph/raytrace/rtinter3.htm
 int intersectBox(float4 rayOrig,
@@ -75,6 +104,7 @@ __kernel void volumeRender(
                            , const uint3 volRes
                            , const sampler_t sampler
                            , const float precisionDiv
+                           , const float3 modelScale
                            /***OFFSET_ARGS***/
                         )
 {
@@ -87,11 +117,6 @@ __kernel void volumeRender(
     float rand = fract(sin(dot(convert_float2(globalId),
                        (float2)(12.9898f, 78.233f))) * 43758.5453f, &iptr);
 
-    float stepSize = native_divide(stepSizeFactor, (float)max(volRes.x, max(volRes.y, volRes.z)));
-    stepSize *= 8.0f; // normalization to octile
-
-    uint idX = get_global_id(0);
-    uint idY = get_global_id(1);
     long gId = get_global_id(0) + get_global_id(1) * get_global_size(0);
     float16 viewLocal = viewMat;
 
@@ -128,6 +153,13 @@ __kernel void volumeRender(
         write_imagef(outData, texCoords, color);
         return;
     }
+
+    float samplingRate = 1.f/stepSizeFactor;
+    float sampleDist = tfar - tnear;
+    float stepSize = min(sampleDist, sampleDist /
+                            (samplingRate*length(sampleDist*rayDir.xyz*convert_float3(volRes.xyz))));
+    float samples = ceil(sampleDist/stepSize);
+    stepSize = sampleDist/samples;
 
     tnear = max(0.f, tnear + rand*stepSize); // clamp to near plane and offset by 'random' distance
 

@@ -85,16 +85,17 @@ namespace opencl
 
         enum kernel_arg
         {
-            VOLUME = 0,     // volume data set      memory object
-            OUTPUT,         // output image         memory object
-            TFF,            // transfer function    memory object
-            VIEW,           // view matrix          memory object
-            ID,             // shuffled ray IDs     memory object
-            STEP_SIZE,      // step size factor     cl_float
-            RESOLUTION,     // volume resolution    cl_int3
-            SAMPLER,        // image data sampler   cl::Sampler
-            PRECISION,      // precision divisor    cl_float
-            // OFFSET       // TODO: ID offset      cl_int2
+              VOLUME = 0    // volume data set      memory object
+            , OUTPUT = 1    // output image         memory object
+            , TFF           // transfer function    memory object
+            , VIEW          // view matrix          memory object
+            , ID            // shuffled ray IDs     memory object
+            , STEP_SIZE     // step size factor     cl_float
+            , RESOLUTION    // volume resolution    cl_int3
+            , SAMPLER       // image data sampler   cl::Sampler
+            , PRECISION     // precision divisor    cl_float
+            , MODEL_SCALE
+            // , OFFSET       // TODO: ID offset      cl_int2
         };
 
         /// <summary>
@@ -437,6 +438,16 @@ namespace opencl
         /// </summary>
         void set_kernel_args(const float precision_div);
 
+        ///
+        /// TODO add descriotion
+        /// \brief update_all_kernel_args
+        /// \param cfg
+        /// \param changed
+        ///
+        void update_all_kernel_args(const trrojan::configuration &cfg,
+                                    const std::unordered_set<std::string> changed,
+                                    const float precision_div);
+
         /// <summary>
         /// Update arguments that are relavant for kernel execution during runtime.
         /// </summary>
@@ -499,6 +510,11 @@ namespace opencl
         /// <param name="error">The OpenCL error objects.</param>
         /// <throws>Runtime error.</throws>
         void log_cl_error(cl::Error error);
+
+        /// <summary>
+        /// TODO add description calcScaling
+        /// </summary>
+        void calcScaling();
 
         /// <summary>
         /// Member to hold 'passive' configuration factors (i.e. they have no influence on tests),
@@ -578,6 +594,11 @@ namespace opencl
         /// The camera.
         /// </summary>
         trrojan::perspective_camera _camera;
+
+        /// <summary>
+        /// Volume model scaling.
+        /// </summary>
+        glm::vec3 _model_scale;
     };
 
 }
