@@ -59,7 +59,7 @@ void trrojan::d3d11::environment::on_finalise(void) {
  * trrojan::d3d11::environment::on_initialise
  */
 void trrojan::d3d11::environment::on_initialise(const cmd_line& cmdLine) {
-    DWORD deviceFlags = 0;
+    DWORD deviceFlags = D3D11_CREATE_DEVICE_DISABLE_GPU_TIMEOUT;
     ATL::CComPtr<IDXGIFactory> factory;
     D3D_FEATURE_LEVEL featureLevel;
     HRESULT hr = S_OK;

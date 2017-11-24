@@ -136,7 +136,6 @@ ATL::CComPtr<ID3D11Buffer> trrojan::d3d11::mmpld_base::read_mmpld_frame(
     this->mmpld_layout = mmpld_base::get_mmpld_layout(this->mmpld_list);
 
     // Read the data.
-    this->mmpld_list.particles = 50;
     auto cntData = mmpld_reader::calc_stride(this->mmpld_list) 
         * this->mmpld_list.particles;
     data.resize(cntData);

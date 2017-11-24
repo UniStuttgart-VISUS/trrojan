@@ -7,6 +7,7 @@
 
 #include <unordered_map>
 
+#include "trrojan/camera.h"
 #include "trrojan/timer.h"
 
 #include "trrojan/d3d11/benchmark_base.h"
@@ -62,6 +63,7 @@ namespace d3d11 {
 
     private:
 
+        trrojan::perspective_camera cam;
         ATL::CComPtr<ID3D11Buffer> constant_buffer;
         ATL::CComPtr<ID3D11GeometryShader> geometry_shader;
         ATL::CComPtr<ID3D11InputLayout> input_layout;

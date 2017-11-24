@@ -33,6 +33,8 @@ trrojan::d3d11::debug_render_target::~debug_render_target(void) {
     //}
 
     if (this->msgPump.joinable()) {
+        log::instance().write_line(log_level::information, "Please close the "
+            "debug view to end the programme.");
         this->msgPump.join();
     }
 }
@@ -82,7 +84,7 @@ void trrojan::d3d11::debug_render_target::resize(const unsigned int width,
 
         {
             ATL::CComPtr<ID3D11Device> device;
-            UINT deviceFlags = 0;
+            UINT deviceFlags = D3D11_CREATE_DEVICE_DISABLE_GPU_TIMEOUT;
 
 #if (defined(DEBUG) || defined(_DEBUG))
             if (supports_debug_layer()) {

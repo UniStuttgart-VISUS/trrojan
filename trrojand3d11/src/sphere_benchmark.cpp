@@ -9,6 +9,8 @@
 #include <cinttypes>
 #include <memory>
 
+#include <glm/ext.hpp>
+
 #include "trrojan/factor_enum.h"
 #include "trrojan/factor_range.h"
 #include "trrojan/log.h"
@@ -165,15 +167,24 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
 
     /* Compute the matrices. */
     {
-        auto projection = DirectX::XMMatrixPerspectiveFovRH(60.0f,
+        auto projection = DirectX::XMMatrixPerspectiveFovRH(std::atan(1) * 4 / 3,
             static_cast<float>(viewport.Width) / static_cast<float>(viewport.Height),
             0.1f, 10.0f);
 
-        auto eye = DirectX::XMFLOAT4(0, 0, 5, 0);
+        auto eye = DirectX::XMFLOAT4(0, 0, 0.5f * (this->mmpld_header.bounding_box[5] - this->mmpld_header.bounding_box[2]), 0);
         auto lookAt = DirectX::XMFLOAT4(0, 0, 0, 0);
         auto up = DirectX::XMFLOAT4(0, 1, 0, 0);
         auto view = DirectX::XMMatrixLookAtRH(DirectX::XMLoadFloat4(&eye),
             DirectX::XMLoadFloat4(&lookAt), DirectX::XMLoadFloat4(&up));
+
+        this->cam.set_fovy(90.0f);
+        this->cam.set_aspect_ratio(static_cast<float>(viewport.Width) / static_cast<float>(viewport.Height));
+        auto mat = DirectX::XMFLOAT4X4(glm::value_ptr(this->cam.get_projection_mx()));
+        projection = DirectX::XMLoadFloat4x4(&mat);
+
+        this->cam.set_look(glm::vec3(0, 0, 0.5f * (this->mmpld_header.bounding_box[5] - this->mmpld_header.bounding_box[2])), glm::vec3(), glm::vec3(0, 1, 0));
+        mat = DirectX::XMFLOAT4X4(glm::value_ptr(this->cam.get_view_mx()));
+        view = DirectX::XMLoadFloat4x4(&mat);
 
         auto viewDet = DirectX::XMMatrixDeterminant(view);
         auto viewInv = DirectX::XMMatrixInverse(&viewDet, view);
@@ -189,7 +200,6 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
         DirectX::XMStoreFloat4x4(&constants.ViewProjInvMatrix,
             DirectX::XMMatrixTranspose(viewProjInv));
 
-        // TODO: read from device
         constants.Viewport.x = 0.0f;
         constants.Viewport.y = 0.0f;
         constants.Viewport.z = viewport.Width;
