@@ -22,7 +22,7 @@ PsInput Main(VsInput input) {
 
     //// Scale rectangle to match size of the target rectangle of the stream.
     //// After that, we are working in pixel units of the virtual display, which
-    //// are the pixel units of the local window, too. At this point, the centre
+    //// are the pixel units of the local window, too. At this point, the centre 
     //// of the virtual display, the centre of the window and the centre of the
     //// target are the same point.
     //pos *= TargetRect.zw;
@@ -47,6 +47,8 @@ PsInput Main(VsInput input) {
 
     //// Scale from virtual display coordinates to NDC range of [-1, 1].
     //pos /= 0.5f * GlobalBounds.zw;
+
+    pos *= 2.0f;
 
     retval.Position = float4(pos.x, pos.y, 0.5f, 1.0f);
     return retval;

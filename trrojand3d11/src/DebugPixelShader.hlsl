@@ -12,8 +12,11 @@ SamplerState LinearSampler : register(s0);
 /// <summary>
 /// Entry point of the pixel shader.
 /// </summary>
-float4 Main(PsInput input) : SV_TARGET{
-    float4 retval = float4(0.0f, 0.0f, 0.0f, 0.0f);
-    retval = ImgTexture.Sample(LinearSampler, input.TexCoords);
+PsOutput Main(PsInput input) : SV_TARGET{
+    PsOutput retval = (PsOutput) 0;
+
+    //retval.Colour = float4(1.0f, 0.0f, 0.0f, 0.0f);
+    retval.Colour  = ImgTexture.Sample(LinearSampler, input.TexCoords);
+
     return retval;
 }

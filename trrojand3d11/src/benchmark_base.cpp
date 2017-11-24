@@ -71,7 +71,7 @@ trrojan::result trrojan::d3d11::benchmark_base::run(const configuration& c) {
     // Check whether the device has been changed. This should always be done
     // first, because all GPU resources, which depend on the content of 'c',
     // depend on the device as their storage location.
-    if (contains(factor_device, changed)) {
+    if (contains(changed, factor_device)) {
         log::instance().write_line(log_level::verbose, "The D3D device has "
             "changed. Reallocating all graphics resources ...");
         this->render_target = std::make_shared<bench_render_target>(device);
@@ -80,7 +80,7 @@ trrojan::result trrojan::d3d11::benchmark_base::run(const configuration& c) {
     }
 
     // Resize the render target if the viewport has changed.
-    if (contains(factor_viewport, changed)) {
+    if (contains(changed, factor_viewport)) {
         auto vp = c.get<viewport_type>(factor_viewport);
         log::instance().write_line(log_level::verbose, "Resizing the "
             "benchmarking render target to %d × %d px ...", vp[0], vp[1]);
@@ -107,17 +107,22 @@ trrojan::result trrojan::d3d11::benchmark_base::run(const configuration& c) {
 
     this->render_target->clear();
     this->render_target->enable();
-    return this->on_run(*device, c, changed);
+    auto retval = this->on_run(*device, c, changed);
+    this->update_debug_staging_texture();
+    return retval;
 }
 
 
 /*
- * trrojan::d3d11::benchmark_base::contains
+ * trrojan::d3d11::benchmark_base::update_debug_staging_texture
  */
-bool trrojan::d3d11::benchmark_base::contains(const std::string& needle,
-        const std::vector<std::string>& haystack) {
-    auto it = std::find(haystack.begin(), haystack.end(), needle);
-    return (it != haystack.end());
+void trrojan::d3d11::benchmark_base::update_debug_staging_texture(void) {
+    if (this->render_target != nullptr) {
+        log::instance().write_line(log_level::verbose, "Staging benchmark "
+            "output for display in debug window.");
+        this->render_target->update_staging_buffer();
+        //::Sleep(10 * 1000);
+    }
 }
 
 

@@ -5,6 +5,8 @@
 
 #pragma once
 
+#include <functional>
+
 #include <Windows.h>
 
 #include "trrojan/d3d11/export.h"
@@ -26,6 +28,9 @@ namespace d3d11 {
         /// </summary>
         virtual ~debugable(void) = default;
 
+        /// <summary>
+        /// Gets the shared staging texture.
+        /// </summary>
         virtual HANDLE get_debug_staging_texture(void) = 0;
 
     protected:

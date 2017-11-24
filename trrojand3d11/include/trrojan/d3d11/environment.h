@@ -54,7 +54,7 @@ namespace d3d11 {
         /// <summary>
         /// Enables the debug view and displays the given content.
         /// </summary>
-        inline void show_debug_view(d3d11::debugable& content) {
+        inline void show_debug_view(debugable& content) {
             this->_debug_view->show(content);
         }
 

@@ -58,9 +58,6 @@ namespace d3d11 {
 
     protected:
 
-        static bool contains(const std::string& needle,
-            const std::vector<std::string>& haystack);
-
         benchmark_base(const std::string& name);
 
         /// <summary>
@@ -75,6 +72,8 @@ namespace d3d11 {
         virtual trrojan::result on_run(d3d11::device& device,
             const configuration& config,
             const std::vector<std::string>& changed) = 0;
+
+        virtual void update_debug_staging_texture(void);
 
     private:
 

@@ -16,6 +16,10 @@
 #include "trrojan/d3d11/render_target.h"
 
 
+/* Forward declatations. */
+struct DebugConstants;
+
+
 namespace trrojan {
 namespace d3d11 {
 
@@ -23,7 +27,7 @@ namespace d3d11 {
     /// The debug view is a render target with a window and a message pumping
     /// thread.
     /// </summary>
-    class TRROJAND3D11_API debug_view : public render_target_base {
+    class TRROJAND3D11_API debug_view {
 
     public:
 
@@ -60,7 +64,7 @@ namespace d3d11 {
         /// <summary>
         /// Shows the debug window.
         /// </summary>
-        void show(d3d11::debugable& content);
+        void show(debugable& content);
 
     private:
 
@@ -86,7 +90,43 @@ namespace d3d11 {
         /// </summary>
         void message_loop(void);
 
-        ATL::CComPtr<ID3D11Texture2D> content;
+        void set_rtv(ID3D11Texture2D *texture);
+
+        /// <summary>
+        /// GPU buffer for <see cref="constants" />.
+        /// </summary>
+        ATL::CComPtr<ID3D11Buffer> cbConstants;
+
+        /// <summary>
+        /// The per-frame constants of the debug view.
+        /// </summary>
+        std::unique_ptr<DebugConstants> constants;
+
+        /// <summary>
+        /// Immediate context of <see cref="debug_view::device" />.
+        /// </summary>
+        ATL::CComPtr<ID3D11DeviceContext> context;
+
+        /// <summary>
+        /// Lock for the shared resource beneath
+        /// <see cref="debug_view::contentView" />.
+        /// </summary>
+        ATL::CComPtr<IDXGIKeyedMutex> contentLock;
+
+        /// <summary>
+        /// Shader resource view for the content texture.
+        /// </summary>
+        ATL::CComPtr<ID3D11ShaderResourceView> contentView;
+
+        /// <summary>
+        /// Depth/stencil state disabling depth test.
+        /// </summary>
+        ATL::CComPtr<ID3D11DepthStencilState> depthState;
+
+        /// <summary>
+        /// The device used for rendering the debug view.
+        /// </summary>
+        ATL::CComPtr<ID3D11Device> device;
 
         /// <summary>
         /// The handle of the debug window.
@@ -109,6 +149,21 @@ namespace d3d11 {
         ATL::CComPtr<ID3D11PixelShader> pixelShader;
 
         /// <summary>
+        /// The rasteriser state of the debugging renderer.
+        /// </summary>
+        ATL::CComPtr<ID3D11RasterizerState> rasteriserState;
+
+        /// <summary>
+        /// The render target view.
+        /// </summary>
+        ATL::CComPtr<ID3D11RenderTargetView> rtv;
+
+        /// <summary>
+        /// A linear sampler.
+        /// </summary>
+        ATL::CComPtr<ID3D11SamplerState> samplerState;
+
+        /// <summary>
         /// The swap chain for the window.
         /// </summary>
         ATL::CComPtr<IDXGISwapChain> swapChain;
@@ -117,6 +172,11 @@ namespace d3d11 {
         /// The vertex shader for drawing the screen-aligned quad.
         /// </summary>
         ATL::CComPtr<ID3D11VertexShader> vertexShader;
+
+        /// <summary>
+        /// The viewport of the debug view.
+        /// </summary>
+        D3D11_VIEWPORT viewport;
     };
 }
 }

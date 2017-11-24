@@ -158,6 +158,16 @@ namespace trrojan {
     protected:
 
         /// <summary>
+        /// Answer whether the array <paramref name="haystack" /> contains
+        /// <paramref name="needle" />.
+        /// </summary>
+        /// <param name="haystack"></param>
+        /// <param name="needle"></param>
+        /// <returns></returns>
+        static bool contains(const std::vector<std::string>& haystack,
+            const std::string& needle);
+
+        /// <summary>
         /// Merges all system factors into <paramref name="c" />.
         /// </summary>
         static trrojan::configuration& merge_system_factors(

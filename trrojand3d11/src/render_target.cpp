@@ -40,6 +40,22 @@ void trrojan::d3d11::render_target_base::enable(void) {
 
 
 /*
+ * trrojan::d3d11::render_target_base::update_staging_buffer
+ */
+void trrojan::d3d11::render_target_base::update_staging_buffer(void) {
+    if (this->_staging_buffer_lock != nullptr) {
+        assert(this->_back_buffer != nullptr);
+        assert(this->_staging_buffer != nullptr);
+        this->_staging_buffer_lock->AcquireSync(0, INFINITE);
+        this->_device_context->CopyResource(this->_staging_buffer,
+            this->_back_buffer);
+        this->_staging_buffer_lock->ReleaseSync(0);
+    }
+}
+
+
+
+/*
  * trrojan::d3d11::render_target_base::render_target_base
  */
 trrojan::d3d11::render_target_base::render_target_base(
@@ -62,7 +78,10 @@ void trrojan::d3d11::render_target_base::set_back_buffer(
     assert(backBuffer != nullptr);
     ATL::CComPtr<ID3D11Texture2D> depthBuffer;
 
+    this->_back_buffer = backBuffer;
+
     this->_staging_buffer = nullptr;
+    this->_staging_buffer_lock = nullptr;
     if (createStagingTexture) {
         D3D11_TEXTURE2D_DESC texDesc;
         backBuffer->GetDesc(&texDesc);
@@ -75,11 +94,16 @@ void trrojan::d3d11::render_target_base::set_back_buffer(
         if (FAILED(hr)) {
             throw ATL::CAtlException(hr);
         }
+
+        hr = this->_staging_buffer->QueryInterface(&this->_staging_buffer_lock);
+        if (FAILED(hr)) {
+            throw ATL::CAtlException(hr);
+        }
     }
 
     {
-        auto hr = this->_device->CreateRenderTargetView(backBuffer, nullptr,
-            &this->_rtv);
+        auto hr = this->_device->CreateRenderTargetView(this->_back_buffer,
+            nullptr, &this->_rtv);
         if (FAILED(hr)) {
             throw ATL::CAtlException(hr);
         }
@@ -87,7 +111,7 @@ void trrojan::d3d11::render_target_base::set_back_buffer(
 
     {
         D3D11_TEXTURE2D_DESC texDesc;
-        backBuffer->GetDesc(&texDesc);
+        this->_back_buffer->GetDesc(&texDesc);
         texDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
         texDesc.Format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT;
 

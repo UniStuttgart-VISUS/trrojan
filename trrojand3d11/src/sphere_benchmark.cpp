@@ -119,7 +119,7 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
     SphereConstants constants;
     auto ctx = device.d3d_context();
     auto dev = device.d3d_device();
-    auto isNewDevice = contains(factor_device, changed);
+    auto isNewDevice = contains(changed, factor_device);
     D3D11_VIEWPORT viewport;
 
     if (isNewDevice) {
@@ -136,14 +136,14 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
             static_cast<UINT>(sizeof(SphereConstants)));
     }
 
-    if (contains(factor_data_set, changed)) {
+    if (contains(changed, factor_data_set)) {
         auto path = config.get<std::string>(factor_data_set);
         log::instance().write_line(log_level::verbose, "Loading MMPLD data set "
             "\"%s\" ...", path.c_str());
         this->open_mmpld(path.c_str());
     }
 
-    if (isNewDevice || contains(factor_frame, changed)) {
+    if (isNewDevice || contains(changed, factor_frame)) {
         // Read the frame.
         auto frame = config.get<frame_type>(factor_frame);
         log::instance().write_line(log_level::verbose, "Loading MMPLD frame "

@@ -94,14 +94,28 @@ void trrojan::d3d11::environment::on_initialise(const cmd_line& cmdLine) {
 
     for (UINT a = 0; SUCCEEDED(hr) || (hr != DXGI_ERROR_NOT_FOUND); ++a) {
         ATL::CComPtr<IDXGIAdapter> adapter;
+        DXGI_ADAPTER_DESC desc;
         ATL::CComPtr<ID3D11Device> device;
 
         hr = factory->EnumAdapters(a, &adapter);
+        if (SUCCEEDED(hr)) {
+            hr = adapter->GetDesc(&desc);
+        }
+
+        if (SUCCEEDED(hr)) {
+            if ((desc.VendorId == 0x1414) && (desc.DeviceId == 0x8c)) {
+                // Skip Microsoft's software emulation (cf.
+                // https://msdn.microsoft.com/en-us/library/windows/desktop/bb205075(v=vs.85).aspx)
+                continue;
+            }
+        }
+
         if (SUCCEEDED(hr)) {
             hr = ::D3D11CreateDevice(adapter, D3D_DRIVER_TYPE_UNKNOWN, NULL,
                 deviceFlags, NULL, 0, D3D11_SDK_VERSION, &device,
                 &featureLevel, nullptr);//&immediateContext);
         }
+
         if (SUCCEEDED(hr)) {
             this->_devices.push_back(std::make_shared<d3d11::device>(device));
         }

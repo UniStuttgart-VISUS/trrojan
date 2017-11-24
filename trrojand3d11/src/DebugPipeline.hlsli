@@ -23,8 +23,18 @@ struct PsInput {
     float4 Position : SV_POSITION;
     float2 TexCoords : TEXCOORD0;
 };
+
+
+/// <summary>
+/// Output of pixel shader stage.
+/// </summary>
+struct PsOutput {
+    float4 Colour : SV_TARGET;
+};
+
 #endif /* _MSC_VER */
 
 cbuffer DebugConstants CBUFFER(0) {
-    float4 Viewport;
+    float2 ImageSize;
+    float2 ViewportSize;
 };

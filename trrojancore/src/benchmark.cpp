@@ -152,6 +152,16 @@ size_t trrojan::benchmark_base::run(const configuration_set& configs,
 
 
 /*
+ * trrojan::benchmark_base::contains
+ */
+bool trrojan::benchmark_base::contains(const std::vector<std::string>& haystack,
+        const std::string& needle) {
+    auto it = std::find(haystack.begin(), haystack.end(), needle);
+    return (it != haystack.end());
+}
+
+
+/*
  * trrojan::benchmark_base::merge_system_factors
  */
 trrojan::configuration& trrojan::benchmark_base::merge_system_factors(

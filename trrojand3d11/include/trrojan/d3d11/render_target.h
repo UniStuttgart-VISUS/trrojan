@@ -82,6 +82,12 @@ namespace d3d11 {
             return this->_staging_buffer;
         }
 
+        /// <summary>
+        /// If available, fill the staging buffer with the content of the back
+        /// buffer.
+        /// </summary>
+        void update_staging_buffer(void);
+
         render_target_base& operator =(const render_target_base&) = delete;
 
     protected:
@@ -122,6 +128,11 @@ namespace d3d11 {
     private:
 
         /// <summary>
+        /// Preserves the back buffer texture.
+        /// </summary>
+        ATL::CComPtr<ID3D11Texture2D> _back_buffer;
+
+        /// <summary>
         /// The device the render target lives on.
         /// </summary>
         ATL::CComPtr<ID3D11Device> _device;
@@ -135,6 +146,11 @@ namespace d3d11 {
         /// Holds a staging buffer for sharing the back buffer.
         /// </summary>
         ATL::CComPtr<ID3D11Texture2D> _staging_buffer;
+
+        /// <summary>
+        /// The staging buffer lock for writing stuff to the buffer.
+        /// </summary>
+        ATL::CComPtr<IDXGIKeyedMutex> _staging_buffer_lock;
     };
 
 

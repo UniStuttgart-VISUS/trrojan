@@ -20,9 +20,9 @@
 /*
  * trrojan::d3d11::debug_view::debug_view
  */
-trrojan::d3d11::debug_view::debug_view(void) : render_target_base(nullptr),
-        hWnd(NULL), isRunning(true) {
+trrojan::d3d11::debug_view::debug_view(void) : hWnd(NULL), isRunning(true) {
     try {
+        this->constants = std::make_unique<DebugConstants>();
         this->initialise();
         this->msgPump = std::thread(std::bind(&debug_view::message_loop,
             std::ref(*this)));
@@ -36,6 +36,11 @@ trrojan::d3d11::debug_view::debug_view(void) : render_target_base(nullptr),
  * trrojan::d3d11::debug_view::~debug_view
  */
 trrojan::d3d11::debug_view::~debug_view(void) {
+    if (this->hWnd != NULL) {
+        ::DestroyWindow(this->hWnd);
+        this->hWnd = NULL;
+    }
+
     this->isRunning = false;
     if (this->msgPump.joinable()) {
         this->msgPump.join();
@@ -52,8 +57,7 @@ void trrojan::d3d11::debug_view::resize(const unsigned int width,
     DXGI_SWAP_CHAIN_DESC desc;
 
     // Release existing views.
-    this->_rtv = nullptr;
-    this->_dsv = nullptr;
+    this->rtv = nullptr;
 
     {
         auto hr = this->swapChain->GetDesc(&desc);
@@ -79,8 +83,20 @@ void trrojan::d3d11::debug_view::resize(const unsigned int width,
             throw ATL::CAtlException(hr);
         }
 
-        this->set_back_buffer(backBuffer.p);
+        this->set_rtv(backBuffer.p);
     }
+
+    this->viewport.TopLeftX = 0.0f;
+    this->viewport.TopLeftY = 0.0f;
+    this->viewport.Width = static_cast<float>(width);
+    this->viewport.Height = static_cast<float>(height);
+    this->viewport.MinDepth = 0.0f;
+    this->viewport.MaxDepth = 1.0f;
+
+    this->constants->ViewportSize.x = this->viewport.Width;
+    this->constants->ViewportSize.y = this->viewport.Height;
+    this->cbConstants = create_buffer(this->device, D3D11_USAGE_DEFAULT,
+        D3D11_BIND_CONSTANT_BUFFER, &this->constants, sizeof(DebugConstants));
 }
 
 
@@ -88,11 +104,43 @@ void trrojan::d3d11::debug_view::resize(const unsigned int width,
  * trrojan::d3d11::debug_view::show
  */
 void trrojan::d3d11::debug_view::show(debugable& content) {
-    auto hRes = content.get_debug_staging_texture();
-    if (hRes != nullptr) {
-        this->content = nullptr;
-        
-        auto hr = this->device()->OpenSharedResource(hRes, IID_ID3D11Texture2D, reinterpret_cast<void **>(&this->content));
+    auto hResource = content.get_debug_staging_texture();
+    this->contentLock = nullptr;
+    this->contentView = nullptr;
+
+    if (hResource != nullptr) {
+        auto hr = S_OK;
+        ATL::CComPtr<ID3D11Texture2D> tex;
+
+        if (SUCCEEDED(hr)) {
+            // Open the staging texture shared by 'content'.
+            hr = this->device->OpenSharedResource(hResource,
+                IID_ID3D11Texture2D, reinterpret_cast<void **>(&tex));
+        }
+
+        if (SUCCEEDED(hr)) {
+            // Get the lock of the staging texture.
+            hr = tex->QueryInterface(&this->contentLock);
+        }
+
+        if (SUCCEEDED(hr)) {
+            // Create a resource view for it.
+            D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
+            D3D11_TEXTURE2D_DESC texDesc;
+
+            tex->GetDesc(&texDesc);
+            ::ZeroMemory(&srvDesc, sizeof(srvDesc));
+            srvDesc.Format = texDesc.Format;
+            srvDesc.ViewDimension = D3D_SRV_DIMENSION_TEXTURE2D;
+            srvDesc.Texture2D.MipLevels = texDesc.MipLevels;
+
+            this->constants->ImageSize.x = static_cast<float>(texDesc.Width);
+            this->constants->ImageSize.y = static_cast<float>(texDesc.Height);
+
+            hr = this->device->CreateShaderResourceView(tex, &srvDesc,
+                &this->contentView);
+        }
+
         if (SUCCEEDED(hr)) {
             ::ShowWindow(this->hWnd, SW_SHOW);
         }
@@ -157,12 +205,10 @@ LRESULT trrojan::d3d11::debug_view::wndProc(HWND hWnd, UINT msg,
  * trrojan::d3d11::debug_view::init
  */
 void trrojan::d3d11::debug_view::initialise(void) {
-    assert(this->_rtv == nullptr);
-    assert(this->_dsv == nullptr);
-    assert(this->device() == nullptr);
-    assert(this->device_context() == nullptr);
+    assert(this->rtv == nullptr);
+    assert(this->device == nullptr);
+    assert(this->context == nullptr);
     assert(this->hWnd == NULL);
-    ATL::CComPtr<ID3D11Device> device;
 
     const auto hInstance = ::GetModuleHandle(NULL);
     if (hInstance == NULL) {
@@ -226,11 +272,11 @@ void trrojan::d3d11::debug_view::initialise(void) {
 
         auto hr = ::D3D11CreateDeviceAndSwapChain(nullptr,
             D3D_DRIVER_TYPE_HARDWARE, NULL, 0, nullptr, 0, D3D11_SDK_VERSION,
-            &swapDesc, &this->swapChain, &device, nullptr, nullptr);
+            &swapDesc, &this->swapChain, &this->device, nullptr,
+            &this->context);
         if (FAILED(hr)) {
             throw ATL::CAtlException(hr);
         }
-        this->set_device(device.p);
     }
 
     {
@@ -242,7 +288,50 @@ void trrojan::d3d11::debug_view::initialise(void) {
             throw ATL::CAtlException(hr);
         }
 
-        this->set_back_buffer(backBuffer.p);
+        this->set_rtv(backBuffer.p);
+    }
+
+    {
+        D3D11_RASTERIZER_DESC rasterDesc;
+        ::ZeroMemory(&rasterDesc, sizeof(rasterDesc));
+
+        rasterDesc.FillMode = D3D11_FILL_SOLID;
+        rasterDesc.CullMode = D3D11_CULL_NONE;
+        rasterDesc.DepthClipEnable = FALSE;
+
+        auto hr = device->CreateRasterizerState(&rasterDesc,
+            &this->rasteriserState);
+        if (FAILED(hr)) {
+            throw ATL::CAtlException(hr);
+        }
+    }
+
+    {
+        D3D11_SAMPLER_DESC desc;
+        ::ZeroMemory(&desc, sizeof(desc));
+
+        desc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+        desc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+        desc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+        desc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+
+        auto hr = device->CreateSamplerState(&desc, &this->samplerState);
+        if (FAILED(hr)) {
+            throw ATL::CAtlException(hr);
+        }
+    }
+
+    {
+        D3D11_DEPTH_STENCIL_DESC desc;
+        ::ZeroMemory(&desc, sizeof(desc));
+
+        desc.DepthEnable = FALSE;
+        desc.DepthFunc = D3D11_COMPARISON_ALWAYS;
+
+        auto hr = device->CreateDepthStencilState(&desc, &this->depthState);
+        if (FAILED(hr)) {
+            throw ATL::CAtlException(hr);
+        }
     }
 
     this->pixelShader = create_pixel_shader(device, ::DebugPixelShaderBytes);
@@ -258,6 +347,7 @@ void trrojan::d3d11::debug_view::initialise(void) {
  * trrojan::d3d11::debug_view::run
  */
 void trrojan::d3d11::debug_view::message_loop(void) {
+    static const float CLEAR_COLOUR[] = { 0.0f, 0.0f, 0.0f, 0.0f };
     MSG msg;
 
     while (this->isRunning) {
@@ -270,8 +360,54 @@ void trrojan::d3d11::debug_view::message_loop(void) {
             }
 
         } else {
-            this->clear();
+            this->context->ClearRenderTargetView(this->rtv, CLEAR_COLOUR);
+
+            this->context->UpdateSubresource(this->cbConstants, 0, nullptr,
+                this->constants.get(), 0, 0);
+
+            this->context->VSSetShader(this->vertexShader, nullptr, 0);
+            this->context->VSSetConstantBuffers(0, 1, &this->cbConstants.p);
+
+            this->context->GSSetShader(nullptr, nullptr, 0);
+
+            this->context->PSSetShader(this->pixelShader, nullptr, 0);
+            this->context->PSSetSamplers(0, 1, &this->samplerState.p);
+            this->context->PSSetShaderResources(0, 1, &this->contentView.p);
+
+            this->context->IASetInputLayout(nullptr);
+            this->context->IASetVertexBuffers(0, 0, nullptr, nullptr, nullptr);
+            this->context->IASetPrimitiveTopology(
+                D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+
+            this->context->RSSetState(this->rasteriserState);
+            this->context->RSSetViewports(1, &this->viewport);
+
+            this->context->OMSetDepthStencilState(this->depthState, 0);
+            this->context->OMSetRenderTargets(1, &this->rtv.p, nullptr);
+
+            auto l = this->contentLock;
+            if (l != nullptr) {
+                l->AcquireSync(0, INFINITE);
+                this->context->Draw(4, 0);
+                l->ReleaseSync(0);
+            }
+
             this->swapChain->Present(0, 0);
         }
+    }
+}
+
+
+/*
+ * trrojan::d3d11::debug_view::set_rtv
+ */
+void trrojan::d3d11::debug_view::set_rtv(ID3D11Texture2D *texture) {
+    assert(texture != nullptr);
+    assert(this->rtv == nullptr);
+
+    auto hr = this->device->CreateRenderTargetView(texture, nullptr,
+        &this->rtv);
+    if (FAILED(hr)) {
+        throw ATL::CAtlException(hr);
     }
 }
