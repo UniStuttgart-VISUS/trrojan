@@ -82,6 +82,11 @@ __kernel void volumeRender(
     if(any(globalId >= get_image_dim(outData)))
         return;
 
+    // pseudo random number [0,1] for ray offsets to avoid moire patterns
+    float iptr;
+    float rand = fract(sin(dot(convert_float2(globalId),
+                       (float2)(12.9898f, 78.233f))) * 43758.5453f, &iptr);
+
     float stepSize = native_divide(stepSizeFactor, (float)max(volRes.x, max(volRes.y, volRes.z)));
     stepSize *= 8.0f; // normalization to octile
 
@@ -110,7 +115,7 @@ __kernel void volumeRender(
 
     float3 rayDir = (float3)(0.0f);
     float tnear = 0.0f;
-    float tfar = 1.f;// FLT_MAX;
+    float tfar = FLT_MAX;
     int hit = 0;
     
     /***CAMERA***/
@@ -124,7 +129,7 @@ __kernel void volumeRender(
         return;
     }
 
-    tnear = max(0.0f, tnear);     // clamp to near plane
+    tnear = max(0.f, tnear + rand*stepSize); // clamp to near plane and offset by 'random' distance
 
     // march along ray from front to back, accumulating color
     float4 color = (float4)(1.0f, 1.0f, 1.0f, 0.0f);

@@ -117,7 +117,7 @@ trrojan::opencl::volume_raycast_benchmark::volume_raycast_benchmark(void)
                                           test_volume));
     // transfer function file name, use a provided linear transfer function file as default
     this->_default_configs.add_factor(factor::from_manifestations(factor_tff_file_name,
-                                                                  std::string("fallback")));
+                                                                  std::string("default")));
     // Down or up-scaling factor for volume data.
     this->_default_configs.add_factor(factor::from_manifestations(factor_volume_scaling, 1.0));
 
@@ -451,8 +451,10 @@ trrojan::result trrojan::opencl::volume_raycast_benchmark::run(const configurati
         auto dev = cfg.find(factor_device)->value().as<trrojan::device>();
         device::pointer dev_ptr = std::dynamic_pointer_cast<device>(dev);
         auto file = cfg.find(factor_volume_file_name)->value().as<std::string>();
+        auto rot = cfg.find(factor_cam_rotation)->value().as<std::array<float, 4>>();
         std::size_t found = file.find_last_of("/\\");
-        trrojan::save_image(dev_ptr->name() + "_" + file.substr(found + 1) + ".png",
+        trrojan::save_image("img/" + dev_ptr->name() + "_" + file.substr(found + 1) + "_"
+                            + std::to_string(rot.at(0)+rot.at(1)+rot.at(2)+ rot.at(3)) + ".png",
                             _output_data.data(), imgSize.at(0), imgSize.at(1), 4);
     }
 
@@ -557,8 +559,8 @@ void trrojan::opencl::volume_raycast_benchmark::setup_volume_data(
 
     if (changed.count(factor_tff_file_name) || changed.count(factor_environment))
     {
-        load_transfer_function(cfg.find(factor_tff_file_name)->value(),
-                               std::dynamic_pointer_cast<environment>(env));
+        auto file_name = cfg.find(factor_tff_file_name)->value().as<std::string>();
+        load_transfer_function(file_name, std::dynamic_pointer_cast<environment>(env));
     }
 }
 
@@ -619,24 +621,20 @@ void trrojan::opencl::volume_raycast_benchmark::load_transfer_function(
         const std::string file_name,
         environment::pointer env)
 {
-    // The size of the transfer function vector (256 * RGBA values).
-    size_t num_values = 256*4;
     std::vector<unsigned char> values;
 
-    if (file_name == "fallback")
+    if (file_name == "default")
     {
         log::instance().write_line(log_level::warning,
                                    "No transfer function file defined, falling back"
                                    " to default: linear function in range [0;1].");
-        for (size_t i = 0; i < num_values; ++i)
+        // The size of the transfer function vector (256 * RGBA values).
+        for (size_t i = 0; i < 256; ++i)
         {
-            for (int j = 0; j < 1; ++j)
-            {
-                values.push_back(i);
-                values.push_back(0);
-                values.push_back(0);
-                values.push_back(i);
-            }
+            values.push_back(i);
+            values.push_back(0);
+            values.push_back(0);
+            values.push_back(i);
         }
     }
     else    // try to read file
@@ -646,14 +644,14 @@ void trrojan::opencl::volume_raycast_benchmark::load_transfer_function(
         log::instance().write(log_level::information, os.str().c_str());
 
         std::ifstream tff_file(file_name, std::ios::in);
-        unsigned char value;
+        float value;
 
         // read lines from file and split on whitespace
         if (tff_file.is_open())
         {
             while (tff_file >> value)
             {
-                values.push_back(value);
+                values.push_back((char)floor(value*255));
             }
             tff_file.close();
         }
@@ -665,21 +663,17 @@ void trrojan::opencl::volume_raycast_benchmark::load_transfer_function(
         }
     }
 
-    // Trunctualte if there are too many values respectively fill with zero values.
-    // We multiply by 4 because of the values for RGBA-channels.
-    values.resize(num_values * 4, 0);
-
-    // create OpenCL 1d image representation
+    // create OpenCL 1D image representation
     cl::ImageFormat format;
     format.image_channel_order = CL_RGBA;
-    // Seems like intel IGP does not support float textures as input: use uint8 here.
+    // Seems like Intel IGP does not support float textures as input: use uint8 here.
     format.image_channel_data_type = CL_UNORM_INT8;
     try
     {
         _tff_mem = cl::Image1D(env->get_properties().context,
                                CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
                                format,
-                               num_values,
+                               values.size(),
                                values.data());
     }
     catch (cl::Error err)
