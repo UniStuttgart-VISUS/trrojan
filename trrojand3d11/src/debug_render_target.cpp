@@ -6,15 +6,47 @@
 #include "trrojan/d3d11/debug_render_target.h"
 
 #include <cassert>
+#include <sstream>
 
 #include "trrojan/log.h"
+
+#include "trrojan/d3d11/utilities.h"
+
+
+/*
+ * trrojan::d3d11::debug_render_target::debug_render_target
+ */
+trrojan::d3d11::debug_render_target::debug_render_target(void) : base(nullptr),
+        hWnd(NULL) {
+    this->msgPump = std::thread(std::bind(&debug_render_target::doMsg,
+        std::ref(*this)));
+}
 
 
 /*
  * trrojan::d3d11::debug_render_target::~debug_render_target
  */
 trrojan::d3d11::debug_render_target::~debug_render_target(void) {
-    this->stop();
+    //auto hWnd = this->hWnd.exchange(NULL);
+    //if (hWnd != NULL) {
+    //    ::SendMessage(hWnd, WM_CLOSE, 0, 0);
+    //}
+
+    if (this->msgPump.joinable()) {
+        log::instance().write_line(log_level::information, "Please close the "
+            "debug view to end the programme.");
+        this->msgPump.join();
+    }
+}
+
+
+/*
+ * trrojan::d3d11::debug_render_target::present
+ */
+void trrojan::d3d11::debug_render_target::present(void) {
+    if (this->swapChain != nullptr) {
+        this->swapChain->Present(0, 0);
+    }
 }
 
 
@@ -24,35 +56,80 @@ trrojan::d3d11::debug_render_target::~debug_render_target(void) {
 void trrojan::d3d11::debug_render_target::resize(const unsigned int width,
         const unsigned int height) {
     ATL::CComPtr<ID3D11Texture2D> backBuffer;
+    DXGI_SWAP_CHAIN_DESC desc;
+    HRESULT hr = S_OK;
 
     if (this->swapChain == nullptr) {
-        /* Create window and swap chain. */
+        /* Initial resize. */
+        assert(this->_dsv == nullptr);
+        assert(this->_rtv == nullptr);
         assert(this->device() == nullptr);
         assert(this->device_context() == nullptr);
-        assert(this->hWnd == NULL);
 
-        auto hInstance = ::GetModuleHandle(NULL);
-        if (hInstance == NULL) {
-            throw std::runtime_error("Failed to retrieve instance handle.");
+        while (this->hWnd.load() == nullptr) {
+            log::instance().write_line(log_level::verbose, "Waiting for the "
+                "debug view becoming available ...");
         }
 
-        WNDCLASSEX wndClass;
-        if (!::GetClassInfoEx(hInstance, WINDOW_CLASS, &wndClass)) {
-            ::ZeroMemory(&wndClass, sizeof(WNDCLASSEX));
-            wndClass.cbSize = sizeof(WNDCLASSEX);
-            wndClass.style = CS_CLASSDC;
-            wndClass.lpfnWndProc = debug_render_target::wndProc;
-            wndClass.hInstance = hInstance;
-            wndClass.lpszClassName = WINDOW_CLASS;
+        ::ZeroMemory(&desc, sizeof(desc));
+        desc.BufferCount = 2;
+        desc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+        desc.BufferDesc.Height = width;
+        desc.BufferDesc.Width = height;
+        desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+        desc.OutputWindow = this->hWnd;
+        desc.SampleDesc.Count = 1;
+        desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+        desc.Windowed = TRUE;
 
-            if (!::RegisterClassEx(&wndClass)) {
-                throw std::runtime_error("Failed to register window class for "
-                    "Direct3D 11 debug render target.");
+        {
+            ATL::CComPtr<ID3D11Device> device;
+            UINT deviceFlags = D3D11_CREATE_DEVICE_DISABLE_GPU_TIMEOUT;
+
+#if (defined(DEBUG) || defined(_DEBUG))
+            if (supports_debug_layer()) {
+                deviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
             }
+#endif /* (defined(DEBUG) || defined(_DEBUG)) */
+
+            hr = ::D3D11CreateDeviceAndSwapChain(nullptr,
+                D3D_DRIVER_TYPE_HARDWARE, NULL, deviceFlags, nullptr, 0,
+                D3D11_SDK_VERSION, &desc, &this->swapChain, &device,
+                nullptr, nullptr);
+            if (FAILED(hr)) {
+                throw ATL::CAtlException(hr);
+            }
+
+            this->set_device(device);
         }
 
-        DWORD style = WS_OVERLAPPEDWINDOW & ~WS_SIZEBOX;
-        DWORD styleEx = 0;
+        ::ShowWindow(this->hWnd, SW_SHOW);
+
+    } else {
+        /* Have existing swap chain. */
+        assert(this->hWnd.load() != NULL);
+        this->_rtv = nullptr;
+        this->_dsv = nullptr;
+
+        hr = this->swapChain->GetDesc(&desc);
+        if (FAILED(hr)) {
+            throw ATL::CAtlException(hr);
+        }
+
+        hr = this->swapChain->ResizeBuffers(desc.BufferCount, width,
+            height, desc.BufferDesc.Format, 0);
+        if (FAILED(hr)) {
+            throw ATL::CAtlException(hr);
+        }
+
+    } /* end if (this->swapChain == nullptr) */
+    assert(this->_dsv == nullptr);
+    assert(this->_rtv == nullptr);
+
+    /* Resize the window to match the requested client area. */
+    {
+        DWORD style = ::GetWindowLong(this->hWnd, GWL_STYLE);
+        DWORD styleEx = ::GetWindowLong(this->hWnd, GWL_EXSTYLE);
         RECT wndRect;
 
         wndRect.left = 0;
@@ -60,129 +137,24 @@ void trrojan::d3d11::debug_render_target::resize(const unsigned int width,
         wndRect.right = width;
         wndRect.bottom = height;
         if (::AdjustWindowRectEx(&wndRect, style, FALSE, styleEx) == FALSE) {
-            throw std::runtime_error("Failed to compute window size for "
-                "Direct3D 11 debug render target.");
+            auto hr = __HRESULT_FROM_WIN32(::GetLastError());
+            throw ATL::CAtlException(hr);
         }
 
-        /* Create the window. */
-        this->hWnd = ::CreateWindowEx(styleEx,
-            WINDOW_CLASS,
-            _T("TRRojan"),
-            style,
-            CW_USEDEFAULT, CW_USEDEFAULT,
-            wndRect.right - wndRect.left, wndRect.bottom - wndRect.top,
-            NULL, NULL,
-            hInstance,
-            this);
-        if (this->hWnd == NULL) {
-            throw std::runtime_error("Failed to create window for Direct3D 11 "
-                "debug render target.");
-        }
+        ::SetWindowPos(this->hWnd, HWND_TOP, 0, 0,
+            wndRect.right - wndRect.left,
+            wndRect.bottom - wndRect.top,
+            SWP_NOMOVE | SWP_SHOWWINDOW);
+    }
 
-        ATL::CComPtr<ID3D11Device> device;
-        auto hr = ::D3D11CreateDeviceAndSwapChain(nullptr,
-            D3D_DRIVER_TYPE_HARDWARE, NULL, 0, nullptr, 0, D3D11_SDK_VERSION,
-            nullptr, &this->swapChain, &device, nullptr, nullptr);
-        if (FAILED(hr)) {
-            log::instance().write(log_level::error, "Failed to create Direct3D "
-                "11 with swap chain (error 0x%x).\n", hr);
-            throw std::runtime_error("Failed to create device and swap chain.");
-        }
-        this->set_device(device.p);
-
-    } else {
-        /* Resize existing swap chain. */
-        assert(this->hWnd != NULL);
-        DXGI_SWAP_CHAIN_DESC desc;
-
-        // Release existing views.
-        this->_rtv = nullptr;
-        this->_dsv = nullptr;
-
-        {
-            auto hr = this->swapChain->GetDesc(&desc);
-            if (FAILED(hr)) {
-                log::instance().write(log_level::error, "Failed to retrieve "
-                    "description of existing swap chain (error 0x%x).\n", hr);
-                throw std::runtime_error("Failed to swap chain description.");
-            }
-        }
-
-        {
-            auto hr = this->swapChain->ResizeBuffers(desc.BufferCount,
-                width, height, desc.BufferDesc.Format, 0);
-            if (FAILED(hr)) {
-                log::instance().write(log_level::error, "Failed to resize "
-                    "swap chain (error 0x%x).\n", hr);
-                throw std::runtime_error("Failed to resize swap chain.");
-            }
-        }
-    } /* end if (this->swapChain == nullptr) */
-    assert(this->swapChain != nullptr);
-
-    {
-        auto hr = this->swapChain->GetBuffer(0, IID_ID3D11Texture2D,
-            reinterpret_cast<void **>(&backBuffer));
-        if (FAILED(hr)) {
-            throw std::runtime_error("Failed to retrieve back buffer from "
-                "swap chain.");
-        }
+    /* Re-create the RTV/DSV. */
+    hr = this->swapChain->GetBuffer(0, IID_ID3D11Texture2D,
+        reinterpret_cast<void **>(&backBuffer));
+    if (FAILED(hr)) {
+        throw ATL::CAtlException(hr);
     }
 
     this->set_back_buffer(backBuffer.p);
-}
-
-
-/*
- * trrojan::d3d11::debug_render_target::run
- */
-int trrojan::d3d11::debug_render_target::run(debugable object) {
-    if (object != nullptr) {
-        MSG msg;
-
-        while (this->isRunning) {
-            if (::PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
-                ::TranslateMessage(&msg);
-                ::DispatchMessage(&msg);
-
-            } else {
-                this->clear();
-                this->object->draw_debug_view(this->device(),
-                    this->device_context());
-                this->swapChain->Present(0, 0);
-            }
-        }
-    } /* end if (object != nullptr) */
-
-    return 0;
-}
-
-
-/*
- * trrojan::d3d11::debug_render_target::start
- */
-void trrojan::d3d11::debug_render_target::start(debugable object) {
-    bool expected = false;
-    if (!this->isRunning.compare_exchange_strong(expected, true)) {
-        throw std::logic_error("The debug_render_target cannot be started "
-            "while it is running.");
-    }
-
-    if (object != nullptr) {
-        this->msgPump = std::thread(std::bind(&debug_render_target::run,
-            std::ref(*this), object));
-    }
-}
-
-
-/*
- * trrojan::d3d11::debug_render_target::stop
- */
-void trrojan::d3d11::debug_render_target::stop(void) {
-    this->isRunning = false;
-    if (this->msgPump.joinable()) {
-        this->msgPump.join();
-    }
 }
 
 
@@ -214,21 +186,13 @@ LRESULT trrojan::d3d11::debug_render_target::wndProc(HWND hWnd, UINT msg,
             }
             break;
 
+        case WM_CLOSE:
+            ::PostQuitMessage(0);
+            break;
+
         case WM_KEYDOWN:
             if ((wParam == VK_ESCAPE) && (that != nullptr)) {
-                that->isRunning = false;
-            }
-            break;
-
-        case WM_QUIT:
-            if (that != nullptr) {
-                that->isRunning = false;
-            }
-            break;
-
-        case WM_SIZE:
-            if (that != nullptr) {
-                that->resize(LOWORD(lParam), HIWORD(lParam));
+                ::PostQuitMessage(0);
             }
             break;
 
@@ -238,4 +202,61 @@ LRESULT trrojan::d3d11::debug_render_target::wndProc(HWND hWnd, UINT msg,
     }
 
     return retval;
+}
+
+
+
+/*
+ * trrojan::d3d11::debug_render_target::doMsg
+ */
+void trrojan::d3d11::debug_render_target::doMsg(void) {
+    MSG msg;
+
+    const auto hInstance = ::GetModuleHandle(NULL);
+    if (hInstance == NULL) {
+        auto hr = __HRESULT_FROM_WIN32(::GetLastError());
+        throw ATL::CAtlException(hr);
+    }
+
+    {
+        WNDCLASSEX wndClass;
+        if (!::GetClassInfoEx(hInstance, WINDOW_CLASS, &wndClass)) {
+            ::ZeroMemory(&wndClass, sizeof(WNDCLASSEX));
+            wndClass.cbSize = sizeof(WNDCLASSEX);
+            wndClass.style = CS_CLASSDC;
+            wndClass.lpfnWndProc = debug_render_target::wndProc;
+            wndClass.hInstance = hInstance;
+            wndClass.lpszClassName = WINDOW_CLASS;
+
+            if (!::RegisterClassEx(&wndClass)) {
+                auto hr = __HRESULT_FROM_WIN32(::GetLastError());
+                throw ATL::CAtlException(hr);
+            }
+        }
+    }
+
+    {
+        DWORD style = WS_OVERLAPPEDWINDOW & ~WS_SIZEBOX;
+        DWORD styleEx = 0;
+
+        /* Create the window. */
+        this->hWnd = ::CreateWindowEx(styleEx,
+            WINDOW_CLASS,
+            _T("TRRojan"),
+            style,
+            CW_USEDEFAULT, CW_USEDEFAULT,
+            CW_USEDEFAULT, CW_USEDEFAULT,
+            NULL, NULL,
+            hInstance,
+            this);
+        if (this->hWnd.load() == NULL) {
+            auto hr = __HRESULT_FROM_WIN32(::GetLastError());
+            throw ATL::CAtlException(hr);
+        }
+    }
+
+    while (::GetMessage(&msg, NULL, 0, 0)) {
+        ::TranslateMessage(&msg);
+        ::DispatchMessage(&msg);
+    }
 }

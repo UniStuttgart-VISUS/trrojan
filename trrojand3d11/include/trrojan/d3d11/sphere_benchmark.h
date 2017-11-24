@@ -7,6 +7,7 @@
 
 #include <unordered_map>
 
+#include "trrojan/camera.h"
 #include "trrojan/timer.h"
 
 #include "trrojan/d3d11/benchmark_base.h"
@@ -25,7 +26,16 @@ namespace d3d11 {
 
     public:
 
-        static const std::string factor_data_set;
+        typedef std::uint32_t frame_type;
+
+        static const char *factor_data_set;
+        static const char *factor_frame;
+        static const char *factor_method;
+
+        static const char *method_geosprite;
+        static const char *method_tesssprite;
+        static const char *method_tesssphere;
+        static const char *method_tesshemisphere;
 
         sphere_benchmark(void);
 
@@ -47,23 +57,20 @@ namespace d3d11 {
     protected:
 
         /// <inheritdoc />
-        virtual void on_device_changed(d3d11::device& device,
-            const configuration& config);
-
-        /// <inheritdoc />
         virtual trrojan::result on_run(d3d11::device& device,
-            const configuration& config);
+            const configuration& config,
+            const std::vector<std::string>& changed);
 
     private:
 
-        struct resources : public benchmark_base::resources {
-            ATL::CComPtr<ID3D11GeometryShader> GeometryShader;
-        };
+        trrojan::perspective_camera cam;
+        ATL::CComPtr<ID3D11Buffer> constant_buffer;
+        ATL::CComPtr<ID3D11GeometryShader> geometry_shader;
+        ATL::CComPtr<ID3D11InputLayout> input_layout;
+        ATL::CComPtr<ID3D11PixelShader> pixel_shader;
+        ATL::CComPtr<ID3D11Buffer> vertex_buffer;
+        ATL::CComPtr<ID3D11VertexShader> vertex_shader;
 
-
-        resources debugResources;
-
-        resources benchmarkResources;
     };
 
 }

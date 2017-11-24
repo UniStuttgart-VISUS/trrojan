@@ -59,6 +59,20 @@ namespace d3d11 {
         }
 
         /// <summary>
+        /// Sets the render target as active target of the output merger of its
+        /// associated device.
+        /// </summary>
+        void enable(void);
+
+        /// <summary>
+        /// Performs cleanup operations once a frame was completed.
+        /// </summary>
+        /// <remarks>
+        /// The default implementation does nothing.
+        /// </remarks>
+        virtual void present(void);
+
+        /// <summary>
         /// Resizes the swap chain of the render target to the given dimension.
         /// </summary>
         /// <param name="width">The new width of the render target in pixels.

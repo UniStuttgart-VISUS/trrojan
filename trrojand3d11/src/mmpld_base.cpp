@@ -7,15 +7,17 @@
 
 #include <cassert>
 #include <cinttypes>
+#include <sstream>
 #include <stdexcept>
 
+#include "trrojan/log.h"
 
 
 /*
- * trrojan::d3d11::mmpld_base::get_mmpld_input
+ * trrojan::d3d11::mmpld_base::get_mmpld_layout
  */
 std::vector<D3D11_INPUT_ELEMENT_DESC>
-trrojan::d3d11::mmpld_base::get_mmpld_input(
+trrojan::d3d11::mmpld_base::get_mmpld_layout(
         const mmpld_reader::list_header& header) {
     D3D11_INPUT_ELEMENT_DESC element;
     UINT offset = 0;
@@ -80,4 +82,83 @@ trrojan::d3d11::mmpld_base::get_mmpld_input(
     }
 
     return std::move(retval);
+}
+
+
+/*
+ * trrojan::d3d11::mmpld_base::mmpld_base
+ */
+trrojan::d3d11::mmpld_base::mmpld_base(void) {
+    ::memset(&this->mmpld_header, 0, sizeof(this->mmpld_header));
+}
+
+
+/*
+ * trrojan::d3d11::mmpld_base::open_mmpld
+ */
+bool trrojan::d3d11::mmpld_base::open_mmpld(const char *path) {
+    this->mmpld_stream = mmpld_reader::read_file_header(this->mmpld_header,
+        this->mmpld_seek_table, path);
+    return this->mmpld_stream.good();
+}
+
+
+/*
+ * trrojan::d3d11::mmpld_base::read_mmpld_frame
+ */
+ATL::CComPtr<ID3D11Buffer> trrojan::d3d11::mmpld_base::read_mmpld_frame(
+        ID3D11Device *device, const unsigned int frame) {
+    assert(this->mmpld_stream.good());
+    assert(device != nullptr);
+
+    D3D11_BUFFER_DESC bufferDesc;
+    std::vector<char> data;
+    mmpld_reader::frame_header frameHeader;
+    D3D11_SUBRESOURCE_DATA id;
+    ATL::CComPtr<ID3D11Buffer> retval;
+
+    // Make sure to erase last layout in case I/O fails.
+    this->mmpld_layout.clear();
+    ::memset(&this->mmpld_list, 0, sizeof(this->mmpld_list));
+
+    // Read the list header and determine the layout using the header.
+    this->mmpld_stream.seekg(this->mmpld_seek_table[frame]);
+    mmpld_reader::read_frame_header(frameHeader, this->mmpld_stream,
+        this->mmpld_header.version);
+
+    if (frameHeader.lists > 1) {
+        log::instance().write_line(log_level::warning, "TRRojan only supports "
+            "MMPLD files with one particle list per frame. All but the first "
+            "will be ignored.");
+    }
+
+    mmpld_reader::read_list_header(this->mmpld_list, this->mmpld_stream);
+    this->mmpld_layout = mmpld_base::get_mmpld_layout(this->mmpld_list);
+
+    // Read the data.
+    auto cntData = mmpld_reader::calc_stride(this->mmpld_list) 
+        * this->mmpld_list.particles;
+    data.resize(cntData);
+    this->mmpld_stream.read(data.data(), cntData);
+
+    // If everything succeeded, create the vertex buffer.
+    ::ZeroMemory(&bufferDesc, sizeof(bufferDesc));
+    assert(cntData <= UINT_MAX);
+    bufferDesc.ByteWidth = static_cast<UINT>(cntData);
+    bufferDesc.Usage = D3D11_USAGE_IMMUTABLE;
+    bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+    bufferDesc.CPUAccessFlags = 0;
+
+    ::ZeroMemory(&id, sizeof(id));
+    id.pSysMem = data.data();
+
+    auto hr = device->CreateBuffer(&bufferDesc, &id, &retval);
+    if (FAILED(hr)) {
+        std::stringstream msg;
+        msg << "Failed to create vertex buffer from MMPLD with error " << hr
+            << std::ends;
+        throw std::runtime_error(msg.str());
+    }
+
+    return retval;
 }

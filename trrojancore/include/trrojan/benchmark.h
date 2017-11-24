@@ -93,7 +93,7 @@ namespace trrojan {
         /// <param name="env">A benchmarking environment to be tested.</param>
         /// <param name="device">A device to be tested.</param>
         /// <returns><c>true</c>, unconditionally.</returns>
-        virtual bool can_run(environment env, device device) const noexcept;
+        virtual bool can_run(environment env, device device) const;
 
         /// <summary>
         /// Answer the default factors to be tested if not specified by the
@@ -156,6 +156,16 @@ namespace trrojan {
         // TODO: define the interface.
 
     protected:
+
+        /// <summary>
+        /// Answer whether the array <paramref name="haystack" /> contains
+        /// <paramref name="needle" />.
+        /// </summary>
+        /// <param name="haystack"></param>
+        /// <param name="needle"></param>
+        /// <returns></returns>
+        static bool contains(const std::vector<std::string>& haystack,
+            const std::string& needle);
 
         /// <summary>
         /// Merges all system factors into <paramref name="c" />.

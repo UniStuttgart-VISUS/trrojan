@@ -18,6 +18,7 @@ GsInput Main(VsInput input) {
     retval.Position = float4(input.Position.xyz, 1.0f);
     retval.Radius = input.Position.w;
     retval.Colour = input.Colour;
+    retval.Colour = float4(1.0f, 0.0f, 0.0f, 1.0f);
 
     return retval;
 }

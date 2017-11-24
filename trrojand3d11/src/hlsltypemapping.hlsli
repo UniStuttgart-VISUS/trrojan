@@ -5,6 +5,9 @@
 
 #ifdef _MSC_VER
 #pragma once
+#include <cstdint>
+
+#include <DirectXMath.h>
 
 typedef DirectX::XMFLOAT2 float2;
 typedef DirectX::XMFLOAT3 float3;

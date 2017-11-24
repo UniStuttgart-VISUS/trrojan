@@ -6,7 +6,6 @@
 #include "trrojan/d3d11/render_target.h"
 
 #include <cassert>
-#include <sstream>
 
 #include "trrojan/log.h"
 
@@ -24,11 +23,26 @@ void trrojan::d3d11::render_target_base::clear(void) {
     assert(this->_device_context != nullptr);
     assert(this->_dsv != nullptr);
     assert(this->_rtv != nullptr);
-    static const FLOAT CLEAR_COLOUR[] = { 0.0f, 0.0f, 0.0f, 0.0f };
+    static const FLOAT CLEAR_COLOUR[] = { 0.0f, 0.0f, 0.0f, 0.0f }; // TODO
     this->_device_context->ClearRenderTargetView(this->_rtv, CLEAR_COLOUR);
     this->_device_context->ClearDepthStencilView(this->_dsv, D3D11_CLEAR_DEPTH,
         1.0f, 0);
 }
+
+
+/*
+ * trrojan::d3d11::render_target_base::enable
+ */
+void trrojan::d3d11::render_target_base::enable(void) {
+    assert(this->_device_context != nullptr);
+    this->_device_context->OMSetRenderTargets(1, &this->_rtv.p, this->_dsv.p);
+}
+
+
+/*
+ * trrojan::d3d11::render_target_base::present
+ */
+void trrojan::d3d11::render_target_base::present(void) { }
 
 
 /*
@@ -53,45 +67,39 @@ void trrojan::d3d11::render_target_base::set_back_buffer(
     assert(this->_rtv == nullptr);
     assert(backBuffer != nullptr);
     ATL::CComPtr<ID3D11Texture2D> depthBuffer;
+    HRESULT hr = S_OK;
+    D3D11_TEXTURE2D_DESC texDesc;
+    D3D11_VIEWPORT viewport;
 
-    {
-        auto hr = this->_device->CreateRenderTargetView(backBuffer, nullptr,
-            &this->_rtv);
-        if (FAILED(hr)) {
-            std::stringstream msg;
-            msg << "Failed to create render target view of back buffer "
-                << backBuffer << " with error code " << hr << "." << std::ends;
-            throw std::runtime_error(msg.str());
-        }
+    hr = this->_device->CreateRenderTargetView(backBuffer, nullptr,
+        &this->_rtv);
+    if (FAILED(hr)) {
+        throw ATL::CAtlException(hr);
     }
 
-    {
-        D3D11_TEXTURE2D_DESC texDesc;
-        backBuffer->GetDesc(&texDesc);
-        texDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
-        texDesc.Format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT;
+    backBuffer->GetDesc(&texDesc);
+    texDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+    texDesc.Format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT;
 
-        auto hr = this->_device->CreateTexture2D(&texDesc, nullptr,
-            &depthBuffer);
-        if (FAILED(hr)) {
-            std::stringstream msg;
-            msg << "Failed to allocate depth buffer with error code " << hr
-                << "." << std::ends;
-            throw std::runtime_error(msg.str());
-        }
+    hr = this->_device->CreateTexture2D(&texDesc, nullptr, &depthBuffer);
+    if (FAILED(hr)) {
+        throw ATL::CAtlException(hr);
     }
 
-    {
-        auto hr = this->_device->CreateDepthStencilView(depthBuffer, nullptr,
+    hr = this->_device->CreateDepthStencilView(depthBuffer, nullptr,
             &this->_dsv);
-        if (FAILED(hr)) {
-            std::stringstream msg;
-            msg << "Failed to create depth/stencil view of depth buffer "
-                << depthBuffer.p << " with error code " << hr << "."
-                << std::ends;
-            throw std::runtime_error(msg.str());
-        }
+    if (FAILED(hr)) {
+        throw ATL::CAtlException(hr);
     }
+
+    viewport.TopLeftX = 0.0f;
+    viewport.TopLeftY = 0.0f;
+    viewport.Width = static_cast<float>(texDesc.Width);
+    viewport.Height = static_cast<float>(texDesc.Height);
+    viewport.MinDepth = 0.0f;
+    viewport.MaxDepth = 1.0f;
+
+    this->_device_context->RSSetViewports(1, &viewport);
 }
 
 

@@ -58,13 +58,13 @@ void trrojan::environment_base::on_activate(void) { }
 /*
  * trrojan::environment_base::on_deactivate
  */
-void trrojan::environment_base::on_deactivate(void)  noexcept { }
+void trrojan::environment_base::on_deactivate(void) { }
 
 
 /*
  * trrojan::environment_base::on_finalise
  */
-void trrojan::environment_base::on_finalise(void)  noexcept { }
+void trrojan::environment_base::on_finalise(void) { }
 
 
 /*

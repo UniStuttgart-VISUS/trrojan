@@ -5,12 +5,13 @@
 
 #include "trrojan/d3d11/benchmark_base.h"
 
-#include <cassert>
-
 #include "trrojan/factor.h"
 #include "trrojan/log.h"
 
+#include "trrojan/d3d11/environment.h"
 #include "trrojan/d3d11/bench_render_target.h"
+#include "trrojan/d3d11/debug_render_target.h"
+#include "trrojan/d3d11/utilities.h"
 
 
 #define _D3D_BENCH_DEFINE_FACTOR(f)                                         \
@@ -39,35 +40,6 @@ bool trrojan::d3d11::benchmark_base::can_run(trrojan::environment env,
 
 
 /*
- * trrojan::d3d11::benchmark_base::draw_debug_view
- */
-void trrojan::d3d11::benchmark_base::draw_debug_view(
-        ATL::CComPtr<ID3D11Device> device,
-        ATL::CComPtr<ID3D11DeviceContext> deviceContext) {
-    assert(device != nullptr);
-    assert(deviceContext != nullptr);
-
-    //deviceContext->ClearRenderTargetView()
-}
-
-
-/*
- * trrojan::d3d11::benchmark_base::on_debug_view_resized
- */
-void trrojan::d3d11::benchmark_base::on_debug_view_resized(
-        ATL::CComPtr<ID3D11Device> device,
-        const unsigned int width, const unsigned int height) {
-}
-
-
-/*
- * trrojan::d3d11::benchmark_base::on_debug_view_resizing
- */
-void trrojan::d3d11::benchmark_base::on_debug_view_resizing(void) {
-}
-
-
-/*
  * trrojan::d3d11::benchmark_base::run
  */
 trrojan::result trrojan::d3d11::benchmark_base::run(const configuration& c) {
@@ -85,46 +57,41 @@ trrojan::result trrojan::d3d11::benchmark_base::run(const configuration& c) {
     // Check whether the device has been changed. This should always be done
     // first, because all GPU resources, which depend on the content of 'c',
     // depend on the device as their storage location.
-    if (std::find(changed.begin(), changed.end(), factor_device)
-            != changed.end()) {
+    if (contains(changed, factor_device)
+            || contains(changed, factor_debug_view)) {
         log::instance().write_line(log_level::verbose, "The D3D device has "
             "changed. Reallocating all graphics resources ...");
-        this->benchTarget = std::make_shared<bench_render_target>(device);
-        this->on_device_changed(*device, c);
-
+        this->render_target = std::make_shared<bench_render_target>(device);
         // If the device has changed, force the viewport to be re-created:
         changed.push_back(factor_viewport);
     }
 
+    auto isDebugView = c.get<bool>(factor_debug_view);
+    isDebugView = true;
+    if (isDebugView) {
+        // TODO: evil crowbaring everywhere.
+        if ((std::dynamic_pointer_cast<debug_render_target>(this->render_target) == nullptr)) {
+            this->render_target = std::make_shared<debug_render_target>();
+            auto vp = c.get<viewport_type>(factor_viewport);
+            this->render_target->resize(vp[0], vp[1]);
+        }
+        device = std::make_shared<d3d11::device>(this->render_target->device());
+        changed.push_back(factor_device);
+    }
+
     // Resize the render target if the viewport has changed.
-    if (std::find(changed.begin(), changed.end(), factor_viewport)
-            != changed.end()) {
+    if (contains(changed, factor_viewport)) {
         auto vp = c.get<viewport_type>(factor_viewport);
         log::instance().write_line(log_level::verbose, "Resizing the "
             "benchmarking render target to %d × %d px ...", vp[0], vp[1]);
-        this->benchTarget->resize(vp[0], vp[1]);
+        this->render_target->resize(vp[0], vp[1]);
     }
 
-    // Find out whether we need to start the debug view.
-    {
-        auto dv = c.get<bool>(factor_debug_view);
-        log::instance().write_line(log_level::verbose, "Configuring the "
-            "debug view to be %s ...", dv ? "on" : "off");
-        if (dv) {
-            if (this->debugTarget == nullptr) {
-                this->debugTarget = std::make_shared<debug_render_target>();
-            }
-
-            // TODO
-            //this->debugTarget->start(this);
-
-        } else if (this->debugTarget != nullptr) {
-            this->debugTarget->stop();
-        }
-    }
-
-    this->benchTarget->clear();
-    return this->on_run(*device, c);
+    this->render_target->enable();
+    this->render_target->clear();
+    auto retval = this->on_run(*device, c, changed);
+    this->render_target->present();
+    return retval;
 }
 
 

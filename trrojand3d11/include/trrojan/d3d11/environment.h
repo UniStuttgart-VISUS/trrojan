@@ -42,17 +42,18 @@ namespace d3d11 {
         virtual void on_activate(void);
 
         /// <inheritdoc />
-        virtual void on_deactivate(void) noexcept;
+        virtual void on_deactivate(void);
 
         /// <inheritdoc />
-        virtual void on_finalise(void) noexcept;
+        virtual void on_finalise(void);
 
         /// <inheritdoc />
         virtual void on_initialise(const cmd_line& cmdLine);
 
     private:
 
-        std::vector<device::pointer> devices;
+        std::vector<device::pointer> _devices;
+
     };
 }
 }

@@ -12,74 +12,43 @@
 #include <atlbase.h>
 #include <Windows.h>
 
-#include "trrojan/d3d11/debugable.h"
 #include "trrojan/d3d11/render_target.h"
+
+
+/* Forward declatations. */
+struct DebugConstants;
 
 
 namespace trrojan {
 namespace d3d11 {
 
     /// <summary>
-    /// Implements an on-screen render target for debugging purposes.
+    /// The debug view is a render target using a visible window.
     /// </summary>
     class TRROJAND3D11_API debug_render_target : public render_target_base {
 
     public:
 
         /// <summary>
-        /// Pointer to an object that can be displayed using this target.
-        /// </summary>
-        typedef std::shared_ptr<trrojan::d3d11::debugable> debugable;
-
-        /// <summary>
         /// Initialises a new instance.
         /// </summary>
-        inline debug_render_target(void) : render_target_base(nullptr),
-            hWnd(NULL), isRunning(false) { }
+        debug_render_target(void);
 
         /// <summary>
         /// Finalises the instance.
         /// </summary>
         virtual ~debug_render_target(void);
 
-        /// <summary>
-        /// Resize the render target to the given dimension.
-        /// </summary>
-        /// <remarks>
-        /// The render target needs to be resized at least once to allocate
-        /// all graphics resources. <see cref="run" /> and <see cref="start" />
-        /// must not be called before this method was called the first time.
-        /// </remarks>
-        /// <param name="width"></param>
-        /// <param name="const"></param>
+        /// <inheritdoc />
+        virtual void present(void);
+
+        /// <inheritdoc />
         virtual void resize(const unsigned int width,
             const unsigned int height);
 
-        /// <summary>
-        /// Open the debug view and render <paramref name="object" /> until
-        /// the escape key was hit.
-        /// </summary>
-        /// <remarks>
-        /// This method will not return until the window was closed. Use
-        /// <see cref="start" /> to run the view asynchronously.
-        /// </remarks>
-        /// <param name="object"></param>
-        int run(debugable object);
-
-        /// <summary>
-        /// Open the debug view and render <paramref name="object" /> until
-        /// the escape key was hit.
-        /// </summary>
-        /// <param name="object"></param>
-        void start(debugable object);
-
-        /// <summary>
-        /// If the debug view is running asynchronously, request it to close and
-        /// wait for the message pumping thread to exit.
-        /// </summary>
-        void stop(void);
-
     private:
+
+        typedef render_target_base base;
 
         /// <summary>
         /// The name of the window class we are registering for the debug view.
@@ -94,24 +63,19 @@ namespace d3d11 {
             LPARAM lParam);
 
         /// <summary>
-        /// The handle of the debug window.
+        /// Runs the message dispatcher.
         /// </summary>
-        HWND hWnd;
+        void doMsg(void);
 
         /// <summary>
-        /// Determines whether <paramref name="msgPump" /> should run.
+        /// The handle of the debug window.
         /// </summary>
-        std::atomic<bool> isRunning;
+        std::atomic<HWND> hWnd;
 
         /// <summary>
         /// The message pumping thread.
         /// </summary>
         std::thread msgPump;
-
-        /// <summary>
-        /// The object to be shown.
-        /// </summary>
-        debugable object;
 
         /// <summary>
         /// The swap chain for the window.

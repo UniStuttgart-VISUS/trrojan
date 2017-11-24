@@ -83,7 +83,7 @@ trrojan::benchmark_base::~benchmark_base(void) { }
  * trrojan::benchmark_base::can_run
  */
 bool trrojan::benchmark_base::can_run(environment env,
-        device device) const noexcept {
+        device device) const {
     return true;
 }
 
@@ -148,6 +148,16 @@ size_t trrojan::benchmark_base::run(const configuration_set& configs,
     });
 
     return retval;
+}
+
+
+/*
+ * trrojan::benchmark_base::contains
+ */
+bool trrojan::benchmark_base::contains(const std::vector<std::string>& haystack,
+        const std::string& needle) {
+    auto it = std::find(haystack.begin(), haystack.end(), needle);
+    return (it != haystack.end());
 }
 
 
