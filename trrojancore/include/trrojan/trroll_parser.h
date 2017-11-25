@@ -37,6 +37,10 @@ namespace trrojan {
 
     private:
 
+        /// <summary>
+        /// Tries parsing <paramref name="str" /> as a
+        /// <see cref="variant_type" /> using the name provided in the traits.
+        /// </summary>
         static variant_type parse_type(const std::string& str);
 
         template<variant_type T, variant_type... Ts>
@@ -45,6 +49,20 @@ namespace trrojan {
 
         static variant parse_value(detail::variant_type_list_t<>,
             const std::string& str, const variant_type type);
+
+        template<variant_type T>
+        static inline typename std::enable_if<variant_type_traits<T>::parsable,
+                variant>::type parse_value(const std::string& str) {
+            return trrojan::parse<typename variant_type_traits<T>::type>(str);
+        }
+
+        template<variant_type T>
+        static inline typename std::enable_if<!variant_type_traits<T>::parsable,
+                variant>::type parse_value(const std::string& str) {
+            // Instantly fail, because we hit a non-parsable type.
+            return trroll_parser::parse_value(detail::variant_type_list_t<>(),
+                str, T);
+        }
 
         template<class I> static I skip_nonspaces(I it, I end);
 

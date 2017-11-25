@@ -11,23 +11,31 @@ template<trrojan::variant_type T, trrojan::variant_type... Ts>
 trrojan::variant trrojan::trroll_parser::parse_value(
         detail::variant_type_list_t<T, Ts...>, const std::string& str,
         const variant_type type) {
-    switch (type) {
-        case variant_type::boolean:
-            return trrojan::parse_bool(str);
+    if (type == variant_type::boolean) {
+        // Booleans require special handling because of multiple possible
+        // representations.
+        return trrojan::parse_bool(str);
 
-        case variant_type::string:
-        case variant_type::wstring:
-        case variant_type::device:
-        case variant_type::environment:
-            // TODO: unsure whether this is clever ...
-            return str;
+    } else if ((type == variant_type::string)
+            || (type == variant_type::wstring)) {
+        // Strings can be returned directly.
+        return str;
 
-        case T:
-            return trrojan::parse<typename variant_type_traits<T>::type>(str);
+    } else if ((type == variant_type::device)
+        || (type == variant_type::environment)) {
+        // Assume devices and environments are names.
+        // TODO: unsure whether this is clever ...
+        return str;
 
-        default:
-            return trroll_parser::parse_value(
-                detail::variant_type_list_t<Ts...>(), str, type);
+    } else if (type == T) {
+        // Use generic parse method based on std::stringstream.
+        //return trrojan::parse<typename variant_type_traits<T>::type>(str);
+        return trroll_parser::parse_value<T>(str);
+
+    }  else {
+        // Try next T.
+        return trroll_parser::parse_value(detail::variant_type_list_t<Ts...>(),
+            str, type);
     }
 }
 
