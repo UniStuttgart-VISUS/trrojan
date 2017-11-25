@@ -133,8 +133,10 @@ trrojan::trroll_parser::parse(const std::string& path) {
                     std::string token(m[j], m[j + 1]);
                     std::replace(token.begin(), token.end(), NF[0], ' ');
                     token = trrojan::trim(token);
-                    manifestations.push_back(trroll_parser::parse_value(
-                        detail::variant_type_list(), token, type));
+                    if (!token.empty()) {
+                        manifestations.push_back(trroll_parser::parse_value(
+                            detail::variant_type_list(), token, type));
+                    }
                 }
             }
 
