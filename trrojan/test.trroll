@@ -16,12 +16,12 @@ opencl::volume_raycast {
     boolean use_ERT = true
     boolean use_tff = true
     boolean use_lerp = true
-    boolean use_illumination = true; false
-    boolean use_ortho_proj = false; false
-    boolean shuffle = false
+    boolean use_illumination = false; true
+    boolean use_ortho_proj = false; true
+    boolean shuffle = false; true
 
     # trasfer function
-    string tff_file_name = /media/brudervn/Daten/volTest/tff/trrojan_cham1.tff; /media/brudervn/Daten/volTest/tff/trrojan_zeiss1.tff;
+    string tff_file_name = /media/brudervn/Daten/volTest/tff/trrojan_cham1.tff; /media/brudervn/Daten/volTest/tff/trrojan_zeiss1.tff
     
     # data sets
     string volume_file_name = /media/brudervn/Daten/volTest/vol/bat.dat; /media/brudervn/Daten/volTest/vol/bonsai.dat; /media/brudervn/Daten/volTest/vol/bunny.dat; /media/brudervn/Daten/volTest/vol/chameleon.dat; /media/brudervn/Daten/volTest/vol/E_1328.dat; /media/brudervn/Daten/volTest/vol/engine.dat; /media/brudervn/Daten/volTest/vol/flower.dat; /media/brudervn/Daten/volTest/vol/foot.dat; /media/brudervn/Daten/volTest/vol/foraminifera.dat; /media/brudervn/Daten/volTest/vol/hazelnut.dat; /media/brudervn/Daten/volTest/vol/hoatzin.dat; /media/brudervn/Daten/volTest/vol/kingfisher.dat; /media/brudervn/Daten/volTest/vol/mandelbulb.dat; /media/brudervn/Daten/volTest/vol/microtomography.dat; /media/brudervn/Daten/volTest/vol/mouse.dat; /media/brudervn/Daten/volTest/vol/parakeet.dat; /media/brudervn/Daten/volTest/vol/skull.dat; /media/brudervn/Daten/volTest/vol/vertebra.dat; /media/brudervn/Daten/volTest/vol/visFemale.dat; /media/brudervn/Daten/volTest/vol/zeiss.dat; /media/brudervn/Daten/volTest/generated/res/res_128.dat; /media/brudervn/Daten/volTest/generated/res/res_256.dat; /media/brudervn/Daten/volTest/generated/res/res_384.dat; /media/brudervn/Daten/volTest/generated/res/res_512.dat; /media/brudervn/Daten/volTest/generated/res/res_640.dat; /media/brudervn/Daten/volTest/generated/res/res_768.dat; /media/brudervn/Daten/volTest/generated/res/res_896.dat; /media/brudervn/Daten/volTest/generated/res/res_1024.dat; /media/brudervn/Daten/volTest/generated/freq/freq_0.dat; /media/brudervn/Daten/volTest/generated/freq/freq_1.dat; /media/brudervn/Daten/volTest/generated/freq/freq_2.dat; /media/brudervn/Daten/volTest/generated/freq/freq_4.dat; /media/brudervn/Daten/volTest/generated/freq/freq_8.dat; /media/brudervn/Daten/volTest/generated/freq/freq_16.dat; /media/brudervn/Daten/volTest/generated/freq/freq_32.dat; /media/brudervn/Daten/volTest/generated/freq/freq_64.dat; /media/brudervn/Daten/volTest/generated/freq/freq_128.dat; /media/brudervn/Daten/volTest/generated/freq/freq_256.dat; /media/brudervn/Daten/volTest/generated/freq/freq_512.dat; /media/brudervn/Daten/volTest/generated/freq/freq_1024.dat

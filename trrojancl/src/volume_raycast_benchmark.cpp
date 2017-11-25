@@ -296,6 +296,13 @@ size_t trrojan::opencl::volume_raycast_benchmark::run(const configuration_set& c
             }
         }
         std::ostringstream os;
+        os << "Changed factors: ";
+        for (auto& f : changed)
+        {
+            // output changed config
+            os << f << ", ";
+        }
+        os << std::endl << "Current config: " << std::endl;
         for (auto& f : cs)
         {
             // output current config
@@ -319,22 +326,23 @@ size_t trrojan::opencl::volume_raycast_benchmark::run(const configuration_set& c
             auto data_precision = parse_scalar_type(*_passive_cfg.find(factor_data_precision));
             auto sample_precision = parse_scalar_type(*cs.find(factor_sample_precision));
             bool use_buffer = cs.find(factor_use_buffer)->value().as<bool>();
-            float precision_div = static_cast<float>(1.0/255.0);        // uchar -> float
+            _precision_div = static_cast<float>(1.0/255.0);        // uchar -> float
+
             if (!use_buffer)
             {
                 if (sample_precision <= data_precision)
                 {
-                    precision_div = 1.0f;
+                    _precision_div = 1.0f;
                 }
                 else if (data_precision == scalar_type::uchar
                          && sample_precision == scalar_type::ushort)    // uchar -> ushort
                 {
-                    precision_div = 255.0f; // 2**8 - 1
+                    _precision_div = 255.0f; // 2**8 - 1
                 }
                 else if (data_precision == scalar_type::ushort
                          && sample_precision == scalar_type::float32)   // ushort -> float
                 {
-                    precision_div = 1.0f/65535.0f; // 2**16 - 1
+                    _precision_div = 1.0f/65535.0f; // 2**16 - 1
                 }
             }
             else
@@ -342,15 +350,13 @@ size_t trrojan::opencl::volume_raycast_benchmark::run(const configuration_set& c
                 if (data_precision == scalar_type::uchar ||
                         sample_precision == scalar_type::uchar)
                 {
-                    precision_div = 1.0f;
+                    _precision_div = 1.0f;
                 }
             }
             build_kernel(std::dynamic_pointer_cast<environment>(env),
                          std::dynamic_pointer_cast<device>(dev),
-                         precision_div,
+                         _precision_div,
                          std::string("-DIMAGE_SUPPORT"));
-            // set the kernel args for the new kernel
-            update_all_kernel_args(cs, changed, precision_div);
         }
 
         // reset volume kernel argument if volume data changed
@@ -368,6 +374,8 @@ size_t trrojan::opencl::volume_raycast_benchmark::run(const configuration_set& c
         {
             update_kernel_args(cs, changed);
         }
+        // set all initial kernel args for the new kernel
+        update_initial_kernel_args(cs);
 
         // run the OpenCL kernel, i.e. the actual test
         auto r = result_callback(std::move(this->run(cs)));
@@ -413,9 +421,6 @@ trrojan::result trrojan::opencl::volume_raycast_benchmark::run(const configurati
             ndr_evt.getProfilingInfo(CL_PROFILING_COMMAND_START, &start);
             ndr_evt.getProfilingInfo(CL_PROFILING_COMMAND_END, &end);
             times.at(i) = static_cast<double>(end - start)*1e-9;
-            std::ostringstream os;
-            os << "Kernel time: " << times.at(i) << std::endl;
-            log::instance().write(log_level::information, os.str().c_str());
         }
         catch (cl::Error err)
         {
@@ -484,9 +489,32 @@ trrojan::result trrojan::opencl::volume_raycast_benchmark::run(const configurati
     double median = times.at(times.size() / 2);
     retval->add({ median });
 
+    std::ostringstream os;
+    os << "Kernel time median: " << median << std::endl;
+    log::instance().write(log_level::information, os.str().c_str());
+
     return retval;
 }
 
+/**
+ * trrojan::opencl::volume_raycast_benchmark::set_shuffled_ray_ids
+ */
+void trrojan::opencl::volume_raycast_benchmark::set_shuffled_ray_ids(const environment::pointer env,
+                                                                     const std::array<unsigned int, 2> viewport)
+{
+    int pixel_cnt = viewport.at(0) * viewport.at(1);
+    // shuffeled ray id array
+    std::vector<int> shuffled_ids(pixel_cnt);
+    std::iota(std::begin(shuffled_ids), std::end(shuffled_ids), 0);
+    unsigned int seed = 42;
+    std::shuffle(shuffled_ids.begin(),
+                 shuffled_ids.end(),
+                 std::default_random_engine(seed));
+    _ray_ids = cl::Buffer(env->get_properties().context,
+                          CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                          shuffled_ids.size() * sizeof(cl_int),
+                          shuffled_ids.data());
+}
 
 /*
  * trrojan::opencl::volume_raycast_benchmark::setup_raycaster
@@ -499,25 +527,12 @@ void trrojan::opencl::volume_raycast_benchmark::setup_raycaster(const configurat
     auto f = cfg.find(factor_device);
     auto dev_o = f->value().as<trrojan::device>();
     opencl::device::pointer dev = std::dynamic_pointer_cast<trrojan::opencl::device>(dev_o);
-//    opencl::device::pointer dev = std::dynamic_pointer_cast<trrojan::opencl::device>(
-//                            cfg.find(factor_device)->value().as<trrojan::device>());
 
     // set up buffer objects for the view matrix and shuffled IDs
     try
     {
-        auto imgSize = cfg.find(factor_viewport)->value().as<std::array<unsigned int, 2>>();
-        int pixel_cnt = imgSize.at(0) * imgSize.at(1);
-        // shuffeled ray id array
-        std::vector<int> shuffled_ids(pixel_cnt);
-        std::iota(std::begin(shuffled_ids), std::end(shuffled_ids), 0);
-        unsigned int seed = 42;
-        std::shuffle(shuffled_ids.begin(),
-                     shuffled_ids.end(),
-                     std::default_random_engine(seed));
-        _ray_ids = cl::Buffer(env->get_properties().context,
-                              CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-                              shuffled_ids.size() * sizeof(cl_int),
-                              shuffled_ids.data());
+        auto viewport = cfg.find(factor_viewport)->value().as<std::array<unsigned int, 2>>();
+        set_shuffled_ray_ids(env, viewport);
 
         // create OpenCL command queue
         cl_command_queue_properties prop = 0;
@@ -702,7 +717,6 @@ void trrojan::opencl::volume_raycast_benchmark::load_transfer_function(
                                format,
                                values.size() / 4,
                                values.data());
-        _kernel.setArg(TFF, _tff_mem);
     }
     catch (cl::Error err)
     {
@@ -919,50 +933,34 @@ void trrojan::opencl::volume_raycast_benchmark::set_kernel_args(const float prec
 /**
  * trrojan::opencl::volume_raycast_benchmark::update_all_kernel_args
  */
-void trrojan::opencl::volume_raycast_benchmark::update_all_kernel_args(
-        const trrojan::configuration &cfg,
-        const std::unordered_set<std::string> changed,
-        const float precision_div)
+void trrojan::opencl::volume_raycast_benchmark::update_initial_kernel_args(
+        const trrojan::configuration &cfg)
 {
-    auto env = cfg.find(factor_environment)->value().as<trrojan::environment>();
-    environment::pointer env_ptr = std::dynamic_pointer_cast<environment>(env);
     try
     {
         _kernel.setArg(VOLUME, _volume_mem);
         _kernel.setArg(OUTPUT, _output_mem);
         _kernel.setArg(TFF, _tff_mem);
-//        cl_float16 view_mat = {1, 0, 0, 0,  0, 1, 0, 0,  0, 0, 1, 0,  0, 0, 0, 1};
-//        _kernel.setArg(VIEW, view_mat);
         _kernel.setArg(ID, _ray_ids);
         _kernel.setArg(STEP_SIZE, static_cast<cl_float>(cfg.find(factor_step_size_factor)->value()));
         cl_uint3 resolution = {{_volume_res[0], _volume_res[1], _volume_res[2]}};
         _kernel.setArg(RESOLUTION, resolution);
-
-        if (cfg.find(factor_use_lerp)->value().as<bool>()) // linear
-            _sampler = cl::Sampler(env_ptr->get_properties().context,
-                                  CL_TRUE, CL_ADDRESS_CLAMP_TO_EDGE, CL_FILTER_LINEAR);
-        else // nearest
-            _sampler = cl::Sampler(env_ptr->get_properties().context,
-                                  CL_TRUE, CL_ADDRESS_CLAMP_TO_EDGE, CL_FILTER_NEAREST);
         _kernel.setArg(SAMPLER, _sampler);
-
-        _kernel.setArg(PRECISION, precision_div);
+        _kernel.setArg(PRECISION, _precision_div);
         cl_float3 model_scale = {_model_scale.x, _model_scale.y, _model_scale.z};
         _kernel.setArg(MODEL_SCALE, model_scale);
 
-
+        // TODO move to own method
         auto pos = cfg.find(factor_cam_position)->value().as<std::array<float, 3>>();
         _camera.set_look_from(glm::vec3(pos.at(0), pos.at(1), pos.at(2)));
         auto rot = cfg.find(factor_cam_rotation)->value().as<std::array<float, 4>>();
         _camera.rotate_fixed_to(glm::quat(rot.at(0), rot.at(1), rot.at(2), rot.at(3)));
         glm::mat4 view = _camera.get_inverse_view_mx();
-
         cl_float16 view_mat = {view[0][0], view[1][0], view[2][0], view[3][0],
                                view[0][1], view[1][1], view[2][1], view[3][1],
                                view[0][2], view[1][2], view[2][2], view[3][2],
                                view[0][3], view[1][3], view[2][3], view[3][3]};
         _kernel.setArg(VIEW, view_mat);
-
     }
     catch (cl::Error err)
     {
@@ -1041,6 +1039,7 @@ void trrojan::opencl::volume_raycast_benchmark::update_kernel_args(
                                       imgSize.at(0),
                                       imgSize.at(1));
             _kernel.setArg(OUTPUT, _output_mem);
+            set_shuffled_ray_ids(env_ptr, imgSize);
 
             _output_data.resize(imgSize.at(0) * imgSize.at(1) * 4, 0);
         }

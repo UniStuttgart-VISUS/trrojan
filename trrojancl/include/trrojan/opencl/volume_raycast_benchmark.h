@@ -139,9 +139,18 @@ namespace opencl
         /// <summary>
         /// Add a factor that is relevant during kernel build time.
         /// </summary>
-        /// <param ="name">Name of the factor</param>
+        /// <param name="name">Name of the factor</param>
         /// <param name="value">Value of the factor</param>
         void add_kernel_build_factor(std::string name, variant value);
+
+        /// <summary>
+        /// Initialize shuffled ray ids and set up kernel buffer.
+        /// </summary>
+        /// <param name="env" OpenCL environment pointer.</param>
+        /// <param name="viewport" Viewpoer size.</param>
+        void set_shuffled_ray_ids(const environment::pointer env,
+                                  const std::array<unsigned int, 2> viewport);
+
 
         /// <summary>
         /// Set-up basic raycaster configuration.
@@ -442,11 +451,8 @@ namespace opencl
         /// TODO add descriotion
         /// \brief update_all_kernel_args
         /// \param cfg
-        /// \param changed
         ///
-        void update_all_kernel_args(const trrojan::configuration &cfg,
-                                    const std::unordered_set<std::string> changed,
-                                    const float precision_div);
+        void update_initial_kernel_args(const trrojan::configuration &cfg);
 
         /// <summary>
         /// Update arguments that are relavant for kernel execution during runtime.
@@ -599,6 +605,8 @@ namespace opencl
         /// Volume model scaling.
         /// </summary>
         glm::vec3 _model_scale;
+
+        float _precision_div;
     };
 
 }
