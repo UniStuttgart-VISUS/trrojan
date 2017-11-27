@@ -50,12 +50,19 @@ namespace trrojan {
         static variant parse_value(detail::variant_type_list_t<>,
             const std::string& str, const variant_type type);
 
+        /// <summary>
+        /// Tries parsing <paramref name="str" /> as <typeparamref name="T" />.
+        /// </summary>
         template<variant_type T>
         static inline typename std::enable_if<variant_type_traits<T>::parsable,
                 variant>::type parse_value(const std::string& str) {
             return trrojan::parse<typename variant_type_traits<T>::type>(str);
         }
 
+        /// <summary>
+        /// Fails parsing <paramref name="str" /> as <typeparamref name="T" />
+        /// for all types not marked parsable.
+        /// </summary>
         template<variant_type T>
         static inline typename std::enable_if<!variant_type_traits<T>::parsable,
                 variant>::type parse_value(const std::string& str) {

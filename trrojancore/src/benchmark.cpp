@@ -130,6 +130,7 @@ size_t trrojan::benchmark_base::run(const configuration_set& configs,
             auto d = c.get<trrojan::device>(device_base::factor_name);
 
             if (this->can_run(e, d)) {
+                c.add_system_factors();
                 this->log_run(c);
                 auto r = resultCallback(std::move(this->run(c)));
                 ++retval;

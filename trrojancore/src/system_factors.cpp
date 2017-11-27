@@ -5,7 +5,9 @@
 
 #include "trrojan/system_factors.h"
 
+#include <cerrno>
 #include <cinttypes>
+#include <ctime>
 #include <fstream>
 #include <iterator>
 #include <regex>
@@ -82,6 +84,7 @@ __TRROJAN_DEFINE_FACTOR(os_version);
 __TRROJAN_DEFINE_FACTOR(process_elevated);
 __TRROJAN_DEFINE_FACTOR(ram);
 __TRROJAN_DEFINE_FACTOR(system_desc);
+__TRROJAN_DEFINE_FACTOR(timestamp);
 __TRROJAN_DEFINE_FACTOR(user_name);
 
 #undef __TRROJAN_DEFINE_FACTOR
@@ -588,6 +591,34 @@ trrojan::variant trrojan::system_factors::system_desc(void) const {
             << e->get_version() << ")" << std::ends;
         return variant(value.str());
     }
+}
+
+
+/*
+ * trrojan::system_factors::timestamp
+ */
+trrojan::variant trrojan::system_factors::timestamp(void) const {
+    std::vector<char> buffer;
+    struct tm tm;
+    auto time = ::time(nullptr);
+
+    {
+#ifdef _WIN32
+        auto error = ::gmtime_s(&tm, &time);
+#else /* _WIN32 */
+        auto error = (::gmtime_r(&time, &tm) != nullptr) ? 0 : E_FAIL;
+#endif /* _WIN32 */
+        if (error != 0) {
+            throw std::system_error(error, std::system_category(),
+                "Failed to convert timestamp.");
+        }
+    }
+
+    buffer.resize(128);
+    ::strftime(buffer.data(), buffer.size(), "%FT%TZ", &tm);
+    buffer.back() = static_cast<char>(0);
+
+    return std::string(buffer.data());
 }
 
 

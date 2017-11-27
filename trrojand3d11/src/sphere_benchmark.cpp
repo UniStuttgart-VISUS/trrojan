@@ -167,24 +167,43 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
 
     /* Compute the matrices. */
     {
-        auto projection = DirectX::XMMatrixPerspectiveFovRH(std::atan(1) * 4 / 3,
-            static_cast<float>(viewport.Width) / static_cast<float>(viewport.Height),
-            0.1f, 10.0f);
+        //auto projection = DirectX::XMMatrixPerspectiveFovRH(std::atan(1) * 4 / 3,
+        //    static_cast<float>(viewport.Width) / static_cast<float>(viewport.Height),
+        //    0.1f, 10.0f);
 
-        auto eye = DirectX::XMFLOAT4(0, 0, 0.5f * (this->mmpld_header.bounding_box[5] - this->mmpld_header.bounding_box[2]), 0);
-        auto lookAt = DirectX::XMFLOAT4(0, 0, 0, 0);
-        auto up = DirectX::XMFLOAT4(0, 1, 0, 0);
-        auto view = DirectX::XMMatrixLookAtRH(DirectX::XMLoadFloat4(&eye),
-            DirectX::XMLoadFloat4(&lookAt), DirectX::XMLoadFloat4(&up));
+        //auto eye = DirectX::XMFLOAT4(0, 0, 0.5f * (this->mmpld_header.bounding_box[5] - this->mmpld_header.bounding_box[2]), 0);
+        //auto lookAt = DirectX::XMFLOAT4(0, 0, 0, 0);
+        //auto up = DirectX::XMFLOAT4(0, 1, 0, 0);
+        //auto view = DirectX::XMMatrixLookAtRH(DirectX::XMLoadFloat4(&eye),
+        //    DirectX::XMLoadFloat4(&lookAt), DirectX::XMLoadFloat4(&up));
 
-        this->cam.set_fovy(90.0f);
+        this->cam.set_fovy(60.0f);
         this->cam.set_aspect_ratio(static_cast<float>(viewport.Width) / static_cast<float>(viewport.Height));
         auto mat = DirectX::XMFLOAT4X4(glm::value_ptr(this->cam.get_projection_mx()));
-        projection = DirectX::XMLoadFloat4x4(&mat);
+        auto projection = DirectX::XMLoadFloat4x4(&mat);
 
-        this->cam.set_look(glm::vec3(0, 0, 0.5f * (this->mmpld_header.bounding_box[5] - this->mmpld_header.bounding_box[2])), glm::vec3(), glm::vec3(0, 1, 0));
+        auto bbWidth = std::abs(this->mmpld_header.bounding_box[3]
+            - this->mmpld_header.bounding_box[0]);
+        auto bbHeight = std::abs(this->mmpld_header.bounding_box[4]
+            - this->mmpld_header.bounding_box[1]);
+        auto bbDepth = std::abs(this->mmpld_header.bounding_box[5]
+            - this->mmpld_header.bounding_box[2]);
+
+        auto bbStartX = std::min(this->mmpld_header.bounding_box[3],
+            this->mmpld_header.bounding_box[0]);
+        auto bbStartY = std::min(this->mmpld_header.bounding_box[4],
+            this->mmpld_header.bounding_box[1]);
+        auto bbStartZ = std::min(this->mmpld_header.bounding_box[5],
+            this->mmpld_header.bounding_box[2]);
+
+        auto pos = glm::vec3(bbStartX + 0.5f * bbWidth,
+            bbStartY + 0.5f * bbHeight,
+            bbStartZ + 0.5f * bbDepth);
+        auto lookAt = pos + glm::vec3(0.0f, 0.0f, 0.5f * bbDepth);
+
+        this->cam.set_look(pos, lookAt, glm::vec3(0, 1, 0));
         mat = DirectX::XMFLOAT4X4(glm::value_ptr(this->cam.get_view_mx()));
-        view = DirectX::XMLoadFloat4x4(&mat);
+        auto view = DirectX::XMLoadFloat4x4(&mat);
 
         auto viewDet = DirectX::XMMatrixDeterminant(view);
         auto viewInv = DirectX::XMMatrixInverse(&viewDet, view);

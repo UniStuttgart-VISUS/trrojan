@@ -103,6 +103,11 @@ namespace trrojan {
         static const std::string factor_system_desc;
 
         /// <summary>
+        /// Gets a string representation of the current date and time.
+        /// </summary>
+        static const std::string factor_timestamp;
+
+        /// <summary>
         /// Name of the built-in factor describing the user name.
         /// </summary>
         static const std::string factor_user_name;
@@ -139,6 +144,8 @@ namespace trrojan {
         variant ram(void) const;
 
         variant system_desc(void) const;
+
+        variant timestamp(void) const;
 
         variant user_name(void) const;
 
