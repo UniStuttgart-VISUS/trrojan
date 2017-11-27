@@ -635,7 +635,7 @@ trrojan::variant trrojan::system_factors::timestamp(void) const {
 #ifdef _WIN32
         auto error = ::gmtime_s(&tm, &time);
 #else /* _WIN32 */
-        auto error = (::gmtime_r(&time, &tm) != nullptr) ? 0 : E_FAIL;
+        auto error = (::gmtime_r(&time, &tm) != nullptr) ? 0 : EOVERFLOW;
 #endif /* _WIN32 */
         if (error != 0) {
             throw std::system_error(error, std::system_category(),
