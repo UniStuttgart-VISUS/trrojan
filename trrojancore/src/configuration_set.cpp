@@ -117,12 +117,17 @@ void trrojan::configuration_set::merge(const configuration_set& other,
  */
 void trrojan::configuration_set::optimise_order(
         const std::vector<std::string>& factors) {
-    for (size_t d = 0; d < factors.size(); ++d) {
-        auto it = this->findFactor(factors[d]);
+    auto d = this->_factors.begin() + (this->_factors.size() - 1);
 
-        if (it != this->_factors.end()) {
-            auto s = std::distance(this->_factors.begin(), it);
-            std::swap(this->_factors[d], this->_factors[s]);
+    for (auto& f : factors) {
+        auto s = this->findFactor(f);
+
+        if ((s != this->_factors.end()) && (s != d)) {
+            // Note: swap/swap_iter destroys implementation pointer in factor.
+            auto t = *s;
+            *s = *d;
+            *d = t;
+            --d;
         }
     }
 }

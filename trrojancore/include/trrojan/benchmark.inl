@@ -5,6 +5,17 @@
 /// <author>Christoph Müller</author>
 
 
+/*
+ * trrojan::benchmark_base::contains_any
+ */
+template<class... T> bool trrojan::benchmark_base::contains_any(
+        const std::vector<std::string>& haystack, T&&... needles) {
+    std::vector<std::string> n = { needles... };
+    auto it = std::find_if(haystack.begin(), haystack.end(),
+        [&n](const std::string h) { return contains(n, h); });
+    return (it != haystack.end());
+}
+
 
 /*
  * trrojan::benchmark_base::check_changed_factors

@@ -73,7 +73,10 @@ namespace d3d11 {
 
         typedef trrojan::benchmark_base base;
 
+        std::shared_ptr<trrojan::d3d11::device> debug_device;
+        render_target debug_target;
         render_target render_target;
+
     };
 
 } /* end namespace d3d11 */

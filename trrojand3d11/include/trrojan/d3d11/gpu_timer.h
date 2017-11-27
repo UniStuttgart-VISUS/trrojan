@@ -37,6 +37,7 @@
 
 #include <array>
 #include <cassert>
+#include <limits>
 #include <stdexcept>
 #include <vector>
 
@@ -61,10 +62,10 @@ namespace d3d11 {
     /// timings should be taken in each frame, allocate sufficient timestamp
     /// queries in this single counter.</para>
     /// <para>The performance counter is <tparamref name="L" />-buffered, ie
-    /// there are <tparamref name="L"> complete sets of counters. One is active
-    /// and used for issuing queries, the one before that is used for evaluating
-    /// the queries. This ensures that reading the queries does not stall the
-    /// CPU.</para>
+    /// there are <tparamref name="L" /> complete sets of counters. One is 
+    /// active and used for issuing queries, the one before that is used for
+    /// evaluating the queries. This ensures that reading the queries does not
+    /// stall the CPU.</para>
     /// <para>You can also set the number of buffers to 1 and use the
     /// <c>try_</c>... methods to check for yourself whether you can read the
     /// buffers. However, you cannot render the next frame in this case.</para>
@@ -162,6 +163,11 @@ namespace d3d11 {
         */
         static millis_type to_milliseconds(const value_type value,
             const value_type frequency);
+
+        /// <summary>
+        /// Indicates an infinite number of retries.
+        /// </summary>
+        static const size_type infinite;
 
         /// <summary>
         /// Initialises a new instance.
@@ -310,7 +316,8 @@ namespace d3d11 {
         *                                          false. The query can never
         *                                          succeed in this case.
         */
-        void evaluate_frame(bool& outIsDisjoint, value_type& outFrequency);
+        void evaluate_frame(bool& outIsDisjoint, value_type& outFrequency,
+            value_type timeout = gpu_timer::infinite);
 
         /**
         * Associates the performance counter with the specified device and

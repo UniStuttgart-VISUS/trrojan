@@ -72,7 +72,7 @@ trrojan::d3d11::sphere_benchmark::~sphere_benchmark(void) { }
  */
 void trrojan::d3d11::sphere_benchmark::optimise_order(
         configuration_set& inOutConfs) {
-    inOutConfs.optimise_order({ factor_device, factor_data_set, factor_frame });
+    inOutConfs.optimise_order({ factor_data_set, factor_frame, factor_device });
 }
 
 
@@ -123,7 +123,7 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
         this->open_mmpld(path.c_str());
     }
 
-    if (isNewDevice || contains(changed, factor_frame)) {
+    if (contains_any(changed, factor_frame, factor_data_set, factor_device)) {
         // Read the frame.
         auto frame = config.get<frame_type>(factor_frame);
         log::instance().write_line(log_level::verbose, "Loading MMPLD frame "
@@ -251,7 +251,7 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
         gpuTimer.end_frame();
         auto cpuTime = cpuTimer.elapsed_millis();
 
-        gpuTimer.evaluate_frame(isDisjoint, gpuFreq);
+        gpuTimer.evaluate_frame(isDisjoint, gpuFreq, 5 * 1000);
         if (!isDisjoint) {
             auto gpuTime = gpu_timer_type::to_milliseconds(
                 gpuTimer.evaluate(0), gpuFreq);
