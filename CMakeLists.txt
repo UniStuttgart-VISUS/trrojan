@@ -31,27 +31,6 @@ if (${MSVC})
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_DEBUG} -DNOMINMAX -EHsc")
 endif (${MSVC})
 
-
-if (${PNG_FOUND})
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Dcimg_use_png")
-	include_directories(${PNG_INCLUDE_DIRS})
-endif (${PNG_FOUND})
-
-if (${JPEG_FOUND})
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Dcimg_use_jpeg")
-	include_directories(${JPEG_INCLUDE_DIR})
-endif (${JPEG_FOUND})
-
-if (${TIFF_FOUND})
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Dcimg_use_tiff")
-	include_directories(${TIFF_INCLUDE_DIR})
-endif (${TIFF_FOUND})
-
-if (${ZLIB_FOUND})
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Dcimg_use_zlib")
-	include_directories(${ZLIB_INCLUDE_DIRS})
-endif (${ZLIB_FOUND})
-
 if (NOT WIN32 OR ${PNG_FOUND})
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTRROJAN_WITH_CIMG -Dcimg_display=0")
 endif (NOT WIN32 OR ${PNG_FOUND})

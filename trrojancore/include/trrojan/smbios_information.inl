@@ -64,8 +64,9 @@ void trrojan::smbios_information::entries(I oit, P predicate) const {
         }
         ptr += 2;
 
-        // TODO: http://git.savannah.gnu.org/cgit/dmidecode.git/tree/dmidecode.c
-        // if (h.type == 127 && (flags & FLAG_STOP_AT_EOT)) break;
+        // From http://git.savannah.gnu.org/cgit/dmidecode.git/tree/dmidecode.c:
+        // SMBIOS v3 requires stopping at this marker.
+        if (header->type == 127 && (this->enumFlags & FLAG_STOP_AT_EOT)) break;
     }
 }
 

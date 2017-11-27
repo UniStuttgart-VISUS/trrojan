@@ -28,7 +28,7 @@ namespace opencl
     /// The implementation of a basic volume raycasting benchmark.
     /// </summary>
     /// <remarks>
-    /// The implementation of this benchmark is closely related to the volume renderer
+    /// The implementation of this benchmark is related to the volume renderer
     /// from the NVIDIA OpenCL SDK:
     /// http://developer.download.nvidia.com/compute/cuda/3_0/sdk/website/OpenCL/website/samples.html#oclVolumeRender
     /// However, instead of using back-to-front compositing, rays are cast in

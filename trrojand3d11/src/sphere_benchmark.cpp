@@ -32,6 +32,7 @@ const char *trrojan::d3d11::sphere_benchmark::factor_##f = #f
 
 _SPHERE_BENCH_DEFINE_FACTOR(data_set);
 _SPHERE_BENCH_DEFINE_FACTOR(frame);
+_SPHERE_BENCH_DEFINE_FACTOR(iterations);
 _SPHERE_BENCH_DEFINE_FACTOR(method);
 
 #undef _SPHERE_BENCH_DEFINE_FACTOR
@@ -55,6 +56,8 @@ trrojan::d3d11::sphere_benchmark::sphere_benchmark(void)
         : benchmark_base("sphere-raycaster") {
     this->_default_configs.add_factor(factor::from_manifestations(
         factor_frame, static_cast<frame_type>(0)));
+    this->_default_configs.add_factor(factor::from_manifestations(
+        factor_iterations, static_cast<unsigned int>(8)));
 }
 
 
@@ -65,40 +68,11 @@ trrojan::d3d11::sphere_benchmark::~sphere_benchmark(void) { }
 
 
 /*
- * trrojan::d3d11::sphere_benchmark::draw_debug_view
- */
-void trrojan::d3d11::sphere_benchmark::draw_debug_view(
-        ATL::CComPtr<ID3D11Device> device,
-        ATL::CComPtr<ID3D11DeviceContext> deviceContext) {
-    assert(device != nullptr);
-    assert(deviceContext != nullptr);
-
-    //deviceContext->ClearRenderTargetView()
-}
-
-
-/*
- * trrojan::d3d11::sphere_benchmark::on_debug_view_resized
- */
-void trrojan::d3d11::sphere_benchmark::on_debug_view_resized(
-        ATL::CComPtr<ID3D11Device> device,
-        const unsigned int width, const unsigned int height) {
-}
-
-
-/*
- * trrojan::d3d11::sphere_benchmark::on_debug_view_resizing
- */
-void trrojan::d3d11::sphere_benchmark::on_debug_view_resizing(void) {
-}
-
-
-/*
  * trrojan::d3d11::sphere_benchmark::optimise_order
  */
 void trrojan::d3d11::sphere_benchmark::optimise_order(
         configuration_set& inOutConfs) {
-    inOutConfs.optimise_order({ factor_device, factor_data_set });
+    inOutConfs.optimise_order({ factor_device, factor_data_set, factor_frame });
 }
 
 
@@ -119,19 +93,23 @@ std::vector<std::string> trrojan::d3d11::sphere_benchmark::required_factors(
 trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
         const configuration& config, const std::vector<std::string>& changed) {
     SphereConstants constants;
+    trrojan::timer cpuTimer;
     auto ctx = device.d3d_context();
     auto dev = device.d3d_device();
+    gpu_timer_type::value_type gpuFreq;
+    gpu_timer_type gpuTimer;
+    auto isDisjoint = true;
     auto isNewDevice = contains(changed, factor_device);
     D3D11_VIEWPORT viewport;
 
     if (isNewDevice) {
         log::instance().write_line(log_level::verbose, "Preparing GPU "
             "resources for device \"%s\" ...", device.name().c_str());
-        this->geometry_shader = create_geometry_shader(device.d3d_device(),
+        this->geometry_shader = create_geometry_shader(dev,
             ::SphereGeometryShaderBytes);
-        this->pixel_shader = create_pixel_shader(device.d3d_device(),
+        this->pixel_shader = create_pixel_shader(dev,
             ::SpherePixelShaderBytes);
-        this->vertex_shader = create_vertex_shader(device.d3d_device(),
+        this->vertex_shader = create_vertex_shader(dev,
             ::SphereVertexShaderBytes);
         this->constant_buffer = create_buffer(device.d3d_device(),
             D3D11_USAGE_DEFAULT, D3D11_BIND_CONSTANT_BUFFER, nullptr,
@@ -164,6 +142,17 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
         viewport.MinDepth = 0.0f;
         viewport.MaxDepth = 1.0f;
     }
+
+    // Retrieve the number of iterations for each frame.
+    const auto cntIterations = config.get<int>(factor_iterations);
+
+    // Initialise the GPU timer.
+    gpuTimer.initialise(dev);
+
+    // Prepare the result set.
+    auto retval = std::make_shared<basic_result>(std::move(config),
+        std::initializer_list<std::string> { "iteration", "particles",
+        "gpu_time", "wall_time" });
 
     /* Compute the matrices. */
     {
@@ -252,15 +241,24 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
 
     /* Render it. */
     assert(this->mmpld_list.particles <= UINT_MAX);
-    ctx->Draw(static_cast<UINT>(this->mmpld_list.particles), 0);
 
+    for (int i = 0; i < cntIterations;) {
+        cpuTimer.start();
+        gpuTimer.start_frame();
+        gpuTimer.start(0);
+        ctx->Draw(static_cast<UINT>(this->mmpld_list.particles), 0);
+        gpuTimer.end(0);
+        gpuTimer.end_frame();
+        auto cpuTime = cpuTimer.elapsed_millis();
 
-    // TODO
-    std::vector<std::string> results = { "todo" };
-    auto retval = std::make_shared<basic_result>(
-        config, std::move(results));
-
-    retval->add({ 42 });
+        gpuTimer.evaluate_frame(isDisjoint, gpuFreq);
+        if (!isDisjoint) {
+            auto gpuTime = gpu_timer_type::to_milliseconds(
+                gpuTimer.evaluate(0), gpuFreq);
+            retval->add({ i, this->mmpld_list.particles, gpuTime, cpuTime });
+            ++i;
+        }
+    }
 
     return retval;
 }

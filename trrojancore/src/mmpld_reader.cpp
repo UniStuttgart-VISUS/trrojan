@@ -84,6 +84,9 @@ std::ifstream& trrojan::mmpld_reader::read_file_header(std::ifstream& outStream,
     }
 
     // Open the file.
+    if (outStream.is_open()) {
+        outStream.close();
+    }
     outStream.open(path, std::ios::binary);
 
     // Read and check the header.
