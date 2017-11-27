@@ -829,6 +829,7 @@ std::string trrojan::smbios_information::decode_memory_device_type_detail(
  */
 trrojan::smbios_information trrojan::smbios_information::read(void) {
     smbios_information retval;
+    retval.enumFlags = 0;
 
 #if defined(_WIN32)
 #pragma pack(push)
@@ -863,7 +864,6 @@ trrojan::smbios_information trrojan::smbios_information::read(void) {
     }
 
     /* Determine the bounds of the structures. */
-    retval.enumFlags = 0;
     retval.tableBegin = sizeof(RawSMBIOSData);
     retval.tableEnd = retval.rawData.size();
 
@@ -891,6 +891,7 @@ trrojan::smbios_information trrojan::smbios_information::read(void) {
         version = (ef[0x07] << 8) + ef[0x08];
         retval.tableBegin = *reinterpret_cast<uint64_t *>(ef.data() + 0x10);
         retval.tableEnd = retval.tableBegin + ef[0x0C];
+        retval.enumFlags |= FLAG_STOP_AT_EOT;
 
     } else if ((ef.size() >= 31) && (::memcmp(ef.data(), "_SM_", 4) == 0)) {
         if (!smbios_information::validate_checksum(ef.data(), ef[0x5])
