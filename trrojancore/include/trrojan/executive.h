@@ -222,7 +222,7 @@ namespace trrojan {
 #ifdef _WIN32
             typedef FARPROC proc_type;
 #else /* _WIN32 */
-            typedef void (* proc_type)(void);
+            typedef void *proc_type;
 #endif /* _WIN32 */
 
             /// <summary>
