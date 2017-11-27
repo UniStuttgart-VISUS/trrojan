@@ -212,7 +212,7 @@ namespace trrojan {
 #ifdef _WIN32
             typedef HMODULE handle_type;
 #else /* _WIN32 */
-            typedef void(*handle_type)(void);
+            typedef void *handle_type;
 #endif /* _WIN32 */
 
             /// <summary>
@@ -222,7 +222,7 @@ namespace trrojan {
 #ifdef _WIN32
             typedef FARPROC proc_type;
 #else /* _WIN32 */
-            typedef void *proc_type;
+            typedef void(* proc_type)(void);
 #endif /* _WIN32 */
 
             /// <summary>

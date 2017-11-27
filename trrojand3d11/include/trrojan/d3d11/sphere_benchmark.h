@@ -30,6 +30,7 @@ namespace d3d11 {
 
         static const char *factor_data_set;
         static const char *factor_frame;
+        static const char *factor_iterations;
         static const char *factor_method;
 
         static const char *method_geosprite;
@@ -40,14 +41,6 @@ namespace d3d11 {
         sphere_benchmark(void);
 
         virtual ~sphere_benchmark(void);
-
-        virtual void draw_debug_view(ATL::CComPtr<ID3D11Device> device,
-            ATL::CComPtr<ID3D11DeviceContext> deviceContext);
-
-        virtual void on_debug_view_resized(ATL::CComPtr<ID3D11Device> device,
-            const unsigned int width, const unsigned int height);
-
-        virtual void on_debug_view_resizing(void);
 
         virtual void optimise_order(configuration_set& inOutConfs);
 
@@ -62,6 +55,12 @@ namespace d3d11 {
             const std::vector<std::string>& changed);
 
     private:
+
+        /// <summary>
+        /// Declare a GPU buffer without latency, because we need to know the
+        /// results immediately and are willing to wait for it.
+        /// </summary>
+        typedef trrojan::d3d11::gpu_timer<1> gpu_timer_type;
 
         trrojan::perspective_camera cam;
         ATL::CComPtr<ID3D11Buffer> constant_buffer;

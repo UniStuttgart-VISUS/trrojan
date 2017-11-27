@@ -559,6 +559,9 @@ namespace trrojan {
 
         static bool validate_checksum(const char *buf, const size_t len);
 
+        static const std::uint32_t FLAG_NO_FILE_OFFSET = (1 << 0);
+        static const std::uint32_t FLAG_STOP_AT_EOT = (1 << 1);
+
         uint32_t enumFlags;
         std::vector<uint8_t> rawData;
         size_t tableBegin;
