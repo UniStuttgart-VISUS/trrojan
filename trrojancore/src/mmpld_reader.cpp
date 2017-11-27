@@ -111,7 +111,7 @@ std::ifstream trrojan::mmpld_reader::read_file_header(file_header& outHeader,
         outSeekTable.push_back(offset);
     }
 
-    return retval;
+    return std::move(retval);
 }
 
 
