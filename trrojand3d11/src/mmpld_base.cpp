@@ -97,7 +97,7 @@ trrojan::d3d11::mmpld_base::mmpld_base(void) {
  * trrojan::d3d11::mmpld_base::open_mmpld
  */
 bool trrojan::d3d11::mmpld_base::open_mmpld(const char *path) {
-    this->mmpld_stream = mmpld_reader::read_file_header(this->mmpld_header,
+    mmpld_reader::read_file_header(this->mmpld_stream , this->mmpld_header,
         this->mmpld_seek_table, path);
     return this->mmpld_stream.good();
 }

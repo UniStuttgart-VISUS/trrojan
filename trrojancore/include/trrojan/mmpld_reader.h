@@ -175,8 +175,8 @@ namespace trrojan {
         /// The file stream is returned after reading the header and the seek
         /// table. The file pointer is located after these data.
         /// </remarks>
-        static std::ifstream read_file_header(file_header& outHeader,
-            seek_table& outSeekTable, const char *path);
+        static std::ifstream& read_file_header(std::ifstream& outStream,
+            file_header& outHeader, seek_table& outSeekTable, const char *path);
 
         /// <summary>
         /// Reads the frame header (of the specified file version) from the

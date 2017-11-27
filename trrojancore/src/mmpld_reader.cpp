@@ -74,8 +74,8 @@ void trrojan::mmpld_reader::parse_version(int& outMajor, int& outMinor,
 /*
  * trrojan::mmpld_reader::read_file_header
  */
-std::ifstream trrojan::mmpld_reader::read_file_header(file_header& outHeader,
-        seek_table& outSeekTable, const char *path) {
+std::ifstream& trrojan::mmpld_reader::read_file_header(std::ifstream& outStream,
+        file_header& outHeader, seek_table& outSeekTable, const char *path) {
     std::uint64_t offset = 0;
 
     if (path == nullptr) {
@@ -84,10 +84,10 @@ std::ifstream trrojan::mmpld_reader::read_file_header(file_header& outHeader,
     }
 
     // Open the file.
-    std::ifstream retval(path, std::ios::binary);
+    outStream = std::ifstream(path, std::ios::binary);
 
     // Read and check the header.
-    retval.read(reinterpret_cast<char *>(&outHeader), sizeof(outHeader));
+    outStream.read(reinterpret_cast<char *>(&outHeader), sizeof(outHeader));
     if (::strcmp(outHeader.magic_identifier, "MMPLD") != 0) {
         throw std::runtime_error("The given stream does not start with a valid "
             "MMPLD header.");
@@ -107,11 +107,11 @@ std::ifstream trrojan::mmpld_reader::read_file_header(file_header& outHeader,
     outSeekTable.clear();
     outSeekTable.reserve(outHeader.frames);
     for (uint32_t i = 0; i < outHeader.frames; ++i) {
-        retval.read(reinterpret_cast<char *>(&offset), sizeof(offset));
+        outStream.read(reinterpret_cast<char *>(&offset), sizeof(offset));
         outSeekTable.push_back(offset);
     }
 
-    return std::move(retval);
+    return outStream;
 }
 
 
