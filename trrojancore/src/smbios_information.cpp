@@ -867,6 +867,14 @@ trrojan::smbios_information trrojan::smbios_information::read(void) {
     retval.tableBegin = sizeof(RawSMBIOSData);
     retval.tableEnd = retval.rawData.size();
 
+    /* Process the header. */
+    {
+        auto header = reinterpret_cast<RawSMBIOSData *>(retval.rawData.data());
+        if (header->SMBIOSMajorVersion >= 3) {
+            retval.enumFlags |= FLAG_STOP_AT_EOT;
+        }
+    }
+
 
 #else /* defined(_WIN32) */
     // Cf. http://git.savannah.gnu.org/cgit/dmidecode.git/tree/dmidecode.c
