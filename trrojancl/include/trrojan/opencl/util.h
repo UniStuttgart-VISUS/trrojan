@@ -9,13 +9,25 @@
 
 #include <map>
 
-#define __CL_ENABLE_EXCEPTIONS
-
-#if defined(__APPLE__) || defined(__MACOSX)
-    #include "OpenCL/cl.hpp"
+#define CL_HPP_ENABLE_EXCEPTIONS
+#if defined(__APPLE__) || defined(__MACOSX) // untested
+	#define GL_SHARING_EXTENSION "cl_APPLE_gl_sharing"
+	#include <OpenCL/cl.hpp>
+	#include <OpenCL/cl_gl.h>
+	#include <OpenGL/OpenGL.h>
 #else
-    #include <CL/cl2.hpp>
+	#define GL_SHARING_EXTENSION "cl_khr_gl_sharing"
+	#define CL_HPP_MINIMUM_OPENCL_VERSION 120
+	#define CL_HPP_TARGET_OPENCL_VERSION 120
+	#include <CL/cl2.hpp>
+	#if _WIN32
+		// TODO: windows OpenGL includes
+	#else
+		#include <GL/glx.h>
+		#include <CL/cl_gl.h>
+	#endif
 #endif
+
 
 namespace trrojan
 {

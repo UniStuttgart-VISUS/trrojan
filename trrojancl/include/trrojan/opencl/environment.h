@@ -7,25 +7,8 @@
 #pragma once
 
 #include "trrojan/environment.h"
-
 #include "trrojan/opencl/export.h"
-
 #include "trrojan/opencl/device.h"
-
-#define __CL_ENABLE_EXCEPTIONS
-
-#if defined(__APPLE__) || defined(__MACOSX) // untested
-    #define GL_SHARING_EXTENSION "cl_APPLE_gl_sharing"
-    #include "OpenCL/cl.hpp"
-#else
-    #define GL_SHARING_EXTENSION "cl_khr_gl_sharing"
-    #include <CL/cl2.hpp>
-    #if _WIN32
-        #include <gl/gl.h>
-    #else
-        #include <GL/glx.h>
-    #endif
-#endif
 
 #include <string>
 #include <iostream>
