@@ -1,0 +1,43 @@
+opencl::volume_raycast {
+    # general
+    boolean img_output = false
+    string sample_precision = uchar
+    
+    # camera setup
+    float32vec3 cam_position = 0 0 2; 0 0 1.5; 0 0 1; 0 0 0.5
+    float32vec4 cam_rotation = 0.6910 0.1809 0.1851 -0.6750; 0.8854 0.1035 0.2372 -0.3861; 0.9576 0.0339 0.2566 -0.1267; 0.9576 -0.0339 0.2566 0.1267; 0.8854 -0.1035 0.2372 0.3861; 0.6910 -0.1809 0.1851 0.6750; 0.5058 0.4941 0.5058 -0.4941; 0.6482 0.2827 0.6482 -0.2827; 0.7010 0.0927 0.7010 -0.0927; 0.7010 -0.0927 0.7010 0.0927; 0.6482 -0.2827 0.6482 0.2827; 0.5058 -0.4941 0.5058 0.4941; 0.1851 0.6750 0.6910 -0.1809; 0.2372 0.3861 0.8854 -0.1035; 0.2566 0.1267 0.9576 -0.0339; 0.2566 -0.1267 0.9576 0.0339; 0.2372 -0.3861 0.8854 0.1035; 0.1851 -0.6750 0.6910 0.1809; -0.1851 0.6750 0.6910 0.1809; -0.2372 0.3861 0.8854 0.1035; -0.2566 0.1267 0.9576 0.0339; -0.2566 -0.1267 0.9576 -0.0339; -0.2372 -0.3861 0.8854 -0.1035; -0.1851 -0.6750 0.6910 -0.1809; -0.5058 0.4941 0.5058 0.4941; -0.6482 0.2827 0.6482 0.2827; -0.7010 0.0927 0.7010 0.0927; -0.7010 -0.0927 0.7010 -0.0927; -0.6482 -0.2827 0.6482 -0.2827; -0.5058 -0.4941 0.5058 -0.4941; -0.6910 0.1809 0.1851 0.6750; -0.8854 0.1035 0.2372 0.3861; -0.9576 0.0339 0.2566 0.1267; -0.9576 -0.0339 0.2566 -0.1267; -0.8854 -0.1035 0.2372 -0.3861; -0.6910 -0.1809 0.1851 -0.6750
+    # float32vec4 cam_rotation = 0.6895 0.2547 0.2856 -0.6149; 0.8760 0.1215 0.3629 -0.2934; 0.9239 -0.0000 0.3827 0.0000; 0.8760 -0.1215 0.3629 0.2934; 0.6895 -0.2547 0.2856 0.6149; 0.2856 0.6149 0.6895 -0.2547; 0.3629 0.2934 0.8760 -0.1215; 0.3827 -0.0000 0.9239 0.0000; 0.3629 -0.2934 0.8760 0.1215; 0.2856 -0.6149 0.6895 0.2547; -0.2856 0.6149 0.6895 0.2547; -0.3629 0.2934 0.8760 0.1215; -0.3827 -0.0000 0.9239 -0.0000; -0.3629 -0.2934 0.8760 -0.1215; -0.2856 -0.6149 0.6895 -0.2547; -0.6895 0.2547 0.2856 0.6149; -0.8760 0.1215 0.3629 0.2934; -0.9239 -0.0000 0.3827 -0.0000; -0.8760 -0.1215 0.3629 -0.2934; -0.6895 -0.2547 0.2856 -0.6149
+    
+    # rendering config
+    float32 step_size_factor = 2.; 1.; 0.5; 0.25
+    uint32vec2 viewport = 512 512; 1024 1024
+    
+    # kernel factors
+    boolean use_ERT = true
+    boolean use_tff = true
+    boolean use_lerp = true
+    boolean use_illumination = false; true
+    boolean use_ortho_proj = false; true
+    boolean shuffle = false; true
+
+    # trasfer function
+    string tff_file_name = /media/brudervn/Daten/volTest/tff/trrojan_cham1.tff; /media/brudervn/Daten/volTest/tff/trrojan_zeiss1.tff
+    
+    # data sets
+    string volume_file_name = \\trr161store.visus.uni-stuttgart.de\SFB-TRR 161\A02\volumes\CT\bat.dat; \\trr161store.visus.uni-stuttgart.de\SFB-TRR 161\A02\volumes\CT\bonsai.dat; \\trr161store.visus.uni-stuttgart.de\SFB-TRR 161\A02\volumes\CT\bunny.dat; \\trr161store.visus.uni-stuttgart.de\SFB-TRR 161\A02\volumes\CT\chameleon.dat; \\trr161store.visus.uni-stuttgart.de\SFB-TRR 161\A02\volumes\CT\E_1328.dat; \\trr161store.visus.uni-stuttgart.de\SFB-TRR 161\A02\volumes\CT\engine.dat; \\trr161store.visus.uni-stuttgart.de\SFB-TRR 161\A02\volumes\CT\flower.dat; \\trr161store.visus.uni-stuttgart.de\SFB-TRR 161\A02\volumes\CT\foot.dat; \\trr161store.visus.uni-stuttgart.de\SFB-TRR 161\A02\volumes\CT\foraminifera.dat; \\trr161store.visus.uni-stuttgart.de\SFB-TRR 161\A02\volumes\CT\hazelnut.dat; \\trr161store.visus.uni-stuttgart.de\SFB-TRR 161\A02\volumes\CT\hoatzin.dat; \\trr161store.visus.uni-stuttgart.de\SFB-TRR 161\A02\volumes\CT\kingfisher.dat; \\trr161store.visus.uni-stuttgart.de\SFB-TRR 161\A02\volumes\CT\mandelbulb.dat; \\trr161store.visus.uni-stuttgart.de\SFB-TRR 161\A02\volumes\CT\microtomography.dat; \\trr161store.visus.uni-stuttgart.de\SFB-TRR 161\A02\volumes\CT\mouse.dat; \\trr161store.visus.uni-stuttgart.de\SFB-TRR 161\A02\volumes\CT\parakeet.dat; \\trr161store.visus.uni-stuttgart.de\SFB-TRR 161\A02\volumes\CT\skull.dat; \\trr161store.visus.uni-stuttgart.de\SFB-TRR 161\A02\volumes\CT\vertebra.dat; \\trr161store.visus.uni-stuttgart.de\SFB-TRR 161\A02\volumes\CT\visFemale.dat; \\trr161store.visus.uni-stuttgart.de\SFB-TRR 161\A02\volumes\CT\zeiss.dat; \\trr161store.visus.uni-stuttgart.de\SFB-TRR 161\A02\volumes\generated\res/res_128.dat; \\trr161store.visus.uni-stuttgart.de\SFB-TRR 161\A02\volumes\generated\res/res_256.dat; \\trr161store.visus.uni-stuttgart.de\SFB-TRR 161\A02\volumes\generated\res/res_384.dat; \\trr161store.visus.uni-stuttgart.de\SFB-TRR 161\A02\volumes\generated\res/res_512.dat; \\trr161store.visus.uni-stuttgart.de\SFB-TRR 161\A02\volumes\generated\res/res_640.dat; \\trr161store.visus.uni-stuttgart.de\SFB-TRR 161\A02\volumes\generated\res/res_768.dat; \\trr161store.visus.uni-stuttgart.de\SFB-TRR 161\A02\volumes\generated\res/res_896.dat; \\trr161store.visus.uni-stuttgart.de\SFB-TRR 161\A02\volumes\generated\res/res_1024.dat; \\trr161store.visus.uni-stuttgart.de\SFB-TRR 161\A02\volumes\generated\freq/freq_0.dat; \\trr161store.visus.uni-stuttgart.de\SFB-TRR 161\A02\volumes\generated\freq/freq_1.dat; \\trr161store.visus.uni-stuttgart.de\SFB-TRR 161\A02\volumes\generated\freq/freq_2.dat; \\trr161store.visus.uni-stuttgart.de\SFB-TRR 161\A02\volumes\generated\freq/freq_4.dat; \\trr161store.visus.uni-stuttgart.de\SFB-TRR 161\A02\volumes\generated\freq/freq_8.dat; \\trr161store.visus.uni-stuttgart.de\SFB-TRR 161\A02\volumes\generated\freq/freq_16.dat; \\trr161store.visus.uni-stuttgart.de\SFB-TRR 161\A02\volumes\generated\freq/freq_32.dat; \\trr161store.visus.uni-stuttgart.de\SFB-TRR 161\A02\volumes\generated\freq/freq_64.dat; \\trr161store.visus.uni-stuttgart.de\SFB-TRR 161\A02\volumes\generated\freq/freq_128.dat; \\trr161store.visus.uni-stuttgart.de\SFB-TRR 161\A02\volumes\generated\freq/freq_256.dat; \\trr161store.visus.uni-stuttgart.de\SFB-TRR 161\A02\volumes\generated\freq/freq_512.dat; \\trr161store.visus.uni-stuttgart.de\SFB-TRR 161\A02\volumes\generated\freq/freq_1024.dat
+    
+    # GPU only
+    int32 device_type = 4
+    int32 device_vendor = 8
+    #device device = TITAN X (Pascal)
+    #environment environment = NVIDIA CUDA
+}
+
+#stream::stream_benchmark{
+#    string task_type = add; triad
+#}
+
+#d3d11::mmpld-raycaster {
+#    uint32 viewport_width = 800
+#    uint32 viewport_height = 600
+#}
