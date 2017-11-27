@@ -97,7 +97,7 @@ trrojan::d3d11::mmpld_base::mmpld_base(void) {
  * trrojan::d3d11::mmpld_base::open_mmpld
  */
 bool trrojan::d3d11::mmpld_base::open_mmpld(const char *path) {
-    this->mmpld_stream = mmpld_reader::read_file_header(this->mmpld_header,
+    mmpld_reader::read_file_header(this->mmpld_stream , this->mmpld_header,
         this->mmpld_seek_table, path);
     return this->mmpld_stream.good();
 }
@@ -120,6 +120,15 @@ ATL::CComPtr<ID3D11Buffer> trrojan::d3d11::mmpld_base::read_mmpld_frame(
     // Make sure to erase last layout in case I/O fails.
     this->mmpld_layout.clear();
     ::memset(&this->mmpld_list, 0, sizeof(this->mmpld_list));
+
+    // Basic sanity check.
+    if (frame >= this->mmpld_seek_table.size()) {
+        std::stringstream msg;
+        msg << "The requested frame #" << frame << " does not exists. The file "
+            << "comprises only " << this->mmpld_seek_table.size()
+            << " frame(s)." << std::ends;
+        throw std::invalid_argument(msg.str());
+    }
 
     // Read the list header and determine the layout using the header.
     this->mmpld_stream.seekg(this->mmpld_seek_table[frame]);

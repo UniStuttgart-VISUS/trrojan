@@ -51,84 +51,21 @@ namespace trrojan {
     /// default-constructible</para>
     /// </remarks>
     enum class TRROJANCORE_API variant_type {
-        /// <summary>
-        /// The variant does not contain valid data.
-        /// </summary>
         empty,
-
-        /// <summary>
-        /// The variant holds a Boolean value.
-        /// </summary>
         boolean,
-
-        /// <summary>
-        /// The variant holds a signed 8-bit integer.
-        /// </summary>
         int8,
-
-        /// <summary>
-        /// The variant holds a signed 16-bit integer.
-        /// </summary>
         int16,
-
-        /// <summary>
-        /// The variant holds a signed 32-bit integer.
-        /// </summary>
         int32,
-
-        /// <summary>
-        /// The variant holds a signed 64-bit integer.
-        /// </summary>
         int64,
-
-        /// <summary>
-        /// The variant holds an unsigned 8-bit integer.
-        /// </summary>
         uint8,
-
-        /// <summary>
-        /// The variant holds an unsigned 16-bit integer.
-        /// </summary>
         uint16,
-
-        /// <summary>
-        /// The variant holds an unsigned 32-bit integer.
-        /// </summary>
         uint32,
-
-        /// <summary>
-        /// The variant holds an unsigned 64-bit integer.
-        /// </summary>
         uint64,
-
-        /// <summary>
-        /// The variant holds 32-bit floating point number.
-        /// </summary>
         float32,
-
-        /// <summary>
-        /// The variant holds 64-bit floating point number.
-        /// </summary>
         float64,
-
-        /// <summary>
-        /// The variant holds a narrow string.
-        /// </summary>
         string,
-
-        /// <summary>
-        /// The variant holds a wide string.
-        /// </summary>
         wstring,
-
-        /// <summary>
-        /// The variant holds a <see cref="trrojan::device" />.
-        /// </summary>
         device,
-
-        /// <summary>
-        /// The variant holds a <see cref="trrojan::environment" />.
-        /// </summary>
         environment,
 
 #define __TRROJAN_VARIANT_VEC(type, dim) type##vec##dim
@@ -152,7 +89,6 @@ namespace trrojan {
 
 #undef __TRROJAN_VARIANT_VEC
 #undef __TRROJAN_VARIANT_VECS
-
 
         // Add new members here.
     };
@@ -248,21 +184,6 @@ namespace detail {
         __TRROJAN_VARIANT_VECS(float64) /* Add new members here. */>
         variant_type_list;
 
-    /// <summary>
-    /// <see cref="variant_types" /> which of the values can be automatically
-    /// parsed using <see cref="trrojan::parse" />.
-    /// </summary>
-    typedef variant_type_list_t<variant_type::int8, variant_type::int16,
-        variant_type::int32, variant_type::int64, variant_type::uint8,
-        variant_type::uint16, variant_type::uint32, variant_type::uint64,
-        variant_type::float32, variant_type::float64,
-        __TRROJAN_VARIANT_VECS(int8), __TRROJAN_VARIANT_VECS(int16),
-        __TRROJAN_VARIANT_VECS(int32), __TRROJAN_VARIANT_VECS(int64),
-        __TRROJAN_VARIANT_VECS(uint8), __TRROJAN_VARIANT_VECS(uint16),
-        __TRROJAN_VARIANT_VECS(uint32), __TRROJAN_VARIANT_VECS(uint64),
-        __TRROJAN_VARIANT_VECS(float32), __TRROJAN_VARIANT_VECS(float64)>
-        auto_parsable_variant_type_list;
-
 #undef __TRROJAN_VARIANT_VECS
 
 } /* end namespace detail */
@@ -273,8 +194,16 @@ namespace detail {
     /// <see cref="trrojan::variant_type" />.
     /// </summary>
     /// <remarks>
-    /// The default implementation does indicate an invalid type; the template
-    /// specialisations implement the type deduction.
+    /// <para>The default implementation does indicate an invalid type; the 
+    /// template specialisations implement the type deduction.</para>
+    /// <para>The traits implementations provided by the
+    /// <c>__TRROJANCORE_DECL_VARIANT_TYPE_TRAITS</c> macro below provide
+    /// The C++ type from the variant enum, whether values can be parsed from
+    /// a <see cref="std::stringstream" /> (by the <see cref="trrojan::parse" />
+    /// function) and the ability to retrieve the value from a
+    /// <see cref="trrojan::detail::variant" /> using a static <c>get</c>
+    /// method. Furthermore, the variant provides a static <c>name</c> method
+    /// which returns the enumeration member as a string.</para>
     /// </remarks>
     template<variant_type T> struct TRROJANCORE_API variant_type_traits { };
 
@@ -290,9 +219,10 @@ namespace detail {
     /// </remarks>
     template<class T> struct TRROJANCORE_API variant_reverse_traits { };
 
-#define __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(t)                              \
+#define __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(t, p)                           \
     template<> struct TRROJANCORE_API variant_type_traits<variant_type::t> {   \
         typedef decltype(trrojan::detail::variant::val_##t) type;              \
+        static const bool parsable = (p);                                      \
         inline static type *get(detail::variant& v) {                          \
             return &v.val_##t;                                                 \
         }                                                                      \
@@ -307,6 +237,7 @@ namespace detail {
     template<> struct TRROJANCORE_API variant_reverse_traits<                  \
             decltype(trrojan::detail::variant::val_##t)> {                     \
         static const variant_type type = variant_type::t;                      \
+        static const bool parsable = (p);                                      \
         inline static decltype(trrojan::detail::variant::val_##t) *get(        \
                 detail::variant& v) {                                          \
             return &v.val_##t;                                                 \
@@ -321,26 +252,26 @@ namespace detail {
         }                                                                      \
     }
 
-    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(boolean);
-    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(int8);
-    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(int16);
-    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(int32);
-    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(int64);
-    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(uint8);
-    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(uint16);
-    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(uint32);
-    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(uint64);
-    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(float32);
-    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(float64);
-    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(string);
-    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(wstring);
-    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(device);
-    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(environment);
+    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(boolean, false);
+    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(int8, true);
+    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(int16, true);
+    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(int32, true);
+    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(int64, true);
+    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(uint8, true);
+    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(uint16, true);
+    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(uint32, true);
+    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(uint64, true);
+    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(float32, true);
+    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(float64, true);
+    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(string, false);
+    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(wstring, false);
+    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(device, false);
+    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(environment, false);
 
 #define __TRROJANCORE_DECL_VARIANT_VEC_TYPE_TRAITS(type)                       \
-    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(type##vec##2);                      \
-    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(type##vec##3);                      \
-    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(type##vec##4)
+    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(type##vec##2, true);                \
+    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(type##vec##3, true);                \
+    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(type##vec##4, true)
 
     __TRROJANCORE_DECL_VARIANT_VEC_TYPE_TRAITS(int8);
     __TRROJANCORE_DECL_VARIANT_VEC_TYPE_TRAITS(int16);

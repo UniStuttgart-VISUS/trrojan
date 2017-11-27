@@ -16,7 +16,6 @@
 #include "trrojan/benchmark.h"
 
 #include "trrojan/d3d11/device.h"
-#include "trrojan/d3d11/hash.h"
 #include "trrojan/d3d11/render_target.h"
 
 

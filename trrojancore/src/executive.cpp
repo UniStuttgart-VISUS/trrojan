@@ -98,10 +98,9 @@ void trrojan::executive::load_plugins(const cmd_line& cmdLine) {
                 auto dll = plugin_dll::open(path);
                 auto ep = dll.find_entry_point();
                 if (ep == nullptr) {
-                    std::stringstream msg;
-                    msg << "Plugin entry point was not found in \"" << path
-                        << "\".";
-                    throw std::runtime_error(msg.str());
+                    log::instance().write_line(log_level::warning, "Plugin "
+                        "entry point was not found in \"%s\".", path.c_str());
+                    continue;
                 }
 
                 log::instance().write(log_level::verbose, "Found a plugin "

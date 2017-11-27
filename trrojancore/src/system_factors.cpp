@@ -5,7 +5,9 @@
 
 #include "trrojan/system_factors.h"
 
+#include <cerrno>
 #include <cinttypes>
+#include <ctime>
 #include <fstream>
 #include <iterator>
 #include <regex>
@@ -82,6 +84,7 @@ __TRROJAN_DEFINE_FACTOR(os_version);
 __TRROJAN_DEFINE_FACTOR(process_elevated);
 __TRROJAN_DEFINE_FACTOR(ram);
 __TRROJAN_DEFINE_FACTOR(system_desc);
+__TRROJAN_DEFINE_FACTOR(timestamp);
 __TRROJAN_DEFINE_FACTOR(user_name);
 
 #undef __TRROJAN_DEFINE_FACTOR
@@ -435,24 +438,53 @@ trrojan::variant trrojan::system_factors::os(void) const {
  */
 trrojan::variant trrojan::system_factors::os_version(void) const {
 #ifdef _WIN32
-    OSVERSIONINFOEXA vi;
-    ::ZeroMemory(&vi, sizeof(vi));
-    vi.dwOSVersionInfoSize = sizeof(vi);
+    typedef NTSTATUS (WINAPI *GetVersionFunc)(PRTL_OSVERSIONINFOW);
+    GetVersionFunc getVersion = nullptr;
+    std::stringstream str;
+
+    {
+        auto hModule = ::GetModuleHandleW(L"ntdll.dll");
+        if (hModule) {
+            getVersion = reinterpret_cast<GetVersionFunc>(::GetProcAddress(
+                hModule, "RtlGetVersion"));
+        }
+    }
+
+    if (getVersion != nullptr) {
+        // First, try calling the runtime library directly, which will give us
+        // the real OS version rather than the SDK version we use.
+        RTL_OSVERSIONINFOW vi = { 0 };
+        ::ZeroMemory(&vi, sizeof(vi));
+        vi.dwOSVersionInfoSize = sizeof(vi);
+
+        if (getVersion(&vi) == 0) {
+            str << vi.dwMajorVersion << "."
+                << vi.dwMinorVersion << "."
+                << vi.dwBuildNumber;
+
+        } else {
+            getVersion = nullptr;   // Try again ...
+        }
+    }
+
+    if (getVersion == nullptr) {
+        // Use public API (returns SDK version on Windows 10)
+        OSVERSIONINFOEXA vi;
+        ::ZeroMemory(&vi, sizeof(vi));
+        vi.dwOSVersionInfoSize = sizeof(vi);
 
 #pragma warning(push)
 #pragma warning(disable: 4996)
-    if (!::GetVersionExA(reinterpret_cast<LPOSVERSIONINFOA>(&vi))) {
-        std::error_code ec(::GetLastError(), std::system_category());
-        throw std::system_error(ec, "Failed to get operating system version.");
-    }
+        if (!::GetVersionExA(reinterpret_cast<LPOSVERSIONINFOA>(&vi))) {
+            std::error_code ec(::GetLastError(), std::system_category());
+            throw std::system_error(ec, "Failed to get operating system version.");
+        }
 #pragma warning(pop)
 
-    // TODO: rewrite this; it will return the SDK version for Win10
-
-    std::stringstream str;
-    str << vi.dwMajorVersion << "."
-        << vi.dwMinorVersion << "."
-        << vi.dwBuildNumber;
+        str << vi.dwMajorVersion << "."
+            << vi.dwMinorVersion << "."
+            << vi.dwBuildNumber;
+    }
 
     return str.str();
 
@@ -588,6 +620,34 @@ trrojan::variant trrojan::system_factors::system_desc(void) const {
             << e->get_version() << ")" << std::ends;
         return variant(value.str());
     }
+}
+
+
+/*
+ * trrojan::system_factors::timestamp
+ */
+trrojan::variant trrojan::system_factors::timestamp(void) const {
+    std::vector<char> buffer;
+    struct tm tm;
+    auto time = ::time(nullptr);
+
+    {
+#ifdef _WIN32
+        auto error = ::gmtime_s(&tm, &time);
+#else /* _WIN32 */
+        auto error = (::gmtime_r(&time, &tm) != nullptr) ? 0 : EOVERFLOW;
+#endif /* _WIN32 */
+        if (error != 0) {
+            throw std::system_error(error, std::system_category(),
+                "Failed to convert timestamp.");
+        }
+    }
+
+    buffer.resize(128);
+    ::strftime(buffer.data(), buffer.size(), "%FT%TZ", &tm);
+    buffer.back() = static_cast<char>(0);
+
+    return std::string(buffer.data());
 }
 
 

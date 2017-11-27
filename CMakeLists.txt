@@ -1,5 +1,5 @@
 ﻿# CMakeLists.txt
-# Copyright © 2016 SFB-TRR 161. Alle Rechte vorbehalten.
+# Copyright © 2016 - 2017 SFB-TRR 161. Alle Rechte vorbehalten.
 
 cmake_minimum_required(VERSION 3.1.0)
 
@@ -9,7 +9,7 @@ find_package(JPEG)
 find_package(TIFF)
 find_package(ZLIB)
 find_package(PNG)
-
+find_package(OpenMP)
 
 set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_USE_RELATIVE_PATHS ON)
@@ -33,32 +33,35 @@ endif (${MSVC})
 
 
 if (${PNG_FOUND})
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Dcimg_use_png")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Dcimg_use_png")
+	include_directories(${PNG_INCLUDE_DIRS})
 endif (${PNG_FOUND})
 
 if (${JPEG_FOUND})
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Dcimg_use_jpeg")
+	include_directories(${JPEG_INCLUDE_DIR})
 endif (${JPEG_FOUND})
 
 if (${TIFF_FOUND})
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Dcimg_use_tiff")
+	include_directories(${TIFF_INCLUDE_DIR})
 endif (${TIFF_FOUND})
 
 if (${ZLIB_FOUND})
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Dcimg_use_zlib")
+	include_directories(${ZLIB_INCLUDE_DIRS})
 endif (${ZLIB_FOUND})
 
 if (NOT WIN32 OR ${PNG_FOUND})
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTRROJAN_WITH_CIMG -Dcimg_display=0 -Dcimg_use_png")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTRROJAN_WITH_CIMG -Dcimg_display=0")
 endif (NOT WIN32 OR ${PNG_FOUND})
 
-find_package(OpenMP)
 if (OPENMP_FOUND)
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 endif()
 
-## Build glm
+# Build glm
 #set(GLM_STATIC_LIBRARY_ENABLE "YES")
 #set(GLM_TEST_ENABLE "NO")
 #add_subdirectory(glm)
