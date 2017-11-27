@@ -251,7 +251,7 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
         gpuTimer.end_frame();
         auto cpuTime = cpuTimer.elapsed_millis();
 
-        gpuTimer.evaluate_frame(isDisjoint, gpuFreq);
+        gpuTimer.evaluate_frame(isDisjoint, gpuFreq, 5 * 1000);
         if (!isDisjoint) {
             auto gpuTime = gpu_timer_type::to_milliseconds(
                 gpuTimer.evaluate(0), gpuFreq);

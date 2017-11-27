@@ -57,8 +57,7 @@ trrojan::result trrojan::d3d11::benchmark_base::run(const configuration& c) {
     // Check whether the device has been changed. This should always be done
     // first, because all GPU resources, which depend on the content of 'c',
     // depend on the device as their storage location.
-    if (contains(changed, factor_device)
-            || contains(changed, factor_debug_view)) {
+    if (contains_any(changed, factor_device, factor_debug_view)) {
         log::instance().write_line(log_level::verbose, "The D3D device has "
             "changed. Reallocating all graphics resources ...");
         this->render_target = std::make_shared<bench_render_target>(device);
@@ -67,16 +66,26 @@ trrojan::result trrojan::d3d11::benchmark_base::run(const configuration& c) {
     }
 
     auto isDebugView = c.get<bool>(factor_debug_view);
-    isDebugView = true;
-    if (isDebugView) {
-        // TODO: evil crowbaring everywhere.
-        if ((std::dynamic_pointer_cast<debug_render_target>(this->render_target) == nullptr)) {
-            this->render_target = std::make_shared<debug_render_target>();
-            auto vp = c.get<viewport_type>(factor_viewport);
-            this->render_target->resize(vp[0], vp[1]);
+    if (contains(changed, factor_debug_view)) {
+        if (isDebugView && (this->debug_target == nullptr)) {
+            log::instance().write_line(log_level::verbose, "Lazy creation of "
+                "D3D11 debug render target.");
+            this->debug_target = std::make_shared<debug_render_target>();
+            this->debug_target->resize(1, 1);
+            this->debug_device = std::make_shared<d3d11::device>(
+                this->debug_target->device());
         }
-        device = std::make_shared<d3d11::device>(this->render_target->device());
+
+        // Switching from debug to standard device and vice versa. Must notify
+        // the user about that to allow for re-creation of resources.
         changed.push_back(factor_device);
+    }
+
+    if (isDebugView) {
+        assert(this->debug_device != nullptr);
+        assert(this->render_target != nullptr);
+        device = this->debug_device;
+        this->render_target = this->debug_target;
     }
 
     // Resize the render target if the viewport has changed.

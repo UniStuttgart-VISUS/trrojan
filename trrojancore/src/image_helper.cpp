@@ -156,7 +156,7 @@ ATL::CComPtr<IWICBitmapSource> TRROJANCORE_API trrojan::get_wic_bitmap(
             throw std::runtime_error(msg.str());
         }
 
-        return conv;
+        return conv.p;
     } else {
         return bmp;
     }

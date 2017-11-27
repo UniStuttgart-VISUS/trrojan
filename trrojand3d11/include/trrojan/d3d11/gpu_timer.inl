@@ -64,6 +64,14 @@ trrojan::d3d11::gpu_timer<L>::to_milliseconds(
 
 
 /*
+ * trrojan::d3d11::gpu_timer<L>::infinite
+ */
+template<size_t L> const typename trrojan::d3d11::gpu_timer<L>::size_type
+trrojan::d3d11::gpu_timer<L>::infinite
+    = (std::numeric_limits<gpu_timer::value_type>::max)();
+
+
+/*
  * trrojan::d3d11::gpu_timer<L>::~gpu_timer
  */
 template<size_t L>
@@ -181,14 +189,24 @@ trrojan::d3d11::gpu_timer<L>::evaluate(
  */
 template<size_t L>
 void trrojan::d3d11::gpu_timer<L>::evaluate_frame(
-        bool& outIsDisjoint, value_type& outFrequency) {
+        bool& outIsDisjoint, value_type& outFrequency,
+        value_type timeout) {
     if (!this->can_evaluate()) {
         throw std::runtime_error("You need to measure more frames before "
             "evaluating the GPU timer.");
     }
 
+    if (timeout != gpu_timer::infinite) {
+        timeout = timer::to_millis(timer::now()) + timeout;
+    }
+
     while (!this->try_evaluate_frame(outIsDisjoint, outFrequency)) {
-        ::SwitchToThread();
+        if (timer::to_millis(timer::now()) > timeout) {
+            throw std::runtime_error("Evaluation of GPU frame counters "
+                "took too long.");
+        } else {
+            ::SwitchToThread();
+        }
     }
 }
 

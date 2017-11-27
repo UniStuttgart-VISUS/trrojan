@@ -24,11 +24,11 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/bin")
 
 # Configure the compiler.
 if (${CMAKE_COMPILER_IS_GNUCXX})
-	add_definitions(-pedantic -fPIC -DUNIX )
+	add_definitions(-pedantic -fPIC -DUNIX)
 	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -DDEBUG -D_DEBUG -ggdb")
 endif (${CMAKE_COMPILER_IS_GNUCXX})
 if (${MSVC})
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_DEBUG} -DNOMINMAX -EHsc")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNOMINMAX -EHsc")
 endif (${MSVC})
 
 if (NOT WIN32 OR ${PNG_FOUND})

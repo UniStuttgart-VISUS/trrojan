@@ -227,6 +227,8 @@ void trrojan::executive::trroll(const std::string& path, output_base& output) {
                         b.configs.replace_factor(factor::from_manifestations(
                             device_base::factor_name, d));
 
+                        (**it).optimise_order(b.configs);
+
                         (**it).run(b.configs, [&output](result&& r) {
                             output << r;
                             return true;
