@@ -51,6 +51,7 @@ _TRROJANSTREAM_DEFINE_FACTOR(cam_rotation);
 _TRROJANSTREAM_DEFINE_FACTOR(sample_precision);
 _TRROJANSTREAM_DEFINE_FACTOR(use_lerp);
 _TRROJANSTREAM_DEFINE_FACTOR(use_ERT);
+_TRROJANSTREAM_DEFINE_FACTOR(use_ESS);
 _TRROJANSTREAM_DEFINE_FACTOR(use_tff);
 _TRROJANSTREAM_DEFINE_FACTOR(use_dvr);
 _TRROJANSTREAM_DEFINE_FACTOR(shuffle);
@@ -148,6 +149,8 @@ trrojan::opencl::volume_raycast_benchmark::volume_raycast_benchmark(void)
     add_kernel_build_factor(factor_use_lerp, false);
     // use early ray termination
     add_kernel_build_factor(factor_use_ERT, true);
+	// use empty space skipping
+	add_kernel_build_factor(factor_use_ESS, false);
     // make a transfer function lookups
     add_kernel_build_factor(factor_use_tff, true);
     // use direct volume rendering (not inderect aka iso-surface rendering)
@@ -870,7 +873,8 @@ void trrojan::opencl::volume_raycast_benchmark::build_kernel(environment::pointe
                                                              const std::string build_flags)
 {
 //    std::cout << _kernel_source << std::endl; // DEBUG: print out composed kernel source
-    cl::Program::Sources source; // (1, std::make_pair(_kernel_source.data(), _kernel_source.size()));
+    cl::Program::Sources source; 
+// (1, std::make_pair(_kernel_source.data(), _kernel_source.size()));
     source.push_back(_kernel_source);
     try
     {

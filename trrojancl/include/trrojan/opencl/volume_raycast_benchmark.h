@@ -67,6 +67,7 @@ namespace opencl
         static const std::string factor_sample_precision;
         static const std::string factor_use_lerp;
         static const std::string factor_use_ERT;
+		static const std::string factor_use_ESS;
         static const std::string factor_use_tff;
         static const std::string factor_use_dvr;
         static const std::string factor_shuffle;
@@ -606,6 +607,9 @@ namespace opencl
         /// </summary>
         glm::vec3 _model_scale;
 
+		/// <summary>
+		/// Data precision devision factor.
+		/// </summary>
         float _precision_div;
     };
 
