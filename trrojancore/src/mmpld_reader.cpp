@@ -15,6 +15,41 @@
 
 
 /*
+ * trrojan::mmpld_reader::shader_properties
+ */
+trrojan::mmpld_reader::shader_properties
+trrojan::mmpld_reader::calc_shader_properties(const list_header& header) {
+    std::underlying_type<shader_properties>::type retval = 0;
+
+    switch (header.vertex_type) {
+        case mmpld_reader::vertex_type::float_xyzr:
+            retval |= shader_properties::per_vertex_radius;
+            break;
+
+        default:
+            // Nothing to do.
+            break;
+    }
+
+    switch (header.colour_type) {
+        case mmpld_reader::colour_type::float_i:
+            retval |= shader_properties::intensity_xfer_function;
+            break;
+
+        case mmpld_reader::colour_type::none:
+            // Nothing to do.
+            break;
+
+        default:
+            retval |= shader_properties::per_vertex_colour;
+            break;
+    }
+
+    return static_cast<shader_properties>(retval);
+}
+
+
+/*
  * trrojan::mmpld_reader::calc_stride
  */
 std::uint64_t trrojan::mmpld_reader::calc_stride(const list_header& header) {

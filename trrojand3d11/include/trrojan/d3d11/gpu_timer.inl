@@ -197,7 +197,7 @@ void trrojan::d3d11::gpu_timer<L>::evaluate_frame(
     }
 
     if (timeout != gpu_timer::infinite) {
-        timeout = timer::to_millis(timer::now()) + timeout;
+        timeout += static_cast<value_type>(timer::to_millis(timer::now()));
     }
 
     while (!this->try_evaluate_frame(outIsDisjoint, outFrequency)) {

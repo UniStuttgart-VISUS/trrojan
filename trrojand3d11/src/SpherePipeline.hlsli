@@ -9,20 +9,11 @@
 #pragma once
 #else /* _MSC_VER */
 
-#define INPUT_POSITION_XYZR 1
-#define INPUT_COLOUR 1
-
 struct VsInput {
-#ifdef INPUT_POSITION_XYZ
-    float3 Position : POSITION;
-#elif INPUT_POSITION_XYZR
     float4 Position : POSITION;
-#else  /* INPUT_POSITION_XYZ */
-#error No format was specified for the input position.
-#endif /* INPUT_POSITION_XYZ */
-#ifdef INPUT_COLOUR
+#ifdef PER_VERTEX_COLOUR
     float4 Colour : COLOR;
-#endif /* INPUT_COLOUR */
+#endif /* PER_VERTEX_COLOUR */
 };
 
 struct GsInput {
@@ -55,5 +46,7 @@ cbuffer SphereConstants CBUFFER(0) {
     float4x4 ViewInvMatrix;
     float4x4 ViewProjInvMatrix;
     float4 Viewport;
+    float4 GlobalColour;
+    float4 IntensityRangeAndGlobalRadius;
 };
 

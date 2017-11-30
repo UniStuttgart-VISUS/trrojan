@@ -101,7 +101,8 @@ PsOutput Main(PsInput input) {
         normal = sphereintersection / rad;
         //normal = normalize(sphereintersection);
         // phong lighting with directional light
-        retval.Colour = float4(LocalLighting(ray, normal, lightPos.xyz, input.Colour.rgb), input.Colour.a);
+        float4 baseColour = input.Colour;
+        retval.Colour = float4(LocalLighting(ray, normal, lightPos.xyz, baseColour.rgb), baseColour.a);
     }
 
     // calculate depth

@@ -94,6 +94,56 @@ trrojan::d3d11::mmpld_base::mmpld_base(void) {
 
 
 /*
+ * trrojan::d3d11::mmpld_base::get_mmpld_pixel_shader_properties
+ */
+trrojan::d3d11::mmpld_base::shader_properties
+trrojan::d3d11::mmpld_base::get_mmpld_pixel_shader_properties(
+        const bool vsXfer) const {
+    typedef mmpld_reader::shader_properties sp_t;
+
+    shader_properties retval = mmpld_reader::calc_shader_properties(
+        this->mmpld_list);
+    
+    if (vsXfer) {
+        // If per-vertex transfer function was selected, erase the flag from
+        // the pixel shader's properties.
+        retval &= ~sp_t::intensity_xfer_function;
+    }
+
+    // The following per-vertex properties are irrelevant for the pixel shader.
+    retval &= ~sp_t::per_vertex_colour;
+    retval &= ~sp_t::per_vertex_radius;
+
+    log::instance().write_line(log_level::debug, "Computed sphere pixel shader "
+        "properties as %u.", retval);
+    return static_cast<shader_properties>(retval);
+}
+
+
+/*
+ * trrojan::d3d11::mmpld_base::get_mmpld_vertex_shader_properties
+ */
+trrojan::d3d11::mmpld_base::shader_properties
+trrojan::d3d11::mmpld_base::get_mmpld_vertex_shader_properties(
+        const bool vsXfer) const  {
+    typedef mmpld_reader::shader_properties sp_t;
+
+    shader_properties retval = mmpld_reader::calc_shader_properties(
+        this->mmpld_list);
+
+    if (!vsXfer) {
+        // If per-pixel transfer function was selected, erase the flag from
+        // the pixel shader's properties.
+        retval &= ~sp_t::intensity_xfer_function;
+    }
+
+    log::instance().write_line(log_level::debug, "Computed sphere vertex shader "
+        "properties as %u.", retval);
+    return static_cast<shader_properties>(retval);
+}
+
+
+/*
  * trrojan::d3d11::mmpld_base::open_mmpld
  */
 bool trrojan::d3d11::mmpld_base::open_mmpld(const char *path) {
