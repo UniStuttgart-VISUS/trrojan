@@ -79,6 +79,8 @@ namespace d3d11 {
             this->render_target->present();
         }
 
+        void save_target(const char *path = nullptr);
+
     private:
 
         typedef trrojan::benchmark_base base;

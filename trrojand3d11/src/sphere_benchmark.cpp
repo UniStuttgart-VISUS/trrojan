@@ -355,6 +355,8 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
             retval->add({ i, this->mmpld_list.particles, gpuTime, cpuTime });
             ++i;
         }
+
+        this->save_target();    // TODO
     }
 
     return retval;

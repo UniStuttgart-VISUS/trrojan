@@ -5,6 +5,8 @@
 
 #include "trrojan/d3d11/benchmark_base.h"
 
+#include <ctime>
+
 #include "trrojan/factor.h"
 #include "trrojan/log.h"
 
@@ -102,6 +104,14 @@ trrojan::result trrojan::d3d11::benchmark_base::run(const configuration& c) {
 
     this->render_target->enable();
     auto retval = this->on_run(*device, c, changed);
+
+    auto benchTarget = std::dynamic_pointer_cast<bench_render_target>(
+        this->render_target);
+    if (benchTarget != nullptr) {
+        benchTarget->save("honcho.png");
+    }
+
+
     return retval;
 }
 
@@ -118,5 +128,32 @@ trrojan::d3d11::benchmark_base::benchmark_base(const std::string& name)
         auto dftViewport = std::array<unsigned int, 2> { 1024, 1024 };
         this->_default_configs.add_factor(factor::from_manifestations(
             factor_viewport, dftViewport));
+    }
+}
+
+
+/*
+ * trrojan::d3d11::benchmark_base::save_target
+ */
+void trrojan::d3d11::benchmark_base::save_target(const char *path) {
+    if (this->render_target != nullptr) {
+        std::string p;
+
+        if (path == nullptr) {
+            std::vector<char> buffer;
+            struct tm tm;
+            auto time = ::time(nullptr);
+            ::localtime_s(&tm, &time);
+
+            buffer.resize(128);
+            ::strftime(buffer.data(), buffer.size(), "%Y%m%d%H%M%S.png", &tm);
+            buffer.back() = static_cast<char>(0);
+
+            p = buffer.data();
+        } else {
+            p = path;
+        }
+
+        this->render_target->save(p);
     }
 }

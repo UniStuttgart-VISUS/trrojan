@@ -82,6 +82,12 @@ namespace d3d11 {
         virtual void resize(const unsigned int width,
             const unsigned int height) = 0;
 
+        /// <summary>
+        /// Stage the current back buffer and save it to the given file, which
+        /// of the extension determines the image codec.
+        /// </summary>
+        void save(const std::string& path);
+
         render_target_base& operator =(const render_target_base&) = delete;
 
     protected:
@@ -129,6 +135,11 @@ namespace d3d11 {
         /// The immediate context of <see cref="_device" />.
         /// </summary>
         ATL::CComPtr<ID3D11DeviceContext> _device_context;
+
+        /// <summary>
+        /// A staging texture for saving the back buffer to disk.
+        /// </summary>
+        ATL::CComPtr<ID3D11Texture2D> _staging_texture;
     };
 
 
