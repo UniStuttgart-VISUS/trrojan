@@ -80,11 +80,13 @@ namespace d3d11 {
         trrojan::perspective_camera cam;
         ATL::CComPtr<ID3D11ShaderResourceView> colour_map;
         ATL::CComPtr<ID3D11Buffer> constant_buffer;
+        ATL::CComPtr<ID3D11Query> done_query;
         ATL::CComPtr<ID3D11GeometryShader> geometry_shader;
         ATL::CComPtr<ID3D11InputLayout> input_layout;
         ATL::CComPtr<ID3D11SamplerState> linear_sampler;
         ATL::CComPtr<ID3D11PixelShader> pixel_shader;
         shader_source_map_type pixel_shaders;
+        ATL::CComPtr<ID3D11Query> stats_query;
         ATL::CComPtr<ID3D11Buffer> vertex_buffer;
         ATL::CComPtr<ID3D11VertexShader> vertex_shader;
         shader_source_map_type vertex_shaders;

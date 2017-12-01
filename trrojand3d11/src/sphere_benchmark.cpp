@@ -157,6 +157,9 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
             ::SphereGeometryShaderBytes);
 
         this->linear_sampler = create_linear_sampler(dev);
+
+        this->done_query = create_event_query(dev);
+        this->stats_query = create_pipline_stats_query(dev);
     }
 
     /* Load the data set (header) if the file changed. */
@@ -224,8 +227,15 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
 
     // Prepare the result set.
     auto retval = std::make_shared<basic_result>(std::move(config),
-        std::initializer_list<std::string> { "iteration", "particles", "gpu_time",
-            "wall_time" });
+        std::initializer_list<std::string> {
+            "iteration",
+            "particles",
+            "vs_invokes",
+            "gs_invokes",
+            "ps_invokes",
+            "gpu_time",
+            "wall_time"
+    });
 
     /* Compute the matrices. */
     {
@@ -342,21 +352,35 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
         gpuTimer.start_frame();
         gpuTimer.start(0);
         this->clear_target();
+        ctx->Begin(this->stats_query);
         ctx->Draw(static_cast<UINT>(this->mmpld_list.particles), 0);
+        ctx->End(this->stats_query);
         this->present_target();
+        ctx->End(this->done_query);
         gpuTimer.end(0);
         gpuTimer.end_frame();
+        wait_for_event_query(ctx, this->done_query);
         auto cpuTime = cpuTimer.elapsed_millis();
 
         gpuTimer.evaluate_frame(isDisjoint, gpuFreq, 5 * 1000);
         if (!isDisjoint) {
+            D3D11_QUERY_DATA_PIPELINE_STATISTICS pipeStats;
+            auto hr = ctx->GetData(this->stats_query, &pipeStats, sizeof(pipeStats), 0);
+            assert(SUCCEEDED(hr));
+
             auto gpuTime = gpu_timer_type::to_milliseconds(
                     gpuTimer.evaluate(0), gpuFreq);
-            retval->add({ i, this->mmpld_list.particles, gpuTime, cpuTime });
+            retval->add({ i,
+                this->mmpld_list.particles,
+                pipeStats.VSInvocations,
+                pipeStats.GSInvocations,
+                pipeStats.PSInvocations,
+                gpuTime,
+                cpuTime });
             ++i;
         }
 
-        this->save_target();    // TODO
+        //this->save_target();    // TODO
     }
 
     return retval;

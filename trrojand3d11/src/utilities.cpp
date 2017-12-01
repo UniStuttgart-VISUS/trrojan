@@ -6,6 +6,29 @@
 #include "trrojan/d3d11/utilities.h"
 
 
+
+
+/*
+ * trrojan::d3d11::create_event_query
+ */
+ATL::CComPtr<ID3D11Query> trrojan::d3d11::create_event_query(
+        ID3D11Device *device) {
+    assert(device != nullptr);
+    D3D11_QUERY_DESC desc;
+    ATL::CComPtr<ID3D11Query> retval;
+
+    ::ZeroMemory(&desc, sizeof(desc));
+    desc.Query = D3D11_QUERY::D3D11_QUERY_EVENT;
+
+    auto hr = device->CreateQuery(&desc, &retval);
+    if (FAILED(hr)) {
+        throw ATL::CAtlException(hr);
+    }
+
+    return retval;
+}
+
+
 /*
  * trrojan::d3d11::create_input_layout
  */
@@ -44,6 +67,27 @@ ATL::CComPtr<ID3D11SamplerState> trrojan::d3d11::create_linear_sampler(
     desc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
 
     auto hr = device->CreateSamplerState(&desc, &retval);
+    if (FAILED(hr)) {
+        throw ATL::CAtlException(hr);
+    }
+
+    return retval;
+}
+
+
+/*
+ * trrojan::d3d11::create_pipline_stats_query
+ */
+ATL::CComPtr<ID3D11Query> trrojan::d3d11::create_pipline_stats_query(
+        ID3D11Device *device) {
+    assert(device != nullptr);
+    D3D11_QUERY_DESC desc;
+    ATL::CComPtr<ID3D11Query> retval;
+
+    ::ZeroMemory(&desc, sizeof(desc));
+    desc.Query = D3D11_QUERY::D3D11_QUERY_PIPELINE_STATISTICS;
+
+    auto hr = device->CreateQuery(&desc, &retval);
     if (FAILED(hr)) {
         throw ATL::CAtlException(hr);
     }
@@ -392,33 +436,6 @@ ATL::CComPtr<ID3D11Texture1D> trrojan::d3d11::create_viridis_colour_map(
 
 
 /*
- * trrojan::d3d11::get_shared_handle
- */
-HANDLE trrojan::d3d11::get_shared_handle(ID3D11Resource *resource) {
-    assert(resource != nullptr);
-    ATL::CComPtr<IDXGIResource> dxgiRes;
-    HANDLE retval = NULL;
-
-    {
-        auto hr = resource->QueryInterface(&dxgiRes);
-        if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
-        }
-    }
-
-    {
-        auto hr = dxgiRes->GetSharedHandle(&retval);
-        if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
-        }
-    }
-
-
-    return retval;
-}
-
-
-/*
  * trrojan::d3d11::create_buffer
  */
 ATL::CComPtr<ID3D11Buffer> trrojan::d3d11::create_buffer(ID3D11Device *device,
@@ -447,4 +464,47 @@ ATL::CComPtr<ID3D11Buffer> trrojan::d3d11::create_buffer(ID3D11Device *device,
     }
 
     return retval;
+}
+
+
+/*
+ * trrojan::d3d11::get_shared_handle
+ */
+HANDLE trrojan::d3d11::get_shared_handle(ID3D11Resource *resource) {
+    assert(resource != nullptr);
+    ATL::CComPtr<IDXGIResource> dxgiRes;
+    HANDLE retval = NULL;
+
+    {
+        auto hr = resource->QueryInterface(&dxgiRes);
+        if (FAILED(hr)) {
+            throw ATL::CAtlException(hr);
+        }
+    }
+
+    {
+        auto hr = dxgiRes->GetSharedHandle(&retval);
+        if (FAILED(hr)) {
+            throw ATL::CAtlException(hr);
+        }
+    }
+
+
+    return retval;
+}
+
+
+/*
+ * trrojan::d3d11::wait_for_event_query
+ */
+void trrojan::d3d11::wait_for_event_query(ID3D11DeviceContext *ctx,
+        ID3D11Asynchronous *query) {
+    assert(ctx != nullptr);
+    assert(query != nullptr);
+    HRESULT hr = S_FALSE;
+
+    while ((hr = ctx->GetData(query, nullptr, 0, 0)) == S_FALSE);
+    if (FAILED(hr)) {
+        throw ATL::CAtlException(hr);
+    }
 }
