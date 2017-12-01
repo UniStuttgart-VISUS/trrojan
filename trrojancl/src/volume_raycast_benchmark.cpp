@@ -460,10 +460,7 @@ trrojan::result trrojan::opencl::volume_raycast_benchmark::run(const configurati
         {
             log_cl_error(err);
         }
-    }
 
-    if (cfg.find(factor_img_output)->value().as<bool>())
-    {
         // write output as image
         auto dev = cfg.find(factor_device)->value().as<trrojan::device>();
         device::pointer dev_ptr = std::dynamic_pointer_cast<device>(dev);
@@ -935,6 +932,27 @@ void trrojan::opencl::volume_raycast_benchmark::set_kernel_args(const float prec
 }
 
 /**
+ * trrojan::opencl::volume_raycast_benchmark::update_camera
+ */
+void trrojan::opencl::volume_raycast_benchmark::update_camera(const trrojan::configuration &cfg)
+{
+    auto pos = cfg.find(factor_cam_position)->value().as<std::array<float, 3>>();
+    _camera.set_look_from(glm::vec3(pos.at(0), pos.at(1), pos.at(2)));
+    auto rot = cfg.find(factor_cam_rotation)->value().as<std::array<float, 4>>();
+    _camera.rotate_fixed_to(glm::quat(rot.at(0), rot.at(1), rot.at(2), rot.at(3)));
+
+    // TODO: add proper camera maneuver handling
+    _camera.set_from_maneuver("diagonal", glm::vec3(-1), glm::vec3(1), 0, 36);
+
+    glm::mat4 view = _camera.get_inverse_view_mx();
+    cl_float16 view_mat = {view[0][0], view[1][0], view[2][0], view[3][0],
+                           view[0][1], view[1][1], view[2][1], view[3][1],
+                           view[0][2], view[1][2], view[2][2], view[3][2],
+                           view[0][3], view[1][3], view[2][3], view[3][3]};
+    _kernel.setArg(VIEW, view_mat);
+}
+
+/**
  * trrojan::opencl::volume_raycast_benchmark::update_all_kernel_args
  */
 void trrojan::opencl::volume_raycast_benchmark::update_initial_kernel_args(
@@ -953,18 +971,7 @@ void trrojan::opencl::volume_raycast_benchmark::update_initial_kernel_args(
         _kernel.setArg(PRECISION, _precision_div);
         cl_float3 model_scale = {_model_scale.x, _model_scale.y, _model_scale.z};
         _kernel.setArg(MODEL_SCALE, model_scale);
-
-        // TODO move to own method
-        auto pos = cfg.find(factor_cam_position)->value().as<std::array<float, 3>>();
-        _camera.set_look_from(glm::vec3(pos.at(0), pos.at(1), pos.at(2)));
-        auto rot = cfg.find(factor_cam_rotation)->value().as<std::array<float, 4>>();
-        _camera.rotate_fixed_to(glm::quat(rot.at(0), rot.at(1), rot.at(2), rot.at(3)));
-        glm::mat4 view = _camera.get_inverse_view_mx();
-        cl_float16 view_mat = {view[0][0], view[1][0], view[2][0], view[3][0],
-                               view[0][1], view[1][1], view[2][1], view[3][1],
-                               view[0][2], view[1][2], view[2][2], view[3][2],
-                               view[0][3], view[1][3], view[2][3], view[3][3]};
-        _kernel.setArg(VIEW, view_mat);
+        update_camera(cfg);
     }
     catch (cl::Error err)
     {
@@ -987,19 +994,9 @@ void trrojan::opencl::volume_raycast_benchmark::update_kernel_args(
     if (changed.count(factor_cam_position) + changed.count(factor_cam_rotation)
             + changed.count(factor_device))
     {
-        auto pos = cfg.find(factor_cam_position)->value().as<std::array<float, 3>>();
-        _camera.set_look_from(glm::vec3(pos.at(0), pos.at(1), pos.at(2)));
-        auto rot = cfg.find(factor_cam_rotation)->value().as<std::array<float, 4>>();
-        _camera.rotate_fixed_to(glm::quat(rot.at(0), rot.at(1), rot.at(2), rot.at(3)));
-        glm::mat4 view = _camera.get_inverse_view_mx();
-
-        cl_float16 view_mat = {view[0][0], view[1][0], view[2][0], view[3][0],
-                               view[0][1], view[1][1], view[2][1], view[3][1],
-                               view[0][2], view[1][2], view[2][2], view[3][2],
-                               view[0][3], view[1][3], view[2][3], view[3][3]};
         try
         {
-            _kernel.setArg(VIEW, view_mat);
+            update_camera(cfg);
         }
         catch (cl::Error err)
         {

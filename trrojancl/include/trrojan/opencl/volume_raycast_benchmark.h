@@ -444,6 +444,12 @@ namespace opencl
                           const std::string build_flags = "");
 
         /// <summary>
+        /// Update the camera configuration and set kernel argument.
+        /// No OpenCL error catching is performed.
+        /// </summary>
+        void update_camera(const trrojan::configuration &cfg);
+
+        /// <summary>
         /// Set all constant kernel arguments such as the OpenCL memory objects.
         /// </summary>
         void set_kernel_args(const float precision_div);

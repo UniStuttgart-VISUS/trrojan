@@ -4,6 +4,7 @@
 /// <author>Valentin Bruder</author>
 
 #include "trrojan/camera.h"
+#include <stdexcept>
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include "glm/gtx/quaternion.hpp"
@@ -107,6 +108,54 @@ void trrojan::camera::rotate_fixed_from(const glm::quat q)
                    glm::rotate(q, _look_up));
 }
 
+/**
+ * trrojan::camera::set_from_maneuver
+ */
+void trrojan::camera::set_from_maneuver(const std::string name, const glm::vec3 bbox_min,
+                                        const glm::vec3 bbox_max, const int iteration,
+                                        const float fovy, const int samples)
+{
+    if (iteration >= samples)
+        throw std::invalid_argument("Iteration must be smaller than #samples.");
+
+    // circle around axis
+    if (name.find("circle") != std::string::npos)
+    {
+        // look at bounding box center
+        this->set_look_to(bbox_min + (bbox_max - bbox_min)*0.5f);
+        // fit view to bounding box x
+        float bbox_length_x = bbox_max.x - bbox_min.x;
+        float camera_dist = (bbox_length_x * 0.5f) / tan(fovy*0.5f);
+        this->set_look_from(this->_look_to + glm::vec3(0, 0, camera_dist));
+        // rotation
+        float angle = (360.f / samples) * iteration;
+        glm::vec3 axis(0.f);
+        // create axis from x,y,z identifier
+        if (name.find("_x") != std::string::npos) axis.x = 1;
+        if (name.find("_y") != std::string::npos) axis.y = 1;
+        if (name.find("_z") != std::string::npos) axis.z = 1;
+        glm::quat q = glm::angleAxis(angle, glm::normalize(axis));
+        this->rotate_fixed_to(q);
+    }
+    // fly-through on diagonal
+    if (name.find("diagonal") != std::string::npos)
+    {
+        glm::vec3 begin = bbox_min;
+        glm::vec3 end = bbox_max;
+        // point mirroring according to definition (e.g. "diagonal_zx" is between (0,1,1)->(1,0,0))
+        if (name.find("_z") != std::string::npos)  std::swap(begin, end);        // back to front
+        if (name.find("_x") != std::string::npos)  std::swap(begin.x, end.x);    // right to left
+        if (name.find("_y") != std::string::npos)  std::swap(begin.y, end.y);    // top to bottom
+
+        this->set_look_to(end);
+        // NOTE: assuming uniform bounding box
+        float camera_dist = (glm::length(end - begin) * 0.5f) / tan(fovy*0.5f);
+        camera_dist *= (1.f - iteration/(float)samples);
+        this->set_look_from(this->_look_to + (begin - end) * camera_dist);
+    }
+    // TODO: curves through volume (sine, cosine,...)
+}
+
 // Perspective camera
 trrojan::perspective_camera::perspective_camera(vec3 look_from, vec3 look_to, vec3 look_up,
                                                 float near_plane, float far_plane,
@@ -117,6 +166,12 @@ trrojan::perspective_camera::perspective_camera(vec3 look_from, vec3 look_to, ve
 {
 }
 
+void trrojan::perspective_camera::set_from_maneuver(const std::string name, const glm::vec3 bbox_min,
+                                                    const glm::vec3 bbox_max, const int iteration,
+                                                    const int samples)
+{
+    camera::set_from_maneuver(name, bbox_min, bbox_max, iteration, get_fovy(), samples);
+}
 
 // Orthographic camera
 trrojan::orthographic_camera::orthographic_camera(vec3 look_from, vec3 look_to, vec3 look_up,
@@ -141,4 +196,13 @@ void trrojan::orthographic_camera::set_aspect_ratio(float val)
     _frustum.z = -height / 2.0f;
     _frustum.w = +height / 2.0f;
     invalidate_projection_mx();
+}
+
+void trrojan::orthographic_camera::set_from_maneuver(const std::string name,
+                                                     const glm::vec3 bbox_min,
+                                                     const glm::vec3 bbox_max, const int iteration,
+                                                     const int samples)
+{
+    // TODO: handle fovy
+    camera::set_from_maneuver(name, bbox_min, bbox_max, iteration, 90.f, samples);
 }
