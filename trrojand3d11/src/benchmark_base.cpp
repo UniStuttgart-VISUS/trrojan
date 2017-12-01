@@ -5,6 +5,8 @@
 
 #include "trrojan/d3d11/benchmark_base.h"
 
+#include <ctime>
+
 #include "trrojan/factor.h"
 #include "trrojan/log.h"
 
@@ -54,39 +56,43 @@ trrojan::result trrojan::d3d11::benchmark_base::run(const configuration& c) {
             "passed to a Direct3D benchmark.");
     }
 
-    // Check whether the device has been changed. This should always be done
-    // first, because all GPU resources, which depend on the content of 'c',
-    // depend on the device as their storage location.
-    if (contains_any(changed, factor_device, factor_debug_view)) {
-        log::instance().write_line(log_level::verbose, "The D3D device has "
-            "changed. Reallocating all graphics resources ...");
-        this->render_target = std::make_shared<bench_render_target>(device);
-        // If the device has changed, force the viewport to be re-created:
+    // Determine whether we are in debug viewing mode, which will block all
+    // device-related factors.
+    auto isDebugView = c.get<bool>(factor_debug_view);
+
+    if (contains(changed, factor_debug_view)) {
+        // If the debug view has been changed, an implicit switch of the device
+        // (from the debug device to the actual device) must be reported.
+        changed.push_back(factor_device);
         changed.push_back(factor_viewport);
     }
 
-    auto isDebugView = c.get<bool>(factor_debug_view);
-    if (contains(changed, factor_debug_view)) {
-        if (isDebugView && (this->debug_target == nullptr)) {
+    if (isDebugView) {
+        if (this->debug_target == nullptr) {
             log::instance().write_line(log_level::verbose, "Lazy creation of "
                 "D3D11 debug render target.");
             this->debug_target = std::make_shared<debug_render_target>();
-            this->debug_target->resize(1, 1);
+            this->debug_target->resize(1, 1);   // Force resource allocation.
             this->debug_device = std::make_shared<d3d11::device>(
                 this->debug_target->device());
         }
 
-        // Switching from debug to standard device and vice versa. Must notify
-        // the user about that to allow for re-creation of resources.
-        changed.push_back(factor_device);
-    }
-
-    if (isDebugView) {
-        assert(this->debug_device != nullptr);
-        assert(this->render_target != nullptr);
+        // Overwrite device and render target.
         device = this->debug_device;
         this->render_target = this->debug_target;
-    }
+
+    } else {
+        // Check whether the device has been changed. This should always be done
+        // first, because all GPU resources, which depend on the content of the
+        // configuration depend on the device as their storage location.
+        if (contains_any(changed, factor_device)) {
+            log::instance().write_line(log_level::verbose, "The D3D device has "
+                "changed. Reallocating all graphics resources ...");
+            this->render_target = std::make_shared<bench_render_target>(device);
+            // If the device has changed, force the viewport to be re-created:
+            changed.push_back(factor_viewport);
+        }
+    } /* end if (isDebugView) */
 
     // Resize the render target if the viewport has changed.
     if (contains(changed, factor_viewport)) {
@@ -97,9 +103,15 @@ trrojan::result trrojan::d3d11::benchmark_base::run(const configuration& c) {
     }
 
     this->render_target->enable();
-    this->render_target->clear();
     auto retval = this->on_run(*device, c, changed);
-    this->render_target->present();
+
+    auto benchTarget = std::dynamic_pointer_cast<bench_render_target>(
+        this->render_target);
+    if (benchTarget != nullptr) {
+        benchTarget->save("honcho.png");
+    }
+
+
     return retval;
 }
 
@@ -116,5 +128,32 @@ trrojan::d3d11::benchmark_base::benchmark_base(const std::string& name)
         auto dftViewport = std::array<unsigned int, 2> { 1024, 1024 };
         this->_default_configs.add_factor(factor::from_manifestations(
             factor_viewport, dftViewport));
+    }
+}
+
+
+/*
+ * trrojan::d3d11::benchmark_base::save_target
+ */
+void trrojan::d3d11::benchmark_base::save_target(const char *path) {
+    if (this->render_target != nullptr) {
+        std::string p;
+
+        if (path == nullptr) {
+            std::vector<char> buffer;
+            struct tm tm;
+            auto time = ::time(nullptr);
+            ::localtime_s(&tm, &time);
+
+            buffer.resize(128);
+            ::strftime(buffer.data(), buffer.size(), "%Y%m%d%H%M%S.png", &tm);
+            buffer.back() = static_cast<char>(0);
+
+            p = buffer.data();
+        } else {
+            p = path;
+        }
+
+        this->render_target->save(p);
     }
 }

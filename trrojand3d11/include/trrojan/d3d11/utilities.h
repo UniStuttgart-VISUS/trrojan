@@ -31,6 +31,8 @@ namespace d3d11 {
     ATL::CComPtr<ID3D11DomainShader> create_domain_shader(ID3D11Device *device,
         const BYTE(&byteCode)[N]);
 
+    ATL::CComPtr<ID3D11Query> create_event_query(ID3D11Device *device);
+
     template<size_t N>
     ATL::CComPtr<ID3D11GeometryShader> create_geometry_shader(
         ID3D11Device *device, const BYTE(&byteCode)[N]);
@@ -39,18 +41,43 @@ namespace d3d11 {
     ATL::CComPtr<ID3D11HullShader> create_hull_shader(
         ID3D11Device *device, const BYTE(&byteCode)[N]);
 
-    template<size_t N>
     ATL::CComPtr<ID3D11InputLayout> create_input_layout(ID3D11Device *device,
         const std::vector<D3D11_INPUT_ELEMENT_DESC>& elements,
-        const BYTE(&byteCode)[N]);
+        const BYTE *byteCode, const size_t cntByteCode);
 
     template<size_t N>
+    inline ATL::CComPtr<ID3D11InputLayout> create_input_layout(
+            ID3D11Device *device,
+            const std::vector<D3D11_INPUT_ELEMENT_DESC>& elements,
+            const BYTE(&byteCode)[N]) {
+        return create_input_layout(device, elements, byteCode, N);
+    }
+
+    ATL::CComPtr<ID3D11SamplerState> create_linear_sampler(
+        ID3D11Device *device);
+
+    ATL::CComPtr<ID3D11Query> create_pipline_stats_query(ID3D11Device *device);
+
     ATL::CComPtr<ID3D11PixelShader> create_pixel_shader(ID3D11Device *device,
-        const BYTE(&byteCode)[N]);
+        const BYTE *byteCode, const size_t cntByteCode);
 
     template<size_t N>
+    inline ATL::CComPtr<ID3D11PixelShader> create_pixel_shader(
+            ID3D11Device *device, const BYTE(&byteCode)[N]) {
+        return create_pixel_shader(device, byteCode, N);
+    }
+
     ATL::CComPtr<ID3D11VertexShader> create_vertex_shader(ID3D11Device *device,
-        const BYTE(& byteCode)[N]);
+        const BYTE *byteCode, const size_t cntByteCode);
+
+    template<size_t N>
+    inline ATL::CComPtr<ID3D11VertexShader> create_vertex_shader(
+            ID3D11Device *device, const BYTE(&byteCode)[N]) {
+        return create_vertex_shader(device, byteCode, N);
+    }
+
+    ATL::CComPtr<ID3D11Texture1D> create_viridis_colour_map(
+        ID3D11Device *device, ID3D11ShaderResourceView **outOptSrv = nullptr);
 
     /// <summary>
     /// Determines whether the debug layers are installed on Windows 10.
@@ -68,6 +95,9 @@ namespace d3d11 {
             nullptr, nullptr);
         return SUCCEEDED(hr);
     }
+
+    void wait_for_event_query(ID3D11DeviceContext *ctx,
+        ID3D11Asynchronous *query);
 
 } /* end namespace d3d11 */
 } /* end namespace trrojan */

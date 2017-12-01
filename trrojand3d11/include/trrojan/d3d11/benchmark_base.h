@@ -56,6 +56,11 @@ namespace d3d11 {
 
         benchmark_base(const std::string& name);
 
+        inline void clear_target(void) {
+            assert(this->render_target != nullptr);
+            this->render_target->clear();
+        }
+
         /// <summary>
         /// Performs the actual test on behalf of the <see cref="run" /> method.
         /// </summary>
@@ -68,6 +73,13 @@ namespace d3d11 {
         virtual trrojan::result on_run(d3d11::device& device,
             const configuration& config,
             const std::vector<std::string>& changed) = 0;
+
+        inline void present_target(void) {
+            assert(this->render_target != nullptr);
+            this->render_target->present();
+        }
+
+        void save_target(const char *path = nullptr);
 
     private:
 

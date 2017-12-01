@@ -32,6 +32,7 @@ namespace d3d11 {
         static const char *factor_frame;
         static const char *factor_iterations;
         static const char *factor_method;
+        static const char *factor_vs_xfer_function;
 
         static const char *method_geosprite;
         static const char *method_tesssprite;
@@ -62,13 +63,33 @@ namespace d3d11 {
         /// </summary>
         typedef trrojan::d3d11::gpu_timer<1> gpu_timer_type;
 
+        typedef std::pair<const BYTE *, UINT> shader_source_type;
+
+        typedef std::unordered_map<shader_properties, shader_source_type>
+            shader_source_map_type;
+
+        /// <summary>
+        /// Pack static shader code into an entry of the
+        /// <see cref="shader_source_map_type" />.
+        /// </summary>
+        template<size_t N>
+        inline static shader_source_type pack_shader_source(const BYTE(&s)[N]) {
+            return std::make_pair(s, static_cast<UINT>(sizeof(s)));
+        }
+
         trrojan::perspective_camera cam;
+        ATL::CComPtr<ID3D11ShaderResourceView> colour_map;
         ATL::CComPtr<ID3D11Buffer> constant_buffer;
+        ATL::CComPtr<ID3D11Query> done_query;
         ATL::CComPtr<ID3D11GeometryShader> geometry_shader;
         ATL::CComPtr<ID3D11InputLayout> input_layout;
+        ATL::CComPtr<ID3D11SamplerState> linear_sampler;
         ATL::CComPtr<ID3D11PixelShader> pixel_shader;
+        shader_source_map_type pixel_shaders;
+        ATL::CComPtr<ID3D11Query> stats_query;
         ATL::CComPtr<ID3D11Buffer> vertex_buffer;
         ATL::CComPtr<ID3D11VertexShader> vertex_shader;
+        shader_source_map_type vertex_shaders;
 
     };
 
