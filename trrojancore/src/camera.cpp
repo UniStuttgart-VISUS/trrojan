@@ -5,6 +5,7 @@
 
 #include "trrojan/camera.h"
 #include <stdexcept>
+#include <iostream>
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include "glm/gtx/quaternion.hpp"
@@ -98,14 +99,14 @@ glm::vec3 trrojan::camera::get_eye_ray(float x, float y)
 
 void trrojan::camera::rotate_fixed_to(const glm::quat q)
 {
-    this->set_look(_look_to + glm::rotate(q, _look_from - _look_to), _look_to,
-                   glm::rotate(q, _look_up));
+    this->set_look(_look_to + q * (_look_from - _look_to), _look_to, _look_up);
+//    this->set_look(_look_to + q * (_look_from - _look_to), _look_to, q*_look_up);
 }
 
 void trrojan::camera::rotate_fixed_from(const glm::quat q)
 {
-    this->set_look(_look_from, glm::rotate(q, this->_look_to - this->_look_from),
-                   glm::rotate(q, _look_up));
+    this->set_look(_look_from, glm::rotate(q, this->_look_to - this->_look_from), _look_up);
+//                   glm::rotate(q, _look_up));
 }
 
 /**
@@ -125,15 +126,15 @@ void trrojan::camera::set_from_maneuver(const std::string name, const glm::vec3 
         this->set_look_to(bbox_min + (bbox_max - bbox_min)*0.5f);
         // fit view to bounding box x
         float bbox_length_x = bbox_max.x - bbox_min.x;
-        float camera_dist = (bbox_length_x * 0.5f) / tan(fovy*0.5f);
-        this->set_look_from(this->_look_to + glm::vec3(0, 0, camera_dist));
-        // rotation
-        float angle = (360.f / samples) * iteration;
+        float camera_dist = (bbox_length_x * 0.5f) / std::tan(fovy*0.5f*M_PI/180.f);
+        this->set_look_from(this->_look_to - glm::vec3(0, 0, bbox_min.z - camera_dist));
+        // rotation in radians
+        float angle = (2.f*M_PI / samples) * iteration;
         glm::vec3 axis(0.f);
         // create axis from x,y,z identifier
-        if (name.find("_x") != std::string::npos) axis.x = 1;
-        if (name.find("_y") != std::string::npos) axis.y = 1;
-        if (name.find("_z") != std::string::npos) axis.z = 1;
+        if (name.find("x") != std::string::npos) axis.x = 1.f;
+        if (name.find("y") != std::string::npos) axis.y = 1.f;
+        if (name.find("z") != std::string::npos) axis.z = 1.f;
         glm::quat q = glm::angleAxis(angle, glm::normalize(axis));
         this->rotate_fixed_to(q);
     }
@@ -143,13 +144,14 @@ void trrojan::camera::set_from_maneuver(const std::string name, const glm::vec3 
         glm::vec3 begin = bbox_min;
         glm::vec3 end = bbox_max;
         // point mirroring according to definition (e.g. "diagonal_zx" is between (0,1,1)->(1,0,0))
-        if (name.find("_z") != std::string::npos)  std::swap(begin, end);        // back to front
-        if (name.find("_x") != std::string::npos)  std::swap(begin.x, end.x);    // right to left
-        if (name.find("_y") != std::string::npos)  std::swap(begin.y, end.y);    // top to bottom
+        if (name.find("z") != std::string::npos)  std::swap(begin, end);        // back to front
+        if (name.find("x") != std::string::npos)  std::swap(begin.x, end.x);    // right to left
+        if (name.find("y") != std::string::npos)  std::swap(begin.y, end.y);    // top to bottom
 
         this->set_look_to(end);
         // NOTE: assuming uniform bounding box
-        float camera_dist = (glm::length(end - begin) * 0.5f) / tan(fovy*0.5f);
+        float bbox_length = M_SQRT2*(bbox_max.x - bbox_min.x); // glm::length(bbox_max - bbox_min);
+        float camera_dist = (bbox_length * 0.5f) / std::tan(fovy*0.5f*M_PI/180.f);
         camera_dist *= (1.f - iteration/(float)samples);
         this->set_look_from(this->_look_to + (begin - end) * camera_dist);
     }
@@ -157,14 +159,15 @@ void trrojan::camera::set_from_maneuver(const std::string name, const glm::vec3 
     {
         // TODO: curves through volume (sine, cosine,...)
     }
-    else if (name.find("radom") != std::string::npos)
+    else if (name.find("random") != std::string::npos)
     {
         this->set_look_to(glm::vec3(bbox_min + (bbox_max - bbox_min)*0.5f));
         // fit view to bounding box x
         float bbox_length_x = bbox_max.x - bbox_min.x;
-        float camera_dist = (bbox_length_x * 0.5f) / tan(fovy*0.5f);
-        // set random distance between center of bbox and 5x bbox fitted view
-        this->set_look_from(this->_look_to + glm::vec3(0, 0, camera_dist * get_rand()*5.f));
+        float camera_dist = (bbox_length_x * 0.5f) / std::tan(fovy*0.5f*M_PI/180.f);
+        // set random distance between center of bbox and 2x bbox fitted view
+        float r = get_rand()*2.f;
+        this->set_look_from(this->_look_to - glm::vec3(0, 0, (bbox_min.z - camera_dist)*r));
         // rotate uniform sampled distance on sphere
         glm::quat q = {get_rand(), get_rand(), get_rand(), get_rand()};
         q = glm::normalize(q);

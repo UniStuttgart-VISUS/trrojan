@@ -87,7 +87,7 @@ const std::string trrojan::opencl::volume_raycast_benchmark::test_volume =
     "/media/brudervn/Daten/volTest/vol/bonsai.dat";
 //    "//trr161store.visus.uni-stuttgart.de/SFB-TRR 161/A02/data/volumes/bonsai.dat";
 #endif
-
+static int test_i = {0};
 /*
  * trrojan::opencl::volume_raycast_benchmark::volume_raycast_benchmark
  */
@@ -468,7 +468,7 @@ trrojan::result trrojan::opencl::volume_raycast_benchmark::run(const configurati
         auto rot = cfg.find(factor_cam_rotation)->value().as<std::array<float, 4>>();
         std::size_t found = file.find_last_of("/\\");
         trrojan::save_image("img/" + dev_ptr->name() + "_" + file.substr(found + 1) + "_"
-                            + std::to_string(rot.at(0)+rot.at(1)+rot.at(2)+ rot.at(3)) + ".png",
+                            + std::to_string(test_i) + ".png",
                             _output_data.data(), imgSize.at(0), imgSize.at(1), 4);
     }
 
@@ -942,7 +942,7 @@ void trrojan::opencl::volume_raycast_benchmark::update_camera(const trrojan::con
     _camera.rotate_fixed_to(glm::quat(rot.at(0), rot.at(1), rot.at(2), rot.at(3)));
 
     // TODO: add proper camera maneuver handling
-    _camera.set_from_maneuver("radom", glm::vec3(-1), glm::vec3(1), 0, 1);
+    _camera.set_from_maneuver("circle_x", glm::vec3(-1), glm::vec3(1), test_i++, 64);
 
     glm::mat4 view = _camera.get_inverse_view_mx();
     cl_float16 view_mat = {view[0][0], view[1][0], view[2][0], view[3][0],
