@@ -138,7 +138,7 @@ void trrojan::camera::set_from_maneuver(const std::string name, const glm::vec3 
         this->rotate_fixed_to(q);
     }
     // fly-through on diagonal
-    if (name.find("diagonal") != std::string::npos)
+    else if (name.find("diagonal") != std::string::npos)
     {
         glm::vec3 begin = bbox_min;
         glm::vec3 end = bbox_max;
@@ -153,7 +153,23 @@ void trrojan::camera::set_from_maneuver(const std::string name, const glm::vec3 
         camera_dist *= (1.f - iteration/(float)samples);
         this->set_look_from(this->_look_to + (begin - end) * camera_dist);
     }
-    // TODO: curves through volume (sine, cosine,...)
+    else if (name.find("path") != std::string::npos)
+    {
+        // TODO: curves through volume (sine, cosine,...)
+    }
+    else if (name.find("radom") != std::string::npos)
+    {
+        this->set_look_to(glm::vec3(bbox_min + (bbox_max - bbox_min)*0.5f));
+        // fit view to bounding box x
+        float bbox_length_x = bbox_max.x - bbox_min.x;
+        float camera_dist = (bbox_length_x * 0.5f) / tan(fovy*0.5f);
+        // set random distance between center of bbox and 5x bbox fitted view
+        this->set_look_from(this->_look_to + glm::vec3(0, 0, camera_dist * get_rand()*5.f));
+        // rotate uniform sampled distance on sphere
+        glm::quat q = {get_rand(), get_rand(), get_rand(), get_rand()};
+        q = glm::normalize(q);
+        this->rotate_fixed_to(q);
+    }
 }
 
 // Perspective camera
