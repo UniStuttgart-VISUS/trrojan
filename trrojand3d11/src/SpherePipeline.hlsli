@@ -16,10 +16,15 @@ struct VsInput {
 #endif /* PER_VERTEX_COLOUR */
 };
 
-struct GsInput {
+struct VsOutput {
     float4 Position : POSITION;
     float4 Colour : COLOR;
     float Radius : FOG;
+};
+
+struct HsConstants {
+    float EdgeTessFactor[4] : SV_TessFactor;
+    float InsideTessFactor[2] : SV_InsideTessFactor;
 };
 
 struct PsInput {
@@ -30,8 +35,8 @@ struct PsInput {
     nointerpolation float4 CameraDirection : TEXCOORD2;
     nointerpolation float4 CameraUp : TEXCOORD3;
     nointerpolation float4 CameraRight : TEXCOORD4;
-    nointerpolation float EyeSeparation : TESSFACTOR0;
-    nointerpolation float Convergence : TESSFACTOR1;
+    //nointerpolation float EyeSeparation : TESSFACTOR0;
+    //nointerpolation float Convergence : TESSFACTOR1;
 };
 
 struct PsOutput {
@@ -42,6 +47,8 @@ struct PsOutput {
 #endif /* _MSC_VER */
 
 cbuffer SphereConstants CBUFFER(0) {
+    float4x4 ViewMatrix;
+    float4x4 ProjMatrix;
     float4x4 ViewProjMatrix;
     float4x4 ViewInvMatrix;
     float4x4 ViewProjInvMatrix;

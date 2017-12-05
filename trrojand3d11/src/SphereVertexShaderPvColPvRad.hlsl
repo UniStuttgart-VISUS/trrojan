@@ -12,8 +12,8 @@
 /// </summary>
 /// <param name="input"></param>
 /// <returns></returns>
-GsInput Main(VsInput input) {
-    GsInput retval = (GsInput) 0;
+VsOutput Main(VsInput input) {
+    VsOutput retval = (VsOutput) 0;
 
     retval.Position = float4(input.Position.xyz, 1.0f);
     retval.Radius = input.Position.w;

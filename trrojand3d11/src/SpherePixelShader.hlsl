@@ -51,7 +51,7 @@ PsOutput Main(PsInput input) {
     float4 camIn = input.CameraDirection;
     float4 camUp = input.CameraUp;
     float4 camRight = input.CameraRight;
-    float eyeSep = input.EyeSeparation;
+    //float eyeSep = input.EyeSeparation;
 
     float4 objPos = float4(input.SphereParams.xyz, 1.0);
 
@@ -117,6 +117,6 @@ PsOutput Main(PsInput input) {
     retval.Depth = input.Position.z;
 #endif // DEPTH
 
-    //retval.Colour = float4(1.0, 0.0, 0.0, 1.0);
+    retval.Colour = float4(1.0, 0.0, 0.0, 1.0);
     return retval;
 }

@@ -160,7 +160,7 @@ ATL::CComPtr<IWICBitmapSource> TRROJANCORE_API trrojan::get_wic_bitmap(
 
         return conv.p;
     } else {
-        return bmp;
+        return bmp.p;
     }
 }
 #endif /* _WIN32 */

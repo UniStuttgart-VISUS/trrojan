@@ -26,6 +26,9 @@
 #include "SpherePipeline.hlsli"
 #include "SpherePixelShader.h"
 #include "SpherePixelShaderInt.h"
+#include "SphereSpriteGeometryShader.h"
+#include "SphereSpriteDomainShader.h"
+#include "SphereSpriteHullShader.h"
 #include "SphereVertexShader.h"
 #include "SphereVertexShaderPvCol.h"
 #include "SphereVertexShaderPvColPvRad.h"
@@ -49,10 +52,10 @@ _SPHERE_BENCH_DEFINE_FACTOR(vs_xfer_function);
 #define _SPHERE_BENCH_DEFINE_METHOD(m)                                         \
 const char *trrojan::d3d11::sphere_benchmark::method_##m = #m
 
-_SPHERE_BENCH_DEFINE_METHOD(geosprite);
-_SPHERE_BENCH_DEFINE_METHOD(tesssprite);
-_SPHERE_BENCH_DEFINE_METHOD(tesssphere);
-_SPHERE_BENCH_DEFINE_METHOD(tesshemisphere);
+_SPHERE_BENCH_DEFINE_METHOD(geo_sprite);
+_SPHERE_BENCH_DEFINE_METHOD(tess_sprite);
+_SPHERE_BENCH_DEFINE_METHOD(tess_sphere);
+_SPHERE_BENCH_DEFINE_METHOD(tess_hemisphere);
 
 #undef _SPHERE_BENCH_DEFINE_METHOD
 
@@ -61,7 +64,8 @@ _SPHERE_BENCH_DEFINE_METHOD(tesshemisphere);
  * trrojan::d3d11::sphere_benchmark::sphere_benchmark
  */
 trrojan::d3d11::sphere_benchmark::sphere_benchmark(void)
-        : benchmark_base("sphere-raycaster") {
+        : benchmark_base("sphere-raycaster"),
+        method(shader_method::geo_sprite) {
     typedef mmpld_reader::shader_properties sp_t;
 
     // Define the data we need.
@@ -133,6 +137,7 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
     gpu_timer_type gpuTimer;
     auto isDisjoint = true;
     auto isNewDevice = contains(changed, factor_device);
+	auto isTessellation = true;
     D3D11_VIEWPORT viewport;
 
     // Determine where to perform transfer-function lookups.
@@ -146,18 +151,27 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
         log::instance().write_line(log_level::verbose, "Preparing GPU "
             "resources for device \"%s\" ...", device.name().c_str());
 
+        // Textures and SRVs
         this->colour_map = nullptr;
         create_viridis_colour_map(dev, &this->colour_map);
 
+        // Constant buffers
         this->constant_buffer = create_buffer(device.d3d_device(),
             D3D11_USAGE_DEFAULT, D3D11_BIND_CONSTANT_BUFFER, nullptr,
             static_cast<UINT>(sizeof(SphereConstants)));
 
-        this->geometry_shader = create_geometry_shader(dev,
-            ::SphereGeometryShaderBytes);
+        // Shaders
+        this->domain_shader = create_domain_shader(dev,
+            ::SphereSpriteDomainShaderBytes);
+        if (isTessellation) this->geometry_shader = create_geometry_shader(dev, ::SphereSpriteGeometryShaderBytes);
+        else this->geometry_shader = create_geometry_shader(dev, ::SphereGeometryShaderBytes);
+        this->hull_shader = create_hull_shader(dev,
+            ::SphereSpriteHullShaderBytes);
 
+        // Samplers
         this->linear_sampler = create_linear_sampler(dev);
 
+        // Queries
         this->done_query = create_event_query(dev);
         this->stats_query = create_pipline_stats_query(dev);
     }
@@ -253,6 +267,8 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
         this->cam.set_aspect_ratio(static_cast<float>(viewport.Width) / static_cast<float>(viewport.Height));
         auto mat = DirectX::XMFLOAT4X4(glm::value_ptr(this->cam.get_projection_mx()));
         auto projection = DirectX::XMLoadFloat4x4(&mat);
+        DirectX::XMStoreFloat4x4(&constants.ProjMatrix,
+            DirectX::XMMatrixTranspose(projection));
 
         auto bbWidth = std::abs(this->mmpld_header.bounding_box[3]
             - this->mmpld_header.bounding_box[0]);
@@ -282,6 +298,8 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
         this->cam.set_look(pos, lookAt, glm::vec3(0, 1, 0));
         mat = DirectX::XMFLOAT4X4(glm::value_ptr(this->cam.get_view_mx()));
         auto view = DirectX::XMLoadFloat4x4(&mat);
+        DirectX::XMStoreFloat4x4(&constants.ViewMatrix,
+            DirectX::XMMatrixTranspose(view));
 
         auto viewDet = DirectX::XMMatrixDeterminant(view);
         auto viewInv = DirectX::XMMatrixInverse(&viewDet, view);
@@ -298,6 +316,7 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
             DirectX::XMMatrixTranspose(viewProjInv));
     }
 
+    /* Compute shader constants besides matrices. */
     constants.GlobalColour.x = this->mmpld_list.colour[0];
     constants.GlobalColour.y = this->mmpld_list.colour[1];
     constants.GlobalColour.z = this->mmpld_list.colour[2];
@@ -311,7 +330,7 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
         = this->mmpld_list.radius;
     constants.IntensityRangeAndGlobalRadius.w = 0.0f;
 
-    /* Update shader constants. */
+    /* Update constant buffer. */
     ctx->UpdateSubresource(this->constant_buffer.p, 0, nullptr,
         &constants, 0, 0);
 
@@ -321,9 +340,26 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
     ctx->VSSetShaderResources(0, 1, &this->colour_map.p);
     ctx->VSSetSamplers(0, 1, &this->linear_sampler.p);
 
-    /* Configure geometry stage. */
-    ctx->GSSetShader(this->geometry_shader.p, nullptr, 0);
-    ctx->GSSetConstantBuffers(0, 1, &this->constant_buffer.p);
+	if (isTessellation) {
+		/* Configure hull shader stage. */
+		ctx->HSSetShader(this->hull_shader.p, nullptr, 0);
+		ctx->HSSetConstantBuffers(0, 1, &this->constant_buffer.p);
+
+		/* Configure domain shader stage. */
+		ctx->DSSetShader(this->domain_shader.p, nullptr, 0);
+		ctx->DSSetConstantBuffers(0, 1, &this->constant_buffer.p);
+	} else {
+        ctx->HSSetShader(nullptr, nullptr, 0);
+        ctx->DSSetShader(nullptr, nullptr, 0);
+	}
+
+    if (true || !isTessellation) {
+        /* Configure geometry stage. */
+        ctx->GSSetShader(this->geometry_shader.p, nullptr, 0);
+        ctx->GSSetConstantBuffers(0, 1, &this->constant_buffer.p);
+    } else {
+        ctx->GSSetShader(nullptr, nullptr, 0);
+    }
 
     /* Configure pixel stage. */
     ctx->PSSetShader(this->pixel_shader.p, nullptr, 0);
@@ -335,8 +371,11 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
     const auto offset = 0u;
     const auto stride = static_cast<UINT>(
         mmpld_reader::calc_stride(this->mmpld_list));
+    const auto topology = isTessellation
+        ? D3D11_PRIMITIVE_TOPOLOGY_1_CONTROL_POINT_PATCHLIST
+        : D3D11_PRIMITIVE_TOPOLOGY_POINTLIST;
     ctx->IASetVertexBuffers(0, 1, &this->vertex_buffer.p, &stride, &offset);
-    ctx->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
+    ctx->IASetPrimitiveTopology(topology);
     ctx->IASetInputLayout(this->input_layout.p);
 
     /* Configure the rasteriser. */
