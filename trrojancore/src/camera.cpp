@@ -121,7 +121,7 @@ void trrojan::camera::set_from_maneuver(const std::string name, const glm::vec3 
         throw std::invalid_argument("Iteration must be smaller than #samples.");
 
     // circle around axis
-    if (name.find("circle") != std::string::npos)
+    if (name.find("orbit") != std::string::npos)
     {
         // look at bounding box center
         this->set_look_to(bbox_min + (bbox_max - bbox_min)*0.5f);
@@ -161,7 +161,28 @@ void trrojan::camera::set_from_maneuver(const std::string name, const glm::vec3 
     }
     else if (name.find("path") != std::string::npos)
     {
-        // TODO: curves through volume (sine, cosine,...)
+        // NOTE: curves only implemented in xz-plane
+        // fit initial view to bounding box x
+        this->set_look_to(bbox_min + (bbox_max - bbox_min)*0.5f);
+        float bbox_length_x = bbox_max.x - bbox_min.x;
+        float camera_dist = (bbox_length_x * 0.5f) / std::tan(fovy*0.5f*M_PI/180.f);
+        this->set_look_from(this->_look_to - glm::vec3(0, 0, bbox_min.z - camera_dist));
+        float x = 2.f*M_PI * (iteration / (float)samples);
+        float view_translation = (iteration / (float)samples)*(camera_dist*2.0f + bbox_length_x);
+        _look_up = glm::vec3(0,1,0);
+
+        float tangent = bbox_length_x*0.25f; // amplitude
+        if (name.find("sin") != std::string::npos)
+        {
+            this->set_look_from(_look_from - glm::vec3(sin(x)*tangent, 0, view_translation));
+            tangent *= cos(x);
+        }
+        if (name.find("cos") != std::string::npos)
+        {
+            this->set_look_from(_look_from - glm::vec3(cos(x)*tangent, 0, view_translation));
+            tangent *= -sin(x);
+        }
+        this->set_look_to(_look_from - glm::vec3(tangent, 0, 1.f - tangent));
     }
     else if (name.find("random") != std::string::npos)
     {

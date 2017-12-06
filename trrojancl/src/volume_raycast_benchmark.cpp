@@ -41,12 +41,10 @@ _TRROJANSTREAM_DEFINE_FACTOR(tff_file_name);
 _TRROJANSTREAM_DEFINE_FACTOR(viewport);
 _TRROJANSTREAM_DEFINE_FACTOR(step_size_factor);
 
-//_TRROJANSTREAM_DEFINE_FACTOR(roll);
-//_TRROJANSTREAM_DEFINE_FACTOR(pitch);
-//_TRROJANSTREAM_DEFINE_FACTOR(yaw);
-//_TRROJANSTREAM_DEFINE_FACTOR(zoom);
 _TRROJANSTREAM_DEFINE_FACTOR(cam_position);
 _TRROJANSTREAM_DEFINE_FACTOR(cam_rotation);
+_TRROJANSTREAM_DEFINE_FACTOR(maneuver);
+_TRROJANSTREAM_DEFINE_FACTOR(maneuver_samples);
 
 _TRROJANSTREAM_DEFINE_FACTOR(sample_precision);
 _TRROJANSTREAM_DEFINE_FACTOR(use_lerp);
@@ -942,7 +940,7 @@ void trrojan::opencl::volume_raycast_benchmark::update_camera(const trrojan::con
     _camera.rotate_fixed_to(glm::quat(rot.at(0), rot.at(1), rot.at(2), rot.at(3)));
 
     // TODO: add proper camera maneuver handling
-    _camera.set_from_maneuver("circle_-x-y", glm::vec3(-1), glm::vec3(1), test_i++, 64);
+    _camera.set_from_maneuver("path_sin", glm::vec3(-1), glm::vec3(1), test_i++, 64);
 
     glm::mat4 view = _camera.get_inverse_view_mx();
     cl_float16 view_mat = {view[0][0], view[1][0], view[2][0], view[3][0],

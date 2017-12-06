@@ -59,10 +59,8 @@ namespace opencl
 
         static const std::string factor_cam_position;
         static const std::string factor_cam_rotation;
-//        static const std::string factor_roll;
-//        static const std::string factor_pitch;
-//        static const std::string factor_yaw;
-//        static const std::string factor_zoom;
+        static const std::string factor_maneuver;
+        static const std::string factor_maneuver_samples;
 
         static const std::string factor_sample_precision;
         static const std::string factor_use_lerp;
