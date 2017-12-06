@@ -3,29 +3,16 @@
 /// </copyright>
 /// <author>Christoph Müller</author>
 
+#include "ReconstructCamera.hlsli"
 #include "SpherePipeline.hlsli"
-
-
-
-void ReconstructCamera(out float4 pos, out float4 dir, out float4 up,
-        out float4 right, const in matrix viewInvMatrix) {
-    // calculate cam position
-    pos = viewInvMatrix._41_42_43_44; // (C) by Christoph
-
-    dir = float4(normalize(viewInvMatrix._31_32_33_34.xyz), 0.0);
-    up = normalize(viewInvMatrix._21_22_23_24);
-    right = float4(normalize(cross(dir.xyz, up.xyz)), 0.0);
-
-    up = float4(normalize(cross(right.xyz, dir.xyz)), 0.0);
-}
 
 
 /// <summary>
 /// Geometry shader creating a sprite from a single vertex.
 /// </summary>
 [maxvertexcount(4)]
-void Main(point GsInput input[1], inout TriangleStream<PsInput> triStream) {
-    PsInput v = (PsInput)0;
+void Main(point VsOutput input[1], inout TriangleStream<PsInput> triStream) {
+    PsInput v = (PsInput) 0;
 
     //// Take a sample directly in the middle of the pixel at 0, 0, which is 0 / Width + 1 / (Width * 2)
     //// Note: We changed NVIDIA's linear sampler to a point sampler, so we can
@@ -34,8 +21,12 @@ void Main(point GsInput input[1], inout TriangleStream<PsInput> triStream) {
     //v.EyeSeparation = stereoParms.x;
     //v.Convergence = stereoParms.y;
 
-    //uint eye = input[0].Eye;
-    float4x4 mvp = ViewProjMatrix;
+#ifdef HOLOMOL
+    const uint eye = input[0].Eye;
+#else /* HOLOMOL */
+    const uint eye = 0;
+#endif /* HOLOMOL */
+    float4x4 mvp = ViewProjMatrix[eye];
     float rad = input[0].Radius;
 
     //#define MAJOR_DOWELING_RADIUS
@@ -48,11 +39,13 @@ void Main(point GsInput input[1], inout TriangleStream<PsInput> triStream) {
     objPos.w = 1.0;
     v.Colour = input[0].Colour;
     v.SphereParams = float4(input[0].Position.xyz, rad);
-    //v.Eye = eye;
+#ifdef HOLOMOL
+    v.Eye = eye;
+#endif /* HOLOMOL */
 
     // Reconstruct camera system.
     ReconstructCamera(v.CameraPosition, v.CameraDirection, v.CameraUp,
-        v.CameraRight, ViewInvMatrix);
+        v.CameraRight, ViewInvMatrix[eye]);
 
     // Transform camera to glyph space and undo stereo transform.
     v.CameraPosition.xyz -= objPos.xyz;
@@ -60,7 +53,7 @@ void Main(point GsInput input[1], inout TriangleStream<PsInput> triStream) {
     //v.CameraPosition.xyz += v.CameraRight * v.EyeSeparation;
 
     // SphereParams-Touch-Plane-Approach™
-    float2 winHalf = 2.0 / Viewport.zw; // window size
+    //float2 winHalf = 2.0 / Viewport.zw; // window size
     float2 d, p, q, h, dd;
     float2 mins, maxs;
     float3 testPos;
@@ -92,15 +85,15 @@ void Main(point GsInput input[1], inout TriangleStream<PsInput> triStream) {
 #else
 
     // projected camera vector
-    float3 c2 = float3(dot(v.CameraPosition.xyz, v.CameraRight),
-        dot(v.CameraPosition.xyz, v.CameraUp),
-        dot(v.CameraPosition.xyz, v.CameraDirection));
+    float3 c2 = float3(dot(v.CameraPosition.xyz, v.CameraRight.xyz),
+        dot(v.CameraPosition.xyz, v.CameraUp.xyz),
+        dot(v.CameraPosition.xyz, v.CameraDirection.xyz));
 
-    float3 cpj1 = v.CameraDirection * c2.z + v.CameraRight * c2.x;
-    float3 cpm1 = v.CameraDirection * c2.x - v.CameraRight * c2.z;
+    float3 cpj1 = v.CameraDirection.xyz * c2.z + v.CameraRight.xyz * c2.x;
+    float3 cpm1 = v.CameraDirection.xyz * c2.x - v.CameraRight.xyz * c2.z;
 
-    float3 cpj2 = v.CameraDirection * c2.z + v.CameraUp * c2.y;
-    float3 cpm2 = v.CameraDirection * c2.y - v.CameraUp * c2.z;
+    float3 cpj2 = v.CameraDirection.xyz * c2.z + v.CameraUp.xyz * c2.y;
+    float3 cpm2 = v.CameraDirection.xyz * c2.y - v.CameraUp.xyz * c2.z;
 
     d.x = length(cpj1);
     d.y = length(cpj2);

@@ -24,17 +24,21 @@ SamplerState LinearSampler : register(s0);
 /// </summary>
 /// <param name="input"></param>
 /// <returns></returns>
-GsInput Main(VsInput input) {
-    GsInput retval = (GsInput)0;
+VsOutput Main(VsInput input) {
+    VsOutput retval = (VsOutput) 0;
 
     retval.Position = float4(input.Position.xyz, 1.0f);
     retval.Radius = input.Position.w;
 
-    float start = min(IntensityRangeAndGlobalRadius.x, IntensityRangeAndGlobalRadius.y);
-    float range = abs(IntensityRangeAndGlobalRadius.y - IntensityRangeAndGlobalRadius.x);
+    float start = min(IntRangeGlobalRadTessFactor.x, IntRangeGlobalRadTessFactor.y);
+    float range = abs(IntRangeGlobalRadTessFactor.y - IntRangeGlobalRadTessFactor.x);
     float texCoords = (input.Colour.r - start) / range;
 
     retval.Colour = TransferFunction.SampleLevel(LinearSampler, texCoords, 0);
+
+#ifdef HOLOMOL
+    retval.Eye = input.Eye;
+#endif /* HOLOMOL */
 
     return retval;
 }

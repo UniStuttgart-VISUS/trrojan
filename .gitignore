@@ -207,3 +207,6 @@
 /SphereVertexShaderPvIntPvRad.h
 /SphereVertexShaderPvInt.h
 /SpherePixelShaderInt.h
+/SphereSpriteHullShader.h
+/SphereSpriteGeometryShader.h
+/SphereSpriteDomainShader.h
