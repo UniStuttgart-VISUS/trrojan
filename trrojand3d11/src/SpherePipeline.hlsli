@@ -27,6 +27,12 @@ struct HsConstants {
     float InsideTessFactor[2] : SV_InsideTessFactor;
 };
 
+struct GsInput {
+    float4 Position : POSITION;
+    float4 Colour : COLOR;
+    float4 SphereParams : TEXCOORD0;
+};
+
 struct PsInput {
     float4 Position : SV_POSITION;
     float4 SphereParams : TEXCOORD0;

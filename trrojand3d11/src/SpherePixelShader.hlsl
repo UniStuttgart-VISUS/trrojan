@@ -93,7 +93,7 @@ PsOutput Main(PsInput input) {
         discard;
         //retval.Colour = 0.8.xxxx;
         //retval.Depth = input.Position.z;
-        //return retval;
+        return retval;
     } else {
         // chose color for lighting
         sphereintersection = lambda * ray + camPos.xyz;    // intersection point
@@ -117,6 +117,6 @@ PsOutput Main(PsInput input) {
     retval.Depth = input.Position.z;
 #endif // DEPTH
 
-    retval.Colour = float4(1.0, 0.0, 0.0, 1.0);
+    //retval.Colour = float4(1.0, 0.0, 0.0, 1.0);
     return retval;
 }

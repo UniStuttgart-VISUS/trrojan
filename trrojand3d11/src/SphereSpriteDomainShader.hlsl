@@ -17,12 +17,12 @@
 /// <param name="input"></param>
 /// <returns></returns>
 [domain("quad")]
-VsOutput Main(OutputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
+GsInput Main(OutputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
 //PsInput Main(OutputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
         HsConstants constants,
         float2 uv : SV_DomainLocation) {
     //PsInput retval = (PsInput) 0;
-    VsOutput retval;
+    GsInput retval;
 
     const float PI = 3.14159265358979323846f;
 
@@ -37,8 +37,8 @@ VsOutput Main(OutputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
     //    retval.CameraUp, retval.CameraRight, vmInv);
 
     // Re-combine the spheres parameters into a float + colour.
-    //retval.SphereParams = float4(patch[0].Position.xyz, patch[0].Radius);
-    //retval.Colour = patch[0].Colour;
+    retval.SphereParams = float4(patch[0].Position.xyz, patch[0].Radius);
+    retval.Colour = patch[0].Colour;
 
 #if 1
     // Transform the position to camera coordinates.
@@ -53,8 +53,7 @@ VsOutput Main(OutputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
     pos += coords;
 
     retval.Position = mul(pos, pm);
-    retval.Radius = patch[0].Radius;
-    retval.Colour = patch[0].Colour;
+    //retval.Radius = patch[0].Radius;
 #endif
 
 #if 0
