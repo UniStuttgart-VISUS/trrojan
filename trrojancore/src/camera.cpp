@@ -9,6 +9,7 @@
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include "glm/gtx/quaternion.hpp"
+#include "glm/gtc/constants.hpp"
 
 trrojan::camera::camera(vec3 look_from, vec3 look_to, vec3 look_up, float near_plane,
                         float far_plane)
@@ -120,6 +121,7 @@ void trrojan::camera::set_from_maneuver(const std::string name, const glm::vec3 
     if (iteration >= samples)
         throw std::invalid_argument("Iteration must be smaller than #samples.");
 
+    float pi = glm::pi<float>();
     // circle around axis
     if (name.find("orbit") != std::string::npos)
     {
@@ -127,10 +129,10 @@ void trrojan::camera::set_from_maneuver(const std::string name, const glm::vec3 
         this->set_look_to(bbox_min + (bbox_max - bbox_min)*0.5f);
         // fit view to bounding box x
         float bbox_length_x = bbox_max.x - bbox_min.x;
-        float camera_dist = (bbox_length_x * 0.5f) / std::tan(fovy*0.5f*M_PI/180.f);
+        float camera_dist = (bbox_length_x * 0.5f) / std::tan(pi*fovy*0.5f/180.f);
         this->set_look_from(this->_look_to - glm::vec3(0, 0, bbox_min.z - camera_dist));
         // rotation in radians
-        float angle = (2.f*M_PI / samples) * iteration;
+        float angle = (2.f*pi / samples) * iteration;
         glm::vec3 axis(0.f);
         // create axis from x,y,z identifier
         if (name.find("x") != std::string::npos) axis.x = 1.f;
@@ -154,8 +156,8 @@ void trrojan::camera::set_from_maneuver(const std::string name, const glm::vec3 
 
         this->set_look_to(end);
         // NOTE: assuming uniform bounding box
-        float bbox_length = M_SQRT2*(bbox_max.x - bbox_min.x); // glm::length(bbox_max - bbox_min);
-        float camera_dist = (bbox_length * 0.5f) / std::tan(fovy*0.5f*M_PI/180.f);
+        float bbox_length = glm::root_two<float>()*(bbox_max.x - bbox_min.x); // glm::length(bbox_max - bbox_min);
+        float camera_dist = (bbox_length * 0.5f) / std::tan(fovy*0.5f*pi/180.f);
         camera_dist *= (1.f - iteration/(float)samples);
         this->set_look_from(this->_look_to + (begin - end) * camera_dist);
     }
@@ -165,9 +167,9 @@ void trrojan::camera::set_from_maneuver(const std::string name, const glm::vec3 
         // fit initial view to bounding box x
         this->set_look_to(bbox_min + (bbox_max - bbox_min)*0.5f);
         float bbox_length_x = bbox_max.x - bbox_min.x;
-        float camera_dist = (bbox_length_x * 0.5f) / std::tan(fovy*0.5f*M_PI/180.f);
+        float camera_dist = (bbox_length_x * 0.5f) / std::tan(fovy*0.5f*pi/180.f);
         this->set_look_from(this->_look_to - glm::vec3(0, 0, bbox_min.z - camera_dist));
-        float x = 2.f*M_PI * (iteration / (float)samples);
+        float x = 2.f*pi * (iteration / (float)samples);
         float view_translation = (iteration / (float)samples)*(camera_dist*2.0f + bbox_length_x);
         _look_up = glm::vec3(0,1,0);
 
@@ -189,7 +191,7 @@ void trrojan::camera::set_from_maneuver(const std::string name, const glm::vec3 
         this->set_look_to(glm::vec3(bbox_min + (bbox_max - bbox_min)*0.5f));
         // fit view to bounding box x
         float bbox_length_x = bbox_max.x - bbox_min.x;
-        float camera_dist = (bbox_length_x * 0.5f) / std::tan(fovy*0.5f*M_PI/180.f);
+        float camera_dist = (bbox_length_x * 0.5f) / std::tan(fovy*0.5f*pi/180.f);
         // set random distance between center of bbox and 2x bbox fitted view
         float r = get_rand()*2.f;
         this->set_look_from(this->_look_to - glm::vec3(0, 0, (bbox_min.z - camera_dist)*r));

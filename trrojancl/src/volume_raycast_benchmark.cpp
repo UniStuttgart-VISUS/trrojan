@@ -45,6 +45,7 @@ _TRROJANSTREAM_DEFINE_FACTOR(cam_position);
 _TRROJANSTREAM_DEFINE_FACTOR(cam_rotation);
 _TRROJANSTREAM_DEFINE_FACTOR(maneuver);
 _TRROJANSTREAM_DEFINE_FACTOR(maneuver_samples);
+_TRROJANSTREAM_DEFINE_FACTOR(maneuver_iteration);
 
 _TRROJANSTREAM_DEFINE_FACTOR(sample_precision);
 _TRROJANSTREAM_DEFINE_FACTOR(use_lerp);
@@ -85,7 +86,7 @@ const std::string trrojan::opencl::volume_raycast_benchmark::test_volume =
     "/media/brudervn/Daten/volTest/vol/bonsai.dat";
 //    "//trr161store.visus.uni-stuttgart.de/SFB-TRR 161/A02/data/volumes/bonsai.dat";
 #endif
-static int test_i = {0};
+
 /*
  * trrojan::opencl::volume_raycast_benchmark::volume_raycast_benchmark
  */
@@ -137,6 +138,11 @@ trrojan::opencl::volume_raycast_benchmark::volume_raycast_benchmark(void)
     add_kernel_run_factor(factor_cam_position, pos);
     auto rotation = std::array<float, 4> {1, 0, 0, 0};
     add_kernel_run_factor(factor_cam_rotation, rotation);
+
+    // maneuvers
+    add_kernel_run_factor(factor_maneuver, "random");
+    add_kernel_run_factor(factor_maneuver_samples, "1");
+    add_kernel_run_factor(factor_maneuver_iteration, "0");
 
     // rendering modes -> kernel build factors
     //
@@ -464,9 +470,10 @@ trrojan::result trrojan::opencl::volume_raycast_benchmark::run(const configurati
         device::pointer dev_ptr = std::dynamic_pointer_cast<device>(dev);
         auto file = cfg.find(factor_volume_file_name)->value().as<std::string>();
         auto rot = cfg.find(factor_cam_rotation)->value().as<std::array<float, 4>>();
+        auto iteration = cfg.find(factor_maneuver_iteration)->value().as<int>();
         std::size_t found = file.find_last_of("/\\");
         trrojan::save_image("img/" + dev_ptr->name() + "_" + file.substr(found + 1) + "_"
-                            + std::to_string(test_i) + ".png",
+                            + std::to_string(iteration) + ".png",
                             _output_data.data(), imgSize.at(0), imgSize.at(1), 4);
     }
 
@@ -934,13 +941,21 @@ void trrojan::opencl::volume_raycast_benchmark::set_kernel_args(const float prec
  */
 void trrojan::opencl::volume_raycast_benchmark::update_camera(const trrojan::configuration &cfg)
 {
-    auto pos = cfg.find(factor_cam_position)->value().as<std::array<float, 3>>();
-    _camera.set_look_from(glm::vec3(pos.at(0), pos.at(1), pos.at(2)));
-    auto rot = cfg.find(factor_cam_rotation)->value().as<std::array<float, 4>>();
-    _camera.rotate_fixed_to(glm::quat(rot.at(0), rot.at(1), rot.at(2), rot.at(3)));
-
-    // TODO: add proper camera maneuver handling
-    _camera.set_from_maneuver("path_sin", glm::vec3(-1), glm::vec3(1), test_i++, 64);
+    auto maneuver = cfg.find(factor_maneuver)->value().as<std::string>();
+    if (maneuver.empty())
+    {
+        auto pos = cfg.find(factor_cam_position)->value().as<std::array<float, 3>>();
+        _camera.set_look_from(glm::vec3(pos.at(0), pos.at(1), pos.at(2)));
+        auto rot = cfg.find(factor_cam_rotation)->value().as<std::array<float, 4>>();
+        _camera.rotate_fixed_to(glm::quat(rot.at(0), rot.at(1), rot.at(2), rot.at(3)));
+    }
+    else
+    {
+        auto samples = cfg.find(factor_maneuver_samples)->value().as<int>();
+        auto iteration = cfg.find(factor_maneuver_iteration)->value().as<int>();
+        assert(iteration < samples);
+        _camera.set_from_maneuver(maneuver, glm::vec3(-1), glm::vec3(1), iteration, samples);
+    }
 
     glm::mat4 view = _camera.get_inverse_view_mx();
     cl_float16 view_mat = {view[0][0], view[1][0], view[2][0], view[3][0],
@@ -962,7 +977,9 @@ void trrojan::opencl::volume_raycast_benchmark::update_initial_kernel_args(
         _kernel.setArg(OUTPUT, _output_mem);
         _kernel.setArg(TFF, _tff_mem);
         _kernel.setArg(ID, _ray_ids);
-        _kernel.setArg(STEP_SIZE, static_cast<cl_float>(cfg.find(factor_step_size_factor)->value()));
+        cl_float step_size = static_cast<cl_float>(cfg.find(factor_step_size_factor)->value());
+        assert(step_size > 0.f);
+        _kernel.setArg(STEP_SIZE, step_size);
         cl_uint3 resolution = {{_volume_res[0], _volume_res[1], _volume_res[2]}};
         _kernel.setArg(RESOLUTION, resolution);
         _kernel.setArg(SAMPLER, _sampler);
