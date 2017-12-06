@@ -99,14 +99,15 @@ glm::vec3 trrojan::camera::get_eye_ray(float x, float y)
 
 void trrojan::camera::rotate_fixed_to(const glm::quat q)
 {
-    this->set_look(_look_to + q * (_look_from - _look_to), _look_to, _look_up);
-//    this->set_look(_look_to + q * (_look_from - _look_to), _look_to, q*_look_up);
+    _look_from = _look_to - q * (_look_from - _look_to);
+    _look_up = q * glm::vec3(0, 1, 0);  // up vector fixed to positive y-axis
 }
 
 void trrojan::camera::rotate_fixed_from(const glm::quat q)
 {
-    this->set_look(_look_from, glm::rotate(q, this->_look_to - this->_look_from), _look_up);
-//                   glm::rotate(q, _look_up));
+    // FIXME
+    _look_to = q * (_look_from - _look_to);
+    _look_up = q * glm::vec3(0, 1, 0);  // up vector fixed to positive y-axis
 }
 
 /**
@@ -135,6 +136,9 @@ void trrojan::camera::set_from_maneuver(const std::string name, const glm::vec3 
         if (name.find("x") != std::string::npos) axis.x = 1.f;
         if (name.find("y") != std::string::npos) axis.y = 1.f;
         if (name.find("z") != std::string::npos) axis.z = 1.f;
+        if (name.find("-x") != std::string::npos) axis.x *= -1.f;
+        if (name.find("-y") != std::string::npos) axis.y *= -1.f;
+        if (name.find("-z") != std::string::npos) axis.z *= -1.f;
         glm::quat q = glm::angleAxis(angle, glm::normalize(axis));
         this->rotate_fixed_to(q);
     }

@@ -942,7 +942,7 @@ void trrojan::opencl::volume_raycast_benchmark::update_camera(const trrojan::con
     _camera.rotate_fixed_to(glm::quat(rot.at(0), rot.at(1), rot.at(2), rot.at(3)));
 
     // TODO: add proper camera maneuver handling
-    _camera.set_from_maneuver("circle_x", glm::vec3(-1), glm::vec3(1), test_i++, 64);
+    _camera.set_from_maneuver("circle_-x-y", glm::vec3(-1), glm::vec3(1), test_i++, 64);
 
     glm::mat4 view = _camera.get_inverse_view_mx();
     cl_float16 view_mat = {view[0][0], view[1][0], view[2][0], view[3][0],
