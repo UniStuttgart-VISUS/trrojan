@@ -148,8 +148,8 @@ __kernel void volumeRender(
 
     if (!hit)
     {
-        // write output color: transparent black
-        float4 color = (float4)(0.0f);
+        // write output color: transparent white
+        float4 color = (float4)(1.f, 1.f, 1.f, 0.0f);
         write_imagef(outData, texCoords, color);
         return;
     }

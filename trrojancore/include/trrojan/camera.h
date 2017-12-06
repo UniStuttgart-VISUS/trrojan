@@ -7,6 +7,7 @@
 #pragma once
 
 #include <string>
+#include <random>
 
 #include "trrojan/export.h"
 
@@ -20,6 +21,31 @@ namespace trrojan
     using glm::vec3;
     using glm::vec4;
     using glm::mat4;
+
+static int state = {42};    //< random seed
+
+/// <summary>
+/// Own rand() implementation for cross platform deterministc 'randomness'.
+/// </summary>
+static int rand()
+{
+    int const a = 1103515245;
+    int const c = 12345;
+    state = a * state + c;
+    return (state >> 16) & 0x7FFF;
+}
+
+/// <summary>
+/// Generate a pseudorandom number in range [0,1] using the Mersenne Twister.
+/// </summary>
+/// <return> A random number in range [0,1] from a uniform distribution. </return>
+static float get_rand()
+{
+    std::mt19937 mtGen(rand());
+    std::uniform_real_distribution<> distribNorm(0.0, 1.0);
+    return distribNorm(mtGen);
+}
+
 /// <summary>
 /// Base class for a camera.
 /// </summary>
@@ -130,6 +156,9 @@ protected:
     virtual mat4 calc_projection_mx() const = 0;
     void invalidate_view_mx();
     void invalidate_projection_mx();
+    void set_from_maneuver(const std::string name, const glm::vec3 bbox_min,
+                           const glm::vec3 bbox_max, const int iteration, const float fovy,
+                           const int samples = 360);
 
     vec3 _look_from;
     vec3 _look_to;
@@ -164,6 +193,8 @@ public:
     virtual float get_aspect_ratio() const override;
     virtual void set_aspect_ratio(float val) override;
 
+    void set_from_maneuver(const std::string name, const glm::vec3 bbox_min,
+                           const glm::vec3 bbox_max, const int iteration, const int samples);
 protected:
     virtual mat4 calc_projection_mx() const override;
 
@@ -194,6 +225,8 @@ public:
     virtual float get_aspect_ratio() const override;
     virtual void set_aspect_ratio(float val) override;
 
+    void set_from_maneuver(const std::string name, const glm::vec3 bbox_min,
+                           const glm::vec3 bbox_max, const int iteration, const int samples);
 protected:
     virtual mat4 calc_projection_mx() const override;
 
