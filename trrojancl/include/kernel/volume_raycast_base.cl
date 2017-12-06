@@ -154,14 +154,14 @@ __kernel void volumeRender(
         return;
     }
 
+    tnear = max(0.f, tnear); // clamp to near plane and offset by 'random' distance
     float samplingRate = 1.f/stepSizeFactor;
     float sampleDist = tfar - tnear;
     float stepSize = min(sampleDist, sampleDist /
                             (samplingRate*length(sampleDist*rayDir.xyz*convert_float3(volRes.xyz))));
     float samples = ceil(sampleDist/stepSize);
     stepSize = sampleDist/samples;
-
-    tnear = max(0.f, tnear + rand*stepSize); // clamp to near plane and offset by 'random' distance
+    tnear += + rand*stepSize;
 
     // march along ray from front to back, accumulating color
     float4 color = (float4)(1.0f, 1.0f, 1.0f, 0.0f);
