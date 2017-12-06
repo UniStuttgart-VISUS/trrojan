@@ -491,13 +491,12 @@ trrojan::result trrojan::opencl::volume_raycast_benchmark::run(const configurati
     for (int i = 0; i < run_iterations; ++i)
         result_names.push_back("execution_time_" + std::to_string(i));
     auto retval = std::make_shared<basic_result>(result_cfg, std::move(result_names));
+    // FIXME: change to be relative to # of run iterations
+    retval->add({times.at(0), times.at(1), times.at(2), times.at(3), times.at(4)});
 
     // calc median of execution times of all runs
-    //for (const auto &a: times)
-    retval->add({times.at(0), times.at(1), times.at(2), times.at(3), times.at(4)});
     std::sort(times.begin(), times.end());
     double median = times.at(times.size() / 2);
-
     std::ostringstream os;
     os << "Kernel time median: " << median << std::endl;
     log::instance().write(log_level::information, os.str().c_str());
