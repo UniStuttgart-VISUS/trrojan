@@ -51,8 +51,8 @@ PsInput Main(OutputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
 
     // If we use the radius of the sphere as size of the triangle fan, its hull
     // are the secants of the final sphere, but we need to have the tangent.
-    /// Adjust the value such that the radius is equal to the altitude of the
-    // triangle.
+    // Adjust the value such that the radius is equal to the altitude (apothem)
+    // of the triangle.
     float rad = patch[0].Radius;
     float alpha = TWO_PI / (2.0f * constants.EdgeTessFactor[0]);
     rad /= cos(alpha);
