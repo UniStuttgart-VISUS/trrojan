@@ -140,9 +140,10 @@ trrojan::opencl::volume_raycast_benchmark::volume_raycast_benchmark(void)
     add_kernel_run_factor(factor_cam_rotation, rotation);
 
     // maneuvers
-    add_kernel_run_factor(factor_maneuver, "random");
-    add_kernel_run_factor(factor_maneuver_samples, "1");
-    add_kernel_run_factor(factor_maneuver_iteration, "0");
+    std::string maneuver = "random";
+    add_kernel_run_factor(factor_maneuver, maneuver);
+    add_kernel_run_factor(factor_maneuver_samples, 1);
+    add_kernel_run_factor(factor_maneuver_iteration, 0);
 
     // rendering modes -> kernel build factors
     //
@@ -1007,7 +1008,8 @@ void trrojan::opencl::volume_raycast_benchmark::update_kernel_args(
     environment::pointer env_ptr = std::dynamic_pointer_cast<environment>(env);
 
     if (changed.count(factor_cam_position) + changed.count(factor_cam_rotation)
-            + changed.count(factor_device))
+            + changed.count(factor_device) + changed.count(factor_maneuver)
+            + changed.count(factor_maneuver_samples) + changed.count(factor_maneuver_iteration))
     {
         try
         {
