@@ -137,7 +137,7 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
     gpu_timer_type gpuTimer;
     auto isDisjoint = true;
     auto isNewDevice = contains(changed, factor_device);
-	auto isTessellation = false;
+	auto isTessellation = true;
     D3D11_VIEWPORT viewport;
 
     // Determine where to perform transfer-function lookups.
@@ -322,13 +322,10 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
     constants.GlobalColour.z = this->mmpld_list.colour[2];
     constants.GlobalColour.w = this->mmpld_list.colour[3];
 
-    constants.IntensityRangeAndGlobalRadius.x
-        = this->mmpld_list.min_intensity;
-    constants.IntensityRangeAndGlobalRadius.y
-        = this->mmpld_list.max_intensity;
-    constants.IntensityRangeAndGlobalRadius.z
-        = this->mmpld_list.radius;
-    constants.IntensityRangeAndGlobalRadius.w = 0.0f;
+    constants.IntRangeGlobalRadTessFactor.x = this->mmpld_list.min_intensity;
+    constants.IntRangeGlobalRadTessFactor.y = this->mmpld_list.max_intensity;
+    constants.IntRangeGlobalRadTessFactor.z = this->mmpld_list.radius;
+    constants.IntRangeGlobalRadTessFactor.w = 5.0f;
 
     /* Update constant buffer. */
     ctx->UpdateSubresource(this->constant_buffer.p, 0, nullptr,
@@ -353,7 +350,7 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
         ctx->DSSetShader(nullptr, nullptr, 0);
 	}
 
-    if (true || !isTessellation) {
+    if (!isTessellation) {
         /* Configure geometry stage. */
         ctx->GSSetShader(this->geometry_shader.p, nullptr, 0);
         ctx->GSSetConstantBuffers(0, 1, &this->constant_buffer.p);

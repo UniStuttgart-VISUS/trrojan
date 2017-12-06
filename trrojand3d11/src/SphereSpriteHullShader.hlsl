@@ -31,8 +31,6 @@ HsConstants CalcConstants(InputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
 
     // using w-value that is equal to the z-component prior to the projection
     float tessFactor = clamp(length(r) / pos.w * pm._11 * 3.f, 5.f, 25.f);
-    tessFactor = 4;
-    tessFactor = 16;
     //float tessFactor = clamp(length(r) / pos.w * projection._22 * 2.f, 5.f, 25.f);
 
     // TODO: adding dynamic tessellation factors
@@ -41,9 +39,9 @@ HsConstants CalcConstants(InputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
         = retval.EdgeTessFactor[2]
         = retval.EdgeTessFactor[3]
         = retval.InsideTessFactor[0]
-        = retval.InsideTessFactor[1] = tessFactor;
-    retval.InsideTessFactor[0] = 2;
-    retval.InsideTessFactor[1] = 2;
+        = retval.InsideTessFactor[1] = IntRangeGlobalRadTessFactor.w;
+    retval.InsideTessFactor[0] = 1;
+    retval.InsideTessFactor[1] = 1;
 
     return retval;
 }
@@ -56,7 +54,7 @@ HsConstants CalcConstants(InputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
 /// <returns></returns>
 [domain("quad")]
 [patchconstantfunc("CalcConstants")]
-[partitioning("integer")]
+[partitioning("fractional_odd")]
 [outputcontrolpoints(CNT_CONTROL_POINTS)]
 [outputtopology("triangle_ccw")]
 VsOutput Main(InputPatch<VsOutput, CNT_CONTROL_POINTS> patch,

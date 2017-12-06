@@ -90,8 +90,9 @@ PsOutput Main(PsInput input) {
     lambda = d1 - sqrt(radicand);                           // lambda
 
     if (radicand < 0.0) {
-        discard;
-        //retval.Colour = 0.8.xxxx;
+        //discard;
+        retval.Colour = 0.8.xxxx;
+        retval.Colour = float4(1.0f, 0.0f, 0.0f, 1.0f);
         //retval.Depth = input.Position.z;
         return retval;
     } else {

@@ -47,7 +47,7 @@ void Main(point VsOutput input[1], inout TriangleStream<PsInput> triStream) {
     //v.CameraPosition.xyz += v.CameraRight * v.EyeSeparation;
 
     // SphereParams-Touch-Plane-Approach™
-    float2 winHalf = 2.0 / Viewport.zw; // window size
+    //float2 winHalf = 2.0 / Viewport.zw; // window size
     float2 d, p, q, h, dd;
     float2 mins, maxs;
     float3 testPos;
@@ -57,7 +57,7 @@ void Main(point VsOutput input[1], inout TriangleStream<PsInput> triStream) {
     squarRad = (rad + HALO_RAD) * (rad + HALO_RAD);
 #endif // HALO
 
-#if 0
+#if 1
 #define DUEBEL 1.5f
     //bottom left
     v.Position = mul(objPos - v.CameraUp * DUEBEL * rad - v.CameraRight * DUEBEL * rad, mvp);
@@ -83,11 +83,11 @@ void Main(point VsOutput input[1], inout TriangleStream<PsInput> triStream) {
         dot(v.CameraPosition.xyz, v.CameraUp.xyz),
         dot(v.CameraPosition.xyz, v.CameraDirection.xyz));
 
-    float3 cpj1 = v.CameraDirection * c2.z + v.CameraRight * c2.x;
-    float3 cpm1 = v.CameraDirection * c2.x - v.CameraRight * c2.z;
+    float3 cpj1 = v.CameraDirection.xyz * c2.z + v.CameraRight.xyz * c2.x;
+    float3 cpm1 = v.CameraDirection.xyz * c2.x - v.CameraRight.xyz * c2.z;
 
-    float3 cpj2 = v.CameraDirection * c2.z + v.CameraUp * c2.y;
-    float3 cpm2 = v.CameraDirection * c2.y - v.CameraUp * c2.z;
+    float3 cpj2 = v.CameraDirection.xyz * c2.z + v.CameraUp.xyz * c2.y;
+    float3 cpm2 = v.CameraDirection.xyz * c2.y - v.CameraUp.xyz * c2.z;
 
     d.x = length(cpj1);
     d.y = length(cpj2);

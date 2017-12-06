@@ -16,7 +16,7 @@ VsOutput Main(VsInput input) {
     VsOutput retval = (VsOutput) 0;
 
     retval.Position = float4(input.Position.xyz, 1.0f);
-    retval.Radius = IntensityRangeAndGlobalRadius.z;
+    retval.Radius = IntRangeGlobalRadTessFactor.z;
     retval.Colour = input.Colour;
 
     return retval;

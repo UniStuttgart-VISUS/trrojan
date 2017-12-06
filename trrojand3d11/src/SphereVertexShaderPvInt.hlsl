@@ -28,10 +28,10 @@ VsOutput Main(VsInput input) {
     VsOutput retval = (VsOutput) 0;
 
     retval.Position = float4(input.Position.xyz, 1.0f);
-    retval.Radius = IntensityRangeAndGlobalRadius.z;
+    retval.Radius = IntRangeGlobalRadTessFactor.z;
 
-    float start = min(IntensityRangeAndGlobalRadius.x, IntensityRangeAndGlobalRadius.y);
-    float range = abs(IntensityRangeAndGlobalRadius.y - IntensityRangeAndGlobalRadius.x);
+    float start = min(IntRangeGlobalRadTessFactor.x, IntRangeGlobalRadTessFactor.y);
+    float range = abs(IntRangeGlobalRadTessFactor.y - IntRangeGlobalRadTessFactor.x);
     float texCoords = (input.Colour.r - start) / range;
 
     retval.Colour = TransferFunction.SampleLevel(LinearSampler, texCoords, 0);

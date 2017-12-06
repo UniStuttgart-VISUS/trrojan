@@ -114,8 +114,8 @@ PsOutput Main(PsInput input) {
         normal = sphereintersection / rad;
         //normal = normalize(sphereintersection);
         // phong lighting with directional light
-        float start = min(IntensityRangeAndGlobalRadius.x, IntensityRangeAndGlobalRadius.y);
-        float range = abs(IntensityRangeAndGlobalRadius.y - IntensityRangeAndGlobalRadius.x);
+        float start = min(IntRangeGlobalRadTessFactor.x, IntRangeGlobalRadTessFactor.y);
+        float range = abs(IntRangeGlobalRadTessFactor.y - IntRangeGlobalRadTessFactor.x);
         float texCoords = (input.Colour.r - start) / range;
         texCoords = 1.0f - texCoords;   // Invert for debugging purposes.
         float4 baseColour = TransferFunction.SampleLevel(LinearSampler, texCoords, 0);

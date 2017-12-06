@@ -27,12 +27,6 @@ struct HsConstants {
     float InsideTessFactor[2] : SV_InsideTessFactor;
 };
 
-struct GsInput {
-    float4 Position : POSITION;
-    float4 Colour : COLOR;
-    float4 SphereParams : TEXCOORD0;
-};
-
 struct PsInput {
     float4 Position : SV_POSITION;
     float4 SphereParams : TEXCOORD0;
@@ -44,6 +38,8 @@ struct PsInput {
     //nointerpolation float EyeSeparation : TESSFACTOR0;
     //nointerpolation float Convergence : TESSFACTOR1;
 };
+
+
 
 struct PsOutput {
     float4 Colour : SV_TARGET;
@@ -60,6 +56,6 @@ cbuffer SphereConstants CBUFFER(0) {
     float4x4 ViewProjInvMatrix;
     float4 Viewport;
     float4 GlobalColour;
-    float4 IntensityRangeAndGlobalRadius;
+    float4 IntRangeGlobalRadTessFactor;
 };
 
