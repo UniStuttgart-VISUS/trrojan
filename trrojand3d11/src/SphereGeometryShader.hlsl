@@ -21,8 +21,12 @@ void Main(point VsOutput input[1], inout TriangleStream<PsInput> triStream) {
     //v.EyeSeparation = stereoParms.x;
     //v.Convergence = stereoParms.y;
 
-    //uint eye = input[0].Eye;
-    float4x4 mvp = ViewProjMatrix;
+#ifdef HOLOMOL
+    const uint eye = input[0].Eye;
+#else /* HOLOMOL */
+    const uint eye = 0;
+#endif /* HOLOMOL */
+    float4x4 mvp = ViewProjMatrix[eye];
     float rad = input[0].Radius;
 
     //#define MAJOR_DOWELING_RADIUS
@@ -35,11 +39,13 @@ void Main(point VsOutput input[1], inout TriangleStream<PsInput> triStream) {
     objPos.w = 1.0;
     v.Colour = input[0].Colour;
     v.SphereParams = float4(input[0].Position.xyz, rad);
-    //v.Eye = eye;
+#ifdef HOLOMOL
+    v.Eye = eye;
+#endif /* HOLOMOL */
 
     // Reconstruct camera system.
     ReconstructCamera(v.CameraPosition, v.CameraDirection, v.CameraUp,
-        v.CameraRight, ViewInvMatrix);
+        v.CameraRight, ViewInvMatrix[eye]);
 
     // Transform camera to glyph space and undo stereo transform.
     v.CameraPosition.xyz -= objPos.xyz;
@@ -57,7 +63,7 @@ void Main(point VsOutput input[1], inout TriangleStream<PsInput> triStream) {
     squarRad = (rad + HALO_RAD) * (rad + HALO_RAD);
 #endif // HALO
 
-#if 1
+#if 0
 #define DUEBEL 1.5f
     //bottom left
     v.Position = mul(objPos - v.CameraUp * DUEBEL * rad - v.CameraRight * DUEBEL * rad, mvp);

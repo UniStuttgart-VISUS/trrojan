@@ -36,5 +36,9 @@ VsOutput Main(VsInput input) {
 
     retval.Colour = TransferFunction.SampleLevel(LinearSampler, texCoords, 0);
 
+#ifdef HOLOMOL
+    retval.Eye = input.Eye;
+#endif /* HOLOMOL */
+
     return retval;
 }

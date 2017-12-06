@@ -17,8 +17,14 @@ HsConstants CalcConstants(InputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
         uint patchId : SV_PrimitiveID) {
     HsConstants retval = (HsConstants) 0;
 
-    float4x4 pm = ProjMatrix;
-    float4x4 mvp = ViewProjMatrix;
+#ifdef HOLOMOL
+    const uint eye = patch[0].Eye;
+#else /* HOLOMOL */
+    const uint eye = 0;
+#endif /* HOLOMOL */
+
+    float4x4 pm = ProjMatrix[eye];
+    float4x4 mvp = ViewProjMatrix[eye];
     float rad = patch[0].Radius;
 
     float4 pos = patch[0].Position;
@@ -61,8 +67,6 @@ VsOutput Main(InputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
         uint pointId : SV_OutputControlPointID,
         uint patchId : SV_PrimitiveID) {
     VsOutput retval = (VsOutput) 0;
-    retval.Position = patch[pointId].Position;
-    retval.Colour = patch[pointId].Colour;
-    retval.Radius = patch[pointId].Radius;
+    retval = patch[pointId];
     return retval;
 }

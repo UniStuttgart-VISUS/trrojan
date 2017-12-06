@@ -267,7 +267,7 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
         this->cam.set_aspect_ratio(static_cast<float>(viewport.Width) / static_cast<float>(viewport.Height));
         auto mat = DirectX::XMFLOAT4X4(glm::value_ptr(this->cam.get_projection_mx()));
         auto projection = DirectX::XMLoadFloat4x4(&mat);
-        DirectX::XMStoreFloat4x4(&constants.ProjMatrix,
+        DirectX::XMStoreFloat4x4(constants.ProjMatrix,
             DirectX::XMMatrixTranspose(projection));
 
         auto bbWidth = std::abs(this->mmpld_header.bounding_box[3]
@@ -298,21 +298,21 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
         this->cam.set_look(pos, lookAt, glm::vec3(0, 1, 0));
         mat = DirectX::XMFLOAT4X4(glm::value_ptr(this->cam.get_view_mx()));
         auto view = DirectX::XMLoadFloat4x4(&mat);
-        DirectX::XMStoreFloat4x4(&constants.ViewMatrix,
+        DirectX::XMStoreFloat4x4(constants.ViewMatrix,
             DirectX::XMMatrixTranspose(view));
 
         auto viewDet = DirectX::XMMatrixDeterminant(view);
         auto viewInv = DirectX::XMMatrixInverse(&viewDet, view);
-        DirectX::XMStoreFloat4x4(&constants.ViewInvMatrix,
+        DirectX::XMStoreFloat4x4(constants.ViewInvMatrix,
             DirectX::XMMatrixTranspose(viewInv));
 
         auto viewProj = view * projection;
-        DirectX::XMStoreFloat4x4(&constants.ViewProjMatrix,
+        DirectX::XMStoreFloat4x4(constants.ViewProjMatrix,
             DirectX::XMMatrixTranspose(viewProj));
 
         auto viewProjDet = DirectX::XMMatrixDeterminant(viewProj);
         auto viewProjInv = DirectX::XMMatrixInverse(&viewProjDet, viewProj);
-        DirectX::XMStoreFloat4x4(&constants.ViewProjInvMatrix,
+        DirectX::XMStoreFloat4x4(constants.ViewProjInvMatrix,
             DirectX::XMMatrixTranspose(viewProjInv));
     }
 

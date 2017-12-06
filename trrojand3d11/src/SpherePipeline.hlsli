@@ -14,12 +14,18 @@ struct VsInput {
 #ifdef PER_VERTEX_COLOUR
     float4 Colour : COLOR;
 #endif /* PER_VERTEX_COLOUR */
+#ifdef HOLOMOL
+    uint Eye : SV_InstanceID;
+#endif /* HOLOMOL */
 };
 
 struct VsOutput {
     float4 Position : POSITION;
     float4 Colour : COLOR;
     float Radius : FOG;
+#ifdef HOLOMOL
+    uint Eye: TEXCOORD0;
+#endif /* HOLOMOL */
 };
 
 struct HsConstants {
@@ -35,8 +41,9 @@ struct PsInput {
     nointerpolation float4 CameraDirection : TEXCOORD2;
     nointerpolation float4 CameraUp : TEXCOORD3;
     nointerpolation float4 CameraRight : TEXCOORD4;
-    //nointerpolation float EyeSeparation : TESSFACTOR0;
-    //nointerpolation float Convergence : TESSFACTOR1;
+#ifdef HOLOMOL
+    nointerpolation uint Eye: SV_RenderTargetArrayIndex;
+#endif /* HOLOMOL */
 };
 
 
@@ -48,12 +55,19 @@ struct PsOutput {
 
 #endif /* _MSC_VER */
 
+#ifdef HOLOMOL
+#define STEREO_BUFFERS (2)
+#else /* HOLOMOL */
+#define STEREO_BUFFERS (1)
+#endif /* HOLOMOL */
+
+
 cbuffer SphereConstants CBUFFER(0) {
-    float4x4 ViewMatrix;
-    float4x4 ProjMatrix;
-    float4x4 ViewProjMatrix;
-    float4x4 ViewInvMatrix;
-    float4x4 ViewProjInvMatrix;
+    float4x4 ViewMatrix[STEREO_BUFFERS];
+    float4x4 ProjMatrix[STEREO_BUFFERS];
+    float4x4 ViewProjMatrix[STEREO_BUFFERS];
+    float4x4 ViewInvMatrix[STEREO_BUFFERS];
+    float4x4 ViewProjInvMatrix[STEREO_BUFFERS];
     float4 Viewport;
     float4 GlobalColour;
     float4 IntRangeGlobalRadTessFactor;

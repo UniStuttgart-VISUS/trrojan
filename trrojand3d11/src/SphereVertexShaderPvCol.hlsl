@@ -18,6 +18,9 @@ VsOutput Main(VsInput input) {
     retval.Position = float4(input.Position.xyz, 1.0f);
     retval.Radius = IntRangeGlobalRadTessFactor.z;
     retval.Colour = input.Colour;
+#ifdef HOLOMOL
+    retval.Eye = input.Eye;
+#endif /* HOLOMOL */
 
     return retval;
 }

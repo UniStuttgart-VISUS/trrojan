@@ -23,12 +23,17 @@ PsInput Main(OutputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
     PsInput retval = (PsInput) 0;
 
     const float TWO_PI = 2.0f * 3.14159265358979323846f;
+#ifdef HOLOMOL
+    const uint eye = patch[0].Eye;
+#else /* HOLOMOL */
+    const uint eye = 0;
+#endif /* HOLOMOL */
 
     // Select the right matrices.
-    float4x4 mvp = ViewProjMatrix;
-    float4x4 pm = ProjMatrix;
-    float4x4 vm = ViewMatrix;
-    float4x4 vmInv = ViewInvMatrix;
+    float4x4 mvp = ViewProjMatrix[eye];
+    float4x4 pm = ProjMatrix[eye];
+    float4x4 vm = ViewMatrix[eye];
+    float4x4 vmInv = ViewInvMatrix[eye];
     
     // Reconstruct the camera system.
     ReconstructCamera(retval.CameraPosition, retval.CameraDirection,
@@ -40,6 +45,9 @@ PsInput Main(OutputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
     // Re-combine the spheres parameters into a float + colour.
     retval.SphereParams = float4(pos.xyz, patch[0].Radius);
     retval.Colour = patch[0].Colour;
+#ifdef HOLOMOL
+    retval.Eye = eye;
+#endif /* HOLOMOL */
 
     // If we use the radius of the sphere as size of the triangle fan, its hull
     // are the secants of the final sphere, but we need to have the tangent.
