@@ -26,17 +26,25 @@ namespace d3d11 {
 
     public:
 
+        enum class shader_method {
+            geo_sprite,
+            tess_sprite,
+            tess_sphere,
+            tess_hemisphere
+        };
+
         typedef std::uint32_t frame_type;
 
         static const char *factor_data_set;
         static const char *factor_frame;
         static const char *factor_iterations;
         static const char *factor_method;
+        static const char *factor_vs_xfer_function;
 
-        static const char *method_geosprite;
-        static const char *method_tesssprite;
-        static const char *method_tesssphere;
-        static const char *method_tesshemisphere;
+        static const char *method_geo_sprite;
+        static const char *method_tess_sprite;
+        static const char *method_tess_sphere;
+        static const char *method_tess_hemisphere;
 
         sphere_benchmark(void);
 
@@ -62,13 +70,38 @@ namespace d3d11 {
         /// </summary>
         typedef trrojan::d3d11::gpu_timer<1> gpu_timer_type;
 
+        typedef std::pair<const BYTE *, UINT> shader_source_type;
+
+        typedef std::unordered_map<shader_properties, shader_source_type>
+            shader_source_map_type;
+
+        /// <summary>
+        /// Pack static shader code into an entry of the
+        /// <see cref="shader_source_map_type" />.
+        /// </summary>
+        template<size_t N>
+        inline static shader_source_type pack_shader_source(const BYTE(&s)[N]) {
+            return std::make_pair(s, static_cast<UINT>(sizeof(s)));
+        }
+
         trrojan::perspective_camera cam;
+        ATL::CComPtr<ID3D11ShaderResourceView> colour_map;
         ATL::CComPtr<ID3D11Buffer> constant_buffer;
+        ATL::CComPtr<ID3D11DomainShader> domain_shader;
+        shader_source_map_type domain_shaders;
+        ATL::CComPtr<ID3D11Query> done_query;
         ATL::CComPtr<ID3D11GeometryShader> geometry_shader;
+        ATL::CComPtr<ID3D11HullShader> hull_shader;
+        shader_source_map_type hull_shaders;
         ATL::CComPtr<ID3D11InputLayout> input_layout;
+        ATL::CComPtr<ID3D11SamplerState> linear_sampler;
+        shader_method method;
         ATL::CComPtr<ID3D11PixelShader> pixel_shader;
+        shader_source_map_type pixel_shaders;
+        ATL::CComPtr<ID3D11Query> stats_query;
         ATL::CComPtr<ID3D11Buffer> vertex_buffer;
         ATL::CComPtr<ID3D11VertexShader> vertex_shader;
+        shader_source_map_type vertex_shaders;
 
     };
 

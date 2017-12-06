@@ -52,6 +52,7 @@ void trrojan::d3d11::environment::on_deactivate(void) { }
  */
 void trrojan::d3d11::environment::on_finalise(void) {
     this->_devices.clear();
+    ::CoUninitialize();
 }
 
 
@@ -63,6 +64,12 @@ void trrojan::d3d11::environment::on_initialise(const cmd_line& cmdLine) {
     ATL::CComPtr<IDXGIFactory> factory;
     D3D_FEATURE_LEVEL featureLevel;
     HRESULT hr = S_OK;
+
+    /* Initialise COM (for WIC). */
+    hr = ::CoInitialize(nullptr);
+    if (FAILED(hr)) {
+        throw ATL::CAtlException(hr);
+    }
 
     /* Create DXGI factory. */
     hr = ::CreateDXGIFactory1(IID_IDXGIFactory1, reinterpret_cast<void **>(

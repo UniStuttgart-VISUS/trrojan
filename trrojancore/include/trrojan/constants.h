@@ -6,6 +6,7 @@
 #pragma once
 
 #include <climits>
+#include <cmath>
 
 #include "trrojan/export.h"
 
@@ -48,6 +49,11 @@ namespace trrojan {
         /// Specifies the number milliseconds per second.
         /// </summary>
         static const type millis_per_second;
+
+        /// <summary>
+        // The PI constant.
+        /// </summary>
+        static const type pi;
 
         /// <summary>
         /// Specifies the number seconds per hour.

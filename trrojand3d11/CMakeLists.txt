@@ -10,19 +10,23 @@ file(GLOB_RECURSE HeaderFiles RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${IncludeD
 file(GLOB_RECURSE SourceFiles RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${SourceDirectory}/*.cpp")
 
 # Glob shaders
-file(GLOB_RECURSE VertexShaderFiles RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${SourceDirectory}/*VertexShader.hlsl")
-file(GLOB_RECURSE GeometryShaderFiles RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${SourceDirectory}/*GeometryShader.hlsl")
-file(GLOB_RECURSE PixelShaderFiles RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${SourceDirectory}/*PixelShader.hlsl")
+file(GLOB_RECURSE VertexShaderFiles RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${SourceDirectory}/*VertexShader*.hlsl")
+file(GLOB_RECURSE HullShaderFiles RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${SourceDirectory}/*HullShader*.hlsl")
+file(GLOB_RECURSE DomainShaderFiles RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${SourceDirectory}/*DomainShader*.hlsl")
+file(GLOB_RECURSE GeometryShaderFiles RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${SourceDirectory}/*GeometryShader*.hlsl")
+file(GLOB_RECURSE PixelShaderFiles RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${SourceDirectory}/*PixelShader*.hlsl")
 file(GLOB_RECURSE ShaderHeaderFiles RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${IncludeDirectory}/*.hlsli" "${SourceDirectory}/*.hlsli")
-set(ShaderFiles ${VertexShaderFiles} ${GeometryShaderFiles} ${PixelShaderFiles})
+set(ShaderFiles ${VertexShaderFiles} ${DomainShaderFiles} ${HullShaderFiles} ${GeometryShaderFiles} ${PixelShaderFiles})
 
 # Configure fxc
 set_property(SOURCE ${ShaderFiles} PROPERTY VS_SHADER_ENTRYPOINT Main)
 set_property(SOURCE ${ShaderFiles} PROPERTY VS_SHADER_MODEL 5.0)
-set_property(SOURCE ${ShaderFiles} PROPERTY VS_SHADER_FLAGS "/Fh \"${PROJECT_SOURCE_DIR}/%(Filename).h\" /Vn \"%(Filename)Bytes\"")
+set_property(SOURCE ${ShaderFiles} PROPERTY VS_SHADER_FLAGS "/Fh \"${PROJECT_SOURCE_DIR}/%(Filename).h\" /Vn \"%(Filename)Bytes\" /Zi")
 
 # Configure shader types
 set_property(SOURCE ${VertexShaderFiles} PROPERTY VS_SHADER_TYPE Vertex)
+set_property(SOURCE ${HullShaderFiles} PROPERTY VS_SHADER_TYPE Hull)
+set_property(SOURCE ${DomainShaderFiles} PROPERTY VS_SHADER_TYPE Domain)
 set_property(SOURCE ${GeometryShaderFiles} PROPERTY VS_SHADER_TYPE Geometry)
 set_property(SOURCE ${PixelShaderFiles} PROPERTY VS_SHADER_TYPE Pixel)
 

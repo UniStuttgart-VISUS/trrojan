@@ -59,14 +59,14 @@ namespace opencl
 
         static const std::string factor_cam_position;
         static const std::string factor_cam_rotation;
-//        static const std::string factor_roll;
-//        static const std::string factor_pitch;
-//        static const std::string factor_yaw;
-//        static const std::string factor_zoom;
+        static const std::string factor_maneuver;
+        static const std::string factor_maneuver_samples;
+        static const std::string factor_maneuver_iteration;
 
         static const std::string factor_sample_precision;
         static const std::string factor_use_lerp;
         static const std::string factor_use_ERT;
+		static const std::string factor_use_ESS;
         static const std::string factor_use_tff;
         static const std::string factor_use_dvr;
         static const std::string factor_shuffle;
@@ -443,6 +443,12 @@ namespace opencl
                           const std::string build_flags = "");
 
         /// <summary>
+        /// Update the camera configuration and set kernel argument.
+        /// No OpenCL error catching is performed.
+        /// </summary>
+        void update_camera(const trrojan::configuration &cfg);
+
+        /// <summary>
         /// Set all constant kernel arguments such as the OpenCL memory objects.
         /// </summary>
         void set_kernel_args(const float precision_div);
@@ -606,6 +612,9 @@ namespace opencl
         /// </summary>
         glm::vec3 _model_scale;
 
+		/// <summary>
+		/// Data precision devision factor.
+		/// </summary>
         float _precision_div;
     };
 

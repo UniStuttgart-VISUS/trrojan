@@ -9,6 +9,7 @@
 
 #include <cstdint>
 #include <fstream>
+#include <type_traits>
 #include <vector>
 
 
@@ -62,6 +63,32 @@ namespace trrojan {
             float_i = 3,
             float_rgb = 4,
             float_rgba = 5
+        };
+
+        /// <summary>
+        /// A bitmask which allows for identifying a shader by its properties.
+        /// </summary>
+        enum shader_properties : std::uint32_t {
+            /// <summary>
+            /// The shader assumes global colour and radius.
+            /// </summary>
+            none = 0,
+
+            /// <summary>
+            /// The shader processes per-vertex colours.
+            /// </summary>
+            per_vertex_colour = 0x00000001,
+
+            /// <summary>
+            /// The shader processes per-vertex radii.
+            /// </summary>
+            per_vertex_radius = 0x00000002,
+
+            /// <summary>
+            /// The shader processes a per-vertex intensity by performing a
+            /// texture lookup in the transfer function texture.
+            /// </summary>
+            intensity_xfer_function = 0x00000004
         };
 
 #pragma pack(push, 1)
@@ -152,6 +179,12 @@ namespace trrojan {
         /// in the file.
         /// </summary>
         typedef std::vector<std::uint64_t> seek_table;
+
+        /// <summary>
+        /// Computes the shader properties from the given
+        /// <see cref="list_header" />.
+        /// </summary>
+        static shader_properties calc_shader_properties(const list_header& header);
 
         /// <summary>
         /// Computes the particle stride from the given <see cref="list_header" />.

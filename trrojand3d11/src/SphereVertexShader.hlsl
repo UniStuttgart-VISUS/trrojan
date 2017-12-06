@@ -7,18 +7,19 @@
 
 
 /// <summary>
-/// Pass-through pixel shader which only separates the radius from the position
-/// for further processing in the geometry shader.
+/// Vertex shader for constant radius and colour.
 /// </summary>
 /// <param name="input"></param>
 /// <returns></returns>
-GsInput Main(VsInput input) {
-    GsInput retval = (GsInput) 0;
+VsOutput Main(VsInput input) {
+    VsOutput retval = (VsOutput) 0;
 
     retval.Position = float4(input.Position.xyz, 1.0f);
-    retval.Radius = input.Position.w;
-    retval.Colour = input.Colour;
-    retval.Colour = float4(1.0f, 0.0f, 0.0f, 1.0f);
+    retval.Radius = IntRangeGlobalRadTessFactor.z;
+    retval.Colour = GlobalColour;
+#ifdef HOLOMOL
+    retval.Eye = input.Eye;
+#endif /* HOLOMOL */
 
     return retval;
 }

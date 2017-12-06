@@ -96,8 +96,10 @@ ATL::CComPtr<IWICBitmapSource> TRROJANCORE_API trrojan::get_wic_bitmap(
     }
 
     /* Create the bitmap */
-    hr = wic->CreateBitmap(width, height, fmtData, WICBitmapCacheOnDemand,
-        &bmp);
+    assert(width <= UINT_MAX);
+    assert(height <= UINT_MAX);
+    hr = wic->CreateBitmap(static_cast<UINT>(width), static_cast<UINT>(height),
+        fmtData, WICBitmapCacheOnDemand, &bmp);
     if (FAILED(hr)) {
         std::stringstream msg;
         msg << "Failed to instantiate WIC bitmap converter with error code "
@@ -158,7 +160,7 @@ ATL::CComPtr<IWICBitmapSource> TRROJANCORE_API trrojan::get_wic_bitmap(
 
         return conv.p;
     } else {
-        return bmp;
+        return bmp.p;
     }
 }
 #endif /* _WIN32 */

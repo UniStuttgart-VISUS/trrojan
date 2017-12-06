@@ -41,16 +41,16 @@ _TRROJANSTREAM_DEFINE_FACTOR(tff_file_name);
 _TRROJANSTREAM_DEFINE_FACTOR(viewport);
 _TRROJANSTREAM_DEFINE_FACTOR(step_size_factor);
 
-//_TRROJANSTREAM_DEFINE_FACTOR(roll);
-//_TRROJANSTREAM_DEFINE_FACTOR(pitch);
-//_TRROJANSTREAM_DEFINE_FACTOR(yaw);
-//_TRROJANSTREAM_DEFINE_FACTOR(zoom);
 _TRROJANSTREAM_DEFINE_FACTOR(cam_position);
 _TRROJANSTREAM_DEFINE_FACTOR(cam_rotation);
+_TRROJANSTREAM_DEFINE_FACTOR(maneuver);
+_TRROJANSTREAM_DEFINE_FACTOR(maneuver_samples);
+_TRROJANSTREAM_DEFINE_FACTOR(maneuver_iteration);
 
 _TRROJANSTREAM_DEFINE_FACTOR(sample_precision);
 _TRROJANSTREAM_DEFINE_FACTOR(use_lerp);
 _TRROJANSTREAM_DEFINE_FACTOR(use_ERT);
+_TRROJANSTREAM_DEFINE_FACTOR(use_ESS);
 _TRROJANSTREAM_DEFINE_FACTOR(use_tff);
 _TRROJANSTREAM_DEFINE_FACTOR(use_dvr);
 _TRROJANSTREAM_DEFINE_FACTOR(shuffle);
@@ -139,6 +139,12 @@ trrojan::opencl::volume_raycast_benchmark::volume_raycast_benchmark(void)
     auto rotation = std::array<float, 4> {1, 0, 0, 0};
     add_kernel_run_factor(factor_cam_rotation, rotation);
 
+    // maneuvers
+    std::string maneuver = "random";
+    add_kernel_run_factor(factor_maneuver, maneuver);
+    add_kernel_run_factor(factor_maneuver_samples, 1);
+    add_kernel_run_factor(factor_maneuver_iteration, 0);
+
     // rendering modes -> kernel build factors
     //
     // sample precision in bytes, if not specified, use uchar (1 byte)
@@ -148,6 +154,8 @@ trrojan::opencl::volume_raycast_benchmark::volume_raycast_benchmark(void)
     add_kernel_build_factor(factor_use_lerp, false);
     // use early ray termination
     add_kernel_build_factor(factor_use_ERT, true);
+	// use empty space skipping
+	add_kernel_build_factor(factor_use_ESS, false);
     // make a transfer function lookups
     add_kernel_build_factor(factor_use_tff, true);
     // use direct volume rendering (not inderect aka iso-surface rendering)
@@ -394,11 +402,12 @@ trrojan::result trrojan::opencl::volume_raycast_benchmark::run(const configurati
 {
     auto env = cfg.find(factor_environment)->value().as<trrojan::environment>();
     environment::pointer env_ptr = std::dynamic_pointer_cast<environment>(env);
-    std::vector<double> times(cfg.find(factor_iterations)->value(), 0.0);
+    int run_iterations = cfg.find(factor_iterations)->value().as<int>();
+    std::vector<double> times(run_iterations, 0.0);
     auto imgSize = cfg.find(factor_viewport)->value().as<std::array<unsigned int, 2>>();
     std::array<unsigned int, 3> img_dim = { {imgSize.at(0), imgSize.at(1), 1u} };
     cl_int evt_status = CL_QUEUED;
-    for (int i = 0; i < cfg.find(factor_iterations)->value().as<int>(); ++i)
+    for (int i = 0; i < run_iterations; ++i)
     {
         cl_int evt_status = CL_QUEUED;
         try // opencl scope
@@ -457,18 +466,16 @@ trrojan::result trrojan::opencl::volume_raycast_benchmark::run(const configurati
         {
             log_cl_error(err);
         }
-    }
 
-    if (cfg.find(factor_img_output)->value().as<bool>())
-    {
         // write output as image
         auto dev = cfg.find(factor_device)->value().as<trrojan::device>();
         device::pointer dev_ptr = std::dynamic_pointer_cast<device>(dev);
         auto file = cfg.find(factor_volume_file_name)->value().as<std::string>();
         auto rot = cfg.find(factor_cam_rotation)->value().as<std::array<float, 4>>();
+        auto iteration = cfg.find(factor_maneuver_iteration)->value().as<int>();
         std::size_t found = file.find_last_of("/\\");
         trrojan::save_image("img/" + dev_ptr->name() + "_" + file.substr(found + 1) + "_"
-                            + std::to_string(rot.at(0)+rot.at(1)+rot.at(2)+ rot.at(3)) + ".png",
+                            + std::to_string(iteration) + ".png",
                             _output_data.data(), imgSize.at(0), imgSize.at(1), 4);
     }
 
@@ -481,14 +488,15 @@ trrojan::result trrojan::opencl::volume_raycast_benchmark::run(const configurati
     }
     result_cfg.add_system_factors();
     std::vector<std::string> result_names;
-    result_names.push_back("execution_time");
+    for (int i = 0; i < run_iterations; ++i)
+        result_names.push_back("execution_time_" + std::to_string(i));
     auto retval = std::make_shared<basic_result>(result_cfg, std::move(result_names));
+    // FIXME: change to be relative to # of run iterations
+    retval->add({times.at(0), times.at(1), times.at(2), times.at(3), times.at(4)});
 
     // calc median of execution times of all runs
     std::sort(times.begin(), times.end());
     double median = times.at(times.size() / 2);
-    retval->add({ median });
-
     std::ostringstream os;
     os << "Kernel time median: " << median << std::endl;
     log::instance().write(log_level::information, os.str().c_str());
@@ -870,7 +878,8 @@ void trrojan::opencl::volume_raycast_benchmark::build_kernel(environment::pointe
                                                              const std::string build_flags)
 {
 //    std::cout << _kernel_source << std::endl; // DEBUG: print out composed kernel source
-    cl::Program::Sources source; // (1, std::make_pair(_kernel_source.data(), _kernel_source.size()));
+    cl::Program::Sources source; 
+// (1, std::make_pair(_kernel_source.data(), _kernel_source.size()));
     source.push_back(_kernel_source);
     try
     {
@@ -931,6 +940,35 @@ void trrojan::opencl::volume_raycast_benchmark::set_kernel_args(const float prec
 }
 
 /**
+ * trrojan::opencl::volume_raycast_benchmark::update_camera
+ */
+void trrojan::opencl::volume_raycast_benchmark::update_camera(const trrojan::configuration &cfg)
+{
+    auto maneuver = cfg.find(factor_maneuver)->value().as<std::string>();
+    if (maneuver.empty())
+    {
+        auto pos = cfg.find(factor_cam_position)->value().as<std::array<float, 3>>();
+        _camera.set_look_from(glm::vec3(pos.at(0), pos.at(1), pos.at(2)));
+        auto rot = cfg.find(factor_cam_rotation)->value().as<std::array<float, 4>>();
+        _camera.rotate_fixed_to(glm::quat(rot.at(0), rot.at(1), rot.at(2), rot.at(3)));
+    }
+    else
+    {
+        auto samples = cfg.find(factor_maneuver_samples)->value().as<int>();
+        auto iteration = cfg.find(factor_maneuver_iteration)->value().as<int>();
+        assert(iteration < samples);
+        _camera.set_from_maneuver(maneuver, glm::vec3(-1), glm::vec3(1), iteration, samples);
+    }
+
+    glm::mat4 view = _camera.get_inverse_view_mx();
+    cl_float16 view_mat = {view[0][0], view[1][0], view[2][0], view[3][0],
+                           view[0][1], view[1][1], view[2][1], view[3][1],
+                           view[0][2], view[1][2], view[2][2], view[3][2],
+                           view[0][3], view[1][3], view[2][3], view[3][3]};
+    _kernel.setArg(VIEW, view_mat);
+}
+
+/**
  * trrojan::opencl::volume_raycast_benchmark::update_all_kernel_args
  */
 void trrojan::opencl::volume_raycast_benchmark::update_initial_kernel_args(
@@ -942,25 +980,16 @@ void trrojan::opencl::volume_raycast_benchmark::update_initial_kernel_args(
         _kernel.setArg(OUTPUT, _output_mem);
         _kernel.setArg(TFF, _tff_mem);
         _kernel.setArg(ID, _ray_ids);
-        _kernel.setArg(STEP_SIZE, static_cast<cl_float>(cfg.find(factor_step_size_factor)->value()));
+        cl_float step_size = static_cast<cl_float>(cfg.find(factor_step_size_factor)->value());
+        assert(step_size > 0.f);
+        _kernel.setArg(STEP_SIZE, step_size);
         cl_uint3 resolution = {{_volume_res[0], _volume_res[1], _volume_res[2]}};
         _kernel.setArg(RESOLUTION, resolution);
         _kernel.setArg(SAMPLER, _sampler);
         _kernel.setArg(PRECISION, _precision_div);
         cl_float3 model_scale = {_model_scale.x, _model_scale.y, _model_scale.z};
         _kernel.setArg(MODEL_SCALE, model_scale);
-
-        // TODO move to own method
-        auto pos = cfg.find(factor_cam_position)->value().as<std::array<float, 3>>();
-        _camera.set_look_from(glm::vec3(pos.at(0), pos.at(1), pos.at(2)));
-        auto rot = cfg.find(factor_cam_rotation)->value().as<std::array<float, 4>>();
-        _camera.rotate_fixed_to(glm::quat(rot.at(0), rot.at(1), rot.at(2), rot.at(3)));
-        glm::mat4 view = _camera.get_inverse_view_mx();
-        cl_float16 view_mat = {view[0][0], view[1][0], view[2][0], view[3][0],
-                               view[0][1], view[1][1], view[2][1], view[3][1],
-                               view[0][2], view[1][2], view[2][2], view[3][2],
-                               view[0][3], view[1][3], view[2][3], view[3][3]};
-        _kernel.setArg(VIEW, view_mat);
+        update_camera(cfg);
     }
     catch (cl::Error err)
     {
@@ -981,21 +1010,12 @@ void trrojan::opencl::volume_raycast_benchmark::update_kernel_args(
     environment::pointer env_ptr = std::dynamic_pointer_cast<environment>(env);
 
     if (changed.count(factor_cam_position) + changed.count(factor_cam_rotation)
-            + changed.count(factor_device))
+            + changed.count(factor_device) + changed.count(factor_maneuver)
+            + changed.count(factor_maneuver_samples) + changed.count(factor_maneuver_iteration))
     {
-        auto pos = cfg.find(factor_cam_position)->value().as<std::array<float, 3>>();
-        _camera.set_look_from(glm::vec3(pos.at(0), pos.at(1), pos.at(2)));
-        auto rot = cfg.find(factor_cam_rotation)->value().as<std::array<float, 4>>();
-        _camera.rotate_fixed_to(glm::quat(rot.at(0), rot.at(1), rot.at(2), rot.at(3)));
-        glm::mat4 view = _camera.get_inverse_view_mx();
-
-        cl_float16 view_mat = {view[0][0], view[1][0], view[2][0], view[3][0],
-                               view[0][1], view[1][1], view[2][1], view[3][1],
-                               view[0][2], view[1][2], view[2][2], view[3][2],
-                               view[0][3], view[1][3], view[2][3], view[3][3]};
         try
         {
-            _kernel.setArg(VIEW, view_mat);
+            update_camera(cfg);
         }
         catch (cl::Error err)
         {

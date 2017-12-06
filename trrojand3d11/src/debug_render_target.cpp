@@ -73,7 +73,7 @@ void trrojan::d3d11::debug_render_target::resize(const unsigned int width,
 
         ::ZeroMemory(&desc, sizeof(desc));
         desc.BufferCount = 2;
-        desc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+        desc.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
         desc.BufferDesc.Height = width;
         desc.BufferDesc.Width = height;
         desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;

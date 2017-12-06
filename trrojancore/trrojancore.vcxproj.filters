@@ -1,0 +1,267 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\src\benchmark.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\src\camera.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\src\configuration.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\src\configuration_set.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\src\csv_output.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\src\csv_output_params.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\src\device.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\src\environment.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\src\excel_output.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\src\excel_output_params.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\src\executive.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\src\factor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\src\factor_base.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\src\factor_enum.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\src\factorator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\src\image_helper.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\src\io.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\src\log.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\src\mmpld_reader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\src\output.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\src\output_params.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\src\plugin.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\src\process.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\src\result.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\src\smbios_information.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\src\system_factors.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\src\timer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\src\trackball.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\src\trroll_parser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\src\variant.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\include\CImg.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\include\trrojan\benchmark.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\include\trrojan\camera.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\include\trrojan\cmd_line.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\include\trrojan\configuration.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\include\trrojan\configuration_set.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\include\trrojan\constants.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\include\trrojan\csv_output.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\include\trrojan\csv_output_params.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\include\trrojan\device.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\include\trrojan\enum_dispatch_list.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\include\trrojan\enum_parse_helper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\include\trrojan\environment.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\include\trrojan\excel_output.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\include\trrojan\excel_output_params.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\include\trrojan\executive.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\include\trrojan\export.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\include\trrojan\factor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\include\trrojan\factor_base.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\include\trrojan\factor_enum.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\include\trrojan\factor_range.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\include\trrojan\factorator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\include\trrojan\image_helper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\include\trrojan\index_sequence.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\include\trrojan\io.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\include\trrojan\log.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\include\trrojan\mmpld_reader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\include\trrojan\named_variant.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\include\trrojan\output.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\include\trrojan\output_params.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\include\trrojan\plugin.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\include\trrojan\process.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\include\trrojan\result.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\include\trrojan\result_set.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\include\trrojan\smbios_information.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\include\trrojan\system_factors.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\include\trrojan\text.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\include\trrojan\timer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\include\trrojan\trackball.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\include\trrojan\trroll_parser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\include\trrojan\variant.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\include\trrojan\benchmark.inl">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\include\trrojan\configuration.inl">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\include\trrojan\constants.inl">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\include\trrojan\excel_output.inl">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\include\trrojan\factor_range.inl">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\include\trrojan\image_helper.inl">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\include\trrojan\io.inl">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\include\trrojan\result.inl">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\include\trrojan\smbios_information.inl">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\include\trrojan\text.inl">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\include\trrojan\trroll_parser.inl">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\include\trrojan\variant.inl">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojancore\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{8CC32C77-1F64-3E36-A423-97308EEE74F9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{8989C17A-6DCE-31EF-A684-42311869A1EA}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

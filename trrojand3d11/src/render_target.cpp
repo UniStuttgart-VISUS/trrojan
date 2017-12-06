@@ -7,6 +7,7 @@
 
 #include <cassert>
 
+#include "trrojan/image_helper.h"
 #include "trrojan/log.h"
 
 
@@ -46,6 +47,64 @@ void trrojan::d3d11::render_target_base::present(void) { }
 
 
 /*
+ * trrojan::d3d11::render_target_base::save
+ */
+void trrojan::d3d11::render_target_base::save(const std::string& path) {
+    if (this->_rtv != nullptr) {
+        D3D11_TEXTURE2D_DESC desc;
+        HRESULT hr = S_OK;
+        ATL::CComPtr<ID3D11Resource> res;
+        D3D11_MAPPED_SUBRESOURCE map;
+        ATL::CComPtr<ID3D11Texture2D> tex;
+
+        this->_rtv->GetResource(&res);
+        hr = res->QueryInterface(&tex);
+        if (FAILED(hr)) {
+            throw ATL::CAtlException(hr);
+        }
+        tex->GetDesc(&desc);
+
+        if (this->_staging_texture == nullptr) {
+            
+            desc.BindFlags = 0;
+            desc.Usage = D3D11_USAGE_STAGING;
+            desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+
+            this->_staging_texture = nullptr;
+            hr = this->device()->CreateTexture2D(&desc, nullptr,
+                &this->_staging_texture);
+            if (FAILED(hr)) {
+                throw ATL::CAtlException(hr);
+            }
+        }
+        assert(this->_staging_texture != nullptr);
+
+        this->_device_context->CopyResource(this->_staging_texture, tex);
+
+        hr = this->_device_context->Map(this->_staging_texture, 0,
+            D3D11_MAP_READ, 0, &map);
+        if (FAILED(hr)) {
+            throw ATL::CAtlException(hr);
+        }
+
+        try {
+            trrojan::wic_save(trrojan::get_wic_factory(), map.pData, desc.Width,
+                desc.Height, map.RowPitch, GUID_WICPixelFormat32bppBGRA, path,
+                GUID_NULL);
+            this->_device_context->Unmap(this->_staging_texture, 0);
+        } catch (...) {
+            this->_device_context->Unmap(this->_staging_texture, 0);
+            throw;
+        }
+
+    } else {
+        log::instance().write_line(log_level::warning, "Benchmarking render "
+            "target could not be saved, because it was not initialised.");
+    }
+}
+
+
+/*
  * trrojan::d3d11::render_target_base::render_target_base
  */
 trrojan::d3d11::render_target_base::render_target_base(
@@ -56,6 +115,7 @@ trrojan::d3d11::render_target_base::render_target_base(
         this->_device_context = d->d3d_context();
     }
 }
+
 
 
 /*
@@ -70,6 +130,9 @@ void trrojan::d3d11::render_target_base::set_back_buffer(
     HRESULT hr = S_OK;
     D3D11_TEXTURE2D_DESC texDesc;
     D3D11_VIEWPORT viewport;
+
+    // Erase old staging texture for lazy recreate in save().
+    this->_staging_texture = nullptr;
 
     hr = this->_device->CreateRenderTargetView(backBuffer, nullptr,
         &this->_rtv);

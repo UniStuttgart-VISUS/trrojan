@@ -41,6 +41,18 @@ float3 LocalLighting(const in float3 ray, const in float3 normal,
 PsOutput Main(PsInput input) {
     PsOutput retval = (PsOutput) 0;
 
+    //#define BILLBOARD
+#ifdef BILLBOARD
+    retval.Colour = float4(1.0, 1.0, 0.0, 1.0);
+    return retval;
+#endif
+
+#ifdef HOLOMOL
+    const uint eye = input.Eye;
+#else /* HOLOMOL */
+    const uint eye = 0;
+#endif /* HOLOMOL */
+
     float4 coord;
     float3 ray;
     float lambda;
@@ -51,14 +63,15 @@ PsOutput Main(PsInput input) {
     float4 camIn = input.CameraDirection;
     float4 camUp = input.CameraUp;
     float4 camRight = input.CameraRight;
-    float eyeSep = input.EyeSeparation;
+    //float eyeSep = input.EyeSeparation;
 
     float4 objPos = float4(input.SphereParams.xyz, 1.0);
 
     // TODO
     float4 lightPos = normalize(float4(0.5, -1.0, -1.0, 0));
     lightPos *= -1;
-    lightPos = mul(lightPos, ViewInvMatrix);
+    lightPos = mul(lightPos, ViewInvMatrix[eye]);
+    lightPos = input.CameraDirection;
     float rad = input.SphereParams.w;
     float squarRad = rad * rad;
 
@@ -74,7 +87,7 @@ PsOutput Main(PsInput input) {
         + float4(-1.0, -1.0, 0.0, 1.0);
 
     // transform fragment coordinates from view coordinates to object coordinates.
-    coord = mul(coord, ViewProjInvMatrix);
+    coord = mul(coord, ViewProjInvMatrix[eye]);
 #endif
     coord /= coord.w;
     coord -= objPos; // ... and to glyph space
@@ -91,9 +104,10 @@ PsOutput Main(PsInput input) {
 
     if (radicand < 0.0) {
         discard;
-        //retval.Colour = 0.8.xxxx;
+        retval.Colour = 0.8.xxxx;
+        retval.Colour = float4(1.0f, 0.0f, 0.0f, 1.0f);
         //retval.Depth = input.Position.z;
-        //return retval;
+        return retval;
     } else {
         // chose color for lighting
         sphereintersection = lambda * ray + camPos.xyz;    // intersection point
@@ -101,15 +115,16 @@ PsOutput Main(PsInput input) {
         normal = sphereintersection / rad;
         //normal = normalize(sphereintersection);
         // phong lighting with directional light
-        retval.Colour = float4(LocalLighting(ray, normal, lightPos.xyz, input.Colour.rgb), input.Colour.a);
+        float4 baseColour = input.Colour;
+        retval.Colour = float4(LocalLighting(ray, normal, lightPos.xyz, baseColour.rgb), baseColour.a);
     }
 
     // calculate depth
 #define DEPTH
 #ifdef DEPTH
     float4 Ding = float4(sphereintersection + objPos.xyz, 1.0);
-    float depth = dot(ViewProjMatrix._13_23_33_43, Ding);
-    float depthW = dot(ViewProjMatrix._14_24_34_44, Ding);
+    float depth = dot(ViewProjMatrix[eye]._13_23_33_43, Ding);
+    float depthW = dot(ViewProjMatrix[eye]._14_24_34_44, Ding);
     //retval.Depth = ((depth / depthW) + 1.0) * 0.5;
     retval.Depth = (depth / depthW);
 #else

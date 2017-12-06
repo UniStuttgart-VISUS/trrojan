@@ -9,6 +9,7 @@
 #include <Windows.h>
 #include <d3d11.h>
 
+#include "trrojan/log.h"
 #include "trrojan/mmpld_reader.h"
 
 #include "trrojan/d3d11/export.h"
@@ -29,6 +30,11 @@ namespace d3d11 {
 
     protected:
 
+        typedef mmpld_reader::colour_type colour_type;
+        typedef std::underlying_type<mmpld_reader::shader_properties>::type
+            shader_properties;
+        typedef mmpld_reader::vertex_type vertex_type;
+
         /// <summary>
         /// Creates a vertex input layout descriptor for the given MMPLD list
         /// header.
@@ -43,6 +49,26 @@ namespace d3d11 {
         /// Initialises a new instance.
         /// </summary>
         mmpld_base(void);
+
+        /// <summary>
+        /// Determine the features used in the pixel shader based on the current
+        /// <see cref="mmpld_list" />.
+        /// </summary>
+        /// <param name="vsXfer">If true, assume transfer function being applied
+        /// in the vertex shader.</param>
+        /// <returns></returns>
+        shader_properties get_mmpld_pixel_shader_properties(
+            const bool vsXfer) const;
+
+        /// <summary>
+        /// Determine the features used in the vertex shader based on the current
+        /// <see cref="mmpld_list" />.
+        /// </summary>
+        /// <param name="vsXfer">If true, assume transfer function being applied
+        /// in the vertex shader.</param>
+        /// <returns></returns>
+        shader_properties get_mmpld_vertex_shader_properties(
+            const bool vsXfer) const;
 
         /// <summary>
         /// Opens the MMPLD file at the specified location and reads its header
