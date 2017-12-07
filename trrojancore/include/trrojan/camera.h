@@ -42,7 +42,7 @@ static int rand()
 static float get_rand()
 {
     std::mt19937 mtGen(rand());
-    std::uniform_real_distribution<> distribNorm(0.0, 1.0);
+    std::uniform_real_distribution<float> distribNorm(0.0f, 1.0f);
     return distribNorm(mtGen);
 }
 

@@ -137,7 +137,7 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
     gpu_timer_type gpuTimer;
     auto isDisjoint = true;
     auto isNewDevice = contains(changed, factor_device);
-	auto isTessellation = true;
+    auto isTessellation = true;
     D3D11_VIEWPORT viewport;
 
     // Determine where to perform transfer-function lookups.
