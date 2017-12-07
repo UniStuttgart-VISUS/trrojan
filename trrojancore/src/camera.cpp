@@ -150,16 +150,15 @@ void trrojan::camera::set_from_maneuver(const std::string name, const glm::vec3 
         glm::vec3 begin = bbox_min;
         glm::vec3 end = bbox_max;
         // point mirroring according to definition (e.g. "diagonal_zx" is between (0,1,1)->(1,0,0))
-        if (name.find("z") != std::string::npos)  std::swap(begin, end);        // back to front
-        if (name.find("x") != std::string::npos)  std::swap(begin.x, end.x);    // right to left
-        if (name.find("y") != std::string::npos)  std::swap(begin.y, end.y);    // top to bottom
+        if (name.find("z") != std::string::npos) std::swap(begin, end);        // back to front
+        if (name.find("x") != std::string::npos) std::swap(begin.x, end.x);    // right to left
+        if (name.find("y") != std::string::npos) std::swap(begin.y, end.y);    // top to bottom
 
         this->set_look_to(end);
-        // NOTE: assuming uniform bounding box
-        float bbox_length = glm::root_two<float>()*(bbox_max.x - bbox_min.x); // glm::length(bbox_max - bbox_min);
-        float camera_dist = (bbox_length * 0.5f) / std::tan(fovy*0.5f*pi/180.f);
+        float diagonal_length = glm::distance(bbox_min, bbox_max); // glm::root_two<float>()*
+        float camera_dist = (diagonal_length * 0.5f) / std::tan(fovy*0.5f*pi/180.f);
         camera_dist *= (1.f - iteration/(float)samples);
-        this->set_look_from(this->_look_to + (begin - end) * camera_dist);
+        this->set_look_from(bbox_min + (bbox_max - bbox_min)*0.5f + (begin - end)*camera_dist);
     }
     else if (name.find("path") != std::string::npos)
     {

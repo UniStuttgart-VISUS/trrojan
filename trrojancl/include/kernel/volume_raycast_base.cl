@@ -149,29 +149,32 @@ __kernel void volumeRender(
     if (!hit)
     {
         // write output color: transparent white
-        float4 color = (float4)(1.f, 1.f, 1.f, 0.0f);
+        float4 color = (float4)(255.f, 255.f, 255.f, 0.0f);
         write_imagef(outData, texCoords, color);
         return;
     }
 
-    tnear = max(0.f, tnear); // clamp to near plane and offset by 'random' distance
+    tnear = max(0.f, tnear); // clamp to near plane
     float samplingRate = 1.f/stepSizeFactor;
     float sampleDist = tfar - tnear;
+    if (sampleDist <= 0.f)
+        return;
     float stepSize = min(sampleDist, sampleDist /
                             (samplingRate*length(sampleDist*rayDir.xyz*convert_float3(volRes.xyz))));
     float samples = ceil(sampleDist/stepSize);
     stepSize = sampleDist/samples;
-    tnear += + rand*stepSize;
+    // offset by 'random' distance
+    tnear += rand*stepSize;
 
     // march along ray from front to back, accumulating color
-    float4 color = (float4)(1.0f, 1.0f, 1.0f, 0.0f);
-    float4 illumColor = (float4)(0.0f);
-    float alpha = 0.0f;
-    float4 pos = (float4)(0.0f);
-    float sample = 0.0f;
-    float4 sample4 = (float4)(0.0f);
-    float4 tfColor = (float4)(0.0f);
-    float opacity = 0.0f;
+    float4 color = (float4)(1.f, 1.f, 1.f, 0.f);
+    float4 illumColor = (float4)(0.f);
+    float alpha = 0.f;
+    float4 pos = (float4)(0.f);
+    float sample = 0.f;
+    float4 sample4 = (float4)(0.f);
+    float4 tfColor = (float4)(0.f);
+    float opacity = 0.f;
     uint i = 0;
     float t = tnear;
 
@@ -179,7 +182,7 @@ __kernel void volumeRender(
     while (true)
     {
         t = (tnear + stepSize*i);
-        pos = camPos + (float4)(t*rayDir, 1.0f);
+        pos = camPos + (float4)(t*rayDir, 1.f);
         pos = pos * 0.5f + 0.5f;
 
         /***DATA_SOURCE***/
