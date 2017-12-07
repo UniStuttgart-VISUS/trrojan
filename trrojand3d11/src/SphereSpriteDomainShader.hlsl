@@ -76,7 +76,7 @@ PsInput Main(OutputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
 
     // Move the fan to world coordinates.
     coords += pos;
-    //coords -= float4(rad * v, 0.0f);
+    coords -= float4(rad * v, 0.0f);
 
     // Perform projection.
     retval.Position = mul(coords, mvp);
