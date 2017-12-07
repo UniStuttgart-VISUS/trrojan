@@ -90,13 +90,30 @@ namespace trrojan {
         /// </param>
         /// <param name="bboxMax">The largest point of the data bounding box.
         /// </param>
-        /// <excecption cref="std::bad_cast">If all required factors exist, but
+        /// <exception cref="std::bad_cast">If all required factors exist, but
         /// do not have the right type.</exception>
-        /// <excecption cref="std::runtime_error">If one of the factors is
+        /// <exception cref="std::runtime_error">If one of the factors is
         /// missing in in <paramref name="config" />.</exception>
         static void apply_manoeuvre(trrojan::camera& camera,
             const configuration& config, const point_type& bboxMin,
             const point_type& bboxMax);
+
+        /// <summary>
+        /// Gets the aspect ration of the viewport from the given configuration.
+        /// </summary>
+        /// <param name="config">The configuration to get the viewport from.
+        /// </param>
+        /// <returns>The aspect ratio of the viewport.</returns>
+        /// <exception cref="std::bad_cast">If the viewport factor exists, but
+        /// does not have the right type.</exception>
+        /// <exception cref="std::runtime_error">If the viewport factor is not
+        /// in <paramref name="config" />.</exception>
+        static inline float get_aspect_ratio(const configuration& config) {
+            auto vp = graphics_benchmark_base::get_viewport(config);
+            auto w = static_cast<float>(vp[0]);
+            auto h = static_cast<float>(vp[1]);
+            return (w / h);
+        }
 
         /// <summary>
         /// Gets all parameters for a pre-defined camera manoeuvre from the given
@@ -107,9 +124,9 @@ namespace trrojan {
         /// <param name="outTotalSteps"></param>
         /// <param name="config">The configuration to get the manoeuvre from.
         /// </param>
-        /// <excecption cref="std::bad_cast">If all required factors exist, but
+        /// <exception cref="std::bad_cast">If all required factors exist, but
         /// do not have the right type.</exception>
-        /// <excecption cref="std::runtime_error">If one of the factors is
+        /// <exception cref="std::runtime_error">If one of the factors is
         /// missing in in <paramref name="config" />.</exception>
         static void get_manoeuvre(manoeuvre_type& outManoeuvre,
             manoeuvre_step_type& outCurStep, manoeuvre_step_type& outTotalSteps,
