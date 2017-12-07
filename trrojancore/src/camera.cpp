@@ -150,16 +150,15 @@ void trrojan::camera::set_from_maneuver(const std::string name, const glm::vec3 
         glm::vec3 begin = bbox_min;
         glm::vec3 end = bbox_max;
         // point mirroring according to definition (e.g. "diagonal_zx" is between (0,1,1)->(1,0,0))
-        if (name.find("z") != std::string::npos)  std::swap(begin, end);        // back to front
-        if (name.find("x") != std::string::npos)  std::swap(begin.x, end.x);    // right to left
-        if (name.find("y") != std::string::npos)  std::swap(begin.y, end.y);    // top to bottom
+        if (name.find("z") != std::string::npos) std::swap(begin, end);        // back to front
+        if (name.find("x") != std::string::npos) std::swap(begin.x, end.x);    // right to left
+        if (name.find("y") != std::string::npos) std::swap(begin.y, end.y);    // top to bottom
 
         this->set_look_to(end);
-        // NOTE: assuming uniform bounding box
-        float bbox_length = glm::root_two<float>()*(bbox_max.x - bbox_min.x); // glm::length(bbox_max - bbox_min);
-        float camera_dist = (bbox_length * 0.5f) / std::tan(fovy*0.5f*pi/180.f);
+        float diagonal_length = glm::distance(bbox_min, bbox_max); // glm::root_two<float>()*
+        float camera_dist = (diagonal_length * 0.5f) / std::tan(fovy*0.5f*pi/180.f);
         camera_dist *= (1.f - iteration/(float)samples);
-        this->set_look_from(this->_look_to + (begin - end) * camera_dist);
+        this->set_look_from(bbox_min + (bbox_max - bbox_min)*0.5f + (begin - end)*camera_dist);
     }
     else if (name.find("path") != std::string::npos)
     {
@@ -168,23 +167,50 @@ void trrojan::camera::set_from_maneuver(const std::string name, const glm::vec3 
         this->set_look_to(bbox_min + (bbox_max - bbox_min)*0.5f);
         float bbox_length_x = bbox_max.x - bbox_min.x;
         float camera_dist = (bbox_length_x * 0.5f) / std::tan(fovy*0.5f*pi/180.f);
-        this->set_look_from(this->_look_to - glm::vec3(0, 0, bbox_min.z - camera_dist));
+        glm::vec3 start = glm::vec3(bbox_min) - glm::vec3(camera_dist);
         float x = 2.f*pi * (iteration / (float)samples);
-        float view_translation = (iteration / (float)samples)*(camera_dist*2.0f + bbox_length_x);
+        float view_translation = (iteration / (float)samples)*(camera_dist + bbox_length_x);
+        glm::vec3 to = glm::vec3(0);
         _look_up = glm::vec3(0,1,0);
+        start += glm::vec3(view_translation);
 
         float tangent = bbox_length_x*0.25f; // amplitude
+        // straight lines
+        if (name.find("x") != std::string::npos)
+        {
+            this->set_look_from(start*glm::vec3(1,0,0));
+            to = glm::vec3(1, 0, 0);
+        }
+        else if (name.find("y") != std::string::npos)
+        {
+            this->set_look_up(glm::vec3(1,0,0));
+            this->set_look_from(start*glm::vec3(0,1,0));
+            to = glm::vec3(0, 1, 0);
+        }
+        else if (name.find("z") != std::string::npos)
+        {
+            this->set_look_from(start*glm::vec3(0,0,1));
+            to = glm::vec3(0, 0, 1);
+        }
+        // curves
+        // NOTE: currently only sin/cos in xz-plane are supported!
         if (name.find("sin") != std::string::npos)
         {
-            this->set_look_from(_look_from - glm::vec3(sin(x)*tangent, 0, view_translation));
+            this->_look_from += glm::vec3(sin(x)*tangent, 0, 0);
             tangent *= cos(x);
+            to = 2.f * glm::vec3(tangent, 0, 1.f - tangent);
         }
-        if (name.find("cos") != std::string::npos)
+        else if (name.find("cos") != std::string::npos)
         {
-            this->set_look_from(_look_from - glm::vec3(cos(x)*tangent, 0, view_translation));
+            this->_look_from -= glm::vec3(cos(x)*tangent, 0, 0);
             tangent *= -sin(x);
+            to = glm::vec3(tangent, 0, 1.f - tangent);
         }
-        this->set_look_to(_look_from - glm::vec3(tangent, 0, 1.f - tangent));
+        else    // straight line
+        {
+            to *= glm::vec3(_look_from.z + camera_dist*2.0f);
+        }
+        this->set_look_to(to - _look_from);
     }
     else if (name.find("random") != std::string::npos)
     {

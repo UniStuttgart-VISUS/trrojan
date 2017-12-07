@@ -402,11 +402,12 @@ trrojan::result trrojan::opencl::volume_raycast_benchmark::run(const configurati
 {
     auto env = cfg.find(factor_environment)->value().as<trrojan::environment>();
     environment::pointer env_ptr = std::dynamic_pointer_cast<environment>(env);
-    std::vector<double> times(cfg.find(factor_iterations)->value(), 0.0);
+    int run_iterations = cfg.find(factor_iterations)->value().as<int>();
+    std::vector<double> times(run_iterations, 0.0);
     auto imgSize = cfg.find(factor_viewport)->value().as<std::array<unsigned int, 2>>();
     std::array<unsigned int, 3> img_dim = { {imgSize.at(0), imgSize.at(1), 1u} };
     cl_int evt_status = CL_QUEUED;
-    for (int i = 0; i < cfg.find(factor_iterations)->value().as<int>(); ++i)
+    for (int i = 0; i < run_iterations; ++i)
     {
         cl_int evt_status = CL_QUEUED;
         try // opencl scope
@@ -487,14 +488,15 @@ trrojan::result trrojan::opencl::volume_raycast_benchmark::run(const configurati
     }
     result_cfg.add_system_factors();
     std::vector<std::string> result_names;
-    result_names.push_back("execution_time");
+    for (int i = 0; i < run_iterations; ++i)
+        result_names.push_back("execution_time_" + std::to_string(i));
     auto retval = std::make_shared<basic_result>(result_cfg, std::move(result_names));
+    // FIXME: change to be relative to # of run iterations
+    retval->add({times.at(0), times.at(1), times.at(2), times.at(3), times.at(4)});
 
     // calc median of execution times of all runs
     std::sort(times.begin(), times.end());
     double median = times.at(times.size() / 2);
-    retval->add({ median });
-
     std::ostringstream os;
     os << "Kernel time median: " << median << std::endl;
     log::instance().write(log_level::information, os.str().c_str());
