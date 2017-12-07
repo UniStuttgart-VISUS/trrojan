@@ -75,6 +75,12 @@ trrojan::d3d11::sphere_benchmark::sphere_benchmark(void)
         factor_iterations, static_cast<unsigned int>(8)));
     this->_default_configs.add_factor(factor::from_manifestations(
         factor_vs_xfer_function, false));
+    this->_default_configs.add_factor(factor::from_manifestations(
+        factor_manoeuvre, manoeuvre_type("diagonal")));
+    this->_default_configs.add_factor(factor::from_manifestations(
+        factor_manoeuvre_step, static_cast<manoeuvre_step_type>(0)));
+    this->_default_configs.add_factor(factor::from_manifestations(
+        factor_manoeuvre_steps, static_cast<manoeuvre_step_type>(64)));
 
     // Prepare a lookup table for different variants of the pixel shader.
     this->pixel_shaders[sp_t::none] = pack_shader_source(
@@ -137,7 +143,7 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
     gpu_timer_type gpuTimer;
     auto isDisjoint = true;
     auto isNewDevice = contains(changed, factor_device);
-	auto isTessellation = true;
+    auto isTessellation = false;
     D3D11_VIEWPORT viewport;
 
     // Determine where to perform transfer-function lookups.
@@ -296,6 +302,16 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
         auto lookAt = pos + glm::vec3(0.0f, 0.0f, 0.5f * bbDepth);
 
         this->cam.set_look(pos, lookAt, glm::vec3(0, 1, 0));
+
+        point_type bbs, bbe;
+        this->get_mmpld_bounding_box(bbs, bbe);
+        this->apply_manoeuvre(this->cam, config, bbs, bbe);
+
+        auto clipping = this->get_mmpld_clipping(cam);
+        this->cam.set_near_plane_dist(clipping.first);
+        this->cam.set_far_plane_dist(clipping.second);
+
+
         mat = DirectX::XMFLOAT4X4(glm::value_ptr(this->cam.get_view_mx()));
         auto view = DirectX::XMLoadFloat4x4(&mat);
         DirectX::XMStoreFloat4x4(constants.ViewMatrix,

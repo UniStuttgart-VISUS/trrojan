@@ -20,7 +20,6 @@
 const std::string trrojan::d3d11::benchmark_base::factor_##f(#f)
 
 _D3D_BENCH_DEFINE_FACTOR(debug_view);
-_D3D_BENCH_DEFINE_FACTOR(viewport);
 
 #undef _D3D_BENCH_DEFINE_FACTOR
 
@@ -120,7 +119,7 @@ trrojan::result trrojan::d3d11::benchmark_base::run(const configuration& c) {
  * trrojan::d3d11::benchmark_base::benchmark_base
  */
 trrojan::d3d11::benchmark_base::benchmark_base(const std::string& name)
-        : trrojan::benchmark_base(name) {
+        : trrojan::graphics_benchmark_base(name) {
     this->_default_configs.add_factor(factor::from_manifestations(
         factor_debug_view, false));
 

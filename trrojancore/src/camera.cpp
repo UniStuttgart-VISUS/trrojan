@@ -158,7 +158,7 @@ void trrojan::camera::set_from_maneuver(const std::string &name, const glm::vec3
         float diagonal_length = glm::distance(bbox_min, bbox_max); // glm::root_two<float>()*
         float camera_dist = (diagonal_length * 0.5f) / std::tan(fovy*0.5f*pi/180.f);
         camera_dist *= (1.f - iteration/(float)samples);
-        this->set_look_from(bbox_min + (bbox_max - bbox_min)*0.5f + (begin - end)*camera_dist);
+        this->set_look_from(bbox_min + (bbox_max - bbox_min)*0.5f + glm::normalize(begin - end)*camera_dist);
     }
     else if (name.find("path") != std::string::npos)
     {

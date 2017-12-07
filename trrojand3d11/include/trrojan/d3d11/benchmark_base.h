@@ -13,7 +13,7 @@
 #include <Windows.h>
 #include <d3d11.h>
 
-#include "trrojan/benchmark.h"
+#include "trrojan/graphics_benchmark_base.h"
 
 #include "trrojan/d3d11/device.h"
 #include "trrojan/d3d11/gpu_timer.h"
@@ -26,24 +26,17 @@ namespace d3d11 {
     /// <summary>
     /// Base class for D3D11 benchmarks.
     /// </summary>
-    class TRROJAND3D11_API benchmark_base : public trrojan::benchmark_base {
+    class TRROJAND3D11_API benchmark_base 
+            : public trrojan::graphics_benchmark_base {
 
     public:
 
-        /// <summary>
-        /// The type to specify the <see cref="factor_viewport" /> factor.
-        /// </summary>
-        typedef std::array<std::uint32_t, 2> viewport_type;
+        typedef graphics_benchmark_base::viewport_type viewport_type;
 
         /// <summary>
         /// Boolean factor enabling the debug view.
         /// </summary>
         static const std::string factor_debug_view;
-
-        /// <summary>
-        /// The name of the viewport factor.
-        /// </summary>
-        static const std::string factor_viewport;
 
         virtual ~benchmark_base(void);
 
