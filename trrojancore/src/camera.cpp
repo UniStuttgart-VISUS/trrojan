@@ -114,7 +114,7 @@ void trrojan::camera::rotate_fixed_from(const glm::quat q)
 /**
  * trrojan::camera::set_from_maneuver
  */
-void trrojan::camera::set_from_maneuver(const std::string name, const glm::vec3 bbox_min,
+void trrojan::camera::set_from_maneuver(const std::string &name, const glm::vec3 bbox_min,
                                         const glm::vec3 bbox_max, const int iteration,
                                         const float fovy, const int samples)
 {
@@ -238,7 +238,7 @@ trrojan::perspective_camera::perspective_camera(vec3 look_from, vec3 look_to, ve
 {
 }
 
-void trrojan::perspective_camera::set_from_maneuver(const std::string name, const glm::vec3 bbox_min,
+void trrojan::perspective_camera::set_from_maneuver(const std::string &name, const glm::vec3 bbox_min,
                                                     const glm::vec3 bbox_max, const int iteration,
                                                     const int samples)
 {
@@ -270,7 +270,7 @@ void trrojan::orthographic_camera::set_aspect_ratio(float val)
     invalidate_projection_mx();
 }
 
-void trrojan::orthographic_camera::set_from_maneuver(const std::string name,
+void trrojan::orthographic_camera::set_from_maneuver(const std::string &name,
                                                      const glm::vec3 bbox_min,
                                                      const glm::vec3 bbox_max, const int iteration,
                                                      const int samples)
