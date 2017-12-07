@@ -143,7 +143,7 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
     gpu_timer_type gpuTimer;
     auto isDisjoint = true;
     auto isNewDevice = contains(changed, factor_device);
-    auto isTessellation = true;
+    auto isTessellation = false;
     D3D11_VIEWPORT viewport;
 
     // Determine where to perform transfer-function lookups.
@@ -308,6 +308,8 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
         this->apply_manoeuvre(this->cam, config, bbs, bbe);
 
         auto clipping = this->get_mmpld_clipping(cam);
+        this->cam.set_near_plane_dist(clipping.first);
+        this->cam.set_far_plane_dist(clipping.second);
 
 
         mat = DirectX::XMFLOAT4X4(glm::value_ptr(this->cam.get_view_mx()));
