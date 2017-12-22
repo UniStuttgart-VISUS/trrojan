@@ -42,7 +42,7 @@ static int rand()
 static float get_rand()
 {
     std::mt19937 mtGen(rand());
-    std::uniform_real_distribution<> distribNorm(0.0, 1.0);
+    std::uniform_real_distribution<float> distribNorm(0.0f, 1.0f);
     return distribNorm(mtGen);
 }
 
@@ -156,7 +156,7 @@ protected:
     virtual mat4 calc_projection_mx() const = 0;
     void invalidate_view_mx();
     void invalidate_projection_mx();
-    void set_from_maneuver(const std::string name, const glm::vec3 bbox_min,
+    void set_from_maneuver(const std::string &name, const glm::vec3 bbox_min,
                            const glm::vec3 bbox_max, const int iteration, const float fovy,
                            const int samples = 360);
 
@@ -193,7 +193,7 @@ public:
     virtual float get_aspect_ratio() const override;
     virtual void set_aspect_ratio(float val) override;
 
-    void set_from_maneuver(const std::string name, const glm::vec3 bbox_min,
+    void set_from_maneuver(const std::string &name, const glm::vec3 bbox_min,
                            const glm::vec3 bbox_max, const int iteration, const int samples);
 protected:
     virtual mat4 calc_projection_mx() const override;
@@ -225,7 +225,7 @@ public:
     virtual float get_aspect_ratio() const override;
     virtual void set_aspect_ratio(float val) override;
 
-    void set_from_maneuver(const std::string name, const glm::vec3 bbox_min,
+    void set_from_maneuver(const std::string &name, const glm::vec3 bbox_min,
                            const glm::vec3 bbox_max, const int iteration, const int samples);
 protected:
     virtual mat4 calc_projection_mx() const override;

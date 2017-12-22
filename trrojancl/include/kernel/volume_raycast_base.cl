@@ -28,16 +28,21 @@ inline float3 transformPointW(const float16 m, const float3 x)
 float3 gradientCentralDiff(read_only image3d_t vol, const float4 pos)
 {
     float3 volResf = convert_float3(get_image_dim(vol).xyz);
-    float3 offset = native_divide((float3)(1.0f, 1.0f, 1.0f), volResf);
+    float3 offset = native_divide((float3)(1.0f), volResf);
     float3 s1;
     float3 s2;
-    s1.x = read_imagef(vol, nearestSmp, pos + (float4)(-offset.x, 0, 0, 0)).x;
-    s2.x = read_imagef(vol, nearestSmp, pos + (float4)(+offset.x, 0, 0, 0)).x;
-    s1.y = read_imagef(vol, nearestSmp, pos + (float4)(0, -offset.y, 0, 0)).x;
-    s2.y = read_imagef(vol, nearestSmp, pos + (float4)(0, +offset.y, 0, 0)).x;
-    s1.z = read_imagef(vol, nearestSmp, pos + (float4)(0, 0, -offset.z, 0)).x;
-    s2.z = read_imagef(vol, nearestSmp, pos + (float4)(0, 0, +offset.z, 0)).x;
-    return (s2 - s1) / (2.f * offset);
+    s1.x = read_imagef(vol, linearSmp, pos + (float4)(-offset.x, 0, 0, 0)).x;
+    s2.x = read_imagef(vol, linearSmp, pos + (float4)(+offset.x, 0, 0, 0)).x;
+    s1.y = read_imagef(vol, linearSmp, pos + (float4)(0, -offset.y, 0, 0)).x;
+    s2.y = read_imagef(vol, linearSmp, pos + (float4)(0, +offset.y, 0, 0)).x;
+    s1.z = read_imagef(vol, linearSmp, pos + (float4)(0, 0, -offset.z, 0)).x;
+    s2.z = read_imagef(vol, linearSmp, pos + (float4)(0, 0, +offset.z, 0)).x;
+
+    float3 normal = fast_normalize(s2 - s1).xyz;
+    if (length(normal) == 0.0f) // TODO: zero correct
+        normal = (float3)(1.f, 0.f, 0.f);
+
+    return normal;
 }
 
 // specular part of blinn-phong shading model
@@ -45,7 +50,6 @@ float3 specularBlinnPhong(float3 lightColor, float specularExp, float3 materialC
                           float3 normal, float3 toLightDir, float3 toCameraDir)
 {
     float3 h = toCameraDir + toLightDir;
-
     // check for special case where the light source is exactly opposite
     // to the view direction, i.e. the length of the halfway vector is zero
     if (dot(h, h) < 1.e-6f) // check for squared length
@@ -56,17 +60,18 @@ float3 specularBlinnPhong(float3 lightColor, float specularExp, float3 materialC
 }
 
 // simple illumination based on central differences
-float3 illumination(read_only image3d_t vol, const float4 pos, float3 diffuse,float3 toCameraDir)
+float3 illumination(read_only image3d_t vol, const float4 pos, float3 color, float3 toLightDir)
 {
-    float3 n = fast_normalize(gradientCentralDiff(vol, pos));
-    float3 l = fast_normalize((float3)(20.0f, 100.0f, 20.0f) - pos.xyz);
+    float3 n = fast_normalize(-gradientCentralDiff(vol, pos));
+    float3 l = fast_normalize(toLightDir.xyz);
 
-    float3 amb = diffuse;
-    float3 diff = diffuse * max(0.f, dot(n, l));
-    float3 spec = specularBlinnPhong((float3)(1.f), 100.f, (float3)(1.f), n, l, toCameraDir);
+    float3 amb = color * 0.2f;
+    float3 diff = color * max(0.f, dot(n, l)) * 0.8f;
+    float3 spec = specularBlinnPhong((float3)(1.f), 40.f, (float3)(1.f), n, l, toLightDir) * 0.2f;
 
-    return (amb + diff + spec) * 0.5f;
+    return (amb + diff + spec);
 }
+
 // intersect ray with a box
 // http://www.siggraph.org/education/materials/HyperGraph/raytrace/rtinter3.htm
 int intersectBox(float4 rayOrig,
@@ -105,6 +110,7 @@ __kernel void volumeRender(
                            , const sampler_t sampler
                            , const float precisionDiv
                            , const float3 modelScale
+                           /***ESS_ARGS***/
                            /***OFFSET_ARGS***/
                         )
 {
@@ -149,37 +155,40 @@ __kernel void volumeRender(
     if (!hit)
     {
         // write output color: transparent white
-        float4 color = (float4)(1.f, 1.f, 1.f, 0.0f);
+        float4 color = (float4)(255.f, 255.f, 255.f, 0.0f);
         write_imagef(outData, texCoords, color);
         return;
     }
 
-    tnear = max(0.f, tnear); // clamp to near plane and offset by 'random' distance
+    tnear = max(0.f, tnear); // clamp to near plane
     float samplingRate = 1.f/stepSizeFactor;
     float sampleDist = tfar - tnear;
+    if (sampleDist < 1e-6f)
+        return;
     float stepSize = min(sampleDist, sampleDist /
-                            (samplingRate*length(sampleDist*rayDir.xyz*convert_float3(volRes.xyz))));
+                            (samplingRate*length(sampleDist*rayDir.xyz*convert_float3(volRes))));
     float samples = ceil(sampleDist/stepSize);
     stepSize = sampleDist/samples;
-    tnear += + rand*stepSize;
+    // offset by 'random' distance
+//    tnear += rand*stepSize;
 
-    // march along ray from front to back, accumulating color
-    float4 color = (float4)(1.0f, 1.0f, 1.0f, 0.0f);
-    float4 illumColor = (float4)(0.0f);
-    float alpha = 0.0f;
-    float4 pos = (float4)(0.0f);
-    float sample = 0.0f;
-    float4 sample4 = (float4)(0.0f);
-    float4 tfColor = (float4)(0.0f);
-    float opacity = 0.0f;
-    uint i = 0;
+    float4 color = (float4)(1.f, 1.f, 1.f, 0.f);
+    float4 illumColor = (float4)(0.f);
+    float alpha = 0.f;
+    float4 pos = (float4)(0.f);
+    float sample = 0.f;
+    float4 sample4 = (float4)(0.f);
+    float4 tfColor = (float4)(0.f);
+    float opacity = 0.f;
     float t = tnear;
+    float t_exit = tfar;
+
+    /***ESS_PART_1***/
 
     // raycasting loop
-    while (true)
+    while (t < t_exit)
     {
-        t = (tnear + stepSize*i);
-        pos = camPos + (float4)(t*rayDir, 1.0f);
+        pos = camPos + (float4)(t*rayDir, 1.f);
         pos = pos * 0.5f + 0.5f;
 
         /***DATA_SOURCE***/
@@ -190,21 +199,55 @@ __kernel void volumeRender(
 
         /***ERT***/
 
-        if (t >= tfar - stepSize) break;
-        ++i;
+        if (t >= tfar) break;
+        t += stepSize;
     }
-    color.w = alpha;
+
+    /***ESS_PART_2***/
 
     /***SAMPLECNT***/
 
+    color.w = alpha;
     color *= (float4)(255.0f);
     write_imagef(outData, texCoords, color);
-    
-//     uint4 colorui;
-//     colorui.x = (uint)floor(color.x);
-//     colorui.y = (uint)floor(color.y);
-//     colorui.z = (uint)floor(color.z);
-//     colorui.w = (uint)floor(color.w);
-//     write_imageui(outData, texCoords, colorui);
 }
 
+
+
+#pragma OPENCL EXTENSION cl_khr_3d_image_writes : enable
+
+//************************** Generate brick volume ***************************
+
+__kernel void generateBricks(  __read_only image3d_t volData
+                             , __read_only image1d_t tffData     // constant transfer function values
+                             , __write_only image3d_t volBrickData
+                            )
+{
+    int3 coord = (int3)(get_global_id(0), get_global_id(1), get_global_id(2));
+    if(any(coord >= get_image_dim(volBrickData).xyz))
+        return;
+
+    int3 voxPerCell = convert_int3(ceil(convert_float4(get_image_dim(volData))/
+                                          convert_float4(get_image_dim(volBrickData))).xyz);
+    int3 volCoordLower = voxPerCell * coord;
+    int3 volCoordUpper = clamp(volCoordLower + voxPerCell, (int3)(0), get_image_dim(volData).xyz);
+
+    float maxVal = 0.f;
+    float minVal = FLT_MAX;
+    float value = 0.f;
+
+    for (int k = volCoordLower.z; k < volCoordUpper.z; ++k)
+    {
+        for (int j = volCoordLower.y; j < volCoordUpper.y; ++j)
+        {
+            for (int i = volCoordLower.x; i < volCoordUpper.x; ++i)
+            {
+                value = read_imagef(volData, nearestSmp, (int4)(i, j, k, 0)).x;  // [0; 1]
+                minVal = min(minVal, value);
+                maxVal = max(maxVal, value);
+            }
+        }
+    }
+
+    write_imagef(volBrickData, (int4)(coord, 0), (float4)(minVal, maxVal, 0, 0));
+}

@@ -5,10 +5,14 @@
 
 #pragma once
 
+#include <utility>
+
 #include <atlbase.h>
 #include <Windows.h>
 #include <d3d11.h>
 
+#include "trrojan/camera.h"
+#include "trrojan/graphics_benchmark_base.h"
 #include "trrojan/log.h"
 #include "trrojan/mmpld_reader.h"
 
@@ -51,6 +55,24 @@ namespace d3d11 {
         mmpld_base(void);
 
         /// <summary>
+        /// Gets the bounding box of the current <see cref="mmpld_list" />.
+        /// </summary>
+        void get_mmpld_bounding_box(graphics_benchmark_base::point_type& outMin,
+            graphics_benchmark_base::point_type& outMax) const;
+
+        /// <summary>
+        /// Gets the centre point of the current <see cref="mmpld_list" />.
+        /// </summary>
+        graphics_benchmark_base::point_type get_mmpld_centre(void) const;
+
+        /// <summary>
+        /// Make a suggestion for near and far clipping plane for the current
+        /// <see cref="mmpld_list" /> and the given
+        /// <see cref="trrojan::camera" />.
+        /// </summary>
+        std::pair<float, float> get_mmpld_clipping(const camera& cam) const;
+
+        /// <summary>
         /// Determine the features used in the pixel shader based on the current
         /// <see cref="mmpld_list" />.
         /// </summary>
@@ -59,6 +81,12 @@ namespace d3d11 {
         /// <returns></returns>
         shader_properties get_mmpld_pixel_shader_properties(
             const bool vsXfer) const;
+
+        /// <summary>
+        /// Gets the 3D size the current <see cref="mmpld_list" /> (x-axis,
+        /// y-axis and z-axis).
+        /// </summary>
+        std::array<float, 3> get_mmpld_size(void) const;
 
         /// <summary>
         /// Determine the features used in the vertex shader based on the current
@@ -121,6 +149,13 @@ namespace d3d11 {
         /// good. Otherwise, its content might be bogus.
         /// </remarks>
         mmpld_reader::seek_table mmpld_seek_table;
+
+    private:
+
+        /// <summary>
+        /// Radius used for clipping computation of the current particle list.
+        /// </summary>
+        float mmpld_max_radius;
     };
 
 } /* end namespace d3d11 */

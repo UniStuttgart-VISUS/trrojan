@@ -5,6 +5,8 @@
 
 #include "trrojan/d3d11/mmpld_base.h"
 
+#include <glm/glm.hpp>
+
 #include <cassert>
 #include <cinttypes>
 #include <sstream>
@@ -88,8 +90,77 @@ trrojan::d3d11::mmpld_base::get_mmpld_layout(
 /*
  * trrojan::d3d11::mmpld_base::mmpld_base
  */
-trrojan::d3d11::mmpld_base::mmpld_base(void) {
+trrojan::d3d11::mmpld_base::mmpld_base(void) : mmpld_max_radius(0) {
     ::memset(&this->mmpld_header, 0, sizeof(this->mmpld_header));
+    ::memset(&this->mmpld_list, 0, sizeof(this->mmpld_list));
+}
+
+
+/*
+ * trrojan::d3d11::mmpld_base::get_mmpld_bounding_box
+ */
+void trrojan::d3d11::mmpld_base::get_mmpld_bounding_box(
+        graphics_benchmark_base::point_type& outMin,
+        graphics_benchmark_base::point_type& outMax) const {
+    for (size_t i = 0; i < outMin.size(); ++i) {
+        outMin[i] = this->mmpld_header.bounding_box[i];
+    }
+    for (size_t i = 0; i < outMax.size(); ++i) {
+        outMax[i] = this->mmpld_header.bounding_box[i + 3];
+    }
+}
+
+
+/*
+ * trrojan::d3d11::mmpld_base::get_mmpld_centre
+ */
+trrojan::graphics_benchmark_base::point_type
+trrojan::d3d11::mmpld_base::get_mmpld_centre(void) const {
+    graphics_benchmark_base::point_type retval = this->get_mmpld_size();
+
+    for (size_t i = 0; i < retval.size(); ++i) {
+        retval[i] /= 2.0f;
+        retval[i] += this->mmpld_header.bounding_box[i];
+    }
+
+    return retval;
+}
+
+
+/*
+ * trrojan::d3d11::mmpld_base::get_mmpld_clipping
+ */
+std::pair<float, float> trrojan::d3d11::mmpld_base::get_mmpld_clipping(
+        const camera& cam) const {
+    auto& camPos = cam.get_look_from();
+    glm::vec3 centre;
+    auto diagLen = 0.0f;
+    auto size = this->get_mmpld_size();
+
+    for (size_t i = 0; i < size.size(); ++i) {
+        centre[i] = size[i] / 2.0f + this->mmpld_header.bounding_box[i];
+        diagLen += size[i] * size[i];
+    }
+    diagLen = std::sqrt(diagLen);
+
+    diagLen += 0.5f * this->mmpld_max_radius;
+    diagLen *= 0.5f;
+
+    auto viewLen = glm::length(centre - camPos);
+
+    auto nearPlane = viewLen - diagLen;
+    if (nearPlane < 0.1f) {
+        nearPlane = 0.1f;
+    }
+
+    auto farPlane = viewLen + diagLen;
+    if (farPlane < nearPlane) {
+        farPlane = nearPlane + 0.1f;
+    }
+
+    return std::make_pair(nearPlane, farPlane);
+
+
 }
 
 
@@ -117,6 +188,21 @@ trrojan::d3d11::mmpld_base::get_mmpld_pixel_shader_properties(
     log::instance().write_line(log_level::debug, "Computed sphere pixel shader "
         "properties as %u.", retval);
     return static_cast<shader_properties>(retval);
+}
+
+
+/*
+ * trrojan::d3d11::mmpld_base::get_mmpld_size
+ */
+std::array<float, 3> trrojan::d3d11::mmpld_base::get_mmpld_size(void) const {
+    std::array<float, 3> retval;
+
+    for (size_t i = 0; i < retval.size(); ++i) {
+        retval[i] = std::abs(this->mmpld_header.bounding_box[i + 3]
+            - this->mmpld_header.bounding_box[i]);
+    }
+
+    return retval;
 }
 
 
@@ -199,6 +285,23 @@ ATL::CComPtr<ID3D11Buffer> trrojan::d3d11::mmpld_base::read_mmpld_frame(
         * this->mmpld_list.particles;
     data.resize(cntData);
     this->mmpld_stream.read(data.data(), cntData);
+
+    // Search the maximum radius for clipping.
+    if (this->mmpld_list.radius > 0.0f) {
+        this->mmpld_max_radius = this->mmpld_list.radius;
+
+    } else {
+        this->mmpld_max_radius = std::numeric_limits<float>::min();
+        auto stride = mmpld_reader::calc_stride(this->mmpld_list);
+
+        for (auto cur = data.data(), end = data.data() + data.size();
+                cur < end; cur += stride) {
+            auto r = *reinterpret_cast<float *>(cur + 3 * sizeof(float));
+            if (r > this->mmpld_max_radius) {
+                this->mmpld_max_radius = r;
+            }
+        }
+    }
 
     // If everything succeeded, create the vertex buffer.
     ::ZeroMemory(&bufferDesc, sizeof(bufferDesc));
