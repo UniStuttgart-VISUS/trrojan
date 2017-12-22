@@ -95,6 +95,8 @@ namespace opencl
             , SAMPLER       // image data sampler   cl::Sampler
             , PRECISION     // precision divisor    cl_float
             , MODEL_SCALE
+            , BRICKS
+            , TFF_PREFIX
             // , OFFSET       // TODO: ID offset      cl_int2
         };
 
@@ -189,6 +191,7 @@ namespace opencl
         /// nor a whitespace</remarks>
         /// <param name="file_name">The name (and path) of the file that contains the
         /// transfer function in form of numeric values.</param>
+        /// <param name="env">Pointer to environment.</param>
         void load_transfer_function(const std::string file_name, environment::pointer env);
 
         /// <summary>
@@ -439,8 +442,9 @@ namespace opencl
         /// fail.</throws>
         void build_kernel(environment::pointer env,
                           device::pointer dev,
+                          const std::string &kernel_source,
                           const float precision_div = 255.0f,
-                          const std::string build_flags = "");
+                          const std::string &build_flags = "");
 
         /// <summary>
         /// Update the camera configuration and set kernel argument.
@@ -528,6 +532,25 @@ namespace opencl
         /// </summary>
         void calcScaling();
 
+        ///
+        /// \brief set_tff_prefix_sum
+        /// \param tff_prefix_sum
+        /// \param env
+        ///
+        void set_tff_prefix_sum(std::vector<unsigned short> &tff_prefix_sum,
+                                environment::pointer env);
+
+        ///
+        /// \brief set_mem_objects_brick_gen
+        ///
+        void set_mem_objects_brick_gen();
+
+        ///
+        /// \brief generate_bricks
+        /// \param env
+        ///
+        void generate_bricks(environment::pointer env);
+
         /// <summary>
         /// Member to hold 'passive' configuration factors (i.e. they have no influence on tests),
         /// that are read from the volume data set ".dat" file.
@@ -563,6 +586,12 @@ namespace opencl
         cl::Memory _volume_mem;
 
         /// <summary>
+        /// Lew resolution representation of volume data containing min and max values
+        /// for each brick consisting of resolution³/64³ voxels.
+        /// </summary>
+        cl::Image3D _brick_mem;
+
+        /// <summary>
         /// The rendering output image.
         /// </summary>
         cl::Image2D _output_mem;
@@ -571,6 +600,11 @@ namespace opencl
         /// Transfer function memory object as a 1d image representation.
         /// </summary>
         cl::Image1D _tff_mem;
+
+        /// <summary>
+        /// Transfer function prefix sum memory object as a 1d image representation.
+        /// </summary>
+        cl::Image1D _tff_prefix_mem;
 
         /// <summary>
         /// OpenCL buffer object for suffled ray IDs.
@@ -586,6 +620,11 @@ namespace opencl
         /// The current OpenCL kernel for volume raycasting.
         /// </summary>
         cl::Kernel _kernel;
+
+        /// <summary>
+        /// The OpenCL kernel for generating low resolution brick volume.
+        /// </summary>
+        cl::Kernel _gen_bricks_kernel;
 
         /// <summary>
         /// Complete source of the current OpenCL kernel.
