@@ -1,10 +1,10 @@
 #pragma OPENCL EXTENSION cl_khr_fp64 : enable
+#pragma OPENCL EXTENSION cl_khr_3d_image_writes : enable
 
 constant sampler_t linearSmp = CLK_NORMALIZED_COORDS_TRUE | CLK_ADDRESS_CLAMP_TO_EDGE |
                                 CLK_FILTER_LINEAR;
 constant sampler_t nearestSmp = CLK_NORMALIZED_COORDS_TRUE | CLK_ADDRESS_CLAMP_TO_EDGE |
                                 CLK_FILTER_NEAREST;
-
 
 inline float3 transformPoint3(const float16 m, const float3 x)
 {
@@ -152,10 +152,11 @@ __kernel void volumeRender(
     /***CAMERA***/
     /***ORTHO_NEAR***/
 
+    float4 color = (float4)(1.f, 1.f, 1.f, 0.f);
     if (!hit)
     {
         // write output color: transparent white
-        float4 color = (float4)(255.f, 255.f, 255.f, 0.0f);
+        // color *= (float4)(255.f);
         write_imagef(outData, texCoords, color);
         return;
     }
@@ -172,7 +173,6 @@ __kernel void volumeRender(
     // offset by 'random' distance
 //    tnear += rand*stepSize;
 
-    float4 color = (float4)(1.f, 1.f, 1.f, 0.f);
     float4 illumColor = (float4)(0.f);
     float alpha = 0.f;
     float4 pos = (float4)(0.f);
@@ -208,19 +208,16 @@ __kernel void volumeRender(
     /***SAMPLECNT***/
 
     color.w = alpha;
-    color *= (float4)(255.0f);
+    //color *= (float4)(255.f);	// cimg scaling
     write_imagef(outData, texCoords, color);
 }
 
 
 
-#pragma OPENCL EXTENSION cl_khr_3d_image_writes : enable
-
 //************************** Generate brick volume ***************************
 
-__kernel void generateBricks(  __read_only image3d_t volData
-                             , __read_only image1d_t tffData     // constant transfer function values
-                             , __write_only image3d_t volBrickData
+__kernel void generateBricks( __read_only image3d_t volData
+                             ,__write_only image3d_t volBrickData
                             )
 {
     int3 coord = (int3)(get_global_id(0), get_global_id(1), get_global_id(2));
@@ -229,25 +226,27 @@ __kernel void generateBricks(  __read_only image3d_t volData
 
     int3 voxPerCell = convert_int3(ceil(convert_float4(get_image_dim(volData))/
                                           convert_float4(get_image_dim(volBrickData))).xyz);
-    int3 volCoordLower = voxPerCell * coord;
-    int3 volCoordUpper = clamp(volCoordLower + voxPerCell, (int3)(0), get_image_dim(volData).xyz);
+    int3 brickOrigin = voxPerCell * coord;
+    int3 brickBounds = clamp(brickOrigin + voxPerCell, (int3)(0), get_image_dim(volData).xyz);
 
     float maxVal = 0.f;
-    float minVal = FLT_MAX;
+    float minVal = 1.f;
     float value = 0.f;
-
-    for (int k = volCoordLower.z; k < volCoordUpper.z; ++k)
+		
+    for (int k = brickOrigin.z; k < brickBounds.z; ++k)
     {
-        for (int j = volCoordLower.y; j < volCoordUpper.y; ++j)
+        for (int j = brickOrigin.y; j < brickBounds.y; ++j)
         {
-            for (int i = volCoordLower.x; i < volCoordUpper.x; ++i)
+            for (int i = brickOrigin.x; i < brickBounds.x; ++i)
             {
-                value = read_imagef(volData, nearestSmp, (int4)(i, j, k, 0)).x;  // [0; 1]
+                value = read_imagef(volData, (int4)(i, j, k, 0)).x;  // [0; 1]
                 minVal = min(minVal, value);
                 maxVal = max(maxVal, value);
             }
         }
     }
+	minVal = clamp(minVal, 0.f, 1.f);
+	maxVal = clamp(maxVal, 0.f, 1.f);
 
-    write_imagef(volBrickData, (int4)(coord, 0), (float4)(minVal, maxVal, 0, 0));
+    write_imagef(volBrickData, (int4)(coord, 0), (float4)(minVal, maxVal, 0.f, 1.f));
 }

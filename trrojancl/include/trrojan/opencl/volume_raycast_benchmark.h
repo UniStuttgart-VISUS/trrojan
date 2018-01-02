@@ -360,7 +360,7 @@ namespace opencl
                 if (use_buffer)
                 {
                     _volume_mem = cl::Buffer(cl_env->get_properties().context,
-                                             CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                                             CL_MEM_READ_ONLY | CL_MEM_HOST_NO_ACCESS,
                                              converted_data.size()*sizeof(To),
                                              converted_data.data());
                 }
@@ -537,7 +537,7 @@ namespace opencl
         /// \param tff_prefix_sum
         /// \param env
         ///
-        void set_tff_prefix_sum(std::vector<unsigned short> &tff_prefix_sum,
+        void set_tff_prefix_sum(std::vector<unsigned int> &tff_prefix_sum,
                                 environment::pointer env);
 
         ///
