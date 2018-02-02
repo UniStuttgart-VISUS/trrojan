@@ -53,6 +53,7 @@ _SPHERE_BENCH_DEFINE_FACTOR(vs_xfer_function);
 const char *trrojan::d3d11::sphere_benchmark::method_##m = #m
 
 _SPHERE_BENCH_DEFINE_METHOD(geo_sprite);
+//_SPHERE_BENCH_DEFINE_METHOD(inst_sprite);
 _SPHERE_BENCH_DEFINE_METHOD(tess_sprite);
 _SPHERE_BENCH_DEFINE_METHOD(tess_sphere);
 _SPHERE_BENCH_DEFINE_METHOD(tess_hemisphere);
