@@ -40,8 +40,11 @@ namespace d3d11 {
         /// Identifies a shader stage (mostly for resource binding).
         /// </summary>
         /// <remarks>
-        /// The individual constants are bitmasks which can be combined if
-        /// necessary.
+        /// <para>The individual constants are bitmasks which can be combined if
+        /// necessary.</para>
+        /// <para>Implementation note: please check correctness of
+        /// <see cref="rendering_technique::foreach_stage" /> when changing the
+        /// enumeration!</para>
         /// </remarks>
         enum class shader_stage {
             vertex = 0x0001,
@@ -51,7 +54,93 @@ namespace d3d11 {
             pixel = 0x0010
         };
 
+        /// <summary>
+        /// Groups all information to emit a vertex buffer.
+        /// </summary>
+        struct vertex_buffer {
+            ATL::CComPtr<ID3D11Buffer> buffer;
+            UINT offset;
+            UINT size;
+            UINT stride;
+
+            inline vertex_buffer(void) : offset(0), size(0), stride(0) { }
+        };
+
+        /// <summary>
+        /// A combination of multiple <see cref="shader_stage" />s.
+        /// </summary>
         typedef std::underlying_type<shader_stage>::type shader_stages;
+
+        /// <summary>
+        /// Initialises a new instance.
+        /// </summary>
+        rendering_technique(void);
+
+        /// <summary>
+        /// Initialises a new instance.
+        /// </summary>
+        rendering_technique(const std::string& name,
+            std::vector<vertex_buffer>&& vb,
+            ID3D11InputLayout *il, const D3D11_PRIMITIVE_TOPOLOGY pt,
+            ID3D11VertexShader *vs, shader_resources&& vsRes,
+            ID3D11HullShader *hs, shader_resources&& hsRes,
+            ID3D11DomainShader *ds, shader_resources&& dsRes,
+            ID3D11GeometryShader *gs, shader_resources&& gsRes,
+            ID3D11PixelShader *ps, shader_resources&& psRes);
+
+        /// <summary>
+        /// Initialises a new instance.
+        /// </summary>
+        rendering_technique(const std::string& name, const vertex_buffer& vb,
+            ID3D11InputLayout *il, const D3D11_PRIMITIVE_TOPOLOGY pt,
+            ID3D11VertexShader *vs, shader_resources&& vsRes,
+            ID3D11HullShader *hs, shader_resources&& hsRes,
+            ID3D11DomainShader *ds, shader_resources&& dsRes,
+            ID3D11GeometryShader *gs, shader_resources&& gsRes,
+            ID3D11PixelShader *ps, shader_resources&& psRes);
+
+        /// <summary>
+        /// Initialises a new instance.
+        /// </summary>
+        rendering_technique(const std::string& name, ID3D11InputLayout *il,
+            const D3D11_PRIMITIVE_TOPOLOGY pt,
+            ID3D11VertexShader *vs, shader_resources&& vsRes,
+            ID3D11HullShader *hs, shader_resources&& hsRes,
+            ID3D11DomainShader *ds, shader_resources&& dsRes,
+            ID3D11GeometryShader *gs, shader_resources&& gsRes,
+            ID3D11PixelShader *ps, shader_resources&& psRes);
+
+        /// <summary>
+        /// Initialises a new instance.
+        /// </summary>
+        rendering_technique(const std::string& name, ID3D11InputLayout *il,
+            const D3D11_PRIMITIVE_TOPOLOGY pt,
+            ID3D11VertexShader *vs, shader_resources&& vsRes,
+            ID3D11PixelShader *ps, shader_resources&& psRes);
+
+        /// <summary>
+        /// Initialises a new instance.
+        /// </summary>
+        rendering_technique(const std::string& name, ID3D11InputLayout *il,
+            const D3D11_PRIMITIVE_TOPOLOGY pt,
+            ID3D11VertexShader *vs, shader_resources&& vsRes,
+            ID3D11GeometryShader *gs, shader_resources&& gsRes,
+            ID3D11PixelShader *ps, shader_resources&& psRes);
+
+        /// <summary>
+        /// Initialises a new instance.
+        /// </summary>
+        rendering_technique(const std::string& name, ID3D11InputLayout *il,
+            const D3D11_PRIMITIVE_TOPOLOGY pt,
+            ID3D11VertexShader *vs, shader_resources&& vsRes,
+            ID3D11HullShader *hs, shader_resources&& hsRes,
+            ID3D11DomainShader *ds, shader_resources&& dsRes,
+            ID3D11PixelShader *ps, shader_resources&& psRes);
+
+        /// <summary>
+        /// Finalise the instance.
+        /// </summary>
+        ~rendering_technique(void) = default;
 
         /// <summary>
         /// Activates the technique by setting the shaders and resources
@@ -134,26 +223,30 @@ namespace d3d11 {
         /// Add or replace the constant buffers starting at index
         /// <paramref name="start" /> in the given stages.
         /// </summary>
-        template<class... T>
-        void set_constant_buffers(const shader_stages stages, const UINT start,
-            T... buffers);
+        void set_constant_buffers(
+            const std::vector<ATL::CComPtr<ID3D11Buffer>>& buffers,
+            const shader_stages stages, const UINT start = 0);
 
         /// <summary>
         /// Add or replace the shader resource views starting at index
         /// <paramref name="start" /> in the given stages.
         /// </summary>
-        template<class... T>
-        void set_shader_resource_views(const shader_stages stages,
-            const UINT start, T... views);
+        void set_shader_resource_views(
+            std::vector<ATL::CComPtr<ID3D11ShaderResourceView>> &srvs,
+            const shader_stages stages, const UINT start = 0);
 
-        //void set_vertex_buffers();
+        /// <summary>
+        /// Add or replace the vertex buffers starting at index
+        /// <paramref name="start" />.
+        /// <summary>
+        void set_vertex_buffers(const std::vector<vertex_buffer>& vbs,
+            const UINT start = 0);
 
         /// <summary>
         /// Gets the vertex buffers to be bound.
         /// </summary>
         /// <returns></returns>
-        inline const std::vector<ATL::CComPtr<ID3D11Buffer>>& vertex_buffers(
-                void) const {
+        inline const std::vector<vertex_buffer>& vertex_buffers(void) const {
             return this->vertexBuffers;
         }
 
@@ -168,8 +261,28 @@ namespace d3d11 {
 
     private:
 
+        /// <summary>
+        /// Ensure that <paramref name="dst" /> has at least so many elements
+        /// that <paramref name="src" /> can be copied starting at index
+        /// <paramre fname="offset" />.
+        /// </summary>
+        template<class T>
+        static void assert_range(std::vector<T>& dst, const std::vector<T>& src,
+            const size_t offset);
+
+        /// <summary>
+        /// Converts a vector of smart pointers into dumb pointers without
+        /// increasing the reference count.
+        /// </summary>
         template<class T>
         static std::vector<T *> unsmart(std::vector<ATL::CComPtr<T>>& input);
+
+        /// <summary>
+        /// Invokes <paramref name="action" /> for all stages marked in
+        /// <paramref name="stages" />.
+        /// </summary>
+        void foreach_stage(const shader_stages stages,
+            const std::function<void(shader_resources&)>& action);
 
         ATL::CComPtr<ID3D11DomainShader> domainShader;
         ATL::CComPtr<ID3D11GeometryShader> geometryShader;
@@ -179,7 +292,7 @@ namespace d3d11 {
         ATL::CComPtr<ID3D11PixelShader> pixelShader;
         D3D11_PRIMITIVE_TOPOLOGY primitiveTopology;
         std::map<shader_stage, shader_resources> _resources;
-        std::vector<ATL::CComPtr<ID3D11Buffer>> vertexBuffers;
+        std::vector<vertex_buffer> vertexBuffers;
         ATL::CComPtr<ID3D11VertexShader> vertexShader;
 
     };

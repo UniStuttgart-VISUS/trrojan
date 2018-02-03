@@ -19,7 +19,7 @@ namespace trrojan {
     /// Provides help for reading MegaMol binary particle files (mmpld).
     /// </summary>
     /// <remarks>
-    /// https://svn.vis.uni-stuttgart.de/trac/megamol/wiki/mmpld
+    /// See https://svn.vis.uni-stuttgart.de/trac/megamol/wiki/mmpld.
     /// The reader does not support three-component colour formats and
     /// the 16-bit position format.
     /// </remarks>
