@@ -5,6 +5,9 @@
 
 #include "hlsltypemapping.hlsli"
 
+// CONSERVATIVE_DEPTH
+// PER_VERTEX_COLOUR
+
 #ifdef _MSC_VER
 #pragma once
 #else /* _MSC_VER */
@@ -33,8 +36,16 @@ struct HsConstants {
     float InsideTessFactor[2] : SV_InsideTessFactor;
 };
 
+
+/// <summary>
+/// The input of the pixel shader stage.
+/// </summary>
 struct PsInput {
+#ifdef CONSERVATIVE_DEPTH
+    linear noperspective sample float4 Position : SV_POSITION;
+#else /* CONSERVATIVE_DEPTH */
     float4 Position : SV_POSITION;
+#endif /* CONSERVATIVE_DEPTH */
     float4 SphereParams : TEXCOORD0;
     float4 Colour : COLOR0;
     nointerpolation float4 CameraPosition : TEXCOORD1;
@@ -47,13 +58,19 @@ struct PsInput {
 };
 
 
-
+/// <summary>
+/// The output of the pixel shader stage.
+/// </summary>
 struct PsOutput {
     float4 Colour : SV_TARGET;
+#ifdef CONSERVATIVE_DEPTH
+    float Depth : SV_DepthGreaterEqual;
+#else /* CONSERVATIVE_DEPTH */
     float Depth : SV_DEPTH;
+#endif /* CONSERVATIVE_DEPTH */
 };
-
 #endif /* _MSC_VER */
+
 
 #ifdef HOLOMOL
 #define STEREO_BUFFERS (2)

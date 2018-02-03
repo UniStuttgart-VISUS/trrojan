@@ -102,7 +102,6 @@ namespace d3d11 {
         ATL::CComPtr<ID3D11Buffer> vertex_buffer;
         ATL::CComPtr<ID3D11VertexShader> vertex_shader;
         shader_source_map_type vertex_shaders;
-
     };
 
 }
