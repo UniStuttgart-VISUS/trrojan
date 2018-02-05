@@ -3,13 +3,14 @@
 /// </copyright>
 /// <author>Christoph Müller</author>
 
-#include "LocalLighting.hlsli"
-#include "ReconstructCamera.hlsli"
 #include "SpherePipeline.hlsli"
 
 
 // The number of control points, which is one per (hemi-) sphere.
 #define CNT_CONTROL_POINTS (1)
+
+// The partitioning scheme used in the hull shader.
+#define PARTITIONING_SCHEME "fractional_odd"
 
 
 /// <summary>
@@ -63,7 +64,7 @@ HsConstants CalcConstants(InputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
 /// <returns></returns>
 [domain("quad")]
 [patchconstantfunc("CalcConstants")]
-[partitioning("fractional_odd")]
+[partitioning(PARTITIONING_SCHEME)]
 [outputcontrolpoints(CNT_CONTROL_POINTS)]
 [outputtopology("triangle_cw")]
 VsOutput Main(InputPatch<VsOutput, CNT_CONTROL_POINTS> patch,

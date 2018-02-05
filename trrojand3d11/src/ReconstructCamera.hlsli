@@ -13,7 +13,7 @@
 /// <param name="right"></param>
 /// <param name="viewInvMatrix"></param>
 void ReconstructCamera(out float4 pos, out float4 dir, out float4 up,
-    out float4 right, const in matrix viewInvMatrix) {
+        out float4 right, const in matrix viewInvMatrix) {
     // calculate cam position
     pos = viewInvMatrix._41_42_43_44; // (C) by Christoph
 
