@@ -183,7 +183,7 @@ struct VsOutput {
     /// </summary>
     float4 SphereParams : TEXCOORD1;
 #else /* PER_VERTEX_TRANSFORM */
-    l
+
     /// <summary>
     /// The original world-space position and radius of the particle.
     /// </summary>

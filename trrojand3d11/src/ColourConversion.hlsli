@@ -10,16 +10,16 @@
 /// <param name=""></param>
 /// <param name=""></param>
 /// <returns></returns>
-float4x4 UintToFloat4Colour(const uint colour) {
+float4 UintToFloat4Colour(uint colour) {
     float4 retval;
 
-    retval.Colour.r = (colour & 0xFF) / 255.0f;
+    retval.r = (colour & 0xFF) / 255.0f;
     colour >>= 8;
-    retval.Colour.g = (colour & 0xFF) / 255.0f;
+    retval.g = (colour & 0xFF) / 255.0f;
     colour >>= 8;
-    retval.Colour.b = (colour & 0xFF) / 255.0f;
+    retval.b = (colour & 0xFF) / 255.0f;
     colour >>= 8;
-    retval.Colour.a = colour / 255.0f;
+    retval.a = colour / 255.0f;
 
     return retval;
 }

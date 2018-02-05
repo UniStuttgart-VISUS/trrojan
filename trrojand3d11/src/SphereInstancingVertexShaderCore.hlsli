@@ -35,7 +35,7 @@ StructuredBuffer<Particle> Particles : register(t1);
 #define VsOutput PsRaycastingInput
 #elif GEOMETRY_INSTANCING
 #define VsInput VsGeometryInput
-#define PsInput PsGeometryInput
+#define VsOutput PsGeometryInput
 #endif /* QUAD_INSTANCING */
 
 
@@ -45,8 +45,8 @@ StructuredBuffer<Particle> Particles : register(t1);
 /// </summary>
 /// <param name="input"></param>
 /// <returns></returns>
-PsInput Main(VsInput input) {
-    PsInput retval = (PsInput) 0;
+VsOutput Main(VsInput input) {
+    VsOutput retval = (VsOutput) 0;
 
     /* Determine active index in structured resource view. */
     uint particleID = input.InstanceID;
@@ -62,8 +62,8 @@ PsInput Main(VsInput input) {
     float4x4 invVm = ViewInvMatrix[eye];
 
     /* Select the sphere parameters from the structured buffer. */
-    const float3 pos = Particles[particleID].xyz;
-    const float rad = Particles[particleID].w;
+    const float3 pos = Particles[particleID].Position.xyz;
+    const float rad = Particles[particleID].Position.w;
 
 #ifdef QUAD_INSTANCING
     // Make the right vertex based on the vertex ID.
@@ -102,8 +102,7 @@ PsInput Main(VsInput input) {
     retval.Position = mul(retval.Position, mvp);
 
     // Retrieve the view direction for later shading.
-    retval.ViewDirection = float4(normalize(viewInvMatrix._31_32_33), 0.0);
-        ViewInvMatrix[eye]);
+    retval.ViewDirection = float4(normalize(invVm._31_32_33), 0.0);
 #endif /* QUAD_INSTANCING */
 
 #ifdef FLOAT_COLOUR
