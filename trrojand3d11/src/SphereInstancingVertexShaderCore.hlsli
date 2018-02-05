@@ -29,6 +29,7 @@ SamplerState LinearSampler : register(s0);
 /// </summary>
 StructuredBuffer<Particle> Particles : register(t1);
 
+
 #ifdef QUAD_INSTANCING
 #define VsInput VsNoInput
 #define VsOutput PsRaycastingInput
@@ -89,6 +90,9 @@ PsInput Main(VsInput input) {
 
     // Transform camera to glyph space.
     retval.CameraPosition.xyz -= pos;
+
+    // Pass on world-space parameters for raycasting.
+    retval.SphereParams = float4(pos, rad);
 
 #elif GEOMETRY_INSTANCING
     // Transform the instance to match the sphere's size and position.
