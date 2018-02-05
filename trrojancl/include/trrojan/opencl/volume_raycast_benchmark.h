@@ -360,7 +360,7 @@ namespace opencl
                 if (use_buffer)
                 {
                     _volume_mem = cl::Buffer(cl_env->get_properties().context,
-                                             CL_MEM_READ_ONLY | CL_MEM_HOST_NO_ACCESS,
+                                             CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
                                              converted_data.size()*sizeof(To),
                                              converted_data.data());
                 }

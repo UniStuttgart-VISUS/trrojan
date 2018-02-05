@@ -365,7 +365,7 @@ size_t trrojan::opencl::volume_raycast_benchmark::run(const configuration_set& c
                          std::dynamic_pointer_cast<device>(dev),
                          _kernel_source,
                          _precision_div,
-                         std::string("-DIMAGE_SUPPORT"));
+                         std::string("-w"));
         }
 
         // reset volume kernel argument if volume data changed
@@ -770,7 +770,7 @@ void trrojan::opencl::volume_raycast_benchmark::generate_bricks(environment::poi
             throw std::invalid_argument("Unknown or invalid volume data format.");
 
         _brick_mem = cl::Image3D(env->get_properties().context,
-                                 CL_MEM_READ_WRITE | CL_MEM_HOST_NO_ACCESS,
+                                 CL_MEM_READ_WRITE,
                                  format,
                                  bricksTexSize.at(0),
                                  bricksTexSize.at(1),

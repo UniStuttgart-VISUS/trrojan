@@ -245,8 +245,8 @@ __kernel void generateBricks( __read_only image3d_t volData
             }
         }
     }
-	minVal = clamp(minVal, 0.f, 1.f);
-	maxVal = clamp(maxVal, 0.f, 1.f);
+    minVal = clamp(minVal, 0.f, 1.f);
+    maxVal = clamp(maxVal, 0.f, 1.f);
 
     write_imagef(volBrickData, (int4)(coord, 0), (float4)(minVal, maxVal, 0.f, 1.f));
 }
