@@ -148,19 +148,18 @@ std::pair<float, float> trrojan::d3d11::mmpld_base::get_mmpld_clipping(
 
     auto viewLen = glm::length(centre - camPos);
 
-    auto nearPlane = viewLen - diagLen;
-    if (nearPlane < 0.1f) {
-        nearPlane = 0.1f;
-    }
+    //auto nearPlane = viewLen - diagLen;
+    //if (nearPlane < 0.01f) {
+    //    nearPlane = 0.01f;
+    //}
+    auto nearPlane = 0.01f;
 
     auto farPlane = viewLen + diagLen;
     if (farPlane < nearPlane) {
-        farPlane = nearPlane + 0.1f;
+        farPlane = nearPlane + 1.0f;
     }
 
     return std::make_pair(nearPlane, farPlane);
-
-
 }
 
 

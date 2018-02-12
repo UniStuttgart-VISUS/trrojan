@@ -115,11 +115,12 @@ PsOutput Main(PsInput input) {
     float radicand = squarRad - d2s;                        // square of difference of projected length and lambda
     lambda = d1 - sqrt(radicand);                           // lambda
 
-    if (radicand < 0.0) {
+    if ((radicand < 0.0f) || (lambda < 0.0f)) {
         discard;
         //retval.Colour = 0.8.xxxx;
+        retval.Colour = float4(1.0f, 0.0f, 0.0f, 1.0f);
         //retval.Depth = input.Position.z;
-        //return retval;
+        return retval;
     } else {
         // chose color for lighting
         sphereintersection = lambda * ray + camPos.xyz;    // intersection point
