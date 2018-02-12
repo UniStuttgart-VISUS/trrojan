@@ -31,7 +31,14 @@ namespace d3d11 {
 
     public:
 
-        typedef graphics_benchmark_base::viewport_type viewport_type;
+        typedef trrojan::graphics_benchmark_base::manoeuvre_step_type
+            manoeuvre_step_type;
+
+        typedef trrojan::graphics_benchmark_base::manoeuvre_type manoeuvre_type;
+
+        typedef trrojan::graphics_benchmark_base::point_type point_type;
+
+        typedef trrojan::graphics_benchmark_base::viewport_type viewport_type;
 
         /// <summary>
         /// Boolean factor enabling the debug view.

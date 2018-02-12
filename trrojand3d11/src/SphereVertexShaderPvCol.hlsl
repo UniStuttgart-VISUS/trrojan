@@ -6,6 +6,8 @@
 #define PER_VERTEX_COLOUR 1
 #include "SpherePipeline.hlsli"
 
+#define VsInput VsRaycastingInput
+
 
 /// <summary>
 /// Vertex shader for constant radius, but per-vertex colour.
@@ -15,8 +17,7 @@
 VsOutput Main(VsInput input) {
     VsOutput retval = (VsOutput) 0;
 
-    retval.Position = float4(input.Position.xyz, 1.0f);
-    retval.Radius = IntRangeGlobalRadTessFactor.z;
+    retval.SphereParams = float4(input.Position.xyz, GlobalRadius);
     retval.Colour = input.Colour;
 #ifdef HOLOMOL
     retval.Eye = input.Eye;

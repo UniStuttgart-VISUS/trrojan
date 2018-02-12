@@ -31,15 +31,30 @@ namespace d3d11 {
     ATL::CComPtr<ID3D11DomainShader> create_domain_shader(ID3D11Device *device,
         const BYTE(&byteCode)[N]);
 
+    inline ATL::CComPtr<ID3D11DomainShader> create_domain_shader(
+            ID3D11Device *device, std::nullptr_t) {
+        return nullptr;
+    }
+
     ATL::CComPtr<ID3D11Query> create_event_query(ID3D11Device *device);
 
     template<size_t N>
     ATL::CComPtr<ID3D11GeometryShader> create_geometry_shader(
         ID3D11Device *device, const BYTE(&byteCode)[N]);
 
+    inline ATL::CComPtr<ID3D11GeometryShader> create_geometry_shader(
+            ID3D11Device *device, std::nullptr_t) {
+        return nullptr;
+    }
+
     template<size_t N>
     ATL::CComPtr<ID3D11HullShader> create_hull_shader(
         ID3D11Device *device, const BYTE(&byteCode)[N]);
+
+    inline ATL::CComPtr<ID3D11HullShader> create_hull_shader(
+            ID3D11Device *device, std::nullptr_t) {
+        return nullptr;
+    }
 
     ATL::CComPtr<ID3D11InputLayout> create_input_layout(ID3D11Device *device,
         const std::vector<D3D11_INPUT_ELEMENT_DESC>& elements,
@@ -67,6 +82,11 @@ namespace d3d11 {
         return create_pixel_shader(device, byteCode, N);
     }
 
+    inline ATL::CComPtr<ID3D11PixelShader> create_pixel_shader(
+            ID3D11Device *device, std::nullptr_t) {
+        return nullptr;
+    }
+
     ATL::CComPtr<ID3D11VertexShader> create_vertex_shader(ID3D11Device *device,
         const BYTE *byteCode, const size_t cntByteCode);
 
@@ -74,6 +94,11 @@ namespace d3d11 {
     inline ATL::CComPtr<ID3D11VertexShader> create_vertex_shader(
             ID3D11Device *device, const BYTE(&byteCode)[N]) {
         return create_vertex_shader(device, byteCode, N);
+    }
+
+    inline ATL::CComPtr<ID3D11VertexShader> create_vertex_shader(
+            ID3D11Device *device, std::nullptr_t) {
+        return nullptr;
     }
 
     ATL::CComPtr<ID3D11Texture1D> create_viridis_colour_map(

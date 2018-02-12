@@ -37,6 +37,19 @@
 #include "SphereVertexShaderPvRad.h"
 
 
+#define _DEFINE_SHADER_PROP(v) static_cast<std::uint32_t>(v)
+#define SHADER_PROP_PV_COL _DEFINE_SHADER_PROP(0x000000001)
+#define SHADER_PROP_PV_RAD _DEFINE_SHADER_PROP(0x000000002)
+#define SHADER_PROP_PV_INT _DEFINE_SHADER_PROP(0x000000004)
+#define SHADER_PROP_VS_XFER_FUNC _DEFINE_SHADER_PROP(0x000000008)
+#define SHADER_PROP_FLOAT_COL _DEFINE_SHADER_PROP(0x000000010)
+#define SHADER_PROP_VPRT _DEFINE_SHADER_PROP(0x000000020)
+#undef _DEFINE_SHADER_PROP
+
+static std::map<std::string, std::map<std::uint32_t,
+    trrojan::d3d11::rendering_technique>> _rendering_techniques;
+
+
 #define _SPHERE_BENCH_DEFINE_FACTOR(f)                                         \
 const char *trrojan::d3d11::sphere_benchmark::factor_##f = #f
 
@@ -52,9 +65,11 @@ _SPHERE_BENCH_DEFINE_FACTOR(vs_xfer_function);
 #define _SPHERE_BENCH_DEFINE_METHOD(m)                                         \
 const char *trrojan::d3d11::sphere_benchmark::method_##m = #m
 
-_SPHERE_BENCH_DEFINE_METHOD(geo_sprite);
-//_SPHERE_BENCH_DEFINE_METHOD(inst_sprite);
-_SPHERE_BENCH_DEFINE_METHOD(tess_sprite);
+_SPHERE_BENCH_DEFINE_METHOD(geo_quad);
+_SPHERE_BENCH_DEFINE_METHOD(geo_poly);
+_SPHERE_BENCH_DEFINE_METHOD(inst_quad);
+_SPHERE_BENCH_DEFINE_METHOD(geo_quad);
+_SPHERE_BENCH_DEFINE_METHOD(tess_poly);
 _SPHERE_BENCH_DEFINE_METHOD(tess_sphere);
 _SPHERE_BENCH_DEFINE_METHOD(tess_hemisphere);
 
@@ -66,7 +81,7 @@ _SPHERE_BENCH_DEFINE_METHOD(tess_hemisphere);
  */
 trrojan::d3d11::sphere_benchmark::sphere_benchmark(void)
         : benchmark_base("sphere-raycaster"),
-        method(shader_method::geo_sprite) {
+        method(sphere_benchmark::method_inst_quad) {
     typedef mmpld_reader::shader_properties sp_t;
 
     // Define the data we need.
@@ -82,6 +97,12 @@ trrojan::d3d11::sphere_benchmark::sphere_benchmark(void)
         factor_manoeuvre_step, static_cast<manoeuvre_step_type>(0)));
     this->_default_configs.add_factor(factor::from_manifestations(
         factor_manoeuvre_steps, static_cast<manoeuvre_step_type>(64)));
+
+    // Prepare a lookup table for the different rendering techniques.
+#define _ADD_SPHERE_TECH(name, variant, file) this->techniques[name][variant] \
+    = rendering_technique();
+#undef _ADD_SPHERE_TECH
+    // TODO
 
     // Prepare a lookup table for different variants of the pixel shader.
     this->pixel_shaders[sp_t::none] = pack_shader_source(
@@ -339,9 +360,9 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
     constants.GlobalColour.z = this->mmpld_list.colour[2];
     constants.GlobalColour.w = this->mmpld_list.colour[3];
 
-    constants.IntRangeGlobalRadTessFactor.x = this->mmpld_list.min_intensity;
-    constants.IntRangeGlobalRadTessFactor.y = this->mmpld_list.max_intensity;
-    constants.IntRangeGlobalRadTessFactor.z = this->mmpld_list.radius;
+    constants.IntensityRange.x = this->mmpld_list.min_intensity;
+    constants.IntensityRange.y = this->mmpld_list.max_intensity;
+    constants.GlobalRadius = this->mmpld_list.radius;
     constants.IntRangeGlobalRadTessFactor.w = 5.0f;
 
     /* Update constant buffer. */

@@ -28,12 +28,21 @@ namespace d3d11 {
 
     public:
 
+        typedef ATL::CComPtr<ID3D11Buffer> buffer_type;
+        typedef ATL::CComPtr<ID3D11DomainShader> domain_shader_type;
+        typedef ATL::CComPtr<ID3D11GeometryShader> geometry_shader_type;
+        typedef ATL::CComPtr<ID3D11HullShader> hull_shader_type;
+        typedef ATL::CComPtr<ID3D11InputLayout> input_layout_type;
+        typedef ATL::CComPtr<ID3D11PixelShader> pixel_shader_type;
+        typedef ATL::CComPtr<ID3D11ShaderResourceView> srv_type;
+        typedef ATL::CComPtr<ID3D11VertexShader> vertex_shader_type;
+
         /// <summary>
         /// Groups resources which should be bound to a shader stage.
         /// </summary>
         struct shader_resources {
-            std::vector<ATL::CComPtr<ID3D11Buffer>> constant_buffers;
-            std::vector<ATL::CComPtr<ID3D11ShaderResourceView>> resource_views;
+            std::vector<buffer_type> constant_buffers;
+            std::vector<srv_type> resource_views;
         };
 
         /// <summary>
@@ -55,10 +64,22 @@ namespace d3d11 {
         };
 
         /// <summary>
+        /// A bitmask that identifies different versions of the same technique,
+        /// e.g. using different input layouts.
+        /// </summary>
+        typedef std::uint32_t version_type;
+
+        /// <summary>
+        /// A list of different versions of the same technique, which can be
+        /// identified by a <see cref="version_type" /> bitmask.
+        /// </summary>
+        typedef std::map<version_type, rendering_technique> version_list;
+
+        /// <summary>
         /// Groups all information to emit a vertex buffer.
         /// </summary>
         struct vertex_buffer {
-            ATL::CComPtr<ID3D11Buffer> buffer;
+            buffer_type buffer;
             UINT offset;
             UINT size;
             UINT stride;
@@ -154,7 +175,7 @@ namespace d3d11 {
         /// </summary>
         /// <returns>A pointer to the shader or <c>nullptr</c> if no shader is
         /// required.</returns>
-        inline ATL::CComPtr<ID3D11DomainShader> domain_shader(void) {
+        inline domain_shader_type domain_shader(void) {
             return this->domainShader;
         }
 
@@ -163,7 +184,7 @@ namespace d3d11 {
         /// </summary>
         /// <returns>A pointer to the shader or <c>nullptr</c> if no shader is
         /// required.</returns>
-        inline ATL::CComPtr<ID3D11GeometryShader> geometry_shader(void) {
+        inline geometry_shader_type geometry_shader(void) {
             return this->geometryShader;
         }
 
@@ -172,7 +193,7 @@ namespace d3d11 {
         /// </summary>
         /// <returns>A pointer to the shader or <c>nullptr</c> if no shader is
         /// required.</returns>
-        inline ATL::CComPtr<ID3D11HullShader> hull_shader(void) {
+        inline hull_shader_type hull_shader(void) {
             return this->hullShader;
         }
 
@@ -180,7 +201,7 @@ namespace d3d11 {
         /// Gets the vertex input layout required for the technique.
         /// </summary>
         /// <returns></returns>
-        inline ATL::CComPtr<ID3D11InputLayout> input_layout(void) {
+        inline input_layout_type input_layout(void) {
             return this->inputLayout;
         }
 
@@ -197,7 +218,7 @@ namespace d3d11 {
         /// </summary>
         /// <returns>A pointer to the shader or <c>nullptr</c> if no shader is
         /// required.</returns>
-        inline ATL::CComPtr<ID3D11PixelShader> pixel_shader(void) {
+        inline pixel_shader_type pixel_shader(void) {
             return this->pixelShader;
         }
 
@@ -223,16 +244,14 @@ namespace d3d11 {
         /// Add or replace the constant buffers starting at index
         /// <paramref name="start" /> in the given stages.
         /// </summary>
-        void set_constant_buffers(
-            const std::vector<ATL::CComPtr<ID3D11Buffer>>& buffers,
+        void set_constant_buffers(const std::vector<buffer_type>& buffers,
             const shader_stages stages, const UINT start = 0);
 
         /// <summary>
         /// Add or replace the shader resource views starting at index
         /// <paramref name="start" /> in the given stages.
         /// </summary>
-        void set_shader_resource_views(
-            std::vector<ATL::CComPtr<ID3D11ShaderResourceView>> &srvs,
+        void set_shader_resource_views(const std::vector<srv_type> &srvs,
             const shader_stages stages, const UINT start = 0);
 
         /// <summary>
@@ -255,7 +274,7 @@ namespace d3d11 {
         /// </summary>
         /// <returns>A pointer to the shader or <c>nullptr</c> if no shader is
         /// required.</returns>
-        inline ATL::CComPtr<ID3D11VertexShader> vertex_shader(void) {
+        inline vertex_shader_type vertex_shader(void) {
             return this->vertexShader;
         }
 
@@ -284,16 +303,16 @@ namespace d3d11 {
         void foreach_stage(const shader_stages stages,
             const std::function<void(shader_resources&)>& action);
 
-        ATL::CComPtr<ID3D11DomainShader> domainShader;
-        ATL::CComPtr<ID3D11GeometryShader> geometryShader;
-        ATL::CComPtr<ID3D11HullShader> hullShader;
-        ATL::CComPtr<ID3D11InputLayout> inputLayout;
+        domain_shader_type domainShader;
+        geometry_shader_type geometryShader;
+        hull_shader_type hullShader;
+        input_layout_type inputLayout;
         std::string _name;
-        ATL::CComPtr<ID3D11PixelShader> pixelShader;
+        pixel_shader_type pixelShader;
         D3D11_PRIMITIVE_TOPOLOGY primitiveTopology;
         std::map<shader_stage, shader_resources> _resources;
         std::vector<vertex_buffer> vertexBuffers;
-        ATL::CComPtr<ID3D11VertexShader> vertexShader;
+        vertex_shader_type vertexShader;
 
     };
 

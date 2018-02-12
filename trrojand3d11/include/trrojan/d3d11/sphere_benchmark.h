@@ -13,6 +13,7 @@
 #include "trrojan/d3d11/benchmark_base.h"
 #include "trrojan/d3d11/mmpld_base.h"
 #include "trrojan/d3d11/random_sphere_base.h"
+#include "trrojan/d3d11/rendering_technique.h"
 
 
 namespace trrojan {
@@ -26,13 +27,9 @@ namespace d3d11 {
 
     public:
 
-        enum class shader_method {
-            geo_sprite,
-            tess_sprite,
-            tess_sphere,
-            tess_hemisphere
-        };
-
+        /// <summary>
+        /// Type identifying a frame index.
+        /// <s/ummary>
         typedef std::uint32_t frame_type;
 
         static const char *factor_data_set;
@@ -41,13 +38,22 @@ namespace d3d11 {
         static const char *factor_method;
         static const char *factor_vs_xfer_function;
 
-        static const char *method_geo_sprite;
-        static const char *method_tess_sprite;
+        static const char *method_geo_quad;
+        static const char *method_geo_poly;
+        static const char *method_inst_quad;
+        static const char *method_tess_quad;
+        static const char *method_tess_poly;
         static const char *method_tess_sphere;
         static const char *method_tess_hemisphere;
 
+        /// <summary>
+        /// Initialise a new instance.
+        /// </summary>
         sphere_benchmark(void);
 
+        /// <summary>
+        /// Finalise the instance,
+        /// </summary>
         virtual ~sphere_benchmark(void);
 
         virtual void optimise_order(configuration_set& inOutConfs);
@@ -76,6 +82,13 @@ namespace d3d11 {
             shader_source_map_type;
 
         /// <summary>
+        /// A lookup table for different rendering techniques and their
+        /// variants.
+        /// </summary>
+        typedef std::unordered_map<std::string,
+            rendering_technique::version_list> technique_list;
+
+        /// <summary>
         /// Pack static shader code into an entry of the
         /// <see cref="shader_source_map_type" />.
         /// </summary>
@@ -95,10 +108,11 @@ namespace d3d11 {
         shader_source_map_type hull_shaders;
         ATL::CComPtr<ID3D11InputLayout> input_layout;
         ATL::CComPtr<ID3D11SamplerState> linear_sampler;
-        shader_method method;
+        std::string method;
         ATL::CComPtr<ID3D11PixelShader> pixel_shader;
         shader_source_map_type pixel_shaders;
         ATL::CComPtr<ID3D11Query> stats_query;
+        technique_list techniques;
         ATL::CComPtr<ID3D11Buffer> vertex_buffer;
         ATL::CComPtr<ID3D11VertexShader> vertex_shader;
         shader_source_map_type vertex_shaders;

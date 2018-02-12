@@ -232,7 +232,7 @@ void trrojan::d3d11::rendering_technique::apply(ID3D11DeviceContext *ctx) {
  * trrojan::d3d11::rendering_technique::set_constant_buffers
  */
 void trrojan::d3d11::rendering_technique::set_constant_buffers(
-        const std::vector<ATL::CComPtr<ID3D11Buffer>>& buffers,
+        const std::vector<buffer_type>& buffers,
         const shader_stages stages, const UINT start) {
     this->foreach_stage(stages, [&buffers, &start](shader_resources& r) {
         auto& dst = r.constant_buffers;
@@ -246,7 +246,7 @@ void trrojan::d3d11::rendering_technique::set_constant_buffers(
  * trrojan::d3d11::rendering_technique::set_shader_resource_views
  */
 void trrojan::d3d11::rendering_technique::set_shader_resource_views(
-        std::vector<ATL::CComPtr<ID3D11ShaderResourceView>>& srvs,
+        const std::vector<srv_type>& srvs,
         const shader_stages stages, const UINT start) {
     this->foreach_stage(stages, [&srvs, &start](shader_resources& r) {
         auto& dst = r.resource_views;

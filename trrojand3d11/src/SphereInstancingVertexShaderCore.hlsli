@@ -30,7 +30,7 @@ SamplerState LinearSampler : register(s0);
 StructuredBuffer<Particle> Particles : register(t1);
 
 
-#ifdef QUAD_INSTANCING
+#if (defined(QUAD_INSTANCING) || defined(POLY_INSTANCING))
 #define VsInput VsNoInput
 #define VsOutput PsRaycastingInput
 #elif GEOMETRY_INSTANCING
@@ -83,7 +83,7 @@ VsOutput Main(VsInput input) {
 
     // Move sprite to world position.
     retval.Position.xyz += pos;
-    retval.Position -= float4(rad * v, 0.0f);
+    retval.Position -= float4(rad * matOrient._31_32_33, 0.0f);
 
     // Do the camera transform.
     retval.Position = mul(retval.Position, mvp);

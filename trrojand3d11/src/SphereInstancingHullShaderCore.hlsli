@@ -1,4 +1,4 @@
-/// <copyright file="SphereSpriteHullShader.hlsli" company="SFB-TRR 161 Quantitative Methods for Visual Computing">
+/// <copyright file="SphereInstancingHullShaderCore.hlsl" company="SFB-TRR 161 Quantitative Methods for Visual Computing">
 /// Copyright © 2017 SFB-TRR 161. Alle Rechte vorbehalten.
 /// </copyright>
 /// <author>Christoph Müller</author>
@@ -14,7 +14,7 @@
 /// Compute the tessellation factors for the sprite to raycast the sphere on.
 /// </summary>
 HsConstants CalcConstants(InputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
-        uint patchId : SV_PrimitiveID) {
+    uint patchId : SV_PrimitiveID) {
     HsConstants retval = (HsConstants) 0;
 
 #ifdef HOLOMOL

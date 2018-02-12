@@ -214,3 +214,5 @@
 /.vs/TRRojan/v15
 /.vs
 /build64
+/SphereSpriteInstPvRadPvByteColVertexShader.h
+/SphereSpriteInstPvRadPvFltColVertexShader.h

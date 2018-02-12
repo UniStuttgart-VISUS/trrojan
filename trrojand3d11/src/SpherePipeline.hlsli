@@ -267,6 +267,11 @@ struct PsOutput {
 #endif /* HOLOMOL */
 
 
+// Note: the current host implementation required the constant buffers to be the
+// same for all techniques, because we are including all this header in exactly
+// one file. Future implementations could work around this by using namespaces.
+
+
 cbuffer SphereConstants CBUFFER(0) {
     float4x4 ViewMatrix[STEREO_BUFFERS];
     float4x4 ProjMatrix[STEREO_BUFFERS];
@@ -279,3 +284,12 @@ cbuffer SphereConstants CBUFFER(0) {
     float GlobalRadius;
     float TessellationFactor;
 };
+
+//cbuffer ViewConstants CBUFFER(1) {
+//    float4x4 ViewMatrix[STEREO_BUFFERS];
+//    float4x4 ProjMatrix[STEREO_BUFFERS];
+//    float4x4 ViewProjMatrix[STEREO_BUFFERS];
+//    float4x4 ViewInvMatrix[STEREO_BUFFERS];
+//    float4x4 ViewProjInvMatrix[STEREO_BUFFERS];
+//    float4 Viewport;
+//};
