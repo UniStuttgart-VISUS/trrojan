@@ -353,18 +353,18 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
     ctx->VSSetShaderResources(0, 1, &this->colour_map.p);
     ctx->VSSetSamplers(0, 1, &this->linear_sampler.p);
 
-	if (isTessellation) {
-		/* Configure hull shader stage. */
-		ctx->HSSetShader(this->hull_shader.p, nullptr, 0);
-		ctx->HSSetConstantBuffers(0, 1, &this->constant_buffer.p);
+    if (isTessellation) {
+        /* Configure hull shader stage. */
+        ctx->HSSetShader(this->hull_shader.p, nullptr, 0);
+        ctx->HSSetConstantBuffers(0, 1, &this->constant_buffer.p);
 
-		/* Configure domain shader stage. */
-		ctx->DSSetShader(this->domain_shader.p, nullptr, 0);
-		ctx->DSSetConstantBuffers(0, 1, &this->constant_buffer.p);
-	} else {
+        /* Configure domain shader stage. */
+        ctx->DSSetShader(this->domain_shader.p, nullptr, 0);
+        ctx->DSSetConstantBuffers(0, 1, &this->constant_buffer.p);
+    } else {
         ctx->HSSetShader(nullptr, nullptr, 0);
         ctx->DSSetShader(nullptr, nullptr, 0);
-	}
+    }
 
     if (!isTessellation) {
         /* Configure geometry stage. */

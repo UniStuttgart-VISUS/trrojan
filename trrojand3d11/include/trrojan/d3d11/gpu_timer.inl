@@ -68,7 +68,8 @@ trrojan::d3d11::gpu_timer<L>::to_milliseconds(
  */
 template<size_t L> const typename trrojan::d3d11::gpu_timer<L>::size_type
 trrojan::d3d11::gpu_timer<L>::infinite
-    = (std::numeric_limits<gpu_timer::value_type>::max)();
+    = static_cast<typename trrojan::d3d11::gpu_timer<L>::size_type>(
+    (std::numeric_limits<gpu_timer::value_type>::max)());
 
 
 /*
