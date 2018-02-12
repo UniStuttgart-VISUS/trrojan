@@ -1,0 +1,118 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojand3d11\src\bench_render_target.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojand3d11\src\benchmark_base.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojand3d11\src\debug_render_target.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojand3d11\src\device.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojand3d11\src\environment.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojand3d11\src\mmpld_base.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojand3d11\src\plugin.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojand3d11\src\random_sphere_base.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojand3d11\src\render_target.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojand3d11\src\sphere_benchmark.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojand3d11\src\utilities.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojand3d11\include\trrojan\d3d11\bench_render_target.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojand3d11\include\trrojan\d3d11\benchmark_base.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojand3d11\include\trrojan\d3d11\debug_render_target.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojand3d11\include\trrojan\d3d11\device.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojand3d11\include\trrojan\d3d11\environment.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojand3d11\include\trrojan\d3d11\export.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojand3d11\include\trrojan\d3d11\gpu_timer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojand3d11\include\trrojan\d3d11\mmpld_base.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojand3d11\include\trrojan\d3d11\plugin.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojand3d11\include\trrojan\d3d11\random_sphere_base.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojand3d11\include\trrojan\d3d11\render_target.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojand3d11\include\trrojan\d3d11\sphere_benchmark.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojand3d11\include\trrojan\d3d11\utilities.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojand3d11\include\trrojan\d3d11\gpu_timer.inl">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojand3d11\include\trrojan\d3d11\utilities.inl">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojand3d11\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <FXCompile Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojand3d11\src\SphereVertexShader.hlsl">
+      <Filter>Shader Files</Filter>
+    </FXCompile>
+    <FXCompile Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojand3d11\src\SphereGeometryShader.hlsl">
+      <Filter>Shader Files</Filter>
+    </FXCompile>
+    <FXCompile Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojand3d11\src\SpherePixelShader.hlsl">
+      <Filter>Shader Files</Filter>
+    </FXCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojand3d11\src\SpherePipeline.hlsli">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="C:\Users\brudervn\tfs\Repos\TRRojan\trrojand3d11\src\hlsltypemapping.hlsli">
+      <Filter>Shader Files</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{8CC32C77-1F64-3E36-A423-97308EEE74F9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{8989C17A-6DCE-31EF-A684-42311869A1EA}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shader Files">
+      <UniqueIdentifier>{28050B37-0883-3B1E-92DC-F7604268817A}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

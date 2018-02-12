@@ -363,8 +363,9 @@ size_t trrojan::opencl::volume_raycast_benchmark::run(const configuration_set& c
             }
             build_kernel(std::dynamic_pointer_cast<environment>(env),
                          std::dynamic_pointer_cast<device>(dev),
+                         _kernel_source,
                          _precision_div,
-                         std::string("-DIMAGE_SUPPORT"));
+                         std::string("-w"));
         }
 
         // reset volume kernel argument if volume data changed
@@ -403,7 +404,7 @@ trrojan::result trrojan::opencl::volume_raycast_benchmark::run(const configurati
     auto env = cfg.find(factor_environment)->value().as<trrojan::environment>();
     environment::pointer env_ptr = std::dynamic_pointer_cast<environment>(env);
     int run_iterations = cfg.find(factor_iterations)->value().as<int>();
-    std::vector<double> times(run_iterations, 0.0);
+    std::vector<variant> times(run_iterations, 0.0);
     auto imgSize = cfg.find(factor_viewport)->value().as<std::array<unsigned int, 2>>();
     std::array<unsigned int, 3> img_dim = { {imgSize.at(0), imgSize.at(1), 1u} };
     cl_int evt_status = CL_QUEUED;
@@ -422,9 +423,8 @@ trrojan::result trrojan::opencl::volume_raycast_benchmark::run(const configurati
                                                                  &ndr_evt);
             env_ptr->get_properties().queue.flush();    // global sync
             while(evt_status != CL_COMPLETE)
-            {
                 ndr_evt.getInfo<cl_int>(CL_EVENT_COMMAND_EXECUTION_STATUS, &evt_status);
-            }
+            
             cl_ulong start = 0;
             cl_ulong end = 0;
             ndr_evt.getProfilingInfo(CL_PROFILING_COMMAND_START, &start);
@@ -471,12 +471,17 @@ trrojan::result trrojan::opencl::volume_raycast_benchmark::run(const configurati
         auto dev = cfg.find(factor_device)->value().as<trrojan::device>();
         device::pointer dev_ptr = std::dynamic_pointer_cast<device>(dev);
         auto file = cfg.find(factor_volume_file_name)->value().as<std::string>();
-        auto rot = cfg.find(factor_cam_rotation)->value().as<std::array<float, 4>>();
+        std::size_t foundFile = file.find_last_of("/\\");
+//        auto rot = cfg.find(factor_cam_rotation)->value().as<std::array<float, 4>>();
         auto iteration = cfg.find(factor_maneuver_iteration)->value().as<int>();
-        std::size_t found = file.find_last_of("/\\");
-        trrojan::save_image("img/" + dev_ptr->name() + "_" + file.substr(found + 1) + "_"
-                            + std::to_string(iteration) + ".png",
-                            _output_data.data(), imgSize.at(0), imgSize.at(1), 4);
+        auto maneuver = cfg.find(factor_maneuver)->value().as<std::string>();
+        auto tff = cfg.find(factor_tff_file_name)->value().as<std::string>();
+        std::size_t foundTff = tff.find_last_of("/\\");
+        trrojan::save_image("imgTest/"
+                            + dev_ptr->name() + "_" + file.substr(foundFile + 1) + "_"
+                            + tff.substr(foundTff + 1) + "_" + maneuver + "_" +
+                            std::to_string(iteration) + ".bmp", _output_data.data(),
+                            imgSize.at(0), imgSize.at(1), 4);
     }
 
     // TODO: move to own method
@@ -491,14 +496,13 @@ trrojan::result trrojan::opencl::volume_raycast_benchmark::run(const configurati
     for (int i = 0; i < run_iterations; ++i)
         result_names.push_back("execution_time_" + std::to_string(i));
     auto retval = std::make_shared<basic_result>(result_cfg, std::move(result_names));
-    // FIXME: change to be relative to # of run iterations
-    retval->add({times.at(0), times.at(1), times.at(2), times.at(3), times.at(4)});
+    retval->add(times);
 
     // calc median of execution times of all runs
-    std::sort(times.begin(), times.end());
+    //std::sort(times.begin(), times.end());
     double median = times.at(times.size() / 2);
     std::ostringstream os;
-    os << "Kernel time median: " << median << std::endl;
+    os << "Kernel time sample: " << median << std::endl;
     log::instance().write(log_level::information, os.str().c_str());
 
     return retval;
@@ -554,6 +558,30 @@ void trrojan::opencl::volume_raycast_benchmark::setup_raycaster(const configurat
 
 }
 
+/**
+ * trrojan::opencl::volume_raycast_benchmark::set_tff_prefix_sum
+ */
+void trrojan::opencl::volume_raycast_benchmark::set_tff_prefix_sum(
+        std::vector<unsigned int> &tff_prefix_sum,
+        environment::pointer env)
+{
+    if (!_dr.has_data())
+        return;
+    try
+    {
+        cl::ImageFormat format;
+        format.image_channel_order = CL_R;
+        format.image_channel_data_type = CL_UNSIGNED_INT32;
+		cl_mem_flags flags = CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR;
+        _tff_prefix_mem = cl::Image1D(env->get_properties().context, flags, format,
+                                      tff_prefix_sum.size(), tff_prefix_sum.data());
+    }
+    catch (cl::Error err)
+    {
+        log_cl_error(err);
+    }
+}
+
 /*
  * trrojan::opencl::volume_raycast_benchmark::setup_volume_data
  */
@@ -589,10 +617,22 @@ void trrojan::opencl::volume_raycast_benchmark::setup_volume_data(
                        cfg.find(factor_volume_scaling)->value());
     }
     // transfer function factor changed
-    if (changed.count(factor_tff_file_name) || changed.count(factor_environment))
+    if (changed.count(factor_tff_file_name) || changed.count(factor_environment)
+            || changed.count(factor_volume_file_name))
     {
         auto file_name = cfg.find(factor_tff_file_name)->value().as<std::string>();
         load_transfer_function(file_name, std::dynamic_pointer_cast<environment>(env));
+
+        // TODO: do the build kernel generation right
+        auto env = cfg.find(factor_environment)->value().as<trrojan::environment>();
+        auto dev = cfg.find(factor_device)->value().as<trrojan::device>();
+        compose_kernel(cfg);
+        build_kernel(std::dynamic_pointer_cast<environment>(env),
+                     std::dynamic_pointer_cast<device>(dev),
+                     _kernel_source,
+                     _precision_div,
+                     std::string("-w"));
+        generate_bricks(std::dynamic_pointer_cast<environment>(env));
     }
 }
 
@@ -665,14 +705,97 @@ const std::vector<char> & trrojan::opencl::volume_raycast_benchmark::load_volume
 }
 
 /**
+ * @brief VolumeRenderCL::setMemObjectsBrickGen
+ */
+void trrojan::opencl::volume_raycast_benchmark::set_mem_objects_brick_gen()
+{
+    _gen_bricks_kernel.setArg(VOLUME, _volume_mem);
+    _gen_bricks_kernel.setArg(1, _brick_mem);
+}
+
+/**
+ * @brief RoundPow2
+ * @param iNumber
+ * @return
+ */
+static unsigned int RoundPow2(unsigned int n)
+{
+    // next highest power of 2
+    // http://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2
+    unsigned int val = n - 1u;
+    val |= val >> 1;
+    val |= val >> 2;
+    val |= val >> 4;
+    val |= val >> 8;
+    val |= val >> 16;
+    val++;
+    // previous power of 2
+    unsigned int x = val >> 1;
+    // round to nearest of the two
+    return (val - n) > (n - x) ? x : val;
+}
+
+/**
+ * @brief VolumeRenderCL::generateBricks
+ * @param volumeData
+ */
+void trrojan::opencl::volume_raycast_benchmark::generate_bricks(environment::pointer env)
+{
+    if (!_dr.has_data())
+        return;
+    try
+    {
+        // calculate brick size
+        const unsigned int numBricks = 64u;
+        std::array<unsigned int, 3> brickRes = {1u, 1u, 1u};
+        brickRes.at(0) = RoundPow2(_dr.properties().volume_res.at(0)/numBricks);
+        brickRes.at(1) = RoundPow2(_dr.properties().volume_res.at(1)/numBricks);
+        brickRes.at(2) = RoundPow2(_dr.properties().volume_res.at(2)/numBricks);
+        std::array<unsigned int, 3> bricksTexSize = {1u, 1u, 1u};
+        bricksTexSize.at(0) = ceil(_dr.properties().volume_res.at(0)/(double)brickRes.at(0));
+        bricksTexSize.at(1) = ceil(_dr.properties().volume_res.at(1)/(double)brickRes.at(1));
+        bricksTexSize.at(2) = ceil(_dr.properties().volume_res.at(2)/(double)brickRes.at(2));
+
+        // set memory object
+        cl::ImageFormat format;
+        format.image_channel_order = CL_RG;  // NOTE: CL_RG for min+max
+
+		if (_dr.properties().format == "UCHAR")
+			format.image_channel_data_type = CL_UNORM_INT8;
+        else if (_dr.properties().format == "USHORT")
+            format.image_channel_data_type = CL_UNORM_INT16;
+        else if (_dr.properties().format == "FLOAT")
+            format.image_channel_data_type = CL_FLOAT;
+        else
+            throw std::invalid_argument("Unknown or invalid volume data format.");
+
+        _brick_mem = cl::Image3D(env->get_properties().context,
+                                 CL_MEM_READ_WRITE,
+                                 format,
+                                 bricksTexSize.at(0),
+                                 bricksTexSize.at(1),
+                                 bricksTexSize.at(2));
+        // run aggregation kernel
+        set_mem_objects_brick_gen();
+        cl::NDRange globalThreads(bricksTexSize.at(0), bricksTexSize.at(1), bricksTexSize.at(2));
+        env->get_properties().queue.enqueueNDRangeKernel(_gen_bricks_kernel, cl::NullRange, globalThreads);
+        env->get_properties().queue.finish();    // global sync
+        log::instance().write_line(log_level::information, "Successfully generated brick texture.");
+    }
+    catch (cl::Error err)
+    {
+        log_cl_error(err);
+    }
+}
+
+
+/**
  * trrojan::opencl::volume_raycast_benchmark::load_transfer_function
  */
-void trrojan::opencl::volume_raycast_benchmark::load_transfer_function(
-        const std::string file_name,
+void trrojan::opencl::volume_raycast_benchmark::load_transfer_function(const std::string file_name,
         environment::pointer env)
 {
-    std::vector<unsigned char> values;
-
+    std::vector<char> values;
     if (file_name == "default")
     {
         log::instance().write_line(log_level::warning,
@@ -713,18 +836,24 @@ void trrojan::opencl::volume_raycast_benchmark::load_transfer_function(
         }
     }
 
-    // create OpenCL 1D image representation
-    cl::ImageFormat format;
-    format.image_channel_order = CL_RGBA;
-    // Seems like Intel IGP does not support float textures as input: use uint8 here.
-    format.image_channel_data_type = CL_UNORM_INT8;
     try
     {
+        // create OpenCL 1D image representation
+        cl::ImageFormat format;
+        format.image_channel_order = CL_RGBA;
+        // Seems like Intel IGP does not support float textures as input: use uint8 here.
+        format.image_channel_data_type = CL_UNORM_INT8;
         _tff_mem = cl::Image1D(env->get_properties().context,
                                CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
                                format,
                                values.size() / 4,
                                values.data());
+
+        std::vector<unsigned int> prefixSum;
+        for (int i = 3; i < values.size(); i += 4)
+            prefixSum.push_back(static_cast<unsigned int>(values.at(i)));
+        std::partial_sum(prefixSum.begin(), prefixSum.end(), prefixSum.begin());
+        set_tff_prefix_sum(prefixSum, env);
     }
     catch (cl::Error err)
     {
@@ -769,8 +898,10 @@ void trrojan::opencl::volume_raycast_benchmark::compose_kernel(
         }
         catch(std::system_error err)
         {
-            std::cerr << "ERROR while reading from " << path << kernel_snippet_path
-                      << " :\n\t" << err.what() << std::endl;
+            std::ostringstream os;
+            os << "ERROR while reading from " << path << kernel_snippet_path
+               << " :\n\t" << err.what() << std::endl;
+            log::instance().write_line(log_level::error, os.str().c_str());
         }
     }
 
@@ -825,6 +956,12 @@ void trrojan::opencl::volume_raycast_benchmark::compose_kernel(
     }
     if (cfg.find(factor_use_tff)->value())
         replace_kernel_snippet("TFF_LOOKUP", _kernel_source);
+    if (cfg.find(factor_use_ESS)->value())
+    {
+        replace_kernel_snippet("ESS_ARGS", _kernel_source);
+        replace_kernel_snippet("ESS_PART_1", _kernel_source);
+        replace_kernel_snippet("ESS_PART_2", _kernel_source);
+    }
     if (cfg.find(factor_use_ERT)->value())
         replace_kernel_snippet("ERT", _kernel_source);
     if (cfg.find(factor_count_samples)->value())
@@ -874,13 +1011,13 @@ void trrojan::opencl::volume_raycast_benchmark::replace_kernel_snippet(const std
  */
 void trrojan::opencl::volume_raycast_benchmark::build_kernel(environment::pointer env,
                                                              device::pointer dev,
+                                                             const std::string &kernel_source,
                                                              const float precision_div,
-                                                             const std::string build_flags)
+                                                             const std::string &build_flags)
 {
 //    std::cout << _kernel_source << std::endl; // DEBUG: print out composed kernel source
     cl::Program::Sources source; 
-// (1, std::make_pair(_kernel_source.data(), _kernel_source.size()));
-    source.push_back(_kernel_source);
+    source.push_back(kernel_source);
     try
     {
         env->generate_program(source);
@@ -892,7 +1029,9 @@ void trrojan::opencl::volume_raycast_benchmark::build_kernel(environment::pointe
         if (!(str.length() > 0))
             log::instance().write(log_level::information, str.c_str());
 
-        _kernel = cl::Kernel(env->get_properties().program, "volumeRender", NULL);
+        _kernel = cl::Kernel(env->get_properties().program, "volumeRender");
+        _gen_bricks_kernel = cl::Kernel(env->get_properties().program, "generateBricks");
+
         // set default kernel arguments and buffer
         set_kernel_args(precision_div);
     }
@@ -989,6 +1128,12 @@ void trrojan::opencl::volume_raycast_benchmark::update_initial_kernel_args(
         _kernel.setArg(PRECISION, _precision_div);
         cl_float3 model_scale = {_model_scale.x, _model_scale.y, _model_scale.z};
         _kernel.setArg(MODEL_SCALE, model_scale);
+        if (cfg.find(factor_use_ESS)->value())
+        {
+            _kernel.setArg(BRICKS, _brick_mem);
+            _kernel.setArg(TFF_PREFIX, _tff_prefix_mem);
+        }
+
         update_camera(cfg);
     }
     catch (cl::Error err)

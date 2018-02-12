@@ -17,9 +17,9 @@ void ReconstructCamera(out float4 pos, out float4 dir, out float4 up,
     // calculate cam position
     pos = viewInvMatrix._41_42_43_44; // (C) by Christoph
 
-    dir = float4(normalize(viewInvMatrix._31_32_33), 0.0f);
-    up = float4(normalize(viewInvMatrix._21_22_23), 0.0f);
-    right = float4(normalize(cross(dir.xyz, up.xyz)), 0.0f);
+    dir = float4(normalize(viewInvMatrix._31_32_33), 0.0);
+    up = normalize(viewInvMatrix._21_22_23_24);
+    right = float4(normalize(cross(dir.xyz, up.xyz)), 0.0);
 
     up = float4(normalize(cross(right.xyz, dir.xyz)), 0.0f);
 }
