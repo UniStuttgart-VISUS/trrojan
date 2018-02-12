@@ -253,7 +253,7 @@ struct PsOutput {
     float4 Colour : SV_TARGET;
 #ifdef CONSERVATIVE_DEPTH
     float Depth : SV_DepthGreaterEqual;
-#else /* CONSERVATIVE_DEPTH */
+#elif WRITE_DEPTH /* CONSERVATIVE_DEPTH */
     float Depth : SV_DEPTH;
 #endif /* CONSERVATIVE_DEPTH */
 };
