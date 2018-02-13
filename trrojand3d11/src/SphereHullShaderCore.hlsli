@@ -26,7 +26,15 @@ HsConstants CalcConstants(InputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
     const uint eye = 0;
 #endif /* defined(HOLOMOL) */
 
-#if (defined(QUAD_INSTANCING) || defined(POLY_INSTANCING))
+    // QUAD_TESS
+    // POLY_TESS
+    // ADAPT_POLY_TESS
+    // SPHERE_TESS
+    // ADAPT_SPHERE_TESS
+    // HEMISPHERE_TESS
+    // ADAPT_HEMISPHERE_TESS
+
+#if (defined(QUAD_TESS) || defined(POLY_INSTANCING))
     retval.EdgeTessFactor[0]
         = retval.EdgeTessFactor[1]
         = retval.EdgeTessFactor[2]
@@ -36,8 +44,8 @@ HsConstants CalcConstants(InputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
     retval.InsideTessFactor[0] = 1;
     retval.InsideTessFactor[1] = 1;
 
-#else /* (defined(QUAD_INSTANCING) || defined(POLY_INSTANCING)) */
-    /* Dynamic tessellation used by HoliMoli: */
+#elif (defined(ADAPT_SPHERE_TESS) || defined(ADAPT_HEMISPHERE_TESS))
+    /* Dynamic geometry tessellation used by HoliMoli: */
     float4x4 pm = ProjMatrix[eye];
     float4x4 vm = ViewMatrix[eye];
     float4x4 mvp = ViewProjMatrix[eye];
@@ -51,9 +59,9 @@ HsConstants CalcConstants(InputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
 
     // using w-value that is equal to the z-component prior to the projection
     float tessFactor = clamp(length(r) / pos.w * pm._11 * 3.f, 5.f, 25.f);
-#if defined(HEMISPHERE_TESSELLATION)
+#if defined(ADAPT_HEMISPHERE_TESS)
     tessFactor /= 2.0f;
-#endif /* defined(HEMISPHERE_TESSELLATION) */
+#endif /* defined(ADAPT_HEMISPHERE_TESS) */
 
     retval.EdgeTessFactor[0]
         = retval.EdgeTessFactor[1]
@@ -61,7 +69,11 @@ HsConstants CalcConstants(InputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
         = retval.EdgeTessFactor[3]
         = retval.InsideTessFactor[0]
         = retval.InsideTessFactor[1] = tessFactor;
-#endif /* (defined(QUAD_INSTANCING) || defined(POLY_INSTANCING)) */
+
+#elif (defined(SPHERE_TESS) || defined(HEMISPHERE_TESS))
+#error "constant tessellation not implemented"
+
+#endif
 
     return retval;
 }
