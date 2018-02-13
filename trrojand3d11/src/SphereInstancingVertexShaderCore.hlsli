@@ -11,7 +11,7 @@
 #include "TransferFunction.hlsli"
 
 
-#ifdef PER_VERTEX_TRANSFER_FUNCTION
+#if defined(PER_VERTEX_TRANSFER_FUNCTION)
 /// <summary>
 /// Transfer function.
 /// </summary>
@@ -21,7 +21,7 @@ Texture1D TransferFunction : register(t0);
 /// Linear sampler for transfer function lookup.
 /// </summary>
 SamplerState LinearSampler : register(s0);
-#endif /* PER_VERTEX_TRANSFER_FUNCTION */
+#endif /* defined(PER_VERTEX_TRANSFER_FUNCTION) */
 
 
 /// <summary>
@@ -33,10 +33,10 @@ StructuredBuffer<Particle> Particles : register(t1);
 #if (defined(QUAD_INSTANCING) || defined(POLY_INSTANCING))
 #define VsInput VsNoInput
 #define VsOutput PsRaycastingInput
-#elif GEOMETRY_INSTANCING
+#elif defined(GEOMETRY_INSTANCING)
 #define VsInput VsGeometryInput
 #define VsOutput PsGeometryInput
-#endif /* QUAD_INSTANCING */
+#endif /* (defined(QUAD_INSTANCING) || defined(POLY_INSTANCING)) */
 
 
 /// <summary>
@@ -50,12 +50,12 @@ VsOutput Main(VsInput input) {
 
     /* Determine active index in structured resource view. */
     uint particleID = input.InstanceID;
-#ifdef HOLOMOL
+#if defined(HOLOMOL)
     uint eye = particleID % 2;
     particleID /= 2;
-#else /* HOLOMOL */
+#else /* defined(HOLOMOL) */
     uint eye = 0;
-#endif /* HOLOMOL */
+#endif /* defined(HOLOMOL) */
 
     /* Select the right matrices. */
     float4x4 mvp = ViewProjMatrix[eye];
@@ -65,7 +65,7 @@ VsOutput Main(VsInput input) {
     const float3 pos = Particles[particleID].Position.xyz;
     const float rad = Particles[particleID].Position.w;
 
-#ifdef QUAD_INSTANCING
+#if defined(QUAD_INSTANCING)
     // Make the right vertex based on the vertex ID.
     const float2 FLIP_Y = float2(1.0f, -1.0f);  // Flips the y-axis of a float2.
     retval.Position = float4(input.VertexID % 2, input.VertexID % 4 / 2,
@@ -94,7 +94,10 @@ VsOutput Main(VsInput input) {
     // Pass on world-space parameters for raycasting.
     retval.SphereParams = float4(pos, rad);
 
-#elif GEOMETRY_INSTANCING
+#elif defined(POLY_INSTANCING)
+#error Polygon sprite instancing is not implemented.
+
+#elif defined(GEOMETRY_INSTANCING)
     // Transform the instance to match the sphere's size and position.
     retval.Position = float4(input.Position, 1.0f);
     retval.Position.xyz *= rad;
@@ -103,17 +106,31 @@ VsOutput Main(VsInput input) {
 
     // Retrieve the view direction for later shading.
     retval.ViewDirection = float4(normalize(invVm._31_32_33), 0.0);
-#endif /* QUAD_INSTANCING */
+#endif /* defined(QUAD_INSTANCING) */
 
-#ifdef FLOAT_COLOUR
+#if (defined(PER_VERTEX_INTENSITY) && defined(PER_VERTEX_TRANSFER_FUNCTION))
+    /* Per-vertex intensity is transformed to colour in vertex shader.*/
+    float intensity = Particles[particleID].Intensity;
+    float texCoords = TexCoordsFromIntensity(intensity, IntensityRange);
+    retval.Colour = TransferFunction.SampleLevel(LinearSampler, texCoords, 0);
+#elif defined(PER_VERTEX_INTENSITY)
+    /* Per-vertex intensity is passed trough to pixel shader. */
+    float intensity = Particles[particleID].Intensity;
+    retval.Colour = intensity.rrrr;
+#elif (defined(PER_VERTEX_COLOUR) && defined(FLOAT_COLOUR))
+    /* Per-vertex floating point colour is passed through to pixel shader. */
     retval.Colour = Particles[particleID].Colour;
-#else /* FLOAT_COLOUR */
+#elif defined(PER_VERTEX_COLOUR)
+    /* Per-vertex byte colour is being transformed to float for pixel shader. */
     retval.Colour = UintToFloat4Colour(Particles[particleID].Colour);
-#endif /* FLOAT_COLOUR */
+#else
+    /* Global colour is used for all vertices.*/
+    retval.Colour = GlobalColour;
+#endif
 
-#ifdef HOLOMOL
+#if defined(HOLOMOL)
     retval.Eye = eye;
-#endif /* HOLOMOL */
+#endif /* defined(HOLOMOL) */
 
     return retval;
 }

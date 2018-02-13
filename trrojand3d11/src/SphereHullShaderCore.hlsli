@@ -14,25 +14,36 @@
 
 
 /// <summary>
-/// Compute the tessellation factors for the sphere.
+/// Compute the tessellation factors for the sphere or sprite.
 /// </summary>
 HsConstants CalcConstants(InputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
         uint patchId : SV_PrimitiveID) {
     HsConstants retval = (HsConstants) 0;
 
-#ifdef HOLOMOL
+#if defined(HOLOMOL)
     const uint eye = patch[0].Eye;
-#else /* HOLOMOL */
+#else /* defined(HOLOMOL) */
     const uint eye = 0;
-#endif /* HOLOMOL */
+#endif /* defined(HOLOMOL) */
 
+#if (defined(QUAD_INSTANCING) || defined(POLY_INSTANCING))
+    retval.EdgeTessFactor[0]
+        = retval.EdgeTessFactor[1]
+        = retval.EdgeTessFactor[2]
+        = retval.EdgeTessFactor[3]
+        = retval.InsideTessFactor[0]
+        = retval.InsideTessFactor[1] = IntRangeGlobalRadTessFactor.w;
+    retval.InsideTessFactor[0] = 1;
+    retval.InsideTessFactor[1] = 1;
+
+#else /* (defined(QUAD_INSTANCING) || defined(POLY_INSTANCING)) */
     /* Dynamic tessellation used by HoliMoli: */
     float4x4 pm = ProjMatrix[eye];
     float4x4 vm = ViewMatrix[eye];
     float4x4 mvp = ViewProjMatrix[eye];
-    float rad = patch[0].Radius;
+    float rad = patch[0].SphereParams.w;
 
-    float4 pos = patch[0].Position;
+    float4 pos = float4(patch[0].SphereParams.xyz, 1.0f);
     pos = mul(pos, mvp);
 
     float4 r = float4(rad, 0.f, 0.f, 1.f);
@@ -40,11 +51,9 @@ HsConstants CalcConstants(InputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
 
     // using w-value that is equal to the z-component prior to the projection
     float tessFactor = clamp(length(r) / pos.w * pm._11 * 3.f, 5.f, 25.f);
-#ifdef HEMISPHERE_TESSELLATION
+#if defined(HEMISPHERE_TESSELLATION)
     tessFactor /= 2.0f;
-#endif HEMISPHERE_TESSELLATION
-
-    // TODO: Host-controlled tess factors for sprites
+#endif /* defined(HEMISPHERE_TESSELLATION) */
 
     retval.EdgeTessFactor[0]
         = retval.EdgeTessFactor[1]
@@ -52,6 +61,7 @@ HsConstants CalcConstants(InputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
         = retval.EdgeTessFactor[3]
         = retval.InsideTessFactor[0]
         = retval.InsideTessFactor[1] = tessFactor;
+#endif /* (defined(QUAD_INSTANCING) || defined(POLY_INSTANCING)) */
 
     return retval;
 }

@@ -173,11 +173,11 @@ trrojan::d3d11::mmpld_base::get_mmpld_pixel_shader_properties(
 
     shader_properties retval = mmpld_reader::calc_shader_properties(
         this->mmpld_list);
-    
+
     if (vsXfer) {
         // If per-vertex transfer function was selected, erase the flag from
         // the pixel shader's properties.
-        retval &= ~sp_t::intensity_xfer_function;
+        retval &= ~sp_t::per_vertex_intensity;
     }
 
     // The following per-vertex properties are irrelevant for the pixel shader.

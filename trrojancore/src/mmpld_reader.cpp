@@ -33,7 +33,7 @@ trrojan::mmpld_reader::calc_shader_properties(const list_header& header) {
 
     switch (header.colour_type) {
         case mmpld_reader::colour_type::float_i:
-            retval |= shader_properties::intensity_xfer_function;
+            retval |= shader_properties::per_vertex_intensity;
             break;
 
         case mmpld_reader::colour_type::none:

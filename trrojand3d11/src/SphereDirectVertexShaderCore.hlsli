@@ -37,37 +37,34 @@ VsOutput Main(VsInput input) {
     VsOutput retval = (VsOutput) 0;
     // TODO: PER_VERTEX_RAY
 
-#ifdef PER_VERTEX_RADIUS
+#if defined(PER_VERTEX_RADIUS)
     /* Sphere parameters are completely stored in vertex buffer. */
     retval.SphereParams = input.Position;
-#else /* PER_VERTEX_RADIUS */
+#else /* defined(PER_VERTEX_RADIUS) */
     /* Only position is in vertex buffer, add global radius from constants. */
     retval.SphereParams = float4(input.Position.xyz, GlobalRadius);
-#endif /* PER_VERTEX_RADIUS */
+#endif /* defined(PER_VERTEX_RADIUS) */
 
-#ifdef PER_VERTEX_COLOUR
-    /* Per-vertex colour is given in vertex buffer. */
-    retval.Colour = input.Colour;
-
-#elif PER_VERTEX_INTENSITY
-#ifdef PER_VERTEX_TRANSFER_FUNCTION
+#if (defined(PER_VERTEX_INTENSITY) && defined(PER_VERTEX_TRANSFER_FUNCTION))
     /* Per-vertex intensity is transformed to colour in vertex shader.*/
-    float texCoords = TexCoordsFromIntensity(input.Intensity.r, IntensityRange);
+    float intensity = input.Intensity;
+    float texCoords = TexCoordsFromIntensity(intensity, IntensityRange);
     retval.Colour = TransferFunction.SampleLevel(LinearSampler, texCoords, 0);
-#else /* PER_VERTEX_TRANSFER_FUNCTION */
+#elif defined(PER_VERTEX_INTENSITY)
     /* Per-vertex intensity is passed trough to pixel shader. */
-    retval.Colour = input.Intensity.rrrr;
-#endif /* PER_VERTEX_TRANSFER_FUNCTION */
-
-#else /* PER_VERTEX_COLOUR */
-    /* No vertex colour is given, use global one from constant buffer. */
+    float intensity = input.Intensity;
+    retval.Colour = intensity.rrrr;
+#elif defined(PER_VERTEX_COLOUR)
+    /* Per-vertex byte colour is passed through to pixel shader. */
+    retval.Colour = input.Colour;
+#else
+    /* Global colour is used for all vertices.*/
     retval.Colour = GlobalColour;
-#endif /* PER_VERTEX_COLOUR */
+#endif
 
-#ifdef HOLOMOL
-    /* HoloLens needs to pass through the eye for later matrix accesses. */
+#if defined(HOLOMOL)
     retval.Eye = input.Eye;
-#endif /* HOLOMOL */
+#endif /* defined(HOLOMOL) */
 
     return retval;
 }
