@@ -100,11 +100,11 @@ process {
                         
                         Create-Shader (Join-Path $OutPath "SphereVertexShader") "SphereVertexShaderCore.hlsli" $technique $features
 
-                        if ($features -band $SPHERE_TECHNIQUE_USE_GEO) {
+                        if ($technique -band $SPHERE_TECHNIQUE_USE_GEO) {
                             Create-Shader (Join-Path $OutPath "SphereGeometryShader") "SphereGeometryShaderCore.hlsli" $technique $features
                         }
 
-                        if ($features -band $SPHERE_TECHNIQUE_USE_TESS) {
+                        if ($technique -band $SPHERE_TECHNIQUE_USE_TESS) {
                             Create-Shader (Join-Path $OutPath "SphereHullShader") "SphereHullShaderCore.hlsli" $technique $features
                             Create-Shader (Join-Path $OutPath "SphereDomainShader") "SphereDomainShaderCore.hlsli" $technique $features
                         }
