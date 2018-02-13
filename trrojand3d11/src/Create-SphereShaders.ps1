@@ -57,7 +57,7 @@ begin {
 
         $lines += "#include `"$core`""
 
-        $lines > "$file$featureCode.hlsl"
+        $lines | Out-File -FilePath "$file$featureCode.hlsl" -Encoding ascii 
     }
 
 }
