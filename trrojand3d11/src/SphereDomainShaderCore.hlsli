@@ -97,13 +97,12 @@ PsInput Main(OutputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
 
 #elif (defined(SPHERE_TESS) || defined(ADAPT_SPHERE_TESS) || defined(HEMISPHERE_TESS) || defined(ADAPT_HEMISPHERE_TESS))
     // Reconstruct the camera system for the pixel shader.
-    float4 up, right;
-    ReconstructCamera(retval.CameraPosition, retval.ViewDirection,
-        up, right, vmInv);
+    float4 camPos, up, right;
+    ReconstructCamera(camPos, retval.ViewDirection, up, right, vmInv);
 
     // Get the world-space centre and radius of the sphere.
-    const float3 pos = patch[0].Position.xyz;
-    const float rad = patch[0].Radius;
+    const float3 pos = patch[0].SphereParams.xyz;
+    const float rad = patch[0].SphereParams.w;
 
     // Move vertices of the patch to a sphere.
     float phi = PI * uv.x;
@@ -125,27 +124,20 @@ PsInput Main(OutputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
 
 #if (defined(HEMISPHERE_TESS) || defined(ADAPT_HEMISPHERE_TESS))
     // Orient the hemisphere towards the camera.
-    float4x4 matOrient = OrientToCamera(pos, invVm);
-    float4 v = matOrient._31_32_33_34;
-    matOrient._31_32_33_34 = matOrient._21_22_23_24;
-    matOrient._21_22_23_24 = -v;
+    float3 v = normalize(pos - camPos.xyz);
+    float3 u = normalize(ViewInvMatrix[eye]._21_22_23);
+    float3 r = normalize(cross(v, u));
+    u = normalize(cross(r, v));
+    float4x4 matOrient = float4x4(
+        float4(r, 0.0f),
+        -float4(v, 0.0f),
+        float4(u, 0.0f),
+        float4(0.0f.xxx, 1.0f));
+    //float4x4 matOrient = OrientToCamera(pos, invVm);
+    //float4 v = matOrient._31_32_33_34;
+    //matOrient._31_32_33_34 = matOrient._21_22_23_24;
+    //matOrient._21_22_23_24 = -v;
     coords = mul(coords, matOrient);
-
-    //float3 v = normalize(pos - retval.CameraPosition.xyz);
-    //float3 u = normalize(ViewInvMatrix[eye]._21_22_23);
-    //float3 r = normalize(cross(v, u));
-    //u = normalize(cross(r, v));
-    ////float4x4 matOrient = float4x4(
-    ////    float4(r, 0.0f),
-    ////    float4(u, 0.0f),
-    ////    float4(v, 0.0f),
-    ////    float4(0.0f.xxx, 1.0f));
-    ////matOrient = mul(matCrowbar, matOrient);
-    //float4x4 matOrient = float4x4(
-    //    float4(r, 0.0f),
-    //    -float4(v, 0.0f),
-    //    float4(u, 0.0f),
-    //    float4(0.0f.xxx, 1.0f));
 #endif /* (defined(HEMISPHERE_TESS) || defined(ADAPT_HEMISPHERE_TESS)) */
 
     // The normal are the sphere coordinates.

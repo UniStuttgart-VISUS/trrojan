@@ -216,8 +216,9 @@ struct HsConstants {
 struct PsGeometryInput {
     float4 Position : SV_POSITION;
     float4 Colour : COLOR0;
-    float4 Normal : NORMAL0;
-    nointerpolation float4 ViewDirection : TEXCOORD0;
+    float4 WorldNormal : NORMAL0;
+    nointerpolation float3 WorldPosition : TEXCOORD0;
+    nointerpolation float4 ViewDirection : TEXCOORD1;
 #ifdef HOLOMOL
     nointerpolation uint Eye: SV_RenderTargetArrayIndex;
 #endif /* HOLOMOL */
