@@ -1,5 +1,6 @@
 [CmdletBinding()]
-param([Parameter(Mandatory = $true, ValueFromPipeline = $true)] [string] $OutPath)
+param([Parameter(Mandatory = $true, ValueFromPipeline = $true)] [string] $OutPath,
+    [string] $IncludeFile = "sphere_techniques.h")
 
 begin {
     # Properties of the rendering techniques.
@@ -7,12 +8,13 @@ begin {
     $SPHERE_TECHNIQUE_USE_TESS = ([uint64] 1) -shl 30
     $SPHERE_TECHNIQUE_USE_SRV =  ([uint64] 1) -shl 29
     $SPHERE_TECHNIQUE_USE_RAYCASTING = ([uint64] 1) -shl 28
+    $SPHERE_TECHNIQUE_USE_INSTANCING = ([uint64] 1) -shl 27
     
     # Rendering techniques.    
     $__SPHERE_TECH_BASE = ([uint64] 1) -shl 63
     $techniques = @{}
-    $techniques[($__SPHERE_TECH_BASE -shr 0) -bor $SPHERE_TECHNIQUE_USE_SRV -bor $SPHERE_TECHNIQUE_USE_RAYCASTING] = "QUAD_INST"
-    $techniques[($__SPHERE_TECH_BASE -shr 1) -bor $SPHERE_TECHNIQUE_USE_SRV -bor $SPHERE_TECHNIQUE_USE_RAYCASTING] = "POLY_INST"
+    $techniques[($__SPHERE_TECH_BASE -shr 0) -bor $SPHERE_TECHNIQUE_USE_SRV -bor $SPHERE_TECHNIQUE_USE_RAYCASTING -bor $SPHERE_TECHNIQUE_USE_INSTANCING] = "QUAD_INST"
+    #$techniques[($__SPHERE_TECH_BASE -shr 1) -bor $SPHERE_TECHNIQUE_USE_SRV -bor $SPHERE_TECHNIQUE_USE_RAYCASTING -bor $SPHERE_TECHNIQUE_USE_INSTANCING] = "POLY_INST"
     $techniques[($__SPHERE_TECH_BASE -shr 2) -bor $SPHERE_TECHNIQUE_USE_TESS -bor $SPHERE_TECHNIQUE_USE_RAYCASTING] = "QUAD_TESS"
     $techniques[($__SPHERE_TECH_BASE -shr 3) -bor $SPHERE_TECHNIQUE_USE_TESS -bor $SPHERE_TECHNIQUE_USE_RAYCASTING] = "POLY_TESS"
     $techniques[($__SPHERE_TECH_BASE -shr 4) -bor $SPHERE_TECHNIQUE_USE_TESS -bor $SPHERE_TECHNIQUE_USE_RAYCASTING] = "ADAPT_POLY_TESS"
@@ -32,9 +34,14 @@ begin {
     $SPHERE_INPUT_FLT_COLOUR = ([uint64] 1) -shl 17
     $SPHERE_INPUT_PV_RAY = ([uint64] 1) -shl 18
 
+    # List of files generated.
+    $files = @()
+    $files.Clear()
 
-    function Create-Shader([string] $file, [string] $core, [uint64] $technique, [uint64] $features) {
+    function Create-Shader([string] $fileBase, [string] $core, [uint64] $technique, [uint64] $features) {
         $featureCode = ("{0:X16}" -f ($technique -bor $features))
+        $file = "$fileBase$featureCode.hlsl"
+        $global:files += $file
 
         $lines = @()
         $lines += "// This file was auto-generated using Create-SphereShaders.ps1 on $(Get-Date)"
@@ -59,10 +66,41 @@ begin {
         if ($features -band $SPHERE_INPUT_PV_RAY) {
             $lines += '#define PER_VERTEX_RAY (1)'
         }
+        if ($features -band $SPHERE_TECHNIQUE_USE_RAYCASTING) {
+            $lines += '#define RAYCASTING (1)'
+        }
 
         $lines += "#include `"$core`""
 
-        $lines | Out-File -FilePath "$file$featureCode.hlsl" -Encoding ascii 
+        $file = Join-Path $OutPath $file
+        $lines | Out-File -FilePath $file -Encoding ascii 
+    }
+
+    function Create-Include([string] $file) {
+        $lines = @()
+        $lines += "// This file was auto-generated using Create-SphereShaders.ps1 on $(Get-Date)"
+
+        $global:files | %{
+            $lines += "#include `"$_.h`""
+        }
+
+        $lines += "#define SPHERE_TECHNIQUE_USE_GEO ($("0x{0:X}" -f $SPHERE_TECHNIQUE_USE_GEO))"
+        $lines += "#define SPHERE_TECHNIQUE_USE_TESS ($("0x{0:X}" -f $SPHERE_TECHNIQUE_USE_TESS))"
+        $lines += "#define SPHERE_TECHNIQUE_USE_SRV ($("0x{0:X}" -f $SPHERE_TECHNIQUE_USE_SRV))"
+        $lines += "#define SPHERE_TECHNIQUE_USE_RAYCASTING ($("0x{0:X}" -f $SPHERE_TECHNIQUE_USE_RAYCASTING))"
+        $lines += "#define SPHERE_TECHNIQUE_USE_INSTANCING ($("0x{0:X}" -f $SPHERE_TECHNIQUE_USE_INSTANCING))"
+        $lines += "#define SPHERE_INPUT_PV_COLOUR ($("0x{0:X}" -f $SPHERE_INPUT_PV_COLOUR))"
+        $lines += "#define SPHERE_INPUT_PV_RADIUS ($("0x{0:X}" -f $SPHERE_INPUT_PV_RADIUS))"
+        $lines += "#define SPHERE_INPUT_PV_INTENSITY ($("0x{0:X}" -f $SPHERE_INPUT_PV_INTENSITY))"
+        $lines += "#define SPHERE_INPUT_PP_INTENSITY ($("0x{0:X}" -f $SPHERE_INPUT_PP_INTENSITY))"
+        $lines += "#define SPHERE_INPUT_FLT_COLOUR ($("0x{0:X}" -f $SPHERE_INPUT_FLT_COLOUR))"
+        $lines += "#define SPHERE_INPUT_PV_RAY ($("0x{0:X}" -f $SPHERE_INPUT_PV_RAY))"
+        $global:techniques.Keys | %{
+            $lines += "#define SPHERE_TECHNIQUE_$($global:techniques[$_]) ($("0x{0:X}" -f $_))"
+        }
+
+        $file = Join-Path $OutPath $file
+        $lines | Out-File -FilePath $file -Encoding ascii 
     }
 
 }
@@ -113,18 +151,18 @@ process {
                             $pvRay = $_ * $SPHERE_INPUT_PV_RAY    
                             $features = ($pvRadius -bor $pvColour -bor $flt -bor $xfer -bor $pvRay)
                         
-                            Create-Shader (Join-Path $OutPath "SphereVertexShader") "SphereVertexShaderCore.hlsli" $technique $features
+                            Create-Shader "SphereVertexShader" "SphereVertexShaderCore.hlsli" $technique $features
 
                             if ($technique -band $SPHERE_TECHNIQUE_USE_GEO) {
-                                Create-Shader (Join-Path $OutPath "SphereGeometryShader") "SphereGeometryShaderCore.hlsli" $technique $features
+                                Create-Shader "SphereGeometryShader" "SphereGeometryShaderCore.hlsli" $technique $features
                             }
 
                             if ($technique -band $SPHERE_TECHNIQUE_USE_TESS) {
-                                Create-Shader (Join-Path $OutPath "SphereHullShader") "SphereHullShaderCore.hlsli" $technique $features
-                                Create-Shader (Join-Path $OutPath "SphereDomainShader") "SphereDomainShaderCore.hlsli" $technique $features
+                                Create-Shader "SphereHullShader" "SphereHullShaderCore.hlsli" $technique $features
+                                Create-Shader "SphereDomainShader" "SphereDomainShaderCore.hlsli" $technique $features
                             }
 
-                            Create-Shader (Join-Path $OutPath "SpherePixelShader") "SpherePixelShaderCore.hlsli" $technique $features
+                            Create-Shader "SpherePixelShader" "SpherePixelShaderCore.hlsli" $technique $features
                         }
                     }
                     
@@ -133,6 +171,9 @@ process {
           
         }
     }
+
+    Create-Include $IncludeFile
+
 }
 
 end { }
