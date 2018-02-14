@@ -10,7 +10,8 @@
 #define CNT_CONTROL_POINTS (1)
 
 // The partitioning scheme used in the hull shader.
-#define PARTITIONING_SCHEME "fractional_odd"
+//#define PARTITIONING_SCHEME "fractional_odd"
+#define PARTITIONING_SCHEME "integer"
 
 
 /// <summary>
@@ -26,39 +27,63 @@ HsConstants CalcConstants(InputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
     const uint eye = 0;
 #endif /* defined(HOLOMOL) */
 
-    // QUAD_TESS
-    // POLY_TESS
-    // ADAPT_POLY_TESS
-    // SPHERE_TESS
-    // ADAPT_SPHERE_TESS
-    // HEMISPHERE_TESS
-    // ADAPT_HEMISPHERE_TESS
-
-#if (defined(QUAD_TESS) || defined(POLY_INSTANCING))
+#if defined(QUAD_TESS)
+    // Tessellation factor for a quad is fixed.
     retval.EdgeTessFactor[0]
         = retval.EdgeTessFactor[1]
         = retval.EdgeTessFactor[2]
         = retval.EdgeTessFactor[3]
         = retval.InsideTessFactor[0]
-        = retval.InsideTessFactor[1] = IntRangeGlobalRadTessFactor.w;
-    retval.InsideTessFactor[0] = 1;
-    retval.InsideTessFactor[1] = 1;
+        = retval.InsideTessFactor[1] = 4.0f;
+    retval.InsideTessFactor[0]
+        = retval.InsideTessFactor[1] = 1.0f;
+
+#elif (defined(POLY_TESS) || defined(SPHERE_TESS) || defined(HEMISPHERE_TESS))
+    // Tessellation factors are CPU-defined.
+    retval.EdgeTessFactor[0] = EdgeTessFactor.x;
+    retval.EdgeTessFactor[1] = EdgeTessFactor.y;
+    retval.EdgeTessFactor[2] = EdgeTessFactor.z;
+    retval.EdgeTessFactor[3] = EdgeTessFactor.w;
+    retval.InsideTessFactor[0] = InsideTessFactor.x;
+    retval.InsideTessFactor[1] = InsideTessFactor.y;
+
+#elif defined(ADAPT_POLY_TESS)
+    /* Dynamic polygon. */
+    float4x4 pm = ProjMatrix[eye];
+    float4x4 vm = ViewMatrix[eye];
+    float4x4 mvp = ViewProjMatrix[eye];
+
+    float4 pos = float4(patch[0].SphereParams.xyz, 1.0f);
+    pos = mul(pos, mvp);
+
+    float4 rad = float4(patch[0].SphereParams.w, 0.f, 0.f, 1.f);
+    rad = mul(rad, vm);
+
+    float tessFactor = clamp(length(rad) / pos.w * pm._11 * 3.f, 4.f, 8.f);
+
+    retval.EdgeTessFactor[0]
+        = retval.EdgeTessFactor[1]
+        = retval.EdgeTessFactor[2]
+        = retval.EdgeTessFactor[3]
+        = retval.InsideTessFactor[0]
+        = retval.InsideTessFactor[1] = tessFactor;
+    retval.InsideTessFactor[0]
+        = retval.InsideTessFactor[1] = 1.0f;
 
 #elif (defined(ADAPT_SPHERE_TESS) || defined(ADAPT_HEMISPHERE_TESS))
     /* Dynamic geometry tessellation used by HoliMoli: */
     float4x4 pm = ProjMatrix[eye];
     float4x4 vm = ViewMatrix[eye];
     float4x4 mvp = ViewProjMatrix[eye];
-    float rad = patch[0].SphereParams.w;
 
     float4 pos = float4(patch[0].SphereParams.xyz, 1.0f);
     pos = mul(pos, mvp);
 
-    float4 r = float4(rad, 0.f, 0.f, 1.f);
-    r = mul(r, vm);
+    float4 rad = float4(patch[0].SphereParams.w, 0.f, 0.f, 1.f);
+    rad = mul(rad, vm);
 
     // using w-value that is equal to the z-component prior to the projection
-    float tessFactor = clamp(length(r) / pos.w * pm._11 * 3.f, 5.f, 25.f);
+    float tessFactor = clamp(length(rad) / pos.w * pm._11 * 3.f, 5.f, 25.f);
 #if defined(ADAPT_HEMISPHERE_TESS)
     tessFactor /= 2.0f;
 #endif /* defined(ADAPT_HEMISPHERE_TESS) */
@@ -69,10 +94,6 @@ HsConstants CalcConstants(InputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
         = retval.EdgeTessFactor[3]
         = retval.InsideTessFactor[0]
         = retval.InsideTessFactor[1] = tessFactor;
-
-#elif (defined(SPHERE_TESS) || defined(HEMISPHERE_TESS))
-#error "constant tessellation not implemented"
-
 #endif
 
     return retval;

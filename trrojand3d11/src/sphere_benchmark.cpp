@@ -37,19 +37,6 @@
 #include "SphereVertexShaderPvRad.h"
 
 
-#define _DEFINE_SHADER_PROP(v) static_cast<std::uint32_t>(v)
-#define SHADER_PROP_PV_COL _DEFINE_SHADER_PROP(0x000000001)
-#define SHADER_PROP_PV_RAD _DEFINE_SHADER_PROP(0x000000002)
-#define SHADER_PROP_PV_INT _DEFINE_SHADER_PROP(0x000000004)
-#define SHADER_PROP_VS_XFER_FUNC _DEFINE_SHADER_PROP(0x000000008)
-#define SHADER_PROP_FLOAT_COL _DEFINE_SHADER_PROP(0x000000010)
-#define SHADER_PROP_VPRT _DEFINE_SHADER_PROP(0x000000020)
-#undef _DEFINE_SHADER_PROP
-
-static std::map<std::string, std::map<std::uint32_t,
-    trrojan::d3d11::rendering_technique>> _rendering_techniques;
-
-
 #define _SPHERE_BENCH_DEFINE_FACTOR(f)                                         \
 const char *trrojan::d3d11::sphere_benchmark::factor_##f = #f
 
@@ -65,13 +52,18 @@ _SPHERE_BENCH_DEFINE_FACTOR(vs_xfer_function);
 #define _SPHERE_BENCH_DEFINE_METHOD(m)                                         \
 const char *trrojan::d3d11::sphere_benchmark::method_##m = #m
 
+_SPHERE_BENCH_DEFINE_METHOD(quad_inst);
+_SPHERE_BENCH_DEFINE_METHOD(poly_inst);
+_SPHERE_BENCH_DEFINE_METHOD(quad_tess);
+_SPHERE_BENCH_DEFINE_METHOD(poly_tess);
+_SPHERE_BENCH_DEFINE_METHOD(adapt_poly_tess);
+_SPHERE_BENCH_DEFINE_METHOD(spta);
 _SPHERE_BENCH_DEFINE_METHOD(geo_quad);
 _SPHERE_BENCH_DEFINE_METHOD(geo_poly);
-_SPHERE_BENCH_DEFINE_METHOD(inst_quad);
-_SPHERE_BENCH_DEFINE_METHOD(geo_quad);
-_SPHERE_BENCH_DEFINE_METHOD(tess_poly);
-_SPHERE_BENCH_DEFINE_METHOD(tess_sphere);
-_SPHERE_BENCH_DEFINE_METHOD(tess_hemisphere);
+_SPHERE_BENCH_DEFINE_METHOD(sphere_tess);
+_SPHERE_BENCH_DEFINE_METHOD(adapt_sphere_tess);
+_SPHERE_BENCH_DEFINE_METHOD(hemisphere_tess);
+_SPHERE_BENCH_DEFINE_METHOD(adapt_hemisphere_tess);
 
 #undef _SPHERE_BENCH_DEFINE_METHOD
 

@@ -12,11 +12,11 @@
 // The number of control points, which is one per splat.
 #define CNT_CONTROL_POINTS (1)
 
-#if (defined(QUAD_INSTANCING) || defined(POLY_INSTANCING))
+#if (defined(QUAD_TESS) || defined(POLY_TESS) || defined(ADAPT_POLY_TESS))
 #define PsInput PsRaycastingInput
-#elif defined(GEOMETRY_INSTANCING)
+#elif (defined(SPHERE_TESS) || defined(ADAPT_SPHERE_TESS) || defined(HEMISPHERE_TESS) || defined(ADAPT_HEMISPHERE_TESS))
 #define PsInput PsGeometryInput
-#endif /* (defined(QUAD_INSTANCING) || defined(POLY_INSTANCING)) */
+#endif
 
 
 /// <summary>
@@ -45,7 +45,9 @@ PsInput Main(OutputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
     float4x4 vm = ViewMatrix[eye];
     float4x4 vmInv = ViewInvMatrix[eye];
 
-#if (defined(QUAD_INSTANCING) || defined(POLY_INSTANCING))
+    // TODO: QUAD_TESS can be hardcoded w/o trigonometry
+
+#if (defined(QUAD_TESS) || defined(POLY_TESS) || defined(ADAPT_POLY_TESS))
     // Reconstruct the camera system for the pixel shader.
     ReconstructCamera(retval.CameraPosition, retval.CameraDirection,
         retval.CameraUp, retval.CameraRight, vmInv);
@@ -93,11 +95,7 @@ PsInput Main(OutputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
     // Transform camera to glyph space.
     retval.CameraPosition.xyz -= pos.xyz;
 
-#else /* (defined(QUAD_INSTANCING) || defined(POLY_INSTANCING)) */
-    // Select the right matrices.
-    float4x4 pm = ProjMatrix[eye];
-    float4x4 vm = ViewMatrix[eye];
-
+#elif (defined(SPHERE_TESS) || defined(ADAPT_SPHERE_TESS) || defined(HEMISPHERE_TESS) || defined(ADAPT_HEMISPHERE_TESS))
     // Reconstruct the camera system for the pixel shader.
     float4 up, right;
     ReconstructCamera(retval.CameraPosition, retval.ViewDirection,
@@ -109,11 +107,11 @@ PsInput Main(OutputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
 
     // Move vertices of the patch to a sphere.
     float phi = PI * uv.x;
-#if defined(HEMISPHERE_TESSELLATION)
+#if (defined(HEMISPHERE_TESS) || defined(ADAPT_HEMISPHERE_TESS))
     float theta = PI * uv.y;
-#else /* defined(HEMISPHERE_TESSELLATION) */
+#else /* (defined(HEMISPHERE_TESS) || defined(ADAPT_HEMISPHERE_TESS)) */
     float theta = TWO_PI * uv.y;
-#endif /* defined(HEMISPHERE_TESSELLATION) */
+#endif /* (defined(HEMISPHERE_TESS) || defined(ADAPT_HEMISPHERE_TESS)) */
 
     float sinPhi, cosPhi, sinTheta, cosTheta;
     sincos(phi, sinPhi, cosPhi);
@@ -125,7 +123,7 @@ PsInput Main(OutputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
         rad * cosPhi,
         1.0f);
 
-#if defined(HEMISPHERE_TESSELLATION)
+#if (defined(HEMISPHERE_TESS) || defined(ADAPT_HEMISPHERE_TESS))
     // Orient the hemisphere towards the camera.
     float4x4 matOrient = OrientToCamera(pos, invVm);
     float4 v = matOrient._31_32_33_34;
@@ -148,7 +146,7 @@ PsInput Main(OutputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
     //    -float4(v, 0.0f),
     //    float4(u, 0.0f),
     //    float4(0.0f.xxx, 1.0f));
-#endif /* defined(HEMISPHERE_TESSELLATION) */
+#endif /* (defined(HEMISPHERE_TESS) || defined(ADAPT_HEMISPHERE_TESS)) */
 
     // The normal are the sphere coordinates.
     retval.WorldNormal = normalize(coords);
@@ -160,7 +158,7 @@ PsInput Main(OutputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
 
     // Project the vertices.
     retval.Position = mul(coords, pm);
-#endif /* (defined(QUAD_INSTANCING) || defined(POLY_INSTANCING)) */
+#endif
 
     retval.Colour = patch[0].Colour;
 

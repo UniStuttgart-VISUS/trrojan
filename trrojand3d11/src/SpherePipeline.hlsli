@@ -282,7 +282,10 @@ cbuffer SphereConstants CBUFFER(0) {
     float4 GlobalColour;
     float2 IntensityRange;
     float GlobalRadius;
-    float TessellationFactor;
+    float DUMMY;
+    float4 EdgeTessFactor;
+    float2 InsideTessFactor;
+    float2 DUMMY2;
 };
 
 //cbuffer ViewConstants CBUFFER(1) {

@@ -38,13 +38,18 @@ namespace d3d11 {
         static const char *factor_method;
         static const char *factor_vs_xfer_function;
 
+        static const char *method_quad_inst;
+        static const char *method_poly_inst;
+        static const char *method_quad_tess;
+        static const char *method_poly_tess;
+        static const char *method_adapt_poly_tess;
+        static const char *method_spta;
         static const char *method_geo_quad;
         static const char *method_geo_poly;
-        static const char *method_inst_quad;
-        static const char *method_tess_quad;
-        static const char *method_tess_poly;
-        static const char *method_tess_sphere;
-        static const char *method_tess_hemisphere;
+        static const char *method_sphere_tess;
+        static const char *method_adapt_sphere_tess;
+        static const char *method_hemisphere_tess;
+        static const char *method_adapt_hemisphere_tess;
 
         /// <summary>
         /// Initialise a new instance.
