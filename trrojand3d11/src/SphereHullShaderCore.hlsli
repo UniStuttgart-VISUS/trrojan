@@ -14,6 +14,9 @@
 #define PARTITIONING_SCHEME "integer"
 
 
+#define VsOutput VsPassThroughOutput
+
+
 /// <summary>
 /// Compute the tessellation factors for the sphere or sprite.
 /// </summary>

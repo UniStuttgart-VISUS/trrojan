@@ -12,11 +12,15 @@
 // The number of control points, which is one per splat.
 #define CNT_CONTROL_POINTS (1)
 
+
+#define VsOutput VsPassThroughOutput
+
+
 #if (defined(QUAD_TESS) || defined(POLY_TESS) || defined(ADAPT_POLY_TESS))
 #define PsInput PsRaycastingInput
 #elif (defined(SPHERE_TESS) || defined(ADAPT_SPHERE_TESS) || defined(HEMISPHERE_TESS) || defined(ADAPT_HEMISPHERE_TESS))
 #define PsInput PsGeometryInput
-#endif
+#endif /* (defined(QUAD_TESS) || defined(POLY_TESS) || defined(ADAPT_POLY_TESS)) */
 
 
 /// <summary>
@@ -47,18 +51,19 @@ PsInput Main(OutputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
 
     // TODO: QUAD_TESS can be hardcoded w/o trigonometry
 
-#if (defined(QUAD_TESS) || defined(POLY_TESS) || defined(ADAPT_POLY_TESS))
+#if defined(RAYCASTING)
+    /* Move vertices to locations on sprite. */
+
     // Reconstruct the camera system for the pixel shader.
     ReconstructCamera(retval.CameraPosition, retval.CameraDirection,
         retval.CameraUp, retval.CameraRight, vmInv);
 
-    // Pass through sphere parametres and colour.
-    retval.SphereParams = patch[0].SphereParams;
-    retval.Colour = patch[0].Colour;
-
     // Get the world-space centre of the sphere.
     const float4 pos = float4(retval.SphereParams.xyz, 1.0f);
     float rad = retval.SphereParams.w;
+
+    // Pass through sphere parameters and colour.
+    retval.SphereParams = patch[0].SphereParams;
 
 #if defined(QUAD_TESS)
     float4 coords = float4(uv.xy, 0.0f, 0.0f);
@@ -103,7 +108,9 @@ PsInput Main(OutputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
     // Transform camera to glyph space.
     retval.CameraPosition.xyz -= pos.xyz;
 
-#elif (defined(SPHERE_TESS) || defined(ADAPT_SPHERE_TESS) || defined(HEMISPHERE_TESS) || defined(ADAPT_HEMISPHERE_TESS))
+#else
+    /* Move vertices to locations on sphere. */
+
     // Reconstruct the camera system for the pixel shader.
     float4 camPos, up, right;
     ReconstructCamera(camPos, retval.ViewDirection, up, right, vmInv);
@@ -158,9 +165,13 @@ PsInput Main(OutputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
 
     // Project the vertices.
     retval.Position = mul(coords, pm);
-#endif
+#endif /* defined(RAYCASTING) */
 
+#if defined(PER_PIXEL_INTENSITY)
+    retval.Intensity = patch[0].Intensity;
+#else /* defined(PER_PIXEL_INTENSITY) */
     retval.Colour = patch[0].Colour;
+#endif /* defined(PER_PIXEL_INTENSITY) */
 
 #if defined(HOLOMOL)
     retval.Eye = eye;
