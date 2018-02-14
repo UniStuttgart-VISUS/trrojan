@@ -32,7 +32,12 @@
 /// This flag indicates that the technique requires a structured resource view
 /// for the particle data rather than a vertex buffer.
 /// </summary>
-#define SPHERE_TECHNIQUE_USE_SRV  (static_cast<std::uint64_t>(1) << 29)
+#define SPHERE_TECHNIQUE_USE_SRV (static_cast<std::uint64_t>(1) << 29)
+
+/// <summary>
+/// This flag indicates that the techqinue uses a raycasting shader.
+/// </summary>
+#define SPHERE_TECHNIQUE_USE_RAYCASTING (static_cast<std::uint64_t>(1) << 28)
 
 
 #define __SPHERE_TECH_BASE (static_cast<std::uint64_t>(1) << 63)
@@ -40,42 +45,42 @@
 /// <summary>
 /// Raycasting on a quad created in the vertex shader by instancing.
 /// </summary>
-#define SPHERE_TECHNIQUE_QUAD_INST ((__SPHERE_TECH_BASE >> 0) | SPHERE_TECHNIQUE_USE_SRV)
+#define SPHERE_TECHNIQUE_QUAD_INST ((__SPHERE_TECH_BASE >> 0) | SPHERE_TECHNIQUE_USE_SRV | SPHERE_TECHNIQUE_USE_RAYCASTING)
 
 /// <summary>
 /// Raycasting on a polygon created in the vertex shader by instancing.
 /// </summary>
-#define SPHERE_TECHNIQUE_POLY_INST ((__SPHERE_TECH_BASE >> 1) | SPHERE_TECHNIQUE_USE_SRV)
+#define SPHERE_TECHNIQUE_POLY_INST ((__SPHERE_TECH_BASE >> 1) | SPHERE_TECHNIQUE_USE_SRV | SPHERE_TECHNIQUE_USE_RAYCASTING)
 
 /// <summary>
 /// Raycasting on a quad created in the tessellation stage.
 /// </summary>
-#define SPHERE_TECHNIQUE_QUAD_TESS ((__SPHERE_TECH_BASE >> 2) | SPHERE_TECHNIQUE_USE_TESS)
+#define SPHERE_TECHNIQUE_QUAD_TESS ((__SPHERE_TECH_BASE >> 2) | SPHERE_TECHNIQUE_USE_TESS | SPHERE_TECHNIQUE_USE_RAYCASTING)
 
 /// <summary>
 /// Raycasting on a polygon created in the tessellation stage.
 /// </summary>
-#define SPHERE_TECHNIQUE_POLY_TESS ((__SPHERE_TECH_BASE >> 3) | SPHERE_TECHNIQUE_USE_TESS)
+#define SPHERE_TECHNIQUE_POLY_TESS ((__SPHERE_TECH_BASE >> 3) | SPHERE_TECHNIQUE_USE_TESS | SPHERE_TECHNIQUE_USE_RAYCASTING)
 
 /// <summary>
 /// Raycasting on an adaptive polygon created in the tessellation stage.
 /// </summary>
-#define SPHERE_TECHNIQUE_ADAPT_POLY_TESS ((__SPHERE_TECH_BASE >> 4) | SPHERE_TECHNIQUE_USE_TESS)
+#define SPHERE_TECHNIQUE_ADAPT_POLY_TESS ((__SPHERE_TECH_BASE >> 4) | SPHERE_TECHNIQUE_USE_TESS | SPHERE_TECHNIQUE_USE_RAYCASTING)
 
 /// <summary>
 /// MegaMol raycasting technique.
 /// </summary>
-#define SPHERE_TECHNIQUE_SPTA ((__SPHERE_TECH_BASE >> 5) | SPHERE_TECHNIQUE_USE_GEO)
+#define SPHERE_TECHNIQUE_SPTA ((__SPHERE_TECH_BASE >> 5) | SPHERE_TECHNIQUE_USE_GEO | SPHERE_TECHNIQUE_USE_RAYCASTING)
 
 /// <summary>
 /// Raycasting on a quad created in the geometry shader.
 /// </summary>
-#define SPHERE_TECHNIQUE_GEO_QUAD ((__SPHERE_TECH_BASE >> 6) | SPHERE_TECHNIQUE_USE_GEO)
+#define SPHERE_TECHNIQUE_GEO_QUAD ((__SPHERE_TECH_BASE >> 6) | SPHERE_TECHNIQUE_USE_GEO | SPHERE_TECHNIQUE_USE_RAYCASTING)
 
 /// <summary>
 /// Raycasting on a polygon created in the geometry shader.
 /// </summary>
-#define SPHERE_TECHNIQUE_GEO_POLY ((__SPHERE_TECH_BASE >> 7) | SPHERE_TECHNIQUE_USE_GEO)
+#define SPHERE_TECHNIQUE_GEO_POLY ((__SPHERE_TECH_BASE >> 7) | SPHERE_TECHNIQUE_USE_GEO | SPHERE_TECHNIQUE_USE_RAYCASTING)
 
 /// <summary>
 /// Tessellated sphere with fixed subdivision factors.
@@ -125,3 +130,8 @@
 /// the CPU.
 /// </summary>
 #define SPHERE_INPUT_FLT_COLOUR (static_cast<std::uint64_t>(1) << 17)
+
+/// <summary>
+/// The initial shader stages should compute the rays for the raycasting pixel shader.
+/// </summary>
+#define SPHERE_INPUT_PV_RAY (static_cast<std::uint64_t>(1) << 18)
