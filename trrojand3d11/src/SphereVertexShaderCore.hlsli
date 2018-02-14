@@ -10,10 +10,6 @@
 #include "SpherePipeline.hlsli"
 #include "TransferFunction.hlsli"
 
-#if (defined(QUAD_INST) || defined(POLY_INST) || defined(SPHERE_INST))
-#define INSTANCING (1)
-#endif /* (defined(QUAD_INST) || defined(POLY_INST) || defined(SPHERE_INST)) */
-
 
 #if defined(PER_VERTEX_INTENSITY)
 /// <summary>
@@ -27,11 +23,12 @@ Texture1D TransferFunction : register(t0);
 SamplerState LinearSampler : register(s0);
 #endif /* defined(PER_VERTEX_INTENSITY) */
 
-
+#if defined(INSTANCING)
 /// <summary>
 /// The buffer holding the particle parameters.
 /// </summary>
 StructuredBuffer<Particle> Particles : register(t1);
+#endif /* defined(INSTANCING) */
 
 
 #if (defined(QUAD_INSTANCING) || defined(POLY_INSTANCING))
@@ -78,13 +75,13 @@ VsOutput Main(VsInput input) {
 
 #if defined(INSTANCING)
     /* Select the sphere parameters from the structured buffer. */
-    const float3 pos = Particles[particleID].Position.xyz;
+    const float3 pos = Particles[particleID].SphereParams.xyz;
 
 #if defined(PER_VERTEX_RADIUS)
-    const float rad = Particles[particleID].Position.w;
-#else
+    const float rad = Particles[particleID].SphereParams.w;
+#else /* defined(PER_VERTEX_RADIUS)*/
     const float rad = GlobalRadius;
-#endif
+#endif /* defined(PER_VERTEX_RADIUS)*/
 
 #if (defined(PER_VERTEX_INTENSITY) || defined(PER_PIXEL_INTENSITY))
     float intensity = Particles[particleID].Intensity;
@@ -92,27 +89,27 @@ VsOutput Main(VsInput input) {
     float4 colour = Particles[particleID].Colour;
 #elif defined(PER_VERTEX_COLOUR)
     float4 colour = UintToFloat4Colour(Particles[particleID].Colour);
-#else
+#else /* (defined(PER_VERTEX_INTENSITY) || defined(PER_PIXEL_INTENSITY)) */
     float4 colour = GlobalColour;
-#endif
+#endif /* (defined(PER_VERTEX_INTENSITY) || defined(PER_PIXEL_INTENSITY)) */
 
 #else /* defined(INSTANCING) */
     /* Select the sphere parameters from vertex buffer. */
-    const float3 pos = input.Position.xyz;
+    const float3 pos = input.SphereParams.xyz;
 
 #if defined(PER_VERTEX_RADIUS)
-    const float rad = input.Position.w;
-#else
+    const float rad = input.SphereParams.w;
+#else /* defined(PER_VERTEX_RADIUS)*/
     const float rad = GlobalRadius;
-#endif
+#endif /* defined(PER_VERTEX_RADIUS)*/
 
 #if defined(PER_VERTEX_INTENSITY) || defined(PER_PIXEL_INTENSITY)
     float intensity = input.Intensity;
 #elif defined(PER_VERTEX_COLOUR)
     float4 colour = input.Colour;
-#else
+#else  /* (defined(PER_VERTEX_INTENSITY) || defined(PER_PIXEL_INTENSITY)) */
     float4 colour = GlobalColour;
-#endif
+#endif  /* (defined(PER_VERTEX_INTENSITY) || defined(PER_PIXEL_INTENSITY)) */
 #endif /* defined(INSTANCING) */
 
 #if defined(QUAD_INST)
@@ -127,19 +124,8 @@ VsOutput Main(VsInput input) {
 #error "POLY_INST is not yet implemented: Compute polar coordinates from input.VertexID here."
 #endif /* defined(QUAD_INST) */
 
-#if 0
-    //"QUAD_TESS"
-    //"POLY_TESS"
-    //"ADAPT_POLY_TESS"
-    //"SPTA"
-    //"GEO_QUAD"
-    //"GEO_POLY"
-    //"SPHERE_TESS"
-    //"ADAPT_SPHERE_TESS"
-    //"HEMISPHERE_TESS"
-    //"ADAPT_HEMISPHERE_TESS"
-
-
+#if defined(RAYCASTING)
+    /* Transform sprite for per-pixel raycasting techniques. */
 
     // Reconstruct the camera system.
     ReconstructCamera(retval.CameraPosition, retval.CameraDirection,
@@ -162,16 +148,31 @@ VsOutput Main(VsInput input) {
     // Pass on world-space parameters for raycasting.
     retval.SphereParams = float4(pos, rad);
 
-#elif defined(GEOMETRY_INSTANCING)
-    // Transform the instance to match the sphere's size and position.
+#else 
+    /* Geometry techniques. */
     retval.Position = float4(input.Position, 1.0f);
     retval.Position.xyz *= rad;
     retval.Position.xyz += pos.xyz;
     retval.Position = mul(retval.Position, mvp);
 
-    // Retrieve the view direction for later shading.
+    // Retrieve data for later shading.
     retval.ViewDirection = float4(normalize(invVm._31_32_33), 0.0);
-#endif /* defined(QUAD_INSTANCING) */
+
+
+    //"QUAD_TESS"
+    //"POLY_TESS"
+    //"ADAPT_POLY_TESS"
+    //"SPTA"
+    //"GEO_QUAD"
+    //"GEO_POLY"
+    //"SPHERE_TESS"
+    //"ADAPT_SPHERE_TESS"
+    //"HEMISPHERE_TESS"
+    //"ADAPT_HEMISPHERE_TESS"
+
+
+
+#endif
 
 #if defined(PER_VERTEX_INTENSITY)
     /* Per-vertex intensity is transformed to colour in vertex shader.*/
@@ -179,7 +180,7 @@ VsOutput Main(VsInput input) {
     retval.Colour = TransferFunction.SampleLevel(LinearSampler, texCoords, 0);
 #elif defined(PER_PIXEL_INTENSITY)
     /* Per-vertex intensity is passed trough to pixel shader. */
-    retval.Colour = intensity.rrrr;
+    retval.Intensity = intensity;
 #else /* defined(PER_VERTEX_INTENSITY) */
     /* Pass through vertex colour.*/
     retval.Colour = colour;

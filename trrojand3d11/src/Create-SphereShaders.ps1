@@ -25,6 +25,7 @@ begin {
     $techniques[($__SPHERE_TECH_BASE -shr 9) -bor $SPHERE_TECHNIQUE_USE_TESS] = "ADAPT_SPHERE_TESS"
     $techniques[($__SPHERE_TECH_BASE -shr 10) -bor $SPHERE_TECHNIQUE_USE_TESS] = "HEMISPHERE_TESS"
     $techniques[($__SPHERE_TECH_BASE -shr 11) -bor $SPHERE_TECHNIQUE_USE_TESS] = "ADAPT_HEMISPHERE_TESS"
+    # Note: Number of techniques must be below 32!
 
     # Properties of the input data.
     $SPHERE_INPUT_PV_COLOUR = ([uint64] 1) -shl 0
@@ -32,11 +33,13 @@ begin {
     $SPHERE_INPUT_PV_INTENSITY = ([uint64] 1) -shl 2
     $SPHERE_INPUT_PP_INTENSITY = ([uint64] 1) -shl 16
     $SPHERE_INPUT_FLT_COLOUR = ([uint64] 1) -shl 17
-    $SPHERE_INPUT_PV_RAY = ([uint64] 1) -shl 18
+
+    # Variants of the renderer
+    $SPHERE_VARIANT_PV_RAY = ([uint64] 1) -shl 18
+    $SPHERE_VARIANT_CONSERVATIVE_DEPTH = ([uint64] 1) -shl 19
 
     # List of files generated.
-    $files = @()
-    $files.Clear()
+    $global:files = @()
 
     function Create-Shader([string] $fileBase, [string] $core, [uint64] $technique, [uint64] $features) {
         $featureCode = ("{0:X16}" -f ($technique -bor $features))
@@ -63,11 +66,17 @@ begin {
         if ($features -band $SPHERE_INPUT_PP_INTENSITY) {
             $lines += '#define PER_PIXEL_INTENSITY (1)'
         }
-        if ($features -band $SPHERE_INPUT_PV_RAY) {
+        if ($features -band $SPHERE_VARIANT_PV_RAY) {
             $lines += '#define PER_VERTEX_RAY (1)'
         }
-        if ($features -band $SPHERE_TECHNIQUE_USE_RAYCASTING) {
+        if ($technique -band $SPHERE_TECHNIQUE_USE_RAYCASTING) {
             $lines += '#define RAYCASTING (1)'
+        }
+        if ($technique -band $SPHERE_TECHNIQUE_USE_INSTANCING) {
+            $lines += '#define INSTANCING (1)'
+        }
+        if ($technique -band $SPHERE_VARIANT_CONSERVATIVE_DEPTH) {
+            $lines += '#define CONSERVATIVE_DEPTH (1)'
         }
 
         $lines += "#include `"$core`""
@@ -94,7 +103,8 @@ begin {
         $lines += "#define SPHERE_INPUT_PV_INTENSITY ($("0x{0:X}" -f $SPHERE_INPUT_PV_INTENSITY))"
         $lines += "#define SPHERE_INPUT_PP_INTENSITY ($("0x{0:X}" -f $SPHERE_INPUT_PP_INTENSITY))"
         $lines += "#define SPHERE_INPUT_FLT_COLOUR ($("0x{0:X}" -f $SPHERE_INPUT_FLT_COLOUR))"
-        $lines += "#define SPHERE_INPUT_PV_RAY ($("0x{0:X}" -f $SPHERE_INPUT_PV_RAY))"
+        $lines += "#define SPHERE_VARIANT_PV_RAY ($("0x{0:X}" -f $SPHERE_VARIANT_PV_RAY))"
+        $lines += "#define SPHERE_VARIANT_CONSERVATIVE_DEPTH ($("0x{0:X}" -f $SPHERE_VARIANT_CONSERVATIVE_DEPTH))"
         $global:techniques.Keys | %{
             $lines += "#define SPHERE_TECHNIQUE_$($global:techniques[$_]) ($("0x{0:X}" -f $_))"
         }
@@ -135,12 +145,15 @@ process {
                 }
 
                 $cntRay = 0
+                $cntConvDepth = 0
                 if ($technique -band $SPHERE_TECHNIQUE_USE_RAYCASTING) {
                     # If the technique uses raycasting, test per-vertex and
-                    # per-pixel generation of rays.
+                    # per-pixel generation of rays. Also, raycasting supports
+                    # optional conservative depth.
                     $cntRay = 1
+                    $cntConvDepth = 1
                 }
-                
+
                 0..$cntFlt | %{
                     $flt = $_ * $SPHERE_INPUT_FLT_COLOUR
 
@@ -148,21 +161,26 @@ process {
                         $xfer = ($_ * $SPHERE_INPUT_PV_INTENSITY) -bor ((1 - $_) * $SPHERE_INPUT_PP_INTENSITY)
 
                         0..$cntRay | %{
-                            $pvRay = $_ * $SPHERE_INPUT_PV_RAY    
-                            $features = ($pvRadius -bor $pvColour -bor $flt -bor $xfer -bor $pvRay)
+                            $pvRay = $_ * $SPHERE_VARIANT_PV_RAY
+
+                            0..$cntConvDepth | %{
+                                $convDepth = $_ * $SPHERE_VARIANT_CONSERVATIVE_DEPTH
+
+                                $features = ($pvRadius -bor $pvColour -bor $flt -bor $xfer -bor $pvRay -bor $convDepth)
                         
-                            Create-Shader "SphereVertexShader" "SphereVertexShaderCore.hlsli" $technique $features
+                                Create-Shader "SphereVertexShader" "SphereVertexShaderCore.hlsli" $technique $features
 
-                            if ($technique -band $SPHERE_TECHNIQUE_USE_GEO) {
-                                Create-Shader "SphereGeometryShader" "SphereGeometryShaderCore.hlsli" $technique $features
+                                if ($technique -band $SPHERE_TECHNIQUE_USE_GEO) {
+                                    Create-Shader "SphereGeometryShader" "SphereGeometryShaderCore.hlsli" $technique $features
+                                }
+
+                                if ($technique -band $SPHERE_TECHNIQUE_USE_TESS) {
+                                    Create-Shader "SphereHullShader" "SphereHullShaderCore.hlsli" $technique $features
+                                    Create-Shader "SphereDomainShader" "SphereDomainShaderCore.hlsli" $technique $features
+                                }
+
+                                Create-Shader "SpherePixelShader" "SpherePixelShaderCore.hlsli" $technique $features
                             }
-
-                            if ($technique -band $SPHERE_TECHNIQUE_USE_TESS) {
-                                Create-Shader "SphereHullShader" "SphereHullShaderCore.hlsli" $technique $features
-                                Create-Shader "SphereDomainShader" "SphereDomainShaderCore.hlsli" $technique $features
-                            }
-
-                            Create-Shader "SpherePixelShader" "SpherePixelShaderCore.hlsli" $technique $features
                         }
                     }
                     
@@ -172,8 +190,9 @@ process {
         }
     }
 
-    Create-Include $IncludeFile
+    Write-Verbose "$($global:files.Count) shader file(s) written ..."
 
+    Create-Include $IncludeFile
 }
 
 end { }
