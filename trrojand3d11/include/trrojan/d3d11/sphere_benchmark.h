@@ -43,7 +43,7 @@ namespace d3d11 {
         static const char *method_quad_tess;
         static const char *method_poly_tess;
         static const char *method_adapt_poly_tess;
-        static const char *method_spta;
+        static const char *method_stpa;
         static const char *method_geo_quad;
         static const char *method_geo_poly;
         static const char *method_sphere_tess;

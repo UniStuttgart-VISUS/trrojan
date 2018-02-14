@@ -12,19 +12,19 @@ begin {
     
     # Rendering techniques.    
     $__SPHERE_TECH_BASE = ([uint64] 1) -shl 63
-    $techniques = @{}
-    $techniques[($__SPHERE_TECH_BASE -shr 0) -bor $SPHERE_TECHNIQUE_USE_SRV -bor $SPHERE_TECHNIQUE_USE_RAYCASTING -bor $SPHERE_TECHNIQUE_USE_INSTANCING] = "QUAD_INST"
-    #$techniques[($__SPHERE_TECH_BASE -shr 1) -bor $SPHERE_TECHNIQUE_USE_SRV -bor $SPHERE_TECHNIQUE_USE_RAYCASTING -bor $SPHERE_TECHNIQUE_USE_INSTANCING] = "POLY_INST"
-    $techniques[($__SPHERE_TECH_BASE -shr 2) -bor $SPHERE_TECHNIQUE_USE_TESS -bor $SPHERE_TECHNIQUE_USE_RAYCASTING] = "QUAD_TESS"
-    $techniques[($__SPHERE_TECH_BASE -shr 3) -bor $SPHERE_TECHNIQUE_USE_TESS -bor $SPHERE_TECHNIQUE_USE_RAYCASTING] = "POLY_TESS"
-    $techniques[($__SPHERE_TECH_BASE -shr 4) -bor $SPHERE_TECHNIQUE_USE_TESS -bor $SPHERE_TECHNIQUE_USE_RAYCASTING] = "ADAPT_POLY_TESS"
-    $techniques[($__SPHERE_TECH_BASE -shr 5) -bor $SPHERE_TECHNIQUE_USE_GEO -bor $SPHERE_TECHNIQUE_USE_RAYCASTING] = "SPTA"
-    $techniques[($__SPHERE_TECH_BASE -shr 6) -bor $SPHERE_TECHNIQUE_USE_GEO -bor $SPHERE_TECHNIQUE_USE_RAYCASTING] = "GEO_QUAD"
-    $techniques[($__SPHERE_TECH_BASE -shr 7) -bor $SPHERE_TECHNIQUE_USE_GEO -bor $SPHERE_TECHNIQUE_USE_RAYCASTING] = "GEO_POLY"
-    $techniques[($__SPHERE_TECH_BASE -shr 8) -bor $SPHERE_TECHNIQUE_USE_TESS] = "SPHERE_TESS"
-    $techniques[($__SPHERE_TECH_BASE -shr 9) -bor $SPHERE_TECHNIQUE_USE_TESS] = "ADAPT_SPHERE_TESS"
-    $techniques[($__SPHERE_TECH_BASE -shr 10) -bor $SPHERE_TECHNIQUE_USE_TESS] = "HEMISPHERE_TESS"
-    $techniques[($__SPHERE_TECH_BASE -shr 11) -bor $SPHERE_TECHNIQUE_USE_TESS] = "ADAPT_HEMISPHERE_TESS"
+    $global:techniques = @{}
+    $global:techniques[($__SPHERE_TECH_BASE -shr 0) -bor $SPHERE_TECHNIQUE_USE_SRV -bor $SPHERE_TECHNIQUE_USE_RAYCASTING -bor $SPHERE_TECHNIQUE_USE_INSTANCING] = "QUAD_INST"
+    #$global:techniques[($__SPHERE_TECH_BASE -shr 1) -bor $SPHERE_TECHNIQUE_USE_SRV -bor $SPHERE_TECHNIQUE_USE_RAYCASTING -bor $SPHERE_TECHNIQUE_USE_INSTANCING] = "POLY_INST"
+    $global:techniques[($__SPHERE_TECH_BASE -shr 2) -bor $SPHERE_TECHNIQUE_USE_TESS -bor $SPHERE_TECHNIQUE_USE_RAYCASTING] = "QUAD_TESS"
+    $global:techniques[($__SPHERE_TECH_BASE -shr 3) -bor $SPHERE_TECHNIQUE_USE_TESS -bor $SPHERE_TECHNIQUE_USE_RAYCASTING] = "POLY_TESS"
+    $global:techniques[($__SPHERE_TECH_BASE -shr 4) -bor $SPHERE_TECHNIQUE_USE_TESS -bor $SPHERE_TECHNIQUE_USE_RAYCASTING] = "ADAPT_POLY_TESS"
+    $global:techniques[($__SPHERE_TECH_BASE -shr 5) -bor $SPHERE_TECHNIQUE_USE_GEO -bor $SPHERE_TECHNIQUE_USE_RAYCASTING] = "STPA"
+    $global:techniques[($__SPHERE_TECH_BASE -shr 6) -bor $SPHERE_TECHNIQUE_USE_GEO -bor $SPHERE_TECHNIQUE_USE_RAYCASTING] = "GEO_QUAD"
+    $global:techniques[($__SPHERE_TECH_BASE -shr 7) -bor $SPHERE_TECHNIQUE_USE_GEO -bor $SPHERE_TECHNIQUE_USE_RAYCASTING] = "GEO_POLY"
+    $global:techniques[($__SPHERE_TECH_BASE -shr 8) -bor $SPHERE_TECHNIQUE_USE_TESS] = "SPHERE_TESS"
+    $global:techniques[($__SPHERE_TECH_BASE -shr 9) -bor $SPHERE_TECHNIQUE_USE_TESS] = "ADAPT_SPHERE_TESS"
+    $global:techniques[($__SPHERE_TECH_BASE -shr 10) -bor $SPHERE_TECHNIQUE_USE_TESS] = "HEMISPHERE_TESS"
+    $global:techniques[($__SPHERE_TECH_BASE -shr 11) -bor $SPHERE_TECHNIQUE_USE_TESS] = "ADAPT_HEMISPHERE_TESS"
     # Note: Number of techniques must be below 32!
 
     # Properties of the input data.
@@ -49,7 +49,7 @@ begin {
         $lines = @()
         $lines += "// This file was auto-generated using Create-SphereShaders.ps1 on $(Get-Date)"
 
-        $lines += "#define $($techniques[$technique]) (1)"
+        $lines += "#define $($global:techniques[$technique]) (1)"
 
 
         if ($features -band $SPHERE_INPUT_PV_COLOUR) {
@@ -137,7 +137,7 @@ process {
             0..$cntXfer | %{
                 $xfer = ($_ * $SPHERE_INPUT_PP_INTENSITY) -bor ((1 - $_) * $pvIntensity)
                                 
-                $techniques.Keys | %{
+                $global:techniques.Keys | %{
                     $technique = $_
                 
                     $cntFlt = 0

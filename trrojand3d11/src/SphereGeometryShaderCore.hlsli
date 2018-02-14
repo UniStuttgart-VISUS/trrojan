@@ -7,10 +7,21 @@
 #include "SpherePipeline.hlsli"
 
 
+#if (defined(STPA) || defined(GEO_QUAD))
+#define CNT_MAX_VERTICES (4)
+#else /* (defined(STPA) || defined(GEO_QUAD)) */
+#define CNT_MAX_VERTICES (32)
+#endif /* (defined(STPA) || defined(GEO_QUAD)) */
+
+
+#define VsOutput VsPassThroughOutput
+#define PsInput PsRaycastingInput
+
+
 /// <summary>
 /// Geometry shader creating a sprite from a single vertex.
 /// </summary>
-[maxvertexcount(4)]
+[maxvertexcount(CNT_MAX_VERTICES)]
 void Main(point VsOutput input[1], inout TriangleStream<PsInput> triStream) {
     PsInput v = (PsInput) 0;
 
@@ -27,7 +38,7 @@ void Main(point VsOutput input[1], inout TriangleStream<PsInput> triStream) {
     const uint eye = 0;
 #endif /* HOLOMOL */
     float4x4 mvp = ViewProjMatrix[eye];
-    float rad = input[0].Radius;
+    float rad = input[0].SphereParams.w;
 
     //#define MAJOR_DOWELING_RADIUS
 #ifdef MAJOR_DOWELING_RADIUS
@@ -35,13 +46,16 @@ void Main(point VsOutput input[1], inout TriangleStream<PsInput> triStream) {
 #endif /* MAJOR_DOWELING_RADIUS */
     float squareRad = rad * rad;
 
-    float4 objPos = input[0].Position;
-    objPos.w = 1.0;
+    float4 objPos = float4(input[0].SphereParams.xyz, 1.0f);
+#if defined(PER_PIXEL_INTENSITY)
+    v.Intensity = input[0].Intensity;
+#else /* defined(PER_PIXEL_INTENSITY) */
     v.Colour = input[0].Colour;
-    v.SphereParams = float4(input[0].Position.xyz, rad);
-#ifdef HOLOMOL
+#endif /* defined(PER_PIXEL_INTENSITY) */
+    v.SphereParams = input[0].SphereParams;
+#if defined(HOLOMOL)
     v.Eye = eye;
-#endif /* HOLOMOL */
+#endif /* defined(HOLOMOL) */
 
     // Reconstruct camera system.
     ReconstructCamera(v.CameraPosition, v.CameraDirection, v.CameraUp,
@@ -52,19 +66,16 @@ void Main(point VsOutput input[1], inout TriangleStream<PsInput> triStream) {
     //have separate matrices on hololens to replace the following:
     //v.CameraPosition.xyz += v.CameraRight * v.EyeSeparation;
 
-    // SphereParams-Touch-Plane-Approach™
+#if defined(STPA)
+    // Sphere-Touch-Plane-Approach™
     //float2 winHalf = 2.0 / Viewport.zw; // window size
     float2 d, p, q, h, dd;
     float2 mins, maxs;
     float3 testPos;
     float4 projPos;
 
-#ifdef HALO
-    squarRad = (rad + HALO_RAD) * (rad + HALO_RAD);
-#endif // HALO
-
-#if 0
-#define DUEBEL 1.2f
+//#define DUEBEL 1.2f
+#if defined(DUEBEL)
     //bottom left
     v.Position = mul(objPos - v.CameraUp * DUEBEL * rad - v.CameraRight * DUEBEL * rad, mvp);
     triStream.Append(v);
@@ -82,8 +93,7 @@ void Main(point VsOutput input[1], inout TriangleStream<PsInput> triStream) {
     triStream.Append(v);
 
     triStream.RestartStrip();
-#else
-
+#else /*  defined(DUEBEL) */
     // projected camera vector
     float3 c2 = float3(dot(v.CameraPosition.xyz, v.CameraRight.xyz),
         dot(v.CameraPosition.xyz, v.CameraUp.xyz),
@@ -158,6 +168,13 @@ void Main(point VsOutput input[1], inout TriangleStream<PsInput> triStream) {
     triStream.Append(v);
 
     triStream.RestartStrip();
-#endif
-}
+#endif /* defined(DUEBEL) */
 
+#elif defined(GEO_QUAD)
+#pragma message "TODO GEO_QUAD"
+#elif defined(GEO_POLY)
+#pragma message "TODO GEO_POLY"
+#else /* defined(STPA) */
+#error "Unsupported geometry shader technique."
+#endif /* defined(STPA) */
+}
