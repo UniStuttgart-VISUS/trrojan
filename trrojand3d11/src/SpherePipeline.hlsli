@@ -65,14 +65,14 @@ struct VsRaycastingInput {
     /// <summary>
     /// The colour of the particle.
     /// </summary>
-    float4 Colour;
+    float4 Colour : COLOUR0;
 
 #elif (defined(PER_VERTEX_INTENSITY) || defined(PER_PIXEL_INTENSITY))
     /// <summary>
     /// A scalar intensity which is transformed into a colour by means of
     /// a transfer function, either in the vertex or in the pixel shader.
     /// </summary>
-    float Intensity;
+    float Intensity : COLOUR0;
 #endif /* defined(PER_VERTEX_COLOUR) */
 
 #if defined(HOLOMOL)
@@ -104,13 +104,41 @@ struct Particle {
     uint Colour;
 #endif /* FLOAT_COLOUR */
 
-#elif defined(PER_PIXEL_INTENSITY) || defined(PER_VERTEX_INTENSITY))
+#elif (defined(PER_PIXEL_INTENSITY) || defined(PER_VERTEX_INTENSITY))
     /// <summary>
     /// A scalar intensity which is transformed into a colour by means of
     /// a transfer function.
     /// </summary>
     float Intensity;
 #endif /* defined(PER_VERTEX_COLOUR) */
+};
+
+
+/// <summary>
+/// Pass-through output of a vertex shader followed by a geometry or
+/// tessellation shader stage that computes the actual vertex positions.
+/// </summary>
+struct VsPassThroughOutput {
+    /// <summary>
+    /// The world-space position (xyz) and radius (w) of the particle.
+    /// </summary>
+    float4 SphereParams : SV_POSITION;
+
+#if defined(PER_PIXEL_INTENSITY)
+    /// <summary>
+    /// The intensity value to be processed using a transfer function.
+    /// </summary>
+    float Intensity : COLOR0;
+#else /*defined(PER_PIXEL_INTENSITY) */
+    /// <summary>
+    /// The (base) colour of the pixel before shading.
+    /// </summary>
+    float4 Colour : COLOR0;
+#endif /*defined(PER_PIXEL_INTENSITY) */
+
+#if defined(HOLOMOL)
+    uint Eye: TEXCOORD0;
+#endif /* defined(HOLOMOL) */
 };
 
 
@@ -127,10 +155,10 @@ struct HsConstants {
 /// The output of the pixel shader in case of rendering actual sphere geometry.
 /// </summary>
 struct PsGeometryInput {
-    ///// <summary>
-    ///// Position of the pixel.
-    ///// </summary>
-    //float4 Position : SV_POSITION;
+    /// <summary>
+    /// Position of the pixel.
+    /// </summary>
+    float4 Position : SV_POSITION;
 
 #if defined(PER_PIXEL_INTENSITY)
     /// <summary>
@@ -150,9 +178,13 @@ struct PsGeometryInput {
     float4 WorldNormal : NORMAL0;
 
     /// <summary>
-    /// 
+    /// The world-space position of the vertex.
     /// </summary>
     nointerpolation float3 WorldPosition : TEXCOORD0;
+
+    /// <summary>
+    /// The view vector in world-space.
+    /// </summary>
     nointerpolation float4 ViewDirection : TEXCOORD1;
 
 #if defined(HOLOMOL)

@@ -23,6 +23,7 @@ Texture1D TransferFunction : register(t0);
 SamplerState LinearSampler : register(s0);
 #endif /* defined(PER_VERTEX_INTENSITY) */
 
+
 #if defined(INSTANCING)
 /// <summary>
 /// The buffer holding the particle parameters.
@@ -31,16 +32,22 @@ StructuredBuffer<Particle> Particles : register(t1);
 #endif /* defined(INSTANCING) */
 
 
-#if (defined(QUAD_INSTANCING) || defined(POLY_INSTANCING))
-#define VsInput VsNoInput
-#define VsOutput PsRaycastingInput
-#elif defined(GEOMETRY_INSTANCING)
+#if defined(SPHERE_INST)
 #define VsInput VsGeometryInput
+#elif (defined(INSTANCING))
+#define VsInput VsNoInput
+#else /* defined(SPHERE_INST) */
+#define VsInput VsRaycastingInput
+#endif /* defined(SPHERE_INST) */
+
+
+#if defined(SPHERE_INST)
 #define VsOutput PsGeometryInput
-#endif /* (defined(QUAD_INSTANCING) || defined(POLY_INSTANCING)) */
-
-// #define VsInput VsRaycastingInput
-
+#elif defined(INSTANCING)
+#define VsOutput PsRaycastingInput
+#else /* defined(SPHERE_INST) */
+#define VsOutput VsPassThroughOutput
+#endif /* defined(SPHERE_INST) */
 
 
 /// <summary>
@@ -112,8 +119,8 @@ VsOutput Main(VsInput input) {
 #endif  /* (defined(PER_VERTEX_INTENSITY) || defined(PER_PIXEL_INTENSITY)) */
 #endif /* defined(INSTANCING) */
 
+    /* Generate vertex from nothing based on the vertex ID. */
 #if defined(QUAD_INST)
-    /* Make the right vertex based on the vertex ID. */
     const float2 FLIP_Y = float2(1.0f, -1.0f);  // Flips the y-axis of a float2.
     retval.Position = float4(input.VertexID % 2, input.VertexID % 4 / 2,
         0.0f, 1.0f);
@@ -124,8 +131,23 @@ VsOutput Main(VsInput input) {
 #error "POLY_INST is not yet implemented: Compute polar coordinates from input.VertexID here."
 #endif /* defined(QUAD_INST) */
 
-#if defined(RAYCASTING)
-    /* Transform sprite for per-pixel raycasting techniques. */
+#if defined(SPHERE_INST)
+    /* Transform geometry for vertex shader stage. */
+    retval.Position = float4(input.Position, 1.0f);
+    retval.Position.xyz *= rad;
+    retval.Position.xyz += pos.xyz;
+    retval.Position = mul(retval.Position, mvp);
+
+    // Retrieve data for later shading.
+    retval.WorldPosition = input.Position.xyz;
+    retval.WorldNormal = input.Normal;
+    retval.ViewDirection = normalize(invVm._31_32_33);
+
+#elif defined(INSTANCING)
+    /*
+     * Transform sprite for per-pixel raycasting techniques working directly on
+     * instanced sprites.
+     */
 
     // Reconstruct the camera system.
     ReconstructCamera(retval.CameraPosition, retval.CameraDirection,
@@ -148,31 +170,10 @@ VsOutput Main(VsInput input) {
     // Pass on world-space parameters for raycasting.
     retval.SphereParams = float4(pos, rad);
 
-#else 
-    /* Geometry techniques. */
-    retval.Position = float4(input.Position, 1.0f);
-    retval.Position.xyz *= rad;
-    retval.Position.xyz += pos.xyz;
-    retval.Position = mul(retval.Position, mvp);
-
-    // Retrieve data for later shading.
-    retval.ViewDirection = float4(normalize(invVm._31_32_33), 0.0);
-
-
-    //"QUAD_TESS"
-    //"POLY_TESS"
-    //"ADAPT_POLY_TESS"
-    //"SPTA"
-    //"GEO_QUAD"
-    //"GEO_POLY"
-    //"SPHERE_TESS"
-    //"ADAPT_SPHERE_TESS"
-    //"HEMISPHERE_TESS"
-    //"ADAPT_HEMISPHERE_TESS"
-
-
-
-#endif
+#else /* defined(SPHERE_INST) */
+    /* Pass through data to geometry or hull shader. */
+    retval.SphereParams = input.SphereParams;
+#endif /* defined(SPHERE_INST) */
 
 #if defined(PER_VERTEX_INTENSITY)
     /* Per-vertex intensity is transformed to colour in vertex shader.*/

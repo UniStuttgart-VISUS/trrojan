@@ -51,6 +51,7 @@ begin {
 
         $lines += "#define $($techniques[$technique]) (1)"
 
+
         if ($features -band $SPHERE_INPUT_PV_COLOUR) {
             $lines += '#define PER_VERTEX_COLOUR (1)'
         }
@@ -126,39 +127,40 @@ process {
             #echo "COL $pvColour"
             #echo "INT $pvIntensity"
 
-            $techniques.Keys | %{
-                $technique = $_
+            $cntXfer = 0
+            if ($pvIntensity -ne 0) {
+                # Technique has per-vertex intensity, so we need to test VS
+                # texture lookup and PS texture lookup.
+                $cntXfer = 1
+            }
+
+            0..$cntXfer | %{
+                $xfer = ($_ * $SPHERE_INPUT_PP_INTENSITY) -bor ((1 - $_) * $pvIntensity)
+                                
+                $techniques.Keys | %{
+                    $technique = $_
                 
-                $cntFlt = 0
-                if (($technique -band $SPHERE_TECHNIQUE_USE_SRV) -and ($pvColour -ne 0)) {
-                    # Technique uses structured resource view and format
-                    # includes colour, so we need to include in-shader RGB8 to 
-                    # float conversion and host code conversion.
-                    $cntFlt = 1
-                }
+                    $cntFlt = 0
+                    if (($technique -band $SPHERE_TECHNIQUE_USE_SRV) -and ($pvColour -ne 0)) {
+                        # Technique uses structured resource view and format
+                        # includes colour, so we need to include in-shader RGB8 to 
+                        # float conversion and host code conversion.
+                        $cntFlt = 1
+                    }
 
-                $cntXfer = 0
-                if ($pvIntensity -ne 0) {
-                    # Technique has per-vertex intensity, so we need to test VS
-                    # texture lookup and PS texture lookup.
-                    $cntXfer = 1
-                }
+                    $cntRay = 0
+                    $cntConvDepth = 0
+                    if ($technique -band $SPHERE_TECHNIQUE_USE_RAYCASTING) {
+                        # If the technique uses raycasting, test per-vertex and
+                        # per-pixel generation of rays. Also, raycasting supports
+                        # optional conservative depth.
+                        $cntRay = 1
+                        $cntConvDepth = 1
+                    }
 
-                $cntRay = 0
-                $cntConvDepth = 0
-                if ($technique -band $SPHERE_TECHNIQUE_USE_RAYCASTING) {
-                    # If the technique uses raycasting, test per-vertex and
-                    # per-pixel generation of rays. Also, raycasting supports
-                    # optional conservative depth.
-                    $cntRay = 1
-                    $cntConvDepth = 1
-                }
+                    0..$cntFlt | %{
+                        $flt = $_ * $SPHERE_INPUT_FLT_COLOUR
 
-                0..$cntFlt | %{
-                    $flt = $_ * $SPHERE_INPUT_FLT_COLOUR
-
-                    0..$cntXfer | %{
-                        $xfer = ($_ * $SPHERE_INPUT_PV_INTENSITY) -bor ((1 - $_) * $SPHERE_INPUT_PP_INTENSITY)
 
                         0..$cntRay | %{
                             $pvRay = $_ * $SPHERE_VARIANT_PV_RAY
@@ -183,10 +185,8 @@ process {
                             }
                         }
                     }
-                    
                 }
             }
-          
         }
     }
 
