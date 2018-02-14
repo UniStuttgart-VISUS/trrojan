@@ -44,7 +44,7 @@ begin {
     function Create-Shader([string] $fileBase, [string] $core, [uint64] $technique, [uint64] $features) {
         $featureCode = ("{0:X16}" -f ($technique -bor $features))
         $file = "$fileBase$featureCode.hlsl"
-        $global:files += $file
+        $global:files += "$fileBase$featureCode.h"
 
         $lines = @()
         $lines += "// This file was auto-generated using Create-SphereShaders.ps1 on $(Get-Date)"
@@ -91,7 +91,7 @@ begin {
         $lines += "// This file was auto-generated using Create-SphereShaders.ps1 on $(Get-Date)"
 
         $global:files | %{
-            $lines += "#include `"$_.h`""
+            $lines += "#include `"$_`""
         }
 
         $lines += "#define SPHERE_TECHNIQUE_USE_GEO ($("0x{0:X}" -f $SPHERE_TECHNIQUE_USE_GEO))"

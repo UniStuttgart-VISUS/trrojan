@@ -21,7 +21,7 @@ set(ShaderFiles ${VertexShaderFiles} ${DomainShaderFiles} ${HullShaderFiles} ${G
 # Configure fxc
 set_property(SOURCE ${ShaderFiles} PROPERTY VS_SHADER_ENTRYPOINT Main)
 set_property(SOURCE ${ShaderFiles} PROPERTY VS_SHADER_MODEL 5.0)
-set_property(SOURCE ${ShaderFiles} PROPERTY VS_SHADER_FLAGS "/Fh \"${PROJECT_SOURCE_DIR}/%(Filename).h\" /Vn \"%(Filename)Bytes\" /Zi")
+set_property(SOURCE ${ShaderFiles} PROPERTY VS_SHADER_FLAGS "/Fh \"$(IntDir)/%(Filename).h\" /Vn \"%(Filename)Bytes\" /Zi")
 
 # Configure shader types
 set_property(SOURCE ${VertexShaderFiles} PROPERTY VS_SHADER_TYPE Vertex)
@@ -36,7 +36,7 @@ set(ShaderFiles ${ShaderHeaderFiles} ${ShaderFiles})
 
 include_directories("${IncludeDirectory}")
 include_directories("${TrrojanCoreIncludeDir}")
-include_directories("${PROJECT_SOURCE_DIR}")	# This is utter sh***, but CMAKE ruins all VS built-in variables by expanding them twice.
+add_compile_options(/I$<1:"$(ProjectDir)$(IntDir)">)    # Hack from https://stackoverflow.com/questions/35232068/referencing-visual-studio-variables-from-cmake
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTRROJAND3D11_EXPORTS")
 

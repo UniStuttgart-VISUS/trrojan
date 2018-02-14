@@ -22,19 +22,7 @@
 
 #include "trrojan/d3d11/utilities.h"
 
-#include "SphereGeometryShader.h"
-#include "SpherePipeline.hlsli"
-#include "SpherePixelShader.h"
-#include "SpherePixelShaderInt.h"
-#include "SphereSpriteGeometryShader.h"
-#include "SphereSpriteDomainShader.h"
-#include "SphereSpriteHullShader.h"
-#include "SphereVertexShader.h"
-#include "SphereVertexShaderPvCol.h"
-#include "SphereVertexShaderPvColPvRad.h"
-#include "SphereVertexShaderPvInt.h"
-#include "SphereVertexShaderPvIntPvRad.h"
-#include "SphereVertexShaderPvRad.h"
+#include "sphere_techniques.h"
 
 
 #define _SPHERE_BENCH_DEFINE_FACTOR(f)                                         \
