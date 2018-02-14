@@ -52,18 +52,24 @@ PsInput Main(OutputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
     ReconstructCamera(retval.CameraPosition, retval.CameraDirection,
         retval.CameraUp, retval.CameraRight, vmInv);
 
-    // Get the world-space centre of the sphere.
-    const float4 pos = float4(patch[0].SphereParams.xyz, 1.0f);
-
-    // Re-combine the spheres parameters into a float + colour.
-    retval.SphereParams = float4(pos.xyz, patch[0].SphereParams.w);
+    // Pass through sphere parametres and colour.
+    retval.SphereParams = patch[0].SphereParams;
     retval.Colour = patch[0].Colour;
 
+    // Get the world-space centre of the sphere.
+    const float4 pos = float4(retval.SphereParams.xyz, 1.0f);
+    float rad = retval.SphereParams.w;
+
+#if defined(QUAD_TESS)
+    float4 coords = float4(uv.xy, 0.0f, 0.0f);
+    coords.xy -= 0.5f.xx;
+    coords *= rad;
+
+#else /* defined(QUAD_TESS) */
     // If we use the radius of the sphere as size of the triangle fan, its hull
     // are the secants of the final sphere, but we need to have the tangent.
     // Adjust the value such that the radius is equal to the altitude (apothem)
     // of the triangle.
-    float rad = patch[0].SphereParams.w;
     float alpha = TWO_PI / (2.0f * constants.EdgeTessFactor[0]);
     rad /= cos(alpha);
     //rad /= 0.9999398715340;
@@ -73,6 +79,8 @@ PsInput Main(OutputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
     float sinPhi, cosPhi;
     sincos(phi, sinPhi, cosPhi);
     float4 coords = float4(rad * cosPhi, rad * sinPhi, 0.0f, 0.0f);
+
+#endif /* defined(QUAD_TESS) */
 
     float3 v = normalize((pos - retval.CameraPosition).xyz);
     float3 u = normalize(vmInv._21_22_23);
