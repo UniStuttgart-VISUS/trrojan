@@ -262,26 +262,47 @@ struct PsOutput {
 
 
 cbuffer SphereConstants CBUFFER(0) {
+    float4 GlobalColour;
+    float2 IntensityRange;
+    float GlobalRadius;
+    float _SpherePadding[9];
+
+};
+
+cbuffer ViewConstants CBUFFER(1) {
     float4x4 ViewMatrix[STEREO_BUFFERS];
     float4x4 ProjMatrix[STEREO_BUFFERS];
     float4x4 ViewProjMatrix[STEREO_BUFFERS];
     float4x4 ViewInvMatrix[STEREO_BUFFERS];
     float4x4 ViewProjInvMatrix[STEREO_BUFFERS];
     float4 Viewport;
-    float4 GlobalColour;
-    float2 IntensityRange;
-    float GlobalRadius;
-    float DUMMY;
-    float4 EdgeTessFactor;
-    float2 InsideTessFactor;
-    float2 DUMMY2;
 };
 
-//cbuffer ViewConstants CBUFFER(1) {
-//    float4x4 ViewMatrix[STEREO_BUFFERS];
-//    float4x4 ProjMatrix[STEREO_BUFFERS];
-//    float4x4 ViewProjMatrix[STEREO_BUFFERS];
-//    float4x4 ViewInvMatrix[STEREO_BUFFERS];
-//    float4x4 ViewProjInvMatrix[STEREO_BUFFERS];
-//    float4 Viewport;
-//};
+
+cbuffer TessellationConstants CBUFFER(2) {
+    /// <summary>
+    /// Specifies the tessellation factors for the hull shader.
+    /// </summary>
+    /// <remarks>
+    /// <para>In case of host-controlled tessellation, this variable specifies
+    /// the edge tessellation factors. This is the case for non-adaptive sphere
+    /// and hemisphere tessellation.</para>
+    /// <para>For adaptive polygons, the <c>x</c>- and the <c>y</c>-component
+    /// specify the minimum and maximum number of corners. The minimum must be
+    /// greater than or equal to four. The <c>z</c>-component controls the
+    /// adaptive tessellation.</para>
+    /// </remarks>
+    float4 EdgeTessFactor;
+
+    /// <summary>
+    /// Specifies the tessellation factors for the hull shader.
+    /// </summary>
+    /// <remarks>
+    /// <para>For non-adaptive sphere and hemisphere tessellation, this value
+    /// specifies the inner tessellation factors of the quad wrapped around the
+    /// sphere.</para>
+    /// </remarks>
+    float2 InsideTessFactor;
+
+    float _TessPadding[10];
+}
