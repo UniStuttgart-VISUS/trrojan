@@ -113,9 +113,10 @@ namespace d3d11 {
         /// </summary>
         /// <param name=""></param>
         /// <param name=""></param>
+        /// <param name=""></param>
         /// <returns>A reference to the cached technique.</returns>
-        rendering_technique& get_technique(const std::string& method,
-            const shader_id_type features);
+        rendering_technique& get_technique(d3d11::device& device,
+            const std::string& method, const shader_id_type features);
 
         /// <summary>
         /// The camera for computing the transformation matrices.

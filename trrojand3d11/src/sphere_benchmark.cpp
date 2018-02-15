@@ -412,7 +412,7 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
 
     auto method = config.get<std::string>(factor_method);
 
-    auto tech = this->get_technique(method, 0);
+    auto tech = this->get_technique(device, method, 0);
 
     throw 1;
 }
@@ -439,8 +439,8 @@ trrojan::d3d11::sphere_benchmark::get_shader_id(const std::string& method,
  * trrojan::d3d11::sphere_benchmark::get_technique
  */
 trrojan::d3d11::rendering_technique&
-trrojan::d3d11::sphere_benchmark::get_technique(const std::string& method,
-        const shader_id_type features) {
+trrojan::d3d11::sphere_benchmark::get_technique(d3d11::device& device,
+        const std::string& method, const shader_id_type features) {
     auto id = sphere_benchmark::get_shader_id(method, features);
 
     auto retval = this->techniqueCache.find(id);
@@ -464,28 +464,30 @@ trrojan::d3d11::sphere_benchmark::get_technique(const std::string& method,
         if (it->second.vertex_shader != 0) {
             auto src = d3d11::plugin::load_resource(
                 MAKEINTRESOURCE(it->second.vertex_shader), _T("SHADER"));
-            //vs = create_vertex_shader(src);
+            vs = create_vertex_shader(device.d3d_device(), src);
         }
         if (it->second.hull_shader != 0) {
             auto src = d3d11::plugin::load_resource(
                 MAKEINTRESOURCE(it->second.hull_shader), _T("SHADER"));
+            hs = create_hull_shader(device.d3d_device(), src);
         }
         if (it->second.domain_shader != 0) {
             auto src = d3d11::plugin::load_resource(
                 MAKEINTRESOURCE(it->second.domain_shader), _T("SHADER"));
+            ds = create_domain_shader(device.d3d_device(), src);
         }
         if (it->second.geometry_shader != 0) {
             auto src = d3d11::plugin::load_resource(
                 MAKEINTRESOURCE(it->second.geometry_shader), _T("SHADER"));
+            gs = create_geometry_shader(device.d3d_device(), src);
         }
         if (it->second.pixel_shader != 0) {
             auto src = d3d11::plugin::load_resource(
                 MAKEINTRESOURCE(it->second.pixel_shader), _T("SHADER"));
+            ps = create_pixel_shader(device.d3d_device(), src);
         }
 
-        //
-
-        this->techniqueCache[id] = rendering_technique();
+        //this->techniqueCache[id] = rendering_technique(method, nullptr, D3D11_PRIMITIVE_TOPOLOGY_10_CONTROL_POINT_PATCHLIST, vs, );
     }
 
     retval = this->techniqueCache.find(id);
