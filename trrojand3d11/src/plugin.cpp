@@ -10,6 +10,30 @@
 
 
 /// <summary>
+/// Handle of the plugin DLL.
+/// </summary>
+static HINSTANCE hTrrojanDll = NULL;
+
+
+/// <summary>
+/// Entry point of the DLL.
+/// </summary>
+BOOL WINAPI DllMain(HINSTANCE hDll, DWORD reason, LPVOID reserved) {
+    switch (reason) {
+        case DLL_PROCESS_ATTACH:
+            ::DisableThreadLibraryCalls(hDll);
+            ::hTrrojanDll = hDll;
+            break;
+
+        case DLL_PROCESS_DETACH:
+            break;
+    }
+
+    return TRUE;
+}
+
+
+/// <summary>
 /// Gets a new instance of the plugin descriptor.
 /// </summary>
 extern "C" TRROJAND3D11_API trrojan::plugin_base *get_trrojan_plugin(void) {

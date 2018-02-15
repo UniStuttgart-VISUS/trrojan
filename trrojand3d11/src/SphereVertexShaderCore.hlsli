@@ -132,7 +132,7 @@ VsOutput Main(VsInput input) {
 #endif /* defined(QUAD_INST) */
 
 #if defined(SPHERE_INST)
-    /* Transform geometry for vertex shader stage. */
+    /* Transform sphere geometry from VB for vertex shader stage. */
     retval.Position = float4(input.Position, 1.0f);
     retval.Position.xyz *= rad;
     retval.Position.xyz += pos.xyz;

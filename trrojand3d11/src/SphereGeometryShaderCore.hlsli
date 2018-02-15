@@ -3,6 +3,7 @@
 /// </copyright>
 /// <author>Christoph Müller</author>
 
+#include "OrientToCamera.hlsli"
 #include "ReconstructCamera.hlsli"
 #include "SpherePipeline.hlsli"
 
@@ -171,9 +172,68 @@ void Main(point VsOutput input[1], inout TriangleStream<PsInput> triStream) {
 #endif /* defined(DUEBEL) */
 
 #elif defined(GEO_QUAD)
-#pragma message "TODO GEO_QUAD"
+    const float4 CORNERS[] = {
+        float4(-1.0f, -1.0f, 0.0f, 1.0f),
+        float4(-1.0f, 1.0f, 0.0f, 1.0f),
+        float4(1.0f, -1.0f, 0.0f, 1.0f),
+        float4(1.0f, 1.0f, 0.0f, 1.0f),
+    };
+    float4x4 invVm = ViewInvMatrix[eye];
+    float4x4 matOrient = OrientToCamera(objPos.xyz, invVm);
+
+    [unroll(4)]
+    for (int i = 0; i < 4; ++i) {
+        v.Position = float4(CORNERS[i]);
+        v.Position.xyz *= rad;
+
+        // Orient the sprite towards the camera.
+        v.Position = mul(v.Position, matOrient);
+
+        // Move sprite to world position.
+        v.Position.xyz += objPos.xyz;
+        v.Position.xyz -= rad * matOrient._31_32_33;
+
+        // Do the camera transform.
+        v.Position = mul(v.Position, mvp);
+
+        triStream.Append(v);
+    }
+
+    triStream.RestartStrip();
+
 #elif defined(GEO_POLY)
-#pragma message "TODO GEO_POLY"
+    const float PI = 3.14159265358979323846f;
+    const float TWO_PI = 2.0f * PI;
+    float4x4 invVm = ViewInvMatrix[eye];
+    float4x4 matOrient = OrientToCamera(objPos.xyz, invVm);
+
+    // Compute apothem of triangle fan enclosing the whole sphere.
+    uint cnt = min((uint) EdgeTessFactor.x, CNT_MAX_VERTICES);
+    float alpha = TWO_PI / (2.0f * cnt);
+    rad /= cos(alpha);
+
+    for (uint i = 0; i < cnt; ++i) {
+        float phi = i / cnt;
+        float sinPhi, cosPhi;
+        sincos(phi, sinPhi, cosPhi);
+
+        v.Position = float4(rad * cosPhi, rad * sinPhi, 0.0f, 1.0f);
+
+        // Orient the sprite towards the camera.
+        v.Position = mul(v.Position, matOrient);
+
+        // Move sprite to world position.
+        v.Position.xyz += objPos.xyz;
+        v.Position.xyz -= rad * matOrient._31_32_33;
+
+        // Do the camera transform.
+        v.Position = mul(v.Position, mvp);
+
+        triStream.Append(v);
+    }
+
+    triStream.RestartStrip();
+
 #else /* defined(STPA) */
 #error "Unsupported geometry shader technique."
 #endif /* defined(STPA) */
