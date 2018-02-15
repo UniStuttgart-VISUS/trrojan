@@ -27,9 +27,19 @@ namespace d3d11 {
         const D3D11_BIND_FLAG binding, const void *data, const UINT cntData,
         const UINT cpuAccess = 0);
 
-    template<size_t N>
     ATL::CComPtr<ID3D11DomainShader> create_domain_shader(ID3D11Device *device,
-        const BYTE(&byteCode)[N]);
+        const BYTE *byteCode, const size_t cntByteCode);
+
+    template<size_t N>
+    inline ATL::CComPtr<ID3D11DomainShader> create_domain_shader(
+            ID3D11Device *device, const BYTE(&byteCode)[N]) {
+        return create_domain_shader(device, byteCode, N);
+    }
+
+    inline ATL::CComPtr<ID3D11DomainShader> create_domain_shader(
+            ID3D11Device *device, const std::vector<std::uint8_t>& byteCode) {
+        return create_domain_shader(device, byteCode.data(), byteCode.size());
+    }
 
     inline ATL::CComPtr<ID3D11DomainShader> create_domain_shader(
             ID3D11Device *device, std::nullptr_t) {
@@ -38,18 +48,39 @@ namespace d3d11 {
 
     ATL::CComPtr<ID3D11Query> create_event_query(ID3D11Device *device);
 
-    template<size_t N>
     ATL::CComPtr<ID3D11GeometryShader> create_geometry_shader(
-        ID3D11Device *device, const BYTE(&byteCode)[N]);
+        ID3D11Device *device, const BYTE *byteCode, const size_t cntByteCode);
+
+    template<size_t N>
+    inline ATL::CComPtr<ID3D11GeometryShader> create_geometry_shader(
+            ID3D11Device *device, const BYTE(&byteCode)[N]) {
+        return create_geometry_shader(device, byteCode, N);
+    }
+
+    inline ATL::CComPtr<ID3D11GeometryShader> create_geometry_shader(
+            ID3D11Device *device, const std::vector<std::uint8_t>& byteCode) {
+        return create_geometry_shader(device, byteCode.data(), byteCode.size());
+    }
 
     inline ATL::CComPtr<ID3D11GeometryShader> create_geometry_shader(
             ID3D11Device *device, std::nullptr_t) {
         return nullptr;
     }
 
+    ATL::CComPtr<ID3D11HullShader> create_hull_shader(ID3D11Device *device,
+        const BYTE *byteCode, const size_t cntByteCode);
+
     template<size_t N>
-    ATL::CComPtr<ID3D11HullShader> create_hull_shader(
-        ID3D11Device *device, const BYTE(&byteCode)[N]);
+    inline ATL::CComPtr<ID3D11HullShader> create_hull_shader(
+            ID3D11Device *device, const BYTE(&byteCode)[N]) {
+        return create_hull_shader(device, byteCode, N);
+    }
+
+    inline ATL::CComPtr<ID3D11HullShader> create_hull_shader(
+            ID3D11Device *device, const std::vector<std::uint8_t>& byteCode) {
+        return create_hull_shader(device, byteCode.data(), byteCode.size());
+    }
+
 
     inline ATL::CComPtr<ID3D11HullShader> create_hull_shader(
             ID3D11Device *device, std::nullptr_t) {
@@ -83,24 +114,77 @@ namespace d3d11 {
     }
 
     inline ATL::CComPtr<ID3D11PixelShader> create_pixel_shader(
+            ID3D11Device *device, const std::vector<std::uint8_t>& byteCode) {
+        return create_pixel_shader(device, byteCode.data(), byteCode.size());
+    }
+
+    inline ATL::CComPtr<ID3D11PixelShader> create_pixel_shader(
             ID3D11Device *device, std::nullptr_t) {
         return nullptr;
     }
 
+    /// <summary>
+    /// Create a vertex shader from the given byte code.
+    /// </summary>
+    /// <param name="device"></param>
+    /// <param name="byteCode"></param>
+    /// <param name="cntByteCode"></param>
+    /// <returns></returns>
+    /// <exception cref="ATL::CAtlException">In case the shader creation failed.
+    /// </exception>
     ATL::CComPtr<ID3D11VertexShader> create_vertex_shader(ID3D11Device *device,
         const BYTE *byteCode, const size_t cntByteCode);
 
+    /// <summary>
+    /// Create a vertex shader from the given byte code.
+    /// </summary>
+    /// <param name="device"></param>
+    /// <param name="byteCode"></param>
+    /// <tparam name="N"></tparam>
+    /// <returns></returns>
+    /// <exception cref="ATL::CAtlException">In case the shader creation failed.
+    /// </exception>
     template<size_t N>
     inline ATL::CComPtr<ID3D11VertexShader> create_vertex_shader(
             ID3D11Device *device, const BYTE(&byteCode)[N]) {
         return create_vertex_shader(device, byteCode, N);
     }
 
+    /// <summary>
+    /// Create a vertex shader from the given byte code.
+    /// </summary>
+    /// <param name="device"></param>
+    /// <param name="byteCode"></param>
+    /// <returns></returns>
+    /// <exception cref="ATL::CAtlException">In case the shader creation failed.
+    /// </exception>
+    inline ATL::CComPtr<ID3D11VertexShader> create_vertex_shader(
+            ID3D11Device *device, const std::vector<std::uint8_t>& byteCode) {
+        return create_vertex_shader(device, byteCode.data(), byteCode.size());
+    }
+
+    /// <summary>
+    /// Create no vertex shader.
+    /// </summary>
+    /// <param name="device"></param>
+    /// <param name=""></param>
+    /// <returns></returns>
+    /// <exception cref="ATL::CAtlException">In case the shader creation failed.
+    /// </exception>
     inline ATL::CComPtr<ID3D11VertexShader> create_vertex_shader(
             ID3D11Device *device, std::nullptr_t) {
         return nullptr;
     }
 
+    /// <summary>
+    /// Creates a 1D texture with the Viridis colour map in it.
+    /// </summary>
+    /// <param name="device"></param>
+    /// <param name="outOptSrv">If not <c>nullptr</c>, create a shader resource
+    /// view for the texture and return it to this variable.</param>
+    /// <returns></returns>
+    /// <exception cref="ATL::CAtlException">In case the texture could not be
+    /// created.</exception>
     ATL::CComPtr<ID3D11Texture1D> create_viridis_colour_map(
         ID3D11Device *device, ID3D11ShaderResourceView **outOptSrv = nullptr);
 

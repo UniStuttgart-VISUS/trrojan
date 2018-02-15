@@ -20,6 +20,7 @@
 #include "trrojan/system_factors.h"
 #include "trrojan/timer.h"
 
+#include "trrojan/d3d11/plugin.h"
 #include "trrojan/d3d11/utilities.h"
 
 #include "sphere_techniques.h"
@@ -37,31 +38,14 @@ _SPHERE_BENCH_DEFINE_FACTOR(vs_xfer_function);
 #undef _SPHERE_BENCH_DEFINE_FACTOR
 
 
-#define _SPHERE_BENCH_DEFINE_METHOD(m)                                         \
-const char *trrojan::d3d11::sphere_benchmark::method_##m = #m
-
-_SPHERE_BENCH_DEFINE_METHOD(quad_inst);
-_SPHERE_BENCH_DEFINE_METHOD(poly_inst);
-_SPHERE_BENCH_DEFINE_METHOD(quad_tess);
-_SPHERE_BENCH_DEFINE_METHOD(poly_tess);
-_SPHERE_BENCH_DEFINE_METHOD(adapt_poly_tess);
-_SPHERE_BENCH_DEFINE_METHOD(stpa);
-_SPHERE_BENCH_DEFINE_METHOD(geo_quad);
-_SPHERE_BENCH_DEFINE_METHOD(geo_poly);
-_SPHERE_BENCH_DEFINE_METHOD(sphere_tess);
-_SPHERE_BENCH_DEFINE_METHOD(adapt_sphere_tess);
-_SPHERE_BENCH_DEFINE_METHOD(hemisphere_tess);
-_SPHERE_BENCH_DEFINE_METHOD(adapt_hemisphere_tess);
-
-#undef _SPHERE_BENCH_DEFINE_METHOD
+_DEFINE_SPHERE_TECHNIQUE_LUT(SPHERE_METHODS);
 
 
 /*
  * trrojan::d3d11::sphere_benchmark::sphere_benchmark
  */
 trrojan::d3d11::sphere_benchmark::sphere_benchmark(void)
-        : benchmark_base("sphere-raycaster"),
-        method(sphere_benchmark::method_inst_quad) {
+        : benchmark_base("sphere-raycaster") {
     typedef mmpld_reader::shader_properties sp_t;
 
     // Define the data we need.
@@ -77,32 +61,17 @@ trrojan::d3d11::sphere_benchmark::sphere_benchmark(void)
         factor_manoeuvre_step, static_cast<manoeuvre_step_type>(0)));
     this->_default_configs.add_factor(factor::from_manifestations(
         factor_manoeuvre_steps, static_cast<manoeuvre_step_type>(64)));
+    {
+        std::vector<std::string> manifestations;
+        for (size_t i = 0; (::SPHERE_METHODS[i].name != nullptr); ++i) {
+            manifestations.emplace_back(::SPHERE_METHODS[i].name);
+        }
+        this->_default_configs.add_factor(factor::from_manifestations(
+            factor_method, manifestations));
+    }
 
-    // Prepare a lookup table for the different rendering techniques.
-#define _ADD_SPHERE_TECH(name, variant, file) this->techniques[name][variant] \
-    = rendering_technique();
-#undef _ADD_SPHERE_TECH
-    // TODO
-
-    // Prepare a lookup table for different variants of the pixel shader.
-    this->pixel_shaders[sp_t::none] = pack_shader_source(
-        ::SpherePixelShaderBytes);
-    this->pixel_shaders[sp_t::intensity_xfer_function] = pack_shader_source(
-        ::SpherePixelShaderIntBytes);
-
-    // Prepare a lookup table for different variants of the vertex shader.
-    this->vertex_shaders[sp_t::none] = pack_shader_source(
-        ::SphereVertexShaderBytes);
-    this->vertex_shaders[sp_t::intensity_xfer_function] = pack_shader_source(
-        ::SphereVertexShaderPvIntBytes);
-    this->vertex_shaders[sp_t::per_vertex_colour] = pack_shader_source(
-        ::SphereVertexShaderPvColBytes);
-    this->vertex_shaders[sp_t::per_vertex_radius] = pack_shader_source(
-        ::SphereVertexShaderPvRadBytes);
-    this->vertex_shaders[sp_t::intensity_xfer_function | sp_t::per_vertex_radius]
-        = pack_shader_source(::SphereVertexShaderPvIntPvRadBytes);
-    this->vertex_shaders[sp_t::per_vertex_colour | sp_t::per_vertex_radius]
-        = pack_shader_source(::SphereVertexShaderPvColPvRadBytes);
+    // Build the lookup table for the shader resources.
+    _ADD_SPHERE_SHADERS(this->shaderResources);
 }
 
 
@@ -137,6 +106,7 @@ std::vector<std::string> trrojan::d3d11::sphere_benchmark::required_factors(
  */
 trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
         const configuration& config, const std::vector<std::string>& changed) {
+#if 0
     SphereConstants constants;
     trrojan::timer cpuTimer;
     auto ctx = device.d3d_context();
@@ -438,4 +408,86 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
     }
 
     return retval;
+#endif
+
+    auto method = config.get<std::string>(factor_method);
+
+    auto tech = this->get_technique(method, 0);
+
+    throw 1;
+}
+
+
+/*
+ * trrojan::d3d11::sphere_benchmark::get_shader_id
+ */
+trrojan::d3d11::sphere_benchmark::shader_id_type
+trrojan::d3d11::sphere_benchmark::get_shader_id(const std::string& method,
+        const shader_id_type features) {
+    for (size_t i = 0; (::SPHERE_METHODS[i].name != nullptr);++i) {
+        if (method == ::SPHERE_METHODS[i].name) {
+            return ::SPHERE_METHODS[i].id;
+        }
+    }
+    /* Not found at this point. */
+
+    return 0;
+}
+
+
+/*
+ * trrojan::d3d11::sphere_benchmark::get_technique
+ */
+trrojan::d3d11::rendering_technique&
+trrojan::d3d11::sphere_benchmark::get_technique(const std::string& method,
+        const shader_id_type features) {
+    auto id = sphere_benchmark::get_shader_id(method, features);
+
+    auto retval = this->techniqueCache.find(id);
+    if (retval == this->techniqueCache.end()) {
+        log::instance().write_line(log_level::verbose, "No cached sphere "
+            "rendering technique for \"%s\" with features %" PRIu64 " (ID %"
+            PRIu64 ") was found. Creating a new one ...", method.c_str(),
+            features, id);
+        rendering_technique::vertex_shader_type vs = nullptr;
+        rendering_technique::hull_shader_type hs = nullptr;
+        rendering_technique::domain_shader_type ds = nullptr;
+        rendering_technique::geometry_shader_type gs = nullptr;
+        rendering_technique::pixel_shader_type ps = nullptr;
+
+        auto it = this->shaderResources.find(id);
+        if (it == this->shaderResources.end()) {
+            throw std::runtime_error("Shader sources for the given sphere "
+                "rendering method ware missing.");
+        }
+
+        if (it->second.vertex_shader != 0) {
+            auto src = d3d11::plugin::load_resource(
+                MAKEINTRESOURCE(it->second.vertex_shader), _T("SHADER"));
+            //vs = create_vertex_shader(src);
+        }
+        if (it->second.hull_shader != 0) {
+            auto src = d3d11::plugin::load_resource(
+                MAKEINTRESOURCE(it->second.hull_shader), _T("SHADER"));
+        }
+        if (it->second.domain_shader != 0) {
+            auto src = d3d11::plugin::load_resource(
+                MAKEINTRESOURCE(it->second.domain_shader), _T("SHADER"));
+        }
+        if (it->second.geometry_shader != 0) {
+            auto src = d3d11::plugin::load_resource(
+                MAKEINTRESOURCE(it->second.geometry_shader), _T("SHADER"));
+        }
+        if (it->second.pixel_shader != 0) {
+            auto src = d3d11::plugin::load_resource(
+                MAKEINTRESOURCE(it->second.pixel_shader), _T("SHADER"));
+        }
+
+        //
+
+        this->techniqueCache[id] = rendering_technique();
+    }
+
+    retval = this->techniqueCache.find(id);
+    return retval->second;
 }

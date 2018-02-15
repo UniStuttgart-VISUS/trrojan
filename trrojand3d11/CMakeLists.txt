@@ -3,11 +3,15 @@
 
 cmake_minimum_required(VERSION 3.1.0)
 
+
 set(IncludeDirectory "include")
 set(SourceDirectory "src")
 
 file(GLOB_RECURSE HeaderFiles RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${IncludeDirectory}/*.h" "${SourceDirectory}/*.h" "${IncludeDirectory}/*.inl" "${SourceDirectory}/*.inl")
 file(GLOB_RECURSE SourceFiles RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${SourceDirectory}/*.cpp")
+
+# Glob and add resoruce scripts
+file(GLOB_RECURSE ResourceFiles RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${SourceDirectory}/*.rc")
 
 # Glob shaders
 file(GLOB_RECURSE VertexShaderFiles RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${SourceDirectory}/*VertexShader*.hlsl")
@@ -21,7 +25,7 @@ set(ShaderFiles ${VertexShaderFiles} ${DomainShaderFiles} ${HullShaderFiles} ${G
 # Configure fxc
 set_property(SOURCE ${ShaderFiles} PROPERTY VS_SHADER_ENTRYPOINT Main)
 set_property(SOURCE ${ShaderFiles} PROPERTY VS_SHADER_MODEL 5.0)
-set_property(SOURCE ${ShaderFiles} PROPERTY VS_SHADER_FLAGS "/Fh \"$(IntDir)/%(Filename).h\" /Vn \"%(Filename)Bytes\" /Zi")
+#set_property(SOURCE ${ShaderFiles} PROPERTY VS_SHADER_FLAGS /Zi)
 
 # Configure shader types
 set_property(SOURCE ${VertexShaderFiles} PROPERTY VS_SHADER_TYPE Vertex)
@@ -36,16 +40,21 @@ set(ShaderFiles ${ShaderHeaderFiles} ${ShaderFiles})
 
 include_directories("${IncludeDirectory}")
 include_directories("${TrrojanCoreIncludeDir}")
-add_compile_options(/I$<1:"$(ProjectDir)$(IntDir)">)    # Hack from https://stackoverflow.com/questions/35232068/referencing-visual-studio-variables-from-cmake
+
+# Create CSOs for packing them into the resource files.
+#add_dependencies(${ResourceFiles} ${ShaderFiles})
+include_directories("${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${CMAKE_CFG_INTDIR}")
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTRROJAND3D11_EXPORTS")
 
-if(WIN32)
-	add_library(trrojand3d11 MODULE ${HeaderFiles} ${SourceFiles} ${ShaderFiles})
-	target_link_libraries(trrojand3d11 trrojancore)
-	target_link_libraries(trrojand3d11 d3d11 dxgi dxguid)
+if (WIN32)
+    add_library(trrojand3d11 MODULE ${HeaderFiles} ${SourceFiles} ${ShaderFiles} ${ResourceFiles})
+    target_link_libraries(trrojand3d11 trrojancore)
+    target_link_libraries(trrojand3d11 d3d11 dxgi dxguid)
 
-	# Group all HLSL into a new filter (cf. https://stackoverflow.com/questions/33808087/cmake-how-to-create-visual-studio-filters)
-	source_group("Shader Files" FILES ${ShaderFiles})
+    # Group all HLSL into a new filter (cf. https://stackoverflow.com/questions/33808087/cmake-how-to-create-visual-studio-filters).
+    source_group("Shader Files" FILES ${ShaderFiles})
 
-endif(WIN32)
+    # Group resource scripts into a new filter.
+    source_group("Resource Files" FILES ${ResourceFiles})
+endif (WIN32)

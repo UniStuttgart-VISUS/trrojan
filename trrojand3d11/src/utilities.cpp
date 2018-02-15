@@ -9,6 +9,24 @@
 
 
 /*
+ * trrojan::d3d11::create_geometry_shader
+ */
+ATL::CComPtr<ID3D11DomainShader> trrojan::d3d11::create_domain_shader(
+        ID3D11Device *device, const BYTE *byteCode, const size_t cntByteCode) {
+    assert(device != nullptr);
+    ATL::CComPtr<ID3D11DomainShader> retval;
+
+    auto hr = device->CreateDomainShader(byteCode, cntByteCode, nullptr,
+        &retval);
+    if (FAILED(hr)) {
+        throw ATL::CAtlException(hr);
+    }
+
+    return retval;
+}
+
+
+/*
  * trrojan::d3d11::create_event_query
  */
 ATL::CComPtr<ID3D11Query> trrojan::d3d11::create_event_query(
@@ -21,6 +39,42 @@ ATL::CComPtr<ID3D11Query> trrojan::d3d11::create_event_query(
     desc.Query = D3D11_QUERY::D3D11_QUERY_EVENT;
 
     auto hr = device->CreateQuery(&desc, &retval);
+    if (FAILED(hr)) {
+        throw ATL::CAtlException(hr);
+    }
+
+    return retval;
+}
+
+
+/*
+* trrojan::d3d11::create_geometry_shader
+*/
+ATL::CComPtr<ID3D11GeometryShader> trrojan::d3d11::create_geometry_shader(
+    ID3D11Device *device, const BYTE *byteCode, const size_t cntByteCode) {
+    assert(device != nullptr);
+    ATL::CComPtr<ID3D11GeometryShader> retval;
+
+    auto hr = device->CreateGeometryShader(byteCode, cntByteCode, nullptr,
+        &retval);
+    if (FAILED(hr)) {
+        throw ATL::CAtlException(hr);
+    }
+
+    return retval;
+}
+
+
+/*
+ * trrojan::d3d11::create_hull_shader
+ */
+ATL::CComPtr<ID3D11HullShader> trrojan::d3d11::create_hull_shader(
+        ID3D11Device *device, const BYTE *byteCode,
+        const size_t cntByteCode) {
+    assert(device != nullptr);
+    ATL::CComPtr<ID3D11HullShader> retval;
+
+    auto hr = device->CreateHullShader(byteCode, cntByteCode, nullptr, &retval);
     if (FAILED(hr)) {
         throw ATL::CAtlException(hr);
     }

@@ -14,6 +14,8 @@
 
 #include "trrojan/log.h"
 
+#include "sphere_techniques.h"
+
 
 /*
  * trrojan::d3d11::mmpld_base::get_mmpld_layout
@@ -137,7 +139,7 @@ std::pair<float, float> trrojan::d3d11::mmpld_base::get_mmpld_clipping(
     auto diagLen = 0.0f;
     auto size = this->get_mmpld_size();
 
-    for (size_t i = 0; i < size.size(); ++i) {
+    for (glm::vec3::length_type i = 0; i < size.size(); ++i) {
         centre[i] = size[i] / 2.0f + this->mmpld_header.bounding_box[i];
         diagLen += size[i] * size[i];
     }
@@ -164,33 +166,6 @@ std::pair<float, float> trrojan::d3d11::mmpld_base::get_mmpld_clipping(
 
 
 /*
- * trrojan::d3d11::mmpld_base::get_mmpld_pixel_shader_properties
- */
-trrojan::d3d11::mmpld_base::shader_properties
-trrojan::d3d11::mmpld_base::get_mmpld_pixel_shader_properties(
-        const bool vsXfer) const {
-    typedef mmpld_reader::shader_properties sp_t;
-
-    shader_properties retval = mmpld_reader::calc_shader_properties(
-        this->mmpld_list);
-
-    if (vsXfer) {
-        // If per-vertex transfer function was selected, erase the flag from
-        // the pixel shader's properties.
-        retval &= ~sp_t::per_vertex_intensity;
-    }
-
-    // The following per-vertex properties are irrelevant for the pixel shader.
-    retval &= ~sp_t::per_vertex_colour;
-    retval &= ~sp_t::per_vertex_radius;
-
-    log::instance().write_line(log_level::debug, "Computed sphere pixel shader "
-        "properties as %u.", retval);
-    return static_cast<shader_properties>(retval);
-}
-
-
-/*
  * trrojan::d3d11::mmpld_base::get_mmpld_size
  */
 std::array<float, 3> trrojan::d3d11::mmpld_base::get_mmpld_size(void) const {
@@ -206,25 +181,26 @@ std::array<float, 3> trrojan::d3d11::mmpld_base::get_mmpld_size(void) const {
 
 
 /*
- * trrojan::d3d11::mmpld_base::get_mmpld_vertex_shader_properties
+ * trrojan::d3d11::mmpld_base::get_mmpld_input_properties
  */
-trrojan::d3d11::mmpld_base::shader_properties
-trrojan::d3d11::mmpld_base::get_mmpld_vertex_shader_properties(
-        const bool vsXfer) const  {
+trrojan::d3d11::mmpld_base::mmpld_input_properties
+trrojan::d3d11::mmpld_base::get_mmpld_input_properties(
+        const bool perPixelXfer) const  {
     typedef mmpld_reader::shader_properties sp_t;
 
-    shader_properties retval = mmpld_reader::calc_shader_properties(
-        this->mmpld_list);
+    auto retval = static_cast<mmpld_input_properties>(
+        mmpld_reader::calc_shader_properties(this->mmpld_list));
 
-    if (!vsXfer) {
-        // If per-pixel transfer function was selected, erase the flag from
-        // the pixel shader's properties.
-        retval &= ~sp_t::intensity_xfer_function;
+    if (perPixelXfer && ((retval & sp_t::per_vertex_intensity) != 0)) {
+        // If per-pixel transfer function was selected, erase the
+        // per-vertex flag from the properties and add the per-pixel flag.
+        retval &= ~sp_t::per_vertex_intensity;
+        retval |= SPHERE_INPUT_PP_INTENSITY;
     }
 
-    log::instance().write_line(log_level::debug, "Computed sphere vertex shader "
+    log::instance().write_line(log_level::debug, "Computed MMPLD input "
         "properties as %u.", retval);
-    return static_cast<shader_properties>(retval);
+    return retval;
 }
 
 

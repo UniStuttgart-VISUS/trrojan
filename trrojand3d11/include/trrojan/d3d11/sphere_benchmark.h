@@ -38,19 +38,6 @@ namespace d3d11 {
         static const char *factor_method;
         static const char *factor_vs_xfer_function;
 
-        static const char *method_quad_inst;
-        static const char *method_poly_inst;
-        static const char *method_quad_tess;
-        static const char *method_poly_tess;
-        static const char *method_adapt_poly_tess;
-        static const char *method_stpa;
-        static const char *method_geo_quad;
-        static const char *method_geo_poly;
-        static const char *method_sphere_tess;
-        static const char *method_adapt_sphere_tess;
-        static const char *method_hemisphere_tess;
-        static const char *method_adapt_hemisphere_tess;
-
         /// <summary>
         /// Initialise a new instance.
         /// </summary>
@@ -76,33 +63,75 @@ namespace d3d11 {
     private:
 
         /// <summary>
+        /// The resource IDs of the shaders for a specific rendering technique.
+        /// </summary>
+        struct shader_resources {
+            std::uint16_t vertex_shader;
+            std::uint16_t hull_shader;
+            std::uint16_t domain_shader;
+            std::uint16_t geometry_shader;
+            std::uint16_t pixel_shader;
+        };
+
+        /// <summary>
         /// Declare a GPU buffer without latency, because we need to know the
         /// results immediately and are willing to wait for it.
         /// </summary>
         typedef trrojan::d3d11::gpu_timer<1> gpu_timer_type;
 
-        typedef std::pair<const BYTE *, UINT> shader_source_type;
+        /// <summary>
+        /// An identifier for a single shader variant.
+        /// </summary>
+        typedef std::uint64_t shader_id_type;
 
-        typedef std::unordered_map<shader_properties, shader_source_type>
+        /// <summary>
+        /// A hash table for all shader sources.
+        /// </summary>
+        typedef std::unordered_map<shader_id_type, shader_resources>
             shader_source_map_type;
 
         /// <summary>
-        /// A lookup table for different rendering techniques and their
-        /// variants.
+        /// A hash table for rendering techniques.
         /// </summary>
-        typedef std::unordered_map<std::string,
-            rendering_technique::version_list> technique_list;
+        typedef std::unordered_map<shader_id_type, rendering_technique>
+            technique_map_type;
 
         /// <summary>
-        /// Pack static shader code into an entry of the
-        /// <see cref="shader_source_map_type" />.
+        /// Gets the identifier for the given rendering method and input+feature
+        /// set.
         /// </summary>
-        template<size_t N>
-        inline static shader_source_type pack_shader_source(const BYTE(&s)[N]) {
-            return std::make_pair(s, static_cast<UINT>(sizeof(s)));
-        }
+        /// <param name=""></param>
+        /// <param name=""></param>
+        /// <returns>The ID of the requested shader, or 0 if no such shader was
+        /// found.</returns>
+        static shader_id_type get_shader_id(const std::string& method,
+            const shader_id_type features);
 
+        /// <summary>
+        /// Gets or creates a rendering technique using the given rendering
+        /// method and input+feature set.
+        /// </summary>
+        /// <param name=""></param>
+        /// <param name=""></param>
+        /// <returns>A reference to the cached technique.</returns>
+        rendering_technique& get_technique(const std::string& method,
+            const shader_id_type features);
+
+        /// <summary>
+        /// The camera for computing the transformation matrices.
+        /// </summary>
         trrojan::perspective_camera cam;
+
+        /// <summary>
+        /// The lookup table for the resource IDs of the shaders.
+        /// </summary>
+        shader_source_map_type shaderResources;
+
+        /// <summary>
+        /// Caches rendering techniques already created.
+        /// </summary>
+        technique_map_type techniqueCache;
+
         ATL::CComPtr<ID3D11ShaderResourceView> colour_map;
         ATL::CComPtr<ID3D11Buffer> constant_buffer;
         ATL::CComPtr<ID3D11DomainShader> domain_shader;
@@ -117,7 +146,6 @@ namespace d3d11 {
         ATL::CComPtr<ID3D11PixelShader> pixel_shader;
         shader_source_map_type pixel_shaders;
         ATL::CComPtr<ID3D11Query> stats_query;
-        technique_list techniques;
         ATL::CComPtr<ID3D11Buffer> vertex_buffer;
         ATL::CComPtr<ID3D11VertexShader> vertex_shader;
         shader_source_map_type vertex_shaders;

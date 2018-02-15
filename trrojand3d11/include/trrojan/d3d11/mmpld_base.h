@@ -34,10 +34,21 @@ namespace d3d11 {
 
     protected:
 
-        typedef mmpld_reader::colour_type colour_type;
+        /// <summary>
+        /// The type of the colour enumeration.
+        /// </summary>
+        typedef mmpld_reader::colour_type mmpld_colour_type;
+
+        /// <summary>
+        /// The bitmask describing the input properties.
+        /// </summary>
         typedef std::underlying_type<mmpld_reader::shader_properties>::type
-            shader_properties;
-        typedef mmpld_reader::vertex_type vertex_type;
+            mmpld_input_properties;
+
+        /// <summary>
+        /// the type of the vertex type enumeration.
+        /// </summary>
+        typedef mmpld_reader::vertex_type mmpld_vertex_type;
 
         /// <summary>
         /// Creates a vertex input layout descriptor for the given MMPLD list
@@ -73,30 +84,20 @@ namespace d3d11 {
         std::pair<float, float> get_mmpld_clipping(const camera& cam) const;
 
         /// <summary>
-        /// Determine the features used in the pixel shader based on the current
-        /// <see cref="mmpld_list" />.
+        /// Determine the input features of the <see cref="mmpld_list" />.
         /// </summary>
-        /// <param name="vsXfer">If true, assume transfer function being applied
-        /// in the vertex shader.</param>
+        /// <param name="perPixelXfer">If <c>true</c>, assume transfer function
+        ///being applied in the pixel shader (<c>SPHERE_INPUT_PP_INTENSITY</c>
+        /// instead of <c>SPHERE_INPUT_PV_INTENSITY</c>).</param>
         /// <returns></returns>
-        shader_properties get_mmpld_pixel_shader_properties(
-            const bool vsXfer) const;
+        mmpld_input_properties get_mmpld_input_properties(
+            const bool perPixelXfer) const;
 
         /// <summary>
         /// Gets the 3D size the current <see cref="mmpld_list" /> (x-axis,
         /// y-axis and z-axis).
         /// </summary>
         std::array<float, 3> get_mmpld_size(void) const;
-
-        /// <summary>
-        /// Determine the features used in the vertex shader based on the current
-        /// <see cref="mmpld_list" />.
-        /// </summary>
-        /// <param name="vsXfer">If true, assume transfer function being applied
-        /// in the vertex shader.</param>
-        /// <returns></returns>
-        shader_properties get_mmpld_vertex_shader_properties(
-            const bool vsXfer) const;
 
         /// <summary>
         /// Opens the MMPLD file at the specified location and reads its header

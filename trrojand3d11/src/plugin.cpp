@@ -1,5 +1,5 @@
 /// <copyright file="plugin.cpp" company="SFB-TRR 161 Quantitative Methods for Visual Computing">
-/// Copyright © 2016 SFB-TRR 161. Alle Rechte vorbehalten.
+/// Copyright © 2016 - 2018 SFB-TRR 161. Alle Rechte vorbehalten.
 /// </copyright>
 /// <author>Christoph Müller</author>
 
@@ -38,6 +38,41 @@ BOOL WINAPI DllMain(HINSTANCE hDll, DWORD reason, LPVOID reserved) {
 /// </summary>
 extern "C" TRROJAND3D11_API trrojan::plugin_base *get_trrojan_plugin(void) {
     return new trrojan::d3d11::plugin();
+}
+
+
+/*
+ * trrojan::d3d11::plugin::load_resource
+ */
+std::vector<std::uint8_t> trrojan::d3d11::plugin::load_resource(LPCTSTR name,
+        LPCSTR type) {
+    auto hRes = ::FindResource(::hTrrojanDll, name, type);
+    if (hRes == NULL) {
+        std::error_code ec(::GetLastError(), std::system_category());
+        throw std::system_error(ec, "Failed to find a resource.");
+    }
+
+    auto hGlobal = ::LoadResource(::hTrrojanDll, hRes);
+    if (hGlobal == NULL) {
+        std::error_code ec(::GetLastError(), std::system_category());
+        throw std::system_error(ec, "Failed to load a resource.");
+    }
+    // Note: 'hGlobal' must not be freed. See
+    // https://msdn.microsoft.com/de-de/library/windows/desktop/ms648046(v=vs.85).aspx
+
+    auto hLock = ::LockResource(hGlobal);
+    if (hLock == NULL) {
+        std::error_code ec(::GetLastError(), std::system_category());
+        throw std::system_error(ec, "Failed to lock a resource.");
+    }
+
+    auto retval = std::vector<std::uint8_t>(::SizeofResource(::hTrrojanDll,
+        hRes));
+    ::memcpy(retval.data(), hLock, retval.size());
+
+    UnlockResource(hLock);
+
+    return std::move(retval);
 }
 
 

@@ -1,11 +1,16 @@
 /// <copyright file="plugin.h" company="SFB-TRR 161 Quantitative Methods for Visual Computing">
-/// Copyright © 2017 SFB-TRR 161. Alle Rechte vorbehalten.
+/// Copyright © 2016 - 2018 SFB-TRR 161. Alle Rechte vorbehalten.
 /// </copyright>
 /// <author>Christoph Müller</author>
 
 #pragma once
 
 #include "trrojan/plugin.h"
+
+#include <cinttypes>
+#include <vector>
+
+#include <Windows.h>
 
 #include "trrojan/d3d11/export.h"
 
@@ -22,6 +27,19 @@ namespace d3d11 {
 
         typedef trrojan::plugin_base::benchmark_list benchmark_list;
         typedef trrojan::plugin_base::environment_list environment_list;
+
+        /// <summary>
+        /// Load a resource from the Direct3D plugin's DLL.
+        /// </summary>
+        /// <param name="name">The name of the resource. Alternately, rather
+        /// than a pointer, this parameter can be MAKEINTRESOURCE(ID), where ID
+        /// is the integer identifier of the resource.</param>
+        /// <param name="type">The resource type. Alternately, rather than a
+        /// pointer, this parameter can be MAKEINTRESOURCE(ID), where ID is the
+        /// integer identifier of the given resource type. </param>
+        /// <returns>The content of the resource.</returns>
+        static std::vector<std::uint8_t> load_resource(LPCTSTR name,
+            LPCSTR type);
 
         inline plugin(void) : trrojan::plugin_base("d3d11") { }
 
