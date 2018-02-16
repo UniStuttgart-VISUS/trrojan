@@ -34,6 +34,7 @@ namespace d3d11 {
         typedef ATL::CComPtr<ID3D11HullShader> hull_shader_type;
         typedef ATL::CComPtr<ID3D11InputLayout> input_layout_type;
         typedef ATL::CComPtr<ID3D11PixelShader> pixel_shader_type;
+        typedef ATL::CComPtr<ID3D11SamplerState> sampler_state_type;
         typedef ATL::CComPtr<ID3D11ShaderResourceView> srv_type;
         typedef ATL::CComPtr<ID3D11VertexShader> vertex_shader_type;
 
@@ -43,6 +44,7 @@ namespace d3d11 {
         struct shader_resources {
             std::vector<buffer_type> constant_buffers;
             std::vector<srv_type> resource_views;
+            std::vector<sampler_state_type> sampler_states;
         };
 
         /// <summary>

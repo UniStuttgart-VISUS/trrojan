@@ -62,7 +62,9 @@ HsConstants CalcConstants(InputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
     float4 rad = float4(patch[0].SphereParams.w, 0.f, 0.f, 1.f);
     rad = mul(rad, vm);
 
-    float tessFactor = clamp(length(rad) / pos.w * pm._11 * 2.f, 4.f, 8.f);
+    float tessFactor = clamp(
+        length(rad) / pos.w * pm._11 * EdgeTessFactor.z,
+        EdgeTessFactor.x, EdgeTessFactor.y);
 
     retval.EdgeTessFactor[0]
         = retval.EdgeTessFactor[1]

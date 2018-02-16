@@ -197,7 +197,7 @@ process {
 
     $includes += "#define _DEFINE_SPHERE_TECHNIQUE_LUT(n) static const struct { const char *name; std::uint64_t id; } n[] = {\"
     $global:techniques.Keys | %{
-        $includes +="{ `"$($global:techniques[$_].ToLower())`", $_ },\"
+        $includes +="{ `"$($global:techniques[$_].ToLower())`", $($_)ull },\"
     }
     $includes += "{ nullptr, 0 } }"
 

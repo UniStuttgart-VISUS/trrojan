@@ -442,6 +442,9 @@ trrojan::d3d11::rendering_technique&
 trrojan::d3d11::sphere_benchmark::get_technique(d3d11::device& device,
         const std::string& method, const shader_id_type features) {
     auto id = sphere_benchmark::get_shader_id(method, features);
+    auto isPsTex = ((features & SPHERE_INPUT_PP_INTENSITY) != 0);
+    auto isVsTex = ((features & SPHERE_INPUT_PV_INTENSITY) != 0);
+    auto isSrvParts = ((features & SPHERE_TECHNIQUE_USE_SRV) != 0);
 
     auto retval = this->techniqueCache.find(id);
     if (retval == this->techniqueCache.end()) {

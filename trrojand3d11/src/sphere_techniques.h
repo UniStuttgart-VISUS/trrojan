@@ -12,17 +12,17 @@
 #define SPHERE_VARIANT_PV_RAY (0x40000)
 #define SPHERE_VARIANT_CONSERVATIVE_DEPTH (0x80000)
 #define _DEFINE_SPHERE_TECHNIQUE_LUT(n) static const struct { const char *name; std::uint64_t id; } n[] = {\
-{ "poly_tess", 1152921505949024256 },\
-{ "adapt_hemisphere_tess", 4503600701112320 },\
-{ "hemisphere_tess", 9007200328482816 },\
-{ "quad_tess", 2305843010555871232 },\
-{ "adapt_sphere_tess", 18014399583223808 },\
-{ "sphere_tess", 36028798092705792 },\
-{ "quad_inst", 9223372037794299904 },\
-{ "adapt_poly_tess", 576460753645600768 },\
-{ "stpa", 288230378567630848 },\
-{ "geo_quad", 144115190491774976 },\
-{ "geo_poly", 72057596453847040 },\
+{ "poly_tess", 1152921505949024256ull },\
+{ "adapt_hemisphere_tess", 4503600701112320ull },\
+{ "hemisphere_tess", 9007200328482816ull },\
+{ "quad_tess", 2305843010555871232ull },\
+{ "adapt_sphere_tess", 18014399583223808ull },\
+{ "sphere_tess", 36028798092705792ull },\
+{ "quad_inst", 9223372037794299904ull },\
+{ "adapt_poly_tess", 576460753645600768ull },\
+{ "stpa", 288230378567630848ull },\
+{ "geo_quad", 144115190491774976ull },\
+{ "geo_poly", 72057596453847040ull },\
 { nullptr, 0 } }
 #define _ADD_SPHERE_SHADERS(ht)\
 ht[36028798092705795] = { 256, 257, 258, 0, 259 };\
