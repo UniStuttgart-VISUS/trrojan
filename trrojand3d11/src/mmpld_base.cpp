@@ -90,6 +90,24 @@ trrojan::d3d11::mmpld_base::get_mmpld_layout(
 
 
 /*
+ * trrojan::d3d11::mmpld_base::is_non_float_colour
+ */
+bool trrojan::d3d11::mmpld_base::is_non_float_colour(
+        const mmpld_reader::list_header& list) {
+    switch (list.colour_type) {
+        case mmpld_reader::colour_type::uint8_rgb:
+        case mmpld_reader::colour_type::uint8_rgba:
+            return true;
+
+        case mmpld_reader::colour_type::none:
+            // Note: no colour is also not a non-float colour.
+        default:
+            return false;
+    }
+}
+
+
+/*
  * trrojan::d3d11::mmpld_base::mmpld_base
  */
 trrojan::d3d11::mmpld_base::mmpld_base(void) : mmpld_max_radius(0) {
@@ -184,20 +202,10 @@ std::array<float, 3> trrojan::d3d11::mmpld_base::get_mmpld_size(void) const {
  * trrojan::d3d11::mmpld_base::get_mmpld_input_properties
  */
 trrojan::d3d11::mmpld_base::mmpld_input_properties
-trrojan::d3d11::mmpld_base::get_mmpld_input_properties(
-        const bool perPixelXfer) const  {
+trrojan::d3d11::mmpld_base::get_mmpld_input_properties(void) const  {
     typedef mmpld_reader::shader_properties sp_t;
-
     auto retval = static_cast<mmpld_input_properties>(
         mmpld_reader::calc_shader_properties(this->mmpld_list));
-
-    if (perPixelXfer && ((retval & sp_t::per_vertex_intensity) != 0)) {
-        // If per-pixel transfer function was selected, erase the
-        // per-vertex flag from the properties and add the per-pixel flag.
-        retval &= ~sp_t::per_vertex_intensity;
-        retval |= SPHERE_INPUT_PP_INTENSITY;
-    }
-
     log::instance().write_line(log_level::debug, "Computed MMPLD input "
         "properties as %u.", retval);
     return retval;
@@ -218,7 +226,8 @@ bool trrojan::d3d11::mmpld_base::open_mmpld(const char *path) {
  * trrojan::d3d11::mmpld_base::read_mmpld_frame
  */
 ATL::CComPtr<ID3D11Buffer> trrojan::d3d11::mmpld_base::read_mmpld_frame(
-        ID3D11Device *device, const unsigned int frame) {
+        ID3D11Device *device, const unsigned int frame,
+        const mmpld_loader_options options) {
     assert(this->mmpld_stream.good());
     assert(device != nullptr);
 
@@ -252,14 +261,54 @@ ATL::CComPtr<ID3D11Buffer> trrojan::d3d11::mmpld_base::read_mmpld_frame(
             "will be ignored.");
     }
 
+    // Read the list header and prepare the D3D input layout.
     mmpld_reader::read_list_header(this->mmpld_list, this->mmpld_stream);
     this->mmpld_layout = mmpld_base::get_mmpld_layout(this->mmpld_list);
 
     // Read the data.
-    auto cntData = mmpld_reader::calc_stride(this->mmpld_list) 
-        * this->mmpld_list.particles;
+    auto stride = mmpld_reader::calc_stride(this->mmpld_list);
+    auto cntData = stride * this->mmpld_list.particles;
     data.resize(cntData);
     this->mmpld_stream.read(data.data(), cntData);
+
+    // If floating point colours are requested, but not available, add a
+    // conversion step. This step copies the first part of the particle,
+    // which is always the position. The following RGBA8 colour is converted
+    // to float4. Afterwards, the buffers are swapped such that 'data' is
+    // the converted buffer and the mmpld_list is updated to contain
+    // float4 colours.
+    if (((options & mmpld_loader_options::force_float_colour) != 0)
+            && mmpld_base::is_non_float_colour(this->mmpld_list)) {
+        auto c = mmpld_base::get_colour_offset(this->mmpld_layout.begin(),
+            this->mmpld_layout.end());
+        assert(c != this->mmpld_layout.end());
+        const auto srcOffset = c->AlignedByteOffset;
+        const auto srcStride = stride;
+        assert(srcOffset < srcStride);
+
+        // Recreate the header with the new colour type.
+        this->mmpld_list.colour_type = mmpld_reader::colour_type::float_rgba;
+        this->mmpld_layout = mmpld_base::get_mmpld_layout(this->mmpld_list);
+        stride = mmpld_reader::calc_stride(this->mmpld_list);
+        cntData = stride * this->mmpld_list.particles;
+
+        std::vector<char> conv(cntData);
+        for (size_t i = 0; i < this->mmpld_list.particles; ++i) {
+            auto src = data.data() + i * srcStride;
+            auto dst = conv.data() + i * stride;
+            auto col = *reinterpret_cast<std::uint32_t *>(src + srcOffset);
+
+            ::memcpy(dst, src, srcOffset);
+            dst += stride;
+
+            for (size_t c = 0; c < 4; ++i) {
+                *reinterpret_cast<float *>(dst) = (col & 0xff) / 255.0f;
+                col >>= 8;
+                dst += sizeof(float);
+            }
+        }
+        std::swap(data, conv);
+    }
 
     // Search the maximum radius for clipping.
     if (this->mmpld_list.radius > 0.0f) {
@@ -283,8 +332,17 @@ ATL::CComPtr<ID3D11Buffer> trrojan::d3d11::mmpld_base::read_mmpld_frame(
     assert(cntData <= UINT_MAX);
     bufferDesc.ByteWidth = static_cast<UINT>(cntData);
     bufferDesc.Usage = D3D11_USAGE_IMMUTABLE;
-    bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
     bufferDesc.CPUAccessFlags = 0;
+    if ((options & mmpld_loader_options::vertex_buffer) != 0) {
+        bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+    } else if ((options & mmpld_loader_options::structured_resource) != 0) {
+        bufferDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+        bufferDesc.StructureByteStride = static_cast<UINT>(stride);
+        bufferDesc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+    } else {
+        throw std::runtime_error("No buffer format was specified for the "
+            "MMPLD data being read.");
+    }
 
     ::ZeroMemory(&id, sizeof(id));
     id.pSysMem = data.data();

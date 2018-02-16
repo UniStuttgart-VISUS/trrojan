@@ -24,15 +24,24 @@
 #include "trrojan/d3d11/utilities.h"
 
 #include "sphere_techniques.h"
+#include "SpherePipeline.hlsli"
 
 
 #define _SPHERE_BENCH_DEFINE_FACTOR(f)                                         \
 const char *trrojan::d3d11::sphere_benchmark::factor_##f = #f
 
+_SPHERE_BENCH_DEFINE_FACTOR(conservative_depth);
 _SPHERE_BENCH_DEFINE_FACTOR(data_set);
+_SPHERE_BENCH_DEFINE_FACTOR(edge_tess_factor);
+_SPHERE_BENCH_DEFINE_FACTOR(force_float_colour);
 _SPHERE_BENCH_DEFINE_FACTOR(frame);
+_SPHERE_BENCH_DEFINE_FACTOR(inside_tess_factor);
 _SPHERE_BENCH_DEFINE_FACTOR(iterations);
 _SPHERE_BENCH_DEFINE_FACTOR(method);
+_SPHERE_BENCH_DEFINE_FACTOR(poly_maximum);
+_SPHERE_BENCH_DEFINE_FACTOR(poly_minimum);
+_SPHERE_BENCH_DEFINE_FACTOR(poly_scale);
+_SPHERE_BENCH_DEFINE_FACTOR(vs_raygen);
 _SPHERE_BENCH_DEFINE_FACTOR(vs_xfer_function);
 
 #undef _SPHERE_BENCH_DEFINE_FACTOR
@@ -45,22 +54,22 @@ _DEFINE_SPHERE_TECHNIQUE_LUT(SPHERE_METHODS);
  * trrojan::d3d11::sphere_benchmark::sphere_benchmark
  */
 trrojan::d3d11::sphere_benchmark::sphere_benchmark(void)
-        : benchmark_base("sphere-raycaster") {
+        : benchmark_base("sphere-raycaster"), data_properties(0) {
     typedef mmpld_reader::shader_properties sp_t;
 
     // Define the data we need.
     this->_default_configs.add_factor(factor::from_manifestations(
+        factor_conservative_depth, { true, false }));
+    this->_default_configs.add_factor(factor::from_manifestations(
+        factor_edge_tess_factor, { std::array<float, 4> { 4, 4, 4, 4} }));
+    this->_default_configs.add_factor(factor::from_manifestations(
+        factor_force_float_colour, { true, false }));
+    this->_default_configs.add_factor(factor::from_manifestations(
         factor_frame, static_cast<frame_type>(0)));
     this->_default_configs.add_factor(factor::from_manifestations(
+        factor_inside_tess_factor, { std::array<float, 2> { 4, 4 } }));
+    this->_default_configs.add_factor(factor::from_manifestations(
         factor_iterations, static_cast<unsigned int>(8)));
-    this->_default_configs.add_factor(factor::from_manifestations(
-        factor_vs_xfer_function, false));
-    this->_default_configs.add_factor(factor::from_manifestations(
-        factor_manoeuvre, manoeuvre_type("diagonal")));
-    this->_default_configs.add_factor(factor::from_manifestations(
-        factor_manoeuvre_step, static_cast<manoeuvre_step_type>(0)));
-    this->_default_configs.add_factor(factor::from_manifestations(
-        factor_manoeuvre_steps, static_cast<manoeuvre_step_type>(64)));
     {
         std::vector<std::string> manifestations;
         for (size_t i = 0; (::SPHERE_METHODS[i].name != nullptr); ++i) {
@@ -69,9 +78,26 @@ trrojan::d3d11::sphere_benchmark::sphere_benchmark(void)
         this->_default_configs.add_factor(factor::from_manifestations(
             factor_method, manifestations));
     }
+    this->_default_configs.add_factor(factor::from_manifestations(
+        factor_poly_maximum, static_cast<unsigned int>(8)));
+    this->_default_configs.add_factor(factor::from_manifestations(
+        factor_poly_minimum, static_cast<unsigned int>(4)));
+    this->_default_configs.add_factor(factor::from_manifestations(
+        factor_poly_scale, 2.0f));
+    this->_default_configs.add_factor(factor::from_manifestations(
+        factor_vs_raygen, { true, false }));
+    this->_default_configs.add_factor(factor::from_manifestations(
+        factor_vs_xfer_function, { true, false }));
+
+    this->_default_configs.add_factor(factor::from_manifestations(
+        factor_manoeuvre, manoeuvre_type("diagonal")));
+    this->_default_configs.add_factor(factor::from_manifestations(
+        factor_manoeuvre_step, static_cast<manoeuvre_step_type>(0)));
+    this->_default_configs.add_factor(factor::from_manifestations(
+        factor_manoeuvre_steps, static_cast<manoeuvre_step_type>(64)));
 
     // Build the lookup table for the shader resources.
-    _ADD_SPHERE_SHADERS(this->shaderResources);
+    _ADD_SPHERE_SHADERS(this->shader_resources);
 }
 
 
@@ -106,45 +132,34 @@ std::vector<std::string> trrojan::d3d11::sphere_benchmark::required_factors(
  */
 trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
         const configuration& config, const std::vector<std::string>& changed) {
-#if 0
-    SphereConstants constants;
     trrojan::timer cpuTimer;
+    const auto cntIterations = config.get<int>(factor_iterations);
     auto ctx = device.d3d_context();
     auto dev = device.d3d_device();
     gpu_timer_type::value_type gpuFreq;
     gpu_timer_type gpuTimer;
     auto isDisjoint = true;
-    auto isNewDevice = contains(changed, factor_device);
-    auto isTessellation = true;
+    auto shaderCode = sphere_benchmark::get_shader_id(config);
+    SphereConstants sphereConstants;
+    TessellationConstants tessConstants;
+    ViewConstants viewConstants;
     D3D11_VIEWPORT viewport;
 
-    // Determine where to perform transfer-function lookups.
-    auto isVsXferFunction = config.get<bool>(factor_vs_xfer_function);
-
-    // Retrieve the number of iterations for each frame.
-    const auto cntIterations = config.get<int>(factor_iterations);
-
-    /* Re-create data-independent GPU resources. */
-    if (isNewDevice) {
+    // If the device has changed, invalidate all GPU resources and recreate the
+    // data-independent ones.
+    if (contains(changed, factor_device)) {
         log::instance().write_line(log_level::verbose, "Preparing GPU "
             "resources for device \"%s\" ...", device.name().c_str());
+        this->colour_map = nullptr;
+        this->data_buffer = nullptr;
+        this->data_properties = 0;
+        this->done_query = nullptr;
+        this->linear_sampler = nullptr;
+        this->stats_query = nullptr;
+        this->technique_cache.clear();
 
         // Textures and SRVs
-        this->colour_map = nullptr;
         create_viridis_colour_map(dev, &this->colour_map);
-
-        // Constant buffers
-        this->constant_buffer = create_buffer(device.d3d_device(),
-            D3D11_USAGE_DEFAULT, D3D11_BIND_CONSTANT_BUFFER, nullptr,
-            static_cast<UINT>(sizeof(SphereConstants)));
-
-        // Shaders
-        this->domain_shader = create_domain_shader(dev,
-            ::SphereSpriteDomainShaderBytes);
-        if (isTessellation) this->geometry_shader = create_geometry_shader(dev, ::SphereSpriteGeometryShaderBytes);
-        else this->geometry_shader = create_geometry_shader(dev, ::SphereGeometryShaderBytes);
-        this->hull_shader = create_hull_shader(dev,
-            ::SphereSpriteHullShaderBytes);
 
         // Samplers
         this->linear_sampler = create_linear_sampler(dev);
@@ -154,21 +169,105 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
         this->stats_query = create_pipline_stats_query(dev);
     }
 
-    /* Load the data set (header) if the file changed. */
+    // Determine whether the data set header must be loaded. This needs to be
+    // done before any frame is loaded or the technique is selected.
     if (contains(changed, factor_data_set)) {
         auto path = config.get<std::string>(factor_data_set);
         log::instance().write_line(log_level::verbose, "Loading MMPLD data set "
             "\"%s\" ...", path.c_str());
         this->open_mmpld(path.c_str());
+
+        /* Any previous data are now invalid. */
+        this->data_buffer = nullptr;
+        this->data_properties = 0;
+    }
+    /* At this point, the data header for processing the MMPLD is OK. */
+
+    // In case we still have a data set, find out whether it is compatible with
+    // the new shader code and erase it otherwise.
+    if (this->data_buffer != nullptr) {
+        // Frame must not have changed for data to be still valid.
+        auto isValid = !contains(changed, factor_frame);
+
+        // Type of buffer (VB or structured data) required must be the same.
+        isValid = isValid && ((shaderCode & SPHERE_TECHNIQUE_USE_SRV)
+            == (this->data_properties & SPHERE_TECHNIQUE_USE_SRV));
+
+        // If there are per-vertex colour values and floating point colours are
+        // enforced, the data must be float.
+        if (config.get<bool>(factor_force_float_colour)
+                && ((this->data_properties & SPHERE_INPUT_PV_COLOUR) != 0)) {
+            isValid = isValid
+                && ((this->data_properties & SPHERE_INPUT_FLT_COLOUR) != 0);
+        }
+
+        // If the existing data do not match, discard them.
+        if (!isValid) {
+            this->data_buffer = nullptr;
+            this->data_properties = 0;
+        }
     }
 
-    /* Read the frame. */
-    if (contains_any(changed, factor_frame, factor_data_set, factor_device)) {
+    // (Re-) read the frame as necessary.
+    if (this->data_buffer == nullptr) {
         auto frame = config.get<frame_type>(factor_frame);
+        auto options = std::underlying_type<mmpld_loader_options>::type(0);
+        if ((shaderCode & SPHERE_TECHNIQUE_USE_SRV) != 0) {
+            options |= mmpld_loader_options::structured_resource;
+            this->data_properties |= SPHERE_TECHNIQUE_USE_SRV;
+        } else {
+            options |= mmpld_loader_options::vertex_buffer;
+            assert((this->data_properties & SPHERE_TECHNIQUE_USE_SRV) == 0);
+        }
+        if (config.get<bool>(factor_force_float_colour)) {
+            options |= mmpld_loader_options::force_float_colour;
+        }
+
         log::instance().write_line(log_level::verbose, "Loading MMPLD frame "
             "%u ...", frame);
-        this->vertex_buffer = this->read_mmpld_frame(dev, frame);
+        this->data_buffer = this->read_mmpld_frame(dev, frame,
+            static_cast<mmpld_loader_options>(options));
+
+        // Merge the requested data properties with the data-defined ones.
+        this->data_properties |= this->get_mmpld_input_properties();
+
+        // If the data are in a structured resource buffer, we need to remember
+        // whether the data are floating point data or 8-bit colours. Otherwise,
+        // this information is not required and also must not be stored, because
+        // the 'data_properties' flags are used to lookup the shader, which does
+        // not request the flags for vertex buffer input.
+        if ((this->data_properties & SPHERE_TECHNIQUE_USE_SRV) != 0) {
+            switch (this->mmpld_list.colour_type) {
+                case mmpld_reader::colour_type::float_rgb:
+                case mmpld_reader::colour_type::float_rgba:
+                    this->data_properties |= SPHERE_INPUT_FLT_COLOUR;
+                    break;
+            }
+        }
     }
+    /* At this point, 'data_buffer' holds data compatible with renderer. */
+
+    // Convert per-vertex TF lookup to per-pixel lookup if requested.
+    if (!config.get<bool>(factor_vs_xfer_function)) {
+        typedef mmpld_reader::shader_properties sp_t;
+        if ((this->data_properties & sp_t::per_vertex_intensity) != 0) {
+            this->data_properties &= ~sp_t::per_vertex_intensity;
+            this->data_properties |= SPHERE_INPUT_PP_INTENSITY;
+            log::instance().write_line(log_level::verbose, "Converted "
+                "per-vertex intensity lookup to per-pixel lookup. The new "
+                "data code is %u.", this->data_properties);
+        }
+    }
+    /* At this point, we know what shader features are needed for the data. */
+
+    // Select or create the right rendering technique.
+    auto& technique = this->get_technique(dev, shaderCode, this->data_properties);
+    // TODO
+
+
+
+#if 0
+
 
     /* Update all data-dependent resources. */
     if (contains_any(changed, factor_frame, factor_data_set, factor_device,
@@ -410,10 +509,6 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
     return retval;
 #endif
 
-    auto method = config.get<std::string>(factor_method);
-
-    auto tech = this->get_technique(device, method, 0);
-
     throw 1;
 }
 
@@ -422,8 +517,7 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
  * trrojan::d3d11::sphere_benchmark::get_shader_id
  */
 trrojan::d3d11::sphere_benchmark::shader_id_type
-trrojan::d3d11::sphere_benchmark::get_shader_id(const std::string& method,
-        const shader_id_type features) {
+trrojan::d3d11::sphere_benchmark::get_shader_id(const std::string& method) {
     for (size_t i = 0; (::SPHERE_METHODS[i].name != nullptr);++i) {
         if (method == ::SPHERE_METHODS[i].name) {
             return ::SPHERE_METHODS[i].id;
@@ -436,30 +530,54 @@ trrojan::d3d11::sphere_benchmark::get_shader_id(const std::string& method,
 
 
 /*
+ * trrojan::d3d11::sphere_benchmark::get_shader_id
+ */
+trrojan::d3d11::sphere_benchmark::shader_id_type
+trrojan::d3d11::sphere_benchmark::get_shader_id(const configuration& config) {
+    auto isConsDepth = config.get<bool>(factor_conservative_depth);
+    auto isVsRay = config.get<bool>(factor_vs_raygen);
+    auto method = config.get<std::string>(factor_method);
+
+    auto retval = sphere_benchmark::get_shader_id(method);
+    if ((retval & SPHERE_TECHNIQUE_USE_RAYCASTING) != 0) {
+        if (isConsDepth) {
+            retval |= SPHERE_VARIANT_CONSERVATIVE_DEPTH;
+        }
+        if (isVsRay) {
+            retval |= SPHERE_VARIANT_PV_RAY;
+        }
+    }
+
+    return retval;
+}
+
+
+/*
  * trrojan::d3d11::sphere_benchmark::get_technique
  */
 trrojan::d3d11::rendering_technique&
-trrojan::d3d11::sphere_benchmark::get_technique(d3d11::device& device,
-        const std::string& method, const shader_id_type features) {
-    auto id = sphere_benchmark::get_shader_id(method, features);
-    auto isPsTex = ((features & SPHERE_INPUT_PP_INTENSITY) != 0);
-    auto isVsTex = ((features & SPHERE_INPUT_PV_INTENSITY) != 0);
-    auto isSrvParts = ((features & SPHERE_TECHNIQUE_USE_SRV) != 0);
+trrojan::d3d11::sphere_benchmark::get_technique(ID3D11Device *device,
+        const shader_id_type method, const shader_id_type data) {
+    auto id = method | data;
+    auto isPsTex = ((method & SPHERE_INPUT_PP_INTENSITY) != 0);
+    auto isVsTex = ((method & SPHERE_INPUT_PV_INTENSITY) != 0);
+    auto isSrvParts = ((method & SPHERE_TECHNIQUE_USE_SRV) != 0);
 
-    auto retval = this->techniqueCache.find(id);
-    if (retval == this->techniqueCache.end()) {
+    auto retval = this->technique_cache.find(method);
+    if (retval == this->technique_cache.end()) {
         log::instance().write_line(log_level::verbose, "No cached sphere "
-            "rendering technique for \"%s\" with features %" PRIu64 " (ID %"
-            PRIu64 ") was found. Creating a new one ...", method.c_str(),
-            features, id);
+            "rendering technique for %" PRIu64 " with data features %" PRIu64
+            " (ID %" PRIu64 ") was found. Creating a new one ...", method, data,
+            id);
+        rendering_technique::input_layout_type il = nullptr;
         rendering_technique::vertex_shader_type vs = nullptr;
         rendering_technique::hull_shader_type hs = nullptr;
         rendering_technique::domain_shader_type ds = nullptr;
         rendering_technique::geometry_shader_type gs = nullptr;
         rendering_technique::pixel_shader_type ps = nullptr;
 
-        auto it = this->shaderResources.find(id);
-        if (it == this->shaderResources.end()) {
+        auto it = this->shader_resources.find(id);
+        if (it == this->shader_resources.end()) {
             throw std::runtime_error("Shader sources for the given sphere "
                 "rendering method ware missing.");
         }
@@ -467,32 +585,35 @@ trrojan::d3d11::sphere_benchmark::get_technique(d3d11::device& device,
         if (it->second.vertex_shader != 0) {
             auto src = d3d11::plugin::load_resource(
                 MAKEINTRESOURCE(it->second.vertex_shader), _T("SHADER"));
-            vs = create_vertex_shader(device.d3d_device(), src);
+            vs = create_vertex_shader(device, src);
+            il = create_input_layout(device, this->mmpld_layout, src.data(),
+                src.size());
         }
         if (it->second.hull_shader != 0) {
             auto src = d3d11::plugin::load_resource(
                 MAKEINTRESOURCE(it->second.hull_shader), _T("SHADER"));
-            hs = create_hull_shader(device.d3d_device(), src);
+            hs = create_hull_shader(device, src);
         }
         if (it->second.domain_shader != 0) {
             auto src = d3d11::plugin::load_resource(
                 MAKEINTRESOURCE(it->second.domain_shader), _T("SHADER"));
-            ds = create_domain_shader(device.d3d_device(), src);
+            ds = create_domain_shader(device, src);
         }
         if (it->second.geometry_shader != 0) {
             auto src = d3d11::plugin::load_resource(
                 MAKEINTRESOURCE(it->second.geometry_shader), _T("SHADER"));
-            gs = create_geometry_shader(device.d3d_device(), src);
+            gs = create_geometry_shader(device, src);
         }
         if (it->second.pixel_shader != 0) {
             auto src = d3d11::plugin::load_resource(
                 MAKEINTRESOURCE(it->second.pixel_shader), _T("SHADER"));
-            ps = create_pixel_shader(device.d3d_device(), src);
+            ps = create_pixel_shader(device, src);
         }
 
         //this->techniqueCache[id] = rendering_technique(method, nullptr, D3D11_PRIMITIVE_TOPOLOGY_10_CONTROL_POINT_PATCHLIST, vs, );
+        this->technique_cache[id] = rendering_technique();
     }
 
-    retval = this->techniqueCache.find(id);
+    retval = this->technique_cache.find(id);
     return retval->second;
 }

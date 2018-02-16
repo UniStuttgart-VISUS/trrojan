@@ -35,6 +35,16 @@ namespace d3d11 {
     protected:
 
         /// <summary>
+        /// Options for the MMPLD frame loader.
+        /// </summary>
+        enum mmpld_loader_options : std::uint32_t {
+            none = 0x0,
+            vertex_buffer = 0x0001,
+            structured_resource = 0x0002,
+            force_float_colour = 0x0004
+        };
+
+        /// <summary>
         /// The type of the colour enumeration.
         /// </summary>
         typedef mmpld_reader::colour_type mmpld_colour_type;
@@ -51,6 +61,16 @@ namespace d3d11 {
         typedef mmpld_reader::vertex_type mmpld_vertex_type;
 
         /// <summary>
+        /// Get the the colour semantic in the given input layout range.
+        /// </summary>
+        template<class I>
+        static I get_colour_offset(I&& begin, I&& end) {
+            return std::find_if(begin, end, [](D3D11_INPUT_ELEMENT_DESC& d) { 
+                return (::strcmp(d.SemanticName, "COLOR") == 0);
+            });
+        }
+
+        /// <summary>
         /// Creates a vertex input layout descriptor for the given MMPLD list
         /// header.
         /// </summary>
@@ -59,6 +79,12 @@ namespace d3d11 {
         /// <returns>The vertex descriptor.</returns>
         static std::vector<D3D11_INPUT_ELEMENT_DESC> get_mmpld_layout(
             const mmpld_reader::list_header& header);
+
+        /// <summary>
+        /// Answer whether the colour format of the given list is not a floating
+        /// point format.
+        /// </summary>
+        static bool is_non_float_colour(const mmpld_reader::list_header& list);
 
         /// <summary>
         /// Initialises a new instance.
@@ -86,12 +112,8 @@ namespace d3d11 {
         /// <summary>
         /// Determine the input features of the <see cref="mmpld_list" />.
         /// </summary>
-        /// <param name="perPixelXfer">If <c>true</c>, assume transfer function
-        ///being applied in the pixel shader (<c>SPHERE_INPUT_PP_INTENSITY</c>
-        /// instead of <c>SPHERE_INPUT_PV_INTENSITY</c>).</param>
         /// <returns></returns>
-        mmpld_input_properties get_mmpld_input_properties(
-            const bool perPixelXfer) const;
+        mmpld_input_properties get_mmpld_input_properties(void) const;
 
         /// <summary>
         /// Gets the 3D size the current <see cref="mmpld_list" /> (x-axis,
@@ -114,9 +136,10 @@ namespace d3d11 {
         /// </summary>
         /// <param name="device"></param>
         /// <param name="frame"></param>
+        /// <param name="options"></param>
         /// <returns></returns>
         ATL::CComPtr<ID3D11Buffer> read_mmpld_frame(ID3D11Device *device,
-            const unsigned int frame);
+            const unsigned int frame, const mmpld_loader_options options);
 
         /// <summary>
         /// The header of the currently opened MMPLD file.

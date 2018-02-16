@@ -32,10 +32,18 @@ namespace d3d11 {
         /// <s/ummary>
         typedef std::uint32_t frame_type;
 
+        static const char *factor_conservative_depth;
         static const char *factor_data_set;
+        static const char *factor_edge_tess_factor;
+        static const char *factor_force_float_colour;
         static const char *factor_frame;
+        static const char *factor_inside_tess_factor;
         static const char *factor_iterations;
         static const char *factor_method;
+        static const char *factor_poly_maximum;
+        static const char *factor_poly_minimum;
+        static const char *factor_poly_scale;
+        static const char *factor_vs_raygen;
         static const char *factor_vs_xfer_function;
 
         /// <summary>
@@ -97,26 +105,36 @@ namespace d3d11 {
             technique_map_type;
 
         /// <summary>
-        /// Gets the identifier for the given rendering method and input+feature
-        /// set.
+        /// Gets the identifier for the given rendering method.
         /// </summary>
-        /// <param name=""></param>
         /// <param name=""></param>
         /// <returns>The ID of the requested shader, or 0 if no such shader was
         /// found.</returns>
-        static shader_id_type get_shader_id(const std::string& method,
-            const shader_id_type features);
+        static shader_id_type get_shader_id(const std::string& method);
+
+        /// <summary>
+        /// Gets the identifier for the rendering method specified in the given
+        /// configuration.
+        /// </summary>
+        /// <remarks>
+        /// The method only retrieves the method code and method-dependent
+        /// features, but not any data-dependent features. These must be added
+        /// later.
+        /// </remarks>
+        /// <param name=""></param>
+        /// <returns></returns>
+        static shader_id_type get_shader_id(const configuration& config);
 
         /// <summary>
         /// Gets or creates a rendering technique using the given rendering
-        /// method and input+feature set.
+        /// method and input data properties set.
         /// </summary>
         /// <param name=""></param>
         /// <param name=""></param>
         /// <param name=""></param>
         /// <returns>A reference to the cached technique.</returns>
-        rendering_technique& get_technique(d3d11::device& device,
-            const std::string& method, const shader_id_type features);
+        rendering_technique& get_technique(ID3D11Device *device,
+            const shader_id_type method, const shader_id_type data);
 
         /// <summary>
         /// The camera for computing the transformation matrices.
@@ -124,32 +142,44 @@ namespace d3d11 {
         trrojan::perspective_camera cam;
 
         /// <summary>
+        /// The shader resource view of the transfer function.
+        /// </summary>
+        rendering_technique::srv_type colour_map;
+
+        /// <summary>
+        /// Buffer holding the data set.
+        /// </summary>
+        rendering_technique::buffer_type data_buffer;
+
+        /// <summary>
+        /// Shader flags for the data in <see cref="data_buffer" />
+        /// </summary>
+        shader_id_type data_properties;
+
+        /// <summary>
+        /// An event query for detecting the end of rendering on the GPU.
+        /// </summary>
+        ATL::CComPtr<ID3D11Query> done_query;
+
+        /// <summary>
+        /// A linear texture sampler state for the transfer function.
+        /// </summary>
+        rendering_technique::sampler_state_type linear_sampler;
+
+        /// <summary>
         /// The lookup table for the resource IDs of the shaders.
         /// </summary>
-        shader_source_map_type shaderResources;
+        shader_source_map_type shader_resources;
+
+        /// <summary>
+        /// A query for pipeline statistics.
+        /// </summary>
+        ATL::CComPtr<ID3D11Query> stats_query;
 
         /// <summary>
         /// Caches rendering techniques already created.
         /// </summary>
-        technique_map_type techniqueCache;
-
-        ATL::CComPtr<ID3D11ShaderResourceView> colour_map;
-        ATL::CComPtr<ID3D11Buffer> constant_buffer;
-        ATL::CComPtr<ID3D11DomainShader> domain_shader;
-        shader_source_map_type domain_shaders;
-        ATL::CComPtr<ID3D11Query> done_query;
-        ATL::CComPtr<ID3D11GeometryShader> geometry_shader;
-        ATL::CComPtr<ID3D11HullShader> hull_shader;
-        shader_source_map_type hull_shaders;
-        ATL::CComPtr<ID3D11InputLayout> input_layout;
-        ATL::CComPtr<ID3D11SamplerState> linear_sampler;
-        std::string method;
-        ATL::CComPtr<ID3D11PixelShader> pixel_shader;
-        shader_source_map_type pixel_shaders;
-        ATL::CComPtr<ID3D11Query> stats_query;
-        ATL::CComPtr<ID3D11Buffer> vertex_buffer;
-        ATL::CComPtr<ID3D11VertexShader> vertex_shader;
-        shader_source_map_type vertex_shaders;
+        technique_map_type technique_cache;
     };
 
 }

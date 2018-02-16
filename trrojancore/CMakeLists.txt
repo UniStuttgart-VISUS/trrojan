@@ -17,8 +17,11 @@ set(TrrojanCoreIncludeDir "${CMAKE_CURRENT_SOURCE_DIR}/${IncludeDirectory}" PARE
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTRROJANCORE_EXPORTS")
 
+if (WITH_CHAKRA==ON)
+endif (WITH_CHAKRA==ON)
+
 add_library(trrojancore SHARED ${HeaderFiles} ${SourceFiles})
 
-IF (${CMAKE_COMPILER_IS_GNUCXX})
-	target_link_libraries(trrojancore dl)
-ENDIF (${CMAKE_COMPILER_IS_GNUCXX})
+if (${CMAKE_COMPILER_IS_GNUCXX})
+    target_link_libraries(trrojancore dl)
+endif (${CMAKE_COMPILER_IS_GNUCXX})

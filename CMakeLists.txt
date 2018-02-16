@@ -22,6 +22,9 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/include")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/bin")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/bin")
 
+# Configure optional features
+option(TRROJAN_WITH_CHAKRA "Enable JavaScript support." OFF)
+
 
 # Configure the compiler.
 if (WIN32)
@@ -52,10 +55,20 @@ endif()
 #add_subdirectory(glm)
 
 # Build spdlog
-set(SPDLOG_BUILD_TESTING "NO")
+set(SPDLOG_BUILD_TESTING "NO" FORCE)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DSPDLOG_FMT_PRINTF")
 add_subdirectory(spdlog)
 
+# Build ChakraCore if enabled.
+if (TRROJAN_WITH_CHAKRA)
+#if (WIN32)
+#    add_custom_command(OUTPUT asd COMMAND msbuild /m /p:Platform=x64 /p:Configuration=Release /p:RuntimeLib=static_library "chakra/Build/Chakra.Core.sln")
+#else (WIN32)
+#    add_custom_command(OUTPUT asd COMMAND "chakra/Build/build.sh --static")
+#endif (WIN32)
+endif (TRROJAN_WITH_CHAKRA)
+
+# Include headers for all of TRRojan.
 include_directories("glm")
 include_directories("spdlog/include")
 
@@ -70,7 +83,7 @@ add_subdirectory(trrojanstream)
 
 # Build the D3D plugin
 if (WIN32)
-	add_subdirectory(trrojand3d11)
+    add_subdirectory(trrojand3d11)
 endif (WIN32)
 
 # Build the executable

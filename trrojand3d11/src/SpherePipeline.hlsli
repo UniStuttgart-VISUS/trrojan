@@ -305,4 +305,4 @@ cbuffer TessellationConstants CBUFFER(2) {
     float2 InsideTessFactor;
 
     float _TessPadding[10];
-}
+};
