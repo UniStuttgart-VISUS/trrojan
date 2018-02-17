@@ -78,7 +78,11 @@ namespace d3d11 {
         static size_t get_random_sphere_stride(
             const random_sphere_type type);
 
-        random_sphere_base(void) = default;
+        /// <summary>
+        /// Initialises a new instance.
+        /// </summary>
+        inline random_sphere_base(void)
+            : random_data_type(random_sphere_type::unspecified) { }
 
         /// <summary>
         /// Creates a vertex or resource buffer filled with random spheres
@@ -95,7 +99,18 @@ namespace d3d11 {
 
         rendering_technique::buffer_type make_random_spheres(
             ID3D11Device *device, const buffer_type bufferType,
-            const std::string& configuration);
+            const std::string& configuration,
+            const bool isForceFloatColour);
+
+        /// <summary>
+        /// Layout of last random data that have been generated.
+        /// </summary>
+        std::vector<D3D11_INPUT_ELEMENT_DESC> random_data_layout;
+
+        /// <summary>
+        /// Type of last random data that have been generated.
+        /// </summary>
+        random_sphere_type random_data_type;
 
     };
 

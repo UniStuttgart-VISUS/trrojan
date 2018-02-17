@@ -188,6 +188,9 @@ trrojan::d3d11::random_sphere_base::make_random_spheres(ID3D11Device *device,
         }
     }
 
+    this->random_data_layout = random_sphere_base::get_random_input(sphereType);
+    this->random_data_type = sphereType;
+
     return retval;
 }
 
@@ -197,7 +200,8 @@ trrojan::d3d11::random_sphere_base::make_random_spheres(ID3D11Device *device,
  */
 trrojan::d3d11::rendering_technique::buffer_type
 trrojan::d3d11::random_sphere_base::make_random_spheres(ID3D11Device *device,
-        const buffer_type bufferType, const std::string& configuration) {
+        const buffer_type bufferType, const std::string& configuration,
+        const bool isForceFloatColour) {
     static const std::runtime_error PARSE_ERROR("The configuration description "
         "of the random spheres is invalid. The configuration must have the "
         "following format: \"<sphere type> : <number of spheres> : <random "
@@ -241,6 +245,17 @@ trrojan::d3d11::random_sphere_base::make_random_spheres(ID3D11Device *device,
     if (sphereType == random_sphere_type::unspecified) {
         throw std::runtime_error("The type of random spheres to generate is "
             "invalid.");
+    }
+    if (isForceFloatColour) {
+        switch (sphereType) {
+            case random_sphere_type::pos_rgba8:
+                sphereType = random_sphere_type::pos_rgba32;
+                break;
+
+            case random_sphere_type::pos_rad_rgba8:
+                sphereType = random_sphere_type::pos_rad_rgba32;
+                break;
+        }
     }
 
     /* Parse the number of spheres to generate. */

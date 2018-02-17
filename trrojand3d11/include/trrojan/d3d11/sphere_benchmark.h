@@ -137,6 +137,33 @@ namespace d3d11 {
             const shader_id_type method, const shader_id_type data);
 
         /// <summary>
+        /// Sets, if necessary (if <c>SPHERE_TECHNIQUE_USE_SRV</c> is set in
+        /// <see cref="data_properties" />), the floating point colour flag in
+        /// <see cref="data_properties" />.
+        /// </summary>
+        void set_float_colour_flag(const mmpld_reader::colour_type colour);
+
+        /// <summary>
+        /// Sets, if necessary (if <c>SPHERE_TECHNIQUE_USE_SRV</c> is set in
+        /// <see cref="data_properties" />), the floating point colour flag in
+        /// <see cref="data_properties" />.
+        /// </summary>
+        void set_float_colour_flag(const random_sphere_type type);
+
+        /// <summary>
+        /// Try processing the data set in <paramref name="config" /> as
+        /// configuration for random sphere generation and load
+        /// <see cref="data_buffer" /> with the random spheres in case
+        /// of success.
+        /// </summary>
+        /// <param name=""></param>
+        /// <param name=""></param>
+        /// <param name=""></param>
+        /// <returns></returns>
+        std::exception_ptr try_make_random_spheres(ID3D11Device *dev,
+            const shader_id_type shaderCode, const configuration& config);
+
+        /// <summary>
         /// The camera for computing the transformation matrices.
         /// </summary>
         trrojan::perspective_camera cam;
