@@ -54,7 +54,7 @@ _DEFINE_SPHERE_TECHNIQUE_LUT(SPHERE_METHODS);
  * trrojan::d3d11::sphere_benchmark::sphere_benchmark
  */
 trrojan::d3d11::sphere_benchmark::sphere_benchmark(void)
-        : benchmark_base("sphere-raycaster"), data_properties(0) {
+        : benchmark_base("sphere-renderer"), data_properties(0) {
     typedef mmpld_reader::shader_properties sp_t;
 
     // Define the data we need.
@@ -223,6 +223,7 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
             options |= mmpld_loader_options::force_float_colour;
         }
 
+        /*
         log::instance().write_line(log_level::verbose, "Loading MMPLD frame "
             "%u ...", frame);
         this->data_buffer = this->read_mmpld_frame(dev, frame,
@@ -230,6 +231,9 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
 
         // Merge the requested data properties with the data-defined ones.
         this->data_properties |= this->get_mmpld_input_properties();
+        */
+        this->data_buffer = this->make_random_spheres(dev, buffer_type::vertex_buffer,
+            config.get<std::string>(factor_data_set));
 
         // If the data are in a structured resource buffer, we need to remember
         // whether the data are floating point data or 8-bit colours. Otherwise,
