@@ -1,3 +1,3 @@
-// This file was auto-generated using Create-SphereShaders.ps1 on 02/15/2018 15:53:15
+// This file was auto-generated using Create-SphereShaders.ps1 on 02/17/2018 17:02:54
 #define ADAPT_SPHERE_TESS (1)
 #include "SphereDomainShaderCore.hlsli"

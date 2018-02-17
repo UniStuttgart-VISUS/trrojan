@@ -159,8 +159,7 @@ namespace d3d11 {
         /// <param name=""></param>
         /// <param name=""></param>
         /// <param name=""></param>
-        /// <returns></returns>
-        std::exception_ptr try_make_random_spheres(ID3D11Device *dev,
+        void try_make_random_spheres(ID3D11Device *dev,
             const shader_id_type shaderCode, const configuration& config);
 
         /// <summary>

@@ -195,9 +195,13 @@ process {
     $includes += "#define SPHERE_VARIANT_PV_RAY ($("0x{0:X}" -f $SPHERE_VARIANT_PV_RAY))"
     $includes += "#define SPHERE_VARIANT_CONSERVATIVE_DEPTH ($("0x{0:X}" -f $SPHERE_VARIANT_CONSERVATIVE_DEPTH))"
 
+    $global:techniques.Keys | %{
+        $includes +="#define SPHERE_TECHNIQUE_$($global:techniques[$_]) ($("0x{0:X}" -f $_)ull)"
+    }
+
     $includes += "#define _DEFINE_SPHERE_TECHNIQUE_LUT(n) static const struct { const char *name; std::uint64_t id; } n[] = {\"
     $global:techniques.Keys | %{
-        $includes +="{ `"$($global:techniques[$_].ToLower())`", $($_)ull },\"
+        $includes +="{ `"$($global:techniques[$_].ToLower())`", $("0x{0:X}" -f $_)ull },\"
     }
     $includes += "{ nullptr, 0 } }"
 

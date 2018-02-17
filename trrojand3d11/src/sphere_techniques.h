@@ -1,4 +1,4 @@
-// This file was auto-generated using Create-SphereShaders.ps1 on 02/15/2018 15:53:19
+// This file was auto-generated using Create-SphereShaders.ps1 on 02/17/2018 17:02:58
 #define SPHERE_TECHNIQUE_USE_GEO (0x80000000)
 #define SPHERE_TECHNIQUE_USE_TESS (0x40000000)
 #define SPHERE_TECHNIQUE_USE_SRV (0x20000000)
@@ -11,18 +11,29 @@
 #define SPHERE_INPUT_FLT_COLOUR (0x20000)
 #define SPHERE_VARIANT_PV_RAY (0x40000)
 #define SPHERE_VARIANT_CONSERVATIVE_DEPTH (0x80000)
+#define SPHERE_TECHNIQUE_POLY_TESS (0x1000000050000000ull)
+#define SPHERE_TECHNIQUE_ADAPT_HEMISPHERE_TESS (0x10000040000000ull)
+#define SPHERE_TECHNIQUE_HEMISPHERE_TESS (0x20000040000000ull)
+#define SPHERE_TECHNIQUE_QUAD_TESS (0x2000000050000000ull)
+#define SPHERE_TECHNIQUE_ADAPT_SPHERE_TESS (0x40000040000000ull)
+#define SPHERE_TECHNIQUE_SPHERE_TESS (0x80000040000000ull)
+#define SPHERE_TECHNIQUE_QUAD_INST (0x8000000038000000ull)
+#define SPHERE_TECHNIQUE_ADAPT_POLY_TESS (0x800000050000000ull)
+#define SPHERE_TECHNIQUE_STPA (0x400000090000000ull)
+#define SPHERE_TECHNIQUE_GEO_QUAD (0x200000090000000ull)
+#define SPHERE_TECHNIQUE_GEO_POLY (0x100000090000000ull)
 #define _DEFINE_SPHERE_TECHNIQUE_LUT(n) static const struct { const char *name; std::uint64_t id; } n[] = {\
-{ "poly_tess", 1152921505949024256ull },\
-{ "adapt_hemisphere_tess", 4503600701112320ull },\
-{ "hemisphere_tess", 9007200328482816ull },\
-{ "quad_tess", 2305843010555871232ull },\
-{ "adapt_sphere_tess", 18014399583223808ull },\
-{ "sphere_tess", 36028798092705792ull },\
-{ "quad_inst", 9223372037794299904ull },\
-{ "adapt_poly_tess", 576460753645600768ull },\
-{ "stpa", 288230378567630848ull },\
-{ "geo_quad", 144115190491774976ull },\
-{ "geo_poly", 72057596453847040ull },\
+{ "poly_tess", 0x1000000050000000ull },\
+{ "adapt_hemisphere_tess", 0x10000040000000ull },\
+{ "hemisphere_tess", 0x20000040000000ull },\
+{ "quad_tess", 0x2000000050000000ull },\
+{ "adapt_sphere_tess", 0x40000040000000ull },\
+{ "sphere_tess", 0x80000040000000ull },\
+{ "quad_inst", 0x8000000038000000ull },\
+{ "adapt_poly_tess", 0x800000050000000ull },\
+{ "stpa", 0x400000090000000ull },\
+{ "geo_quad", 0x200000090000000ull },\
+{ "geo_poly", 0x100000090000000ull },\
 { nullptr, 0 } }
 #define _ADD_SPHERE_SHADERS(ht)\
 ht[36028798092705795] = { 256, 257, 258, 0, 259 };\
