@@ -91,6 +91,14 @@ namespace d3d11 {
         const std::vector<D3D11_INPUT_ELEMENT_DESC>& elements,
         const BYTE *byteCode, const size_t cntByteCode);
 
+    inline ATL::CComPtr<ID3D11InputLayout> create_input_layout(
+            ID3D11Device *device,
+            const std::vector<D3D11_INPUT_ELEMENT_DESC>& elements,
+            const std::vector<std::uint8_t>& byteCode) {
+        return create_input_layout(device, elements, byteCode.data(),
+            byteCode.size());
+    }
+
     template<size_t N>
     inline ATL::CComPtr<ID3D11InputLayout> create_input_layout(
             ID3D11Device *device,

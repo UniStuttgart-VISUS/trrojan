@@ -134,7 +134,14 @@ namespace d3d11 {
         /// <param name=""></param>
         /// <returns>A reference to the cached technique.</returns>
         rendering_technique& get_technique(ID3D11Device *device,
-            const shader_id_type method, const shader_id_type data);
+            const shader_id_type method, const shader_id_type data,
+            const bool isRandomSpheres);
+
+        /// <summary>
+        /// Setsthe data poroperties for random particles.
+        /// </summary>
+        void set_data_properties(const random_sphere_type type,
+            const shader_id_type shaderCode);
 
         /// <summary>
         /// Sets, if necessary (if <c>SPHERE_TECHNIQUE_USE_SRV</c> is set in
@@ -142,13 +149,6 @@ namespace d3d11 {
         /// <see cref="data_properties" />.
         /// </summary>
         void set_float_colour_flag(const mmpld_reader::colour_type colour);
-
-        /// <summary>
-        /// Sets, if necessary (if <c>SPHERE_TECHNIQUE_USE_SRV</c> is set in
-        /// <see cref="data_properties" />), the floating point colour flag in
-        /// <see cref="data_properties" />.
-        /// </summary>
-        void set_float_colour_flag(const random_sphere_type type);
 
         /// <summary>
         /// Try processing the data set in <paramref name="config" /> as

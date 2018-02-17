@@ -261,7 +261,8 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
     /* At this point, we know what shader features are needed for the data. */
 
     // Select or create the right rendering technique.
-    auto& technique = this->get_technique(dev, shaderCode, this->data_properties);
+    auto& technique = this->get_technique(dev, shaderCode,
+        this->data_properties, isRandomSpheres);
     // TODO
 
 
@@ -557,7 +558,8 @@ trrojan::d3d11::sphere_benchmark::get_shader_id(const configuration& config) {
  */
 trrojan::d3d11::rendering_technique&
 trrojan::d3d11::sphere_benchmark::get_technique(ID3D11Device *device,
-        const shader_id_type method, const shader_id_type data) {
+        const shader_id_type method, const shader_id_type data,
+        const bool isRandomSpheres) {
     auto id = method | data;
     auto isPsTex = ((method & SPHERE_INPUT_PP_INTENSITY) != 0);
     auto isVsTex = ((method & SPHERE_INPUT_PV_INTENSITY) != 0);
@@ -586,8 +588,9 @@ trrojan::d3d11::sphere_benchmark::get_technique(ID3D11Device *device,
             auto src = d3d11::plugin::load_resource(
                 MAKEINTRESOURCE(it->second.vertex_shader), _T("SHADER"));
             vs = create_vertex_shader(device, src);
-            //il = create_input_layout(device, this->mmpld_layout, src.data(),
-            //    src.size());
+            il = create_input_layout(device,
+                isRandomSpheres ? this->random_data_layout : this->mmpld_layout,
+                src);
         }
         if (it->second.hull_shader != 0) {
             auto src = d3d11::plugin::load_resource(
@@ -620,6 +623,44 @@ trrojan::d3d11::sphere_benchmark::get_technique(ID3D11Device *device,
 
 
 /*
+ * trrojan::d3d11::sphere_benchmark::set_data_properties
+ */
+void trrojan::d3d11::sphere_benchmark::set_data_properties(
+        const random_sphere_type type, const shader_id_type shaderCode) {
+    switch (type) {
+        case random_sphere_type::pos_intensity:
+            this->data_properties |= SPHERE_INPUT_PV_INTENSITY;
+            /* falls through. */
+        case random_sphere_type::pos_rad_intensity:
+            this->data_properties |= SPHERE_INPUT_PV_RADIUS;
+            break;
+
+        case random_sphere_type::pos_rgba8:
+        case random_sphere_type::pos_rgba32:
+            this->data_properties |= SPHERE_INPUT_PV_COLOUR;
+            /* falls through. */
+        case random_sphere_type::pos_rad_rgba8:
+        case random_sphere_type::pos_rad_rgba32:
+            this->data_properties |= SPHERE_INPUT_PV_RADIUS;
+            break;
+    }
+
+    // Indicate that the buffer is for SRVs.
+    this->data_properties |= (shaderCode & SPHERE_TECHNIQUE_USE_SRV);
+
+    // See MMPLD overload for detailed explanation.
+    if ((this->data_properties & SPHERE_TECHNIQUE_USE_SRV) != 0) {
+        switch (type) {
+            case random_sphere_type::pos_rad_rgba32:
+            case random_sphere_type::pos_rgba32:
+                this->data_properties |= SPHERE_INPUT_FLT_COLOUR;
+                break;
+        }
+    }
+}
+
+
+/*
  * trrojan::d3d11::sphere_benchmark::set_float_colour_flag
  */
 void trrojan::d3d11::sphere_benchmark::set_float_colour_flag(
@@ -641,23 +682,6 @@ void trrojan::d3d11::sphere_benchmark::set_float_colour_flag(
 
 
 /*
- * trrojan::d3d11::sphere_benchmark::set_float_colour_flag
- */
-void trrojan::d3d11::sphere_benchmark::set_float_colour_flag(
-        const random_sphere_type type) {
-    // See MMPLD overload for detailed explanation.
-    if ((this->data_properties & SPHERE_TECHNIQUE_USE_SRV) != 0) {
-        switch (type) {
-            case random_sphere_type::pos_rad_rgba32:
-            case random_sphere_type::pos_rgba32:
-                this->data_properties |= SPHERE_INPUT_FLT_COLOUR;
-                break;
-        }
-    }
-}
-
-
-/*
  * trrojan::d3d11::sphere_benchmark::try_make_random_spheres
  */
 std::exception_ptr trrojan::d3d11::sphere_benchmark::try_make_random_spheres(
@@ -671,9 +695,7 @@ std::exception_ptr trrojan::d3d11::sphere_benchmark::try_make_random_spheres(
 
         this->data_buffer = this->make_random_spheres(dev, bufferType, path,
             forceFloat);
-
-        this->data_properties |= (shaderCode & SPHERE_TECHNIQUE_USE_SRV);
-        this->set_float_colour_flag(this->random_data_type);
+        this->set_data_properties(this->random_data_type, shaderCode);
 
         return std::exception_ptr();
     } catch (...) {
