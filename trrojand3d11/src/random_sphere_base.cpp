@@ -201,7 +201,8 @@ trrojan::d3d11::random_sphere_base::make_random_spheres(ID3D11Device *device,
 trrojan::d3d11::rendering_technique::buffer_type
 trrojan::d3d11::random_sphere_base::make_random_spheres(ID3D11Device *device,
         const buffer_type bufferType, const std::string& configuration,
-        const bool isForceFloatColour) {
+        const bool isForceFloatColour, std::uint32_t *outSize,
+        std::uint32_t *outStride) {
     static const std::runtime_error PARSE_ERROR("The configuration description "
         "of the random spheres is invalid. The configuration must have the "
         "following format: \"<sphere type> : <number of spheres> : <random "
@@ -257,6 +258,10 @@ trrojan::d3d11::random_sphere_base::make_random_spheres(ID3D11Device *device,
                 break;
         }
     }
+    if (outStride != nullptr) {
+        *outStride = static_cast<std::uint32_t>(
+            random_sphere_base::get_random_sphere_stride(sphereType));
+    }
 
     /* Parse the number of spheres to generate. */
     tokBegin = ++tokEnd;
@@ -266,6 +271,9 @@ trrojan::d3d11::random_sphere_base::make_random_spheres(ID3D11Device *device,
     }
 
     cntParticles = parse<decltype(cntParticles)>(std::string(tokBegin, tokEnd));
+    if (outSize != nullptr) {
+        *outSize = cntParticles;
+    }
 
     /* Parse the random seed. */
     tokBegin = ++tokEnd;

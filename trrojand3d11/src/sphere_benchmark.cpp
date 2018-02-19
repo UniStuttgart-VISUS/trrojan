@@ -54,7 +54,8 @@ _DEFINE_SPHERE_TECHNIQUE_LUT(SPHERE_METHODS);
  * trrojan::d3d11::sphere_benchmark::sphere_benchmark
  */
 trrojan::d3d11::sphere_benchmark::sphere_benchmark(void)
-        : benchmark_base("sphere-renderer"), data_properties(0) {
+        : benchmark_base("sphere-renderer"), data_properties(0), data_size(0),
+        data_stride(0) {
     typedef mmpld_reader::shader_properties sp_t;
 
     // Define the data we need.
@@ -151,21 +152,25 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
     if (contains(changed, factor_device)) {
         log::instance().write_line(log_level::verbose, "Preparing GPU "
             "resources for device \"%s\" ...", device.name().c_str());
-        this->colour_map = nullptr;
-        this->data_buffer = nullptr;
         this->data_properties = 0;
-        this->done_query = nullptr;
-        this->linear_sampler = nullptr;
-        this->stats_query = nullptr;
         this->technique_cache.clear();
 
-        // Textures and SRVs
+        // Constant buffers.
+        this->sphere_constants = create_buffer(dev, D3D11_USAGE_DEFAULT,
+            D3D11_BIND_CONSTANT_BUFFER, nullptr, sizeof(SphereConstants));
+        this->tessellation_constants = create_buffer(dev, D3D11_USAGE_DEFAULT,
+            D3D11_BIND_CONSTANT_BUFFER, nullptr, sizeof(TessellationConstants));
+        this->view_constants = create_buffer(dev, D3D11_USAGE_DEFAULT,
+            D3D11_BIND_CONSTANT_BUFFER, nullptr, sizeof(ViewConstants));
+
+        // Textures and SRVs.
+        this->colour_map = nullptr;
         create_viridis_colour_map(dev, &this->colour_map);
 
-        // Samplers
+        // Samplers.
         this->linear_sampler = create_linear_sampler(dev);
 
-        // Queries
+        // Queries.
         this->done_query = create_event_query(dev);
         this->stats_query = create_pipline_stats_query(dev);
     }
@@ -178,7 +183,7 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
         this->data_properties = 0;
 
         try {
-            this->try_make_random_spheres(dev, shaderCode, config);
+            this->make_random_spheres(dev, shaderCode, config);
             isRandomSpheres = true;
         } catch (std::exception& ex) {
             log::instance().write_line(log_level::warning, ex);
@@ -222,32 +227,14 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
 
     // (Re-) read MMPLD frame as necessary.
     if (this->data_buffer == nullptr) {
-        auto frame = config.get<frame_type>(factor_frame);
-        auto options = std::underlying_type<mmpld_loader_options>::type(0);
-        if ((shaderCode & SPHERE_TECHNIQUE_USE_SRV) != 0) {
-            options |= mmpld_loader_options::structured_resource;
-            this->data_properties |= SPHERE_TECHNIQUE_USE_SRV;
-        } else {
-            options |= mmpld_loader_options::vertex_buffer;
-            assert((this->data_properties & SPHERE_TECHNIQUE_USE_SRV) == 0);
-        }
-        if (config.get<bool>(factor_force_float_colour)) {
-            options |= mmpld_loader_options::force_float_colour;
-        }
-
-        log::instance().write_line(log_level::verbose, "Loading MMPLD frame "
-            "%u ...", frame);
-        this->data_buffer = this->read_mmpld_frame(dev, frame,
-            static_cast<mmpld_loader_options>(options));
-
-        // Merge the requested data properties with the data-defined ones.
-        this->data_properties |= this->get_mmpld_input_properties();
-        this->set_float_colour_flag(this->mmpld_list.colour_type);
+        assert(!isRandomSpheres);
+        this->load_mmpld_frame(dev, shaderCode, config);
     }
     /* At this point, 'data_buffer' holds data compatible with renderer. */
 
     // Convert per-vertex TF lookup to per-pixel lookup if requested.
-    if (!config.get<bool>(factor_vs_xfer_function)) {
+    const auto isVsXfer = config.get<bool>(factor_vs_xfer_function);
+    if (!isVsXfer) {
         typedef mmpld_reader::shader_properties sp_t;
         if ((this->data_properties & sp_t::per_vertex_intensity) != 0) {
             this->data_properties &= ~sp_t::per_vertex_intensity;
@@ -264,41 +251,37 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
         this->data_properties, isRandomSpheres);
     // TODO
 
+    // Make sure that the data set is set as vertex buffer or SRV.
+    if ((shaderCode & SPHERE_TECHNIQUE_USE_SRV) != 0) {
+        D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
+        ::ZeroMemory(&srvDesc, sizeof(srvDesc));
+        srvDesc.Format = DXGI_FORMAT_UNKNOWN;
+        srvDesc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
+        srvDesc.Buffer.FirstElement = 0;
+        srvDesc.Buffer.NumElements = this->data_size;
 
-
-#if 0
-
-
-    /* Update all data-dependent resources. */
-    if (contains_any(changed, factor_frame, factor_data_set, factor_device,
-            factor_vs_xfer_function)) {
-        auto psProps = this->get_mmpld_pixel_shader_properties(
-            isVsXferFunction);
-        auto psCode = this->pixel_shaders.find(psProps);
-        if (psCode == this->pixel_shaders.end()) {
-            throw std::runtime_error("No pixel shader is available which can "
-                "fulfil the requirements of the data set.");
+        rendering_technique::srv_type srv;
+        auto hr = dev->CreateShaderResourceView(this->data_buffer,
+            &srvDesc, &srv);
+        if (FAILED(hr)) {
+            throw ATL::CAtlException(hr);
         }
 
-        auto vsProps = this->get_mmpld_vertex_shader_properties(
-            isVsXferFunction);
-        auto vsCode = this->vertex_shaders.find(vsProps);
-        if (vsCode == this->vertex_shaders.end()) {
-            throw std::runtime_error("No vertex shader is available which can "
-                "fulfil the requirements of the data set.");
-        }
+        technique.set_shader_resource_views(srv,
+            rendering_technique::combine_shader_stages(
+            rendering_technique::shader_stage::vertex));
 
-        this->input_layout = create_input_layout(device.d3d_device(),
-            this->mmpld_layout, vsCode->second.first, vsCode->second.second);
+    } else {
+        rendering_technique::vertex_buffer vb;
+        vb.buffer = this->data_buffer;
+        vb.offset = 0;
+        vb.size = this->data_size;
+        vb.stride = this->data_stride;
 
-        this->vertex_shader = create_vertex_shader(device.d3d_device(),
-            vsCode->second.first, vsCode->second.second);
-
-        this->pixel_shader = create_pixel_shader(device.d3d_device(),
-            psCode->second.first, psCode->second.second);
+        technique.set_vertex_buffers(vb);
     }
 
-    /* Retrieve the viewport for rasteriser and shaders. */
+    // Retrieve the viewport for rasteriser and shaders.
     {
         auto vp = config.get<viewport_type>(factor_viewport);
         viewport.TopLeftX = viewport.TopLeftY = 0.0f;
@@ -307,10 +290,10 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
         viewport.MinDepth = 0.0f;
         viewport.MaxDepth = 1.0f;
 
-        constants.Viewport.x = 0.0f;
-        constants.Viewport.y = 0.0f;
-        constants.Viewport.z = viewport.Width;
-        constants.Viewport.w = viewport.Height;
+        viewConstants.Viewport.x = 0.0f;
+        viewConstants.Viewport.y = 0.0f;
+        viewConstants.Viewport.z = viewport.Width;
+        viewConstants.Viewport.w = viewport.Height;
     }
 
     // Initialise the GPU timer.
@@ -322,13 +305,15 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
             "iteration",
             "particles",
             "vs_invokes",
+            "hs_invokes",
+            "ds_invokes",
             "gs_invokes",
             "ps_invokes",
             "gpu_time",
             "wall_time"
     });
 
-    /* Compute the matrices. */
+    // Compute the matrices.
     {
         //auto projection = DirectX::XMMatrixPerspectiveFovRH(std::atan(1) * 4 / 3,
         //    static_cast<float>(viewport.Width) / static_cast<float>(viewport.Height),
@@ -341,10 +326,12 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
         //    DirectX::XMLoadFloat4(&lookAt), DirectX::XMLoadFloat4(&up));
 
         this->cam.set_fovy(60.0f);
-        this->cam.set_aspect_ratio(static_cast<float>(viewport.Width) / static_cast<float>(viewport.Height));
-        auto mat = DirectX::XMFLOAT4X4(glm::value_ptr(this->cam.get_projection_mx()));
+        this->cam.set_aspect_ratio(static_cast<float>(viewport.Width)
+            / static_cast<float>(viewport.Height));
+        auto mat = DirectX::XMFLOAT4X4(
+            glm::value_ptr(this->cam.get_projection_mx()));
         auto projection = DirectX::XMLoadFloat4x4(&mat);
-        DirectX::XMStoreFloat4x4(constants.ProjMatrix,
+        DirectX::XMStoreFloat4x4(viewConstants.ProjMatrix,
             DirectX::XMMatrixTranspose(projection));
 
         auto bbWidth = std::abs(this->mmpld_header.bounding_box[3]
@@ -385,90 +372,65 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
 
         mat = DirectX::XMFLOAT4X4(glm::value_ptr(this->cam.get_view_mx()));
         auto view = DirectX::XMLoadFloat4x4(&mat);
-        DirectX::XMStoreFloat4x4(constants.ViewMatrix,
+        DirectX::XMStoreFloat4x4(viewConstants.ViewMatrix,
             DirectX::XMMatrixTranspose(view));
 
         auto viewDet = DirectX::XMMatrixDeterminant(view);
         auto viewInv = DirectX::XMMatrixInverse(&viewDet, view);
-        DirectX::XMStoreFloat4x4(constants.ViewInvMatrix,
+        DirectX::XMStoreFloat4x4(viewConstants.ViewInvMatrix,
             DirectX::XMMatrixTranspose(viewInv));
 
         auto viewProj = view * projection;
-        DirectX::XMStoreFloat4x4(constants.ViewProjMatrix,
+        DirectX::XMStoreFloat4x4(viewConstants.ViewProjMatrix,
             DirectX::XMMatrixTranspose(viewProj));
 
         auto viewProjDet = DirectX::XMMatrixDeterminant(viewProj);
         auto viewProjInv = DirectX::XMMatrixInverse(&viewProjDet, viewProj);
-        DirectX::XMStoreFloat4x4(constants.ViewProjInvMatrix,
+        DirectX::XMStoreFloat4x4(viewConstants.ViewProjInvMatrix,
             DirectX::XMMatrixTranspose(viewProjInv));
     }
 
-    /* Compute shader constants besides matrices. */
-    constants.GlobalColour.x = this->mmpld_list.colour[0];
-    constants.GlobalColour.y = this->mmpld_list.colour[1];
-    constants.GlobalColour.z = this->mmpld_list.colour[2];
-    constants.GlobalColour.w = this->mmpld_list.colour[3];
+    // Set data constants.
+    if (isRandomSpheres) {
+        sphereConstants.GlobalColour.x = 0.5f;
+        sphereConstants.GlobalColour.y = 0.5f;
+        sphereConstants.GlobalColour.z = 0.5f;
+        sphereConstants.GlobalColour.w = 1.f;
 
-    constants.IntensityRange.x = this->mmpld_list.min_intensity;
-    constants.IntensityRange.y = this->mmpld_list.max_intensity;
-    constants.GlobalRadius = this->mmpld_list.radius;
-    constants.IntRangeGlobalRadTessFactor.w = 5.0f;
+        sphereConstants.IntensityRange.x = 0.0f;
+        sphereConstants.IntensityRange.y = 1.0f;
+        sphereConstants.GlobalRadius = 1.0f;
 
-    /* Update constant buffer. */
-    ctx->UpdateSubresource(this->constant_buffer.p, 0, nullptr,
-        &constants, 0, 0);
-
-    /* Configure vertex stage. */
-    ctx->VSSetShader(this->vertex_shader.p, nullptr, 0);
-    ctx->VSSetConstantBuffers(0, 1, &this->constant_buffer.p);
-    ctx->VSSetShaderResources(0, 1, &this->colour_map.p);
-    ctx->VSSetSamplers(0, 1, &this->linear_sampler.p);
-
-    if (isTessellation) {
-        /* Configure hull shader stage. */
-        ctx->HSSetShader(this->hull_shader.p, nullptr, 0);
-        ctx->HSSetConstantBuffers(0, 1, &this->constant_buffer.p);
-
-        /* Configure domain shader stage. */
-        ctx->DSSetShader(this->domain_shader.p, nullptr, 0);
-        ctx->DSSetConstantBuffers(0, 1, &this->constant_buffer.p);
     } else {
-        ctx->HSSetShader(nullptr, nullptr, 0);
-        ctx->DSSetShader(nullptr, nullptr, 0);
+        sphereConstants.GlobalColour.x = this->mmpld_list.colour[0];
+        sphereConstants.GlobalColour.y = this->mmpld_list.colour[1];
+        sphereConstants.GlobalColour.z = this->mmpld_list.colour[2];
+        sphereConstants.GlobalColour.w = this->mmpld_list.colour[3];
+
+        sphereConstants.IntensityRange.x = this->mmpld_list.min_intensity;
+        sphereConstants.IntensityRange.y = this->mmpld_list.max_intensity;
+        sphereConstants.GlobalRadius = this->mmpld_list.radius;
     }
 
-    if (!isTessellation) {
-        /* Configure geometry stage. */
-        ctx->GSSetShader(this->geometry_shader.p, nullptr, 0);
-        ctx->GSSetConstantBuffers(0, 1, &this->constant_buffer.p);
-    } else {
-        ctx->GSSetShader(nullptr, nullptr, 0);
-    }
+    // Set tessellation constants.
 
-    /* Configure pixel stage. */
-    ctx->PSSetShader(this->pixel_shader.p, nullptr, 0);
-    ctx->PSSetConstantBuffers(0, 1, &this->constant_buffer.p);
-    ctx->PSSetShaderResources(0, 1, &this->colour_map.p);
-    ctx->PSSetSamplers(0, 1, &this->linear_sampler.p);
 
-    /* Set vertex buffer. */
-    const auto offset = 0u;
-    const auto stride = static_cast<UINT>(
-        mmpld_reader::calc_stride(this->mmpld_list));
-    const auto topology = isTessellation
-        ? D3D11_PRIMITIVE_TOPOLOGY_1_CONTROL_POINT_PATCHLIST
-        : D3D11_PRIMITIVE_TOPOLOGY_POINTLIST;
-    ctx->IASetVertexBuffers(0, 1, &this->vertex_buffer.p, &stride, &offset);
-    ctx->IASetPrimitiveTopology(topology);
-    ctx->IASetInputLayout(this->input_layout.p);
+    // Update constant buffers.
+    ctx->UpdateSubresource(this->sphere_constants.p, 0, nullptr,
+        &sphereConstants, 0, 0);
+    ctx->UpdateSubresource(this->tessellation_constants.p, 0, nullptr,
+        &tessConstants, 0, 0);
+    ctx->UpdateSubresource(this->view_constants.p, 0, nullptr,
+        &viewConstants, 0, 0);
 
-    /* Configure the rasteriser. */
+    // Configure the rasteriser.
     ctx->RSSetViewports(1, &viewport);
     //context->RSSetState(this->rasteriserState.Get());
 
-    /* Render it. */
-    assert(this->mmpld_list.particles <= UINT_MAX);
+    // Enable the technique.
+    technique.apply(ctx);
 
+    // Render it.
     for (int i = 0; i < cntIterations;) {
         log::instance().write_line(log_level::debug, "Iteration %d.", i);
         cpuTimer.start();
@@ -493,13 +455,17 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
 
             auto gpuTime = gpu_timer_type::to_milliseconds(
                     gpuTimer.evaluate(0), gpuFreq);
-            retval->add({ i,
+            retval->add({
+                i,
                 this->mmpld_list.particles,
                 pipeStats.VSInvocations,
+                pipeStats.HSInvocations,
+                pipeStats.DSInvocations,
                 pipeStats.GSInvocations,
                 pipeStats.PSInvocations,
                 gpuTime,
-                cpuTime });
+                cpuTime
+            });
             ++i;
         }
 
@@ -507,9 +473,6 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
     }
 
     return retval;
-#endif
-
-    throw 1;
 }
 
 
@@ -560,12 +523,13 @@ trrojan::d3d11::sphere_benchmark::get_technique(ID3D11Device *device,
         const shader_id_type method, const shader_id_type data,
         const bool isRandomSpheres) {
     auto id = method | data;
-    auto isPsTex = ((method & SPHERE_INPUT_PP_INTENSITY) != 0);
-    auto isVsTex = ((method & SPHERE_INPUT_PV_INTENSITY) != 0);
-    auto isSrvParts = ((method & SPHERE_TECHNIQUE_USE_SRV) != 0);
-    auto isRay = ((method & SPHERE_TECHNIQUE_USE_RAYCASTING) != 0);
-    auto isInst = ((method & SPHERE_TECHNIQUE_USE_INSTANCING) != 0);
-    auto isTess = ((method & SPHERE_TECHNIQUE_USE_TESS) != 0);
+    auto isPsTex = ((id & SPHERE_INPUT_PP_INTENSITY) != 0);
+    auto isVsTex = ((id & SPHERE_INPUT_PV_INTENSITY) != 0);
+    auto isSrv = ((id & SPHERE_TECHNIQUE_USE_SRV) != 0);
+    auto isRay = ((id & SPHERE_TECHNIQUE_USE_RAYCASTING) != 0);
+    auto isInst = ((id & SPHERE_TECHNIQUE_USE_INSTANCING) != 0);
+    auto isGeo = ((id & SPHERE_TECHNIQUE_USE_GEO) != 0);
+    auto isTess = ((id & SPHERE_TECHNIQUE_USE_TESS) != 0);
 
     auto retval = this->technique_cache.find(method);
     if (retval == this->technique_cache.end()) {
@@ -579,6 +543,11 @@ trrojan::d3d11::sphere_benchmark::get_technique(ID3D11Device *device,
         rendering_technique::domain_shader_type ds = nullptr;
         rendering_technique::geometry_shader_type gs = nullptr;
         rendering_technique::pixel_shader_type ps = nullptr;
+        rendering_technique::shader_resources vsRes;
+        rendering_technique::shader_resources hsRes;
+        rendering_technique::shader_resources dsRes;
+        rendering_technique::shader_resources gsRes;
+        rendering_technique::shader_resources psRes;
         auto pt = D3D11_PRIMITIVE_TOPOLOGY_POINTLIST;
 
         auto it = this->shader_resources.find(id);
@@ -608,6 +577,7 @@ trrojan::d3d11::sphere_benchmark::get_technique(ID3D11Device *device,
             ds = create_domain_shader(device, src);
         }
         if (it->second.geometry_shader != 0) {
+            assert(isGeo);
             auto src = d3d11::plugin::load_resource(
                 MAKEINTRESOURCE(it->second.geometry_shader), _T("SHADER"));
             gs = create_geometry_shader(device, src);
@@ -618,25 +588,118 @@ trrojan::d3d11::sphere_benchmark::get_technique(ID3D11Device *device,
             ps = create_pixel_shader(device, src);
         }
 
-        if (isTess) {
-            // All tessellation-based techniques use 1 control point lists.
-            pt = D3D11_PRIMITIVE_TOPOLOGY_1_CONTROL_POINT_PATCHLIST;
-        } else if (isRay && isInst) {
-            // Raycasting and instances creates tri-strip from nothing.
+        if ((method & SPHERE_TECHNIQUE_QUAD_INST)
+                == SPHERE_TECHNIQUE_QUAD_INST) {
+            assert(isRay);
             pt = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP;
-        } else if (isInst) {
-            // Geometry instancing uses triangles and index buffers.
-            pt = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+            vsRes.constant_buffers.push_back(this->sphere_constants);
+            vsRes.constant_buffers.push_back(this->view_constants);
+
+            psRes.constant_buffers.push_back(this->sphere_constants);
+            psRes.constant_buffers.push_back(this->view_constants);
         }
 
-        //this->techniqueCache[id] = rendering_technique(method, nullptr, D3D11_PRIMITIVE_TOPOLOGY_10_CONTROL_POINT_PATCHLIST, vs, );
+        if (isTess) {
+            pt = D3D11_PRIMITIVE_TOPOLOGY_1_CONTROL_POINT_PATCHLIST;
+            vsRes.constant_buffers.push_back(this->sphere_constants);
+            vsRes.constant_buffers.push_back(this->view_constants);
+
+            hsRes.constant_buffers.push_back(nullptr);
+            hsRes.constant_buffers.push_back(this->view_constants);
+            hsRes.constant_buffers.push_back(this->tessellation_constants);
+
+            dsRes.constant_buffers.push_back(nullptr);
+            dsRes.constant_buffers.push_back(this->view_constants);
+
+            psRes.constant_buffers.push_back(this->sphere_constants);
+            psRes.constant_buffers.push_back(this->view_constants);
+        }
+
+        if (isGeo) {
+            assert(isRay);
+            pt = D3D11_PRIMITIVE_TOPOLOGY_POINTLIST;
+            vsRes.constant_buffers.push_back(this->sphere_constants);
+            vsRes.constant_buffers.push_back(this->view_constants);
+
+            gsRes.constant_buffers.push_back(nullptr);
+            gsRes.constant_buffers.push_back(this->view_constants);
+            gsRes.constant_buffers.push_back(this->tessellation_constants);
+
+            psRes.constant_buffers.push_back(this->sphere_constants);
+            psRes.constant_buffers.push_back(this->view_constants);
+        }
+
+        if (isPsTex) {
+            psRes.sampler_states.push_back(this->linear_sampler);
+            psRes.resource_views.resize(2);
+            psRes.resource_views[1] = this->colour_map;
+
+        } else if (isVsTex) {
+            vsRes.sampler_states.push_back(this->linear_sampler);
+            vsRes.resource_views.resize(2);
+            vsRes.resource_views[1] = this->colour_map;
+        }
+
         this->technique_cache[id] = rendering_technique(
-            //std::to_string(id), il, );
-        );
+            std::to_string(id), il, pt, vs, std::move(vsRes),
+            hs, std::move(hsRes), ds, std::move(dsRes),
+            gs, std::move(gsRes), ps, std::move(psRes));
     }
 
     retval = this->technique_cache.find(id);
     return retval->second;
+}
+
+
+/*
+ * trrojan::d3d11::sphere_benchmark::load_mmpld_frame
+ */
+void trrojan::d3d11::sphere_benchmark::load_mmpld_frame(ID3D11Device *dev,
+        const shader_id_type shaderCode, const configuration& config) {
+    auto frame = config.get<frame_type>(factor_frame);
+
+    auto options = std::underlying_type<mmpld_loader_options>::type(0);
+    if ((shaderCode & SPHERE_TECHNIQUE_USE_SRV) != 0) {
+        options |= mmpld_loader_options::structured_resource;
+        this->data_properties |= SPHERE_TECHNIQUE_USE_SRV;
+    } else {
+        options |= mmpld_loader_options::vertex_buffer;
+        assert((this->data_properties & SPHERE_TECHNIQUE_USE_SRV) == 0);
+    }
+    if (config.get<bool>(factor_force_float_colour)) {
+        options |= mmpld_loader_options::force_float_colour;
+    }
+
+    log::instance().write_line(log_level::verbose, "Loading MMPLD frame "
+        "%u ...", frame);
+    this->data_buffer = this->read_mmpld_frame(dev, frame,
+        static_cast<mmpld_loader_options>(options));
+
+    // Merge the requested data properties with the data-defined ones.
+    this->data_properties |= this->get_mmpld_input_properties();
+    this->set_float_colour_flag(this->mmpld_list.colour_type);
+
+    assert(this->mmpld_list.particles < UINT_MAX);
+    this->data_size = static_cast<std::uint32_t>(this->mmpld_list.particles);
+    this->data_stride = static_cast<std::uint32_t>(
+        mmpld_reader::calc_stride(this->mmpld_list));
+}
+
+
+/*
+ * trrojan::d3d11::sphere_benchmark::make_random_spheres
+ */
+void trrojan::d3d11::sphere_benchmark::make_random_spheres(
+        ID3D11Device *dev, const shader_id_type shaderCode,
+        const configuration& config) {
+    auto path = config.get<std::string>(factor_data_set);
+    auto forceFloat = config.get<bool>(factor_force_float_colour);
+    auto bufferType = ((shaderCode & SPHERE_TECHNIQUE_USE_SRV) != 0)
+        ? buffer_type::structured_resource : buffer_type::vertex_buffer;
+
+    this->data_buffer = random_sphere_base::make_random_spheres(dev,
+        bufferType, path, forceFloat, &this->data_size, &this->data_stride);
+    this->set_data_properties(this->random_data_type, shaderCode);
 }
 
 
@@ -646,20 +709,20 @@ trrojan::d3d11::sphere_benchmark::get_technique(ID3D11Device *device,
 void trrojan::d3d11::sphere_benchmark::set_data_properties(
         const random_sphere_type type, const shader_id_type shaderCode) {
     switch (type) {
-        case random_sphere_type::pos_intensity:
-            this->data_properties |= SPHERE_INPUT_PV_INTENSITY;
-            /* falls through. */
         case random_sphere_type::pos_rad_intensity:
             this->data_properties |= SPHERE_INPUT_PV_RADIUS;
+            /* falls through. */
+        case random_sphere_type::pos_intensity:
+            this->data_properties |= SPHERE_INPUT_PV_INTENSITY;
             break;
 
-        case random_sphere_type::pos_rgba8:
-        case random_sphere_type::pos_rgba32:
-            this->data_properties |= SPHERE_INPUT_PV_COLOUR;
-            /* falls through. */
         case random_sphere_type::pos_rad_rgba8:
         case random_sphere_type::pos_rad_rgba32:
             this->data_properties |= SPHERE_INPUT_PV_RADIUS;
+            /* falls through. */
+        case random_sphere_type::pos_rgba8:
+        case random_sphere_type::pos_rgba32:
+            this->data_properties |= SPHERE_INPUT_PV_COLOUR;
             break;
     }
 
@@ -696,21 +759,4 @@ void trrojan::d3d11::sphere_benchmark::set_float_colour_flag(
                 break;
         }
     }
-}
-
-
-/*
- * trrojan::d3d11::sphere_benchmark::try_make_random_spheres
- */
-void trrojan::d3d11::sphere_benchmark::try_make_random_spheres(
-        ID3D11Device *dev, const shader_id_type shaderCode,
-        const configuration& config) {
-    auto path = config.get<std::string>(factor_data_set);
-    auto forceFloat = config.get<bool>(factor_force_float_colour);
-    auto bufferType = ((shaderCode & SPHERE_TECHNIQUE_USE_SRV) != 0)
-        ? buffer_type::structured_resource : buffer_type::vertex_buffer;
-
-    this->data_buffer = this->make_random_spheres(dev, bufferType, path,
-        forceFloat);
-    this->set_data_properties(this->random_data_type, shaderCode);
 }

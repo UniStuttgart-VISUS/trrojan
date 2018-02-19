@@ -1,7 +1,7 @@
 /// <copyright file="SpherePipeline.hlsli" company="SFB-TRR 161 Quantitative Methods for Visual Computing">
-/// Copyright © 2017 SFB-TRR 161. Alle Rechte vorbehalten.
+/// Copyright ï¿½ 2017 SFB-TRR 161. Alle Rechte vorbehalten.
 /// </copyright>
-/// <author>Christoph Müller</author>
+/// <author>Christoph Mï¿½ller</author>
 
 #include "hlsltypemapping.hlsli"
 
@@ -65,14 +65,14 @@ struct VsRaycastingInput {
     /// <summary>
     /// The colour of the particle.
     /// </summary>
-    float4 Colour : COLOUR0;
+    float4 Colour : COLOR0;
 
 #elif (defined(PER_VERTEX_INTENSITY) || defined(PER_PIXEL_INTENSITY))
     /// <summary>
     /// A scalar intensity which is transformed into a colour by means of
     /// a transfer function, either in the vertex or in the pixel shader.
     /// </summary>
-    float Intensity : COLOUR0;
+    float Intensity : COLOR0;
 #endif /* defined(PER_VERTEX_COLOUR) */
 
 #if defined(HOLOMOL)

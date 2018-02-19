@@ -177,6 +177,9 @@ void trrojan::d3d11::rendering_technique::apply(ID3D11DeviceContext *ctx) {
                     auto srvs = unsmart(res.second.resource_views);
                     ctx->VSSetShaderResources(0, static_cast<UINT>(srvs.size()),
                         srvs.data());
+                    auto samplers = unsmart(res.second.sampler_states);
+                    ctx->VSSetSamplers(0, static_cast<UINT>(samplers.size()),
+                        samplers.data());
                 }
                 break;
 
@@ -188,6 +191,9 @@ void trrojan::d3d11::rendering_technique::apply(ID3D11DeviceContext *ctx) {
                     auto srvs = unsmart(res.second.resource_views);
                     ctx->HSSetShaderResources(0, static_cast<UINT>(srvs.size()),
                         srvs.data());
+                    auto samplers = unsmart(res.second.sampler_states);
+                    ctx->HSSetSamplers(0, static_cast<UINT>(samplers.size()),
+                        samplers.data());
                 }
                 break;
 
@@ -199,6 +205,9 @@ void trrojan::d3d11::rendering_technique::apply(ID3D11DeviceContext *ctx) {
                     auto srvs = unsmart(res.second.resource_views);
                     ctx->DSSetShaderResources(0, static_cast<UINT>(srvs.size()),
                         srvs.data());
+                    auto samplers = unsmart(res.second.sampler_states);
+                    ctx->DSSetSamplers(0, static_cast<UINT>(samplers.size()),
+                        samplers.data());
                 }
                 break;
 
@@ -210,6 +219,9 @@ void trrojan::d3d11::rendering_technique::apply(ID3D11DeviceContext *ctx) {
                     auto srvs = unsmart(res.second.resource_views);
                     ctx->GSSetShaderResources(0, static_cast<UINT>(srvs.size()),
                         srvs.data());
+                    auto samplers = unsmart(res.second.sampler_states);
+                    ctx->GSSetSamplers(0, static_cast<UINT>(samplers.size()),
+                        samplers.data());
                 }
                 break;
 
@@ -221,6 +233,9 @@ void trrojan::d3d11::rendering_technique::apply(ID3D11DeviceContext *ctx) {
                     auto srvs = unsmart(res.second.resource_views);
                     ctx->PSSetShaderResources(0, static_cast<UINT>(srvs.size()),
                         srvs.data());
+                    auto samplers = unsmart(res.second.sampler_states);
+                    ctx->PSSetSamplers(0, static_cast<UINT>(samplers.size()),
+                        samplers.data());
                 }
                 break;
         }
@@ -257,12 +272,36 @@ void trrojan::d3d11::rendering_technique::set_shader_resource_views(
 
 
 /*
+ * trrojan::d3d11::rendering_technique::set_shader_resource_views
+ */
+void trrojan::d3d11::rendering_technique::set_shader_resource_views(
+        const srv_type& srv, const shader_stages stages, const UINT start) {
+    this->foreach_stage(stages, [&srv, &start](shader_resources& r) {
+        auto& dst = r.resource_views;
+        assert_range(dst, start);
+        dst[start] = srv;
+    });
+}
+
+
+
+/*
  * trrojan::d3d11::rendering_technique::set_vertex_buffers
  */
 void trrojan::d3d11::rendering_technique::set_vertex_buffers(
         const std::vector<vertex_buffer>& vbs, const UINT start) {
     assert_range(this->vertexBuffers, vbs, start);
     std::copy(vbs.begin(), vbs.end(), this->vertexBuffers.begin() + start);
+}
+
+
+/*
+ * trrojan::d3d11::rendering_technique::set_vertex_buffers
+ */
+void trrojan::d3d11::rendering_technique::set_vertex_buffers(
+        const vertex_buffer& vb, const UINT start) {
+    assert_range(this->vertexBuffers, start);
+    this->vertexBuffers[start] = vb;
 }
 
 

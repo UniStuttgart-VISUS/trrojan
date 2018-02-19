@@ -100,7 +100,9 @@ namespace d3d11 {
         rendering_technique::buffer_type make_random_spheres(
             ID3D11Device *device, const buffer_type bufferType,
             const std::string& configuration,
-            const bool isForceFloatColour);
+            const bool isForceFloatColour,
+            std::uint32_t *outSize = nullptr,
+            std::uint32_t *outStride = nullptr);
 
         /// <summary>
         /// Layout of last random data that have been generated.

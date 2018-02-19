@@ -95,6 +95,12 @@ namespace d3d11 {
         typedef std::underlying_type<shader_stage>::type shader_stages;
 
         /// <summary>
+        /// Combine several shader stages into a bitmask.
+        /// </summary>
+        template<class... T>
+        static shader_stages combine_shader_stages(T... args);
+
+        /// <summary>
         /// Initialises a new instance.
         /// </summary>
         rendering_technique(void);
@@ -257,10 +263,24 @@ namespace d3d11 {
             const shader_stages stages, const UINT start = 0);
 
         /// <summary>
+        /// Add or replace the shader resource views starting at index
+        /// <paramref name="start" /> in the given stages.
+        /// </summary>
+        void set_shader_resource_views(const srv_type& srv,
+            const shader_stages stages, const UINT start = 0);
+
+        /// <summary>
         /// Add or replace the vertex buffers starting at index
         /// <paramref name="start" />.
         /// <summary>
         void set_vertex_buffers(const std::vector<vertex_buffer>& vbs,
+            const UINT start = 0);
+
+        /// <summary>
+        /// Add or replace the vertex buffers starting at index
+        /// <paramref name="start" />.
+        /// <summary>
+        void set_vertex_buffers(const vertex_buffer& vb,
             const UINT start = 0);
 
         /// <summary>
@@ -290,6 +310,14 @@ namespace d3d11 {
         template<class T>
         static void assert_range(std::vector<T>& dst, const std::vector<T>& src,
             const size_t offset);
+
+        /// <summary>
+        /// Ensure that <paramref name="dst" /> has at least so many elements
+        /// that one element can be copied starting at index
+        /// <paramre fname="offset" />.
+        /// </summary>
+        template<class T>
+        static void assert_range(std::vector<T>& dst, const size_t offset);
 
         /// <summary>
         /// Converts a vector of smart pointers into dumb pointers without

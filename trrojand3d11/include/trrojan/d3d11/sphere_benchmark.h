@@ -63,6 +63,8 @@ namespace d3d11 {
 
     protected:
 
+        typedef random_sphere_base::random_sphere_type random_sphere_type;
+
         /// <inheritdoc />
         virtual trrojan::result on_run(d3d11::device& device,
             const configuration& config,
@@ -138,6 +140,25 @@ namespace d3d11 {
             const bool isRandomSpheres);
 
         /// <summary>
+        /// Loads the MMPLD frame with the given number from the already opened
+        /// MMPLD file.
+        /// </summary>
+        void load_mmpld_frame(ID3D11Device *dev,
+            const shader_id_type shaderCode, const configuration& config);
+
+        /// <summary>
+        /// Try processing the data set in <paramref name="config" /> as
+        /// configuration for random sphere generation and load
+        /// <see cref="data_buffer" /> with the random spheres in case
+        /// of success.
+        /// </summary>
+        /// <param name=""></param>
+        /// <param name=""></param>
+        /// <param name=""></param>
+        void make_random_spheres(ID3D11Device *dev,
+            const shader_id_type shaderCode, const configuration& config);
+
+        /// <summary>
         /// Setsthe data poroperties for random particles.
         /// </summary>
         void set_data_properties(const random_sphere_type type,
@@ -149,18 +170,6 @@ namespace d3d11 {
         /// <see cref="data_properties" />.
         /// </summary>
         void set_float_colour_flag(const mmpld_reader::colour_type colour);
-
-        /// <summary>
-        /// Try processing the data set in <paramref name="config" /> as
-        /// configuration for random sphere generation and load
-        /// <see cref="data_buffer" /> with the random spheres in case
-        /// of success.
-        /// </summary>
-        /// <param name=""></param>
-        /// <param name=""></param>
-        /// <param name=""></param>
-        void try_make_random_spheres(ID3D11Device *dev,
-            const shader_id_type shaderCode, const configuration& config);
 
         /// <summary>
         /// The camera for computing the transformation matrices.
@@ -183,6 +192,16 @@ namespace d3d11 {
         shader_id_type data_properties;
 
         /// <summary>
+        /// The number of elements in <see cref="data_buffer" />
+        /// </summary>
+        std::uint32_t data_size;
+
+        /// <summary>
+        /// The stride of the elements in <see cref="data_buffer" />
+        /// </summary>
+        std::uint32_t data_stride;
+
+        /// <summary>
         /// An event query for detecting the end of rendering on the GPU.
         /// </summary>
         ATL::CComPtr<ID3D11Query> done_query;
@@ -198,6 +217,11 @@ namespace d3d11 {
         shader_source_map_type shader_resources;
 
         /// <summary>
+        /// Constant buffer for sphere parameters.
+        /// </summary>
+        rendering_technique::buffer_type sphere_constants;
+
+        /// <summary>
         /// A query for pipeline statistics.
         /// </summary>
         ATL::CComPtr<ID3D11Query> stats_query;
@@ -206,7 +230,17 @@ namespace d3d11 {
         /// Caches rendering techniques already created.
         /// </summary>
         technique_map_type technique_cache;
+
+        /// <summary>
+        /// Constant buffer holding parameters for GPU tessellation.
+        /// </summary>
+        rendering_technique::buffer_type tessellation_constants;
+
+        /// <summary>
+        /// Constant buffer holding the current view parameters.
+        /// </summary>
+        rendering_technique::buffer_type view_constants;
     };
 
-}
-}
+} /* end namespace d3d11 */
+} /* end namespace trrojan */
