@@ -1,23 +1,14 @@
-/// <copyright file="mmpld_base.h" company="SFB-TRR 161 Quantitative Methods for Visual Computing">
-/// Copyright © 2017 SFB-TRR 161. Alle Rechte vorbehalten.
+/// <copyright file="mmpld_data_set.h" company="SFB-TRR 161 Quantitative Methods for Visual Computing">
+/// Copyright © 2017 - 2018 SFB-TRR 161. Alle Rechte vorbehalten.
 /// </copyright>
 /// <author>Christoph Müller</author>
 
 #pragma once
 
-#include <utility>
+#include "trrojan/d3d11/sphere_data_set.h"
 
-#include <atlbase.h>
-#include <Windows.h>
-#include <d3d11.h>
-
-#include "trrojan/camera.h"
-#include "trrojan/graphics_benchmark_base.h"
-#include "trrojan/log.h"
 #include "trrojan/mmpld_reader.h"
 
-#include "trrojan/d3d11/export.h"
-#include "trrojan/d3d11/device.h"
 
 
 namespace trrojan {
@@ -26,11 +17,43 @@ namespace d3d11 {
     /// <summary>
     /// Base class for using MMPLD files.
     /// </summary>
-    class TRROJAND3D11_API mmpld_base {
+    class TRROJAND3D11_API mmpld_data_set : public sphere_data_set_base {
 
     public:
 
-        virtual ~mmpld_base(void) = default;
+        /// <summary>
+        /// The possible types of spheres from MMPLD files.
+        /// </summary>
+        typedef mmpld_reader::vertex_type sphere_type;
+
+        /// <summary>
+        /// The possible colour types from MMPLD.
+        /// </summary>
+        typedef mmpld_reader::colour_type colour_type;
+
+        /// <summary>
+        /// Creates a vertex input layout descriptor for the given MMPLD list
+        /// header.
+        /// </summary>
+        /// <param name="header">The header of the particle list to get the
+        /// vertex format for.</param>
+        /// <returns>The vertex descriptor.</returns>
+        static std::vector<D3D11_INPUT_ELEMENT_DESC> get_input_layout(
+            const mmpld_reader::list_header& header);
+
+        virtual ~mmpld_data_set(void) = default;
+
+        /// <inheritdoc />
+        virtual void bounding_box(point_type& outMin, point_type& outMax) const;
+
+        /// <inheritdoc />
+        virtual float max_radius(void) const;
+
+        /// <inheritdoc />
+        virtual size_type size(void) const;
+
+        /// <inheritdoc />
+        virtual size_type stride(void) const;
 
     protected:
 
@@ -45,20 +68,10 @@ namespace d3d11 {
         };
 
         /// <summary>
-        /// The type of the colour enumeration.
-        /// </summary>
-        typedef mmpld_reader::colour_type mmpld_colour_type;
-
-        /// <summary>
         /// The bitmask describing the input properties.
         /// </summary>
         typedef std::underlying_type<mmpld_reader::shader_properties>::type
             mmpld_input_properties;
-
-        /// <summary>
-        /// the type of the vertex type enumeration.
-        /// </summary>
-        typedef mmpld_reader::vertex_type mmpld_vertex_type;
 
         /// <summary>
         /// Get the the colour semantic in the given input layout range.
@@ -71,16 +84,6 @@ namespace d3d11 {
         }
 
         /// <summary>
-        /// Creates a vertex input layout descriptor for the given MMPLD list
-        /// header.
-        /// </summary>
-        /// <param name="header">The header of the particle list to get the
-        /// vertex format for.</param>
-        /// <returns>The vertex descriptor.</returns>
-        static std::vector<D3D11_INPUT_ELEMENT_DESC> get_mmpld_layout(
-            const mmpld_reader::list_header& header);
-
-        /// <summary>
         /// Answer whether the colour format of the given list is not a floating
         /// point format.
         /// </summary>
@@ -89,25 +92,7 @@ namespace d3d11 {
         /// <summary>
         /// Initialises a new instance.
         /// </summary>
-        mmpld_base(void);
-
-        /// <summary>
-        /// Gets the bounding box of the current <see cref="mmpld_list" />.
-        /// </summary>
-        void get_mmpld_bounding_box(graphics_benchmark_base::point_type& outMin,
-            graphics_benchmark_base::point_type& outMax) const;
-
-        /// <summary>
-        /// Gets the centre point of the current <see cref="mmpld_list" />.
-        /// </summary>
-        graphics_benchmark_base::point_type get_mmpld_centre(void) const;
-
-        /// <summary>
-        /// Make a suggestion for near and far clipping plane for the current
-        /// <see cref="mmpld_list" /> and the given
-        /// <see cref="trrojan::camera" />.
-        /// </summary>
-        std::pair<float, float> get_mmpld_clipping(const camera& cam) const;
+        mmpld_data_set(void);
 
         /// <summary>
         /// Determine the input features of the <see cref="mmpld_list" />.
@@ -116,19 +101,13 @@ namespace d3d11 {
         mmpld_input_properties get_mmpld_input_properties(void) const;
 
         /// <summary>
-        /// Gets the 3D size the current <see cref="mmpld_list" /> (x-axis,
-        /// y-axis and z-axis).
-        /// </summary>
-        std::array<float, 3> get_mmpld_size(void) const;
-
-        /// <summary>
         /// Opens the MMPLD file at the specified location and reads its header
         /// and seek table.
         /// </summary>
         /// <param name="path"></param>
         /// <returns>The state of the stream after the above-mentioned
         /// operations have been performed.</returns>
-        bool open_mmpld(const char *path);
+        bool open(const char *path);
 
         /// <summary>
         /// Read the given frame from the previously opened MMPLD stream and
@@ -138,48 +117,41 @@ namespace d3d11 {
         /// <param name="frame"></param>
         /// <param name="options"></param>
         /// <returns></returns>
-        ATL::CComPtr<ID3D11Buffer> read_mmpld_frame(ID3D11Device *device,
+        rendering_technique::buffer_type read_frame(ID3D11Device *device,
             const unsigned int frame, const mmpld_loader_options options);
 
         /// <summary>
         /// The header of the currently opened MMPLD file.
         /// </summary>
         /// <remarks>
-        /// This variable is only valid while <see cref="mmpld_stream" /> is
+        /// This variable is only valid while <see cref="_stream" /> is
         /// good. Otherwise, its content might be bogus.
         /// </remarks>
-        mmpld_reader::file_header mmpld_header;
-
-        /// <summary>
-        /// The input layout of the last read MMPLD frame particle list.
-        /// </summary>
-        std::vector<D3D11_INPUT_ELEMENT_DESC> mmpld_layout;
+        mmpld_reader::file_header _header;
 
         /// <summary>
         /// The list header of the last read MMPLD particle list.
         /// </summary>
-        mmpld_reader::list_header mmpld_list;
+        mmpld_reader::list_header _list;
 
         /// <summary>
-        /// The stream of the currently opened MMPLD file.
+        /// Radius used for clipping computation of the current particle list.
         /// </summary>
-        std::ifstream mmpld_stream;
+        float _max_radius;
 
         /// <summary>
         /// The seek table for the currently opened MMPLD file.
         /// </summary>
         /// <remarks>
-        /// This variable is only valid while <see cref="mmpld_stream" /> is
+        /// This variable is only valid while <see cref="_stream" /> is
         /// good. Otherwise, its content might be bogus.
         /// </remarks>
-        mmpld_reader::seek_table mmpld_seek_table;
-
-    private:
+        mmpld_reader::seek_table _seek_table;
 
         /// <summary>
-        /// Radius used for clipping computation of the current particle list.
+        /// The stream of the currently opened MMPLD file.
         /// </summary>
-        float mmpld_max_radius;
+        std::ifstream _stream;
     };
 
 } /* end namespace d3d11 */
