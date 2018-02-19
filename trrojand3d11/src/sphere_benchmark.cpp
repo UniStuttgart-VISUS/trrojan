@@ -579,7 +579,7 @@ trrojan::d3d11::sphere_benchmark::get_technique(ID3D11Device *device,
         rendering_technique::domain_shader_type ds = nullptr;
         rendering_technique::geometry_shader_type gs = nullptr;
         rendering_technique::pixel_shader_type ps = nullptr;
-        auto pt = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+        auto pt = D3D11_PRIMITIVE_TOPOLOGY_POINTLIST;
 
         auto it = this->shader_resources.find(id);
         if (it == this->shader_resources.end()) {
@@ -619,9 +619,14 @@ trrojan::d3d11::sphere_benchmark::get_technique(ID3D11Device *device,
         }
 
         if (isTess) {
+            // All tessellation-based techniques use 1 control point lists.
             pt = D3D11_PRIMITIVE_TOPOLOGY_1_CONTROL_POINT_PATCHLIST;
         } else if (isRay && isInst) {
+            // Raycasting and instances creates tri-strip from nothing.
             pt = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP;
+        } else if (isInst) {
+            // Geometry instancing uses triangles and index buffers.
+            pt = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
         }
 
         //this->techniqueCache[id] = rendering_technique(method, nullptr, D3D11_PRIMITIVE_TOPOLOGY_10_CONTROL_POINT_PATCHLIST, vs, );
