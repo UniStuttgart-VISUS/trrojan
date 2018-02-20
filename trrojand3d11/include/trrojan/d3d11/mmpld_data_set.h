@@ -39,7 +39,14 @@ namespace d3d11 {
         /// <summary>
         /// Open the given MMPLD data set without reading a frame.
         /// </summary>
-        sphere_data_set create(const char *path);
+        static sphere_data_set create(const char *path);
+
+        /// <summary>
+        /// Open the given MMPLD data set without reading a frame.
+        /// </summary>
+        inline static sphere_data_set create(const std::string& path) {
+            return mmpld_data_set::create(path.c_str());
+        }
 
         /// <summary>
         /// Creates a vertex input layout descriptor for the given MMPLD list
@@ -49,6 +56,13 @@ namespace d3d11 {
         /// vertex format for.</param>
         /// <returns>The vertex descriptor.</returns>
         static std::vector<D3D11_INPUT_ELEMENT_DESC> get_input_layout(
+            const mmpld_reader::list_header& header);
+
+        /// <summary>
+        /// Retrieves the data properties inherent to the spheres in the given
+        /// list.
+        /// </summary>
+        static sphere_data_set_base::properties_type get_properties(
             const mmpld_reader::list_header& header);
 
         virtual ~mmpld_data_set(void) = default;

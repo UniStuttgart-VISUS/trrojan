@@ -27,6 +27,7 @@ trrojan::d3d11::sphere_data_set trrojan::d3d11::mmpld_data_set::create(
     return retval;
 }
 
+
 /*
  * trrojan::d3d11::mmpld_data_set::get_mmpld_layout
  */
@@ -96,6 +97,39 @@ trrojan::d3d11::mmpld_data_set::get_input_layout(
     }
 
     return std::move(retval);
+}
+
+
+/*
+ * trrojan::d3d11::mmpld_data_set::get_properties
+ */
+trrojan::d3d11::sphere_data_set_base::properties_type
+trrojan::d3d11::mmpld_data_set::get_properties(
+        const mmpld_reader::list_header& header) {
+    properties_type retval = 0;
+
+    switch (header.vertex_type) {
+        case mmpld_reader::vertex_type::float_xyzr:
+            retval |= property_per_sphere_radius;
+            break;
+    }
+
+    switch (header.colour_type) {
+        case mmpld_reader::colour_type::float_i:
+            retval |= property_per_sphere_intensity;
+            break;
+
+        case mmpld_reader::colour_type::float_rgb:
+        case mmpld_reader::colour_type::float_rgba:
+            retval |= property_float_colour;
+            /* falls through. */
+        case mmpld_reader::colour_type::uint8_rgb:
+        case mmpld_reader::colour_type::uint8_rgba:
+            retval |= property_per_sphere_colour;
+            break;
+    }
+
+    return retval;
 }
 
 
@@ -255,6 +289,8 @@ trrojan::d3d11::mmpld_data_set::read_frame(ID3D11Device *device,
 
     this->_buffer = retval;
     this->_properties |= (options & VALID_INPUT_FLAGS);
+    this->_properties |= mmpld_data_set::get_properties(this->_list);
+
     return retval;
 }
 

@@ -49,6 +49,48 @@ trrojan::d3d11::sphere_data_set_base::property_structured_resource
 
 
 /*
+ * trrojan::d3d11::sphere_data_set_base::apply
+ */
+void trrojan::d3d11::sphere_data_set_base::apply(rendering_technique& technique,
+        ID3D11Device *device, const rendering_technique::shader_stages stages,
+        const UINT idxVb, const UINT idxSrv) {
+    if (device == nullptr) {
+        throw std::invalid_argument("The Direct3D device must not be nullptr.");
+    }
+
+    if ((this->properties() & property_structured_resource) != 0) {
+        // Add the data set as structured resource view.
+        D3D11_SHADER_RESOURCE_VIEW_DESC desc;
+        rendering_technique::srv_type srv;
+
+        ::ZeroMemory(&desc, sizeof(desc));
+        desc.Format = DXGI_FORMAT_UNKNOWN;
+        desc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
+        desc.Buffer.FirstElement = 0;
+        desc.Buffer.NumElements = this->size() * this->stride();
+
+        auto hr = device->CreateShaderResourceView(this->buffer().p, &desc,
+            &srv);
+        if (FAILED(hr)) {
+            throw ATL::CAtlException(hr);
+        }
+
+        technique.set_shader_resource_views(srv, stages, idxSrv);
+
+    } else {
+        // Add the data set as vertex buffer.
+        rendering_technique::vertex_buffer vb;
+        vb.buffer = this->buffer().p;
+        vb.offset = 0;
+        vb.size = this->size();
+        vb.stride = this->stride();
+
+        technique.set_vertex_buffers(vb, idxVb);
+    }
+}
+
+
+/*
  * trrojan::d3d11::sphere_data_set_base::centre
  */
 trrojan::d3d11::sphere_data_set_base::point_type

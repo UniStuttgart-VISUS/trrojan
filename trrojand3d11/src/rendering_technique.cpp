@@ -10,6 +10,16 @@
 
 
 /*
+ * trrojan::d3d11::rendering_technique::set_shader_resource_view
+ */
+void trrojan::d3d11::rendering_technique::set_shader_resource_view(
+        shader_resources& res, srv_type srv, const UINT idx) {
+    assert_range(res.resource_views, idx);
+    res.resource_views[idx] = srv;
+}
+
+
+/*
  * trrojan::d3d11::rendering_technique::rendering_technique
  */
 trrojan::d3d11::rendering_technique::rendering_technique(void)

@@ -101,6 +101,12 @@ namespace d3d11 {
         static shader_stages combine_shader_stages(T... args);
 
         /// <summary>
+        /// Set the shader resource view at the given index.
+        /// </summary>
+        static void set_shader_resource_view(shader_resources& res,
+            srv_type srv, const UINT idx);
+
+        /// <summary>
         /// Initialises a new instance.
         /// </summary>
         rendering_technique(void);

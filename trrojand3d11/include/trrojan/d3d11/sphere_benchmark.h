@@ -61,8 +61,6 @@ namespace d3d11 {
 
     protected:
 
-        typedef random_sphere_base::random_sphere_type random_sphere_type;
-
         /// <inheritdoc />
         virtual trrojan::result on_run(d3d11::device& device,
             const configuration& config,
@@ -80,6 +78,11 @@ namespace d3d11 {
             std::uint16_t geometry_shader;
             std::uint16_t pixel_shader;
         };
+
+        /// <summary>
+        /// The type to specify data set properties
+        /// </summary>
+        typedef sphere_data_set_base::properties_type data_properties_type;
 
         /// <summary>
         /// Declare a GPU buffer without latency, because we need to know the
@@ -126,16 +129,36 @@ namespace d3d11 {
         static shader_id_type get_shader_id(const configuration& config);
 
         /// <summary>
+        /// Answer whether all bits of <paramref name="technique" /> are set
+        /// in <see cref="shaderCode" />.
+        /// </summary>
+        static inline bool is_technique(const shader_id_type shaderCode,
+                const shader_id_type technique) {
+            return ((shaderCode & technique) == technique);
+        }
+
+        /// <summary>
+        /// Check whether the currently loaded data are compatible with the
+        /// requirements specified in the given shader code.
+        /// </summary>
+        bool check_data_compatibility(const shader_id_type shaderCode);
+
+        /// <summary>
+        /// Retrieves the properties of the currently loaded data set and erases
+        /// all flags which are not relevant for the given shader technique.
+        /// </summary>
+        data_properties_type get_data_properties(
+            const shader_id_type shaderCode);
+
+        /// <summary>
         /// Gets or creates a rendering technique using the given rendering
         /// method and input data properties set.
         /// </summary>
         /// <param name=""></param>
         /// <param name=""></param>
-        /// <param name=""></param>
         /// <returns>A reference to the cached technique.</returns>
         rendering_technique& get_technique(ID3D11Device *device,
-            const shader_id_type method, const shader_id_type data,
-            const bool isRandomSpheres);
+            const shader_id_type shaderCode);
 
         /// <summary>
         /// Loads the MMPLD frame with the given number from the already opened
@@ -157,19 +180,6 @@ namespace d3d11 {
             const shader_id_type shaderCode, const configuration& config);
 
         /// <summary>
-        /// Setsthe data poroperties for random particles.
-        /// </summary>
-        void set_data_properties(const random_sphere_type type,
-            const shader_id_type shaderCode);
-
-        /// <summary>
-        /// Sets, if necessary (if <c>SPHERE_TECHNIQUE_USE_SRV</c> is set in
-        /// <see cref="data_properties" />), the floating point colour flag in
-        /// <see cref="data_properties" />.
-        /// </summary>
-        void set_float_colour_flag(const mmpld_reader::colour_type colour);
-
-        /// <summary>
         /// The camera for computing the transformation matrices.
         /// </summary>
         trrojan::perspective_camera cam;
@@ -183,26 +193,6 @@ namespace d3d11 {
         /// The data set to be rendered.
         /// </summary>
         sphere_data_set data;
-
-        /// <summary>
-        /// Buffer holding the data set.
-        /// </summary>
-        rendering_technique::buffer_type data_buffer;
-
-        /// <summary>
-        /// Shader flags for the data in <see cref="data_buffer" />
-        /// </summary>
-        shader_id_type data_properties;
-
-        /// <summary>
-        /// The number of elements in <see cref="data_buffer" />
-        /// </summary>
-        std::uint32_t data_size;
-
-        /// <summary>
-        /// The stride of the elements in <see cref="data_buffer" />
-        /// </summary>
-        std::uint32_t data_stride;
 
         /// <summary>
         /// An event query for detecting the end of rendering on the GPU.

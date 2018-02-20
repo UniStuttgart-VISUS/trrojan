@@ -42,6 +42,11 @@ namespace d3d11 {
         /// <summary>
         /// Data type to specify data set properties.
         /// </summary>
+        /// <remarks>
+        /// The properties are stored in a bitfield which is compatible with
+        /// the flags of the shader techniques used by the
+        /// <see cref="sphere_benchmark" />.
+        /// </remarks>
         typedef std::uint64_t properties_type;
 
         /// <summary>
@@ -56,6 +61,14 @@ namespace d3d11 {
         static const properties_type property_structured_resource;
 
         virtual ~sphere_data_set_base(void) = default;
+
+        /// <summary>
+        /// Applies the data set as vertex buffer or shader resource in the
+        /// given <see cref="rendering_technique" />.
+        /// </summary>
+        void apply(rendering_technique& technique, ID3D11Device *device,
+            const rendering_technique::shader_stages stages,
+            const UINT idxVb = 0, const UINT idxSrv = 0);
 
         /// <summary>
         /// Gets the two opposite points defining the bounding box of the data
