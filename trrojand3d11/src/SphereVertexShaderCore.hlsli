@@ -11,25 +11,25 @@
 #include "TransferFunction.hlsli"
 
 
-#if defined(INSTANCING)
-/// <summary>
-/// The buffer holding the particle parameters.
-/// </summary>
-StructuredBuffer<Particle> Particles : register(t0);
-#endif /* defined(INSTANCING) */
-
-
 #if defined(PER_VERTEX_INTENSITY)
 /// <summary>
 /// Transfer function.
 /// </summary>
-Texture1D TransferFunction : register(t1);
+Texture1D TransferFunction : register(t0);
 
 /// <summary>
 /// Linear sampler for transfer function lookup.
 /// </summary>
 SamplerState LinearSampler : register(s0);
 #endif /* defined(PER_VERTEX_INTENSITY) */
+
+
+#if defined(INSTANCING)
+/// <summary>
+/// The buffer holding the particle parameters.
+/// </summary>
+StructuredBuffer<Particle> Particles : register(t1);
+#endif /* defined(INSTANCING) */
 
 
 #if defined(SPHERE_INST)
@@ -124,7 +124,7 @@ VsOutput Main(VsInput input) {
     const float2 FLIP_Y = float2(1.0f, -1.0f);  // Flips the y-axis of a float2.
     retval.Position = float4(input.VertexID % 2, input.VertexID % 4 / 2,
         0.0f, 1.0f);
-    retval.Position.xy = 2.0f * FLIP_Y * (pos.xy - 0.5f.xx);
+    retval.Position.xy = 2.0f * FLIP_Y * (retval.Position.xy - 0.5f.xx);
     retval.Position.xyz *= rad;
 
 #elif defined(POLY_INST)

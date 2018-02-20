@@ -235,8 +235,8 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
     // Select or create the right rendering technique and apply the data set
     // to the technique.
     auto& technique = this->get_technique(dev, shaderCode);
-    this->data->apply(technique, dev,
-        rendering_technique::combine_shader_stages(shader_stage::vertex));
+    this->data->apply(technique, rendering_technique::combine_shader_stages(
+        shader_stage::vertex), 0, 1);
 
     // Retrieve the viewport for rasteriser and shaders.
     {
@@ -315,7 +315,6 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
         this->cam.set_near_plane_dist(clipping.first);
         this->cam.set_far_plane_dist(clipping.second);
 
-
         mat = DirectX::XMFLOAT4X4(glm::value_ptr(this->cam.get_view_mx()));
         auto view = DirectX::XMLoadFloat4x4(&mat);
         DirectX::XMStoreFloat4x4(viewConstants.ViewMatrix,
@@ -384,9 +383,11 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
 
     // Determine the number of primitives to emit.
     auto cntPrimitives = this->data->size();
+    auto cntInstances = 0;
     if (is_technique(shaderCode, SPHERE_TECHNIQUE_QUAD_INST)) {
         // Instancing of quads requires 4 vertices per particle.
-        cntPrimitives *= 4;
+        cntInstances = cntPrimitives;
+        cntPrimitives = 4;
     }
 
     // Render it.
@@ -397,7 +398,11 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
         gpuTimer.start(0);
         this->clear_target();
         ctx->Begin(this->stats_query);
-        ctx->Draw(cntPrimitives, 0);
+        if (is_technique(shaderCode, SPHERE_TECHNIQUE_QUAD_INST)) {
+            ctx->DrawInstanced(cntPrimitives, cntInstances, 0, 0);
+        } else {
+            ctx->Draw(cntPrimitives, 0);
+        }
         ctx->End(this->stats_query);
         this->present_target();
         ctx->End(this->done_query);
@@ -643,6 +648,8 @@ trrojan::d3d11::sphere_benchmark::get_technique(ID3D11Device *device,
 
             psRes.constant_buffers.push_back(this->sphere_constants);
             psRes.constant_buffers.push_back(this->view_constants);
+
+            il = nullptr;   // Uses vertex-from-nothing technique.
         }
 
         if (isTess) {
@@ -678,12 +685,12 @@ trrojan::d3d11::sphere_benchmark::get_technique(ID3D11Device *device,
         if (isPsTex) {
             psRes.sampler_states.push_back(this->linear_sampler);
             rendering_technique::set_shader_resource_view(psRes,
-                this->colour_map, 1);
+                this->colour_map, 0);
 
         } else if (isVsTex) {
             vsRes.sampler_states.push_back(this->linear_sampler);
             rendering_technique::set_shader_resource_view(vsRes,
-                this->colour_map, 1);
+                this->colour_map, 0);
         }
 
         this->technique_cache[id] = rendering_technique(

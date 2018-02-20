@@ -66,7 +66,18 @@ namespace d3d11 {
         /// Applies the data set as vertex buffer or shader resource in the
         /// given <see cref="rendering_technique" />.
         /// </summary>
-        void apply(rendering_technique& technique, ID3D11Device *device,
+        /// <param name="technique">The <see cref="rendering_technique" /> to
+        /// add the data to.</param>
+        /// <param name="stages">If the data set used a structured resouce,
+        /// bind it to the specified stages. If the data set is a vertex buffer,
+        /// this parameter has no effect.</param>
+        /// <param name="idxVb">If the data set is a vertex buffer, bind it to
+        /// this slot. If it is no vertex buffer, this parameter has no effect.
+        /// </param>
+        /// <param name="idxSrv">If the data set is a structured resource
+        /// buffer, bind it to this slot. Otherwise, this parameter has no
+        /// effect.</param>
+        void apply(rendering_technique& technique,
             const rendering_technique::shader_stages stages,
             const UINT idxVb = 0, const UINT idxSrv = 0);
 

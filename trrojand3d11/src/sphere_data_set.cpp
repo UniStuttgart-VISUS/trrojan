@@ -52,16 +52,15 @@ trrojan::d3d11::sphere_data_set_base::property_structured_resource
  * trrojan::d3d11::sphere_data_set_base::apply
  */
 void trrojan::d3d11::sphere_data_set_base::apply(rendering_technique& technique,
-        ID3D11Device *device, const rendering_technique::shader_stages stages,
-        const UINT idxVb, const UINT idxSrv) {
-    if (device == nullptr) {
-        throw std::invalid_argument("The Direct3D device must not be nullptr.");
-    }
-
+        const rendering_technique::shader_stages stages, const UINT idxVb,
+        const UINT idxSrv) {
     if ((this->properties() & property_structured_resource) != 0) {
         // Add the data set as structured resource view.
+        ATL::CComPtr<ID3D11Device> device;
         D3D11_SHADER_RESOURCE_VIEW_DESC desc;
         rendering_technique::srv_type srv;
+
+        this->buffer()->GetDevice(&device);
 
         ::ZeroMemory(&desc, sizeof(desc));
         desc.Format = DXGI_FORMAT_UNKNOWN;

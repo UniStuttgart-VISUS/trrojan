@@ -1,7 +1,7 @@
 /// <copyright file="SpherePipeline.hlsli" company="SFB-TRR 161 Quantitative Methods for Visual Computing">
-/// Copyright � 2017 SFB-TRR 161. Alle Rechte vorbehalten.
+/// Copyright © 2017 SFB-TRR 161. Alle Rechte vorbehalten.
 /// </copyright>
-/// <author>Christoph M�ller</author>
+/// <author>Christoph Müller</author>
 
 #include "hlsltypemapping.hlsli"
 
