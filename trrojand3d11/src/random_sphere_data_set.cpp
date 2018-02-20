@@ -18,12 +18,12 @@
  */
 trrojan::d3d11::sphere_data_set
 trrojan::d3d11::random_sphere_data_set::create(ID3D11Device *device,
-        const create_flags flags,
-        const sphere_type sphereType,
-        const size_type cntParticles,
-        const std::array<float, 3>& domainSize,
-        const std::array<float, 2>& sphereSize,
-        const std::uint32_t seed) {
+    const create_flags flags,
+    const sphere_type sphereType,
+    const size_type cntParticles,
+    const std::array<float, 3>& domainSize,
+    const std::array<float, 2>& sphereSize,
+    const std::uint32_t seed) {
     static const create_flags VALID_INPUT_FLAGS // Flags directly copied from user input.
         = sphere_data_set_base::property_structured_resource;
     D3D11_BUFFER_DESC bufferDesc;
@@ -44,18 +44,17 @@ trrojan::d3d11::random_sphere_data_set::create(ID3D11Device *device,
     prng.seed(seed);
     particles.resize(cntParticles * retval->stride());
 
+    // Compute bounding box directly from domain size.
+    for (size_t i = 0; i < sizeof(domainSize); ++i) {
+        retval->_bbox[i][0] = -0.5f * domainSize[i];
+        retval->_bbox[i][1] = 0.5f * domainSize[i];
+    }
+
     log::instance().write_line(log_level::verbose, "Creating %u random "
         "sphere(s) of type %u on a domain of [%f, %f, %f] with a uniformly "
         "distributed size in [%f, %f]. The random seed is %u.", cntParticles,
         static_cast<std::uint32_t>(sphereType), domainSize[0], domainSize[1],
         domainSize[2], sphereSize[0], sphereSize[1], seed);
-
-    retval->_bbox[0][0] = retval->_bbox[0][1] = retval->_bbox[0][2]
-        = (std::numeric_limits<float>::max)();
-    retval->_bbox[1][0] = retval->_bbox[1][1] = retval->_bbox[1][2]
-        = (std::numeric_limits<float>::min)();
-    retval->_max_radius
-        = (std::numeric_limits<decltype(retval->_max_radius)>::min)();
     for (std::uint32_t i = 0; i < cntParticles; ++i) {
         auto p = particles.data() + (i * retval->stride());
         auto g = static_cast<float>(i) / static_cast<float>(cntParticles);
@@ -64,7 +63,6 @@ trrojan::d3d11::random_sphere_data_set::create(ID3D11Device *device,
         pos->x = posDist(prng) * domainSize[0] - 0.5f * domainSize[0];
         pos->y = posDist(prng) * domainSize[1] - 0.5f * domainSize[1];
         pos->z = posDist(prng) * domainSize[2] - 0.5f * domainSize[2];
-        minmax(retval->_bbox[0], retval->_bbox[1], *pos);
 
         switch (sphereType) {
             case sphere_type::pos_rad_intensity:
