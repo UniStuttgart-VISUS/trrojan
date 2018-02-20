@@ -33,14 +33,29 @@ namespace d3d11 {
             pos_rad_rgba8
         };
 
+        /// <summary>
+        /// The type of flags controlling the data generation.
+        /// </summary>
+        typedef sphere_data_set_base::properties_type create_flags;
+
         typedef sphere_data_set_base::point_type point_type;
         typedef sphere_data_set_base::size_type size_type;
 
         /// <summary>
         /// Creates a data set of random spheres with the specified properties.
         /// </summary>
-        sphere_data_set create(ID3D11Device *device,
-            const buffer_type bufferType,
+        /// <param name="device"></param>
+        /// <param name="flags">
+        /// <see cref="sphere_data_set_base::property_structured_resource" /> to
+        /// create a structured resource buffer, 0 for a vertex buffer.</param>
+        /// <param name="sphereType"></param>
+        /// <param name="cntParticles"></param>
+        /// <param name="domainSize"></param>
+        /// <param name="sphereSize"></param>
+        /// <param name="seed"></param>
+        /// <returns></returns>
+        static sphere_data_set create(ID3D11Device *device,
+            const create_flags flags,
             const sphere_type sphereType,
             const size_type cntParticles,
             const std::array<float, 3>& domainSize,
@@ -51,15 +66,29 @@ namespace d3d11 {
         /// Creates a data set of random spheres as described in the given
         /// <paramref name="configuration" /> string.
         /// </summary>
-        sphere_data_set create(ID3D11Device *device,
-            const buffer_type bufferType,
-            const std::string& configuration,
-            const bool isForceFloatColour);
+        /// <param name="device"></param>
+        /// <param name="flags">
+        /// <see cref="sphere_data_set_base::property_structured_resource" /> to
+        /// create a structured resource buffer, 0 for a vertex buffer. This
+        /// value can be combined with
+        /// <see cref="sphere_data_set_base::property_float_colour" /> to force
+        /// colours using <c>float</c> channels instead of 8-bit.</param>
+        /// <param name="configuration"></param>
+        /// </returns></returns>
+        static sphere_data_set create(ID3D11Device *device,
+            const create_flags flags,
+            const std::string& configuration);
 
         /// <summary>
         /// Creates a vector format descriptor for the random spheres.
         /// </summary>
         static std::vector<D3D11_INPUT_ELEMENT_DESC> get_input_layout(
+            const sphere_type type);
+
+        /// <summary>
+        /// Retrieves the data properties inherent to the type of spheres.
+        /// </summary>
+        static sphere_data_set_base::properties_type get_properties(
             const sphere_type type);
 
         /// <summary>

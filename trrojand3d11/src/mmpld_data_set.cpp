@@ -18,6 +18,16 @@
 
 
 /*
+ * trrojan::d3d11::mmpld_data_set::create
+ */
+trrojan::d3d11::sphere_data_set trrojan::d3d11::mmpld_data_set::create(
+        const char *path) {
+    std::shared_ptr<mmpld_data_set> retval(new mmpld_data_set());
+    retval->open(path);
+    return retval;
+}
+
+/*
  * trrojan::d3d11::mmpld_data_set::get_mmpld_layout
  */
 std::vector<D3D11_INPUT_ELEMENT_DESC>
@@ -111,6 +121,144 @@ float trrojan::d3d11::mmpld_data_set::max_radius(void) const {
 }
 
 
+
+/*
+ * trrojan::d3d11::mmpld_data_set::read_frame
+ */
+trrojan::d3d11::rendering_technique::buffer_type
+trrojan::d3d11::mmpld_data_set::read_frame(ID3D11Device *device,
+        const unsigned int frame, const frame_load_flags options) {
+    assert(this->_stream.good());
+    assert(device != nullptr);
+    static const frame_load_flags VALID_INPUT_FLAGS // Flags directly copied from user input.
+        = sphere_data_set_base::property_structured_resource;
+
+    D3D11_BUFFER_DESC bufferDesc;
+    std::vector<char> data;
+    mmpld_reader::frame_header frameHeader;
+    D3D11_SUBRESOURCE_DATA id;
+    rendering_technique::buffer_type retval;
+
+    // Make sure to erase last layout in case I/O fails.
+    this->_layout.clear();
+    ::memset(&this->_list, 0, sizeof(this->_list));
+
+    // Basic sanity check.
+    if (frame >= this->_seek_table.size()) {
+        std::stringstream msg;
+        msg << "The requested frame #" << frame << " does not exists. The file "
+            << "comprises only " << this->_seek_table.size()
+            << " frame(s)." << std::ends;
+        throw std::invalid_argument(msg.str());
+    }
+
+    // Read the list header and determine the layout using the header.
+    this->_stream.seekg(this->_seek_table[frame]);
+    mmpld_reader::read_frame_header(frameHeader, this->_stream,
+        this->_header.version);
+
+    if (frameHeader.lists > 1) {
+        log::instance().write_line(log_level::warning, "TRRojan only supports "
+            "MMPLD files with one particle list per frame. All but the first "
+            "will be ignored.");
+    }
+
+    // Read the list header and prepare the D3D input layout.
+    mmpld_reader::read_list_header(this->_list, this->_stream);
+    this->_layout = mmpld_data_set::get_input_layout(this->_list);
+
+    // Read the data.
+    auto cntData = this->stride() * this->size();
+    data.resize(cntData);
+    this->_stream.read(data.data(), cntData);
+
+    // If floating point colours are requested, but not available, add a
+    // conversion step. This step copies the first part of the particle,
+    // which is always the position. The following RGBA8 colour is converted
+    // to float4. Afterwards, the buffers are swapped such that 'data' is
+    // the converted buffer and the mmpld_list is updated to contain
+    // float4 colours.
+    auto forceFloat = ((options & property_float_colour) != 0);
+    auto notFloat = mmpld_data_set::is_non_float_colour(this->_list);
+    if (forceFloat && notFloat) {
+        auto c = mmpld_data_set::get_colour_offset(this->_layout.begin(),
+            this->_layout.end());
+        assert(c != this->_layout.end());
+        const auto srcOffset = c->AlignedByteOffset;
+        const auto srcStride = this->stride() * this->size();
+        assert(srcOffset < srcStride);
+
+        // Recreate the header with the new colour type.
+        this->_list.colour_type = mmpld_reader::colour_type::float_rgba;
+        this->_layout = mmpld_data_set::get_input_layout(this->_list);
+        cntData = this->stride() * this->size();
+
+        std::vector<char> conv(cntData);
+        for (size_t i = 0; i < this->_list.particles; ++i) {
+            auto src = data.data() + i * srcStride;
+            auto dst = conv.data() + i * this->stride();
+            auto col = *reinterpret_cast<std::uint32_t *>(src + srcOffset);
+
+            ::memcpy(dst, src, srcOffset);
+            dst += this->stride();
+
+            for (size_t c = 0; c < 4; ++i) {
+                *reinterpret_cast<float *>(dst) = (col & 0xff) / 255.0f;
+                col >>= 8;
+                dst += sizeof(float);
+            }
+        }
+        std::swap(data, conv);
+    }
+
+    // Search the maximum radius for clipping.
+    if (this->_list.radius > 0.0f) {
+        this->_max_radius = this->_list.radius;
+
+    } else {
+        this->_max_radius = (std::numeric_limits<float>::min)();
+        auto stride = this->stride();
+
+        for (auto cur = data.data(), end = data.data() + data.size();
+                cur < end; cur += stride) {
+            auto r = *reinterpret_cast<float *>(cur + 3 * sizeof(float));
+            if (r > this->_max_radius) {
+                this->_max_radius = r;
+            }
+        }
+    }
+
+    // If everything succeeded, create the vertex buffer.
+    ::ZeroMemory(&bufferDesc, sizeof(bufferDesc));
+    assert(cntData <= UINT_MAX);
+    bufferDesc.ByteWidth = static_cast<UINT>(cntData);
+    bufferDesc.Usage = D3D11_USAGE_IMMUTABLE;
+    bufferDesc.CPUAccessFlags = 0;
+    if ((options & property_structured_resource) != 0) {
+        bufferDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+        bufferDesc.StructureByteStride = this->stride();
+        bufferDesc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+    } else {
+        bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+    }
+
+    ::ZeroMemory(&id, sizeof(id));
+    id.pSysMem = data.data();
+
+    auto hr = device->CreateBuffer(&bufferDesc, &id, &retval);
+    if (FAILED(hr)) {
+        std::stringstream msg;
+        msg << "Failed to create vertex buffer from MMPLD with error " << hr
+            << std::ends;
+        throw std::runtime_error(msg.str());
+    }
+
+    this->_buffer = retval;
+    this->_properties |= (options & VALID_INPUT_FLAGS);
+    return retval;
+}
+
+
 /*
  * trrojan::d3d11::mmpld_data_set::size
  */
@@ -185,136 +333,3 @@ bool trrojan::d3d11::mmpld_data_set::open(const char *path) {
     return this->_stream.good();
 }
 
-
-/*
- * trrojan::d3d11::mmpld_data_set::read_frame
- */
-trrojan::d3d11::rendering_technique::buffer_type
-trrojan::d3d11::mmpld_data_set::read_frame(ID3D11Device *device,
-        const unsigned int frame, const mmpld_loader_options options) {
-    assert(this->_stream.good());
-    assert(device != nullptr);
-    D3D11_BUFFER_DESC bufferDesc;
-    std::vector<char> data;
-    mmpld_reader::frame_header frameHeader;
-    D3D11_SUBRESOURCE_DATA id;
-    rendering_technique::buffer_type retval;
-
-    // Make sure to erase last layout in case I/O fails.
-    this->_layout.clear();
-    ::memset(&this->_list, 0, sizeof(this->_list));
-
-    // Basic sanity check.
-    if (frame >= this->_seek_table.size()) {
-        std::stringstream msg;
-        msg << "The requested frame #" << frame << " does not exists. The file "
-            << "comprises only " << this->_seek_table.size()
-            << " frame(s)." << std::ends;
-        throw std::invalid_argument(msg.str());
-    }
-
-    // Read the list header and determine the layout using the header.
-    this->_stream.seekg(this->_seek_table[frame]);
-    mmpld_reader::read_frame_header(frameHeader, this->_stream,
-        this->_header.version);
-
-    if (frameHeader.lists > 1) {
-        log::instance().write_line(log_level::warning, "TRRojan only supports "
-            "MMPLD files with one particle list per frame. All but the first "
-            "will be ignored.");
-    }
-
-    // Read the list header and prepare the D3D input layout.
-    mmpld_reader::read_list_header(this->_list, this->_stream);
-    this->_layout = mmpld_data_set::get_input_layout(this->_list);
-
-    // Read the data.
-    auto cntData = this->stride() * this->size();
-    data.resize(cntData);
-    this->_stream.read(data.data(), cntData);
-
-    // If floating point colours are requested, but not available, add a
-    // conversion step. This step copies the first part of the particle,
-    // which is always the position. The following RGBA8 colour is converted
-    // to float4. Afterwards, the buffers are swapped such that 'data' is
-    // the converted buffer and the mmpld_list is updated to contain
-    // float4 colours.
-    if (((options & mmpld_loader_options::force_float_colour) != 0)
-            && mmpld_data_set::is_non_float_colour(this->_list)) {
-        auto c = mmpld_data_set::get_colour_offset(this->_layout.begin(),
-            this->_layout.end());
-        assert(c != this->_layout.end());
-        const auto srcOffset = c->AlignedByteOffset;
-        const auto srcStride = this->stride() * this->size();
-        assert(srcOffset < srcStride);
-
-        // Recreate the header with the new colour type.
-        this->_list.colour_type = mmpld_reader::colour_type::float_rgba;
-        this->_layout = mmpld_data_set::get_input_layout(this->_list);
-        cntData = this->stride() * this->size();
-
-        std::vector<char> conv(cntData);
-        for (size_t i = 0; i < this->_list.particles; ++i) {
-            auto src = data.data() + i * srcStride;
-            auto dst = conv.data() + i * this->stride();
-            auto col = *reinterpret_cast<std::uint32_t *>(src + srcOffset);
-
-            ::memcpy(dst, src, srcOffset);
-            dst += this->stride();
-
-            for (size_t c = 0; c < 4; ++i) {
-                *reinterpret_cast<float *>(dst) = (col & 0xff) / 255.0f;
-                col >>= 8;
-                dst += sizeof(float);
-            }
-        }
-        std::swap(data, conv);
-    }
-
-    // Search the maximum radius for clipping.
-    if (this->_list.radius > 0.0f) {
-        this->_max_radius = this->_list.radius;
-
-    } else {
-        this->_max_radius = (std::numeric_limits<float>::min)();
-        auto stride = this->stride();
-
-        for (auto cur = data.data(), end = data.data() + data.size();
-                cur < end; cur += stride) {
-            auto r = *reinterpret_cast<float *>(cur + 3 * sizeof(float));
-            if (r > this->_max_radius) {
-                this->_max_radius = r;
-            }
-        }
-    }
-
-    // If everything succeeded, create the vertex buffer.
-    ::ZeroMemory(&bufferDesc, sizeof(bufferDesc));
-    assert(cntData <= UINT_MAX);
-    bufferDesc.ByteWidth = static_cast<UINT>(cntData);
-    bufferDesc.Usage = D3D11_USAGE_IMMUTABLE;
-    bufferDesc.CPUAccessFlags = 0;
-    if ((options & mmpld_loader_options::vertex_buffer) != 0) {
-        bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-    } else if ((options & mmpld_loader_options::structured_resource) != 0) {
-        bufferDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-        bufferDesc.StructureByteStride = this->stride();
-        bufferDesc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
-    } else {
-        throw std::runtime_error("No buffer format was specified for the "
-            "MMPLD data being read.");
-    }
-
-    ::ZeroMemory(&id, sizeof(id));
-    id.pSysMem = data.data();
-
-    auto hr = device->CreateBuffer(&bufferDesc, &id, &retval);
-    if (FAILED(hr)) {
-        std::stringstream msg;
-        msg << "Failed to create vertex buffer from MMPLD with error " << hr
-            << std::ends;
-        throw std::runtime_error(msg.str());
-    }
-
-    return retval;
-}

@@ -13,19 +13,19 @@
 #include "trrojan/text.h"
 
 
-
-
 /*
  * trrojan::d3d11::random_sphere_data_set::create
  */
 trrojan::d3d11::sphere_data_set
 trrojan::d3d11::random_sphere_data_set::create(ID3D11Device *device,
-        const buffer_type bufferType,
+        const create_flags flags,
         const sphere_type sphereType,
         const size_type cntParticles,
         const std::array<float, 3>& domainSize,
         const std::array<float, 2>& sphereSize,
         const std::uint32_t seed) {
+    static const create_flags VALID_INPUT_FLAGS // Flags directly copied from user input.
+        = sphere_data_set_base::property_structured_resource;
     D3D11_BUFFER_DESC bufferDesc;
     D3D11_SUBRESOURCE_DATA id;
     std::uniform_real_distribution<float> posDist(0, 1);
@@ -34,6 +34,7 @@ trrojan::d3d11::random_sphere_data_set::create(ID3D11Device *device,
     std::mt19937 prng;
     std::shared_ptr<random_sphere_data_set> retval(
         new random_sphere_data_set(sphereType));
+    assert(retval->_properties == 0);
 
     if (device == nullptr) {
         throw std::invalid_argument("The Direct3D device to create the vertex "
@@ -108,20 +109,12 @@ trrojan::d3d11::random_sphere_data_set::create(ID3D11Device *device,
     bufferDesc.ByteWidth = static_cast<UINT>(particles.size());
     bufferDesc.Usage = D3D11_USAGE_IMMUTABLE;
     bufferDesc.CPUAccessFlags = 0;
-    switch (bufferType) {
-        case buffer_type::vertex_buffer:
-            bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-            break;
-
-        case buffer_type::structured_resource:
-            bufferDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-            bufferDesc.StructureByteStride = retval->stride();
-            bufferDesc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
-            break;
-
-        default:
-            throw std::runtime_error("An invalid Direct3D buffer type was "
-                "specified for creating random spheres.");
+    if ((flags & property_structured_resource) != 0) {
+        bufferDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+        bufferDesc.StructureByteStride = retval->stride();
+        bufferDesc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+    } else {
+        bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
     }
 
     ::ZeroMemory(&id, sizeof(id));
@@ -137,6 +130,9 @@ trrojan::d3d11::random_sphere_data_set::create(ID3D11Device *device,
     retval->_size = cntParticles;
     retval->_layout = random_sphere_data_set::get_input_layout(sphereType);
 
+    retval->_properties |= (flags & VALID_INPUT_FLAGS);
+    retval->_properties |= random_sphere_data_set::get_properties(sphereType);
+
     return retval;
 }
 
@@ -146,8 +142,7 @@ trrojan::d3d11::random_sphere_data_set::create(ID3D11Device *device,
  */
 trrojan::d3d11::sphere_data_set
 trrojan::d3d11::random_sphere_data_set::create(ID3D11Device *device,
-        const buffer_type bufferType, const std::string& configuration,
-        const bool isForceFloatColour) {
+        const create_flags flags, const std::string& configuration) {
     static const std::runtime_error PARSE_ERROR("The configuration description "
         "of the random spheres is invalid. The configuration must have the "
         "following format: \"<sphere type> : <number of spheres> : <random "
@@ -192,7 +187,7 @@ trrojan::d3d11::random_sphere_data_set::create(ID3D11Device *device,
         throw std::runtime_error("The type of random spheres to generate is "
             "invalid.");
     }
-    if (isForceFloatColour) {
+    if ((flags & property_float_colour) != 0) {
         // Force 8-bit colours to float on request.
         switch (sphereType) {
             case sphere_type::pos_rgba8:
@@ -243,7 +238,7 @@ trrojan::d3d11::random_sphere_data_set::create(ID3D11Device *device,
     tokEnd = configuration.end();
     sphereSize = parse<decltype(sphereSize)>(std::string(tokBegin, tokEnd));
 
-    return random_sphere_data_set::create(device, bufferType, sphereType,
+    return random_sphere_data_set::create(device, flags, sphereType,
         cntParticles, domainSize, sphereSize, seed);
 }
 
@@ -284,6 +279,43 @@ trrojan::d3d11::random_sphere_data_set::get_input_layout(
         default:
             throw std::runtime_error("Unexpected sphere format.");
     }
+}
+
+
+/*
+ * trrojan::d3d11::random_sphere_data_set::get_properties
+ */
+trrojan::d3d11::sphere_data_set_base::properties_type
+trrojan::d3d11::random_sphere_data_set::get_properties(const sphere_type type) {
+    properties_type retval = 0;
+
+    switch (type) {
+        case pos_rad_intensity:
+        case pos_rad_rgba32:
+        case pos_rad_rgba8:
+            retval |= property_per_sphere_radius;
+            break;
+    }
+
+    switch (type) {
+        case pos_rgba32:
+        case pos_rad_rgba32:
+            retval |= property_float_colour;
+            /* falls through. */
+        case pos_rgba8:
+        case pos_rad_rgba8:
+            retval |= property_per_sphere_colour;
+            break;
+    }
+
+    switch (type) {
+        case pos_intensity:
+        case pos_rad_intensity:
+            retval |= property_per_sphere_intensity;
+            break;
+    }
+
+    return retval;
 }
 
 

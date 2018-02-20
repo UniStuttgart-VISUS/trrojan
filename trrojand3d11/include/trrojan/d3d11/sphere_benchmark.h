@@ -11,9 +11,8 @@
 #include "trrojan/timer.h"
 
 #include "trrojan/d3d11/benchmark_base.h"
-#include "trrojan/d3d11/mmpld_base.h"
-#include "trrojan/d3d11/random_sphere_base.h"
 #include "trrojan/d3d11/rendering_technique.h"
+#include "trrojan/d3d11/sphere_data_set.h"
 
 
 namespace trrojan {
@@ -22,8 +21,7 @@ namespace d3d11 {
     /// <summary>
     /// Implements a particle rendering benchmark using MMPLD files.
     /// </summary>
-    class TRROJAND3D11_API sphere_benchmark : public benchmark_base,
-            public mmpld_base, public random_sphere_base {
+    class TRROJAND3D11_API sphere_benchmark : public benchmark_base {
 
     public:
 
@@ -180,6 +178,11 @@ namespace d3d11 {
         /// The shader resource view of the transfer function.
         /// </summary>
         rendering_technique::srv_type colour_map;
+
+        /// <summary>
+        /// The data set to be rendered.
+        /// </summary>
+        sphere_data_set data;
 
         /// <summary>
         /// Buffer holding the data set.

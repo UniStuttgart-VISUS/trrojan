@@ -334,38 +334,26 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
         DirectX::XMStoreFloat4x4(viewConstants.ProjMatrix,
             DirectX::XMMatrixTranspose(projection));
 
-        auto bbWidth = std::abs(this->mmpld_header.bounding_box[3]
-            - this->mmpld_header.bounding_box[0]);
-        auto bbHeight = std::abs(this->mmpld_header.bounding_box[4]
-            - this->mmpld_header.bounding_box[1]);
-        auto bbDepth = std::abs(this->mmpld_header.bounding_box[5]
-            - this->mmpld_header.bounding_box[2]);
-        auto bbMax = (std::max)(bbWidth, bbHeight);
+        point_type bbs, bbe;
+        this->data->bounding_box(bbs, bbe);
+        auto bbSize = this->data->extents();
+        auto bbMax = (std::max)(bbSize[0], bbSize[1]);
         auto dist = 0.5f * bbMax / std::tan(this->cam.get_fovy() / 180.f
             * trrojan::constants<float>::pi);
 
         this->cam.set_near_plane_dist(0.1f);
         this->cam.set_far_plane_dist(2.0f * bbMax);
 
-        auto bbStartX = std::min(this->mmpld_header.bounding_box[3],
-            this->mmpld_header.bounding_box[0]);
-        auto bbStartY = std::min(this->mmpld_header.bounding_box[4],
-            this->mmpld_header.bounding_box[1]);
-        auto bbStartZ = std::min(this->mmpld_header.bounding_box[5],
-            this->mmpld_header.bounding_box[2]);
-
-        auto pos = glm::vec3(bbStartX + 0.5f * bbWidth,
-            bbStartY + 0.5f * bbHeight,
-            bbStartZ + 0.5f * bbDepth + dist);
-        auto lookAt = pos + glm::vec3(0.0f, 0.0f, 0.5f * bbDepth);
+        auto pos = glm::vec3(bbs[0]+ 0.5f * bbSize[0],
+            bbs[1] + 0.5f * bbSize[1],
+            bbs[2] + 0.5f * bbSize[2] + dist);
+        auto lookAt = pos + glm::vec3(0.0f, 0.0f, 0.5f * bbSize[2]);
 
         this->cam.set_look(pos, lookAt, glm::vec3(0, 1, 0));
 
-        point_type bbs, bbe;
-        this->get_mmpld_bounding_box(bbs, bbe);
         this->apply_manoeuvre(this->cam, config, bbs, bbe);
 
-        auto clipping = this->get_mmpld_clipping(cam);
+        auto clipping = this->data->clipping_planes(cam);
         this->cam.set_near_plane_dist(clipping.first);
         this->cam.set_far_plane_dist(clipping.second);
 

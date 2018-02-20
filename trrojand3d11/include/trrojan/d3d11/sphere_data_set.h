@@ -35,29 +35,25 @@ namespace d3d11 {
     public:
 
         /// <summary>
-        /// The type of GPU resources allocated for the data set.
-        /// </summary>
-        enum buffer_type {
-            /// <summary>
-            /// The data set was allocated as vertex buffer.
-            /// </summary>
-            vertex_buffer,
-
-            /// <summary>
-            /// The data set was allocated as structured resource.
-            /// </summary>
-            structured_resource
-        };
-
-        /// <summary>
         /// The data type for 3D points.
         /// </summary>
         typedef trrojan::graphics_benchmark_base::point_type point_type;
 
         /// <summary>
+        /// Data type to specify data set properties.
+        /// </summary>
+        typedef std::uint64_t properties_type;
+
+        /// <summary>
         /// Define a Direct3D-compatible size type.
         /// </summary>
         typedef std::uint32_t size_type;
+
+        static const properties_type property_float_colour;
+        static const properties_type property_per_sphere_colour;
+        static const properties_type property_per_sphere_intensity;
+        static const properties_type property_per_sphere_radius;
+        static const properties_type property_structured_resource;
 
         virtual ~sphere_data_set_base(void) = default;
 
@@ -67,6 +63,13 @@ namespace d3d11 {
         /// </summary>
         virtual void bounding_box(point_type& outMin,
             point_type& outMax) const = 0;
+
+        /// <summary>
+        /// Answer the buffer holding the data.
+        /// </summary>
+        inline const rendering_technique::buffer_type& buffer(void) const {
+            return this->_buffer;
+        }
 
         /// <summary>
         /// Gets the world-space centre point of the current data set.
@@ -97,6 +100,13 @@ namespace d3d11 {
         virtual float max_radius(void) const = 0;
 
         /// <summary>
+        /// Gets certain graphics-relevant properties of the data set.
+        /// </summary>
+        inline properties_type properties(void) const {
+            return this->_properties;
+        }
+
+        /// <summary>
         /// Gets the stride of the particles (in bytes).
         /// </summary>
         virtual size_type stride(void) const = 0;
@@ -108,7 +118,7 @@ namespace d3d11 {
 
     protected:
 
-        inline sphere_data_set_base(void) = default;
+        inline sphere_data_set_base(void) : _properties(0) { }
 
         /// <summary>
         /// The buffer holding the data.
@@ -120,6 +130,10 @@ namespace d3d11 {
         /// </summary>
         std::vector<D3D11_INPUT_ELEMENT_DESC> _layout;
 
+        /// <summary>
+        /// Holds the properties of the data set.
+        /// </summary>
+        properties_type _properties;
     };
 
 

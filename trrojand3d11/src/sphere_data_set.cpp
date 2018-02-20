@@ -5,6 +5,48 @@
 
 #include "trrojan/d3d11/sphere_data_set.h"
 
+#include "sphere_techniques.h"
+
+
+/*
+ * trrojan::d3d11::sphere_data_set_base::property_float_colour
+ */
+const trrojan::d3d11::sphere_data_set_base::properties_type
+trrojan::d3d11::sphere_data_set_base::property_float_colour
+    = SPHERE_INPUT_FLT_COLOUR;
+
+
+/*
+ * trrojan::d3d11::sphere_data_set_base::property_per_sphere_colour
+ */
+const trrojan::d3d11::sphere_data_set_base::properties_type
+trrojan::d3d11::sphere_data_set_base::property_per_sphere_colour
+    = SPHERE_INPUT_PV_COLOUR;
+
+
+/*
+ * trrojan::d3d11::sphere_data_set_base::property_per_sphere_intensity
+ */
+const trrojan::d3d11::sphere_data_set_base::properties_type
+trrojan::d3d11::sphere_data_set_base::property_per_sphere_intensity
+    = SPHERE_INPUT_PP_INTENSITY | SPHERE_INPUT_PV_INTENSITY;
+
+
+/*
+ * trrojan::d3d11::sphere_data_set_base::property_per_sphere_radius
+ */
+const trrojan::d3d11::sphere_data_set_base::properties_type
+trrojan::d3d11::sphere_data_set_base::property_per_sphere_radius
+    = SPHERE_INPUT_PV_RADIUS;
+
+
+/*
+ * trrojan::d3d11::sphere_data_set_base::property_structured_resource
+ */
+const trrojan::d3d11::sphere_data_set_base::properties_type
+trrojan::d3d11::sphere_data_set_base::property_structured_resource
+    = SPHERE_TECHNIQUE_USE_SRV;
+
 
 /*
  * trrojan::d3d11::sphere_data_set_base::centre

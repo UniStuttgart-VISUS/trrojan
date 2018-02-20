@@ -22,14 +22,24 @@ namespace d3d11 {
     public:
 
         /// <summary>
+        /// The possible colour types from MMPLD.
+        /// </summary>
+        typedef mmpld_reader::colour_type colour_type;
+
+        /// <summary>
+        /// The type of flags controlling the loader.
+        /// </summary>
+        typedef sphere_data_set_base::properties_type frame_load_flags;
+
+        /// <summary>
         /// The possible types of spheres from MMPLD files.
         /// </summary>
         typedef mmpld_reader::vertex_type sphere_type;
 
         /// <summary>
-        /// The possible colour types from MMPLD.
+        /// Open the given MMPLD data set without reading a frame.
         /// </summary>
-        typedef mmpld_reader::colour_type colour_type;
+        sphere_data_set create(const char *path);
 
         /// <summary>
         /// Creates a vertex input layout descriptor for the given MMPLD list
@@ -46,8 +56,33 @@ namespace d3d11 {
         /// <inheritdoc />
         virtual void bounding_box(point_type& outMin, point_type& outMax) const;
 
+        /// <summary>
+        /// Provides access to the list header of the current frame, which
+        /// contains information like a global colour or radius.
+        /// </summary>
+        inline const mmpld_reader::list_header& header(void) const {
+            return this->_list;
+        }
+
         /// <inheritdoc />
         virtual float max_radius(void) const;
+
+        /// <summary>
+        /// Read the given frame from the previously opened MMPLD stream and
+        /// upload it to a vertex buffer on the given device.
+        /// </summary>
+        /// <param name="device"></param>
+        /// <param name="frame"></param>
+        /// <param name="options">Controls certain properties of the data being
+        /// generated. Valid bits are
+        /// <see cref="sphere_data_set::property_float_colour" /> for forcing
+        /// 8-bit colour channels to float and
+        /// <see cref="sphere_data_set::property_structured_resource" /> for
+        /// creating a structured resource buffer instead of a vertex buffer.
+        /// </param>
+        /// <returns></returns>
+        rendering_technique::buffer_type read_frame(ID3D11Device *device,
+            const unsigned int frame, const frame_load_flags options);
 
         /// <inheritdoc />
         virtual size_type size(void) const;
@@ -56,16 +91,6 @@ namespace d3d11 {
         virtual size_type stride(void) const;
 
     protected:
-
-        /// <summary>
-        /// Options for the MMPLD frame loader.
-        /// </summary>
-        enum mmpld_loader_options : std::uint32_t {
-            none = 0x0,
-            vertex_buffer = 0x0001,
-            structured_resource = 0x0002,
-            force_float_colour = 0x0004
-        };
 
         /// <summary>
         /// The bitmask describing the input properties.
@@ -108,17 +133,6 @@ namespace d3d11 {
         /// <returns>The state of the stream after the above-mentioned
         /// operations have been performed.</returns>
         bool open(const char *path);
-
-        /// <summary>
-        /// Read the given frame from the previously opened MMPLD stream and
-        /// upload it to a vertex buffer on the given device.
-        /// </summary>
-        /// <param name="device"></param>
-        /// <param name="frame"></param>
-        /// <param name="options"></param>
-        /// <returns></returns>
-        rendering_technique::buffer_type read_frame(ID3D11Device *device,
-            const unsigned int frame, const mmpld_loader_options options);
 
         /// <summary>
         /// The header of the currently opened MMPLD file.
