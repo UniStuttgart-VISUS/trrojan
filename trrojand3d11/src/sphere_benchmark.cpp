@@ -152,8 +152,11 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
     if (contains(changed, factor_device)) {
         log::instance().write_line(log_level::verbose, "Preparing GPU "
             "resources for device \"%s\" ...", device.name().c_str());
-        this->data.reset();
         this->technique_cache.clear();
+
+        if (this->data != nullptr) {
+            this->data->release();
+        }
 
         // Constant buffers.
         this->sphere_constants = create_buffer(dev, D3D11_USAGE_DEFAULT,
@@ -177,7 +180,7 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
 
     // Determine whether the data set header must be loaded. This needs to be
     // done before any frame is loaded or the technique is selected.
-    if (contains(changed, factor_data_set)) {
+    if (contains_any(changed, factor_data_set)) {
         this->data.reset();
 
         try {
@@ -210,6 +213,7 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
 
             if (isFrameChanged || !isFrameCompat) {
                 this->load_mmpld_frame(dev, shaderCode, config);
+                assert(this->check_data_compatibility(shaderCode));
             }
         }
 
@@ -218,7 +222,11 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
             auto isFrameCompat = this->check_data_compatibility(shaderCode);
 
             if (!isFrameCompat) {
+                log::instance().write_line(log_level::debug, "Recreating "
+                    "random sphere data set due to incompatibility with "
+                    "current rendering technique.");
                 r->recreate(dev, shaderCode);
+                assert(this->check_data_compatibility(shaderCode));
             }
         }
     }

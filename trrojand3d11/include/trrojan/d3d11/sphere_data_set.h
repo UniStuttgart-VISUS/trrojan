@@ -131,6 +131,11 @@ namespace d3d11 {
         }
 
         /// <summary>
+        /// Releases all GPU resources of the data set.
+        /// </summary>
+        virtual void release(void);
+
+        /// <summary>
         /// Gets the stride of the particles (in bytes).
         /// </summary>
         virtual size_type stride(void) const = 0;
