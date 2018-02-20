@@ -45,7 +45,7 @@ trrojan::d3d11::random_sphere_data_set::create(ID3D11Device *device,
     particles.resize(cntParticles * retval->stride());
 
     // Compute bounding box directly from domain size.
-    for (size_t i = 0; i < sizeof(domainSize); ++i) {
+    for (size_t i = 0; i < std::size(domainSize); ++i) {
         retval->_bbox[i][0] = -0.5f * domainSize[i];
         retval->_bbox[i][1] = 0.5f * domainSize[i];
     }

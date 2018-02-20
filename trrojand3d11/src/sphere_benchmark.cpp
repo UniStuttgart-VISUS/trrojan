@@ -485,7 +485,9 @@ trrojan::d3d11::sphere_benchmark::get_shader_id(const configuration& config) {
 bool trrojan::d3d11::sphere_benchmark::check_data_compatibility(
         const shader_id_type shaderCode) {
     if ((this->data == nullptr) || (this->data->buffer() == nullptr)) {
-        // If there are no data, they are not compatible.
+        log::instance().write_line(log_level::debug, "Data set is not "
+            "compatible with rendering technique because no data have been "
+            "loaded so far.");
         return false;
     }
 
@@ -493,16 +495,24 @@ bool trrojan::d3d11::sphere_benchmark::check_data_compatibility(
 
     if ((shaderCode & SPHERE_TECHNIQUE_USE_SRV)
             != (dataCode & SPHERE_TECHNIQUE_USE_SRV)) {
-        // The type of the GPU buffer does not match.
+        log::instance().write_line(log_level::debug, "Data set is not "
+            "compatible with rendering technique because the technique has the "
+            "shader resource view flag %sset in contrast to the data set.",
+            ((shaderCode & SPHERE_TECHNIQUE_USE_SRV) != 0) ? "" : "not ");
         return false;
     }
 
     if (((shaderCode & SPHERE_INPUT_PV_COLOUR) != 0)
             && ((shaderCode & SPHERE_INPUT_FLT_COLOUR)
             != (dataCode & SPHERE_INPUT_FLT_COLOUR))) {
-        // Shader expects floating point, but data are 8-bit.
+        log::instance().write_line(log_level::debug, "Data set is not "
+            "compatible with rendering technique because the requested "
+            "floating point conversion of colours does not match.");
         return false;
     }
+
+    // No problem found at this point.
+    return true;
 }
 
 
