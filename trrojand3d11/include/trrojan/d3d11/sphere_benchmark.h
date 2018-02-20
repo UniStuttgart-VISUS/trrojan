@@ -107,6 +107,7 @@ namespace d3d11 {
         typedef std::unordered_map<shader_id_type, rendering_technique>
             technique_map_type;
 
+
         /// <summary>
         /// Gets the identifier for the given rendering method.
         /// </summary>

@@ -103,7 +103,12 @@ namespace d3d11 {
 
         /// <inheritdoc />
         virtual float max_radius(void) const;
-        
+
+        /// <summary>
+        /// Recreates the data set using the given set of new flags.
+        /// </summary>
+        void recreate(ID3D11Device *device, const create_flags flags);
+
         /// <inheritdoc />
         virtual size_type size(void) const;
 
@@ -133,7 +138,7 @@ namespace d3d11 {
         /// <summary>
         /// Initialises a new instance.
         /// </summary>
-        random_sphere_data_set(const sphere_type type);
+        random_sphere_data_set(void);
 
         /// <summary>
         /// Stores the bounding box of the data set.
@@ -144,6 +149,17 @@ namespace d3d11 {
         /// Maximum radius of all spheres that have been generated.
         /// </summary>
         float _max_radius;
+
+        /// <summary>
+        /// Preserves the random seed that was used to generate the data.
+        /// </summary>
+        std::uint32_t _seed;
+
+        /// <summary>
+        /// Preserves the range of sphere sizes that was used to generate the
+        /// data.
+        /// </summary>
+        std::array<float, 2> _sphere_size;
 
         /// <summary>
         /// The number of particles in the buffer.
