@@ -11,25 +11,25 @@
 #include "TransferFunction.hlsli"
 
 
+#if defined(INSTANCING)
+/// <summary>
+/// The buffer holding the particle parameters.
+/// </summary>
+StructuredBuffer<Particle> Particles : register(t0);
+#endif /* defined(INSTANCING) */
+
+
 #if defined(PER_VERTEX_INTENSITY)
 /// <summary>
 /// Transfer function.
 /// </summary>
-Texture1D TransferFunction : register(t0);
+Texture1D TransferFunction : register(t1);
 
 /// <summary>
 /// Linear sampler for transfer function lookup.
 /// </summary>
 SamplerState LinearSampler : register(s0);
 #endif /* defined(PER_VERTEX_INTENSITY) */
-
-
-#if defined(INSTANCING)
-/// <summary>
-/// The buffer holding the particle parameters.
-/// </summary>
-StructuredBuffer<Particle> Particles : register(t1);
-#endif /* defined(INSTANCING) */
 
 
 #if defined(SPHERE_INST)
