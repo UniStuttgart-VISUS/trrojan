@@ -26,21 +26,32 @@ namespace d3d11 {
     public:
 
         /// <summary>
+        /// Type for edge tessellation factors.
+        /// </summary>
+        typedef std::array<float, 4> edge_tess_factor_type;
+
+        /// <summary>
         /// Type identifying a frame index.
         /// <s/ummary>
         typedef std::uint32_t frame_type;
 
+        /// <summary>
+        /// Typoe for inside tessellation factors.
+        /// </summary>
+        typedef std::array<float, 2> inside_tess_factor_type;
+
+        static const char *factor_adapt_tess_maximum;
+        static const char *factor_adapt_tess_minimum;
+        static const char *factor_adapt_tess_scale;
         static const char *factor_conservative_depth;
         static const char *factor_data_set;
         static const char *factor_edge_tess_factor;
         static const char *factor_force_float_colour;
         static const char *factor_frame;
+        static const char *factor_hemi_tess_scale;
         static const char *factor_inside_tess_factor;
         static const char *factor_iterations;
         static const char *factor_method;
-        static const char *factor_poly_maximum;
-        static const char *factor_poly_minimum;
-        static const char *factor_poly_scale;
         static const char *factor_vs_raygen;
         static const char *factor_vs_xfer_function;
 

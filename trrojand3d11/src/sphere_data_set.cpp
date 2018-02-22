@@ -163,3 +163,12 @@ std::array<float, 3> trrojan::d3d11::sphere_data_set_base::extents(void) const {
 
     return retval;
 }
+
+
+/*
+ * trrojan::d3d11::sphere_data_set_base::release
+ */
+void trrojan::d3d11::sphere_data_set_base::release(void) {
+    this->_buffer = nullptr;
+    this->_properties = 0;
+}

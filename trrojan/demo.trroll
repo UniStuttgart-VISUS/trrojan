@@ -1,10 +1,15 @@
 d3d11::sphere-renderer {
-	boolean conservative_depth = true; false
 	string data_set = pos_rad_intensity : 1000 : - : 10 10 10 : 0.01 0.1
 	uint32 frame = 0
 	uint32 iterations = 8
+	boolean debug_view = true
+
+	#string method = sphere_tess
 	uint32 poly_minimum = 4
 	uint32 poly_maximum = 16
+
+	boolean conservative_depth = true; false
+	boolean force_float_colour = true; false
 	boolean vs_raygen = true; false
 	boolean vs_xfer_function = true; false
 }

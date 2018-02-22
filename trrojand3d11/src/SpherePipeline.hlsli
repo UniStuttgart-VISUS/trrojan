@@ -287,10 +287,6 @@ cbuffer TessellationConstants CBUFFER(2) {
     /// <para>In case of host-controlled tessellation, this variable specifies
     /// the edge tessellation factors. This is the case for non-adaptive sphere
     /// and hemisphere tessellation.</para>
-    /// <para>For adaptive polygons, the <c>x</c>- and the <c>y</c>-component
-    /// specify the minimum and maximum number of corners. The minimum must be
-    /// greater than or equal to four. The <c>z</c>-component controls the
-    /// adaptive tessellation.</para>
     /// </remarks>
     float4 EdgeTessFactor;
 
@@ -304,5 +300,22 @@ cbuffer TessellationConstants CBUFFER(2) {
     /// </remarks>
     float2 InsideTessFactor;
 
-    float _TessPadding[10];
+    /// <summary>
+    /// For tessellation of adaptive polygons, specifies the minimum (<c>x</c>)
+    /// and maximum (<c>y</c>) number of corners as well as the scaling
+    /// parameter of the adaptive tessellation (<c>z</c>).
+    /// For adaptive tessellation of spheres, this first two coordinates specify
+    /// the minimum and maximum tessellation factor whereas <c>z</c> again
+    /// controls the tessellation. The values used by the HoliMoli app are
+    /// 5, 25 and 3.
+    /// </summary>
+    float3 AdaptiveTessParams;
+
+    /// <summary>
+    /// A scaling factor for computing the tessellation factor for hemispheres
+    /// from the one for spheres. 0.5 is a reasonable value.
+    /// </summary>
+    float HemisphereTessScaling;
+
+    float _TessPadding[6];
 };

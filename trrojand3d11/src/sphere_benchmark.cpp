@@ -32,17 +32,18 @@
 #define _SPHERE_BENCH_DEFINE_FACTOR(f)                                         \
 const char *trrojan::d3d11::sphere_benchmark::factor_##f = #f
 
+_SPHERE_BENCH_DEFINE_FACTOR(adapt_tess_maximum);
+_SPHERE_BENCH_DEFINE_FACTOR(adapt_tess_minimum);
+_SPHERE_BENCH_DEFINE_FACTOR(adapt_tess_scale);
 _SPHERE_BENCH_DEFINE_FACTOR(conservative_depth);
 _SPHERE_BENCH_DEFINE_FACTOR(data_set);
 _SPHERE_BENCH_DEFINE_FACTOR(edge_tess_factor);
 _SPHERE_BENCH_DEFINE_FACTOR(force_float_colour);
 _SPHERE_BENCH_DEFINE_FACTOR(frame);
+_SPHERE_BENCH_DEFINE_FACTOR(hemi_tess_scale);
 _SPHERE_BENCH_DEFINE_FACTOR(inside_tess_factor);
 _SPHERE_BENCH_DEFINE_FACTOR(iterations);
 _SPHERE_BENCH_DEFINE_FACTOR(method);
-_SPHERE_BENCH_DEFINE_FACTOR(poly_maximum);
-_SPHERE_BENCH_DEFINE_FACTOR(poly_minimum);
-_SPHERE_BENCH_DEFINE_FACTOR(poly_scale);
 _SPHERE_BENCH_DEFINE_FACTOR(vs_raygen);
 _SPHERE_BENCH_DEFINE_FACTOR(vs_xfer_function);
 
@@ -57,17 +58,25 @@ _DEFINE_SPHERE_TECHNIQUE_LUT(SPHERE_METHODS);
  */
 trrojan::d3d11::sphere_benchmark::sphere_benchmark(void)
         : benchmark_base("sphere-renderer") {
-    // Declare the configuration data we need.
+    // Declare the configuration data we need to have.
+    this->_default_configs.add_factor(factor::from_manifestations(
+        factor_adapt_tess_maximum, static_cast<unsigned int>(8)));
+    this->_default_configs.add_factor(factor::from_manifestations(
+        factor_adapt_tess_minimum, static_cast<unsigned int>(4)));
+    this->_default_configs.add_factor(factor::from_manifestations(
+        factor_adapt_tess_scale, 2.0f));
     this->_default_configs.add_factor(factor::from_manifestations(
         factor_conservative_depth, { true, false }));
     this->_default_configs.add_factor(factor::from_manifestations(
-        factor_edge_tess_factor, { std::array<float, 4> { 4, 4, 4, 4} }));
+        factor_edge_tess_factor, { edge_tess_factor_type { 4, 4, 4, 4} }));
     this->_default_configs.add_factor(factor::from_manifestations(
         factor_force_float_colour, { true, false }));
     this->_default_configs.add_factor(factor::from_manifestations(
         factor_frame, static_cast<frame_type>(0)));
     this->_default_configs.add_factor(factor::from_manifestations(
-        factor_inside_tess_factor, { std::array<float, 2> { 4, 4 } }));
+        factor_hemi_tess_scale, 0.5f));
+    this->_default_configs.add_factor(factor::from_manifestations(
+        factor_inside_tess_factor, { inside_tess_factor_type{ 4, 4 } }));
     this->_default_configs.add_factor(factor::from_manifestations(
         factor_iterations, static_cast<unsigned int>(8)));
     {
@@ -78,12 +87,6 @@ trrojan::d3d11::sphere_benchmark::sphere_benchmark(void)
         this->_default_configs.add_factor(factor::from_manifestations(
             factor_method, manifestations));
     }
-    this->_default_configs.add_factor(factor::from_manifestations(
-        factor_poly_maximum, static_cast<unsigned int>(8)));
-    this->_default_configs.add_factor(factor::from_manifestations(
-        factor_poly_minimum, static_cast<unsigned int>(4)));
-    this->_default_configs.add_factor(factor::from_manifestations(
-        factor_poly_scale, 2.0f));
     this->_default_configs.add_factor(factor::from_manifestations(
         factor_vs_raygen, { true, false }));
     this->_default_configs.add_factor(factor::from_manifestations(
@@ -152,8 +155,11 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
     if (contains(changed, factor_device)) {
         log::instance().write_line(log_level::verbose, "Preparing GPU "
             "resources for device \"%s\" ...", device.name().c_str());
-        this->data.reset();
         this->technique_cache.clear();
+
+        if (this->data != nullptr) {
+            this->data->release();
+        }
 
         // Constant buffers.
         this->sphere_constants = create_buffer(dev, D3D11_USAGE_DEFAULT,
@@ -177,7 +183,7 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
 
     // Determine whether the data set header must be loaded. This needs to be
     // done before any frame is loaded or the technique is selected.
-    if (contains(changed, factor_data_set)) {
+    if (contains_any(changed, factor_data_set)) {
         this->data.reset();
 
         try {
@@ -210,6 +216,7 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
 
             if (isFrameChanged || !isFrameCompat) {
                 this->load_mmpld_frame(dev, shaderCode, config);
+                assert(this->check_data_compatibility(shaderCode));
             }
         }
 
@@ -218,7 +225,11 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
             auto isFrameCompat = this->check_data_compatibility(shaderCode);
 
             if (!isFrameCompat) {
+                log::instance().write_line(log_level::debug, "Recreating "
+                    "random sphere data set due to incompatibility with "
+                    "current rendering technique.");
                 r->recreate(dev, shaderCode);
+                assert(this->check_data_compatibility(shaderCode));
             }
         }
     }
@@ -363,7 +374,29 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
     }
 
     // Set tessellation constants.
-    // TODO
+    {
+        auto f = config.get<edge_tess_factor_type>(factor_edge_tess_factor);
+        tessConstants.EdgeTessFactor.x = f[0];
+        tessConstants.EdgeTessFactor.y = f[1];
+        tessConstants.EdgeTessFactor.z = f[2];
+        tessConstants.EdgeTessFactor.w = f[3];
+    }
+
+    {
+        auto f = config.get<inside_tess_factor_type>(factor_inside_tess_factor);
+        tessConstants.InsideTessFactor.x = f[0];
+        tessConstants.InsideTessFactor.y = f[1];
+    }
+
+    tessConstants.AdaptiveTessParams.x = config.get<float>(
+        factor_adapt_tess_maximum);
+    tessConstants.AdaptiveTessParams.y = config.get<float>(
+        factor_adapt_tess_minimum);
+    tessConstants.AdaptiveTessParams.z = config.get<float>(
+        factor_adapt_tess_scale);
+
+    tessConstants.HemisphereTessScaling = config.get<float>(
+        factor_hemi_tess_scale);
 
 
     // Update constant buffers.
