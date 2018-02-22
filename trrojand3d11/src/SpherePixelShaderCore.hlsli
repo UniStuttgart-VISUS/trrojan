@@ -144,6 +144,7 @@ PsOutput Main(PsInput input) {
     // The colour is the intensity value, which for we need to perform a
     // texture lookup before shading.
     float texCoords = TexCoordsFromIntensity(input.Intensity, IntensityRange);
+    texCoords = 1.0f - texCoords;
     float4 baseColour = TransferFunction.SampleLevel(LinearSampler, texCoords, 0);
 #else /* defined(PER_PIXEL_INTENSITY) */
     // Colour is explicitly given or transfer function has already been
@@ -151,9 +152,10 @@ PsOutput Main(PsInput input) {
     float4 baseColour = input.Colour;
 #endif /* defined(PER_PIXEL_INTENSITY) */
 
-    float4 ray = normalize(input.ViewDirection);
-    retval.Colour = float4(LocalLighting(-ray.xyz, input.WorldNormal.xyz,
+    float4 ray = input.ViewDirection;
+    retval.Colour = float4(LocalLighting(-ray.xyz, input.WorldNormal,
         ray.xyz, baseColour.rgb), baseColour.a);
+    //retval.Colour = float4(input.WorldNormal.xyz, 1.0f);
 #endif /* defined(RAYCASTING) */
 
     //retval.Colour = float4(1.0, 0.0, 0.0, 1.0);

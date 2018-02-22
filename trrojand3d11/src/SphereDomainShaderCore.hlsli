@@ -109,9 +109,9 @@ PsInput Main(OutputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
     retval.CameraPosition.xyz -= pos.xyz;
 
 #else
-    /* Move vertices to locations on sphere. */
+    /* 3D sphere tessellation: Move vertices to locations on sphere. */
 
-    // Reconstruct the camera system for the pixel shader.
+    // Reconstruct the view direction for shading.
     float4 camPos, up, right;
     ReconstructCamera(camPos, retval.ViewDirection, up, right, vmInv);
 
@@ -156,7 +156,7 @@ PsInput Main(OutputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
 #endif /* (defined(HEMISPHERE_TESS) || defined(ADAPT_HEMISPHERE_TESS)) */
 
     // The normal are the sphere coordinates.
-    retval.WorldNormal = normalize(coords);
+    retval.WorldNormal = normalize(coords.xyz);
 
     // Move the sphere to the right location.
     coords.xyz += pos;

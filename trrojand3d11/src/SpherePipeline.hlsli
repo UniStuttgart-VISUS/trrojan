@@ -175,7 +175,7 @@ struct PsGeometryInput {
     /// <summary>
     /// The world-space normal used for shading.
     /// </summary>
-    float4 WorldNormal : NORMAL0;
+    float3 WorldNormal : NORMAL0;
 
     /// <summary>
     /// The world-space position of the vertex.
