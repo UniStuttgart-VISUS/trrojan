@@ -4,7 +4,7 @@ d3d11::sphere-renderer {
 	uint32 iterations = 8
 	boolean debug_view = true
 
-	#string method = stpa
+	#string method = sphere_tess
 	uint32 poly_minimum = 4
 	uint32 poly_maximum = 16
 

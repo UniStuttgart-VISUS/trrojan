@@ -63,8 +63,8 @@ HsConstants CalcConstants(InputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
     rad = mul(rad, vm);
 
     float tessFactor = clamp(
-        length(rad) / pos.w * pm._11 * EdgeTessFactor.z,
-        EdgeTessFactor.x, EdgeTessFactor.y);
+        length(rad) / pos.w * pm._11 * AdaptiveTessParams.z,
+        AdaptiveTessParams.x, AdaptiveTessParams.y);
 
     retval.EdgeTessFactor[0]
         = retval.EdgeTessFactor[1]
@@ -88,9 +88,11 @@ HsConstants CalcConstants(InputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
     rad = mul(rad, vm);
 
     // using w-value that is equal to the z-component prior to the projection
-    float tessFactor = clamp(length(rad) / pos.w * pm._11 * 3.f, 5.f, 25.f);
+    float tessFactor = clamp(
+        length(rad) / pos.w * pm._11 * AdaptiveTessParams.z,
+        AdaptiveTessParams.x, AdaptiveTessParams.y);
 #if defined(ADAPT_HEMISPHERE_TESS)
-    tessFactor /= 2.0f;
+    tessFactor *= HemisphereTessScaling;
 #endif /* defined(ADAPT_HEMISPHERE_TESS) */
 
     retval.EdgeTessFactor[0]
