@@ -52,6 +52,7 @@ namespace d3d11 {
         static const char *factor_inside_tess_factor;
         static const char *factor_iterations;
         static const char *factor_method;
+        static const char *factor_poly_corners;
         static const char *factor_vs_raygen;
         static const char *factor_vs_xfer_function;
 
@@ -170,7 +171,7 @@ namespace d3d11 {
         /// <param name=""></param>
         /// <returns>A reference to the cached technique.</returns>
         rendering_technique& get_technique(ID3D11Device *device,
-            const shader_id_type shaderCode);
+            shader_id_type shaderCode);
 
         /// <summary>
         /// Loads the MMPLD frame with the given number from the already opened

@@ -371,7 +371,7 @@ void trrojan::d3d11::random_sphere_data_set::recreate(ID3D11Device *device,
     id.pSysMem = particles.data();
 
     {
-        this->_buffer.Release();
+        this->_buffer = nullptr;
         auto hr = device->CreateBuffer(&bufferDesc, &id, &this->_buffer);
         if (FAILED(hr)) {
             throw ATL::CAtlException(hr);

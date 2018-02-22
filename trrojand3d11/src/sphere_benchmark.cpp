@@ -44,6 +44,7 @@ _SPHERE_BENCH_DEFINE_FACTOR(hemi_tess_scale);
 _SPHERE_BENCH_DEFINE_FACTOR(inside_tess_factor);
 _SPHERE_BENCH_DEFINE_FACTOR(iterations);
 _SPHERE_BENCH_DEFINE_FACTOR(method);
+_SPHERE_BENCH_DEFINE_FACTOR(poly_corners);
 _SPHERE_BENCH_DEFINE_FACTOR(vs_raygen);
 _SPHERE_BENCH_DEFINE_FACTOR(vs_xfer_function);
 
@@ -87,6 +88,8 @@ trrojan::d3d11::sphere_benchmark::sphere_benchmark(void)
         this->_default_configs.add_factor(factor::from_manifestations(
             factor_method, manifestations));
     }
+    this->_default_configs.add_factor(factor::from_manifestations(
+        factor_poly_corners, { 4u, 5u, 6u }));
     this->_default_configs.add_factor(factor::from_manifestations(
         factor_vs_raygen, { true, false }));
     this->_default_configs.add_factor(factor::from_manifestations(
@@ -578,10 +581,6 @@ bool trrojan::d3d11::sphere_benchmark::check_data_compatibility(
 trrojan::d3d11::sphere_benchmark::data_properties_type
 trrojan::d3d11::sphere_benchmark::get_data_properties(
         const shader_id_type shaderCode) {
-    const shader_id_type FORCE_FROM_SHADER_CODE
-        = SPHERE_INPUT_PV_INTENSITY
-        | SPHERE_INPUT_PP_INTENSITY;
-
     data_properties_type retval = (this->data != nullptr)
         ? this->data->properties()
         : 0;
@@ -592,8 +591,16 @@ trrojan::d3d11::sphere_benchmark::get_data_properties(
         retval &= ~SPHERE_INPUT_FLT_COLOUR;
     }
 
-    retval &= ~FORCE_FROM_SHADER_CODE;
-    retval |= shaderCode & FORCE_FROM_SHADER_CODE;
+    if ((retval & SPHERE_INPUT_PV_INTENSITY) != 0) {
+        // If we need a transfer function, let the shader code decide where to
+        // apply it.
+        assert((retval & SPHERE_INPUT_PP_INTENSITY) != 0);
+        const shader_id_type LET_TECHNIQUE_DECIDE
+            = SPHERE_INPUT_PV_INTENSITY
+            | SPHERE_INPUT_PP_INTENSITY;
+        retval &= ~LET_TECHNIQUE_DECIDE;
+        retval |= shaderCode & LET_TECHNIQUE_DECIDE;
+    }
 
     return retval;
 }
@@ -604,7 +611,19 @@ trrojan::d3d11::sphere_benchmark::get_data_properties(
  */
 trrojan::d3d11::rendering_technique&
 trrojan::d3d11::sphere_benchmark::get_technique(ID3D11Device *device,
-        const shader_id_type shaderCode) {
+        shader_id_type shaderCode) {
+    {
+        // Erase flags controlled by the data from the shader code. These flags
+        // are in the shader code to select the preferred data format, but at
+        // the time we create the bitmask, we do not yet know whether the
+        // information is in the data.
+        const shader_id_type LET_DATA_DECIDE
+            = SPHERE_INPUT_PV_INTENSITY
+            | SPHERE_INPUT_PP_INTENSITY
+            | SPHERE_INPUT_FLT_COLOUR;
+        shaderCode &= ~LET_DATA_DECIDE;
+    }
+
     auto dataCode = this->get_data_properties(shaderCode);
     auto id = shaderCode | dataCode;
     auto isPsTex = ((id & SPHERE_INPUT_PP_INTENSITY) != 0);

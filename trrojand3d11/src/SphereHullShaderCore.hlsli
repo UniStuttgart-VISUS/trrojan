@@ -37,7 +37,7 @@ HsConstants CalcConstants(InputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
         = retval.EdgeTessFactor[2]
         = retval.EdgeTessFactor[3]
         = retval.InsideTessFactor[0]
-        = retval.InsideTessFactor[1] = 4.0f;
+        = retval.InsideTessFactor[1] = 1.0f;
     retval.InsideTessFactor[0]
         = retval.InsideTessFactor[1] = 1.0f;
 

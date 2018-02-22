@@ -34,7 +34,7 @@ SamplerState LinearSampler : register(s0);
 PsOutput Main(PsInput input) {
     PsOutput retval = (PsOutput) 0;
 
-//#define BILLBOARD
+#define BILLBOARD
 #ifdef BILLBOARD
     retval.Colour = float4(1.0, 1.0, 0.0, 1.0);
     return retval;
@@ -152,10 +152,11 @@ PsOutput Main(PsInput input) {
     float4 baseColour = input.Colour;
 #endif /* defined(PER_PIXEL_INTENSITY) */
 
-    float4 ray = input.ViewDirection;
-    retval.Colour = float4(LocalLighting(-ray.xyz, input.WorldNormal,
-        ray.xyz, baseColour.rgb), baseColour.a);
+    float3 ray = input.ViewDirection.xyz;
+    retval.Colour = float4(LocalLighting(-ray, input.WorldNormal,
+        ray, baseColour.rgb), baseColour.a);
     //retval.Colour = float4(input.WorldNormal.xyz, 1.0f);
+    //retval.Colour = float4(-ray, 1.0f);
 #endif /* defined(RAYCASTING) */
 
     //retval.Colour = float4(1.0, 0.0, 0.0, 1.0);

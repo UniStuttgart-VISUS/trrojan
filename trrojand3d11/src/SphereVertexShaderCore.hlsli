@@ -159,7 +159,7 @@ VsOutput Main(VsInput input) {
 
     // Move sprite to world position.
     retval.Position.xyz += pos;
-    retval.Position -= float4(rad * matOrient._31_32_33, 0.0f);
+    retval.Position.xyz -= rad * matOrient._31_32_33;
 
     // Do the camera transform.
     retval.Position = mul(retval.Position, mvp);

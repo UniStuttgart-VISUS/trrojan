@@ -49,7 +49,9 @@ PsInput Main(OutputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
     float4x4 vm = ViewMatrix[eye];
     float4x4 vmInv = ViewInvMatrix[eye];
 
-    // TODO: QUAD_TESS can be hardcoded w/o trigonometry
+    // Get the world-space centre of the sphere.
+    const float3 pos = patch[0].SphereParams.xyz;
+    float rad = patch[0].SphereParams.w;
 
 #if defined(RAYCASTING)
     /* Move vertices to locations on sprite. */
@@ -58,17 +60,13 @@ PsInput Main(OutputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
     ReconstructCamera(retval.CameraPosition, retval.CameraDirection,
         retval.CameraUp, retval.CameraRight, vmInv);
 
-    // Get the world-space centre of the sphere.
-    const float4 pos = float4(retval.SphereParams.xyz, 1.0f);
-    float rad = retval.SphereParams.w;
-
     // Pass through sphere parameters and colour.
     retval.SphereParams = patch[0].SphereParams;
 
 #if defined(QUAD_TESS)
-    float4 coords = float4(uv.xy, 0.0f, 0.0f);
+    float4 coords = float4(uv.xy, 0.0f, 1.0f);
     coords.xy -= 0.5f.xx;
-    coords *= rad;
+    coords.xy *= rad;
 
 #else /* defined(QUAD_TESS) */
     // If we use the radius of the sphere as size of the triangle fan, its hull
@@ -83,24 +81,17 @@ PsInput Main(OutputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
     float phi = TWO_PI * uv.x;
     float sinPhi, cosPhi;
     sincos(phi, sinPhi, cosPhi);
-    float4 coords = float4(rad * cosPhi, rad * sinPhi, 0.0f, 0.0f);
+    float4 coords = float4(rad * cosPhi, rad * sinPhi, 0.0f, 1.0f);
 
 #endif /* defined(QUAD_TESS) */
 
-    float3 v = normalize((pos - retval.CameraPosition).xyz);
-    float3 u = normalize(vmInv._21_22_23);
-    float3 r = normalize(cross(v, u));
-    u = normalize(cross(r, v));
-    float4x4 matOrient = float4x4(
-        float4(r, 0.0f),
-        float4(u, 0.0f),
-        float4(v, 0.0f),
-        float4(0.0f.xxx, 1.0f));
-    coords = mul(coords, matOrient);
+    // Orient the sprite towards the camera.
+    float4x4 matOrient = OrientToCamera(pos, vmInv);
+    coords = mul(retval.Position, matOrient);
 
-    // Move the fan to world coordinates.
-    coords += pos;
-    coords -= float4(rad * v, 0.0f);
+    // Move sprite to world position.
+    coords.xyz += pos;
+    coords.xyz -= rad * matOrient._31_32_33;
 
     // Perform projection.
     retval.Position = mul(coords, mvp);
@@ -114,10 +105,6 @@ PsInput Main(OutputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
     // Reconstruct the view direction for shading.
     float4 camPos, up, right;
     ReconstructCamera(camPos, retval.ViewDirection, up, right, vmInv);
-
-    // Get the world-space centre and radius of the sphere.
-    const float3 pos = patch[0].SphereParams.xyz;
-    const float rad = patch[0].SphereParams.w;
 
     // Move vertices of the patch to a sphere.
     float phi = PI * uv.x;
@@ -140,7 +127,7 @@ PsInput Main(OutputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
 #if (defined(HEMISPHERE_TESS) || defined(ADAPT_HEMISPHERE_TESS))
     // Orient the hemisphere towards the camera.
     float3 v = normalize(pos - camPos.xyz);
-    float3 u = normalize(ViewInvMatrix[eye]._21_22_23);
+    float3 u = normalize(vmInv._21_22_23);
     float3 r = normalize(cross(v, u));
     u = normalize(cross(r, v));
     float4x4 matOrient = float4x4(
@@ -161,7 +148,7 @@ PsInput Main(OutputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
     // Move the sphere to the right location.
     coords.xyz += pos;
     coords = mul(coords, vm);
-    retval.WorldPosition = coords.xyz;
+    //retval.WorldPosition = coords.xyz;
 
     // Project the vertices.
     retval.Position = mul(coords, pm);

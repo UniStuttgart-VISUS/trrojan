@@ -178,14 +178,14 @@ struct PsGeometryInput {
     float3 WorldNormal : NORMAL0;
 
     /// <summary>
-    /// The world-space position of the vertex.
-    /// </summary>
-    nointerpolation float3 WorldPosition : TEXCOORD0;
-
-    /// <summary>
     /// The view vector in world-space.
     /// </summary>
-    nointerpolation float4 ViewDirection : TEXCOORD1;
+    float4 ViewDirection : TEXCOORD0;
+
+    ///// <summary>
+    ///// The world-space position of the vertex.
+    ///// </summary>
+    //nointerpolation float3 WorldPosition : TEXCOORD1;
 
 #if defined(HOLOMOL)
     nointerpolation uint Eye: SV_RenderTargetArrayIndex;

@@ -96,7 +96,7 @@ namespace trrojan {
         /// <returns>A new instance with the specified manifestation.</returns>
         /// <tparam name="T">The value type of the factor.</tparam>
         template<class T> static inline factor from_manifestations(
-            const std::string& name, const T& manifestation) {
+                const std::string& name, const T& manifestation) {
             std::vector<T> m(1, manifestation);
             return factor::from_manifestations(name, m);
         }
