@@ -338,10 +338,10 @@ void trrojan::d3d11::random_sphere_data_set::recreate(ID3D11Device *device,
 
             case sphere_type::pos_rgba32:
             case sphere_type::pos_rad_rgba32:
-                *reinterpret_cast<float *>(pos + 1) = g;
-                *reinterpret_cast<float *>(pos + 2) = g;
-                *reinterpret_cast<float *>(pos + 3) = g;
-                *reinterpret_cast<float *>(pos + 4) = 1.0f;
+                (pos + 1)->x = g;
+                (pos + 1)->y = g;
+                (pos + 1)->z = g;
+                (pos + 1)->w = 1.0f;
                 break;
 
             case sphere_type::pos_rgba8:

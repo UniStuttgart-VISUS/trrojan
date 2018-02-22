@@ -1,16 +1,25 @@
 d3d11::sphere-renderer {
-	string data_set = pos_rad_intensity : 1000 : - : 10 10 10 : 0.01 0.1
+	string data_set = pos_rad_rgba32 : 1000 : - : 10 10 10 : 0.01 0.1
 	uint32 frame = 0
 	uint32 iterations = 8
 	boolean debug_view = true
 
-	#string method = sphere_tess
-	uint32 poly_minimum = 4
-	uint32 poly_maximum = 16
+	#string method = quad_inst; poly_tess; adapt_poly_tess; sphere_tess; adapt_sphere_tess; hemisphere_tess; adapt_hemisphere_tess; geo_quad; geo_poly; stpa
 
-	boolean conservative_depth = true; false
-	boolean force_float_colour = true; false
+	uint32 adapt_tess_minimum = 4
+	uint32 adapt_tess_maximum = 16
+	float32 adapt_tess_scale = 3
+
+	float32vec4 edge_tess_factor = 4 4 4 4
+	float32vec2 inside_tess_Factor = 1 1
+
+	uint32 poly_corners = 5
+
+	float32 hemi_tess_scale = 0.5
+
+	boolean conservative_depth = false
+	boolean force_float_colour = false
 	boolean vs_raygen = true; false
-	boolean vs_xfer_function = true; false
+	boolean vs_xfer_function = false
 }
 
