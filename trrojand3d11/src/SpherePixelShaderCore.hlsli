@@ -151,7 +151,7 @@ PsOutput Main(PsInput input) {
 #endif /* defined(PER_PIXEL_INTENSITY) */
 
     float3 ray = input.ViewDirection.xyz;
-    retval.Colour = float4(LocalLighting(-ray, input.WorldNormal,
+    retval.Colour = float4(LocalLighting(-ray, normalize(input.WorldNormal.xyz),
         ray, baseColour.rgb), baseColour.a);
     //retval.Colour = float4(input.WorldNormal.xyz, 1.0f);
     //retval.Colour = float4(-ray, 1.0f);

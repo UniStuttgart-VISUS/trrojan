@@ -180,7 +180,7 @@ struct PsGeometryInput {
     /// <summary>
     /// The view vector in world-space.
     /// </summary>
-    float4 ViewDirection : TEXCOORD0;
+    nointerpolation float4 ViewDirection : TEXCOORD0;
 
     ///// <summary>
     ///// The world-space position of the vertex.

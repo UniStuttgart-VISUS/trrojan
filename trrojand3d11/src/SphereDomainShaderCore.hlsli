@@ -143,8 +143,7 @@ PsInput Main(OutputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
 #endif /* (defined(HEMISPHERE_TESS) || defined(ADAPT_HEMISPHERE_TESS)) */
 
     // The normal are the sphere coordinates.
-    retval.WorldNormal = normalize(coords.xyz);
-    retval.WorldNormal = normalize(mul(coords, vm).xyz);
+    retval.WorldNormal = coords.xyz;
 
     // Move the sphere to the right location.
     coords.xyz += pos;
