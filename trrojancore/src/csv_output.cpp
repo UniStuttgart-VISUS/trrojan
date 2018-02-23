@@ -47,7 +47,9 @@ void trrojan::csv_output::open(const output_params& params) {
         this->params = std::make_shared<csv_output_params>(*params);
     }
 
-    this->file.open(this->params->path(),std::ios::trunc);
+    // Note: We use the binary mode such that we can control the type of line
+    // break being generated.
+    this->file.open(this->params->path(), std::ios::trunc | std::ios::binary);
     if (!this->file) {
         std::stringstream msg;
         msg << "Failed to open output file \"" << this->params->path() << "\""

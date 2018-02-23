@@ -103,8 +103,7 @@ void trrojan::configuration_set::merge(const configuration_set& other,
         assert(f.size() > 0);
         auto it = this->findFactor(f.name());
         if (it != this->_factors.cend() && overwrite) {
-            this->_factors.erase(it);
-            this->_factors.push_back(f);
+            *it = f;
         } else if (it == this->_factors.cend()) {
             this->_factors.push_back(f);
         }

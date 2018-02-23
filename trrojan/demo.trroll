@@ -1,12 +1,12 @@
 d3d11::sphere-renderer {
-	string data_set = pos_rad_intensity : 1000 : - : 10 10 10 : 0.01 0.1
+	string data_set = pos_rad_intensity : 1000 : 0 : 10 10 10 : 0.01 0.1
 	uint32 frame = 0
 	uint32 iterations = 10
 	boolean debug_view = true
 
 	##string method = quad_inst; poly_tess; adapt_poly_tess; sphere_tess; adapt_sphere_tess; hemisphere_tess; adapt_hemisphere_tess; geo_quad; geo_poly; stpa
 	#string method = quad_tess
-	string method = sphere_tess; hemisphere_tess
+	string method = quad_inst
 	#string method = hemisphere_tess; geo_quad; stpa
 
 
