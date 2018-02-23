@@ -641,7 +641,7 @@ trrojan::d3d11::sphere_benchmark::get_technique(ID3D11Device *device,
     auto isGeo = ((id & SPHERE_TECHNIQUE_USE_GEO) != 0);
     auto isTess = ((id & SPHERE_TECHNIQUE_USE_TESS) != 0);
 
-    auto retval = this->technique_cache.find(shaderCode);
+    auto retval = this->technique_cache.find(id);
     if (retval == this->technique_cache.end()) {
         log::instance().write_line(log_level::verbose, "No cached sphere "
             "rendering technique for 0x%" PRIx64 " with data features 0x%"
@@ -759,6 +759,7 @@ trrojan::d3d11::sphere_benchmark::get_technique(ID3D11Device *device,
     }
 
     retval = this->technique_cache.find(id);
+    assert(retval != this->technique_cache.end());
     return retval->second;
 }
 
