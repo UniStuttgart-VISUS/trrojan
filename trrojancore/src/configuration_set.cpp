@@ -121,11 +121,14 @@ void trrojan::configuration_set::optimise_order(
     for (auto& f : factors) {
         auto s = this->findFactor(f);
 
-        if ((s != this->_factors.end()) && (s != d)) {
-            // Note: swap/swap_iter destroys implementation pointer in factor.
-            auto t = *s;
-            *s = *d;
-            *d = t;
+        if (s != this->_factors.end()) {
+            if (s != d) {
+                // Note: swap/swap_iter destroys implementation pointer in
+                // factor.
+                auto t = *s;
+                *s = *d;
+                *d = t;
+            }
             --d;
         }
     }

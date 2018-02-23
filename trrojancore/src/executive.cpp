@@ -211,12 +211,16 @@ void trrojan::executive::trroll(const std::string& path, output_base& output) {
         if (curPlugin != nullptr) {
             auto it = std::find_if(benchmarks.begin(), benchmarks.end(),
                 [&b](const benchmark m) { return m->name() == b.benchmark; });
+            // HAZARD: IT IS INHERENTLY UNSAFE TO RUN DIFFERENT TYPES OF BENCHMARKS WITH DIFFERENT FACTORS FROM THE SAME FILE, BECAUSE THE CSV WILL BECOME BOGUS IN THIS CASE!
+            // Think about either preventing this or emitting new headers.
             if (it != benchmarks.end() && (*it != nullptr)) {
                 log::instance().write(log_level::information, "Running "
                     "benchmark \"%s\" from plugin \"%s\".\n",
                     b.benchmark.c_str(), b.plugin.c_str());
 
                 auto eds = this->prepare_env_devs(b.configs);
+
+                (**it).optimise_order(b.configs);
 
                 for (auto e : eds) {
                     this->enable_environment(e.environment);
@@ -226,8 +230,6 @@ void trrojan::executive::trroll(const std::string& path, output_base& output) {
                     for (auto d : e.devices) {
                         b.configs.replace_factor(factor::from_manifestations(
                             device_base::factor_name, d));
-
-                        (**it).optimise_order(b.configs);
 
                         (**it).run(b.configs, [&output](result&& r) {
                             output << r;
