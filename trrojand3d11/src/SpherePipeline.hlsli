@@ -229,6 +229,10 @@ struct PsRaycastingInput {
     nointerpolation float4 CameraUp : TEXCOORD3;
     nointerpolation float4 CameraRight : TEXCOORD4;
 
+#if defined(PER_VERTEX_RAY)
+    float4 Ray : TEXCOORD5;
+#endif /* defined(PER_VERTEX_RAY) */
+
 #if defined(HOLOMOL)
     nointerpolation uint Eye: SV_RenderTargetArrayIndex;
 #endif /* defined(HOLOMOL) */
@@ -256,16 +260,21 @@ struct PsOutput {
 #endif /* HOLOMOL */
 
 
+#ifdef _MSC_VER
+// See https://msdn.microsoft.com/de-de/library/windows/desktop/bb509632(v=vs.85).aspx
+#pragma pack(push)
+#pragma pack(4)
+#endif /* _MSC_VER */
+
 // Note: the current host implementation required the constant buffers to be the
 // same for all techniques, because we are including all this header in exactly
 // one file. Future implementations could work around this by using namespaces.
-
 
 cbuffer SphereConstants CBUFFER(0) {
     float4 GlobalColour;
     float2 IntensityRange;
     float GlobalRadius;
-    float _SpherePadding[9];
+    float _SpherePadding[1];
 
 };
 
@@ -300,16 +309,20 @@ cbuffer TessellationConstants CBUFFER(2) {
     /// </remarks>
     float2 InsideTessFactor;
 
+    float2 _TessPadding1;
+
     /// <summary>
-    /// For tessellation of adaptive polygons, specifies the minimum (<c>x</c>)
-    /// and maximum (<c>y</c>) number of corners as well as the scaling
-    /// parameter of the adaptive tessellation (<c>z</c>).
-    /// For adaptive tessellation of spheres, this first two coordinates specify
-    /// the minimum and maximum tessellation factor whereas <c>z</c> again
+    /// For tessellation of adaptive polygons, specifies the minimum (index 0)
+    /// and maximum (index 1) number of corners as well as the scaling
+    /// parameter of the adaptive tessellation (index 2).
+    /// For adaptive tessellation of spheres, this first two indices specify
+    /// the minimum and maximum tessellation factor whereas the third again
     /// controls the tessellation. The values used by the HoliMoli app are
     /// 5, 25 and 3.
     /// </summary>
-    float3 AdaptiveTessParams;
+    float AdaptiveTessMin;
+    float AdaptiveTessMax;
+    float AdaptiveTessScale;
 
     /// <summary>
     /// A scaling factor for computing the tessellation factor for hemispheres
@@ -322,5 +335,9 @@ cbuffer TessellationConstants CBUFFER(2) {
     /// </summary>
     uint PolygonCorners;
 
-    float _TessPadding[5];
+    float2 _TessPadding2;
 };
+
+#ifdef _MSC_VER
+#pragma pack(pop)
+#endif /* _MSC_VER */

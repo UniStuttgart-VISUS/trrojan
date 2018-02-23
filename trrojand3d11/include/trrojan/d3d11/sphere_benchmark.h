@@ -48,6 +48,7 @@ namespace d3d11 {
         static const char *factor_edge_tess_factor;
         static const char *factor_force_float_colour;
         static const char *factor_frame;
+        static const char *factor_global_radius;
         static const char *factor_hemi_tess_scale;
         static const char *factor_inside_tess_factor;
         static const char *factor_iterations;

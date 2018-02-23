@@ -60,7 +60,7 @@ PsInput Main(OutputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
     ReconstructCamera(retval.CameraPosition, retval.CameraDirection,
         retval.CameraUp, retval.CameraRight, vmInv);
 
-    // Pass through sphere parameters and colour.
+    // Pass through sphere parameters.
     retval.SphereParams = patch[0].SphereParams;
 
 #if defined(QUAD_TESS)
@@ -73,7 +73,7 @@ PsInput Main(OutputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
     // are the secants of the final sphere, but we need to have the tangent.
     // Adjust the value such that the radius is equal to the altitude (apothem)
     // of the triangle.
-    float alpha = TWO_PI / (2.0f * max(PolygonCorners, 1.0f));
+    float alpha = TWO_PI / (2.0f * constants.EdgeTessFactor[0]);
     rad /= cos(alpha);
     //rad /= 0.9999398715340;
 
@@ -87,7 +87,7 @@ PsInput Main(OutputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
 
     // Orient the sprite towards the camera.
     float4x4 matOrient = OrientToCamera(pos, vmInv);
-    coords = mul(retval.Position, matOrient);
+    coords = mul(coords, matOrient);
 
     // Move sprite to world position.
     coords.xyz += pos;
@@ -155,6 +155,7 @@ PsInput Main(OutputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
     retval.Position = mul(coords, pm);
 #endif /* defined(RAYCASTING) */
 
+    // Pass through intensity or colour.
 #if defined(PER_PIXEL_INTENSITY)
     retval.Intensity = patch[0].Intensity;
 #else /* defined(PER_PIXEL_INTENSITY) */

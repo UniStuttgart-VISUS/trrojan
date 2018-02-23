@@ -172,7 +172,7 @@ VsOutput Main(VsInput input) {
 
 #else /* defined(SPHERE_INST) */
     /* Pass through data to geometry or hull shader. */
-    retval.SphereParams = input.SphereParams;
+    retval.SphereParams = float4(pos, rad);
 #endif /* defined(SPHERE_INST) */
 
 #if defined(PER_VERTEX_INTENSITY)

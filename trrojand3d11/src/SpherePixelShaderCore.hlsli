@@ -111,7 +111,7 @@ PsOutput Main(PsInput input) {
         // texture lookup before shading.
         float texCoords = TexCoordsFromIntensity(input.Intensity, IntensityRange);
         float4 baseColour = TransferFunction.SampleLevel(LinearSampler, texCoords, 0);
-        baseColour = float4(1.0f, 0.0f, 0.0f, 1.0f);
+        //baseColour = float4(1.0f, 0.0f, 0.0f, 1.0f);
 #else /* defined(PER_PIXEL_INTENSITY) */
         // Colour is explicitly given or transfer function has already been
         // sampled in vertex shader stage.

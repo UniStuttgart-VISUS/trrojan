@@ -20,7 +20,7 @@ typedef DirectX::XMINT4 int4;
 typedef DirectX::XMFLOAT4X4 float4x4;
 typedef std::uint32_t uint;
 
-#define cbuffer /*__declspec(align(16))*/ struct
+#define cbuffer __declspec(align(16)) struct
 
 #define CBUFFER(slot)
 

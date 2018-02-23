@@ -40,6 +40,7 @@ _SPHERE_BENCH_DEFINE_FACTOR(data_set);
 _SPHERE_BENCH_DEFINE_FACTOR(edge_tess_factor);
 _SPHERE_BENCH_DEFINE_FACTOR(force_float_colour);
 _SPHERE_BENCH_DEFINE_FACTOR(frame);
+_SPHERE_BENCH_DEFINE_FACTOR(global_radius);
 _SPHERE_BENCH_DEFINE_FACTOR(hemi_tess_scale);
 _SPHERE_BENCH_DEFINE_FACTOR(inside_tess_factor);
 _SPHERE_BENCH_DEFINE_FACTOR(iterations);
@@ -67,13 +68,15 @@ trrojan::d3d11::sphere_benchmark::sphere_benchmark(void)
     this->_default_configs.add_factor(factor::from_manifestations(
         factor_adapt_tess_scale, 2.0f));
     this->_default_configs.add_factor(factor::from_manifestations(
-        factor_conservative_depth, { true, false }));
+        factor_conservative_depth, false));
     this->_default_configs.add_factor(factor::from_manifestations(
         factor_edge_tess_factor, { edge_tess_factor_type { 4, 4, 4, 4} }));
     this->_default_configs.add_factor(factor::from_manifestations(
-        factor_force_float_colour, { true, false }));
+        factor_force_float_colour, false));
     this->_default_configs.add_factor(factor::from_manifestations(
         factor_frame, static_cast<frame_type>(0)));
+    this->_default_configs.add_factor(factor::from_manifestations(
+        factor_global_radius, 1.0f));
     this->_default_configs.add_factor(factor::from_manifestations(
         factor_hemi_tess_scale, 0.5f));
     this->_default_configs.add_factor(factor::from_manifestations(
@@ -89,11 +92,11 @@ trrojan::d3d11::sphere_benchmark::sphere_benchmark(void)
             factor_method, manifestations));
     }
     this->_default_configs.add_factor(factor::from_manifestations(
-        factor_poly_corners, { 4u, 5u, 6u }));
+        factor_poly_corners, 4u));
     this->_default_configs.add_factor(factor::from_manifestations(
-        factor_vs_raygen, { true, false }));
+        factor_vs_raygen, false));
     this->_default_configs.add_factor(factor::from_manifestations(
-        factor_vs_xfer_function, { true, false }));
+        factor_vs_xfer_function, false));
 
     this->_default_configs.add_factor(factor::from_manifestations(
         factor_manoeuvre, manoeuvre_type("diagonal")));
@@ -137,7 +140,7 @@ std::vector<std::string> trrojan::d3d11::sphere_benchmark::required_factors(
  * trrojan::d3d11::sphere_benchmark::on_run
  */
 trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
-        const configuration& config, const std::vector<std::string>& changed) {
+    const configuration& config, const std::vector<std::string>& changed) {
     typedef rendering_technique::shader_stage shader_stage;
 
     trrojan::timer cpuTimer;
@@ -245,10 +248,12 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
     if ((this->get_data_properties(shaderCode) & SPHERE_INPUT_PV_COLOUR) == 0) {
         shaderCode &= ~SPHERE_INPUT_FLT_COLOUR;
     }
-    if ((this->get_data_properties(shaderCode) & SPHERE_INPUT_PV_INTENSITY)
-            == 0) {
-        shaderCode &= ~SPHERE_INPUT_PV_INTENSITY;
-        shaderCode &= ~SPHERE_INPUT_PP_INTENSITY;
+    {
+        static const auto INTENSITY_MASK = (SPHERE_INPUT_PV_INTENSITY
+            | SPHERE_INPUT_PP_INTENSITY);
+        if ((this->get_data_properties(shaderCode) & INTENSITY_MASK) == 0) {
+            shaderCode &= ~INTENSITY_MASK;
+        }
     }
 
     // Select or create the right rendering technique and apply the data set
@@ -278,8 +283,10 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
     // Prepare the result set.
     auto retval = std::make_shared<basic_result>(std::move(config),
         std::initializer_list<std::string> {
-            "iteration",
+        "iteration",
             "particles",
+            "ia_vertices",
+            "ia_primitives",
             "vs_invokes",
             "hs_invokes",
             "ds_invokes",
@@ -321,7 +328,7 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
         this->cam.set_near_plane_dist(0.1f);
         this->cam.set_far_plane_dist(2.0f * bbMax);
 
-        auto pos = glm::vec3(bbs[0]+ 0.5f * bbSize[0],
+        auto pos = glm::vec3(bbs[0] + 0.5f * bbSize[0],
             bbs[1] + 0.5f * bbSize[1],
             bbs[2] + 0.5f * bbSize[2] + dist);
         auto lookAt = pos + glm::vec3(0.0f, 0.0f, 0.5f * bbSize[2]);
@@ -356,6 +363,8 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
 
     // Set data constants.
     {
+        ::ZeroMemory(&sphereConstants, sizeof(SphereConstants));
+
         auto m = std::dynamic_pointer_cast<mmpld_data_set>(this->data);
         if (m != nullptr) {
             auto& l = m->header();
@@ -377,7 +386,8 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
 
             sphereConstants.IntensityRange.x = 0.0f;
             sphereConstants.IntensityRange.y = 1.0f;
-            sphereConstants.GlobalRadius = 1.0f;
+            sphereConstants.GlobalRadius = config.get<float>(
+                factor_global_radius);
         }
     }
 
@@ -396,11 +406,11 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
         tessConstants.InsideTessFactor.y = f[1];
     }
 
-    tessConstants.AdaptiveTessParams.x = config.get<float>(
-        factor_adapt_tess_maximum);
-    tessConstants.AdaptiveTessParams.y = config.get<float>(
+    tessConstants.AdaptiveTessMin = config.get<float>(
         factor_adapt_tess_minimum);
-    tessConstants.AdaptiveTessParams.z = config.get<float>(
+    tessConstants.AdaptiveTessMax = config.get<float>(
+        factor_adapt_tess_maximum);
+    tessConstants.AdaptiveTessScale = config.get<float>(
         factor_adapt_tess_scale);
 
     tessConstants.HemisphereTessScaling = config.get<float>(
@@ -465,6 +475,8 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
             retval->add({
                 i,
                 this->data->size(),
+                pipeStats.IAVertices,
+                pipeStats.IAPrimitives,
                 pipeStats.VSInvocations,
                 pipeStats.HSInvocations,
                 pipeStats.DSInvocations,
@@ -606,7 +618,7 @@ trrojan::d3d11::sphere_benchmark::get_data_properties(
             = SPHERE_INPUT_PV_INTENSITY
             | SPHERE_INPUT_PP_INTENSITY;
         retval &= ~LET_TECHNIQUE_DECIDE;
-        retval |= shaderCode & LET_TECHNIQUE_DECIDE;
+        retval |= (shaderCode & LET_TECHNIQUE_DECIDE);
     }
 
     return retval;

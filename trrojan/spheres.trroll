@@ -1,0 +1,94 @@
+d3d11::sphere-renderer {
+    string data_set = pos_intensity : 100 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 1000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 10000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 100 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 1000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 10000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3
+    float32 global_radius = 0.3
+
+    string method = quad_tess
+
+    boolean vs_xfer_function = false; true
+    boolean conservative_depth = false; true
+    boolean vs_raygen = false
+    boolean force_float_colour = false; true
+
+
+    string manoeuvre = diagonal
+    uint32 manoeuvre_steps = 100
+    uint32 manoeuvre_step = 0; 5; 10; 15; 20; 25; 30; 35; 40; 45; 50; 55; 60; 65; 70; 75; 80; 85; 90; 95; 99
+
+    uint32vec2 viewport = 1024 768; 1920 1080; 4096 2160
+    boolean debug_view = false
+
+    uint32 iterations = 8
+}
+
+
+d3d11::sphere-renderer {
+    string data_set = pos_intensity : 100 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 1000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 10000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 100 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 1000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 10000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3
+    float32 global_radius = 0.3
+
+    string method = adapt_poly_tess
+    float32 adapt_tess_minimum = 4
+    float32 adapt_tess_maximum = 16
+    float32 adapt_tess_scale = 4
+
+    boolean vs_xfer_function = false; true
+    boolean conservative_depth = false; true
+    boolean vs_raygen = false
+    boolean force_float_colour = false; true
+
+
+    string manoeuvre = diagonal
+    uint32 manoeuvre_steps = 100
+    uint32 manoeuvre_step = 0; 5; 10; 15; 20; 25; 30; 35; 40; 45; 50; 55; 60; 65; 70; 75; 80; 85; 90; 95; 99
+
+    uint32vec2 viewport = 1024 768; 1920 1080; 4096 2160
+    boolean debug_view = false
+
+    uint32 iterations = 8
+}
+
+
+d3d11::sphere-renderer {
+    string data_set = pos_intensity : 100 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 1000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 10000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 100 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 1000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 10000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3
+    float32 global_radius = 0.3
+
+    string method = poly_tess
+    uint32 poly_corners = 4; 5; 6; 7; 8; 16; 32
+
+    boolean vs_xfer_function = false; true
+    boolean conservative_depth = false; true
+    boolean vs_raygen = false
+    boolean force_float_colour = false; true
+
+
+    string manoeuvre = diagonal
+    uint32 manoeuvre_steps = 100
+    uint32 manoeuvre_step = 0; 5; 10; 15; 20; 25; 30; 35; 40; 45; 50; 55; 60; 65; 70; 75; 80; 85; 90; 95; 99
+
+    uint32vec2 viewport = 1024 768; 1920 1080; 4096 2160
+    boolean debug_view = false
+
+    uint32 iterations = 8
+}
+
+
+d3d11::sphere-renderer {
+    string data_set = pos_intensity : 100 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 1000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 10000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 100 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 1000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 10000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3
+    float32 global_radius = 0.3
+
+    string method = geo_quad; stpa
+
+    boolean vs_xfer_function = false; true
+    boolean conservative_depth = false; true
+    boolean vs_raygen = false
+    boolean force_float_colour = false; true
+
+
+    string manoeuvre = diagonal
+    uint32 manoeuvre_steps = 100
+    uint32 manoeuvre_step = 0; 5; 10; 15; 20; 25; 30; 35; 40; 45; 50; 55; 60; 65; 70; 75; 80; 85; 90; 95; 99
+
+    uint32vec2 viewport = 1024 768; 1920 1080; 4096 2160
+    boolean debug_view = false
+
+    uint32 iterations = 8
+}
