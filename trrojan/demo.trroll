@@ -1,12 +1,12 @@
 d3d11::sphere-renderer {
 	string data_set = pos_rad_intensity : 1000 : - : 10 10 10 : 0.01 0.1
 	uint32 frame = 0
-	uint32 iterations = 10000
+	uint32 iterations = 10
 	boolean debug_view = true
 
-	#string method = quad_inst; poly_tess; adapt_poly_tess; sphere_tess; adapt_sphere_tess; hemisphere_tess; adapt_hemisphere_tess; geo_quad; geo_poly; stpa
+	##string method = quad_inst; poly_tess; adapt_poly_tess; sphere_tess; adapt_sphere_tess; hemisphere_tess; adapt_hemisphere_tess; geo_quad; geo_poly; stpa
 	#string method = quad_tess
-	string method = poly_tess
+	string method = sphere_tess; hemisphere_tess
 	#string method = hemisphere_tess; geo_quad; stpa
 
 
@@ -25,5 +25,9 @@ d3d11::sphere-renderer {
 	boolean force_float_colour = false
 	boolean vs_raygen = true; false
 	boolean vs_xfer_function = true
+
+	string manouevre = diagonal
+	uint32 manoeuvre_steps = 100
+	uint32 manoeuvre_step = 0; 1; 2;3;4;5;6;7;8;9;10;11;12;13;14;15;16;17;18;19;20
 }
 

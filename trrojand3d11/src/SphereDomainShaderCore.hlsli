@@ -133,7 +133,7 @@ PsInput Main(OutputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
     float4x4 matOrient = float4x4(
         float4(r, 0.0f),
         -float4(v, 0.0f),
-        float4(u, 0.0f),
+        -float4(u, 0.0f),
         float4(0.0f.xxx, 1.0f));
     //float4x4 matOrient = OrientToCamera(pos, invVm);
     //float4 v = matOrient._31_32_33_34;
@@ -142,7 +142,7 @@ PsInput Main(OutputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
     coords = mul(coords, matOrient);
 #endif /* (defined(HEMISPHERE_TESS) || defined(ADAPT_HEMISPHERE_TESS)) */
 
-    // The normal are the sphere coordinates.
+    // Sphere coordinates and normal are the same.
     retval.WorldNormal = coords.xyz;
 
     // Move the sphere to the right location.
