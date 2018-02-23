@@ -98,7 +98,7 @@ d3d11::sphere-renderer {
     string data_set = pos_intensity : 100 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 1000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 10000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3
     float32 global_radius = 0.3
 
-    string method = sphere_tess
+    string method = sphere_tess; hemisphere_tess
     float32vec4 edge_tess_factor = 4 4 4 4; 8 8 8 8; 16 16 16 16
     float32vec2 inside_tess_factor = 4 4; 8 8; 16 16
     float32 hemi_tess_scale = 0.5
@@ -124,7 +124,7 @@ d3d11::sphere-renderer {
     string data_set = pos_intensity : 100 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 1000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 10000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3
     float32 global_radius = 0.3
 
-    string method = adapt_sphere_tess
+    string method = adapt_sphere_tess; adapt_hemisphere_tess
     float32 hemi_tess_scale = 0.5
     float32 adapt_tess_minimum = 5
     float32 adapt_tess_maximum = 25
