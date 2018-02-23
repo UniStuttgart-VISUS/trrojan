@@ -66,14 +66,14 @@ PsInput Main(OutputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
 #if defined(QUAD_TESS)
     float4 coords = float4(uv.xy, 0.0f, 1.0f);
     coords.xy -= 0.5f.xx;
-    coords.xy *= rad;
+    coords.xy *= 2.0f * rad;
 
 #else /* defined(QUAD_TESS) */
     // If we use the radius of the sphere as size of the triangle fan, its hull
     // are the secants of the final sphere, but we need to have the tangent.
     // Adjust the value such that the radius is equal to the altitude (apothem)
     // of the triangle.
-    float alpha = TWO_PI / (2.0f * constants.EdgeTessFactor[0]);
+    float alpha = TWO_PI / (2.0f * max(PolygonCorners, 1.0f));
     rad /= cos(alpha);
     //rad /= 0.9999398715340;
 
@@ -144,6 +144,7 @@ PsInput Main(OutputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
 
     // The normal are the sphere coordinates.
     retval.WorldNormal = normalize(coords.xyz);
+    retval.WorldNormal = normalize(mul(coords, vm).xyz);
 
     // Move the sphere to the right location.
     coords.xyz += pos;

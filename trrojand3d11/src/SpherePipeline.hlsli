@@ -317,5 +317,10 @@ cbuffer TessellationConstants CBUFFER(2) {
     /// </summary>
     float HemisphereTessScaling;
 
-    float _TessPadding[6];
+    /// <summary>
+    /// In case of shader-generated polygons, the number of corners to create.
+    /// </summary>
+    uint PolygonCorners;
+
+    float _TessPadding[5];
 };

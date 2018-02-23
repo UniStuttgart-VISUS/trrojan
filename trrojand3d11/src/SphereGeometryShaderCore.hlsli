@@ -208,15 +208,41 @@ void Main(point VsOutput input[1], inout TriangleStream<PsInput> triStream) {
     float4x4 matOrient = OrientToCamera(objPos.xyz, invVm);
 
     // Compute apothem of triangle fan enclosing the whole sphere.
-    uint cnt = min((uint) EdgeTessFactor.x, CNT_MAX_VERTICES);
+    uint cnt = min(PolygonCorners, CNT_MAX_VERTICES);
     float alpha = TWO_PI / (2.0f * cnt);
     rad /= cos(alpha);
 
-    for (uint i = 0; i < cnt; ++i) {
-        float phi = i / cnt;
-        float sinPhi, cosPhi;
-        sincos(phi, sinPhi, cosPhi);
+    float phi = 0.0f;
+    float sinPhi = 0.0f;
+    float cosPhi = 1.0f;
 
+    v.Position = float4(rad * cosPhi, rad * sinPhi, 0.0f, 1.0f);
+
+    // Orient the sprite towards the camera.
+    v.Position = mul(v.Position, matOrient);
+
+    // Move sprite to world position.
+    v.Position.xyz += objPos.xyz;
+    v.Position.xyz -= rad * matOrient._31_32_33;
+
+    // Do the camera transform.
+    v.Position = mul(v.Position, mvp);
+
+    triStream.Append(v);
+
+    // https://www.gamedev.net/forums/topic/199741-convex-polygon-to-triangle-strip/
+    uint i = 1;
+    uint j = cnt - 1;
+    bool k = false;
+
+    while (i < j) {
+        if (k) {
+            phi = i++ / cnt;
+        } else {
+            phi = TWO_PI - (j-- / cnt);
+        }
+
+        sincos(phi, sinPhi, cosPhi);
         v.Position = float4(rad * cosPhi, rad * sinPhi, 0.0f, 1.0f);
 
         // Orient the sprite towards the camera.
@@ -230,6 +256,8 @@ void Main(point VsOutput input[1], inout TriangleStream<PsInput> triStream) {
         v.Position = mul(v.Position, mvp);
 
         triStream.Append(v);
+
+        k = !k;
     }
 
     triStream.RestartStrip();

@@ -34,7 +34,7 @@ SamplerState LinearSampler : register(s0);
 PsOutput Main(PsInput input) {
     PsOutput retval = (PsOutput) 0;
 
-#define BILLBOARD
+//#define BILLBOARD
 #ifdef BILLBOARD
     retval.Colour = float4(1.0, 1.0, 0.0, 1.0);
     return retval;
@@ -62,11 +62,7 @@ PsOutput Main(PsInput input) {
 
     float4 objPos = float4(input.SphereParams.xyz, 1.0);
 
-    // TODO
-    float4 lightPos = normalize(float4(0.5, -1.0, -1.0, 0));
-    lightPos *= -1;
-    lightPos = mul(lightPos, ViewInvMatrix[eye]);
-    lightPos = input.CameraDirection;
+    float4 lightDir = normalize(input.CameraDirection);
     float rad = input.SphereParams.w;
     float squarRad = rad * rad;
 
@@ -115,13 +111,15 @@ PsOutput Main(PsInput input) {
         // texture lookup before shading.
         float texCoords = TexCoordsFromIntensity(input.Intensity, IntensityRange);
         float4 baseColour = TransferFunction.SampleLevel(LinearSampler, texCoords, 0);
+        baseColour = float4(1.0f, 0.0f, 0.0f, 1.0f);
 #else /* defined(PER_PIXEL_INTENSITY) */
         // Colour is explicitly given or transfer function has already been
         // sampled in vertex shader stage.
         float4 baseColour = input.Colour;
+        //baseColour = float4(0.0f, 1.0f, 0.0f, 1.0f);
 #endif /* defined(PER_PIXEL_INTENSITY) */
 
-        retval.Colour = float4(LocalLighting(ray, normal, lightPos.xyz, baseColour.rgb), baseColour.a);
+        retval.Colour = float4(LocalLighting(ray, normal, lightDir.xyz, baseColour.rgb), baseColour.a);
         //retval.Colour = baseColour;
     }
 
@@ -144,7 +142,7 @@ PsOutput Main(PsInput input) {
     // The colour is the intensity value, which for we need to perform a
     // texture lookup before shading.
     float texCoords = TexCoordsFromIntensity(input.Intensity, IntensityRange);
-    texCoords = 1.0f - texCoords;
+    //texCoords = 1.0f - texCoords;
     float4 baseColour = TransferFunction.SampleLevel(LinearSampler, texCoords, 0);
 #else /* defined(PER_PIXEL_INTENSITY) */
     // Colour is explicitly given or transfer function has already been

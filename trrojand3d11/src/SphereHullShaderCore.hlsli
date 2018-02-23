@@ -41,7 +41,16 @@ HsConstants CalcConstants(InputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
     retval.InsideTessFactor[0]
         = retval.InsideTessFactor[1] = 1.0f;
 
-#elif (defined(POLY_TESS) || defined(SPHERE_TESS) || defined(HEMISPHERE_TESS))
+#elif defined(POLY_TESS)
+    // Tessellation factors are CPU-defined.
+    retval.EdgeTessFactor[0]
+        = retval.EdgeTessFactor[1]
+        = retval.EdgeTessFactor[2]
+        = retval.EdgeTessFactor[3] = PolygonCorners;
+    retval.InsideTessFactor[0]
+        = retval.InsideTessFactor[1] = 1;
+
+#elif (defined(SPHERE_TESS) || defined(HEMISPHERE_TESS))
     // Tessellation factors are CPU-defined.
     retval.EdgeTessFactor[0] = EdgeTessFactor.x;
     retval.EdgeTessFactor[1] = EdgeTessFactor.y;

@@ -245,6 +245,11 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
     if ((this->get_data_properties(shaderCode) & SPHERE_INPUT_PV_COLOUR) == 0) {
         shaderCode &= ~SPHERE_INPUT_FLT_COLOUR;
     }
+    if ((this->get_data_properties(shaderCode) & SPHERE_INPUT_PV_INTENSITY)
+            == 0) {
+        shaderCode &= ~SPHERE_INPUT_PV_INTENSITY;
+        shaderCode &= ~SPHERE_INPUT_PP_INTENSITY;
+    }
 
     // Select or create the right rendering technique and apply the data set
     // to the technique.
@@ -401,6 +406,8 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
     tessConstants.HemisphereTessScaling = config.get<float>(
         factor_hemi_tess_scale);
 
+    tessConstants.PolygonCorners = config.get<std::uint32_t>(
+        factor_poly_corners);
 
     // Update constant buffers.
     ctx->UpdateSubresource(this->sphere_constants.p, 0, nullptr,
@@ -612,18 +619,6 @@ trrojan::d3d11::sphere_benchmark::get_data_properties(
 trrojan::d3d11::rendering_technique&
 trrojan::d3d11::sphere_benchmark::get_technique(ID3D11Device *device,
         shader_id_type shaderCode) {
-    {
-        // Erase flags controlled by the data from the shader code. These flags
-        // are in the shader code to select the preferred data format, but at
-        // the time we create the bitmask, we do not yet know whether the
-        // information is in the data.
-        const shader_id_type LET_DATA_DECIDE
-            = SPHERE_INPUT_PV_INTENSITY
-            | SPHERE_INPUT_PP_INTENSITY
-            | SPHERE_INPUT_FLT_COLOUR;
-        shaderCode &= ~LET_DATA_DECIDE;
-    }
-
     auto dataCode = this->get_data_properties(shaderCode);
     auto id = shaderCode | dataCode;
     auto isPsTex = ((id & SPHERE_INPUT_PP_INTENSITY) != 0);
