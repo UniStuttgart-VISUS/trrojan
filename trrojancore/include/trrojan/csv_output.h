@@ -14,7 +14,7 @@
 namespace trrojan {
 
     /// <summary>
-    /// Base class for output handlers.
+    /// Output handler writing the results to a CSV file.
     /// </summary>
     class TRROJANCORE_API csv_output : public output_base {
 

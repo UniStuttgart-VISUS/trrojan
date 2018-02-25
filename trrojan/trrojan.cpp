@@ -1,5 +1,5 @@
 /// <copyright file="trrojan.cpp" company="SFB-TRR 161 Quantitative Methods for Visual Computing">
-/// Copyright © 2016 - 2017 SFB-TRR 161. Alle Rechte vorbehalten.
+/// Copyright © 2016 - 2018 SFB-TRR 161. Alle Rechte vorbehalten.
 /// </copyright>
 /// <author>Christoph Müller</author>
 
@@ -7,6 +7,7 @@
 #include <numeric>
 
 #include "trrojan/cmd_line.h"
+#include "trrojan/console_output.h"
 #include "trrojan/executive.h"
 #include "trrojan/log.h"
 
@@ -30,6 +31,8 @@ int main(const int argc, const char **argv) {
                 trrojan::log::instance().write_line(trrojan::log_level::warning,
                     "You have not specified an output file. Please do so using "
                     "the --output option.");
+                output = std::make_shared<trrojan::console_output>();
+                output->open(trrojan::console_output_params::create());
             }
         }
 

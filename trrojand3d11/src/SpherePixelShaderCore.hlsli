@@ -34,7 +34,7 @@ SamplerState LinearSampler : register(s0);
 PsOutput Main(PsInput input) {
     PsOutput retval = (PsOutput) 0;
 
-//#define BILLBOARD
+#define BILLBOARD
 #ifdef BILLBOARD
     retval.Colour = float4(1.0, 1.0, 0.0, 1.0);
     return retval;

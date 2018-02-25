@@ -122,8 +122,7 @@ VsOutput Main(VsInput input) {
     /* Generate vertex from nothing based on the vertex ID. */
 #if defined(QUAD_INST)
     const float2 FLIP_Y = float2(1.0f, -1.0f);  // Flips the y-axis of a float2.
-    retval.Position = float4(input.VertexID % 2, input.VertexID % 4 / 2,
-        0.0f, 1.0f);
+    retval.Position = float4(input.VertexID % 2, input.VertexID / 2, 0.0f, 1.0f);
     retval.Position.xy = 2.0f * FLIP_Y * (retval.Position.xy - 0.5f.xx);
     retval.Position.xyz *= rad;
 
@@ -159,6 +158,7 @@ VsOutput Main(VsInput input) {
 
     // Move sprite to world position.
     retval.Position.xyz += pos;
+    //retval.Position.x += particleID * rad;
     retval.Position.xyz -= rad * matOrient._31_32_33;
 
     // Do the camera transform.
