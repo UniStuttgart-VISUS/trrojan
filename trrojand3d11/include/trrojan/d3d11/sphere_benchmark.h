@@ -46,6 +46,7 @@ namespace d3d11 {
         static const char *factor_conservative_depth;
         static const char *factor_data_set;
         static const char *factor_edge_tess_factor;
+        static const char *factor_fit_bounding_box;
         static const char *factor_force_float_colour;
         static const char *factor_frame;
         static const char *factor_global_radius;

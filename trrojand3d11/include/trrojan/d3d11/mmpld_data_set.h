@@ -41,6 +41,10 @@ namespace d3d11 {
         /// </summary>
         static sphere_data_set create(const char *path);
 
+        static const frame_load_flags load_flag_fit_bounding_box;
+        static const frame_load_flags load_flag_float_colour;
+        static const frame_load_flags load_flag_structured_resource;
+
         /// <summary>
         /// Open the given MMPLD data set without reading a frame.
         /// </summary>

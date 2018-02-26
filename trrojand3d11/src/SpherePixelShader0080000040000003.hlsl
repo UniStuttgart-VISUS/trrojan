@@ -1,4 +1,4 @@
-// This file was auto-generated using Create-SphereShaders.ps1 on 02/17/2018 17:02:58
+// This file was auto-generated using Create-SphereShaders.ps1 on 02/26/2018 18:48:22
 #define SPHERE_TESS (1)
 #define PER_VERTEX_COLOUR (1)
 #define PER_VERTEX_RADIUS (1)

@@ -296,7 +296,7 @@ void trrojan::d3d11::random_sphere_data_set::recreate(ID3D11Device *device,
 
     this->_properties = random_sphere_data_set::get_properties(this->_type);
     this->_properties |= (flags & VALID_INPUT_FLAGS);
-    this->_max_radius = std::numeric_limits<decltype(this->_max_radius)>::min();
+    this->_max_radius = std::numeric_limits<decltype(this->_max_radius)>::lowest();
 
     prng.seed(this->_seed);
     particles.resize(this->_size * stride);

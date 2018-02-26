@@ -38,6 +38,7 @@ _SPHERE_BENCH_DEFINE_FACTOR(adapt_tess_scale);
 _SPHERE_BENCH_DEFINE_FACTOR(conservative_depth);
 _SPHERE_BENCH_DEFINE_FACTOR(data_set);
 _SPHERE_BENCH_DEFINE_FACTOR(edge_tess_factor);
+_SPHERE_BENCH_DEFINE_FACTOR(fit_bounding_box);
 _SPHERE_BENCH_DEFINE_FACTOR(force_float_colour);
 _SPHERE_BENCH_DEFINE_FACTOR(frame);
 _SPHERE_BENCH_DEFINE_FACTOR(global_radius);
@@ -71,6 +72,8 @@ trrojan::d3d11::sphere_benchmark::sphere_benchmark(void)
         factor_conservative_depth, false));
     this->_default_configs.add_factor(factor::from_manifestations(
         factor_edge_tess_factor, { edge_tess_factor_type { 4, 4, 4, 4} }));
+    this->_default_configs.add_factor(factor::from_manifestations(
+        factor_fit_bounding_box, false));
     this->_default_configs.add_factor(factor::from_manifestations(
         factor_force_float_colour, false));
     this->_default_configs.add_factor(factor::from_manifestations(
@@ -221,7 +224,8 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
     {
         auto m = std::dynamic_pointer_cast<mmpld_data_set>(this->data);
         if (m != nullptr) {
-            auto isFrameChanged = contains(changed, factor_frame);
+            auto isFrameChanged = contains_any(changed, factor_frame,
+                factor_fit_bounding_box);
             auto isFrameCompat = this->check_data_compatibility(shaderCode);
 
             if (isFrameChanged || !isFrameCompat) {
@@ -812,6 +816,7 @@ trrojan::d3d11::sphere_benchmark::get_technique(ID3D11Device *device,
  */
 void trrojan::d3d11::sphere_benchmark::load_mmpld_frame(ID3D11Device *dev,
         const shader_id_type shaderCode, const configuration& config) {
+    auto flags = shaderCode;
     auto d = std::dynamic_pointer_cast<mmpld_data_set>(this->data);
     auto f = config.get<frame_type>(factor_frame);
 
@@ -820,9 +825,13 @@ void trrojan::d3d11::sphere_benchmark::load_mmpld_frame(ID3D11Device *dev,
             "MMPLD data set is open.");
     }
 
+    if (config.get<bool>(factor_fit_bounding_box)) {
+        flags |= mmpld_data_set::load_flag_fit_bounding_box;
+    }
+
     log::instance().write_line(log_level::verbose, "Loading MMPLD frame %u ...",
         f);
-    d->read_frame(dev, f, shaderCode);
+    d->read_frame(dev, f, flags);
 }
 
 

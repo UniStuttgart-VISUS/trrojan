@@ -12,7 +12,8 @@ begin {
     $SPHERE_TECHNIQUE_USE_SRV =  ([uint64] 1) -shl 29
     $SPHERE_TECHNIQUE_USE_RAYCASTING = ([uint64] 1) -shl 28
     $SPHERE_TECHNIQUE_USE_INSTANCING = ([uint64] 1) -shl 27
-    
+    $SPHERE_TECHNIQUE_RESERVED_MMPLD = ([uint64] 1) -shl 26
+
     # Rendering techniques.    
     $__SPHERE_TECH_BASE = ([uint64] 1) -shl 63
     $global:techniques = @{}
@@ -194,6 +195,7 @@ process {
     $includes += "#define SPHERE_INPUT_FLT_COLOUR ($("0x{0:X}" -f $SPHERE_INPUT_FLT_COLOUR))"
     $includes += "#define SPHERE_VARIANT_PV_RAY ($("0x{0:X}" -f $SPHERE_VARIANT_PV_RAY))"
     $includes += "#define SPHERE_VARIANT_CONSERVATIVE_DEPTH ($("0x{0:X}" -f $SPHERE_VARIANT_CONSERVATIVE_DEPTH))"
+    $includes += "#define SPHERE_TECHNIQUE_RESERVED_MMPLD ($("0x{0:X}" -f $SPHERE_TECHNIQUE_RESERVED_MMPLD))"
 
     $global:techniques.Keys | %{
         $includes +="#define SPHERE_TECHNIQUE_$($global:techniques[$_]) ($("0x{0:X}" -f $_)ull)"

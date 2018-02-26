@@ -9,6 +9,7 @@
 
 #include <cassert>
 #include <cinttypes>
+#include <limits>
 #include <sstream>
 #include <stdexcept>
 
@@ -26,6 +27,31 @@ trrojan::d3d11::sphere_data_set trrojan::d3d11::mmpld_data_set::create(
     retval->open(path);
     return retval;
 }
+
+
+/*
+ * trrojan::d3d11::mmpld_data_set::load_flag_fit_bounding_box
+ */
+const trrojan::d3d11::mmpld_data_set::frame_load_flags
+trrojan::d3d11::mmpld_data_set::load_flag_fit_bounding_box
+    = SPHERE_TECHNIQUE_RESERVED_MMPLD;
+
+
+/*
+ * trrojan::d3d11::mmpld_data_set::load_flag_float_colour
+ */
+const trrojan::d3d11::mmpld_data_set::frame_load_flags
+trrojan::d3d11::mmpld_data_set::load_flag_float_colour
+    = trrojan::d3d11::sphere_data_set_base::property_float_colour;
+
+
+
+/*
+ * trrojan::d3d11::mmpld_data_set::load_flag_structured_resource
+ */
+const trrojan::d3d11::mmpld_data_set::frame_load_flags
+trrojan::d3d11::mmpld_data_set::load_flag_structured_resource
+    = trrojan::d3d11::sphere_data_set_base::property_structured_resource;
 
 
 /*
@@ -262,6 +288,43 @@ trrojan::d3d11::mmpld_data_set::read_frame(ID3D11Device *device,
         }
     }
 
+    // Recompute bounding box as requested.
+    if ((options & load_flag_fit_bounding_box) != 0) {
+        log::instance().write_line(log_level::verbose, "Recomputing bounding "
+            "box of MMPLD data from data actually contained in the active "
+            "particle list...");
+
+        typedef std::decay<decltype(*this->_header.bounding_box)>::type bbox_type;
+        typedef std::numeric_limits<bbox_type> bbox_limits;
+        const auto stride = this->stride();
+
+        // Re-initialise with extrema.
+        for (size_t c = 0; c < 3; ++c) {
+            this->_header.bounding_box[c] = (bbox_limits::max)();
+            this->_header.bounding_box[c + 3] = (bbox_limits::lowest)();
+        }
+
+        // Search minimum and maximum.
+        for (size_t i = 0; i < this->_list.particles; ++i) {
+            auto pos = reinterpret_cast<const float *>(
+                data.data() + i * stride);
+            for (size_t c = 0; c < 3; ++c) {
+                if (pos[c] < this->_header.bounding_box[c]) {
+                    this->_header.bounding_box[c] = pos[c];
+                }
+                if (pos[c] > this->_header.bounding_box[c + 3]) {
+                    this->_header.bounding_box[c + 3] = pos[c];
+                }
+            }
+        }
+
+        log::instance().write_line(log_level::verbose, "Recomputed bounding "
+            "box of MMPLD data is (%f, %f, %f) - (%f, %f, %f).",
+            this->_header.bounding_box[0], this->_header.bounding_box[1],
+            this->_header.bounding_box[2], this->_header.bounding_box[3],
+            this->_header.bounding_box[4], this->_header.bounding_box[5]);
+    } /* end if ((options & load_flag_fit_bounding_box) != 0) */
+
     // If everything succeeded, create the vertex buffer.
     ::ZeroMemory(&bufferDesc, sizeof(bufferDesc));
     assert(cntData <= UINT_MAX);
@@ -290,7 +353,7 @@ trrojan::d3d11::mmpld_data_set::read_frame(ID3D11Device *device,
     set_debug_object_name(retval.p, "mmpld_data_set");
 
     this->_buffer = retval;
-    this->_properties |= (options & VALID_INPUT_FLAGS);
+    this->_properties = (options & VALID_INPUT_FLAGS);
     this->_properties |= mmpld_data_set::get_properties(this->_list);
 
     return retval;

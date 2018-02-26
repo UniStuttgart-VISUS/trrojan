@@ -1,4 +1,4 @@
-// This file was auto-generated using Create-SphereShaders.ps1 on 02/17/2018 17:02:56
+// This file was auto-generated using Create-SphereShaders.ps1 on 02/26/2018 18:48:20
 #define ADAPT_HEMISPHERE_TESS (1)
 #define PER_VERTEX_RADIUS (1)
 #include "SphereHullShaderCore.hlsli"
