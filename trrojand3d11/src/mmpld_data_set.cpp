@@ -287,6 +287,8 @@ trrojan::d3d11::mmpld_data_set::read_frame(ID3D11Device *device,
         throw std::runtime_error(msg.str());
     }
 
+    set_debug_object_name(retval.p, "mmpld_data_set");
+
     this->_buffer = retval;
     this->_properties |= (options & VALID_INPUT_FLAGS);
     this->_properties |= mmpld_data_set::get_properties(this->_list);

@@ -22,6 +22,7 @@
 
 #include "trrojan/d3d11/export.h"
 #include "trrojan/d3d11/rendering_technique.h"
+#include "trrojan/d3d11/utilities.h"
 
 
 namespace trrojan {

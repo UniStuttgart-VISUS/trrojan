@@ -203,6 +203,11 @@ namespace d3d11 {
         ID3D11Device *device, ID3D11ShaderResourceView **outOptSrv = nullptr);
 
     /// <summary>
+    /// Sets the <c>WKPDID_D3DDebugObjectName</c> of the given object.
+    /// </summary>
+    template<class T> void set_debug_object_name(T *obj, const char *name);
+
+    /// <summary>
     /// Determines whether the debug layers are installed on Windows 10.
     /// </summary>
     /// <remarks>

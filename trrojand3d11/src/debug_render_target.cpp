@@ -154,6 +154,8 @@ void trrojan::d3d11::debug_render_target::resize(const unsigned int width,
         throw ATL::CAtlException(hr);
     }
 
+    set_debug_object_name(backBuffer.p, "debug_render_target (colour buffer)");
+
     this->set_back_buffer(backBuffer.p);
 }
 

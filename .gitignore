@@ -21,3 +21,5 @@
 /include/Debug
 /include/Debug
 /include/Release
+/include/MinSizeRel
+/include/RelWithDebInfo

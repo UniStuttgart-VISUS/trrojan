@@ -488,6 +488,8 @@ ATL::CComPtr<ID3D11Texture1D> trrojan::d3d11::create_viridis_colour_map(
         throw ATL::CAtlException(hr);
     }
 
+    set_debug_object_name(retval.p, "viridis_colour_map");
+
     if (outOptSrv != nullptr) {
         hr = device->CreateShaderResourceView(retval, nullptr, outOptSrv);
         if (FAILED(hr)) {

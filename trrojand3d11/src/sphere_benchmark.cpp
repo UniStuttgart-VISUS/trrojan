@@ -170,10 +170,14 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
         // Constant buffers.
         this->sphere_constants = create_buffer(dev, D3D11_USAGE_DEFAULT,
             D3D11_BIND_CONSTANT_BUFFER, nullptr, sizeof(SphereConstants));
+        set_debug_object_name(this->sphere_constants.p, "sphere_constants");
         this->tessellation_constants = create_buffer(dev, D3D11_USAGE_DEFAULT,
             D3D11_BIND_CONSTANT_BUFFER, nullptr, sizeof(TessellationConstants));
+        set_debug_object_name(this->tessellation_constants.p,
+            "tessellation_constants");
         this->view_constants = create_buffer(dev, D3D11_USAGE_DEFAULT,
             D3D11_BIND_CONSTANT_BUFFER, nullptr, sizeof(ViewConstants));
+        set_debug_object_name(this->view_constants.p, "view_constants");
 
         // Textures and SRVs.
         this->colour_map = nullptr;

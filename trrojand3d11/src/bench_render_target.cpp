@@ -8,6 +8,8 @@
 #include <cassert>
 #include <sstream>
 
+#include "trrojan/d3d11/utilities.h"
+
 
 /*
  * trrojan::d3d11::bench_render_target::bench_render_target
@@ -43,6 +45,8 @@ void trrojan::d3d11::bench_render_target::resize(
     if (FAILED(hr)) {
         throw ATL::CAtlException(hr);
     }
+
+    set_debug_object_name(backBuffer.p, "bench_render_target (colour buffer)");
 
     // Update the back buffer and all of its views.
     this->_dsv = nullptr;

@@ -383,6 +383,8 @@ void trrojan::d3d11::random_sphere_data_set::recreate(ID3D11Device *device,
             throw ATL::CAtlException(hr);
         }
     }
+
+    set_debug_object_name(this->_buffer.p, "random_sphere_data_set");
 }
 
 
