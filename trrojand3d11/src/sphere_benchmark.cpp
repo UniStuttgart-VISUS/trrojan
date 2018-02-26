@@ -447,6 +447,15 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
         cntPrimitives = 4;
     }
 
+#if 0
+    {
+        auto soBuffer = create_buffer(dev, D3D11_USAGE_DEFAULT,
+            D3D11_BIND_STREAM_OUTPUT, nullptr, 4000 * sizeof(float) * 4, 0);
+        UINT soOffset[] = { 0 };
+        ctx->SOSetTargets(1, &soBuffer.p, soOffset);
+    }
+#endif
+
     // Render it.
     for (int i = 0; i < cntIterations;) {
         log::instance().write_line(log_level::debug, "Iteration %d.", i);
@@ -713,6 +722,16 @@ trrojan::d3d11::sphere_benchmark::get_technique(ID3D11Device *device,
             psRes.constant_buffers.push_back(this->view_constants);
 
             il = nullptr;   // Uses vertex-from-nothing technique.
+
+#if 0
+            D3D11_SO_DECLARATION_ENTRY soDecl[] = {
+                { 0, "SV_POSITION", 0, 0, 4, 0 }  // Position
+            };
+            auto vsSrc = d3d11::plugin::load_resource(
+                MAKEINTRESOURCE(it->second.vertex_shader), _T("SHADER"));
+            gs = create_geometry_shader(device, vsSrc.data(), vsSrc.size(),
+                soDecl, sizeof(soDecl) / sizeof(*soDecl), nullptr, 0, 0);
+#endif
 
 #if 0
             gs = create_geometry_shader(device, "C:\\Users\\mueller\\source\\repos\\TRRojan\\bin\\Debug\\PassThroughGeometryShader.cso");

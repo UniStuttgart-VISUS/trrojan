@@ -75,6 +75,32 @@ ATL::CComPtr<ID3D11GeometryShader> trrojan::d3d11::create_geometry_shader(
         reinterpret_cast<const BYTE *>(byteCode.data()), byteCode.size());
 }
 
+
+/*
+ * trrojan::d3d11::create_geometry_shader
+ */
+ATL::CComPtr<ID3D11GeometryShader> trrojan::d3d11::create_geometry_shader(
+        ID3D11Device *device, const BYTE *byteCode, const size_t cntByteCode,
+        const D3D11_SO_DECLARATION_ENTRY * soDecls, const size_t cntSoDecls,
+        const UINT *bufferStrides, const size_t cntBufferStrides,
+        const UINT rasterisedStream) {
+    assert(device != nullptr);
+    ATL::CComPtr<ID3D11GeometryShader> retval;
+
+    assert(cntSoDecls <= UINT_MAX);
+    assert(cntBufferStrides <= UINT_MAX);
+    auto hr = device->CreateGeometryShaderWithStreamOutput(
+        byteCode, cntByteCode, soDecls, static_cast<UINT>(cntSoDecls),
+        bufferStrides, static_cast<UINT>(cntBufferStrides), rasterisedStream,
+        nullptr, &retval);
+    if (FAILED(hr)) {
+        throw ATL::CAtlException(hr);
+    }
+
+    return retval;
+}
+
+
 /*
  * trrojan::d3d11::create_hull_shader
  */

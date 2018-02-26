@@ -66,8 +66,7 @@ void trrojan::d3d11::sphere_data_set_base::apply(rendering_technique& technique,
         desc.Format = DXGI_FORMAT_UNKNOWN;
         desc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
         desc.Buffer.FirstElement = 0;
-        desc.Buffer.NumElements = this->size() * this->stride();
-        desc.Buffer.ElementWidth = this->stride();
+        desc.Buffer.NumElements = this->size();
 
         auto hr = device->CreateShaderResourceView(this->buffer().p, &desc,
             &srv);

@@ -133,15 +133,15 @@ VsOutput Main(VsInput input) {
 
 #if defined(SPHERE_INST)
     /* Transform sphere geometry from VB for vertex shader stage. */
-    //retval.Position = float4(input.Position, 1.0f);
-    //retval.Position.xyz *= rad;
-    //retval.Position.xyz += pos.xyz;
-    //retval.Position = mul(retval.Position, mvp);
+    retval.Position = float4(input.Position, 1.0f);
+    retval.Position.xyz *= rad;
+    retval.Position.xyz += pos.xyz;
+    retval.Position = mul(retval.Position, mvp);
 
-    //// Retrieve data for later shading.
-    //retval.WorldPosition = input.Position.xyz;
-    //retval.WorldNormal = input.Normal;
-    //retval.ViewDirection = normalize(invVm._31_32_33);
+    // Retrieve data for later shading.
+    retval.WorldPosition = input.Position.xyz;
+    retval.WorldNormal = input.Normal;
+    retval.ViewDirection = normalize(invVm._31_32_33);
 
 #elif defined(INSTANCING)
     /*
@@ -159,8 +159,6 @@ VsOutput Main(VsInput input) {
 
     // Move sprite to world position.
     retval.Position.xyz += pos;
-    // retval.Position = float4(0.0.xxx, 1.0f);
-    //retval.Position.x += particleID * rad;
     retval.Position.xyz -= rad * matOrient._31_32_33;
 
     // Do the camera transform.

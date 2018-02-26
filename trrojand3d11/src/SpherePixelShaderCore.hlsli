@@ -36,11 +36,12 @@ PsOutput Main(PsInput input/*, bool isFront : SV_IsFrontFace*/) {
 
 //#define BILLBOARD
 #ifdef BILLBOARD
-    if (isFront) {
-        retval.Colour = float4(1.0, 0.0, 0.0, 1.0);
-    } else {
-        retval.Colour = float4(0.0, 6.0, 0.0, 1.0);
-    }
+    //if (isFront) {
+    //    retval.Colour = float4(1.0, 0.0, 0.0, 1.0);
+    //} else {
+    //    retval.Colour = float4(0.0, 6.0, 0.0, 1.0);
+    //}
+    retval.Colour = float4(1.0, 1.0f, 0.0f, 1.0f);
     return retval;
 #endif
 

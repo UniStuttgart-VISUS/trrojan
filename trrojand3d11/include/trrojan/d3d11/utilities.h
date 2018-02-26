@@ -73,6 +73,15 @@ namespace d3d11 {
     ATL::CComPtr<ID3D11GeometryShader> create_geometry_shader(
         ID3D11Device *device, const std::string& path);
 
+    /// <summary>
+    /// Creates a new geometry shader with stream output.
+    /// </summary>
+    ATL::CComPtr<ID3D11GeometryShader> create_geometry_shader(
+        ID3D11Device *device, const BYTE *byteCode, const size_t cntByteCode,
+        const D3D11_SO_DECLARATION_ENTRY *soDecls, const size_t cntSoDecls,
+        const UINT *bufferStrides = nullptr, const size_t cntBufferStrides = 0,
+        const UINT rasterisedStream = 0);
+
     ATL::CComPtr<ID3D11HullShader> create_hull_shader(ID3D11Device *device,
         const BYTE *byteCode, const size_t cntByteCode);
 
