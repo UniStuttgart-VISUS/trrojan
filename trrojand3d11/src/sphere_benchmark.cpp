@@ -709,6 +709,10 @@ trrojan::d3d11::sphere_benchmark::get_technique(ID3D11Device *device,
             psRes.constant_buffers.push_back(this->view_constants);
 
             il = nullptr;   // Uses vertex-from-nothing technique.
+
+#if 0
+            gs = create_geometry_shader(device, "C:\\Users\\mueller\\source\\repos\\TRRojan\\bin\\Debug\\PassThroughGeometryShader.cso");
+#endif
         }
 
         if (isTess) {
@@ -756,6 +760,22 @@ trrojan::d3d11::sphere_benchmark::get_technique(ID3D11Device *device,
             std::to_string(id), il, pt, vs, std::move(vsRes),
             hs, std::move(hsRes), ds, std::move(dsRes),
             gs, std::move(gsRes), ps, std::move(psRes));
+
+#if 0
+        {
+            D3D11_RASTERIZER_DESC desc;
+            rendering_technique::rasteriser_state_type state;
+
+            ::ZeroMemory(&desc, sizeof(desc));
+            desc.FillMode = D3D11_FILL_SOLID;
+            desc.CullMode = D3D11_CULL_NONE;
+
+            auto hr = device->CreateRasterizerState(&desc, &state);
+            assert(SUCCEEDED(hr));
+
+            this->technique_cache[id].set_rasteriser_state(state);
+        }
+#endif
     }
 
     retval = this->technique_cache.find(id);

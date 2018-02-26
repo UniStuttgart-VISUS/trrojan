@@ -249,7 +249,10 @@ void trrojan::d3d11::rendering_technique::apply(ID3D11DeviceContext *ctx) {
                 }
                 break;
         }
-    }
+    } /* end for (auto& res : this->_resources) */
+
+    /* Apply specific rasteriser state. */
+    ctx->RSSetState(this->rasteriserState.p);
 }
 
 

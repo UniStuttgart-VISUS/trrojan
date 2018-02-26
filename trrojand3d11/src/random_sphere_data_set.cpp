@@ -316,6 +316,10 @@ void trrojan::d3d11::random_sphere_data_set::recreate(ID3D11Device *device,
         pos->y = posDist(prng) * domainSize[1] - 0.5f * domainSize[1];
         pos->z = posDist(prng) * domainSize[2] - 0.5f * domainSize[2];
 
+#if 0
+        pos->x = pos->y = pos->z = g * domainSize[0] - 0.5f * domainSize[0];
+#endif
+
         switch (this->_type) {
             case sphere_type::pos_rad_intensity:
             case sphere_type::pos_rad_rgba32:
@@ -345,10 +349,12 @@ void trrojan::d3d11::random_sphere_data_set::recreate(ID3D11Device *device,
                 break;
 
             case sphere_type::pos_rgba8:
-            case sphere_type::pos_rad_rgba8:
-                *reinterpret_cast<COLORREF *>(pos + 1)
-                    = RGB(g * 255, g * 255, g * 255);
-                break;
+            case sphere_type::pos_rad_rgba8: {
+                auto s = static_cast<std::uint8_t>(g * 255);
+                auto d = reinterpret_cast<std::uint8_t *>(pos + 1);
+                d[0] = d[1] = d[2] = s;
+                d[3] = 255;
+                } break;
 
             default:
                 throw std::runtime_error("Unexpected sphere format.");

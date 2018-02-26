@@ -31,12 +31,16 @@ SamplerState LinearSampler : register(s0);
 /// Entry point of the pixel shader doing the raycasting of a sphere on the
 /// sprite.
 /// </summary>
-PsOutput Main(PsInput input) {
+PsOutput Main(PsInput input/*, bool isFront : SV_IsFrontFace*/) {
     PsOutput retval = (PsOutput) 0;
 
-#define BILLBOARD
+//#define BILLBOARD
 #ifdef BILLBOARD
-    retval.Colour = float4(1.0, 1.0, 0.0, 1.0);
+    if (isFront) {
+        retval.Colour = float4(1.0, 0.0, 0.0, 1.0);
+    } else {
+        retval.Colour = float4(0.0, 6.0, 0.0, 1.0);
+    }
     return retval;
 #endif
 

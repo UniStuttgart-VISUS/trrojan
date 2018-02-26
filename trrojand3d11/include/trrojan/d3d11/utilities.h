@@ -67,6 +67,12 @@ namespace d3d11 {
         return nullptr;
     }
 
+    /// <summary>
+    /// Create a new geometry shader from the byte code in a shader object file.
+    /// </summary>
+    ATL::CComPtr<ID3D11GeometryShader> create_geometry_shader(
+        ID3D11Device *device, const std::string& path);
+
     ATL::CComPtr<ID3D11HullShader> create_hull_shader(ID3D11Device *device,
         const BYTE *byteCode, const size_t cntByteCode);
 

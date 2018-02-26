@@ -38,6 +38,7 @@ void Main(point VsOutput input[1], inout TriangleStream<PsInput> triStream) {
 #else /* HOLOMOL */
     const uint eye = 0;
 #endif /* HOLOMOL */
+    float4x4 invVm = ViewInvMatrix[eye];
     float4x4 mvp = ViewProjMatrix[eye];
     float rad = input[0].SphereParams.w;
 
@@ -60,7 +61,7 @@ void Main(point VsOutput input[1], inout TriangleStream<PsInput> triStream) {
 
     // Reconstruct camera system.
     ReconstructCamera(v.CameraPosition, v.CameraDirection, v.CameraUp,
-        v.CameraRight, ViewInvMatrix[eye]);
+        v.CameraRight, invVm);
 
     // Transform camera to glyph space and undo stereo transform.
     v.CameraPosition.xyz -= objPos.xyz;
@@ -178,7 +179,6 @@ void Main(point VsOutput input[1], inout TriangleStream<PsInput> triStream) {
         float4(1.0f, -1.0f, 0.0f, 1.0f),
         float4(1.0f, 1.0f, 0.0f, 1.0f),
     };
-    float4x4 invVm = ViewInvMatrix[eye];
     float4x4 matOrient = OrientToCamera(objPos.xyz, invVm);
 
     [unroll(4)]
@@ -204,7 +204,6 @@ void Main(point VsOutput input[1], inout TriangleStream<PsInput> triStream) {
 #elif defined(GEO_POLY)
     const float PI = 3.14159265358979323846f;
     const float TWO_PI = 2.0f * PI;
-    float4x4 invVm = ViewInvMatrix[eye];
     float4x4 matOrient = OrientToCamera(objPos.xyz, invVm);
 
     // Compute apothem of triangle fan enclosing the whole sphere.

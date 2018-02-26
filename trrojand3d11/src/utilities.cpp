@@ -5,7 +5,7 @@
 
 #include "trrojan/d3d11/utilities.h"
 
-
+#include "trrojan/io.h"
 
 
 /*
@@ -64,6 +64,16 @@ ATL::CComPtr<ID3D11GeometryShader> trrojan::d3d11::create_geometry_shader(
     return retval;
 }
 
+
+/*
+ * trrojan::d3d11::create_geometry_shader
+ */
+ATL::CComPtr<ID3D11GeometryShader> trrojan::d3d11::create_geometry_shader(
+        ID3D11Device *device, const std::string& path) {
+    auto byteCode = trrojan::read_binary_file(path);
+    return create_geometry_shader(device,
+        reinterpret_cast<const BYTE *>(byteCode.data()), byteCode.size());
+}
 
 /*
  * trrojan::d3d11::create_hull_shader

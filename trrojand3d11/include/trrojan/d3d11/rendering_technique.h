@@ -34,6 +34,7 @@ namespace d3d11 {
         typedef ATL::CComPtr<ID3D11HullShader> hull_shader_type;
         typedef ATL::CComPtr<ID3D11InputLayout> input_layout_type;
         typedef ATL::CComPtr<ID3D11PixelShader> pixel_shader_type;
+        typedef ATL::CComPtr<ID3D11RasterizerState> rasteriser_state_type;
         typedef ATL::CComPtr<ID3D11SamplerState> sampler_state_type;
         typedef ATL::CComPtr<ID3D11ShaderResourceView> srv_type;
         typedef ATL::CComPtr<ID3D11VertexShader> vertex_shader_type;
@@ -261,6 +262,13 @@ namespace d3d11 {
         void set_constant_buffers(const std::vector<buffer_type>& buffers,
             const shader_stages stages, const UINT start = 0);
 
+        //// <summary>
+        /// Set a specific rasteriser state to apply.
+        //// </summary>
+        void set_rasteriser_state(rasteriser_state_type& rasteriserState) {
+            this->rasteriserState = rasteriserState;
+        }
+
         /// <summary>
         /// Add or replace the shader resource views starting at index
         /// <paramref name="start" /> in the given stages.
@@ -346,6 +354,7 @@ namespace d3d11 {
         std::string _name;
         pixel_shader_type pixelShader;
         D3D11_PRIMITIVE_TOPOLOGY primitiveTopology;
+        rasteriser_state_type rasteriserState;
         std::map<shader_stage, shader_resources> _resources;
         std::vector<vertex_buffer> vertexBuffers;
         vertex_shader_type vertexShader;
