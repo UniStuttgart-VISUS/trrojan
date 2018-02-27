@@ -107,6 +107,13 @@ trrojan::d3d11::sphere_benchmark::sphere_benchmark(void)
         factor_manoeuvre_step, static_cast<manoeuvre_step_type>(0)));
     this->_default_configs.add_factor(factor::from_manifestations(
         factor_manoeuvre_steps, static_cast<manoeuvre_step_type>(64)));
+#if 0
+    this->_default_configs.add_factor(factor::from_range(
+        factor_manoeuvre_step, static_cast<manoeuvre_step_type>(0),
+        static_cast<manoeuvre_step_type>(1000), 1000));
+    this->_default_configs.add_factor(factor::from_manifestations(
+        factor_manoeuvre_steps, static_cast<manoeuvre_step_type>(1000)));
+#endif
 
     // Build the lookup table for the shader resources.
     _ADD_SPHERE_SHADERS(this->shader_resources);
@@ -328,21 +335,6 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
 
         point_type bbs, bbe;
         this->data->bounding_box(bbs, bbe);
-        auto bbSize = this->data->extents();
-        auto bbMax = (std::max)(bbSize[0], bbSize[1]);
-        auto dist = 0.5f * bbMax / std::tan(this->cam.get_fovy() / 180.f
-            * trrojan::constants<float>::pi);
-
-        this->cam.set_near_plane_dist(0.1f);
-        this->cam.set_far_plane_dist(2.0f * bbMax);
-
-        auto pos = glm::vec3(bbs[0] + 0.5f * bbSize[0],
-            bbs[1] + 0.5f * bbSize[1],
-            bbs[2] + 0.5f * bbSize[2] + dist);
-        auto lookAt = pos + glm::vec3(0.0f, 0.0f, 0.5f * bbSize[2]);
-
-        this->cam.set_look(pos, lookAt, glm::vec3(0, 1, 0));
-
         this->apply_manoeuvre(this->cam, config, bbs, bbe);
 
         auto clipping = this->data->clipping_planes(cam);

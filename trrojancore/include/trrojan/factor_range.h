@@ -113,7 +113,7 @@ namespace detail {
     template<class T> std::unique_ptr<factor_range<T>> make_factor_from_range(
             const std::string& name, const T begin, const T end,
             const size_t cnt_steps) {
-        auto range = static_cast<double>(std::abs(end - begin));
+        auto range = std::abs(static_cast<double>(end - begin));
         auto retval = std::unique_ptr<factor_range<T>>(new factor_range<T>(name,
             begin, static_cast<T>(range / cnt_steps), cnt_steps));
         return std::move(retval);

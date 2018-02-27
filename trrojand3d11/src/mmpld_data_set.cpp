@@ -292,7 +292,7 @@ trrojan::d3d11::mmpld_data_set::read_frame(ID3D11Device *device,
     if ((options & load_flag_fit_bounding_box) != 0) {
         log::instance().write_line(log_level::verbose, "Recomputing bounding "
             "box of MMPLD data from data actually contained in the active "
-            "particle list...");
+            "particle list ...");
 
         typedef std::decay<decltype(*this->_header.bounding_box)>::type bbox_type;
         typedef std::numeric_limits<bbox_type> bbox_limits;
@@ -318,11 +318,19 @@ trrojan::d3d11::mmpld_data_set::read_frame(ID3D11Device *device,
             }
         }
 
-        log::instance().write_line(log_level::verbose, "Recomputed bounding "
-            "box of MMPLD data is (%f, %f, %f) - (%f, %f, %f).",
+        // Account for the radius.
+        for (size_t c = 0; c < 3; ++c) {
+            this->_header.bounding_box[c] -= this->_max_radius;
+            this->_header.bounding_box[c + 3] += this->_max_radius;
+        }
+
+        log::instance().write_line(log_level::verbose, "Recomputed "
+            "single-frame bounding box of MMPLD data is (%f, %f, %f) - "
+            "(%f, %f, %f) with maximum radius of %f.",
             this->_header.bounding_box[0], this->_header.bounding_box[1],
             this->_header.bounding_box[2], this->_header.bounding_box[3],
-            this->_header.bounding_box[4], this->_header.bounding_box[5]);
+            this->_header.bounding_box[4], this->_header.bounding_box[5],
+            this->_max_radius);
     } /* end if ((options & load_flag_fit_bounding_box) != 0) */
 
     // If everything succeeded, create the vertex buffer.

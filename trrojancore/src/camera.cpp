@@ -4,12 +4,15 @@
 /// <author>Valentin Bruder</author>
 
 #include "trrojan/camera.h"
+
 #include <stdexcept>
 #include <iostream>
 
 #define GLM_ENABLE_EXPERIMENTAL
-#include "glm/gtx/quaternion.hpp"
 #include "glm/gtc/constants.hpp"
+#include "glm/gtx/component_wise.hpp"
+#include "glm/gtx/quaternion.hpp"
+
 
 trrojan::camera::camera(vec3 look_from, vec3 look_to, vec3 look_up, float near_plane,
                         float far_plane)
@@ -121,7 +124,20 @@ void trrojan::camera::set_from_maneuver(const std::string &name, const glm::vec3
     if (iteration >= samples)
         throw std::invalid_argument("Iteration must be smaller than #samples.");
 
-    float pi = glm::pi<float>();
+    // Some generic constants.
+    const auto half_pi = 0.5f * glm::pi<float>();
+    const auto pi = glm::pi<float>();
+    const auto two_pi = 2.0f * glm::pi<float>();
+
+    // Some derived information about the data.
+    const auto data_centre = bbox_min + 0.5f * (bbox_max - bbox_min);
+    const auto data_size = glm::abs(bbox_max - bbox_min);
+    const auto data_max = glm::compMax(data_size);
+
+    // The relative progress of the manoeuvre.
+    const auto lambda = static_cast<float>(iteration)
+        / static_cast<float>(samples);
+
     // circle around axis
     if (name.find("orbit") != std::string::npos)
     {
@@ -164,53 +180,86 @@ void trrojan::camera::set_from_maneuver(const std::string &name, const glm::vec3
     {
         // NOTE: curves only implemented in xz-plane
         // fit initial view to bounding box x
-        this->set_look_to(bbox_min + (bbox_max - bbox_min)*0.5f);
-        float bbox_length_x = bbox_max.x - bbox_min.x;
-        float camera_dist = (bbox_length_x * 0.5f) / std::tan(fovy*0.5f*pi/180.f);
-        glm::vec3 start = glm::vec3(bbox_min) - glm::vec3(camera_dist);
-        float x = 2.f*pi * (iteration / (float)samples);
-        float view_translation = (iteration / (float)samples)*(camera_dist + bbox_length_x);
-        glm::vec3 to = glm::vec3(0);
-        _look_up = glm::vec3(0,1,0);
-        start += glm::vec3(view_translation);
+        const auto alpha = two_pi * lambda; // Angular progress on path.
+        const auto camera_dist = (bbox_max * 0.5f)  // Distance for full view.
+            / std::tan(fovy * half_pi / 180.0f);
+        auto cam_pos = data_centre;             // Position of camera.
+        auto dist = 0.0f;                       // Distance to travel.
+        auto ray = glm::vec3(0.0f);             // View direction of camera.
+        auto up = glm::vec3(0.0f, 1.0f, 0.0f);  // Camera up vector.
+        auto curve = glm::vec3(0.0f);           // Curve amplitude.
 
-        float tangent = bbox_length_x*0.25f; // amplitude
-        // straight lines
-        if (name.find("x") != std::string::npos)
-        {
-            this->set_look_from(start*glm::vec3(1,0,0));
-            to = glm::vec3(1, 0, 0);
+        if (name.find('x') != std::string::npos) {
+            dist = data_size.x;
+            auto cam_dist = 0.5f * (std::max)(data_size.y, data_size.z)
+                / std::tan(fovy * half_pi / 180.0f);
+            cam_pos.x -= 0.5f * dist + cam_dist;
+            dist += cam_dist;
+            ray = glm::vec3(1.0f, 0.0f, 0.0f);
+            curve.z = data_size.z;
+
+        } else if (name.find('y') != std::string::npos) {
+            dist = data_size.y;
+            auto cam_dist = 0.5f * (std::max)(data_size.x, data_size.z)
+                / std::tan(fovy * half_pi / 180.0f);
+            cam_pos.y -= 0.5f * dist + cam_dist;
+            dist += cam_dist;
+            ray = glm::vec3(0.0f, 1.0f, 0.0f);
+            curve.z = data_size.z;
+            up = glm::vec3(1.0f, 0.0f, 0.0f);
+
+        } else if (name.find('z') != std::string::npos) {
+            dist = data_size.z;
+            auto cam_dist = 0.5f * (std::max)(data_size.x, data_size.y)
+                / std::tan(fovy * half_pi / 180.0f);
+            cam_pos.z -= 0.5f * dist + cam_dist;
+            dist += cam_dist;
+            curve.x = data_size.x;
+            ray = glm::vec3(0.0f, 0.0f, 1.0f);
+
+        } else {
+            throw std::invalid_argument("The path manoeuvre requires the "
+                "primary motion axis 'x', 'y' or 'z' to be specified.");
         }
-        else if (name.find("y") != std::string::npos)
-        {
-            this->set_look_up(glm::vec3(1,0,0));
-            this->set_look_from(start*glm::vec3(0,1,0));
-            to = glm::vec3(0, 1, 0);
-        }
-        else if (name.find("z") != std::string::npos)
-        {
-            this->set_look_from(start*glm::vec3(0,0,1));
-            to = glm::vec3(0, 0, 1);
-        }
+
+        // Make sure that the camera stays within a corridor half of the data
+        // set side from the middle line through the data.
+        curve *= 0.25f;
+
         // curves
         // NOTE: currently only sin/cos in xz-plane are supported!
-        if (name.find("sin") != std::string::npos)
-        {
-            this->_look_from += glm::vec3(sin(x)*tangent, 0, 0);
-            tangent *= cos(x);
-            to = 2.f * glm::vec3(tangent, 0, 1.f - tangent);
+        if (name.find("sin") != std::string::npos) {
+            /* Sine curve along non-zero component of 'curve'. */
+            auto a = std::sin(alpha);
+            auto da = std::cos(alpha);
+
+            cam_pos += a * curve;
+            cam_pos += (lambda * dist) * ray;
+
+            da /= glm::compMax(curve);
+            auto quat = glm::angleAxis(da, up);
+            ray = glm::rotate(quat, ray);
+
+        } else if (name.find("cos") != std::string::npos) {
+            /* Cosine curve along non-zero component of 'curve'. */
+            auto a = std::cos(alpha);
+            auto da = -std::sin(alpha);
+
+            cam_pos += a * curve;
+            cam_pos += (lambda * dist) * ray;
+
+            da /= glm::compMax(curve);
+            auto quat = glm::angleAxis(da, up);
+            ray = glm::rotate(quat, ray);
+
+        } else {
+            /* Straight line. */
+            cam_pos += (lambda * dist) * ray;
         }
-        else if (name.find("cos") != std::string::npos)
-        {
-            this->_look_from -= glm::vec3(cos(x)*tangent, 0, 0);
-            tangent *= -sin(x);
-            to = glm::vec3(tangent, 0, 1.f - tangent);
-        }
-        else    // straight line
-        {
-            to *= glm::vec3(_look_from.z + camera_dist*2.0f);
-        }
-        this->set_look_to(to - _look_from);
+
+        this->set_look_from(cam_pos);
+        this->set_look_to(cam_pos + ray);
+        this->set_look_up(up);
     }
     else if (name.find("random") != std::string::npos)
     {
