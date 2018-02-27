@@ -145,6 +145,7 @@ void trrojan::camera::set_from_maneuver(const std::string &name, const glm::vec3
         this->set_look_to(bbox_min + (bbox_max - bbox_min)*0.5f);
         // fit view to bounding box x
         float bbox_length_x = bbox_max.x - bbox_min.x;
+        bbox_length_x = data_max;
         float camera_dist = (bbox_length_x * 0.5f) / std::tan(pi*fovy*0.5f/180.f);
         this->set_look_from(this->_look_to - glm::vec3(0, 0, bbox_min.z - camera_dist));
         // rotation in radians
@@ -266,6 +267,7 @@ void trrojan::camera::set_from_maneuver(const std::string &name, const glm::vec3
         this->set_look_to(glm::vec3(bbox_min + (bbox_max - bbox_min)*0.5f));
         // fit view to bounding box x
         float bbox_length_x = bbox_max.x - bbox_min.x;
+        bbox_length_x = data_max;
         float camera_dist = (bbox_length_x * 0.5f) / std::tan(fovy*0.5f*pi/180.f);
         // set random distance between center of bbox and 2x bbox fitted view
         float r = get_rand()*2.f;

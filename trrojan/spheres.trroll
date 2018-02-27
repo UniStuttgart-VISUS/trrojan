@@ -1,8 +1,8 @@
 d3d11::sphere-renderer {
-    string data_set = pos_intensity : 100 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 1000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 10000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 100 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 1000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 10000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3
+    string data_set = pos_intensity : 100 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 1000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 10000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 100 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 1000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 10000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; \\visus.uni-stuttgart.de\visusstore\share\Projekte\SFB 716\D3\Data\a8-kronenburg\megaridis-experimental.mmpld; \\visus.uni-stuttgart.de\visusstore\share\Projekte\SFB 716\D3\Data\exp2mill_signed_distance_00030.mmpld; \\visus.uni-stuttgart.de\visusstore\share\Projekte\SFB 716\D3\Data\B5.vid1.mmpld
     float32 global_radius = 0.3
 
-    string method = quad_tess
+    string method = quad_inst; quad_tess; geo_quad
 
     boolean vs_xfer_function = false; true
     boolean conservative_depth = false; true
@@ -10,11 +10,11 @@ d3d11::sphere-renderer {
     boolean force_float_colour = false
 
 
-    string manoeuvre = diagonal
+    string manoeuvre = diagonal_x; diagonal_y; diagonal_z; orbit_x; orbit_y; path_x; path_y; path_z; path_sinx; path_siny; path_sinz
     uint32 manoeuvre_steps = 100
-    uint32 manoeuvre_step = 0; 5; 10; 15; 20; 25; 30; 35; 40; 45; 50; 55; 60; 65; 70; 75; 80; 85; 90; 95; 99
+    uint32 manoeuvre_step = 0; 4; 9; 14; 19; 24; 29; 34; 39; 44; 49; 54; 59; 64; 69; 74; 79; 84; 89; 94; 99
 
-    uint32vec2 viewport = 1024 768; 1920 1080; 4096 2160
+    uint32vec2 viewport = 512 512; 1024 1024; 2048 2048
     boolean debug_view = false
 
     uint32 iterations = 8
@@ -22,7 +22,30 @@ d3d11::sphere-renderer {
 
 
 d3d11::sphere-renderer {
-    string data_set = pos_intensity : 100 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 1000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 10000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 100 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 1000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 10000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3
+    string data_set = pos_intensity : 100 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 1000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 10000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 100 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 1000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 10000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; \\visus.uni-stuttgart.de\visusstore\share\Projekte\SFB 716\D3\Data\a8-kronenburg\megaridis-experimental.mmpld; \\visus.uni-stuttgart.de\visusstore\share\Projekte\SFB 716\D3\Data\exp2mill_signed_distance_00030.mmpld; \\visus.uni-stuttgart.de\visusstore\share\Projekte\SFB 716\D3\Data\B5.vid1.mmpld
+    float32 global_radius = 0.3
+
+    string method = quad_inst
+
+    boolean vs_xfer_function = false; true
+    boolean conservative_depth = false; true
+    boolean vs_raygen = false
+    boolean force_float_colour = false; true
+
+
+    string manoeuvre = diagonal_x; diagonal_y; diagonal_z; orbit_x; orbit_y; path_x; path_y; path_z; path_sinx; path_siny; path_sinz
+    uint32 manoeuvre_steps = 100
+    uint32 manoeuvre_step = 0; 4; 9; 14; 19; 24; 29; 34; 39; 44; 49; 54; 59; 64; 69; 74; 79; 84; 89; 94; 99
+
+    uint32vec2 viewport = 512 512; 1024 1024; 2048 2048
+    boolean debug_view = false
+
+    uint32 iterations = 8
+}
+
+
+d3d11::sphere-renderer {
+    string data_set = pos_intensity : 100 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 1000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 10000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 100 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 1000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 10000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; \\visus.uni-stuttgart.de\visusstore\share\Projekte\SFB 716\D3\Data\a8-kronenburg\megaridis-experimental.mmpld; \\visus.uni-stuttgart.de\visusstore\share\Projekte\SFB 716\D3\Data\exp2mill_signed_distance_00030.mmpld; \\visus.uni-stuttgart.de\visusstore\share\Projekte\SFB 716\D3\Data\B5.vid1.mmpld
     float32 global_radius = 0.3
 
     string method = adapt_poly_tess
@@ -36,11 +59,11 @@ d3d11::sphere-renderer {
     boolean force_float_colour = false
 
 
-    string manoeuvre = diagonal
+    string manoeuvre = diagonal_x; diagonal_y; diagonal_z; orbit_x; orbit_y; path_x; path_y; path_z; path_sinx; path_siny; path_sinz
     uint32 manoeuvre_steps = 100
-    uint32 manoeuvre_step = 0; 5; 10; 15; 20; 25; 30; 35; 40; 45; 50; 55; 60; 65; 70; 75; 80; 85; 90; 95; 99
+    uint32 manoeuvre_step = 0; 4; 9; 14; 19; 24; 29; 34; 39; 44; 49; 54; 59; 64; 69; 74; 79; 84; 89; 94; 99
 
-    uint32vec2 viewport = 1024 768; 1920 1080; 4096 2160
+    uint32vec2 viewport = 512 512; 1024 1024; 2048 2048
     boolean debug_view = false
 
     uint32 iterations = 8
@@ -48,7 +71,7 @@ d3d11::sphere-renderer {
 
 
 d3d11::sphere-renderer {
-    string data_set = pos_intensity : 100 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 1000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 10000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 100 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 1000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 10000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3
+    string data_set = pos_intensity : 100 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 1000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 10000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 100 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 1000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 10000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; \\visus.uni-stuttgart.de\visusstore\share\Projekte\SFB 716\D3\Data\a8-kronenburg\megaridis-experimental.mmpld; \\visus.uni-stuttgart.de\visusstore\share\Projekte\SFB 716\D3\Data\exp2mill_signed_distance_00030.mmpld; \\visus.uni-stuttgart.de\visusstore\share\Projekte\SFB 716\D3\Data\B5.vid1.mmpld
     float32 global_radius = 0.3
 
     string method = poly_tess
@@ -60,11 +83,11 @@ d3d11::sphere-renderer {
     boolean force_float_colour = false
 
 
-    string manoeuvre = diagonal
+    string manoeuvre = diagonal_x; diagonal_y; diagonal_z; orbit_x; orbit_y; path_x; path_y; path_z; path_sinx; path_siny; path_sinz
     uint32 manoeuvre_steps = 100
-    uint32 manoeuvre_step = 0; 5; 10; 15; 20; 25; 30; 35; 40; 45; 50; 55; 60; 65; 70; 75; 80; 85; 90; 95; 99
+    uint32 manoeuvre_step = 0; 4; 9; 14; 19; 24; 29; 34; 39; 44; 49; 54; 59; 64; 69; 74; 79; 84; 89; 94; 99
 
-    uint32vec2 viewport = 1024 768; 1920 1080; 4096 2160
+    uint32vec2 viewport = 512 512; 1024 1024; 2048 2048
     boolean debug_view = false
 
     uint32 iterations = 8
@@ -72,30 +95,7 @@ d3d11::sphere-renderer {
 
 
 d3d11::sphere-renderer {
-    string data_set = pos_intensity : 100 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 1000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 10000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 100 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 1000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 10000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3
-    float32 global_radius = 0.3
-
-    string method = geo_quad; stpa
-
-    boolean vs_xfer_function = false; true
-    boolean conservative_depth = false; true
-    boolean vs_raygen = false
-    boolean force_float_colour = false
-
-
-    string manoeuvre = diagonal
-    uint32 manoeuvre_steps = 100
-    uint32 manoeuvre_step = 0; 5; 10; 15; 20; 25; 30; 35; 40; 45; 50; 55; 60; 65; 70; 75; 80; 85; 90; 95; 99
-
-    uint32vec2 viewport = 1024 768; 1920 1080; 4096 2160
-    boolean debug_view = false
-
-    uint32 iterations = 8
-}
-
-
-d3d11::sphere-renderer {
-    string data_set = pos_intensity : 100 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 1000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 10000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3
+    string data_set = pos_intensity : 100 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 1000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 10000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 100 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 1000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 10000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; \\visus.uni-stuttgart.de\visusstore\share\Projekte\SFB 716\D3\Data\a8-kronenburg\megaridis-experimental.mmpld; \\visus.uni-stuttgart.de\visusstore\share\Projekte\SFB 716\D3\Data\exp2mill_signed_distance_00030.mmpld; \\visus.uni-stuttgart.de\visusstore\share\Projekte\SFB 716\D3\Data\B5.vid1.mmpld
     float32 global_radius = 0.3
 
     string method = sphere_tess; hemisphere_tess
@@ -109,11 +109,11 @@ d3d11::sphere-renderer {
     boolean force_float_colour = false
 
 
-    string manoeuvre = diagonal
+    string manoeuvre = diagonal_x; diagonal_y; diagonal_z; orbit_x; orbit_y; path_x; path_y; path_z; path_sinx; path_siny; path_sinz
     uint32 manoeuvre_steps = 100
-    uint32 manoeuvre_step = 0; 5; 10; 15; 20; 25; 30; 35; 40; 45; 50; 55; 60; 65; 70; 75; 80; 85; 90; 95; 99
+    uint32 manoeuvre_step = 0; 4; 9; 14; 19; 24; 29; 34; 39; 44; 49; 54; 59; 64; 69; 74; 79; 84; 89; 94; 99
 
-    uint32vec2 viewport = 1024 768; 1920 1080; 4096 2160
+    uint32vec2 viewport = 512 512; 1024 1024; 2048 2048
     boolean debug_view = false
 
     uint32 iterations = 8
@@ -121,7 +121,7 @@ d3d11::sphere-renderer {
 
 
 d3d11::sphere-renderer {
-    string data_set = pos_intensity : 100 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 1000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 10000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3
+    string data_set = pos_intensity : 100 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 1000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 10000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 100 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 1000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 10000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; \\visus.uni-stuttgart.de\visusstore\share\Projekte\SFB 716\D3\Data\a8-kronenburg\megaridis-experimental.mmpld; \\visus.uni-stuttgart.de\visusstore\share\Projekte\SFB 716\D3\Data\exp2mill_signed_distance_00030.mmpld; \\visus.uni-stuttgart.de\visusstore\share\Projekte\SFB 716\D3\Data\B5.vid1.mmpld
     float32 global_radius = 0.3
 
     string method = adapt_sphere_tess; adapt_hemisphere_tess
@@ -136,11 +136,11 @@ d3d11::sphere-renderer {
     boolean force_float_colour = false
 
 
-    string manoeuvre = diagonal
+    string manoeuvre = diagonal_x; diagonal_y; diagonal_z; orbit_x; orbit_y; path_x; path_y; path_z; path_sinx; path_siny; path_sinz
     uint32 manoeuvre_steps = 100
-    uint32 manoeuvre_step = 0; 5; 10; 15; 20; 25; 30; 35; 40; 45; 50; 55; 60; 65; 70; 75; 80; 85; 90; 95; 99
+    uint32 manoeuvre_step = 0; 4; 9; 14; 19; 24; 29; 34; 39; 44; 49; 54; 59; 64; 69; 74; 79; 84; 89; 94; 99
 
-    uint32vec2 viewport = 1024 768; 1920 1080; 4096 2160
+    uint32vec2 viewport = 512 512; 1024 1024; 2048 2048
     boolean debug_view = false
 
     uint32 iterations = 8
