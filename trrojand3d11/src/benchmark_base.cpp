@@ -104,11 +104,11 @@ trrojan::result trrojan::d3d11::benchmark_base::run(const configuration& c) {
     this->render_target->enable();
     auto retval = this->on_run(*device, c, changed);
 
-    auto benchTarget = std::dynamic_pointer_cast<bench_render_target>(
-        this->render_target);
-    if (benchTarget != nullptr) {
-        benchTarget->save("honcho.png");
-    }
+    //auto benchTarget = std::dynamic_pointer_cast<bench_render_target>(
+    //    this->render_target);
+    //if (benchTarget != nullptr) {
+    //    benchTarget->save("honcho.png");
+    //}
 
 
     return retval;
