@@ -72,6 +72,9 @@ endif (TRROJAN_WITH_CHAKRA)
 include_directories("glm")
 include_directories("spdlog/include")
 
+# Build the system information library.
+add_subdirectory(trrojansnfo)
+
 # Build the core library
 add_subdirectory(trrojancore)
 
