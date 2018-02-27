@@ -38,8 +38,13 @@ namespace trrojan {
         /// <summary>
         /// Answer the only instance of the <see cref="trrojan::log" />.
         /// </summary>
-        static inline log& instance(void) {
-            static log l;
+        /// <param name="file">The path to a log file, which is only honoured in
+        /// the very first call to the method. If the parameter is
+        /// <c>nullptr</c>, which is the default, the console will be used for
+        /// logging.</param>
+        /// <returns>An instance of the logger.</returns>
+        static inline log& instance(const char *file = nullptr) {
+            static log l(file);
             return l;
         }
 
@@ -96,10 +101,18 @@ namespace trrojan {
 
     private:
 
+        static std::shared_ptr<spdlog::logger> create_logger(const char *file) {
+            if (file != nullptr) {
+                return spdlog::basic_logger_mt("file", file);
+            } else {
+                return spdlog::stdout_color_mt("console");
+            }
+        }
+
         /// <summary>
         /// Initialises a new instance.
         /// </summary>
-        inline log(void) : logger(spdlog::stdout_color_mt("console")) {
+        inline log(const char *file) : logger(log::create_logger(file)) {
 #if (defined(DEBUG) || defined(_DEBUG))
             spdlog::set_level(spdlog::level::trace);
 #endif /* (defined(DEBUG) || defined(_DEBUG)) */

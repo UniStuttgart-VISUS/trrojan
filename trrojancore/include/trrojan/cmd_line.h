@@ -31,13 +31,14 @@ namespace trrojan {
     /// <returns></returns>
     template<class T, class I>
     inline I find_switch(const std::basic_string<T>& name, I begin, I end,
-        const bool matchCase = false) {
+            const bool matchCase = false) {
         return std::find_if(begin, end, [&](const std::basic_string<T>& s) {
             if (matchCase) {
                 return (name == s);
             } else {
-                return std::equal(name.cbegin(), name.cend(), s.cbegin(),
-                    [](T l, T r) { return (std::tolower(l) == std::tolower(r)); });
+                return ((name.length() == s.length())
+                    && std::equal(name.cbegin(), name.cend(), s.cbegin(),
+                    [](T l, T r) { return (std::tolower(l) == std::tolower(r)); }));
             }
         });
     }
