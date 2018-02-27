@@ -20,6 +20,7 @@ const char *trrojan::sysinfo::smbios_information::get_string(const T *structure,
     if (structure == nullptr) {
         throw std::invalid_argument("'structure' must not be nullptr.");
     }
+
     if (id > 0) {
         auto header = &(structure->header);
         auto retval = reinterpret_cast<const char *>(header) + header->length;
@@ -67,7 +68,9 @@ void trrojan::sysinfo::smbios_information::entries(I oit, P predicate) const {
 
         // From http://git.savannah.gnu.org/cgit/dmidecode.git/tree/dmidecode.c:
         // SMBIOS v3 requires stopping at this marker.
-        if (header->type == 127 && (this->enumFlags & FLAG_STOP_AT_EOT)) break;
+        if ((header->type == 127) && (this->enumFlags & FLAG_STOP_AT_EOT)) {
+            break; 
+        }
     }
 }
 

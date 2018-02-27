@@ -20,6 +20,8 @@
 #include <Windows.h>
 #endif /* _WIN32 */
 
+#include "utilities.h"
+
 
 static const char *BIOS_CHARACTERISTICS[] = {
     "Reserved.",
@@ -776,63 +778,32 @@ static const char *MEMORY_ERROR_OPERATIONS[] = {
 
 
 
-/// <summary>
-/// Performs an index lookup of <paramref name="value" /> in
-/// <paramref name="src" />.
-/// </summary>
-template<class T, size_t N>
-static bool _do_lookup(char *dst, size_t& cntDst, const char *(&src)[N],
-        const T value) {
-    auto retval = (value < N);
-
-    if (retval) {
-        auto res = src[value];
-        auto req = ::strlen(res) + 1;
-        retval = ((dst != nullptr) && (cntDst >= req));
-
-        cntDst = req;
-
-        if (retval) {
-#if defined(WIN32)
-            ::strncpy_s(dst, cntDst, res, cntDst);
-#else /* defined(WIN32) */
-            ::strncpy(dst, res, cntDst);
-#endif /* defined(WIN32) */
-        }
-
-    } else {
-        // This is an invalid index, we need no space.
-        cntDst = 0;
-    }
-
-    return retval;
-}
-
 
 /*
  * trrojan::sysinfo::smbios_information::decode_memory_device_form_factor
  */
 bool trrojan::sysinfo::smbios_information::decode_memory_device_form_factor(
         char *dst, size_t& cntDst, const byte_type value) {
-    return ::_do_lookup(dst, cntDst, MEMORY_DEVICE_FORM_FACTORS, value);
+    return detail::string_lookup(dst, cntDst, ::MEMORY_DEVICE_FORM_FACTORS,
+        value);
 }
 
 
 /*
  * trrojan::sysinfo::smbios_information::decode_memory_device_type
  */
-std::string trrojan::sysinfo::smbios_information::decode_memory_device_type(
-        const byte_type value) {
-    auto c = detail::size(MEMORY_DEVICE_TYPES);
-    return (value < c) ? MEMORY_DEVICE_TYPES[value] : "";
+bool trrojan::sysinfo::smbios_information::decode_memory_device_type(
+        char *dst, size_t cntDst, const byte_type value) {
+    return detail::string_lookup(dst, cntDst, ::MEMORY_DEVICE_TYPES,
+        value);
 }
 
 
 /*
  * trrojan::sysinfo::smbios_information::decode_memory_device_type_detail
  */
-std::string trrojan::sysinfo::smbios_information::decode_memory_device_type_detail(
-        const word_type value) {
+bool trrojan::sysinfo::smbios_information::decode_memory_device_type_detail(
+        char *dst, size_t cntDst, const word_type value) {
     std::string retval;
 
     auto c = detail::size(MEMORY_DEVICE_TYPE_DETAILS);
@@ -851,7 +822,7 @@ std::string trrojan::sysinfo::smbios_information::decode_memory_device_type_deta
         }
     }
 
-    return retval;
+    return detail::return_string(dst, cntDst, retval);
 }
 
 

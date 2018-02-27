@@ -392,11 +392,18 @@ namespace sysinfo {
         /// <see cref="trrojan::smbios_information::memory_device_type" />
         /// structure.
         /// </summary>
+        /// <param name="dst">Receives the output string if the buffer is large
+        /// enough.</param>
+        /// <param name="cntDst">The size of <paramref name="dst" /> in
+        /// characters. On return, the number of characters actually written,
+        /// including the trailing zero.</param>
         /// <param name="value">A value from a
         /// <see cref="trrojan::smbios_information::memory_device_type::form_factor" />
         /// member.</param>
-        /// <returns>A human-readable interpretation of
-        /// <paramref name="value" />.</returns>
+        /// <returns><c>true</c> in case the value has been written,
+        /// <c>false</c> otherwise. Check the required buffer size if nothing
+        /// has been written. If the buffer size is zero, the
+        /// <paramref name="value" /> is invalid.</returns>
         static bool decode_memory_device_form_factor(char *dst, size_t& cntDst,
             const byte_type value);
 
@@ -406,12 +413,20 @@ namespace sysinfo {
         /// <see cref="trrojan::smbios_information::memory_device_type" />
         /// structure.
         /// </summary>
+        /// <param name="dst">Receives the output string if the buffer is large
+        /// enough.</param>
+        /// <param name="cntDst">The size of <paramref name="dst" /> in
+        /// characters. On return, the number of characters actually written,
+        /// including the trailing zero.</param>
         /// <param name="value">A value from a
         /// <see cref="trrojan::smbios_information::memory_device_type::type" />
         /// member.</param>
-        /// <returns>A human-readable interpretation of
-        /// <paramref name="value" />.</returns>
-        static std::string decode_memory_device_type(const byte_type value);
+        /// <returns><c>true</c> in case the value has been written,
+        /// <c>false</c> otherwise. Check the required buffer size if nothing
+        /// has been written. If the buffer size is zero, the
+        /// <paramref name="value" /> is invalid.</returns>
+        static bool decode_memory_device_type(char *dst, size_t cntDst,
+            const byte_type value);
 
         /// <summary>
         /// Answer the string representation of a memory device type details
@@ -422,9 +437,11 @@ namespace sysinfo {
         /// <param name="value">A value from a
         /// <see cref="trrojan::smbios_information::memory_device_type::type_detail" />
         /// member.</param>
-        /// <returns>A human-readable interpretation of
-        /// <paramref name="value" />.</returns>
-        static std::string decode_memory_device_type_detail(
+        /// <returns><c>true</c> in case the value has been written,
+        /// <c>false</c> otherwise. Check the required buffer size if nothing
+        /// has been written. If the buffer size is zero, the
+        /// <paramref name="value" /> is invalid.</returns>
+        bool decode_memory_device_type_detail(char *dst, size_t cntDst,
             const word_type value);
 
         /// <summary>
@@ -518,6 +535,13 @@ namespace sysinfo {
         /// <tparam name=I"></tparam>
         template<class T, class I> void entries_by_type(I oit) const;
 
+        /// <summary>
+        /// Retrieves all entries of the given type id
+        /// <paramref name="type" />.
+        /// </summary>
+        /// <param name="oit"></param>
+        /// <param name="type"></param>
+        /// <tparam name="I"></tparam>
         template<class I>
         inline void entries_by_type_id(I oit, const byte_type type) const {
             this->entries(oit, [type](const header_type *h) -> bool {
@@ -561,7 +585,7 @@ namespace sysinfo {
         static const std::uint32_t FLAG_NO_FILE_OFFSET = (1 << 0);
         static const std::uint32_t FLAG_STOP_AT_EOT = (1 << 1);
 
-        uint32_t enumFlags;
+        std::uint32_t enumFlags;
         byte_type *rawData;
         size_t rawSize;
         size_t tableBegin;
@@ -574,6 +598,10 @@ namespace detail {
     /// <summary>
     /// Allows for inferring the ID of a SMBIOS structure from its C++ type.
     /// </summary>
+    /// <remarks>
+    /// This default implementation denotes an invalid structure, whereas all
+    /// valid specialisations hold a static <c>id</c> field.
+    /// </remarks>
     /// <tparam name="T">The type of the SMBIOS structure to derive the ID
     /// for.</tparam>
     template<class T> struct structure_desc { };
@@ -633,18 +661,6 @@ namespace detail {
         static const smbios_information::byte_type id = 18;
     };
 
-
-    /// <summary>
-    /// Answer the number of elements in a stack-allocated array.
-    /// </summary>
-    /// <remarks>
-    /// This is a backport of <see cref="std::size" /> from the C++17 STL, which
-    /// is already available in VS2015, but not in gcc.
-    /// </remarks>
-    template<class T, size_t S>
-    inline constexpr size_t size(const T(&)[S]) noexcept {
-        return S;
-    }
 } /* end namespace detail*/
 
 } /* end namespace sysinfo */
