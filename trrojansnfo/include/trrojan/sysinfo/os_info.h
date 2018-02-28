@@ -6,6 +6,11 @@
 
 #pragma once
 
+#include <cinttypes>
+#include <utility>
+
+#include "trrojan/sysinfo/export.h"
+
 
 namespace trrojan {
 namespace sysinfo {
@@ -14,26 +19,72 @@ namespace sysinfo {
     /// Provides information about the operating system the software is
     /// running on.
     /// </summary>
-    class os_info {
+    class TRROJANSNFO_API os_info {
 
     public:
 
         /// <summary>
-        /// Answer whether the operating system is 32 bit or 64 bit.
+        /// Collects information about the current operating system.
         /// </summary>
-        size_t bits(void) const = 0;
+        static os_info collect(void);
+
+        /// <summary>
+        /// Initialises a new instance.
+        /// </summary>
+        inline os_info(void)
+            : _name(nullptr), _version(nullptr), _word_size(0) { }
+
+        /// <summary>
+        /// Clone <paramref name="rhs" />.
+        /// </summary>
+        inline os_info(const os_info& rhs)
+                : _name(nullptr), _version(nullptr), _word_size(0) {
+            *this = rhs;
+        }
+
+        /// <summary>
+        /// Move <paramref name="rhs" />.
+        /// </summary>
+        inline os_info(os_info&& rhs)
+                : _name(nullptr), _version(nullptr), _word_size(0) {
+            *this = std::move(rhs);
+        }
+
+        /// <summary>
+        /// Finalise the instance.
+        /// </summary>
+        ~os_info(void);
 
         /// <summary>
         /// Gets the name of the operating system.
         /// </summary>
-        const char *name(void) const = 0;
+        inline const char *const name(void) const {
+            return this->_name;
+        }
 
         /// <summary>
         /// Gets the version of the operating system.
         /// </summary>
-        const char *version(void) const = 0;
+        const char *const version(void) const {
+            return this->_version;
+        }
+
+        /// <summary>
+        /// Gets the word size of the operating system.
+        /// </summary>
+        inline size_t word_size(void) const {
+            return this->_word_size;
+        }
+
+        os_info& operator =(const os_info& rhs);
+
+        os_info& operator =(os_info&& rhs);
 
     private:
+
+        char *_name;
+        char *_version;
+        size_t _word_size;
 
     };
 

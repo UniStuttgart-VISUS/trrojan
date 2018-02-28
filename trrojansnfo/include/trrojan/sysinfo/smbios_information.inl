@@ -44,8 +44,8 @@ const char *trrojan::sysinfo::smbios_information::get_string(const T *structure,
  */
 template<class I, class P, class T>
 void trrojan::sysinfo::smbios_information::entries(I oit, P predicate) const {
-    const auto BEGIN = this->rawData.data() + this->tableBegin;
-    const auto END = this->rawData.data() + this->tableEnd;
+    const auto BEGIN = this->rawData + this->tableBegin;
+    const auto END = this->rawData + this->tableEnd;
 
     for (auto ptr = BEGIN; ptr < END;) {
         auto header = reinterpret_cast<const header_type *>(ptr);

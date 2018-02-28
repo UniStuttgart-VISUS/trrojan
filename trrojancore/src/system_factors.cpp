@@ -94,7 +94,7 @@ __TRROJAN_DEFINE_FACTOR(user_name);
  * trrojan::system_factors::bios
  */
 trrojan::variant trrojan::system_factors::bios(void) const {
-    typedef smbios_information::bios_information_type entry_type;
+    typedef sysinfo::smbios_information::bios_information_type entry_type;
     std::vector<const entry_type *> entries;
     smbios.entries_by_type<entry_type>(std::back_inserter(entries));
 
@@ -156,7 +156,7 @@ trrojan::variant trrojan::system_factors::computer_name(void) const {
  * trrojan::system_factors::cpu
  */
 trrojan::variant trrojan::system_factors::cpu(void) const {
-    typedef smbios_information::processor_information_type entry_type;
+    typedef sysinfo::smbios_information::processor_information_type entry_type;
     std::vector<const entry_type *> entries;
     smbios.entries_by_type<entry_type>(std::back_inserter(entries));
 
@@ -320,7 +320,7 @@ trrojan::variant trrojan::system_factors::logical_cores(void) const {
  * trrojan::system_factors::mainboard
  */
 trrojan::variant trrojan::system_factors::mainboard(void) const {
-    typedef smbios_information::baseboard_information_type entry_type;
+    typedef sysinfo::smbios_information::baseboard_information_type entry_type;
     std::vector<const entry_type *> entries;
     smbios.entries_by_type<entry_type>(std::back_inserter(entries));
 
@@ -344,92 +344,7 @@ trrojan::variant trrojan::system_factors::mainboard(void) const {
  * trrojan::system_factors::os
  */
 trrojan::variant trrojan::system_factors::os(void) const {
-#ifdef _WIN32
-    OSVERSIONINFOEXA vi;
-    ::ZeroMemory(&vi, sizeof(vi));
-    vi.dwOSVersionInfoSize = sizeof(vi);
-
-#pragma warning(push)
-#pragma warning(disable: 4996)
-    if (!::GetVersionExA(reinterpret_cast<LPOSVERSIONINFOA>(&vi))) {
-        std::error_code ec(::GetLastError(), std::system_category());
-        throw std::system_error(ec, "Failed to get operating system version.");
-    }
-#pragma warning(pop)
-
-    // TODO: rewrite this; it will return the SDK version for Win10
-
-    auto isWorkstation = (vi.wProductType == VER_NT_WORKSTATION);
-
-    // https://msdn.microsoft.com/de-de/library/windows/desktop/ms724833(v=vs.85).aspx
-    if ((vi.dwMajorVersion == 5) && (vi.dwMinorVersion == 0)) {
-        return std::string("Windows 2000");
-
-    } else if ((vi.dwMajorVersion == 5) && (vi.dwMinorVersion == 1)) {
-        return std::string("Windows XP");
-
-    } else if ((vi.dwMajorVersion == 5) && (vi.dwMinorVersion == 2)) {
-        auto server2 = ::GetSystemMetrics(SM_SERVERR2);
-
-        if (isWorkstation) {
-            return std::string("Windows XP");
-
-        } else if (server2 == 0) {
-            return std::string("Windows Server 2003");
-
-        } else if (vi.wSuiteMask & VER_SUITE_WH_SERVER) {
-            return std::string("Windows Home Server");
-
-        } else if (server2 != 0) {
-            return std::string("Windows Server 2003 R2");
-
-        } else {
-            // Should be unreachable
-            return std::string("Windows 5.2");
-        }
-
-    } else if ((vi.dwMajorVersion == 6) && (vi.dwMinorVersion == 0)) {
-        return isWorkstation
-                ? std::string("Windows Vista")
-                : std::string("Windows Server 2008");
-
-    } else if ((vi.dwMajorVersion == 6) && (vi.dwMinorVersion == 1)) {
-        return isWorkstation
-            ? std::string("Windows 7")
-            : std::string("Windows Server 2008 R2");
-
-    } else if ((vi.dwMajorVersion == 6) && (vi.dwMinorVersion == 2)) {
-        return isWorkstation
-            ? std::string("Windows 8")
-            : std::string("Windows Server 2012");
-
-    } else if ((vi.dwMajorVersion == 6) && (vi.dwMinorVersion == 3)) {
-        return isWorkstation
-            ? std::string("Windows 8.1")
-            : std::string("Windows Server 2012 R2");
-
-    } else if ((vi.dwMajorVersion == 10) && (vi.dwMinorVersion == 0)) {
-        return isWorkstation
-            ? std::string("Windows 10")
-            : std::string("Windows Server 2016");
-
-    } else {
-        return isWorkstation
-            ? std::string("Windows")
-            : std::string("Windows Server");
-    }
-
-#else /* _WIN32 */
-    utsname vi;
-
-    // http://stackoverflow.com/questions/6315666/c-get-linux-distribution-name-version
-    if (::uname(&vi) < 0) {
-        std::error_code ec(errno, std::system_category());
-        throw std::system_error(ec, "Failed to get operating system version.");
-    }
-
-    return std::string(vi.sysname);
-#endif /* _WIN32 */
+    return std::string(this->osinfo.name());
 }
 
 
@@ -437,68 +352,7 @@ trrojan::variant trrojan::system_factors::os(void) const {
  * trrojan::system_factors::os_version
  */
 trrojan::variant trrojan::system_factors::os_version(void) const {
-#ifdef _WIN32
-    typedef NTSTATUS (WINAPI *GetVersionFunc)(PRTL_OSVERSIONINFOW);
-    GetVersionFunc getVersion = nullptr;
-    std::stringstream str;
-
-    {
-        auto hModule = ::GetModuleHandleW(L"ntdll.dll");
-        if (hModule) {
-            getVersion = reinterpret_cast<GetVersionFunc>(::GetProcAddress(
-                hModule, "RtlGetVersion"));
-        }
-    }
-
-    if (getVersion != nullptr) {
-        // First, try calling the runtime library directly, which will give us
-        // the real OS version rather than the SDK version we use.
-        RTL_OSVERSIONINFOW vi = { 0 };
-        ::ZeroMemory(&vi, sizeof(vi));
-        vi.dwOSVersionInfoSize = sizeof(vi);
-
-        if (getVersion(&vi) == 0) {
-            str << vi.dwMajorVersion << "."
-                << vi.dwMinorVersion << "."
-                << vi.dwBuildNumber;
-
-        } else {
-            getVersion = nullptr;   // Try again ...
-        }
-    }
-
-    if (getVersion == nullptr) {
-        // Use public API (returns SDK version on Windows 10)
-        OSVERSIONINFOEXA vi;
-        ::ZeroMemory(&vi, sizeof(vi));
-        vi.dwOSVersionInfoSize = sizeof(vi);
-
-#pragma warning(push)
-#pragma warning(disable: 4996)
-        if (!::GetVersionExA(reinterpret_cast<LPOSVERSIONINFOA>(&vi))) {
-            std::error_code ec(::GetLastError(), std::system_category());
-            throw std::system_error(ec, "Failed to get operating system version.");
-        }
-#pragma warning(pop)
-
-        str << vi.dwMajorVersion << "."
-            << vi.dwMinorVersion << "."
-            << vi.dwBuildNumber;
-    }
-
-    return str.str();
-
-#else /* _WIN32 */
-    utsname vi;
-
-    // http://stackoverflow.com/questions/6315666/c-get-linux-distribution-name-version
-    if (::uname(&vi) < 0) {
-        std::error_code ec(errno, std::system_category());
-        throw std::system_error(ec, "Failed to get operating system version.");
-    }
-
-    return std::string(vi.release);
-#endif /* _WIN32 */
+    return std::string(this->osinfo.version());
 }
 
 
@@ -551,7 +405,7 @@ trrojan::variant trrojan::system_factors::process_elevated(void) const {
  * trrojan::system_factors::ram
  */
 trrojan::variant trrojan::system_factors::ram(void) const {
-    typedef smbios_information::memory_device_type entry_type;
+    typedef sysinfo::smbios_information::memory_device_type entry_type;
     std::vector<const entry_type *> entries;
     smbios.entries_by_type<entry_type>(std::back_inserter(entries));
 
@@ -603,7 +457,7 @@ trrojan::variant trrojan::system_factors::ram(void) const {
  * trrojan::system_factors::system_desc
  */
 trrojan::variant trrojan::system_factors::system_desc(void) const {
-    typedef smbios_information::system_information_type entry_type;
+    typedef sysinfo::smbios_information::system_information_type entry_type;
     std::vector<const entry_type *> entries;
     smbios.entries_by_type<entry_type>(std::back_inserter(entries));
 
@@ -789,7 +643,8 @@ trrojan::system_factors::get_retrievers(void) {
  */
 trrojan::system_factors::system_factors(void) {
     try {
-        this->smbios = smbios_information::read();
+        this->osinfo = sysinfo::os_info::collect();
+        this->smbios = sysinfo::smbios_information::read();
     } catch (std::exception ex) {
         log::instance().write(log_level::warning, ex);
     }

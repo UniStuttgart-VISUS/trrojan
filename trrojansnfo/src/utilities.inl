@@ -6,6 +6,22 @@
 
 
 /*
+ * trrojan::sysinfo::detail::clone_string
+ */
+template<class C> C *trrojan::sysinfo::detail::clone_string(const C *src) {
+    C *retval = nullptr;
+
+    if (src != nullptr) {
+        auto len = std::char_traits<C>::length(src) + 1;
+        retval = new C[len];
+        ::memcpy(retval, src, len * sizeof(C));
+    }
+
+    return retval;
+}
+
+
+/*
  * trrojan::sysinfo::detail::return_string
  */
 template<class C>

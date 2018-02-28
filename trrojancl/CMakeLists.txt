@@ -15,6 +15,7 @@ file(GLOB_RECURSE SourceFiles RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${SourceDi
 
 include_directories("${IncludeDirectory}")
 include_directories(${TrrojanCoreIncludeDir})
+include_directories("${TrrojanSysInfoIncludeDir}")
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTRROJANCL_EXPORTS -DTRROJANCORE_WITH_SPELLING_ERRORS")
 

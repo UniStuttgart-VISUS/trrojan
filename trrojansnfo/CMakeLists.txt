@@ -15,7 +15,9 @@ file(GLOB_RECURSE ResourceFiles RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${Source
 
 include_directories("${IncludeDirectory}")
 
-add_definitions(-DTRROJANSNFO_EXPORTS)
+add_definitions("-DTRROJANSNFO_EXPORTS")
+
+set(TrrojanSysInfoIncludeDir "${CMAKE_CURRENT_SOURCE_DIR}/${IncludeDirectory}" PARENT_SCOPE)
 
 add_library(trrojansnfo SHARED ${HeaderFiles} ${SourceFiles} ${ResourceFiles})
 

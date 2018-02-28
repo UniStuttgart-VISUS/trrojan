@@ -441,7 +441,7 @@ namespace sysinfo {
         /// <c>false</c> otherwise. Check the required buffer size if nothing
         /// has been written. If the buffer size is zero, the
         /// <paramref name="value" /> is invalid.</returns>
-        bool decode_memory_device_type_detail(char *dst, size_t cntDst,
+        static bool decode_memory_device_type_detail(char *dst, size_t cntDst,
             const word_type value);
 
         /// <summary>

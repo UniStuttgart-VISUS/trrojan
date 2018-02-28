@@ -15,6 +15,7 @@
 #include <cassert>
 #include <cstring>
 #include <iostream>
+#include <vector>
 
 #ifdef _WIN32
 #include <Windows.h>
@@ -853,8 +854,9 @@ trrojan::sysinfo::smbios_information trrojan::sysinfo::smbios_information::read(
         if (status == 0) {
             throw std::runtime_error("Failed to retrieve SMBIOS table size.");
         }
-        retval.rawData = new byte_type[status];
+        assert(retval.rawData == nullptr);
         retval.rawSize = status;
+        retval.rawData = new byte_type[retval.rawSize];
     }
 
     /* Read the data. */
@@ -883,9 +885,21 @@ trrojan::sysinfo::smbios_information trrojan::sysinfo::smbios_information::read(
     // Cf. http://git.savannah.gnu.org/cgit/dmidecode.git/tree/dmidecode.c
     uint16_t version = 0;
 
-    auto ef = read_binary_file("/sys/firmware/dmi/tables/smbios_entry_point");
-    auto tf = read_binary_file("/sys/firmware/dmi/tables/DMI");
+    /* Read the entry point into a temporary buffer to determine the version. */
+    std::ifstream fEntry("/sys/firmware/dmi/tables/smbios_entry_point",
+        std::ios::in | std::ios::binary | std::ios::ate);
+    if (!fEntry) {
+        throw std::runtime_error("Failed to open SMBIOS entry point.");
+    }
 
+    std::vector<char> ef(fEntry.tellg());
+    fEntry.seekg(0, std::ios::beg);
+
+    if (!fEntry.read(ef.data(), ef.size())) {
+        throw std::runtime_error("Failed to read SMBIOS entry point.");
+    }
+
+    /* Determine how to handle the data by parsing the entry point. */
     if ((ef.size() >= 24) && (::memcmp(ef.data(), "_SM3_", 5) == 0)) {
         // SMBIOS 3
         if (!smbios_information::validate_checksum(ef.data(), ef[0x06])) {
@@ -929,9 +943,21 @@ trrojan::sysinfo::smbios_information trrojan::sysinfo::smbios_information::read(
         throw std::runtime_error("SMBIOS entry point is defective.");
     }
 
-    retval.rawData.reserve(tf.size());
-    std::transform(tf.cbegin(), tf.cend(), std::back_inserter(retval.rawData),
-        [&](char c) { return c; });
+    /* Read the table. */
+    std::ifstream fTable("/sys/firmware/dmi/tables/DMI",
+        std::ios::in | std::ios::binary | std::ios::ate);
+    if (!fEntry) {
+        throw std::runtime_error("Failed to open DMI table.");
+    }
+
+    assert(retval.rawData == nullptr);
+    retval.rawSize = fTable.tellg();
+    retval.rawData = new byte_type[retval.rawSize];
+    fTable.seekg(0, std::ios::beg);
+
+    if (!fTable.read(retval.rawData, retval.rawSize)) {
+        throw std::runtime_error("Failed to read DMI table.");
+    }
 #endif /* defined(_WIN32) */
 
     return std::move(retval);

@@ -14,6 +14,12 @@ namespace sysinfo {
 namespace detail {
 
     /// <summary>
+    /// Allocate a copy of <paramref name="src" /> using new[] and return
+    /// ownership of the new buffer.
+    /// </summary>
+    template<class C> C *clone_string(const C *src);
+
+    /// <summary>
     /// Return <paramref name="src" /> to <paramref name="dst" />, but only if
     /// <paramref name="cntDst" /> indicates a sufficiently large buffer.
     /// </summary>
