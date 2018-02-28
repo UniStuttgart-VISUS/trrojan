@@ -7,6 +7,7 @@
 #include <cinttypes>
 #include <memory>
 #include <string>
+#include <vector>
 
 
 namespace trrojan {
@@ -18,6 +19,11 @@ namespace detail {
     /// ownership of the new buffer.
     /// </summary>
     template<class C> C *clone_string(const C *src);
+
+    /// <summary>
+    /// Read all contents of a binary file.
+    /// </summary>
+    std::vector<std::uint8_t> read_all_bytes(const char *path);
 
     /// <summary>
     /// Return <paramref name="src" /> to <paramref name="dst" />, but only if

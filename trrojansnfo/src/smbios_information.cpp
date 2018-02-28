@@ -880,26 +880,14 @@ trrojan::sysinfo::smbios_information trrojan::sysinfo::smbios_information::read(
         }
     }
 
-
 #else /* defined(_WIN32) */
     // Cf. http://git.savannah.gnu.org/cgit/dmidecode.git/tree/dmidecode.c
     uint16_t version = 0;
 
-    /* Read the entry point into a temporary buffer to determine the version. */
-    std::ifstream fEntry("/sys/firmware/dmi/tables/smbios_entry_point",
-        std::ios::in | std::ios::binary | std::ios::ate);
-    if (!fEntry) {
-        throw std::runtime_error("Failed to open SMBIOS entry point.");
-    }
-
-    std::vector<char> ef(fEntry.tellg());
-    fEntry.seekg(0, std::ios::beg);
-
-    if (!fEntry.read(ef.data(), ef.size())) {
-        throw std::runtime_error("Failed to read SMBIOS entry point.");
-    }
-
     /* Determine how to handle the data by parsing the entry point. */
+    auto ef = detail::read_all_bytes("/sys/firmware/dmi/tables/"
+        "smbios_entry_point");
+
     if ((ef.size() >= 24) && (::memcmp(ef.data(), "_SM3_", 5) == 0)) {
         // SMBIOS 3
         if (!smbios_information::validate_checksum(ef.data(), ef[0x06])) {
