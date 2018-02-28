@@ -1,2 +1,2 @@
-# trrojan
+# TRRojan
 The TRRojan benchmarking framework.
