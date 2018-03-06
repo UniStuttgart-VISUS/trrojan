@@ -99,6 +99,10 @@ PsInput Main(OutputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
     // Transform camera to glyph space.
     retval.CameraPosition.xyz -= pos.xyz;
 
+#if defined(PER_VERTEY_RAY)
+    v.Ray = normalize(coords.xyz - v.CameraPosition.xyz);
+#endif /* defined(PER_VERTEY_RAY) */
+
 #else
     /* 3D sphere tessellation: Move vertices to locations on sphere. */
 
