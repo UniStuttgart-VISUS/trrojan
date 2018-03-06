@@ -1,5 +1,5 @@
 d3d11::sphere-renderer {
-	string data_set =  pos_rad_intensity : 2000 : 0 : 10 10 10 : 0.01 0.1
+	string data_set =  pos_rad_intensity : 2000000 : 0 : 10 10 10 : 0.01 0.1
 	uint32 frame = 0
 	boolean debug_view = true
 	float32 global_radius = 0.07
@@ -21,7 +21,7 @@ d3d11::sphere-renderer {
 
 	boolean conservative_depth = false
 	boolean force_float_colour = false
-	boolean vs_raygen = true
+	boolean vs_raygen = true;false
 	boolean vs_xfer_function = true
 
 	#string manoeuvre = orbit_x
