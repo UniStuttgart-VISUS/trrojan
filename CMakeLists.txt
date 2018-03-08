@@ -60,13 +60,14 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DSPDLOG_FMT_PRINTF")
 add_subdirectory(spdlog)
 
 # Build ChakraCore if enabled.
-if (TRROJAN_WITH_CHAKRA)
+if (TRROJAN_WITH_CHAKRA AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/chakra")
+message(WARNING, "Not yet implemented.")
 #if (WIN32)
 #    add_custom_command(OUTPUT asd COMMAND msbuild /m /p:Platform=x64 /p:Configuration=Release /p:RuntimeLib=static_library "chakra/Build/Chakra.Core.sln")
 #else (WIN32)
 #    add_custom_command(OUTPUT asd COMMAND "chakra/Build/build.sh --static")
 #endif (WIN32)
-endif (TRROJAN_WITH_CHAKRA)
+endif (TRROJAN_WITH_CHAKRA AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/chakra")
 
 # Include headers for all of TRRojan.
 include_directories("glm")

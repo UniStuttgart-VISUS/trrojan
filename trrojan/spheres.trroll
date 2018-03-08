@@ -6,7 +6,7 @@ d3d11::sphere-renderer {
 
     boolean vs_xfer_function = false; true
     boolean conservative_depth = false; true
-    boolean vs_raygen = false
+    boolean vs_raygen = false; true
     boolean force_float_colour = false
 
 
@@ -29,7 +29,7 @@ d3d11::sphere-renderer {
 
     boolean vs_xfer_function = false; true
     boolean conservative_depth = false; true
-    boolean vs_raygen = false
+    boolean vs_raygen = false; true
     boolean force_float_colour = false; true
 
 
@@ -55,7 +55,7 @@ d3d11::sphere-renderer {
 
     boolean vs_xfer_function = false; true
     boolean conservative_depth = false; true
-    boolean vs_raygen = false
+    boolean vs_raygen = false; true
     boolean force_float_colour = false
 
 
@@ -79,7 +79,7 @@ d3d11::sphere-renderer {
 
     boolean vs_xfer_function = false; true
     boolean conservative_depth = false; true
-    boolean vs_raygen = false
+    boolean vs_raygen = false; true
     boolean force_float_colour = false
 
 
@@ -105,7 +105,7 @@ d3d11::sphere-renderer {
 
     boolean vs_xfer_function = false; true
     boolean conservative_depth = false
-    boolean vs_raygen = false
+    boolean vs_raygen = false; true
     boolean force_float_colour = false
 
 
@@ -132,7 +132,7 @@ d3d11::sphere-renderer {
 
     boolean vs_xfer_function = false; true
     boolean conservative_depth = false
-    boolean vs_raygen = false
+    boolean vs_raygen = false; true
     boolean force_float_colour = false
 
 
