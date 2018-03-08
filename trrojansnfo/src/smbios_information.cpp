@@ -1026,8 +1026,8 @@ trrojan::sysinfo::smbios_information::operator =(smbios_information&& rhs) {
 /*
  * trrojan::sysinfo::smbios_information::validate_checksum
  */
-bool trrojan::sysinfo::smbios_information::validate_checksum(const char *buf,
-        const size_t len) {
+bool trrojan::sysinfo::smbios_information::validate_checksum(
+        const std::uint8_t *buf, const size_t len) {
     uint8_t sum = 0;
 
     for (size_t i = 0; i < len; ++i) {

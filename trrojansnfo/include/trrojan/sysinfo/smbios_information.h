@@ -580,7 +580,8 @@ namespace sysinfo {
 
     private:
 
-        static bool validate_checksum(const char *buf, const size_t len);
+        static bool validate_checksum(const std::uint8_t *buf,
+            const size_t len);
 
         static const std::uint32_t FLAG_NO_FILE_OFFSET = (1 << 0);
         static const std::uint32_t FLAG_STOP_AT_EOT = (1 << 1);
