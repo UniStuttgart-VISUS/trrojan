@@ -162,11 +162,12 @@ trrojan::sysinfo::os_info trrojan::sysinfo::os_info::collect(void) {
     retval._tdr_ddi_delay = detail::get_tdr_registry_value("TdrDdiDelay",
         static_cast<size_t>(5), os_info::invalid_tdr_value);
     retval._tdr_debug_mode = detail::get_tdr_registry_value("TdrDebugMode",
-        sysinfo::tdr_debug_mode::default, sysinfo::tdr_debug_mode::unknown);
+        sysinfo::tdr_debug_mode::default_behaviour,
+        sysinfo::tdr_debug_mode::unknown);
     retval._tdr_delay = detail::get_tdr_registry_value("TdrDelay",
         static_cast<size_t>(2), os_info::invalid_tdr_value);
     retval._tdr_level = detail::get_tdr_registry_value("TdrLevel",
-        sysinfo::tdr_level::default, sysinfo::tdr_level::unknown);
+        sysinfo::tdr_level::default_behaviour, sysinfo::tdr_level::unknown);
     retval._tdr_limit_count = detail::get_tdr_registry_value("TdrLimitCount",
         static_cast<size_t>(5), os_info::invalid_tdr_value);
     retval._tdr_limit_time = detail::get_tdr_registry_value("TdrLimitTime",
