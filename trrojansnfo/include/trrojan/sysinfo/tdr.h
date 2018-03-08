@@ -64,7 +64,7 @@ namespace detail {
         /// The default behaviour according to
         /// https://docs.microsoft.com/en-us/windows-hardware/drivers/display/tdr-registry-keys
         /// </summary>
-        default = recover_no_prompt
+        default = static_cast<detail::tdr_underlying_type>(2)
     };
 
     /// <summary>
@@ -101,7 +101,7 @@ namespace detail {
         /// The default level according to
         /// https://docs.microsoft.com/en-us/windows-hardware/drivers/display/tdr-registry-keys
         /// </summary>
-        default = recover
+        default = static_cast<detail::tdr_underlying_type>(3)
     };
 
 } /* end namespace trrojan */
