@@ -7,6 +7,7 @@
 #pragma once
 
 #include <cinttypes>
+#include <cstdlib>
 #include <utility>
 
 #include "trrojan/sysinfo/export.h"
