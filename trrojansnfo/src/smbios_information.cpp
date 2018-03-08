@@ -14,6 +14,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cstring>
+#include <fstream>
 #include <iostream>
 #include <vector>
 
@@ -934,7 +935,7 @@ trrojan::sysinfo::smbios_information trrojan::sysinfo::smbios_information::read(
     /* Read the table. */
     std::ifstream fTable("/sys/firmware/dmi/tables/DMI",
         std::ios::in | std::ios::binary | std::ios::ate);
-    if (!fEntry) {
+    if (!fTable) {
         throw std::runtime_error("Failed to open DMI table.");
     }
 
