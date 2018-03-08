@@ -944,7 +944,8 @@ trrojan::sysinfo::smbios_information trrojan::sysinfo::smbios_information::read(
     retval.rawData = new byte_type[retval.rawSize];
     fTable.seekg(0, std::ios::beg);
 
-    if (!fTable.read(retval.rawData, retval.rawSize)) {
+    if (!fTable.read(reinterpret_cast<char *>(retval.rawData),
+            retval.rawSize)) {
         throw std::runtime_error("Failed to read DMI table.");
     }
 #endif /* defined(_WIN32) */
