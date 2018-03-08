@@ -7,6 +7,7 @@
 #pragma once
 
 #include <cinttypes>
+#include <cstring>
 #include <memory>
 #include <string>
 #include <system_error>
