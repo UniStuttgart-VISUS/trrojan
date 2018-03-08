@@ -1,5 +1,6 @@
 /// <copyright file="smbios_information.inl" company="SFB-TRR 161 Quantitative Methods for Visual Computing">
-/// Copyright © 2016 SFB-TRR 161. Alle Rechte vorbehalten.
+/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+/// Copyright © 2016 - 2018 SFB-TRR 161. Alle Rechte vorbehalten.
 /// </copyright>
 /// <author>Christoph Müller</author>
 
@@ -11,14 +12,15 @@
 
 
 /*
- * trrojan::smbios_information::get_string
+ * trrojan::sysinfo::smbios_information::get_string
  */
 template<class T>
-const char *trrojan::smbios_information::get_string(const T *structure,
+const char *trrojan::sysinfo::smbios_information::get_string(const T *structure,
         const string_type id) {
     if (structure == nullptr) {
         throw std::invalid_argument("'structure' must not be nullptr.");
     }
+
     if (id > 0) {
         auto header = &(structure->header);
         auto retval = reinterpret_cast<const char *>(header) + header->length;
@@ -38,12 +40,12 @@ const char *trrojan::smbios_information::get_string(const T *structure,
 
 
 /*
- * trrojan::smbios_information::entries
+ * trrojan::sysinfo::smbios_information::entries
  */
 template<class I, class P, class T>
-void trrojan::smbios_information::entries(I oit, P predicate) const {
-    const auto BEGIN = this->rawData.data() + this->tableBegin;
-    const auto END = this->rawData.data() + this->tableEnd;
+void trrojan::sysinfo::smbios_information::entries(I oit, P predicate) const {
+    const auto BEGIN = this->rawData + this->tableBegin;
+    const auto END = this->rawData + this->tableEnd;
 
     for (auto ptr = BEGIN; ptr < END;) {
         auto header = reinterpret_cast<const header_type *>(ptr);
@@ -66,16 +68,18 @@ void trrojan::smbios_information::entries(I oit, P predicate) const {
 
         // From http://git.savannah.gnu.org/cgit/dmidecode.git/tree/dmidecode.c:
         // SMBIOS v3 requires stopping at this marker.
-        if (header->type == 127 && (this->enumFlags & FLAG_STOP_AT_EOT)) break;
+        if ((header->type == 127) && (this->enumFlags & FLAG_STOP_AT_EOT)) {
+            break; 
+        }
     }
 }
 
 
 /*
- * trrojan::smbios_information::entries_by_type
+ * trrojan::sysinfo::smbios_information::entries_by_type
  */
 template<class T, class I>
-void trrojan::smbios_information::entries_by_type(I oit) const {
+void trrojan::sysinfo::smbios_information::entries_by_type(I oit) const {
     static auto pred = [](const header_type *h) -> bool {
         return (h->type == detail::structure_desc<T>::id);
     };

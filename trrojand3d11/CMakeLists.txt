@@ -40,6 +40,7 @@ set(ShaderFiles ${ShaderHeaderFiles} ${ShaderFiles})
 
 include_directories("${IncludeDirectory}")
 include_directories("${TrrojanCoreIncludeDir}")
+include_directories("${TrrojanSysInfoIncludeDir}")
 
 # Create CSOs for packing them into the resource files.
 #add_dependencies(${ResourceFiles} ${ShaderFiles})

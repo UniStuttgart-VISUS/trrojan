@@ -4,6 +4,3 @@
 [submodule "spdlog"]
 	path = spdlog
 	url = https://github.com/gabime/spdlog
-[submodule "chakra"]
-	path = chakra
-	url = https://github.com/Microsoft/ChakraCore.git

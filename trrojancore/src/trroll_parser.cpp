@@ -11,7 +11,6 @@
 
 #include "trrojan/io.h"
 #include "trrojan/enum_parse_helper.h"
-#include "trrojan/smbios_information.h"
 
 
 /*
@@ -64,7 +63,7 @@ trrojan::trroll_parser::parse(const std::string& path) {
         configuration_set cs;
         ++beginBlock;   // Skip the '{'
         auto blockTokens = trroll_parser::tokenise(beginBlock, endBlock,
-            NL, NL + trrojan::detail::size(NL));
+            NL, NL + sizeof(NL) / sizeof(*NL));
 
         assert(blockTokens.size() > 0);
         for (size_t i = 0; i < blockTokens.size() - 1; ++i) {
@@ -127,7 +126,7 @@ trrojan::trroll_parser::parse(const std::string& path) {
             {
                 c = trroll_parser::skip_spaces(c, eol);
                 auto m = trroll_parser::tokenise(c, eol,
-                    NF, NF + trrojan::detail::size(NF));
+                    NF, NF + sizeof(NF) / sizeof(*NF));
                 assert(m.size() > 0);
                 for (size_t j = 0; j < m.size() - 1; ++j) {
                     std::string token(m[j], m[j + 1]);

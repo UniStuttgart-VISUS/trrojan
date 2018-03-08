@@ -9,17 +9,20 @@
 /// </copyright>
 /// <author>Christoph Müller</author>
 
-#include "trrojan/smbios_information.h"
+#include "trrojan/sysinfo/smbios_information.h"
 
 #include <algorithm>
+#include <cassert>
 #include <cstring>
+#include <fstream>
 #include <iostream>
+#include <vector>
 
 #ifdef _WIN32
 #include <Windows.h>
 #endif /* _WIN32 */
 
-#include "trrojan/io.h"
+#include "utilities.h"
 
 
 static const char *BIOS_CHARACTERISTICS[] = {
@@ -777,31 +780,32 @@ static const char *MEMORY_ERROR_OPERATIONS[] = {
 
 
 
+
 /*
- * trrojan::smbios_information::decode_memory_device_form_factor
+ * trrojan::sysinfo::smbios_information::decode_memory_device_form_factor
  */
-std::string trrojan::smbios_information::decode_memory_device_form_factor(
-        const byte_type value) {
-    auto c = detail::size(MEMORY_DEVICE_FORM_FACTORS);
-    return (value < c) ? MEMORY_DEVICE_FORM_FACTORS[value] : "";
+bool trrojan::sysinfo::smbios_information::decode_memory_device_form_factor(
+        char *dst, size_t& cntDst, const byte_type value) {
+    return detail::string_lookup(dst, cntDst, ::MEMORY_DEVICE_FORM_FACTORS,
+        value);
 }
 
 
 /*
- * trrojan::smbios_information::decode_memory_device_type
+ * trrojan::sysinfo::smbios_information::decode_memory_device_type
  */
-std::string trrojan::smbios_information::decode_memory_device_type(
-        const byte_type value) {
-    auto c = detail::size(MEMORY_DEVICE_TYPES);
-    return (value < c) ? MEMORY_DEVICE_TYPES[value] : "";
+bool trrojan::sysinfo::smbios_information::decode_memory_device_type(
+        char *dst, size_t cntDst, const byte_type value) {
+    return detail::string_lookup(dst, cntDst, ::MEMORY_DEVICE_TYPES,
+        value);
 }
 
 
 /*
- * trrojan::smbios_information::decode_memory_device_type_detail
+ * trrojan::sysinfo::smbios_information::decode_memory_device_type_detail
  */
-std::string trrojan::smbios_information::decode_memory_device_type_detail(
-        const word_type value) {
+bool trrojan::sysinfo::smbios_information::decode_memory_device_type_detail(
+        char *dst, size_t cntDst, const word_type value) {
     std::string retval;
 
     auto c = detail::size(MEMORY_DEVICE_TYPE_DETAILS);
@@ -820,14 +824,14 @@ std::string trrojan::smbios_information::decode_memory_device_type_detail(
         }
     }
 
-    return retval;
+    return detail::return_string(dst, cntDst, retval);
 }
 
 
 /*
- * trrojan::smbios_information::read
+ * trrojan::sysinfo::smbios_information::read
  */
-trrojan::smbios_information trrojan::smbios_information::read(void) {
+trrojan::sysinfo::smbios_information trrojan::sysinfo::smbios_information::read(void) {
     smbios_information retval;
     retval.enumFlags = 0;
 
@@ -851,37 +855,39 @@ trrojan::smbios_information trrojan::smbios_information::read(void) {
         if (status == 0) {
             throw std::runtime_error("Failed to retrieve SMBIOS table size.");
         }
-        retval.rawData.resize(status);
+        assert(retval.rawData == nullptr);
+        retval.rawSize = status;
+        retval.rawData = new byte_type[retval.rawSize];
     }
 
     /* Read the data. */
     {
-        auto status = ::GetSystemFirmwareTable('RSMB', 0, retval.rawData.data(),
-            static_cast<DWORD>(retval.rawData.size()));
-        if (status != retval.rawData.size()) {
+        auto status = ::GetSystemFirmwareTable('RSMB', 0, retval.rawData,
+            static_cast<DWORD>(retval.rawSize));
+        if (status != retval.rawSize) {
             throw std::runtime_error("Failed to retrieve SMBIOS table.");
         }
     }
 
     /* Determine the bounds of the structures. */
     retval.tableBegin = sizeof(RawSMBIOSData);
-    retval.tableEnd = retval.rawData.size();
+    retval.tableEnd = retval.rawSize;
 
     /* Process the header. */
     {
-        auto header = reinterpret_cast<RawSMBIOSData *>(retval.rawData.data());
+        auto header = reinterpret_cast<RawSMBIOSData *>(retval.rawData);
         if (header->SMBIOSMajorVersion >= 3) {
             retval.enumFlags |= FLAG_STOP_AT_EOT;
         }
     }
 
-
 #else /* defined(_WIN32) */
     // Cf. http://git.savannah.gnu.org/cgit/dmidecode.git/tree/dmidecode.c
     uint16_t version = 0;
 
-    auto ef = read_binary_file("/sys/firmware/dmi/tables/smbios_entry_point");
-    auto tf = read_binary_file("/sys/firmware/dmi/tables/DMI");
+    /* Determine how to handle the data by parsing the entry point. */
+    auto ef = detail::read_all_bytes("/sys/firmware/dmi/tables/"
+        "smbios_entry_point");
 
     if ((ef.size() >= 24) && (::memcmp(ef.data(), "_SM3_", 5) == 0)) {
         // SMBIOS 3
@@ -926,9 +932,22 @@ trrojan::smbios_information trrojan::smbios_information::read(void) {
         throw std::runtime_error("SMBIOS entry point is defective.");
     }
 
-    retval.rawData.reserve(tf.size());
-    std::transform(tf.cbegin(), tf.cend(), std::back_inserter(retval.rawData),
-        [&](char c) { return c; });
+    /* Read the table. */
+    std::ifstream fTable("/sys/firmware/dmi/tables/DMI",
+        std::ios::in | std::ios::binary | std::ios::ate);
+    if (!fTable) {
+        throw std::runtime_error("Failed to open DMI table.");
+    }
+
+    assert(retval.rawData == nullptr);
+    retval.rawSize = fTable.tellg();
+    retval.rawData = new byte_type[retval.rawSize];
+    fTable.seekg(0, std::ios::beg);
+
+    if (!fTable.read(reinterpret_cast<char *>(retval.rawData),
+            retval.rawSize)) {
+        throw std::runtime_error("Failed to read DMI table.");
+    }
 #endif /* defined(_WIN32) */
 
     return std::move(retval);
@@ -936,35 +955,69 @@ trrojan::smbios_information trrojan::smbios_information::read(void) {
 
 
 /*
- * trrojan::smbios_information::smbios_information
+ * trrojan::sysinfo::smbios_information::smbios_information
  */
-trrojan::smbios_information::smbios_information(const smbios_information& rhs)
-    : enumFlags(rhs.enumFlags), rawData(rhs.rawData),
-    tableBegin(rhs.tableBegin), tableEnd(rhs.tableEnd) { }
+trrojan::sysinfo::smbios_information::smbios_information(
+        const smbios_information& rhs)
+    : enumFlags(rhs.enumFlags), rawData(nullptr), rawSize(rhs.rawSize),
+        tableBegin(rhs.tableBegin), tableEnd(rhs.tableEnd) {
+    this->rawData = new byte_type[this->rawSize];
+    ::memcpy(this->rawData, rhs.rawData, this->rawSize);
+}
 
 
 /*
- * trrojan::smbios_information::smbios_information
+ * trrojan::sysinfo::smbios_information::smbios_information
  */
-trrojan::smbios_information::smbios_information(smbios_information&& rhs)
-    : enumFlags(rhs.enumFlags), rawData(std::move(rhs.rawData)),
-    tableBegin(rhs.tableBegin), tableEnd(rhs.tableEnd) { }
+trrojan::sysinfo::smbios_information::smbios_information(
+        smbios_information&& rhs)
+    : enumFlags(rhs.enumFlags), rawData(rhs.rawData), rawSize(rhs.rawSize),
+        tableBegin(rhs.tableBegin), tableEnd(rhs.tableEnd) {
+    rhs.rawData = nullptr;
+    rhs.rawSize = 0;
+}
 
 
 /*
- * trrojan::smbios_information::~smbios_information
+ * trrojan::sysinfo::smbios_information::~smbios_information
  */
-trrojan::smbios_information::~smbios_information(void) { }
+trrojan::sysinfo::smbios_information::~smbios_information(void) {
+    delete[] this->rawData;
+}
 
 
 /*
- * trrojan::smbios_information::operator =
+ * trrojan::sysinfo::smbios_information::operator =
  */
-trrojan::smbios_information& trrojan::smbios_information::operator =(
+trrojan::sysinfo::smbios_information&
+trrojan::sysinfo::smbios_information::operator =(
         const smbios_information& rhs) {
-    if (this != &rhs) {
+    if (this != std::addressof(rhs)) {
+        this->enumFlags = rhs.enumFlags;
+        
+        delete[] this->rawData;
+        this->rawSize = rhs.rawSize;
+        this->rawData = new byte_type[this->rawSize];
+        ::memcpy(this->rawData, rhs.rawData, this->rawSize);
+
+        this->tableBegin = rhs.tableBegin;
+        this->tableEnd = rhs.tableEnd;
+    }
+    return *this;
+}
+
+
+/*
+ * trrojan::sysinfo::smbios_information::operator =
+ */
+trrojan::sysinfo::smbios_information&
+trrojan::sysinfo::smbios_information::operator =(smbios_information&& rhs) {
+    if (this != std::addressof(rhs)) {
         this->enumFlags = rhs.enumFlags;
         this->rawData = rhs.rawData;
+        rhs.rawData = nullptr;
+        this->rawSize = rhs.rawSize;
+        rhs.rawSize = 0;
         this->tableBegin = rhs.tableBegin;
         this->tableEnd = rhs.tableEnd;
     }
@@ -973,25 +1026,10 @@ trrojan::smbios_information& trrojan::smbios_information::operator =(
 
 
 /*
- * trrojan::smbios_information::operator =
+ * trrojan::sysinfo::smbios_information::validate_checksum
  */
-trrojan::smbios_information& trrojan::smbios_information::operator =(
-        smbios_information&& rhs) {
-    if (this != &rhs) {
-        this->enumFlags = rhs.enumFlags;
-        this->rawData = std::move(rhs.rawData);
-        this->tableBegin = rhs.tableBegin;
-        this->tableEnd = rhs.tableEnd;
-    }
-    return *this;
-}
-
-
-/*
- * trrojan::smbios_information::validate_checksum
- */
-bool trrojan::smbios_information::validate_checksum(const char *buf,
-        const size_t len) {
+bool trrojan::sysinfo::smbios_information::validate_checksum(
+        const std::uint8_t *buf, const size_t len) {
     uint8_t sum = 0;
 
     for (size_t i = 0; i < len; ++i) {

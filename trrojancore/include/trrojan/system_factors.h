@@ -11,7 +11,10 @@
 #include "trrojan/export.h"
 #include "trrojan/named_variant.h"
 #include "trrojan/variant.h"
-#include "trrojan/smbios_information.h"
+
+//#include "trrojan/sysinfo/hardware_info.h"
+#include "trrojan/sysinfo/os_info.h"
+#include "trrojan/sysinfo/smbios_information.h"
 
 
 namespace trrojan {
@@ -103,6 +106,18 @@ namespace trrojan {
         static const std::string factor_system_desc;
 
         /// <summary>
+        /// Name of the built-in factor retrieving the OS timeout for hanging 
+        /// GPUs.
+        /// </summary>
+        static const std::string factor_tdr_delay;
+
+        /// <summary>
+        /// Name of the built-in factor retrieving the OS behaviour if a GPU
+        /// hang was detected.
+        /// </summary>
+        static const std::string factor_tdr_level;
+
+        /// <summary>
         /// Gets a string representation of the current date and time.
         /// </summary>
         static const std::string factor_timestamp;
@@ -145,6 +160,14 @@ namespace trrojan {
 
         variant system_desc(void) const;
 
+        inline variant tdr_delay(void) const {
+            return static_cast<std::uint32_t>(this->osinfo.tdr_delay());
+        }
+
+        inline variant tdr_level(void) const {
+            return static_cast<std::uint32_t>(this->osinfo.tdr_level());
+        }
+
         variant timestamp(void) const;
 
         variant user_name(void) const;
@@ -160,7 +183,9 @@ namespace trrojan {
 
         system_factors& operator =(const system_factors&) = delete;
 
-        smbios_information smbios;
+        sysinfo::smbios_information smbios;
+
+        sysinfo::os_info osinfo;
 
     };
 }
