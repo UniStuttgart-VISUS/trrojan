@@ -106,6 +106,18 @@ namespace trrojan {
         static const std::string factor_system_desc;
 
         /// <summary>
+        /// Name of the built-in factor retrieving the OS timeout for hanging 
+        /// GPUs.
+        /// </summary>
+        static const std::string factor_tdr_delay;
+
+        /// <summary>
+        /// Name of the built-in factor retrieving the OS behaviour if a GPU
+        /// hang was detected.
+        /// </summary>
+        static const std::string factor_tdr_level;
+
+        /// <summary>
         /// Gets a string representation of the current date and time.
         /// </summary>
         static const std::string factor_timestamp;
@@ -147,6 +159,14 @@ namespace trrojan {
         variant ram(void) const;
 
         variant system_desc(void) const;
+
+        inline variant tdr_delay(void) const {
+            return static_cast<std::uint32_t>(this->osinfo.tdr_delay());
+        }
+
+        inline variant tdr_level(void) const {
+            return static_cast<std::uint32_t>(this->osinfo.tdr_level());
+        }
 
         variant timestamp(void) const;
 

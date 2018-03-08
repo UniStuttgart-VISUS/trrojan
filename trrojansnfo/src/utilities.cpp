@@ -38,3 +38,27 @@ std::vector<std::uint8_t> trrojan::sysinfo::detail::read_all_bytes(
 
     return retval;
 }
+
+
+#if defined(_WIN32)
+/*
+ * trrojan::sysinfo::detail::read_reg_value
+ */
+LSTATUS trrojan::sysinfo::detail::read_reg_value(std::vector<std::uint8_t>& dst,
+        DWORD& type, HKEY key, const char *name) {
+    LSTATUS retval = ERROR_SUCCESS;
+    DWORD size = 0;
+
+    // Determine required size of 'dst'.
+    retval = ::RegQueryValueExA(key, name, nullptr, &type, nullptr, &size);
+
+    // Get the value.
+    if ((retval == ERROR_SUCCESS) || (retval == ERROR_MORE_DATA)) {
+        dst.resize(size);
+        retval = ::RegQueryValueExA(key, name, nullptr, &type, dst.data(),
+            &size);
+    }
+
+    return retval;
+}
+#endif /* defined (_WIN32) */

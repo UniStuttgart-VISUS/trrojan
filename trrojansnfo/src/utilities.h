@@ -9,7 +9,12 @@
 #include <cinttypes>
 #include <memory>
 #include <string>
+#include <system_error>
 #include <vector>
+
+#if defined(_WIN32)
+#include <Windows.h>
+#endif /* defined(_WIN32) */
 
 
 namespace trrojan {
@@ -26,6 +31,15 @@ namespace detail {
     /// Read all contents of a binary file.
     /// </summary>
     std::vector<std::uint8_t> read_all_bytes(const char *path);
+
+#if defined(_WIN32)
+    /// <summary>
+    /// Return the requested registry value below <paramref name="key" /> to
+    /// <paramref name="dst" /> and its type to <see cref="type" />.
+    /// </summary>
+    LSTATUS read_reg_value(std::vector<std::uint8_t>& dst, DWORD& type,
+        HKEY key, const char *name);
+#endif /* defined (_WIN32) */
 
     /// <summary>
     /// Return <paramref name="src" /> to <paramref name="dst" />, but only if

@@ -6,6 +6,8 @@
 
 #include "trrojan/sysinfo/os_info.h"
 
+#include <cassert>
+#include <limits>
 #include <memory>
 #include <sstream>
 
@@ -21,6 +23,53 @@
 
 #include "utilities.h"
 
+
+namespace trrojan {
+namespace sysinfo {
+namespace detail {
+
+#if defined(_WIN32)
+    /// <summary>
+    /// Reads a DWORD value from the TDR registry path.
+    /// </summary>
+    template<class T> T get_tdr_registry_value(const char *name,
+            const T default, const T error) {
+        assert(name != nullptr);
+
+        HKEY hKey = reinterpret_cast<HKEY>(INVALID_HANDLE_VALUE);
+        auto retval = error;
+
+        auto status = ::RegOpenKeyExA(HKEY_LOCAL_MACHINE,
+            "System\\CurrentControlSet\\Control\\GraphicsDrivers", 0,
+            KEY_READ, &hKey);
+        if (status == ERROR_SUCCESS) {
+            DWORD type = 0;
+            std::vector<std::uint8_t> value;
+
+            status = detail::read_reg_value(value, type, hKey, name);
+            if (status == ERROR_SUCCESS) {
+                // The key was found, convert the data.
+                if ((type == REG_DWORD) && (value.size() == sizeof(DWORD))) {
+                    auto v = *reinterpret_cast<DWORD *>(value.data());
+                    retval = static_cast<T>(v);
+                }
+            } else if (status == ERROR_FILE_NOT_FOUND) {
+                // The key was not found, but everything else succeeded, which
+                // indicates default behaviour.
+                retval = default;
+            }
+        }
+
+        ::RegCloseKey(hKey);
+
+        return retval;
+    }
+#endif /* defined(_WIN32) */
+
+
+} /* end namespace detail */
+} /* end namespace trrojan */
+} /* end namespace sysinfo */
 
 
 /*
@@ -109,6 +158,20 @@ trrojan::sysinfo::os_info trrojan::sysinfo::os_info::collect(void) {
         }
     }
 
+    // Determine the TDR information.
+    retval._tdr_ddi_delay = detail::get_tdr_registry_value("TdrDdiDelay",
+        static_cast<size_t>(5), os_info::invalid_tdr_value);
+    retval._tdr_debug_mode = detail::get_tdr_registry_value("TdrDebugMode",
+        sysinfo::tdr_debug_mode::default, sysinfo::tdr_debug_mode::unknown);
+    retval._tdr_delay = detail::get_tdr_registry_value("TdrDelay",
+        static_cast<size_t>(2), os_info::invalid_tdr_value);
+    retval._tdr_level = detail::get_tdr_registry_value("TdrLevel",
+        sysinfo::tdr_level::default, sysinfo::tdr_level::unknown);
+    retval._tdr_limit_count = detail::get_tdr_registry_value("TdrLimitCount",
+        static_cast<size_t>(5), os_info::invalid_tdr_value);
+    retval._tdr_limit_time = detail::get_tdr_registry_value("TdrLimitTime",
+        static_cast<size_t>(60), os_info::invalid_tdr_value);
+
 #else /* defined(_WIN32) */
     utsname vi;
 
@@ -130,6 +193,13 @@ trrojan::sysinfo::os_info trrojan::sysinfo::os_info::collect(void) {
 
 
 /*
+ * trrojan::sysinfo::os_info::invalid_tdr_value
+ */
+const size_t trrojan::sysinfo::os_info::invalid_tdr_value
+    = (std::numeric_limits<size_t>::max)();
+
+
+/*
  * trrojan::sysinfo::os_info::~os_info
  */
 trrojan::sysinfo::os_info::~os_info(void) {
@@ -145,6 +215,12 @@ trrojan::sysinfo::os_info& trrojan::sysinfo::os_info::operator =(
         const os_info& rhs) {
     if (this != std::addressof(rhs)) {
         this->_name = detail::clone_string(rhs._name);
+        this->_tdr_ddi_delay = rhs._tdr_ddi_delay;
+        this->_tdr_debug_mode = rhs._tdr_debug_mode;
+        this->_tdr_delay = rhs._tdr_delay;
+        this->_tdr_level = rhs._tdr_level;
+        this->_tdr_limit_count = rhs._tdr_limit_count;
+        this->_tdr_limit_time = rhs._tdr_limit_time;
         this->_version = detail::clone_string(rhs._version);
         this->_word_size = rhs._word_size;
     }
@@ -160,10 +236,23 @@ trrojan::sysinfo::os_info& trrojan::sysinfo::os_info::operator =(
         os_info&& rhs) {
     if (this != std::addressof(rhs)) {
         this->_name = rhs._name;
-        rhs._name = nullptr;
+        this->_tdr_ddi_delay = rhs._tdr_ddi_delay;
+        this->_tdr_debug_mode = rhs._tdr_debug_mode;
+        this->_tdr_delay = rhs._tdr_delay;
+        this->_tdr_level = rhs._tdr_level;
+        this->_tdr_limit_count = rhs._tdr_limit_count;
+        this->_tdr_limit_time = rhs._tdr_limit_time;
         this->_version = rhs._version;
-        rhs._version = nullptr;
         this->_word_size = rhs._word_size;
+
+        rhs._name = nullptr;
+        rhs._tdr_ddi_delay = os_info::invalid_tdr_value;
+        rhs._tdr_debug_mode = sysinfo::tdr_debug_mode::unknown;
+        rhs._tdr_delay = os_info::invalid_tdr_value;
+        rhs._tdr_level = sysinfo::tdr_level::unknown;
+        rhs._tdr_limit_count = os_info::invalid_tdr_value;
+        rhs._tdr_limit_time = os_info::invalid_tdr_value;
+        rhs._version = nullptr;
         rhs._word_size = 0;
     }
 

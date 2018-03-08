@@ -84,6 +84,8 @@ __TRROJAN_DEFINE_FACTOR(os_version);
 __TRROJAN_DEFINE_FACTOR(process_elevated);
 __TRROJAN_DEFINE_FACTOR(ram);
 __TRROJAN_DEFINE_FACTOR(system_desc);
+__TRROJAN_DEFINE_FACTOR(tdr_delay);
+__TRROJAN_DEFINE_FACTOR(tdr_level);
 __TRROJAN_DEFINE_FACTOR(timestamp);
 __TRROJAN_DEFINE_FACTOR(user_name);
 
