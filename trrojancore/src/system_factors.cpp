@@ -288,7 +288,7 @@ trrojan::variant trrojan::system_factors::installed_memory(void) const {
 #else /* _WIN32 */
     struct sysinfo info;
 
-    if (sysinfo(&info) == 0) {
+    if (::sysinfo(&info) == 0) {
         if (sizeof(info._f) != (sizeof(char) * (20 - 2 * sizeof(long)
             - sizeof(int)))) {
             /* a fucking old kernel is used */
