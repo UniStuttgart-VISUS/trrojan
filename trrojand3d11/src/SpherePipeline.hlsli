@@ -230,7 +230,7 @@ struct PsRaycastingInput {
     nointerpolation float4 CameraRight : TEXCOORD4;
 
 #if defined(PER_VERTEX_RAY)
-    float4 Ray : TEXCOORD5;
+    float3 Ray : TEXCOORD5;
 #endif /* defined(PER_VERTEX_RAY) */
 
 #if defined(HOLOMOL)

@@ -71,12 +71,10 @@ PsOutput Main(PsInput input/*, bool isFront : SV_IsFrontFace*/) {
     float rad = input.SphereParams.w;
     float squarRad = rad * rad;
 
+#if defined(PER_VERTEY_RAY)
+    ray = input.Ray;
+#else /* defined(PER_VERTEY_RAY) */
     // transform fragment coordinates from window coordinates to view coordinates.
-    // TODO: Replace NV-stuff with own implementation to save texture sampling
-    //#define STEREO_WORLD_POS
-#ifdef STEREO_WORLD_POS
-    coord = ComputeWorldPosition(input.Position, true);
-#else    
     input.Position.y = Viewport.w - input.Position.y;
     coord = input.Position
         * float4(2.0 / Viewport.z, 2.0 / Viewport.w, 1.0, 0.0)
@@ -84,12 +82,12 @@ PsOutput Main(PsInput input/*, bool isFront : SV_IsFrontFace*/) {
 
     // transform fragment coordinates from view coordinates to object coordinates.
     coord = mul(coord, ViewProjInvMatrix[eye]);
-#endif
     coord /= coord.w;
     coord -= objPos; // ... and to glyph space
 
                      // calc the viewing ray
     ray = coord.xyz - camPos.xyz;
+#endif /* defined(PER_VERTEY_RAY) */
     ray = normalize(ray);
 
     // calculate the geometry-ray-intersection
