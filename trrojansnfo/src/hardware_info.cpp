@@ -15,6 +15,7 @@
  * trrojan::sysinfo::hardware_info::_DOWEL
  */
 void trrojan::sysinfo::hardware_info::_DOWEL(void) {
+#if 0
     //detail::enum_class_devices(nullptr, [](HDEVINFO hDev, SP_DEVINFO_DATA& data) {
     //    auto name = detail::get_device_registry_property(hDev, data, SPDRP_DEVICEDESC);
     //    auto n = reinterpret_cast<char *>(name.data());
@@ -53,4 +54,5 @@ void trrojan::sysinfo::hardware_info::_DOWEL(void) {
 
         return true;
     }, DIGCF_PRESENT | DIGCF_DEVICEINTERFACE);
+#endif
 }
