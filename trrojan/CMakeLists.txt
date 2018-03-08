@@ -9,6 +9,7 @@ file(GLOB_RECURSE SourceFiles RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"  "*.cpp")
 include_directories(${TrrojanCoreIncludeDir})
 
 # Do some debugging quickhack ...
+#include_directories(${TrrojanSysInfoIncludeDir})
 #include_directories(${TrrojanStreamIncludeDir})
 #target_link_libraries(trrojan LINK_PUBLIC trrojanstream)
 
@@ -227,3 +228,4 @@ SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CIMG_CFLAGS}")
 add_executable(trrojan ${SourceFiles})
 target_link_libraries(trrojan LINK_PUBLIC ${SYSTEM_LIBS} trrojancore)
 #target_link_libraries(trrojan ${SYSTEM_LIBS} )
+#target_link_libraries(trrojan LINK_PUBLIC trrojansnfo)

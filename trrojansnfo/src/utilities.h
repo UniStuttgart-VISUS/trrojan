@@ -4,6 +4,8 @@
 /// </copyright>
 /// <author>Christoph Müller</author>
 
+#pragma once
+
 #include <cinttypes>
 #include <memory>
 #include <string>

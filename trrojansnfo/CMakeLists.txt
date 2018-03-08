@@ -22,7 +22,7 @@ set(TrrojanSysInfoIncludeDir "${CMAKE_CURRENT_SOURCE_DIR}/${IncludeDirectory}" P
 add_library(trrojansnfo SHARED ${HeaderFiles} ${SourceFiles} ${ResourceFiles})
 
 if (WIN32)
-target_link_libraries(trrojansnfo d3d11 dxgi dxguid)
+target_link_libraries(trrojansnfo d3d11 dxgi dxguid setupapi)
 endif (WIN32)
 
 # Group resource scripts into a new filter.

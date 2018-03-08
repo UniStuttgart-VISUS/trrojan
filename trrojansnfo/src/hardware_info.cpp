@@ -6,145 +6,51 @@
 
 #include "trrojan/sysinfo/hardware_info.h"
 
+#include <iostream>
 
-#if 0
-list<wstring> GetPhysicalDisks()
-{
-    HDEVINFO hDeviceInfoSet;
-    ULONG ulMemberIndex;
-    ULONG ulErrorCode;
-    BOOL bFound = FALSE;
-    BOOL bOk;
-    list<wstring> disks;
+#include "setupapiutil.h"
 
-    // create a HDEVINFO with all present devices
-    hDeviceInfoSet = ::SetupDiGetClassDevs(&GUID_DEVINTERFACE_DISK, NULL, NULL, DIGCF_PRESENT | DIGCF_DEVICEINTERFACE);
-    if (hDeviceInfoSet == INVALID_HANDLE_VALUE) {
-        _ASSERT(FALSE);
-        return disks;
-    }
 
-    // enumerate through all devices in the set
-    ulMemberIndex = 0;
-    while (TRUE)
-    {
-        // get device info
-        SP_DEVINFO_DATA deviceInfoData;
-        deviceInfoData.cbSize = sizeof(SP_DEVINFO_DATA);
-        if (!::SetupDiEnumDeviceInfo(hDeviceInfoSet, ulMemberIndex, &deviceInfoData))
-        {
-            if (::GetLastError() == ERROR_NO_MORE_ITEMS) {
-                // ok, reached end of the device enumeration
-                break;
-            } else {
-                // error
-                _ASSERT(FALSE);
-                ::SetupDiDestroyDeviceInfoList(hDeviceInfoSet);
-                return disks;
-            }
-        }
+/*
+ * trrojan::sysinfo::hardware_info::_DOWEL
+ */
+void trrojan::sysinfo::hardware_info::_DOWEL(void) {
+    //detail::enum_class_devices(nullptr, [](HDEVINFO hDev, SP_DEVINFO_DATA& data) {
+    //    auto name = detail::get_device_registry_property(hDev, data, SPDRP_DEVICEDESC);
+    //    auto n = reinterpret_cast<char *>(name.data());
+    //    std::cout << n << std::endl;
+    //    return true;
+    //}, DIGCF_ALLCLASSES | DIGCF_DEVICEINTERFACE);
 
-        // get device interfaces
-        SP_DEVICE_INTERFACE_DATA deviceInterfaceData;
-        deviceInterfaceData.cbSize = sizeof(SP_DEVICE_INTERFACE_DATA);
-        if (!::SetupDiEnumDeviceInterfaces(hDeviceInfoSet, NULL, &GUID_DEVINTERFACE_DISK, ulMemberIndex, &deviceInterfaceData))
-        {
-            if (::GetLastError() == ERROR_NO_MORE_ITEMS) {
-                // ok, reached end of the device enumeration
-                break;
-            } else {
-                // error
-                _ASSERT(FALSE);
-                ::SetupDiDestroyDeviceInfoList(hDeviceInfoSet);
-                return disks;
-            }
-        }
+    //auto ID = trrojan::sysinfo::detail::display_device_class;
+    auto ID = GUID_DEVINTERFACE_DISK;
 
-        // process the next device next time 
-        ulMemberIndex++;
+    detail::enum_class_devices(&ID, [&ID](HDEVINFO hDev, SP_DEVINFO_DATA& data) {
+        auto desc= detail::get_device_registry_property(hDev, data, SPDRP_DEVICEDESC);
+        auto name = detail::get_device_registry_property(hDev, data, SPDRP_FRIENDLYNAME);
+        auto hwid = detail::get_device_registry_property(hDev, data, SPDRP_HARDWAREID);
+        auto mfg = detail::get_device_registry_property(hDev, data, SPDRP_MFG);
+        auto svc = detail::get_device_registry_property(hDev, data, SPDRP_SERVICE);
+        auto drv = detail::get_device_registry_property(hDev, data, SPDRP_DRIVER);
 
-        // get hardware id of the device
-        ULONG ulPropertyRegDataType = 0;
-        ULONG ulRequiredSize = 0;
-        ULONG ulBufferSize = 0;
-        BYTE *pbyBuffer = NULL;
-        if (!::SetupDiGetDeviceRegistryProperty(hDeviceInfoSet, &deviceInfoData, SPDRP_HARDWAREID, &ulPropertyRegDataType, NULL, 0, &ulRequiredSize))
-        {
-            if (::GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
-                pbyBuffer = (BYTE *)::malloc(ulRequiredSize);
-                ulBufferSize = ulRequiredSize;
-                if (!::SetupDiGetDeviceRegistryProperty(hDeviceInfoSet, &deviceInfoData, SPDRP_HARDWAREID, &ulPropertyRegDataType, pbyBuffer, ulBufferSize, &ulRequiredSize))
-                {
-                    // getting the hardware id failed
-                    _ASSERT(FALSE);
-                    ::SetupDiDestroyDeviceInfoList(hDeviceInfoSet);
-                    ::free(pbyBuffer);
-                    return disks;
-                }
-            } else {
-                // getting device registry property failed
-                _ASSERT(FALSE);
-                ::SetupDiDestroyDeviceInfoList(hDeviceInfoSet);
-                return disks;
-            }
-        } else {
-            // getting hardware id of the device succeeded unexpectedly
-            _ASSERT(FALSE);
-            ::SetupDiDestroyDeviceInfoList(hDeviceInfoSet);
-            return disks;
-        }
+        std::cout << reinterpret_cast<TCHAR *>(name.data()) << std::endl
+            << reinterpret_cast<TCHAR *>(desc.data()) << std::endl
+            << reinterpret_cast<TCHAR *>(hwid.data()) << std::endl
+            << reinterpret_cast<TCHAR *>(mfg.data()) << std::endl
+            << reinterpret_cast<TCHAR *>(svc.data()) << std::endl
+            << reinterpret_cast<TCHAR *>(drv.data()) << std::endl
+            << std::endl;
 
-        // pbyBuffer is initialized now!
-        LPCWSTR pszHardwareId = (LPCWSTR) pbyBuffer;
+        detail::enum_device_interfaces(hDev, data, ID, [](HDEVINFO hDev, SP_DEVINFO_DATA& d, SP_DEVICE_INTERFACE_DATA& i) {
+            auto detail = detail::get_device_interface_detail(hDev, i);
+            //auto name = detail::get_device_registry_property(hDev, i, SPDRP_DEVICEDESC);
+            //auto n = reinterpret_cast<char *>(name.data());
+            //std::cout << "\t" << n << std::endl;
 
-        // retrieve detailed information about the device
-        // (especially the device path which is needed to create the device object)
-        SP_DEVICE_INTERFACE_DETAIL_DATA *pDeviceInterfaceDetailData = NULL;
-        ULONG ulDeviceInterfaceDetailDataSize = 0;
-        ulRequiredSize = 0;
-        bOk = ::SetupDiGetDeviceInterfaceDetail(hDeviceInfoSet, &deviceInterfaceData, pDeviceInterfaceDetailData, ulDeviceInterfaceDetailDataSize, &ulRequiredSize, NULL);
-        if (!bOk)
-        {
-            ulErrorCode = ::GetLastError();
-            if (ulErrorCode == ERROR_INSUFFICIENT_BUFFER) {
-                // insufficient buffer space
-                // => that's ok, allocate enough space and try again
-                pDeviceInterfaceDetailData = (SP_DEVICE_INTERFACE_DETAIL_DATA *)::malloc(ulRequiredSize);
-                pDeviceInterfaceDetailData->cbSize = sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA);
-                ulDeviceInterfaceDetailDataSize = ulRequiredSize;
-                deviceInfoData.cbSize = sizeof(SP_DEVINFO_DATA);
-                bOk = ::SetupDiGetDeviceInterfaceDetail(hDeviceInfoSet, &deviceInterfaceData, pDeviceInterfaceDetailData, ulDeviceInterfaceDetailDataSize, &ulRequiredSize, &deviceInfoData);
-                ulErrorCode = ::GetLastError();
-            }
 
-            if (!bOk) {
-                // retrieving detailed information about the device failed
-                _ASSERT(FALSE);
-                ::free(pbyBuffer);
-                ::free(pDeviceInterfaceDetailData);
-                ::SetupDiDestroyDeviceInfoList(hDeviceInfoSet);
-                return disks;
-            }
-        } else {
-            // retrieving detailed information about the device succeeded unexpectedly
-            _ASSERT(FALSE);
-            ::free(pbyBuffer);
-            ::SetupDiDestroyDeviceInfoList(hDeviceInfoSet);
-            return disks;
-        }
+            return true;
+        });
 
-        disks.push_back(pDeviceInterfaceDetailData->DevicePath);
-
-        // free buffer for device interface details
-        ::free(pDeviceInterfaceDetailData);
-
-        // free buffer
-        ::free(pbyBuffer);
-    }
-
-    // destroy device info list
-    ::SetupDiDestroyDeviceInfoList(hDeviceInfoSet);
-
-    return disks;
+        return true;
+    }, DIGCF_PRESENT | DIGCF_DEVICEINTERFACE);
 }
-#endif
