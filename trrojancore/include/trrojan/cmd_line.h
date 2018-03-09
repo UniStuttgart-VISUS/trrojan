@@ -61,6 +61,24 @@ namespace trrojan {
     }
 
     /// <summary>
+    /// Answer whether the specified switch is in the range of the given command
+    /// line arguments.
+    /// <summary>
+    /// <param name="name"></param>
+    /// <param name="begin"></param>
+    /// <param name="end"></param>
+    /// <param name="matchCase"></param>
+    /// <tparam name="T"></tparam>
+    /// <tparam name="I"></tparam>
+    /// <returns></returns>
+    template<class T, class I>
+    inline bool contains_switch(const T *name, I begin, I end,
+            const bool matchCase = false) {
+        return contains_switch(std::basic_string<T>(name), begin, end,
+            matchCase);
+    }
+
+    /// <summary>
     /// Find the first occurrence of an argument with the specified switch name
     /// in a range of command line arguments.
     /// </summary>

@@ -66,7 +66,8 @@ void trrojan::excel_output::open(const output_params& params) {
     this->close();
 
     /* Initialise COM. */
-    auto hr = ::CoInitializeEx(0, COINIT_MULTITHREADED);
+    // Note: DXGI uses STA, so we need to do so, too. auto hr = ::CoInitializeEx(0, COINIT_MULTITHREADED);
+    auto hr = ::CoInitialize(nullptr);
     if (FAILED(hr)) {
         std::stringstream msg;
         msg << "Failed to initialise COM to communicate with Excel: " << hr

@@ -88,4 +88,16 @@ namespace trrojan {
     /// <param name="path">The path to the output file.</param>
     /// <returns>An output handler.</returns>
     output TRROJANCORE_API make_output(const std::string& path);
+
+    /// <summary>
+    /// Instantiates and opens an output depending on the command line
+    /// parameters specified.
+    /// </summary>
+    /// <remarks>
+    /// The &quot;--output&quot; argument is used to determine the output file.
+    /// All other arguments are dependent on the type of the file.
+    /// </remarks>
+    /// <param name="cmdLine">The command line arguments.</param>
+    /// <returns>An open output handler.</returns>
+    output TRROJANCORE_API open_output(const trrojan::cmd_line& cmdLine);
 }
