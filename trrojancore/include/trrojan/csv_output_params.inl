@@ -21,7 +21,7 @@ trrojan::csv_output_params::csv_output_params(const std::string& path,
         }
     }
 
-    this->_quote_strings = trrojan::contains_switch("--quote-strings",
+    this->_quote_strings = !trrojan::contains_switch("--do-not-quote-strings",
         cmdLineBegin, cmdLineEnd);
 
     {
