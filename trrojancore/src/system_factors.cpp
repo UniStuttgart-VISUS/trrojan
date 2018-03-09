@@ -110,7 +110,7 @@ trrojan::variant trrojan::system_factors::bios(void) const {
         std::stringstream value;
         value << e->get_vendor() << " "
             << e->get_version() << " ("
-            << e->get_release_date() << ")" << std::ends;
+            << e->get_release_date() << ")";
         return variant(value.str());
     }
 }
@@ -199,8 +199,7 @@ trrojan::variant trrojan::system_factors::cpu(void) const {
                 }
 #endif /* (defined(__GNUC__) && ((__GNUC__ > 4) ... */
             }
-            value << std::ends;
-            
+
             if (value.tellp() > 0) {
                 return variant(value.str());
             }
@@ -228,7 +227,6 @@ trrojan::variant trrojan::system_factors::cpu(void) const {
                 << e->get_manufacturer() << " "
                 << e->get_version();
         }
-        value << std::ends;
 
         return variant(value.str());
     }
@@ -336,7 +334,7 @@ trrojan::variant trrojan::system_factors::mainboard(void) const {
         std::stringstream value;
         value << e->get_manufacturer() << " "
             << e->get_product_name() << " ("
-            << e->get_version() << ")" << std::ends;
+            << e->get_version() << ")";
         return variant(value.str());
     }
 }
@@ -432,7 +430,6 @@ trrojan::variant trrojan::system_factors::ram(void) const {
                     << e->get_part_number();
             }
         }
-        value << std::ends;
 
         return variant(value.str());
     }
@@ -473,7 +470,7 @@ trrojan::variant trrojan::system_factors::system_desc(void) const {
         std::stringstream value;
         value << e->get_manufacturer() << " "
             << e->get_product_name() << " ("
-            << e->get_version() << ")" << std::ends;
+            << e->get_version() << ")";
         return variant(value.str());
     }
 }
