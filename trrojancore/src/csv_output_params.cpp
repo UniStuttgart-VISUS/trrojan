@@ -28,3 +28,32 @@ const std::string trrojan::csv_output_params::default_separator("\t");
  * trrojan::csv_output_params::~csv_output_params
  */
 trrojan::csv_output_params::~csv_output_params(void) { }
+
+
+/*
+ * trrojan::csv_output_params::unescape
+ */
+std::string trrojan::csv_output_params::unescape(
+        std::string::const_iterator begin, std::string::const_iterator end) {
+    std::string retval;
+    retval.reserve(std::distance(begin, end));
+
+    while (begin != end) {
+        auto c = *begin++;
+
+        if ((c == '\\') && (begin != end)) {
+            auto e = *begin++;
+
+            switch (e) {
+                case '\\': c = '\\'; break;
+                case 'n': c = '\n'; break;
+                case 't': c = '\t'; break;
+                default: c = e; break;
+            }
+        }
+
+        retval += c;
+    }
+
+    return retval;
+}

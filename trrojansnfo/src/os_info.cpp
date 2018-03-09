@@ -215,6 +215,7 @@ trrojan::sysinfo::os_info::~os_info(void) {
 trrojan::sysinfo::os_info& trrojan::sysinfo::os_info::operator =(
         const os_info& rhs) {
     if (this != std::addressof(rhs)) {
+        delete[] this->_name;
         this->_name = detail::clone_string(rhs._name);
         this->_tdr_ddi_delay = rhs._tdr_ddi_delay;
         this->_tdr_debug_mode = rhs._tdr_debug_mode;
@@ -222,6 +223,7 @@ trrojan::sysinfo::os_info& trrojan::sysinfo::os_info::operator =(
         this->_tdr_level = rhs._tdr_level;
         this->_tdr_limit_count = rhs._tdr_limit_count;
         this->_tdr_limit_time = rhs._tdr_limit_time;
+        delete[] this->_version;
         this->_version = detail::clone_string(rhs._version);
         this->_word_size = rhs._word_size;
     }
@@ -231,7 +233,7 @@ trrojan::sysinfo::os_info& trrojan::sysinfo::os_info::operator =(
 
 
 /*
-* trrojan::sysinfo::os_info::operator =
+ * trrojan::sysinfo::os_info::operator =
  */
 trrojan::sysinfo::os_info& trrojan::sysinfo::os_info::operator =(
         os_info&& rhs) {

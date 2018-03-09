@@ -36,21 +36,7 @@ int main(const int argc, const char **argv) {
         }
 
         /* Configure the output target for the results. */
-        trrojan::output output;
-        {
-            auto it = trrojan::find_argument("--output", cmdLine.begin(),
-                cmdLine.end());
-            if (it != cmdLine.end()) {
-                output = trrojan::make_output(*it);
-                output->open(trrojan::csv_output_params::create(*it));  // TODO: customise
-            } else {
-                trrojan::log::instance().write_line(trrojan::log_level::warning,
-                    "You have not specified an output file. Please do so using "
-                    "the --output option.");
-                output = std::make_shared<trrojan::console_output>();
-                output->open(trrojan::console_output_params::create());
-            }
-        }
+        auto output = trrojan::open_output(cmdLine);
 
         /* Configure the executive. */
         trrojan::executive exe;
