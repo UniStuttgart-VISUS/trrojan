@@ -113,7 +113,7 @@ trrojan::d3d11::sphere_data_set_base::centre(void) const {
  * trrojan::d3d11::sphere_data_set_base::clipping_planess
  */
 std::pair<float, float> trrojan::d3d11::sphere_data_set_base::clipping_planes(
-        const camera& cam) const {
+        const camera& cam, const float globalRadius) const {
     point_type bbox[2];
     auto& camPos = cam.get_look_from();
     glm::vec3 centre;
@@ -128,20 +128,27 @@ std::pair<float, float> trrojan::d3d11::sphere_data_set_base::clipping_planes(
     }
     diagLen = std::sqrt(diagLen);
 
-    diagLen += 0.5f * this->max_radius();
+    if ((this->_properties & property_per_sphere_radius) != 0) {
+        diagLen += 0.5f * this->max_radius();
+    } else {
+        diagLen += 0.5f * globalRadius;
+    }
     diagLen *= 0.5f;
 
     auto viewLen = glm::length(centre - camPos);
 
-    //auto nearPlane = viewLen - diagLen;
-    //if (nearPlane < 0.01f) {
-    //    nearPlane = 0.01f;
-    //}
-    auto nearPlane = 0.01f;
-
+    // Compute the standard values.
+    auto nearPlane = viewLen - diagLen;
     auto farPlane = viewLen + diagLen;
+
+    // Apply some limits on valid ranges.
+    if (nearPlane < 0.01f) {
+        nearPlane = 0.01f;
+    }
+    nearPlane = 0.01f;
+
     if (farPlane < nearPlane) {
-        farPlane = nearPlane + 1.0f;
+        farPlane = nearPlane + (std::max)(1.0f, diagLen);
     }
 
     return std::make_pair(nearPlane, farPlane);

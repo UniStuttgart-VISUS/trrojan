@@ -327,56 +327,8 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
             "wall_time_avg"
     });
 
-    // Compute the matrices.
-    {
-        //auto projection = DirectX::XMMatrixPerspectiveFovRH(std::atan(1) * 4 / 3,
-        //    static_cast<float>(viewport.Width) / static_cast<float>(viewport.Height),
-        //    0.1f, 10.0f);
-
-        //auto eye = DirectX::XMFLOAT4(0, 0, 0.5f * (this->mmpld_header.bounding_box[5] - this->mmpld_header.bounding_box[2]), 0);
-        //auto lookAt = DirectX::XMFLOAT4(0, 0, 0, 0);
-        //auto up = DirectX::XMFLOAT4(0, 1, 0, 0);
-        //auto view = DirectX::XMMatrixLookAtRH(DirectX::XMLoadFloat4(&eye),
-        //    DirectX::XMLoadFloat4(&lookAt), DirectX::XMLoadFloat4(&up));
-
-        this->cam.set_fovy(60.0f);
-        this->cam.set_aspect_ratio(static_cast<float>(viewport.Width)
-            / static_cast<float>(viewport.Height));
-        auto mat = DirectX::XMFLOAT4X4(
-            glm::value_ptr(this->cam.get_projection_mx()));
-        auto projection = DirectX::XMLoadFloat4x4(&mat);
-        DirectX::XMStoreFloat4x4(viewConstants.ProjMatrix,
-            DirectX::XMMatrixTranspose(projection));
-
-        point_type bbs, bbe;
-        this->data->bounding_box(bbs, bbe);
-        this->apply_manoeuvre(this->cam, config, bbs, bbe);
-
-        auto clipping = this->data->clipping_planes(cam);
-        this->cam.set_near_plane_dist(clipping.first);
-        this->cam.set_far_plane_dist(clipping.second);
-
-        mat = DirectX::XMFLOAT4X4(glm::value_ptr(this->cam.get_view_mx()));
-        auto view = DirectX::XMLoadFloat4x4(&mat);
-        DirectX::XMStoreFloat4x4(viewConstants.ViewMatrix,
-            DirectX::XMMatrixTranspose(view));
-
-        auto viewDet = DirectX::XMMatrixDeterminant(view);
-        auto viewInv = DirectX::XMMatrixInverse(&viewDet, view);
-        DirectX::XMStoreFloat4x4(viewConstants.ViewInvMatrix,
-            DirectX::XMMatrixTranspose(viewInv));
-
-        auto viewProj = view * projection;
-        DirectX::XMStoreFloat4x4(viewConstants.ViewProjMatrix,
-            DirectX::XMMatrixTranspose(viewProj));
-
-        auto viewProjDet = DirectX::XMMatrixDeterminant(viewProj);
-        auto viewProjInv = DirectX::XMMatrixInverse(&viewProjDet, viewProj);
-        DirectX::XMStoreFloat4x4(viewConstants.ViewProjInvMatrix,
-            DirectX::XMMatrixTranspose(viewProjInv));
-    }
-
-    // Set data constants.
+    // Set data constants. Note that his must be done before computing the
+    // matrices because we will use sphereConstants.GlobalRadius there.
     {
         ::ZeroMemory(&sphereConstants, sizeof(SphereConstants));
 
@@ -404,6 +356,56 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
             sphereConstants.GlobalRadius = config.get<float>(
                 factor_global_radius);
         }
+    }
+
+    // Compute the matrices.
+    {
+        //auto projection = DirectX::XMMatrixPerspectiveFovRH(std::atan(1) * 4 / 3,
+        //    static_cast<float>(viewport.Width) / static_cast<float>(viewport.Height),
+        //    0.1f, 10.0f);
+
+        //auto eye = DirectX::XMFLOAT4(0, 0, 0.5f * (this->mmpld_header.bounding_box[5] - this->mmpld_header.bounding_box[2]), 0);
+        //auto lookAt = DirectX::XMFLOAT4(0, 0, 0, 0);
+        //auto up = DirectX::XMFLOAT4(0, 1, 0, 0);
+        //auto view = DirectX::XMMatrixLookAtRH(DirectX::XMLoadFloat4(&eye),
+        //    DirectX::XMLoadFloat4(&lookAt), DirectX::XMLoadFloat4(&up));
+
+        this->cam.set_fovy(60.0f);
+        this->cam.set_aspect_ratio(static_cast<float>(viewport.Width)
+            / static_cast<float>(viewport.Height));
+        auto mat = DirectX::XMFLOAT4X4(
+            glm::value_ptr(this->cam.get_projection_mx()));
+        auto projection = DirectX::XMLoadFloat4x4(&mat);
+        DirectX::XMStoreFloat4x4(viewConstants.ProjMatrix,
+            DirectX::XMMatrixTranspose(projection));
+
+        point_type bbs, bbe;
+        this->data->bounding_box(bbs, bbe);
+        this->apply_manoeuvre(this->cam, config, bbs, bbe);
+
+        auto clipping = this->data->clipping_planes(cam,
+            sphereConstants.GlobalRadius);
+        this->cam.set_near_plane_dist(clipping.first);
+        this->cam.set_far_plane_dist(clipping.second);
+
+        mat = DirectX::XMFLOAT4X4(glm::value_ptr(this->cam.get_view_mx()));
+        auto view = DirectX::XMLoadFloat4x4(&mat);
+        DirectX::XMStoreFloat4x4(viewConstants.ViewMatrix,
+            DirectX::XMMatrixTranspose(view));
+
+        auto viewDet = DirectX::XMMatrixDeterminant(view);
+        auto viewInv = DirectX::XMMatrixInverse(&viewDet, view);
+        DirectX::XMStoreFloat4x4(viewConstants.ViewInvMatrix,
+            DirectX::XMMatrixTranspose(viewInv));
+
+        auto viewProj = view * projection;
+        DirectX::XMStoreFloat4x4(viewConstants.ViewProjMatrix,
+            DirectX::XMMatrixTranspose(viewProj));
+
+        auto viewProjDet = DirectX::XMMatrixDeterminant(viewProj);
+        auto viewProjInv = DirectX::XMMatrixInverse(&viewProjDet, viewProj);
+        DirectX::XMStoreFloat4x4(viewConstants.ViewProjInvMatrix,
+            DirectX::XMMatrixTranspose(viewProjInv));
     }
 
     // Set tessellation constants.
@@ -544,7 +546,7 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
     std::sort(gpuTimes.begin(), gpuTimes.end());
     auto gpuMedian = gpuTimes[gpuTimes.size() / 2];
     if (gpuTimes.size() % 2 == 0) {
-        gpuMedian += gpuTimes[gpuTimes.size() / 2 + 1];
+        gpuMedian += gpuTimes[gpuTimes.size() / 2 - 1];
         gpuMedian *= 0.5;
     }
 
