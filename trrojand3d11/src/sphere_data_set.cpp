@@ -114,42 +114,34 @@ trrojan::d3d11::sphere_data_set_base::centre(void) const {
  */
 std::pair<float, float> trrojan::d3d11::sphere_data_set_base::clipping_planes(
         const camera& cam, const float globalRadius) const {
+    const auto& camPos = cam.get_look_from();
+    const auto radius = ((this->_properties & property_per_sphere_radius) != 0)
+        ? this->max_radius()
+        : globalRadius;
+    const auto size = this->extents();
+    const auto& view = glm::normalize(cam.get_look_to() - camPos);
+
     point_type bbox[2];
-    auto& camPos = cam.get_look_from();
-    glm::vec3 centre;
-    auto diagLen = 0.0f;
-    auto size = this->extents();
+    auto farPlane = std::numeric_limits<float>::lowest();
+    auto nearPlane = (std::numeric_limits<float>::max)();
 
     this->bounding_box(bbox[0], bbox[1]);
 
-    for (glm::vec3::length_type i = 0; i < size.size(); ++i) {
-        centre[i] = size[i] / 2.0f + bbox[0][i];
-        diagLen += size[i] * size[i];
+    for (auto x = 0; x < 2; ++x) {
+        for (auto y = 0; y < 2; ++y) {
+            for (auto z = 0; z < 2; ++z) {
+                auto pt = glm::vec3(bbox[x][0], bbox[y][1], bbox[z][2]);
+                auto ray = pt - camPos;
+                auto dist = glm::dot(view, ray);
+                if (dist < nearPlane) nearPlane = dist;
+                if (dist > farPlane) farPlane = dist;
+            }
+        }
     }
-    diagLen = std::sqrt(diagLen);
 
-    if ((this->_properties & property_per_sphere_radius) != 0) {
-        diagLen += 0.5f * this->max_radius();
-    } else {
-        diagLen += 0.5f * globalRadius;
-    }
-    diagLen *= 0.5f;
-
-    auto viewLen = glm::length(centre - camPos);
-
-    // Compute the standard values.
-    auto nearPlane = viewLen - diagLen;
-    auto farPlane = viewLen + diagLen;
-
-    // Apply some limits on valid ranges.
-    if (nearPlane < 0.01f) {
-        nearPlane = 0.01f;
-    }
-    nearPlane = 0.01f;
-
-    if (farPlane < nearPlane) {
-        farPlane = nearPlane + (std::max)(1.0f, diagLen);
-    }
+    nearPlane -= radius;
+    farPlane += radius;
+    farPlane *= 1.3f;   // Add additional safety margin because some data sets require it.
 
     return std::make_pair(nearPlane, farPlane);
 }
