@@ -600,3 +600,20 @@ void trrojan::d3d11::wait_for_event_query(ID3D11DeviceContext *ctx,
         throw ATL::CAtlException(hr);
     }
 }
+
+
+/*
+ * trrojan::d3d11::wait_for_stats_query
+ */
+void trrojan::d3d11::wait_for_stats_query(
+        D3D11_QUERY_DATA_PIPELINE_STATISTICS& dst,
+        ID3D11DeviceContext *ctx, ID3D11Asynchronous *query) {
+    assert(ctx != nullptr);
+    assert(query != nullptr);
+    HRESULT hr = S_FALSE;
+
+    while ((hr = ctx->GetData(query, &dst, sizeof(dst), 0)) == S_FALSE);
+    if (FAILED(hr)) {
+        throw ATL::CAtlException(hr);
+    }
+}

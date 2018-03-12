@@ -42,10 +42,12 @@ _SPHERE_BENCH_DEFINE_FACTOR(fit_bounding_box);
 _SPHERE_BENCH_DEFINE_FACTOR(force_float_colour);
 _SPHERE_BENCH_DEFINE_FACTOR(frame);
 _SPHERE_BENCH_DEFINE_FACTOR(global_radius);
+_SPHERE_BENCH_DEFINE_FACTOR(gpu_counter_iterations);
 _SPHERE_BENCH_DEFINE_FACTOR(hemi_tess_scale);
 _SPHERE_BENCH_DEFINE_FACTOR(inside_tess_factor);
-_SPHERE_BENCH_DEFINE_FACTOR(iterations);
 _SPHERE_BENCH_DEFINE_FACTOR(method);
+_SPHERE_BENCH_DEFINE_FACTOR(min_prewarms);
+_SPHERE_BENCH_DEFINE_FACTOR(min_wall_time);
 _SPHERE_BENCH_DEFINE_FACTOR(poly_corners);
 _SPHERE_BENCH_DEFINE_FACTOR(vs_raygen);
 _SPHERE_BENCH_DEFINE_FACTOR(vs_xfer_function);
@@ -81,11 +83,11 @@ trrojan::d3d11::sphere_benchmark::sphere_benchmark(void)
     this->_default_configs.add_factor(factor::from_manifestations(
         factor_global_radius, 1.0f));
     this->_default_configs.add_factor(factor::from_manifestations(
+        factor_gpu_counter_iterations, static_cast<unsigned int>(7)));
+    this->_default_configs.add_factor(factor::from_manifestations(
         factor_hemi_tess_scale, 0.5f));
     this->_default_configs.add_factor(factor::from_manifestations(
         factor_inside_tess_factor, { inside_tess_factor_type{ 4, 4 } }));
-    this->_default_configs.add_factor(factor::from_manifestations(
-        factor_iterations, static_cast<unsigned int>(8)));
     {
         std::vector<std::string> manifestations;
         for (size_t i = 0; (::SPHERE_METHODS[i].name != nullptr); ++i) {
@@ -94,6 +96,10 @@ trrojan::d3d11::sphere_benchmark::sphere_benchmark(void)
         this->_default_configs.add_factor(factor::from_manifestations(
             factor_method, manifestations));
     }
+    this->_default_configs.add_factor(factor::from_manifestations(
+        factor_min_prewarms, static_cast<unsigned int>(4)));
+    this->_default_configs.add_factor(factor::from_manifestations(
+        factor_min_wall_time, static_cast<unsigned int>(1000)));
     this->_default_configs.add_factor(factor::from_manifestations(
         factor_poly_corners, 4u));
     this->_default_configs.add_factor(factor::from_manifestations(
@@ -154,12 +160,18 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
     typedef rendering_technique::shader_stage shader_stage;
 
     trrojan::timer cpuTimer;
-    const auto cntIterations = config.get<int>(factor_iterations);
+    auto cntCpuIterations = static_cast<std::uint32_t>(0);
+    const auto cntGpuIterations= config.get<std::uint32_t>(
+        factor_gpu_counter_iterations);
+    const auto cntPrewarms = config.get<std::uint32_t>(factor_min_prewarms);
     auto ctx = device.d3d_context();
     auto dev = device.d3d_device();
     gpu_timer_type::value_type gpuFreq;
     gpu_timer_type gpuTimer;
+    std::vector<gpu_timer_type::millis_type> gpuTimes;
     auto isDisjoint = true;
+    const auto minWallTime = config.get<std::uint32_t>(factor_min_wall_time);
+    D3D11_QUERY_DATA_PIPELINE_STATISTICS pipeStats;
     auto shaderCode = sphere_benchmark::get_shader_id(config);
     SphereConstants sphereConstants;
     TessellationConstants tessConstants;
@@ -298,7 +310,6 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
     // Prepare the result set.
     auto retval = std::make_shared<basic_result>(std::move(config),
         std::initializer_list<std::string> {
-        "iteration",
             "particles",
             "ia_vertices",
             "ia_primitives",
@@ -308,8 +319,12 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
             "gs_invokes",
             "gs_primitives",
             "ps_invokes",
-            "gpu_time",
-            "wall_time"
+            "gpu_time_min",
+            "gpu_time_med",
+            "gpu_time_max",
+            "wall_time_iterations",
+            "wall_time",
+            "wall_time_avg"
     });
 
     // Compute the matrices.
@@ -437,10 +452,12 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
     // Determine the number of primitives to emit.
     auto cntPrimitives = this->data->size();
     auto cntInstances = 0;
+    auto isInstanced = false;
     if (is_technique(shaderCode, SPHERE_TECHNIQUE_QUAD_INST)) {
         // Instancing of quads requires 4 vertices per particle.
         cntInstances = cntPrimitives;
         cntPrimitives = 4;
+        isInstanced = true;
     }
 
 #if 0
@@ -452,54 +469,103 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
     }
 #endif
 
-    // Render it.
-    for (int i = 0; i < cntIterations;) {
-        log::instance().write_line(log_level::debug, "Iteration %d.", i);
-        cpuTimer.start();
-        gpuTimer.start_frame();
-        gpuTimer.start(0);
+    // Do prewarming and compute number of CPU iterations at the same time.
+    log::instance().write_line(log_level::debug, "Prewarming ...");
+    cpuTimer.start();
+    cntCpuIterations = 0;
+    do {
         this->clear_target();
-        ctx->Begin(this->stats_query);
-        if (is_technique(shaderCode, SPHERE_TECHNIQUE_QUAD_INST)) {
+        if (isInstanced) {
             ctx->DrawInstanced(cntPrimitives, cntInstances, 0, 0);
         } else {
             ctx->Draw(cntPrimitives, 0);
         }
-        ctx->End(this->stats_query);
         this->present_target();
-        ctx->End(this->done_query);
+    } while ((++cntCpuIterations < cntPrewarms)
+        || (cpuTimer.elapsed_millis() < minWallTime));
+
+    // Do the GPU counter measurements
+    gpuTimes.resize(cntGpuIterations);
+    for (std::uint32_t i = 0; i < cntGpuIterations;) {
+        log::instance().write_line(log_level::debug, "GPU counter measurement "
+            "#%d.", i);
+        gpuTimer.start_frame();
+        gpuTimer.start(0);
+        this->clear_target();
+        if (isInstanced) {
+            ctx->DrawInstanced(cntPrimitives, cntInstances, 0, 0);
+        } else {
+            ctx->Draw(cntPrimitives, 0);
+        }
+        this->present_target();
         gpuTimer.end(0);
         gpuTimer.end_frame();
-        wait_for_event_query(ctx, this->done_query);
-        auto cpuTime = cpuTimer.elapsed_millis();
 
         gpuTimer.evaluate_frame(isDisjoint, gpuFreq, 5 * 1000);
         if (!isDisjoint) {
-            D3D11_QUERY_DATA_PIPELINE_STATISTICS pipeStats;
-            auto hr = ctx->GetData(this->stats_query, &pipeStats, sizeof(pipeStats), 0);
-            assert(SUCCEEDED(hr));
-
-            auto gpuTime = gpu_timer_type::to_milliseconds(
+            gpuTimes[i] = gpu_timer_type::to_milliseconds(
                     gpuTimer.evaluate(0), gpuFreq);
-            retval->add({
-                i,
-                this->data->size(),
-                pipeStats.IAVertices,
-                pipeStats.IAPrimitives,
-                pipeStats.VSInvocations,
-                pipeStats.HSInvocations,
-                pipeStats.DSInvocations,
-                pipeStats.GSInvocations,
-                pipeStats.GSPrimitives,
-                pipeStats.PSInvocations,
-                gpuTime,
-                cpuTime
-            });
-            ++i;
+            ++i;    // Only proceed in case of success.
         }
-
-        //this->save_target();    // TODO
     }
+
+    // Obtain pipeline statistics
+    log::instance().write_line(log_level::debug, "Collecting pipeline "
+        "statistics ...");
+    this->clear_target();
+    ctx->Begin(this->stats_query);
+    if (isInstanced) {
+        ctx->DrawInstanced(cntPrimitives, cntInstances, 0, 0);
+    } else {
+        ctx->Draw(cntPrimitives, 0);
+    }
+    ctx->End(this->stats_query);
+    this->present_target();
+    wait_for_stats_query(pipeStats, ctx, this->stats_query);
+
+    // Do the wall clock measurement.
+    log::instance().write_line(log_level::debug, "Measuring wall clock "
+        "timings over %u iterations ...", cntCpuIterations);
+    cpuTimer.start();
+    for (std::uint32_t i = 0; i < cntCpuIterations; ++i) {
+        this->clear_target();
+        if (isInstanced) {
+            ctx->DrawInstanced(cntPrimitives, cntInstances, 0, 0);
+        } else {
+            ctx->Draw(cntPrimitives, 0);
+        }
+        this->present_target();
+    }
+    ctx->End(this->done_query);
+    wait_for_event_query(ctx, this->done_query);
+    auto cpuTime = cpuTimer.elapsed_millis();
+
+    // Compute derived statistics for GPU counters.
+    std::sort(gpuTimes.begin(), gpuTimes.end());
+    auto gpuMedian = gpuTimes[gpuTimes.size() / 2];
+    if (gpuTimes.size() % 2 == 0) {
+        gpuMedian += gpuTimes[gpuTimes.size() / 2 + 1];
+        gpuMedian *= 0.5;
+    }
+
+    // Output the results.
+    retval->add({
+        this->data->size(),
+        pipeStats.IAVertices,
+        pipeStats.IAPrimitives,
+        pipeStats.VSInvocations,
+        pipeStats.HSInvocations,
+        pipeStats.DSInvocations,
+        pipeStats.GSInvocations,
+        pipeStats.GSPrimitives,
+        pipeStats.PSInvocations,
+        gpuTimes.front(),
+        gpuMedian,
+        gpuTimes.back(),
+        cntCpuIterations,
+        cpuTime,
+        static_cast<double>(cpuTime) / cntCpuIterations
+        });
 
     return retval;
 }
