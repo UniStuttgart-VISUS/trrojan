@@ -5,6 +5,8 @@
 
 #include "trrojan/d3d11/sphere_data_set.h"
 
+#include "trrojan/log.h"
+
 #include "sphere_techniques.h"
 
 
@@ -118,7 +120,6 @@ std::pair<float, float> trrojan::d3d11::sphere_data_set_base::clipping_planes(
     const auto radius = ((this->_properties & property_per_sphere_radius) != 0)
         ? this->max_radius()
         : globalRadius;
-    const auto size = this->extents();
     const auto& view = glm::normalize(cam.get_look_to() - camPos);
 
     point_type bbox[2];
@@ -131,6 +132,8 @@ std::pair<float, float> trrojan::d3d11::sphere_data_set_base::clipping_planes(
         for (auto y = 0; y < 2; ++y) {
             for (auto z = 0; z < 2; ++z) {
                 auto pt = glm::vec3(bbox[x][0], bbox[y][1], bbox[z][2]);
+                log::instance().write_line(log_level::debug, "Testing "
+                    "(%f, %f, %f) ...", pt.x, pt.y, pt.z);
                 auto ray = pt - camPos;
                 auto dist = glm::dot(view, ray);
                 if (dist < nearPlane) nearPlane = dist;
@@ -140,13 +143,17 @@ std::pair<float, float> trrojan::d3d11::sphere_data_set_base::clipping_planes(
     }
 
     nearPlane -= radius;
-    if (nearPlane < 0.001f) {
-        // Plane could become negative in data set, which is illegal.
-        nearPlane = 0.001f;
-    }
     farPlane += radius;
-    //farPlane *= 1.3f;   // Add additional safety margin because some data sets require it.
 
+    if (nearPlane < 0.0f) {
+        // Plane could become negative in data set, which is illegal. A range of
+        // 10k seems to be something our shaders can still handle.
+        nearPlane = farPlane / 10000.0f;
+    }
+    //farPlane *= 1.1f;
+
+    log::instance().write_line(log_level::debug, "Dynamic clipping planes are "
+        "located at %f and %f.", nearPlane, farPlane);
     return std::make_pair(nearPlane, farPlane);
 }
 

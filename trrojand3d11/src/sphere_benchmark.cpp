@@ -369,24 +369,33 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
         //auto up = DirectX::XMFLOAT4(0, 1, 0, 0);
         //auto view = DirectX::XMMatrixLookAtRH(DirectX::XMLoadFloat4(&eye),
         //    DirectX::XMLoadFloat4(&lookAt), DirectX::XMLoadFloat4(&up));
+        const auto aspect = static_cast<float>(viewport.Width)
+            / static_cast<float>(viewport.Height);
+        const auto fovyDeg = 60.0f;
+        point_type bbs, bbe;
 
-        this->cam.set_fovy(60.0f);
-        this->cam.set_aspect_ratio(static_cast<float>(viewport.Width)
-            / static_cast<float>(viewport.Height));
+        // Retrieve the bounding box of the data.
+        this->data->bounding_box(bbs, bbe);
+
+        // Set basic view parameters.
+        this->cam.set_fovy(fovyDeg);
+        this->cam.set_aspect_ratio(aspect);
+
+        // Apply the current step of the manoeuvre.
+        this->apply_manoeuvre(this->cam, config, bbs, bbe);
+
+        // Compute the clipping planes based on the current view.
+        const auto clipping = this->data->clipping_planes(cam,
+            sphereConstants.GlobalRadius);
+        this->cam.set_near_plane_dist(clipping.first);
+        this->cam.set_far_plane_dist(clipping.second);
+
+        // Retrieve the matrices.
         auto mat = DirectX::XMFLOAT4X4(
             glm::value_ptr(this->cam.get_projection_mx()));
         auto projection = DirectX::XMLoadFloat4x4(&mat);
         DirectX::XMStoreFloat4x4(viewConstants.ProjMatrix,
             DirectX::XMMatrixTranspose(projection));
-
-        point_type bbs, bbe;
-        this->data->bounding_box(bbs, bbe);
-        this->apply_manoeuvre(this->cam, config, bbs, bbe);
-
-        auto clipping = this->data->clipping_planes(cam,
-            sphereConstants.GlobalRadius);
-        this->cam.set_near_plane_dist(clipping.first);
-        this->cam.set_far_plane_dist(clipping.second);
 
         mat = DirectX::XMFLOAT4X4(glm::value_ptr(this->cam.get_view_mx()));
         auto view = DirectX::XMLoadFloat4x4(&mat);
