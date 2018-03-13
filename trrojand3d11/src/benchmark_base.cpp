@@ -79,6 +79,7 @@ trrojan::result trrojan::d3d11::benchmark_base::run(const configuration& c) {
         // Overwrite device and render target.
         device = this->debug_device;
         this->render_target = this->debug_target;
+        //this->render_target->use_reversed_depth_buffer(true);
 
     } else {
         // Check whether the device has been changed. This should always be done
@@ -88,6 +89,7 @@ trrojan::result trrojan::d3d11::benchmark_base::run(const configuration& c) {
             log::instance().write_line(log_level::verbose, "The D3D device has "
                 "changed. Reallocating all graphics resources ...");
             this->render_target = std::make_shared<bench_render_target>(device);
+            //this->render_target->use_reversed_depth_buffer(true);
             // If the device has changed, force the viewport to be re-created:
             changed.push_back(factor_viewport);
         }

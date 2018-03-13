@@ -235,22 +235,47 @@ trrojan::d3d11::random_sphere_data_set::get_properties(const sphere_type type) {
 trrojan::d3d11::random_sphere_data_set::size_type
 trrojan::d3d11::random_sphere_data_set::get_stride(
         const sphere_type type) {
+    size_type retval = 0;
+
     switch (type) {
         case sphere_type::pos_intensity:
-        case sphere_type::pos_rad_intensity:
-            return sizeof(random_sphere_intensity);
-
         case sphere_type::pos_rgba8:
-        case sphere_type::pos_rad_rgba8:
-            return sizeof(random_sphere_rgba8);
-
         case sphere_type::pos_rgba32:
+            retval += 3 * sizeof(float);
+            break;
+
+        case sphere_type::pos_rad_intensity:
+        case sphere_type::pos_rad_rgba8:
         case sphere_type::pos_rad_rgba32:
-            return sizeof(random_sphere_rgba32);
+            retval += 4 * sizeof(float);
+            break;
 
         default:
             throw std::runtime_error("Unexpected sphere format.");
     }
+
+    switch (type) {
+        case sphere_type::pos_intensity:
+        case sphere_type::pos_rad_intensity:
+            retval += 1 * sizeof(float);
+            break;
+
+        case sphere_type::pos_rgba8:
+        case sphere_type::pos_rad_rgba8:
+            retval += 4 * sizeof(byte);
+            break;
+
+        case sphere_type::pos_rgba32:
+        case sphere_type::pos_rad_rgba32:
+            retval += 4 * sizeof(float);
+            break;
+
+        default:
+            throw std::runtime_error("Unexpected sphere format.");
+    }
+
+
+    return retval;
 }
 
 
@@ -310,48 +335,47 @@ void trrojan::d3d11::random_sphere_data_set::recreate(ID3D11Device *device,
     for (std::uint32_t i = 0; i < this->size(); ++i) {
         auto p = particles.data() + (i * stride);
         auto g = static_cast<float>(i) / static_cast<float>(this->size());
-        auto pos = reinterpret_cast<DirectX::XMFLOAT4 *>(p);
+        auto cur = reinterpret_cast<float *>(p);
 
-        pos->x = posDist(prng) * domainSize[0] - 0.5f * domainSize[0];
-        pos->y = posDist(prng) * domainSize[1] - 0.5f * domainSize[1];
-        pos->z = posDist(prng) * domainSize[2] - 0.5f * domainSize[2];
+        cur[0] = posDist(prng) * domainSize[0] - 0.5f * domainSize[0];
+        cur[1] = posDist(prng) * domainSize[1] - 0.5f * domainSize[1];
+        cur[2] = posDist(prng) * domainSize[2] - 0.5f * domainSize[2];
+        cur += 3;
 
 #if 0
-        pos->x = pos->y = pos->z = g * domainSize[0] - 0.5f * domainSize[0];
+        cur->x = cur->y = cur->z = g * domainSize[0] - 0.5f * domainSize[0];
 #endif
 
         switch (this->_type) {
             case sphere_type::pos_rad_intensity:
             case sphere_type::pos_rad_rgba32:
             case sphere_type::pos_rad_rgba8:
-                pos->w = radDist(prng);
-                if (this->_max_radius < pos->w) {
-                    this->_max_radius = pos->w;
+                *cur = radDist(prng);
+                if (this->_max_radius < *cur) {
+                    this->_max_radius = *cur;
                 }
+                ++cur;
                 break;
-
-            default:
-                pos->w = 0.0f;
         }
 
         switch (this->_type) {
             case sphere_type::pos_intensity:
             case sphere_type::pos_rad_intensity:
-                *reinterpret_cast<float *>(pos + 1) = g;
+                *reinterpret_cast<float *>(cur) = g;
                 break;
 
             case sphere_type::pos_rgba32:
             case sphere_type::pos_rad_rgba32:
-                (pos + 1)->x = g;
-                (pos + 1)->y = g;
-                (pos + 1)->z = g;
-                (pos + 1)->w = 1.0f;
+                cur[0] = g;
+                cur[1] = g;
+                cur[2] = g;
+                cur[3] = 1.0f;
                 break;
 
             case sphere_type::pos_rgba8:
             case sphere_type::pos_rad_rgba8: {
                 auto s = static_cast<std::uint8_t>(g * 255);
-                auto d = reinterpret_cast<std::uint8_t *>(pos + 1);
+                auto d = reinterpret_cast<std::uint8_t *>(cur);
                 d[0] = d[1] = d[2] = s;
                 d[3] = 255;
                 } break;

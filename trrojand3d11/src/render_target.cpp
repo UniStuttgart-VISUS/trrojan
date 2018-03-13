@@ -27,7 +27,7 @@ void trrojan::d3d11::render_target_base::clear(void) {
     static const FLOAT CLEAR_COLOUR[] = { 0.0f, 0.0f, 0.0f, 0.0f }; // TODO
     this->_device_context->ClearRenderTargetView(this->_rtv, CLEAR_COLOUR);
     this->_device_context->ClearDepthStencilView(this->_dsv, D3D11_CLEAR_DEPTH,
-        1.0f, 0);
+        this->_depth_clear, 0);
 }
 
 
@@ -36,6 +36,7 @@ void trrojan::d3d11::render_target_base::clear(void) {
  */
 void trrojan::d3d11::render_target_base::enable(void) {
     assert(this->_device_context != nullptr);
+    this->_device_context->OMSetDepthStencilState(this->_dss.p, 0);
     this->_device_context->OMSetRenderTargets(1, &this->_rtv.p, this->_dsv.p);
 }
 
@@ -105,10 +106,40 @@ void trrojan::d3d11::render_target_base::save(const std::string& path) {
 
 
 /*
+ * trrojan::d3d11::render_target_base::use_reversed_depth_buffer
+ */
+void trrojan::d3d11::render_target_base::use_reversed_depth_buffer(
+        const bool isEnabled) {
+    this->_dss = nullptr;
+
+    if (isEnabled) {
+        D3D11_DEPTH_STENCIL_DESC desc;
+        ::ZeroMemory(&desc, sizeof(desc));
+
+        desc.DepthEnable = TRUE;
+        desc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+        desc.DepthFunc = D3D11_COMPARISON_GREATER;
+        desc.StencilEnable = FALSE;
+
+        auto hr = this->_device->CreateDepthStencilState(&desc, &this->_dss);
+        if (FAILED(hr)) {
+            throw ATL::CAtlException(hr);
+        }
+
+        this->_depth_clear = 0.0f;
+
+
+    } else {
+        this->_depth_clear = 1.0f;
+    }
+
+}
+
+/*
  * trrojan::d3d11::render_target_base::render_target_base
  */
 trrojan::d3d11::render_target_base::render_target_base(
-        const trrojan::device& device) {
+        const trrojan::device& device) : _depth_clear(1.0f) {
     auto d = std::dynamic_pointer_cast<trrojan::d3d11::device>(device);
     if (d != nullptr) {
         this->_device = d->d3d_device();
@@ -142,7 +173,7 @@ void trrojan::d3d11::render_target_base::set_back_buffer(
 
     backBuffer->GetDesc(&texDesc);
     texDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
-    texDesc.Format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT;
+    texDesc.Format = DXGI_FORMAT_D32_FLOAT;
 
     hr = this->_device->CreateTexture2D(&texDesc, nullptr, &depthBuffer);
     if (FAILED(hr)) {

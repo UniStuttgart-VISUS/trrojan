@@ -88,6 +88,11 @@ namespace d3d11 {
         /// </summary>
         void save(const std::string& path);
 
+        /// <summary>
+        /// Enables or disables used of reversed 32-bit depth buffer.
+        /// </summary>
+        void use_reversed_depth_buffer(const bool isEnabled);
+
         render_target_base& operator =(const render_target_base&) = delete;
 
     protected:
@@ -113,6 +118,16 @@ namespace d3d11 {
         /// Sets the D3D device and updates the immediate context.
         /// </summary>
         void set_device(ID3D11Device *device);
+
+        /// <summary>
+        /// Clear value for the depth buffer.
+        /// </summary>
+        float _depth_clear;
+
+        /// <summary>
+        /// A depth-stencil state that is being activated with the target.
+        /// </summary>
+        ATL::CComPtr<ID3D11DepthStencilState> _dss;
 
         /// <summary>
         /// The depth/stencil view.

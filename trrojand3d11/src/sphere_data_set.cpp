@@ -140,8 +140,12 @@ std::pair<float, float> trrojan::d3d11::sphere_data_set_base::clipping_planes(
     }
 
     nearPlane -= radius;
+    if (nearPlane < 0.001f) {
+        // Plane could become negative in data set, which is illegal.
+        nearPlane = 0.001f;
+    }
     farPlane += radius;
-    farPlane *= 1.3f;   // Add additional safety margin because some data sets require it.
+    //farPlane *= 1.3f;   // Add additional safety margin because some data sets require it.
 
     return std::make_pair(nearPlane, farPlane);
 }
