@@ -515,7 +515,7 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
         gpuTimer.end(0);
         gpuTimer.end_frame();
 
-        gpuTimer.evaluate_frame(isDisjoint, gpuFreq, 5 * 1000);
+        gpuTimer.evaluate_frame(isDisjoint, gpuFreq);
         if (!isDisjoint) {
             gpuTimes[i] = gpu_timer_type::to_milliseconds(
                     gpuTimer.evaluate(0), gpuFreq);
