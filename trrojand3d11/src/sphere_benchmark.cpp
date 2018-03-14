@@ -694,12 +694,6 @@ trrojan::d3d11::sphere_benchmark::get_data_properties(
         ? this->data->properties()
         : 0;
 
-    if ((shaderCode & SPHERE_TECHNIQUE_USE_SRV) == 0) {
-        // If no shader resource view is used, the floating point data flag is
-        // not relevant. Therefore, erase it from the result.
-        retval &= ~SPHERE_INPUT_FLT_COLOUR;
-    }
-
     if ((retval & SPHERE_INPUT_PV_INTENSITY) != 0) {
         // If we need a transfer function, let the shader code decide where to
         // apply it.
@@ -722,14 +716,15 @@ trrojan::d3d11::rendering_technique&
 trrojan::d3d11::sphere_benchmark::get_technique(ID3D11Device *device,
         shader_id_type shaderCode) {
     auto dataCode = this->get_data_properties(shaderCode);
-    auto id = shaderCode | dataCode;
-    auto isPsTex = ((id & SPHERE_INPUT_PP_INTENSITY) != 0);
-    auto isVsTex = ((id & SPHERE_INPUT_PV_INTENSITY) != 0);
-    auto isSrv = ((id & SPHERE_TECHNIQUE_USE_SRV) != 0);
-    auto isRay = ((id & SPHERE_TECHNIQUE_USE_RAYCASTING) != 0);
-    auto isInst = ((id & SPHERE_TECHNIQUE_USE_INSTANCING) != 0);
+    const auto id = shaderCode | dataCode;
+    auto isFlt = ((id & SPHERE_INPUT_FLT_COLOUR) != 0);
     auto isGeo = ((id & SPHERE_TECHNIQUE_USE_GEO) != 0);
+    auto isInst = ((id & SPHERE_TECHNIQUE_USE_INSTANCING) != 0);
+    auto isPsTex = ((id & SPHERE_INPUT_PP_INTENSITY) != 0);
+    auto isRay = ((id & SPHERE_TECHNIQUE_USE_RAYCASTING) != 0);
+    auto isSrv = ((id & SPHERE_TECHNIQUE_USE_SRV) != 0);
     auto isTess = ((id & SPHERE_TECHNIQUE_USE_TESS) != 0);
+    auto isVsTex = ((id & SPHERE_INPUT_PV_INTENSITY) != 0);
 
     auto retval = this->technique_cache.find(id);
     if (retval == this->technique_cache.end()) {
@@ -749,12 +744,20 @@ trrojan::d3d11::sphere_benchmark::get_technique(ID3D11Device *device,
         rendering_technique::shader_resources gsRes;
         rendering_technique::shader_resources psRes;
         auto pt = D3D11_PRIMITIVE_TOPOLOGY_POINTLIST;
+        auto sid = id;
 
-        auto it = this->shader_resources.find(id);
+        if (!isSrv) {
+            // The type of colour is only relevant for SRVs, VB-based methods do
+            // not declare this in their shader flags because the layout is
+            // handled via the input layout of the technique.
+            sid &= ~SPHERE_INPUT_FLT_COLOUR;
+        }
+
+        auto it = this->shader_resources.find(sid);
         if (it == this->shader_resources.end()) {
             std::stringstream msg;
             msg << "Shader sources for sphere rendering method 0x"
-                << std::hex << id << " was not found." << std::ends;
+                << std::hex << sid << " was not found." << std::ends;
             throw std::runtime_error(msg.str());
         }
 
