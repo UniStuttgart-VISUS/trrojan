@@ -41,7 +41,6 @@ _SPHERE_BENCH_DEFINE_FACTOR(edge_tess_factor);
 _SPHERE_BENCH_DEFINE_FACTOR(fit_bounding_box);
 _SPHERE_BENCH_DEFINE_FACTOR(force_float_colour);
 _SPHERE_BENCH_DEFINE_FACTOR(frame);
-_SPHERE_BENCH_DEFINE_FACTOR(global_radius);
 _SPHERE_BENCH_DEFINE_FACTOR(gpu_counter_iterations);
 _SPHERE_BENCH_DEFINE_FACTOR(hemi_tess_scale);
 _SPHERE_BENCH_DEFINE_FACTOR(inside_tess_factor);
@@ -80,8 +79,6 @@ trrojan::d3d11::sphere_benchmark::sphere_benchmark(void)
         factor_force_float_colour, false));
     this->_default_configs.add_factor(factor::from_manifestations(
         factor_frame, static_cast<frame_type>(0)));
-    this->_default_configs.add_factor(factor::from_manifestations(
-        factor_global_radius, 1.0f));
     this->_default_configs.add_factor(factor::from_manifestations(
         factor_gpu_counter_iterations, static_cast<unsigned int>(7)));
     this->_default_configs.add_factor(factor::from_manifestations(
@@ -353,8 +350,9 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
 
             sphereConstants.IntensityRange.x = 0.0f;
             sphereConstants.IntensityRange.y = 1.0f;
-            sphereConstants.GlobalRadius = config.get<float>(
-                factor_global_radius);
+            sphereConstants.GlobalRadius = this->data->max_radius();
+            // Note: the maximum radius is the global radius for random
+            // spheres without per-sphere radius.
         }
     }
 

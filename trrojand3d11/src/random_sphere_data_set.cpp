@@ -305,6 +305,8 @@ void trrojan::d3d11::random_sphere_data_set::recreate(ID3D11Device *device,
     static const create_flags VALID_INPUT_FLAGS // Flags directly copied from user input.
         = sphere_data_set_base::property_structured_resource;
     D3D11_BUFFER_DESC bufferDesc;
+    auto avgSphereSize = std::abs(this->_sphere_size[1] - this->_sphere_size[0])
+        * 0.5f + (std::min)(this->_sphere_size[0], this->_sphere_size[1]);
     auto domainSize = this->extents();
     D3D11_SUBRESOURCE_DATA id;
     std::uniform_real_distribution<float> posDist(0, 1);
@@ -356,6 +358,9 @@ void trrojan::d3d11::random_sphere_data_set::recreate(ID3D11Device *device,
                 }
                 ++cur;
                 break;
+
+            default:
+                this->_max_radius = avgSphereSize;
         }
 
         switch (this->_type) {
