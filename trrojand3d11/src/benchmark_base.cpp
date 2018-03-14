@@ -67,6 +67,9 @@ trrojan::result trrojan::d3d11::benchmark_base::run(const configuration& c) {
     }
 
     if (isDebugView) {
+        log::instance().write_line(log_level::warning, "Using the debug view "
+            "restricts the benchmark to the GPU connected to the display. The "
+            "device parameter has no effect.");
         if (this->debug_target == nullptr) {
             log::instance().write_line(log_level::verbose, "Lazy creation of "
                 "D3D11 debug render target.");
