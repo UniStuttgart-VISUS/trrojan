@@ -5,6 +5,7 @@
 
 #include "trrojan/d3d11/sphere_benchmark.h"
 
+#include <algorithm>
 #include <cassert>
 #include <cinttypes>
 #include <memory>
@@ -161,7 +162,6 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
     auto cntCpuIterations = static_cast<std::uint32_t>(0);
     const auto cntGpuIterations= config.get<std::uint32_t>(
         factor_gpu_counter_iterations);
-    const auto cntPrewarms = config.get<std::uint32_t>(factor_min_prewarms);
     auto ctx = device.d3d_context();
     auto dev = device.d3d_device();
     gpu_timer_type::value_type gpuFreq;
@@ -485,18 +485,40 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
 
     // Do prewarming and compute number of CPU iterations at the same time.
     log::instance().write_line(log_level::debug, "Prewarming ...");
-    cpuTimer.start();
-    cntCpuIterations = 0;
-    do {
-        this->clear_target();
-        if (isInstanced) {
-            ctx->DrawInstanced(cntPrimitives, cntInstances, 0, 0);
-        } else {
-            ctx->Draw(cntPrimitives, 0);
-        }
-        this->present_target();
-    } while ((++cntCpuIterations < cntPrewarms)
-        || (cpuTimer.elapsed_millis() < minWallTime));
+    {
+       auto batchTime = 0.0;
+       auto cntPrewarms = (std::max)(1u,
+           config.get<std::uint32_t>(factor_min_prewarms));
+
+        do {
+            cntCpuIterations = 0;
+            assert(cntPrewarms >= 1);
+
+            cpuTimer.start();
+            for (; cntCpuIterations < cntPrewarms; ++cntCpuIterations) {
+                this->clear_target();
+                if (isInstanced) {
+                    ctx->DrawInstanced(cntPrimitives, cntInstances, 0, 0);
+                } else {
+                    ctx->Draw(cntPrimitives, 0);
+                }
+                this->present_target();
+            }
+
+            ctx->End(this->done_query);
+            wait_for_event_query(ctx, this->done_query);
+            batchTime = cpuTimer.elapsed_millis();
+
+            if (batchTime < minWallTime) {
+                cntPrewarms = static_cast<std::uint32_t>(std::ceil(
+                    static_cast<double>(minWallTime * cntCpuIterations)
+                    / batchTime));
+                if (cntPrewarms < 1) {
+                    cntPrewarms = 1;
+                }
+            }
+        } while (batchTime < minWallTime);
+    }
 
     // Do the GPU counter measurements
     gpuTimes.resize(cntGpuIterations);
