@@ -156,6 +156,7 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
     const configuration& config, const std::vector<std::string>& changed) {
     typedef rendering_technique::shader_stage shader_stage;
 
+    std::array<float, 3> bboxSize;
     trrojan::timer cpuTimer;
     auto cntCpuIterations = static_cast<std::uint32_t>(0);
     const auto cntGpuIterations= config.get<std::uint32_t>(
@@ -308,6 +309,7 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
     auto retval = std::make_shared<basic_result>(std::move(config),
         std::initializer_list<std::string> {
             "particles",
+            "data_extents",
             "ia_vertices",
             "ia_primitives",
             "vs_invokes",
@@ -374,6 +376,9 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
 
         // Retrieve the bounding box of the data.
         this->data->bounding_box(bbs, bbe);
+        for (size_t i = 0; i < 3; ++i) {
+            bboxSize[i] = std::abs(bbe[i] - bbs[1]);
+        }
 
         // Set basic view parameters.
         this->cam.set_fovy(fovyDeg);
@@ -560,6 +565,7 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
     // Output the results.
     retval->add({
         this->data->size(),
+        bboxSize,
         pipeStats.IAVertices,
         pipeStats.IAPrimitives,
         pipeStats.VSInvocations,

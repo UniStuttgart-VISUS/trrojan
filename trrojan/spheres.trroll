@@ -1,6 +1,5 @@
 d3d11::sphere-renderer {
     string data_set = pos_intensity : 100 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 1000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 10000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 100 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 1000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 10000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; \\visus.uni-stuttgart.de\visusstore\share\Projekte\SFB 716\D3\Data\a8-kronenburg\megaridis-experimental.mmpld; \\visus.uni-stuttgart.de\visusstore\share\Projekte\SFB 716\D3\Data\exp2mill_signed_distance_00030.mmpld; \\visus.uni-stuttgart.de\visusstore\share\Projekte\SFB 716\D3\Data\B5.vid1.mmpld
-    float32 global_radius = 0.3
 
     string method = quad_inst; quad_tess; geo_quad
 
@@ -17,13 +16,14 @@ d3d11::sphere-renderer {
     uint32vec2 viewport = 512 512; 1024 1024; 2048 2048
     boolean debug_view = false
 
-    uint32 iterations = 8
+    uint32 min_wall_time = 500
+    uint32 min_prewarms = 4
+    uint32 gpu_counter_iterations = 8
 }
 
 
 d3d11::sphere-renderer {
     string data_set = pos_intensity : 100 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 1000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 10000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 100 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 1000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 10000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; \\visus.uni-stuttgart.de\visusstore\share\Projekte\SFB 716\D3\Data\a8-kronenburg\megaridis-experimental.mmpld; \\visus.uni-stuttgart.de\visusstore\share\Projekte\SFB 716\D3\Data\exp2mill_signed_distance_00030.mmpld; \\visus.uni-stuttgart.de\visusstore\share\Projekte\SFB 716\D3\Data\B5.vid1.mmpld
-    float32 global_radius = 0.3
 
     string method = quad_inst
 
@@ -40,13 +40,14 @@ d3d11::sphere-renderer {
     uint32vec2 viewport = 512 512; 1024 1024; 2048 2048
     boolean debug_view = false
 
-    uint32 iterations = 8
+    uint32 min_wall_time = 500
+    uint32 min_prewarms = 4
+    uint32 gpu_counter_iterations = 8
 }
 
 
 d3d11::sphere-renderer {
     string data_set = pos_intensity : 100 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 1000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 10000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 100 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 1000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 10000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; \\visus.uni-stuttgart.de\visusstore\share\Projekte\SFB 716\D3\Data\a8-kronenburg\megaridis-experimental.mmpld; \\visus.uni-stuttgart.de\visusstore\share\Projekte\SFB 716\D3\Data\exp2mill_signed_distance_00030.mmpld; \\visus.uni-stuttgart.de\visusstore\share\Projekte\SFB 716\D3\Data\B5.vid1.mmpld
-    float32 global_radius = 0.3
 
     string method = adapt_poly_tess
     float32 adapt_tess_minimum = 4
@@ -66,13 +67,14 @@ d3d11::sphere-renderer {
     uint32vec2 viewport = 512 512; 1024 1024; 2048 2048
     boolean debug_view = false
 
-    uint32 iterations = 8
+    uint32 min_wall_time = 500
+    uint32 min_prewarms = 4
+    uint32 gpu_counter_iterations = 8
 }
 
 
 d3d11::sphere-renderer {
     string data_set = pos_intensity : 100 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 1000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 10000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 100 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 1000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 10000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; \\visus.uni-stuttgart.de\visusstore\share\Projekte\SFB 716\D3\Data\a8-kronenburg\megaridis-experimental.mmpld; \\visus.uni-stuttgart.de\visusstore\share\Projekte\SFB 716\D3\Data\exp2mill_signed_distance_00030.mmpld; \\visus.uni-stuttgart.de\visusstore\share\Projekte\SFB 716\D3\Data\B5.vid1.mmpld
-    float32 global_radius = 0.3
 
     string method = poly_tess
     uint32 poly_corners = 4; 5; 6; 7; 8; 16; 32
@@ -90,13 +92,14 @@ d3d11::sphere-renderer {
     uint32vec2 viewport = 512 512; 1024 1024; 2048 2048
     boolean debug_view = false
 
-    uint32 iterations = 8
+    uint32 min_wall_time = 500
+    uint32 min_prewarms = 4
+    uint32 gpu_counter_iterations = 8
 }
 
 
 d3d11::sphere-renderer {
     string data_set = pos_intensity : 100 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 1000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 10000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 100 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 1000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 10000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; \\visus.uni-stuttgart.de\visusstore\share\Projekte\SFB 716\D3\Data\a8-kronenburg\megaridis-experimental.mmpld; \\visus.uni-stuttgart.de\visusstore\share\Projekte\SFB 716\D3\Data\exp2mill_signed_distance_00030.mmpld; \\visus.uni-stuttgart.de\visusstore\share\Projekte\SFB 716\D3\Data\B5.vid1.mmpld
-    float32 global_radius = 0.3
 
     string method = sphere_tess; hemisphere_tess
     float32vec4 edge_tess_factor = 4 4 4 4; 8 8 8 8; 16 16 16 16
@@ -116,13 +119,14 @@ d3d11::sphere-renderer {
     uint32vec2 viewport = 512 512; 1024 1024; 2048 2048
     boolean debug_view = false
 
-    uint32 iterations = 8
+    uint32 min_wall_time = 500
+    uint32 min_prewarms = 4
+    uint32 gpu_counter_iterations = 8
 }
 
 
 d3d11::sphere-renderer {
     string data_set = pos_intensity : 100 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 1000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 10000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; pos_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 100 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 1000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 10000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; pos_rad_intensity : 100000 : 42 : 10 10 10 : 0.05 0.3; \\visus.uni-stuttgart.de\visusstore\share\Projekte\SFB 716\D3\Data\a8-kronenburg\megaridis-experimental.mmpld; \\visus.uni-stuttgart.de\visusstore\share\Projekte\SFB 716\D3\Data\exp2mill_signed_distance_00030.mmpld; \\visus.uni-stuttgart.de\visusstore\share\Projekte\SFB 716\D3\Data\B5.vid1.mmpld
-    float32 global_radius = 0.3
 
     string method = adapt_sphere_tess; adapt_hemisphere_tess
     float32 hemi_tess_scale = 0.5
@@ -143,5 +147,7 @@ d3d11::sphere-renderer {
     uint32vec2 viewport = 512 512; 1024 1024; 2048 2048
     boolean debug_view = false
 
-    uint32 iterations = 8
+    uint32 min_wall_time = 500
+    uint32 min_prewarms = 4
+    uint32 gpu_counter_iterations = 8
 }
