@@ -119,7 +119,8 @@ namespace stream {
         virtual ~stream_benchmark(void);
 
         virtual size_t run(const configuration_set& configs,
-            const on_result_callback& callback);
+            const on_result_callback& callback,
+            const cool_down& coolDown);
 
         virtual trrojan::result run(const configuration& config);
 

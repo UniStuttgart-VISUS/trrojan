@@ -13,6 +13,7 @@
 #include <vector>
 
 #include "trrojan/configuration_set.h"
+#include "trrojan/cool_down.h"
 #include "trrojan/device.h"
 #include "trrojan/environment.h"
 #include "trrojan/export.h"
@@ -142,14 +143,26 @@ namespace trrojan {
         /// <see cref="trrojan::configuration" />s of the given set and return
         /// the results to the given callback.
         /// </summary>
+        /// <remarks>
+        /// The base class provides a general implementation executing all
+        /// configurations in <paramref name="configs" /> by enumerating them
+        /// and calling the pure virtual <see cref="run" /> method. Implementing
+        /// subclasses may overwrite this implementation with a more efficient
+        /// one. This implementation should honour the cool-down periods
+        /// requested in <paramref name="coolDown" />. The
+        /// <see cref="trrojan::cool_down_evaluator" /> is a RAII-inspired
+        /// utility class for implementing the requested cool-down periods.
+        /// </remarks>
         /// <param name="configs"></param>
         /// <param name="resultCallback"></param>
+        /// <param name="coolDown"></param>
         /// <returns>The total number of <see cref="trrojan::result" />s that
         /// have been returned to <paramref name="callback" />.</returns>
         /// <exception cref="std::invalid_argument">If not all required factors
         /// are specified in the configuration set.</exception>
         virtual size_t run(const configuration_set& configs,
-            const on_result_callback& resultCallback);
+            const on_result_callback& resultCallback,
+            const cool_down& coolDown);
 
         virtual result run(const configuration& config) = 0;
 

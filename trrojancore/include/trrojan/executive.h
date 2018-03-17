@@ -14,11 +14,11 @@
 #include <Windows.h>
 #endif /* _WIN32 */
 
-#include "trrojan/csv_output.h"
+#include "trrojan/cool_down.h"
 #include "trrojan/environment.h"
-#include "trrojan/excel_output.h"
 #include "trrojan/export.h"
 #include "trrojan/image_helper.h"
+#include "trrojan/output.h"
 #include "trrojan/plugin.h"
 #include "trrojan/trroll_parser.h"
 
@@ -36,6 +36,9 @@ namespace trrojan {
 
     public:
 
+        /// <summary>
+        /// Initialises a new instance.
+        /// </summary>
         inline executive(void) { }
 
         executive(const executive&) = delete;
@@ -74,106 +77,10 @@ namespace trrojan {
         /// Runs the benchmarks in the given TRROLL script writing the results
         // to the given <paramref name="output" />.
         /// </summary>
-        void trroll(const std::string& path, output_base& output);
+        void trroll(const std::string& path, output_base& output,
+            const cool_down& coolDown);
 
         executive operator =(const executive&) = delete;
-
-
-#if 0
-        // TODO: remove this
-        void crowbar() {
-            try {
-                trroll_parser::parse("test.trroll");
-            } catch (std::exception& ex) {
-                std::cerr << ex.what() << std::endl;
-            }
-
-            //try {
-            //    auto width = 800;
-            //    auto height = 600;
-            //    auto channels = 3;
-            //    std::vector<char> image(width * height * channels);
-            //    std::srand(std::time(nullptr));
-            //    std::generate(image.begin(), image.end(), std::rand);
-            //    trrojan::save_image("test.png", image.data(),
-            //        width, height, channels);
-            //} catch (std::exception& ex) {
-            //    std::cerr << ex.what() << std::endl;
-            //}
-
-            configuration_set ec;
-            plugin_base::benchmark_list bs;
-            plugin_base::environment_list es;
-
-            for (auto p : this->plugins)
-            {
-                p->create_benchmarks(bs);
-                p->create_environments(es);
-            }
-
-            // iterate environments
-            for (auto e : es)
-            {
-                ec.replace_factor(factor::from_manifestations<environment>("environment", e));
-                std::vector<device> dst;
-                e->get_devices(dst);
-
-                for (auto d : dst)
-                {
-                    ec.replace_factor(factor::from_manifestations<device>("device", d));
-//                    if (e->name().find("Intel") != std::string::npos)
-//                    {
-//                        // skip intel iGPU
-//                        //continue;
-//                        ec.replace_factor(factor::from_manifestations("device_type", 1 << 1));
-//                    }
-                    std::cout << std::endl << "=== " << d->name() << " ===" << std::endl;
-
-                    for (auto b : bs)
-                    {
-                        // skip stream bech for testing volume raycast bench
-                        if (b->name() != "stream")
-                        {
-                            auto fn = b->name();
-#ifdef _WIN32f
-                            fn += std::string(".xslx");
-                            excel_output writer;
-                            writer.open(excel_output_params::create(fn, true));
-#else
-                            fn += std::string(".csv");
-                            csv_output writer;
-                            writer.open(csv_output_params::create(fn));
-#endif
-                            b->run(ec, [&writer](result&& r) {
-                                static_cast<output_base&>(writer) << r;
-                                return true;
-                            });
-                        }
-                    }
-                }
-            }
-
-//            for (auto b : bs) {
-//                std::cout << "=== " << b->name() << " ===" << std::endl;
-//                auto fn = b->name();
-//#ifdef _WIN32
-//                fn += std::string(".xslx");
-//                excel_output writer;
-//                writer.open(excel_output_params::create(fn, true));
-//#else
-//                fn += std::string(".csv");
-//                csv_output writer;
-//                writer.open(csv_output_params::create(fn));
-//#endif
-//                b->run(ec, [&writer](result&& r) {
-//                    static_cast<output_base&>(writer) << r;
-//                    return true;
-//                });
-
-//                writer.close();
-//            }
-        }
-#endif
 
     private:
 

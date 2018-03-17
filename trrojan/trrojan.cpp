@@ -38,6 +38,25 @@ int main(const int argc, const char **argv) {
         /* Configure the output target for the results. */
         auto output = trrojan::open_output(cmdLine);
 
+        /* Determine cool-down behaviour. */
+        trrojan::cool_down coolDown;
+        {
+            auto it = trrojan::find_argument("--cool-down-frequency",
+                cmdLine.begin(), cmdLine.end());
+            if (it != cmdLine.end()) {
+                typedef decltype(coolDown.frequency) v_t;
+                coolDown.frequency = v_t(trrojan::parse<v_t::rep>(it->c_str()));
+            }
+        }
+        {
+            auto it = trrojan::find_argument("--cool-down-duration",
+                cmdLine.begin(), cmdLine.end());
+            if (it != cmdLine.end()) {
+                typedef decltype(coolDown.duration) v_t;
+                coolDown.duration = v_t(trrojan::parse<v_t::rep>(it->c_str()));
+            }
+        }
+
         /* Configure the executive. */
         trrojan::executive exe;
         exe.load_plugins(cmdLine);
@@ -50,7 +69,7 @@ int main(const int argc, const char **argv) {
                 trrojan::log::instance().write_line(
                     trrojan::log_level::information, "Running benchmarks "
                     "configured in TRROLL script \"%s\" ...", *it);
-                exe.trroll(*it, *output);
+                exe.trroll(*it, *output, coolDown);
             }
         }
 

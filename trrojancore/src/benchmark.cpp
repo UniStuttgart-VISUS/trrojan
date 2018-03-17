@@ -114,7 +114,8 @@ std::vector<std::string> trrojan::benchmark_base::required_factors(void) const {
  * trrojan::benchmark_base::run
  */
 size_t trrojan::benchmark_base::run(const configuration_set& configs,
-        const on_result_callback& resultCallback) {
+        const on_result_callback& resultCallback,
+        const cool_down& coolDown) {
     // Check that caller has provided all required factors.
     this->check_required_factors(configs);
 
@@ -123,11 +124,14 @@ size_t trrojan::benchmark_base::run(const configuration_set& configs,
     c.merge(this->_default_configs, false);
 
     // Invoke each configuration.
+    cool_down_evaluator cde(coolDown);
     size_t retval = 0;
     c.foreach_configuration([&](configuration& c) -> bool {
         try {
             auto e = c.get<trrojan::environment>(environment_base::factor_name);
             auto d = c.get<trrojan::device>(device_base::factor_name);
+
+            cde.check();
 
             if (this->can_run(e, d)) {
                 c.add_system_factors();
