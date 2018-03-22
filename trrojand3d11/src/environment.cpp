@@ -6,12 +6,17 @@
 #include "trrojan/d3d11/environment.h"
 
 #include <cassert>
+#include <cinttypes>
 #include <iterator>
 #include <memory>
 
 #include <Windows.h>
 #include <atlbase.h>
 #include <dxgi.h>
+
+#include "trrojan/cmd_line.h"
+#include "trrojan/log.h"
+#include "trrojan/text.h"
 
 #include "trrojan/d3d11/utilities.h"
 
@@ -60,10 +65,23 @@ void trrojan::d3d11::environment::on_finalise(void) {
  * trrojan::d3d11::environment::on_initialise
  */
 void trrojan::d3d11::environment::on_initialise(const cmd_line& cmdLine) {
+    USES_CONVERSION;
     DWORD deviceFlags = D3D11_CREATE_DEVICE_DISABLE_GPU_TIMEOUT;
     ATL::CComPtr<IDXGIFactory> factory;
     D3D_FEATURE_LEVEL featureLevel;
     HRESULT hr = S_OK;
+    const auto isBasicRender = contains_switch("--with-basic-render-driver",
+        cmdLine.begin(), cmdLine.end());
+    std::shared_ptr<std::uint64_t> singleLuid;
+
+    {
+        auto it = find_argument("--single-luid", cmdLine.begin(),
+            cmdLine.end());
+        if (it != cmdLine.end()) {
+            singleLuid = std::make_shared<std::uint64_t>(
+                parse<std::uint64_t>(*it));
+        }
+    }
 
     /* Initialise COM (for WIC). */
     hr = ::CoInitialize(nullptr);
@@ -95,9 +113,33 @@ void trrojan::d3d11::environment::on_initialise(const cmd_line& cmdLine) {
         }
 
         if (SUCCEEDED(hr)) {
-            if ((desc.VendorId == 0x1414) && (desc.DeviceId == 0x8c)) {
+            auto luid
+                = (static_cast<std::uint64_t>(desc.AdapterLuid.HighPart) << 32)
+                | static_cast<std::uint64_t>(desc.AdapterLuid.LowPart);
+            log::instance().write_line(log_level::information, "The Direct3D "
+                "11 environment found \"%s\" with logical unique identifier %"
+                PRIu64 ". The LUID can be used in the command line like "
+                "--single-luid %" PRIu64 " to restrict the Direct3D 11 "
+                "environment to this device. Please note that LUIDs are only "
+                "guaranteed to be stable until the system is restarted.",
+                W2A(desc.Description), luid, luid);
+
+            if ((desc.VendorId == 0x1414) && (desc.DeviceId == 0x8c)
+                    && !isBasicRender) {
                 // Skip Microsoft's software emulation (cf.
                 // https://msdn.microsoft.com/en-us/library/windows/desktop/bb205075(v=vs.85).aspx)
+                log::instance().write_line(log_level::information, "Excluding "
+                    "\"%s\" from list of device eligible for benchmarking "
+                    "because --with-basic-render-driver was not specified.",
+                    W2A(desc.Description));
+                continue;
+            }
+
+            if ((singleLuid != nullptr) && (luid != *singleLuid)) {
+                log::instance().write_line(log_level::information, "Excluding "
+                    "\"%s\" from list of device eligible for benchmarking "
+                    "because LUID filtering was enabled.",
+                    W2A(desc.Description));
                 continue;
             }
         }

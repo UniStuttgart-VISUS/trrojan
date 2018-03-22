@@ -132,8 +132,8 @@ std::pair<float, float> trrojan::d3d11::sphere_data_set_base::clipping_planes(
         for (auto y = 0; y < 2; ++y) {
             for (auto z = 0; z < 2; ++z) {
                 auto pt = glm::vec3(bbox[x][0], bbox[y][1], bbox[z][2]);
-                log::instance().write_line(log_level::debug, "Testing "
-                    "(%f, %f, %f) ...", pt.x, pt.y, pt.z);
+                //log::instance().write_line(log_level::debug, "Testing "
+                //    "(%f, %f, %f) ...", pt.x, pt.y, pt.z);
                 auto ray = pt - camPos;
                 auto dist = glm::dot(view, ray);
                 if (dist < nearPlane) nearPlane = dist;
