@@ -159,36 +159,68 @@ trrojan::d3d11::random_sphere_data_set::create(ID3D11Device *device,
 std::vector<D3D11_INPUT_ELEMENT_DESC>
 trrojan::d3d11::random_sphere_data_set::get_input_layout(
         const sphere_type type) {
-    static const std::vector<D3D11_INPUT_ELEMENT_DESC> _INT = {
-        { "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0,  0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-        { "COLOR", 0, DXGI_FORMAT_R32_FLOAT, 0, 16, D3D11_INPUT_PER_VERTEX_DATA, 0 }
-    };
-    static const std::vector<D3D11_INPUT_ELEMENT_DESC> _RGBA8 = {
-        { "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0,  0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-        { "COLOR", 0, DXGI_FORMAT_R8G8B8A8_UNORM, 0,  16, D3D11_INPUT_PER_VERTEX_DATA, 0 }
-    };
-    static const std::vector<D3D11_INPUT_ELEMENT_DESC> _RGBA32 = {
-        { "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0,  0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-        { "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 16, D3D11_INPUT_PER_VERTEX_DATA, 0 }
-    };
+    D3D11_INPUT_ELEMENT_DESC element;
+    UINT offset = 0;
+    std::vector<D3D11_INPUT_ELEMENT_DESC> retval;
 
+    ::memset(&element, 0, sizeof(element));
+    element.SemanticName = "POSITION";
+    element.AlignedByteOffset = offset;
+    element.InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
 
     switch (type) {
         case sphere_type::pos_intensity:
-        case sphere_type::pos_rad_intensity:
-            return _INT;
-
         case sphere_type::pos_rgba8:
-        case sphere_type::pos_rad_rgba8:
-            return _RGBA8;
-
         case sphere_type::pos_rgba32:
+            element.Format = DXGI_FORMAT_R32G32B32_FLOAT;
+            offset += 3 * sizeof(float);
+            retval.push_back(element);
+            break;
+
+        case sphere_type::pos_rad_intensity:
+        case sphere_type::pos_rad_rgba8:
         case sphere_type::pos_rad_rgba32:
-            return _RGBA32;
+            element.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+            offset += 4 * sizeof(float);
+            retval.push_back(element);
+            break;
 
         default:
             throw std::runtime_error("Unexpected sphere format.");
     }
+
+    ::memset(&element, 0, sizeof(element));
+    element.SemanticName = "COLOR";
+    element.AlignedByteOffset = offset;
+    element.InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
+
+    switch (type) {
+        case sphere_type::pos_intensity:
+        case sphere_type::pos_rad_intensity:
+            element.Format = DXGI_FORMAT_R32_FLOAT;
+            offset += 1 * sizeof(float);
+            retval.push_back(element);
+            break;
+
+        case sphere_type::pos_rgba8:
+        case sphere_type::pos_rad_rgba8:
+            element.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+            offset += 4 * sizeof(float);
+            retval.push_back(element);
+            break;
+
+        case sphere_type::pos_rgba32:
+        case sphere_type::pos_rad_rgba32:
+            element.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+            offset += 4 * sizeof(float);
+            retval.push_back(element);
+            break;
+
+        default:
+            throw std::runtime_error("Unexpected sphere format.");
+    }
+
+    return std::move(retval);
 }
 
 
