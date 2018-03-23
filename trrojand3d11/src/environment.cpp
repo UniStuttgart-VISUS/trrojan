@@ -9,6 +9,7 @@
 #include <cinttypes>
 #include <iterator>
 #include <memory>
+#include <set>
 
 #include <Windows.h>
 #include <atlbase.h>
@@ -72,16 +73,9 @@ void trrojan::d3d11::environment::on_initialise(const cmd_line& cmdLine) {
     HRESULT hr = S_OK;
     const auto isBasicRender = contains_switch("--with-basic-render-driver",
         cmdLine.begin(), cmdLine.end());
-    std::shared_ptr<std::uint64_t> singleLuid;
-
-    {
-        auto it = find_argument("--single-luid", cmdLine.begin(),
-            cmdLine.end());
-        if (it != cmdLine.end()) {
-            singleLuid = std::make_shared<std::uint64_t>(
-                parse<std::uint64_t>(*it));
-        }
-    }
+    const auto isUniqueDevice = contains_switch("--unique-devices",
+        cmdLine.begin(), cmdLine.end());
+    std::set<std::pair<UINT, UINT>> pciIds;
 
     /* Initialise COM (for WIC). */
     hr = ::CoInitialize(nullptr);
@@ -113,17 +107,6 @@ void trrojan::d3d11::environment::on_initialise(const cmd_line& cmdLine) {
         }
 
         if (SUCCEEDED(hr)) {
-            auto luid
-                = (static_cast<std::uint64_t>(desc.AdapterLuid.HighPart) << 32)
-                | static_cast<std::uint64_t>(desc.AdapterLuid.LowPart);
-            log::instance().write_line(log_level::information, "The Direct3D "
-                "11 environment found \"%s\" with logical unique identifier %"
-                PRIu64 ". The LUID can be used in the command line like "
-                "--single-luid %" PRIu64 " to restrict the Direct3D 11 "
-                "environment to this device. Please note that LUIDs are only "
-                "guaranteed to be stable until the system is restarted.",
-                W2A(desc.Description), luid, luid);
-
             if ((desc.VendorId == 0x1414) && (desc.DeviceId == 0x8c)
                     && !isBasicRender) {
                 // Skip Microsoft's software emulation (cf.
@@ -135,12 +118,18 @@ void trrojan::d3d11::environment::on_initialise(const cmd_line& cmdLine) {
                 continue;
             }
 
-            if ((singleLuid != nullptr) && (luid != *singleLuid)) {
-                log::instance().write_line(log_level::information, "Excluding "
-                    "\"%s\" from list of device eligible for benchmarking "
-                    "because LUID filtering was enabled.",
-                    W2A(desc.Description));
-                continue;
+            if (isUniqueDevice) {
+                auto pciId = std::make_pair(desc.VendorId, desc.DeviceId);
+                if (std::find(pciIds.begin(), pciIds.end(), pciId)
+                        != pciIds.end()) {
+                    log::instance().write_line(log_level::information,
+                        "Excluding \"%s\" from list of device eligible for "
+                        "benchmarking because another device with the same PCI "
+                        "IDs was already added.", W2A(desc.Description));
+                    continue;
+                } else {
+                    pciIds.emplace(std::move(pciId));
+                }
             }
         }
 

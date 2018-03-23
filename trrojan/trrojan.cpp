@@ -35,6 +35,18 @@ int main(const int argc, const char **argv) {
             }
         }
 
+        /* Print the copyright notice. */
+        if (!trrojan::contains_switch("--nologo", cmdLine.begin(),
+                cmdLine.end())) {
+            std::cout << "TRRojan" << std::endl;
+            std::cout << "Copyright (C) 2016 - 2018 Visualisierungsinstitut "
+                "der Universität Stuttgart."
+                << std::endl << "All rights reserved."
+                << std::endl << std::endl;
+            std::cout << "The way it's meant to be trrolled." 
+                << std::endl << std::endl;
+        }
+
         /* Configure the output target for the results. */
         auto output = trrojan::open_output(cmdLine);
 
