@@ -150,6 +150,7 @@ std::pair<float, float> trrojan::d3d11::sphere_data_set_base::clipping_planes(
         // 10k seems to be something our shaders can still handle.
         nearPlane = farPlane / 10000.0f;
     }
+    //nearPlane = 0.01f;
     //farPlane *= 1.1f;
 
     log::instance().write_line(log_level::debug, "Dynamic clipping planes are "
