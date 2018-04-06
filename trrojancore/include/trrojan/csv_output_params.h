@@ -91,9 +91,6 @@ namespace trrojan {
 
     private:
 
-        static std::string unescape(std::string::const_iterator begin,
-            std::string::const_iterator end);
-
         std::string _line_break;
 
         bool _quote_strings;

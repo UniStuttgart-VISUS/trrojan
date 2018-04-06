@@ -98,7 +98,8 @@ trrojan::stream::stream_benchmark::~stream_benchmark(void) { }
  * trrojan::stream::stream_benchmark::run
  */
 size_t trrojan::stream::stream_benchmark::run(const configuration_set& configs,
-    const on_result_callback& callback) {
+        const on_result_callback& callback, const cool_down& coolDown) {
+    cool_down_evaluator cde(coolDown);
     std::vector<std::string> changed;
     size_t retval = 0;
 
@@ -118,6 +119,7 @@ size_t trrojan::stream::stream_benchmark::run(const configuration_set& configs,
         //retval.push_back(this->run(c));
         //return true;
         // TODO: optimise reallocs.
+        cde.check();
         try {
             this->log_run(c);
             ++retval;

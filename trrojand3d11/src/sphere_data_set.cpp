@@ -5,6 +5,8 @@
 
 #include "trrojan/d3d11/sphere_data_set.h"
 
+#include "trrojan/log.h"
+
 #include "sphere_techniques.h"
 
 
@@ -113,37 +115,46 @@ trrojan::d3d11::sphere_data_set_base::centre(void) const {
  * trrojan::d3d11::sphere_data_set_base::clipping_planess
  */
 std::pair<float, float> trrojan::d3d11::sphere_data_set_base::clipping_planes(
-        const camera& cam) const {
+        const camera& cam, const float globalRadius) const {
+    const auto& camPos = cam.get_look_from();
+    const auto radius = ((this->_properties & property_per_sphere_radius) != 0)
+        ? this->max_radius()
+        : globalRadius;
+    const auto& view = glm::normalize(cam.get_look_to() - camPos);
+
     point_type bbox[2];
-    auto& camPos = cam.get_look_from();
-    glm::vec3 centre;
-    auto diagLen = 0.0f;
-    auto size = this->extents();
+    auto farPlane = std::numeric_limits<float>::lowest();
+    auto nearPlane = (std::numeric_limits<float>::max)();
 
     this->bounding_box(bbox[0], bbox[1]);
 
-    for (glm::vec3::length_type i = 0; i < size.size(); ++i) {
-        centre[i] = size[i] / 2.0f + bbox[0][i];
-        diagLen += size[i] * size[i];
-    }
-    diagLen = std::sqrt(diagLen);
-
-    diagLen += 0.5f * this->max_radius();
-    diagLen *= 0.5f;
-
-    auto viewLen = glm::length(centre - camPos);
-
-    //auto nearPlane = viewLen - diagLen;
-    //if (nearPlane < 0.01f) {
-    //    nearPlane = 0.01f;
-    //}
-    auto nearPlane = 0.01f;
-
-    auto farPlane = viewLen + diagLen;
-    if (farPlane < nearPlane) {
-        farPlane = nearPlane + 1.0f;
+    for (auto x = 0; x < 2; ++x) {
+        for (auto y = 0; y < 2; ++y) {
+            for (auto z = 0; z < 2; ++z) {
+                auto pt = glm::vec3(bbox[x][0], bbox[y][1], bbox[z][2]);
+                //log::instance().write_line(log_level::debug, "Testing "
+                //    "(%f, %f, %f) ...", pt.x, pt.y, pt.z);
+                auto ray = pt - camPos;
+                auto dist = glm::dot(view, ray);
+                if (dist < nearPlane) nearPlane = dist;
+                if (dist > farPlane) farPlane = dist;
+            }
+        }
     }
 
+    nearPlane -= radius;
+    farPlane += radius;
+
+    if (nearPlane < 0.0f) {
+        // Plane could become negative in data set, which is illegal. A range of
+        // 10k seems to be something our shaders can still handle.
+        nearPlane = farPlane / 10000.0f;
+    }
+    //nearPlane = 0.01f;
+    //farPlane *= 1.1f;
+
+    log::instance().write_line(log_level::debug, "Dynamic clipping planes are "
+        "located at %f and %f.", nearPlane, farPlane);
     return std::make_pair(nearPlane, farPlane);
 }
 

@@ -35,8 +35,39 @@ int main(const int argc, const char **argv) {
             }
         }
 
+        /* Print the copyright notice. */
+        if (!trrojan::contains_switch("--nologo", cmdLine.begin(),
+                cmdLine.end())) {
+            std::cout << "TRRojan" << std::endl;
+            std::cout << "Copyright (C) 2016 - 2018 Visualisierungsinstitut "
+                "der Universität Stuttgart."
+                << std::endl << "All rights reserved."
+                << std::endl << std::endl;
+            std::cout << "The way it's meant to be trrolled." 
+                << std::endl << std::endl;
+        }
+
         /* Configure the output target for the results. */
         auto output = trrojan::open_output(cmdLine);
+
+        /* Determine cool-down behaviour. */
+        trrojan::cool_down coolDown;
+        {
+            auto it = trrojan::find_argument("--cool-down-frequency",
+                cmdLine.begin(), cmdLine.end());
+            if (it != cmdLine.end()) {
+                typedef decltype(coolDown.frequency) v_t;
+                coolDown.frequency = v_t(trrojan::parse<v_t::rep>(it->c_str()));
+            }
+        }
+        {
+            auto it = trrojan::find_argument("--cool-down-duration",
+                cmdLine.begin(), cmdLine.end());
+            if (it != cmdLine.end()) {
+                typedef decltype(coolDown.duration) v_t;
+                coolDown.duration = v_t(trrojan::parse<v_t::rep>(it->c_str()));
+            }
+        }
 
         /* Configure the executive. */
         trrojan::executive exe;
@@ -50,7 +81,7 @@ int main(const int argc, const char **argv) {
                 trrojan::log::instance().write_line(
                     trrojan::log_level::information, "Running benchmarks "
                     "configured in TRROLL script \"%s\" ...", *it);
-                exe.trroll(*it, *output);
+                exe.trroll(*it, *output, coolDown);
             }
         }
 

@@ -114,74 +114,78 @@ void Main(point VsOutput input[1], inout TriangleStream<PsInput> triStream) {
 
     p = squareRad * dd;
     q = d - p;
-    h = sqrt(p * q);
-    //h = float2(0.0);
+    //if (!(any(d < p)
+    //        || (length(v.CameraPosition.xyz) < rad)
+    //        || dot(v.CameraDirection.xyz, v.CameraPosition.xyz) < 0)) {
+        h = sqrt(p * q);
+        //h = float2(0.0);
 
-    p *= dd;
-    h *= dd;
+        p *= dd;
+        h *= dd;
 
-    cpj1 *= p.x;
-    cpm1 *= h.x;
-    cpj2 *= p.y;
-    cpm2 *= h.y;
+        cpj1 *= p.x;
+        cpm1 *= h.x;
+        cpj2 *= p.y;
+        cpm2 *= h.y;
 
-    testPos = objPos.xyz + cpj1 + cpm1;
-    projPos = mul(float4(testPos, 1.0), mvp);
-    ///projPos = mul(mvp, float4(testPos, 1.0));
-    projPos /= projPos.w;
-    mins = projPos.xy;
-    maxs = projPos.xy;
+        testPos = objPos.xyz + cpj1 + cpm1;
+        projPos = mul(float4(testPos, 1.0), mvp);
+        ///projPos = mul(mvp, float4(testPos, 1.0));
+        projPos /= projPos.w;
+        mins = projPos.xy;
+        maxs = projPos.xy;
 
-    testPos -= 2.0 * cpm1;
-    projPos = mul(float4(testPos, 1.0), mvp);
-    ///projPos = mul(mvp, float4(testPos, 1.0));
-    projPos /= projPos.w;
-    mins = min(mins, projPos.xy);
-    maxs = max(maxs, projPos.xy);
+        testPos -= 2.0 * cpm1;
+        projPos = mul(float4(testPos, 1.0), mvp);
+        ///projPos = mul(mvp, float4(testPos, 1.0));
+        projPos /= projPos.w;
+        mins = min(mins, projPos.xy);
+        maxs = max(maxs, projPos.xy);
 
-    testPos = objPos.xyz + cpj2 + cpm2;
-    projPos = mul(float4(testPos, 1.0), mvp);
-    ///projPos = mul(mvp, float4(testPos, 1.0));
-    projPos /= projPos.w;
-    mins = min(mins, projPos.xy);
-    maxs = max(maxs, projPos.xy);
+        testPos = objPos.xyz + cpj2 + cpm2;
+        projPos = mul(float4(testPos, 1.0), mvp);
+        ///projPos = mul(mvp, float4(testPos, 1.0));
+        projPos /= projPos.w;
+        mins = min(mins, projPos.xy);
+        maxs = max(maxs, projPos.xy);
 
-    testPos -= 2.0 * cpm2;
-    projPos = mul(float4(testPos, 1.0), mvp);
-    ///projPos = mul(mvp, float4(testPos, 1.0));
-    projPos /= projPos.w;
-    mins = min(mins, projPos.xy);
-    maxs = max(maxs, projPos.xy);
+        testPos -= 2.0 * cpm2;
+        projPos = mul(float4(testPos, 1.0), mvp);
+        ///projPos = mul(mvp, float4(testPos, 1.0));
+        projPos /= projPos.w;
+        mins = min(mins, projPos.xy);
+        maxs = max(maxs, projPos.xy);
 
-    //bottom left
-    v.Position = float4(mins.x, mins.y, projPos.z, 1.0);
+        //bottom left
+        v.Position = float4(mins.x, mins.y, projPos.z, 1.0f);
 #if defined(PER_VERTEY_RAY)
-    v.Ray = normalize(v.Position.xyz - v.CameraPosition.xyz);
+        v.Ray = normalize(v.Position.xyz - v.CameraPosition.xyz);
 #endif /* defined(PER_VERTEY_RAY) */
-    triStream.Append(v);
+        triStream.Append(v);
 
-    //top left
-    v.Position = float4(mins.x, maxs.y, projPos.z, 1.0);
+        //top left
+        v.Position = float4(mins.x, maxs.y, projPos.z, 1.0f);
 #if defined(PER_VERTEY_RAY)
-    v.Ray = normalize(v.Position.xyz - v.CameraPosition.xyz);
+        v.Ray = normalize(v.Position.xyz - v.CameraPosition.xyz);
 #endif /* defined(PER_VERTEY_RAY) */
-    triStream.Append(v);
+        triStream.Append(v);
 
-    //bottom right
-    v.Position = float4(maxs.x, mins.y, projPos.z, 1.0);
+        //bottom right
+        v.Position = float4(maxs.x, mins.y, projPos.z, 1.0f);
 #if defined(PER_VERTEY_RAY)
-    v.Ray = normalize(v.Position.xyz - v.CameraPosition.xyz);
+        v.Ray = normalize(v.Position.xyz - v.CameraPosition.xyz);
 #endif /* defined(PER_VERTEY_RAY) */
-    triStream.Append(v);
+        triStream.Append(v);
 
-    //top right
-    v.Position = float4(maxs.x, maxs.y, projPos.z, 1.0);
+        //top right
+        v.Position = float4(maxs.x, maxs.y, projPos.z, 1.0f);
 #if defined(PER_VERTEY_RAY)
-    v.Ray = normalize(v.Position.xyz - v.CameraPosition.xyz);
+        v.Ray = normalize(v.Position.xyz - v.CameraPosition.xyz);
 #endif /* defined(PER_VERTEY_RAY) */
-    triStream.Append(v);
+        triStream.Append(v);
 
-    triStream.RestartStrip();
+        triStream.RestartStrip();
+    //}
 #endif /* defined(DUEBEL) */
 
 #elif defined(GEO_QUAD)

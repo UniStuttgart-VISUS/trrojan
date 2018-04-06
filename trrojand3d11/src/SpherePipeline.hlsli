@@ -89,10 +89,14 @@ struct VsRaycastingInput {
 /// A particle from the structured buffer.
 /// </summary>
 struct Particle {
+#if defined(PER_VERTEX_RADIUS)
     /// <summary>
     /// The world-space position (xyz) and radius (w) of the particle.
     /// </summary>
     float4 SphereParams;
+#else /* defined(PER_VERTEX_RADIUS) */
+    float3 SphereParams;
+#endif /* defined(PER_VERTEX_RADIUS) */
 
 #if defined(PER_VERTEX_COLOUR)
     /// <summary>

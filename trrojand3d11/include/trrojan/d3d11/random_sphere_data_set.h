@@ -117,21 +117,6 @@ namespace d3d11 {
 
     protected:
 
-        struct random_sphere_intensity {
-            DirectX::XMFLOAT4 Position;
-            float Intensity;
-        };
-
-        struct random_sphere_rgba32 {
-            DirectX::XMFLOAT4 Position;
-            DirectX::XMFLOAT4 Colour;
-        };
-
-        struct random_sphere_rgba8 {
-            DirectX::XMFLOAT4 Position;
-            COLORREF Colour;
-        };
-
         static void minmax(point_type& i, point_type& a,
             const DirectX::XMFLOAT4& v);
 

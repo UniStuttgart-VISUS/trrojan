@@ -233,8 +233,17 @@ namespace d3d11 {
         return SUCCEEDED(hr);
     }
 
+    /// <summary>
+    /// Block the CPU until the given event occurred on the GPU.
+    /// </summary>
     void wait_for_event_query(ID3D11DeviceContext *ctx,
         ID3D11Asynchronous *query);
+
+    /// <summary>
+    /// Block the CPU until the results of the given event query are available.
+    /// </summary>
+    void wait_for_stats_query(D3D11_QUERY_DATA_PIPELINE_STATISTICS& dst,
+        ID3D11DeviceContext *ctx, ID3D11Asynchronous *query);
 
 } /* end namespace d3d11 */
 } /* end namespace trrojan */

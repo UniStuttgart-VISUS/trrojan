@@ -159,36 +159,68 @@ trrojan::d3d11::random_sphere_data_set::create(ID3D11Device *device,
 std::vector<D3D11_INPUT_ELEMENT_DESC>
 trrojan::d3d11::random_sphere_data_set::get_input_layout(
         const sphere_type type) {
-    static const std::vector<D3D11_INPUT_ELEMENT_DESC> _INT = {
-        { "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0,  0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-        { "COLOR", 0, DXGI_FORMAT_R32_FLOAT, 0, 16, D3D11_INPUT_PER_VERTEX_DATA, 0 }
-    };
-    static const std::vector<D3D11_INPUT_ELEMENT_DESC> _RGBA8 = {
-        { "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0,  0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-        { "COLOR", 0, DXGI_FORMAT_R8G8B8A8_UNORM, 0,  16, D3D11_INPUT_PER_VERTEX_DATA, 0 }
-    };
-    static const std::vector<D3D11_INPUT_ELEMENT_DESC> _RGBA32 = {
-        { "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0,  0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-        { "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 16, D3D11_INPUT_PER_VERTEX_DATA, 0 }
-    };
+    D3D11_INPUT_ELEMENT_DESC element;
+    UINT offset = 0;
+    std::vector<D3D11_INPUT_ELEMENT_DESC> retval;
 
+    ::memset(&element, 0, sizeof(element));
+    element.SemanticName = "POSITION";
+    element.AlignedByteOffset = offset;
+    element.InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
 
     switch (type) {
         case sphere_type::pos_intensity:
-        case sphere_type::pos_rad_intensity:
-            return _INT;
-
         case sphere_type::pos_rgba8:
-        case sphere_type::pos_rad_rgba8:
-            return _RGBA8;
-
         case sphere_type::pos_rgba32:
+            element.Format = DXGI_FORMAT_R32G32B32_FLOAT;
+            offset += 3 * sizeof(float);
+            retval.push_back(element);
+            break;
+
+        case sphere_type::pos_rad_intensity:
+        case sphere_type::pos_rad_rgba8:
         case sphere_type::pos_rad_rgba32:
-            return _RGBA32;
+            element.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+            offset += 4 * sizeof(float);
+            retval.push_back(element);
+            break;
 
         default:
             throw std::runtime_error("Unexpected sphere format.");
     }
+
+    ::memset(&element, 0, sizeof(element));
+    element.SemanticName = "COLOR";
+    element.AlignedByteOffset = offset;
+    element.InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
+
+    switch (type) {
+        case sphere_type::pos_intensity:
+        case sphere_type::pos_rad_intensity:
+            element.Format = DXGI_FORMAT_R32_FLOAT;
+            offset += 1 * sizeof(float);
+            retval.push_back(element);
+            break;
+
+        case sphere_type::pos_rgba8:
+        case sphere_type::pos_rad_rgba8:
+            element.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+            offset += 4 * sizeof(float);
+            retval.push_back(element);
+            break;
+
+        case sphere_type::pos_rgba32:
+        case sphere_type::pos_rad_rgba32:
+            element.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+            offset += 4 * sizeof(float);
+            retval.push_back(element);
+            break;
+
+        default:
+            throw std::runtime_error("Unexpected sphere format.");
+    }
+
+    return std::move(retval);
 }
 
 
@@ -235,22 +267,47 @@ trrojan::d3d11::random_sphere_data_set::get_properties(const sphere_type type) {
 trrojan::d3d11::random_sphere_data_set::size_type
 trrojan::d3d11::random_sphere_data_set::get_stride(
         const sphere_type type) {
+    size_type retval = 0;
+
     switch (type) {
         case sphere_type::pos_intensity:
-        case sphere_type::pos_rad_intensity:
-            return sizeof(random_sphere_intensity);
-
         case sphere_type::pos_rgba8:
-        case sphere_type::pos_rad_rgba8:
-            return sizeof(random_sphere_rgba8);
-
         case sphere_type::pos_rgba32:
+            retval += 3 * sizeof(float);
+            break;
+
+        case sphere_type::pos_rad_intensity:
+        case sphere_type::pos_rad_rgba8:
         case sphere_type::pos_rad_rgba32:
-            return sizeof(random_sphere_rgba32);
+            retval += 4 * sizeof(float);
+            break;
 
         default:
             throw std::runtime_error("Unexpected sphere format.");
     }
+
+    switch (type) {
+        case sphere_type::pos_intensity:
+        case sphere_type::pos_rad_intensity:
+            retval += 1 * sizeof(float);
+            break;
+
+        case sphere_type::pos_rgba8:
+        case sphere_type::pos_rad_rgba8:
+            retval += 4 * sizeof(byte);
+            break;
+
+        case sphere_type::pos_rgba32:
+        case sphere_type::pos_rad_rgba32:
+            retval += 4 * sizeof(float);
+            break;
+
+        default:
+            throw std::runtime_error("Unexpected sphere format.");
+    }
+
+
+    return retval;
 }
 
 
@@ -280,6 +337,8 @@ void trrojan::d3d11::random_sphere_data_set::recreate(ID3D11Device *device,
     static const create_flags VALID_INPUT_FLAGS // Flags directly copied from user input.
         = sphere_data_set_base::property_structured_resource;
     D3D11_BUFFER_DESC bufferDesc;
+    auto avgSphereSize = std::abs(this->_sphere_size[1] - this->_sphere_size[0])
+        * 0.5f + (std::min)(this->_sphere_size[0], this->_sphere_size[1]);
     auto domainSize = this->extents();
     D3D11_SUBRESOURCE_DATA id;
     std::uniform_real_distribution<float> posDist(0, 1);
@@ -310,48 +369,50 @@ void trrojan::d3d11::random_sphere_data_set::recreate(ID3D11Device *device,
     for (std::uint32_t i = 0; i < this->size(); ++i) {
         auto p = particles.data() + (i * stride);
         auto g = static_cast<float>(i) / static_cast<float>(this->size());
-        auto pos = reinterpret_cast<DirectX::XMFLOAT4 *>(p);
+        auto cur = reinterpret_cast<float *>(p);
 
-        pos->x = posDist(prng) * domainSize[0] - 0.5f * domainSize[0];
-        pos->y = posDist(prng) * domainSize[1] - 0.5f * domainSize[1];
-        pos->z = posDist(prng) * domainSize[2] - 0.5f * domainSize[2];
+        cur[0] = posDist(prng) * domainSize[0] - 0.5f * domainSize[0];
+        cur[1] = posDist(prng) * domainSize[1] - 0.5f * domainSize[1];
+        cur[2] = posDist(prng) * domainSize[2] - 0.5f * domainSize[2];
+        cur += 3;
 
 #if 0
-        pos->x = pos->y = pos->z = g * domainSize[0] - 0.5f * domainSize[0];
+        cur->x = cur->y = cur->z = g * domainSize[0] - 0.5f * domainSize[0];
 #endif
 
         switch (this->_type) {
             case sphere_type::pos_rad_intensity:
             case sphere_type::pos_rad_rgba32:
             case sphere_type::pos_rad_rgba8:
-                pos->w = radDist(prng);
-                if (this->_max_radius < pos->w) {
-                    this->_max_radius = pos->w;
+                *cur = radDist(prng);
+                if (this->_max_radius < *cur) {
+                    this->_max_radius = *cur;
                 }
+                ++cur;
                 break;
 
             default:
-                pos->w = 0.0f;
+                this->_max_radius = avgSphereSize;
         }
 
         switch (this->_type) {
             case sphere_type::pos_intensity:
             case sphere_type::pos_rad_intensity:
-                *reinterpret_cast<float *>(pos + 1) = g;
+                *reinterpret_cast<float *>(cur) = g;
                 break;
 
             case sphere_type::pos_rgba32:
             case sphere_type::pos_rad_rgba32:
-                (pos + 1)->x = g;
-                (pos + 1)->y = g;
-                (pos + 1)->z = g;
-                (pos + 1)->w = 1.0f;
+                cur[0] = g;
+                cur[1] = g;
+                cur[2] = g;
+                cur[3] = 1.0f;
                 break;
 
             case sphere_type::pos_rgba8:
             case sphere_type::pos_rad_rgba8: {
                 auto s = static_cast<std::uint8_t>(g * 255);
-                auto d = reinterpret_cast<std::uint8_t *>(pos + 1);
+                auto d = reinterpret_cast<std::uint8_t *>(cur);
                 d[0] = d[1] = d[2] = s;
                 d[3] = 255;
                 } break;

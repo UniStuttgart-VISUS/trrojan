@@ -37,7 +37,7 @@ namespace trrojan {
         /// <summary>
         /// Finalises the instance.
         /// </summary>
-        virtual ~basic_output_params(void);
+        virtual ~basic_output_params(void) = default;
 
         /// <summary>
         /// Answer the path of the output file.
@@ -48,6 +48,12 @@ namespace trrojan {
         }
 
     protected:
+
+        /// <summary>
+        /// Unescapes a character sequence.
+        /// </summary>
+        static std::string unescape(std::string::const_iterator begin,
+            std::string::const_iterator end);
 
         /// <summary>
         /// Initialises a new instance.

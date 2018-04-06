@@ -25,8 +25,8 @@ _GRAPH_BENCH_BASE_DEFINE_FACTOR(viewport);
  * trrojan::graphics_benchmark_base::apply_manoeuvre
  */
 void trrojan::graphics_benchmark_base::apply_manoeuvre(trrojan::camera& camera,
-    const configuration& config, const point_type& bboxMin,
-    const point_type& bboxMax) {
+        const configuration& config, const point_type& bboxMin,
+        const point_type& bboxMax) {
     glm::vec3 bbe(bboxMax[0], bboxMax[1], bboxMax[2]);
     glm::vec3 bbs(bboxMin[0], bboxMin[1], bboxMin[2]);
     auto curStep = config.get<manoeuvre_step_type>(factor_manoeuvre_step);

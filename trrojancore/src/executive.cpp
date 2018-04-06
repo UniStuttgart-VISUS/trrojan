@@ -173,7 +173,8 @@ void trrojan::executive::load_plugins(const cmd_line& cmdLine) {
 /*
  * trrojan::executive::trroll
  */
-void trrojan::executive::trroll(const std::string& path, output_base& output) {
+void trrojan::executive::trroll(const std::string& path, output_base& output,
+        const cool_down& coolDown) {
     typedef trroll_parser::benchmark_configs bcs;
     auto bcss = trroll_parser::parse(path);
     std::vector<benchmark> benchmarks;
@@ -234,7 +235,7 @@ void trrojan::executive::trroll(const std::string& path, output_base& output) {
                         (**it).run(b.configs, [&output](result&& r) {
                             output << r;
                             return true;
-                        });
+                        }, coolDown);
                     }
                 }
 

@@ -129,11 +129,14 @@ PsOutput Main(PsInput input/*, bool isFront : SV_IsFrontFace*/) {
     // calculate depth
 #define DEPTH
 #ifdef DEPTH
-    float4 Ding = float4(sphereintersection + objPos.xyz, 1.0);
-    float depth = dot(ViewProjMatrix[eye]._13_23_33_43, Ding);
-    float depthW = dot(ViewProjMatrix[eye]._14_24_34_44, Ding);
-    //retval.Depth = ((depth / depthW) + 1.0) * 0.5;
-    retval.Depth = (depth / depthW);
+    float4 intPos = float4(sphereintersection + objPos.xyz, 1.0);
+    float dz = dot(ViewProjMatrix[eye]._13_23_33_43, intPos);
+    float dw = dot(ViewProjMatrix[eye]._14_24_34_44, intPos);
+    //retval.Depth = ((dz / dw) + 1.0) * 0.5;
+    //retval.Colour.gb = 0.0f.xx;
+    //retval.Colour.r = retval.Depth;
+    //retval.Depth = 1.0f - (dz / dw);
+    retval.Depth = (dz / dw);
 #else
     retval.Depth = input.Position.z;
 #endif // DEPTH

@@ -105,7 +105,8 @@ namespace d3d11 {
         /// Make a suggestion for near and far clipping plane for the data set
         /// and the given <see cref="trrojan::camera" />.
         /// </summary>
-        std::pair<float, float> clipping_planes(const camera& cam) const;
+        std::pair<float, float> clipping_planes(const camera& cam,
+            const float globalRadius) const;
 
         /// <summary>
         /// Gets the size of the bounding box.

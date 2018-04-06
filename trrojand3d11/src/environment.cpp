@@ -6,12 +6,18 @@
 #include "trrojan/d3d11/environment.h"
 
 #include <cassert>
+#include <cinttypes>
 #include <iterator>
 #include <memory>
+#include <set>
 
 #include <Windows.h>
 #include <atlbase.h>
 #include <dxgi.h>
+
+#include "trrojan/cmd_line.h"
+#include "trrojan/log.h"
+#include "trrojan/text.h"
 
 #include "trrojan/d3d11/utilities.h"
 
@@ -60,10 +66,16 @@ void trrojan::d3d11::environment::on_finalise(void) {
  * trrojan::d3d11::environment::on_initialise
  */
 void trrojan::d3d11::environment::on_initialise(const cmd_line& cmdLine) {
+    USES_CONVERSION;
     DWORD deviceFlags = D3D11_CREATE_DEVICE_DISABLE_GPU_TIMEOUT;
     ATL::CComPtr<IDXGIFactory> factory;
     D3D_FEATURE_LEVEL featureLevel;
     HRESULT hr = S_OK;
+    const auto isBasicRender = contains_switch("--with-basic-render-driver",
+        cmdLine.begin(), cmdLine.end());
+    const auto isUniqueDevice = contains_switch("--unique-devices",
+        cmdLine.begin(), cmdLine.end());
+    std::set<std::pair<UINT, UINT>> pciIds;
 
     /* Initialise COM (for WIC). */
     hr = ::CoInitialize(nullptr);
@@ -95,10 +107,29 @@ void trrojan::d3d11::environment::on_initialise(const cmd_line& cmdLine) {
         }
 
         if (SUCCEEDED(hr)) {
-            if ((desc.VendorId == 0x1414) && (desc.DeviceId == 0x8c)) {
+            if ((desc.VendorId == 0x1414) && (desc.DeviceId == 0x8c)
+                    && !isBasicRender) {
                 // Skip Microsoft's software emulation (cf.
                 // https://msdn.microsoft.com/en-us/library/windows/desktop/bb205075(v=vs.85).aspx)
+                log::instance().write_line(log_level::information, "Excluding "
+                    "\"%s\" from list of device eligible for benchmarking "
+                    "because --with-basic-render-driver was not specified.",
+                    W2A(desc.Description));
                 continue;
+            }
+
+            if (isUniqueDevice) {
+                auto pciId = std::make_pair(desc.VendorId, desc.DeviceId);
+                if (std::find(pciIds.begin(), pciIds.end(), pciId)
+                        != pciIds.end()) {
+                    log::instance().write_line(log_level::information,
+                        "Excluding \"%s\" from list of device eligible for "
+                        "benchmarking because another device with the same PCI "
+                        "IDs was already added.", W2A(desc.Description));
+                    continue;
+                } else {
+                    pciIds.emplace(std::move(pciId));
+                }
             }
         }
 

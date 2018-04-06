@@ -9,6 +9,8 @@
 #include <cassert>
 #include <stdexcept>
 
+#include "trrojan/log.h"
+
 
 /*
  * trrojan::configuration_set::add_factor
@@ -77,6 +79,9 @@ bool trrojan::configuration_set::foreach_configuration(
             frequencies.push_back(cntTests);
             cntTests *= f.size();
         }
+
+        log::instance().write_line(log_level::information, "The configuration "
+            "set comprises %u individual configuration(s).", cntTests);
 
         for (size_t i = 0; (i < cntTests) && retval; ++i) {
             config.clear();

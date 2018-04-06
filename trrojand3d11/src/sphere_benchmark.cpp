@@ -5,6 +5,7 @@
 
 #include "trrojan/d3d11/sphere_benchmark.h"
 
+#include <algorithm>
 #include <cassert>
 #include <cinttypes>
 #include <memory>
@@ -41,11 +42,12 @@ _SPHERE_BENCH_DEFINE_FACTOR(edge_tess_factor);
 _SPHERE_BENCH_DEFINE_FACTOR(fit_bounding_box);
 _SPHERE_BENCH_DEFINE_FACTOR(force_float_colour);
 _SPHERE_BENCH_DEFINE_FACTOR(frame);
-_SPHERE_BENCH_DEFINE_FACTOR(global_radius);
+_SPHERE_BENCH_DEFINE_FACTOR(gpu_counter_iterations);
 _SPHERE_BENCH_DEFINE_FACTOR(hemi_tess_scale);
 _SPHERE_BENCH_DEFINE_FACTOR(inside_tess_factor);
-_SPHERE_BENCH_DEFINE_FACTOR(iterations);
 _SPHERE_BENCH_DEFINE_FACTOR(method);
+_SPHERE_BENCH_DEFINE_FACTOR(min_prewarms);
+_SPHERE_BENCH_DEFINE_FACTOR(min_wall_time);
 _SPHERE_BENCH_DEFINE_FACTOR(poly_corners);
 _SPHERE_BENCH_DEFINE_FACTOR(vs_raygen);
 _SPHERE_BENCH_DEFINE_FACTOR(vs_xfer_function);
@@ -79,13 +81,11 @@ trrojan::d3d11::sphere_benchmark::sphere_benchmark(void)
     this->_default_configs.add_factor(factor::from_manifestations(
         factor_frame, static_cast<frame_type>(0)));
     this->_default_configs.add_factor(factor::from_manifestations(
-        factor_global_radius, 1.0f));
+        factor_gpu_counter_iterations, static_cast<unsigned int>(7)));
     this->_default_configs.add_factor(factor::from_manifestations(
         factor_hemi_tess_scale, 0.5f));
     this->_default_configs.add_factor(factor::from_manifestations(
         factor_inside_tess_factor, { inside_tess_factor_type{ 4, 4 } }));
-    this->_default_configs.add_factor(factor::from_manifestations(
-        factor_iterations, static_cast<unsigned int>(8)));
     {
         std::vector<std::string> manifestations;
         for (size_t i = 0; (::SPHERE_METHODS[i].name != nullptr); ++i) {
@@ -94,6 +94,10 @@ trrojan::d3d11::sphere_benchmark::sphere_benchmark(void)
         this->_default_configs.add_factor(factor::from_manifestations(
             factor_method, manifestations));
     }
+    this->_default_configs.add_factor(factor::from_manifestations(
+        factor_min_prewarms, static_cast<unsigned int>(4)));
+    this->_default_configs.add_factor(factor::from_manifestations(
+        factor_min_wall_time, static_cast<unsigned int>(1000)));
     this->_default_configs.add_factor(factor::from_manifestations(
         factor_poly_corners, 4u));
     this->_default_configs.add_factor(factor::from_manifestations(
@@ -153,13 +157,19 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
     const configuration& config, const std::vector<std::string>& changed) {
     typedef rendering_technique::shader_stage shader_stage;
 
+    std::array<float, 3> bboxSize;
     trrojan::timer cpuTimer;
-    const auto cntIterations = config.get<int>(factor_iterations);
+    auto cntCpuIterations = static_cast<std::uint32_t>(0);
+    const auto cntGpuIterations= config.get<std::uint32_t>(
+        factor_gpu_counter_iterations);
     auto ctx = device.d3d_context();
     auto dev = device.d3d_device();
     gpu_timer_type::value_type gpuFreq;
     gpu_timer_type gpuTimer;
+    std::vector<gpu_timer_type::millis_type> gpuTimes;
     auto isDisjoint = true;
+    const auto minWallTime = config.get<std::uint32_t>(factor_min_wall_time);
+    D3D11_QUERY_DATA_PIPELINE_STATISTICS pipeStats;
     auto shaderCode = sphere_benchmark::get_shader_id(config);
     SphereConstants sphereConstants;
     TessellationConstants tessConstants;
@@ -298,8 +308,8 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
     // Prepare the result set.
     auto retval = std::make_shared<basic_result>(std::move(config),
         std::initializer_list<std::string> {
-        "iteration",
             "particles",
+            "data_extents",
             "ia_vertices",
             "ia_primitives",
             "vs_invokes",
@@ -308,60 +318,16 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
             "gs_invokes",
             "gs_primitives",
             "ps_invokes",
-            "gpu_time",
-            "wall_time"
+            "gpu_time_min",
+            "gpu_time_med",
+            "gpu_time_max",
+            "wall_time_iterations",
+            "wall_time",
+            "wall_time_avg"
     });
 
-    // Compute the matrices.
-    {
-        //auto projection = DirectX::XMMatrixPerspectiveFovRH(std::atan(1) * 4 / 3,
-        //    static_cast<float>(viewport.Width) / static_cast<float>(viewport.Height),
-        //    0.1f, 10.0f);
-
-        //auto eye = DirectX::XMFLOAT4(0, 0, 0.5f * (this->mmpld_header.bounding_box[5] - this->mmpld_header.bounding_box[2]), 0);
-        //auto lookAt = DirectX::XMFLOAT4(0, 0, 0, 0);
-        //auto up = DirectX::XMFLOAT4(0, 1, 0, 0);
-        //auto view = DirectX::XMMatrixLookAtRH(DirectX::XMLoadFloat4(&eye),
-        //    DirectX::XMLoadFloat4(&lookAt), DirectX::XMLoadFloat4(&up));
-
-        this->cam.set_fovy(60.0f);
-        this->cam.set_aspect_ratio(static_cast<float>(viewport.Width)
-            / static_cast<float>(viewport.Height));
-        auto mat = DirectX::XMFLOAT4X4(
-            glm::value_ptr(this->cam.get_projection_mx()));
-        auto projection = DirectX::XMLoadFloat4x4(&mat);
-        DirectX::XMStoreFloat4x4(viewConstants.ProjMatrix,
-            DirectX::XMMatrixTranspose(projection));
-
-        point_type bbs, bbe;
-        this->data->bounding_box(bbs, bbe);
-        this->apply_manoeuvre(this->cam, config, bbs, bbe);
-
-        auto clipping = this->data->clipping_planes(cam);
-        this->cam.set_near_plane_dist(clipping.first);
-        this->cam.set_far_plane_dist(clipping.second);
-
-        mat = DirectX::XMFLOAT4X4(glm::value_ptr(this->cam.get_view_mx()));
-        auto view = DirectX::XMLoadFloat4x4(&mat);
-        DirectX::XMStoreFloat4x4(viewConstants.ViewMatrix,
-            DirectX::XMMatrixTranspose(view));
-
-        auto viewDet = DirectX::XMMatrixDeterminant(view);
-        auto viewInv = DirectX::XMMatrixInverse(&viewDet, view);
-        DirectX::XMStoreFloat4x4(viewConstants.ViewInvMatrix,
-            DirectX::XMMatrixTranspose(viewInv));
-
-        auto viewProj = view * projection;
-        DirectX::XMStoreFloat4x4(viewConstants.ViewProjMatrix,
-            DirectX::XMMatrixTranspose(viewProj));
-
-        auto viewProjDet = DirectX::XMMatrixDeterminant(viewProj);
-        auto viewProjInv = DirectX::XMMatrixInverse(&viewProjDet, viewProj);
-        DirectX::XMStoreFloat4x4(viewConstants.ViewProjInvMatrix,
-            DirectX::XMMatrixTranspose(viewProjInv));
-    }
-
-    // Set data constants.
+    // Set data constants. Note that his must be done before computing the
+    // matrices because we will use sphereConstants.GlobalRadius there.
     {
         ::ZeroMemory(&sphereConstants, sizeof(SphereConstants));
 
@@ -386,9 +352,72 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
 
             sphereConstants.IntensityRange.x = 0.0f;
             sphereConstants.IntensityRange.y = 1.0f;
-            sphereConstants.GlobalRadius = config.get<float>(
-                factor_global_radius);
+            sphereConstants.GlobalRadius = this->data->max_radius();
+            // Note: the maximum radius is the global radius for random
+            // spheres without per-sphere radius.
         }
+    }
+
+    // Compute the matrices.
+    {
+        //auto projection = DirectX::XMMatrixPerspectiveFovRH(std::atan(1) * 4 / 3,
+        //    static_cast<float>(viewport.Width) / static_cast<float>(viewport.Height),
+        //    0.1f, 10.0f);
+
+        //auto eye = DirectX::XMFLOAT4(0, 0, 0.5f * (this->mmpld_header.bounding_box[5] - this->mmpld_header.bounding_box[2]), 0);
+        //auto lookAt = DirectX::XMFLOAT4(0, 0, 0, 0);
+        //auto up = DirectX::XMFLOAT4(0, 1, 0, 0);
+        //auto view = DirectX::XMMatrixLookAtRH(DirectX::XMLoadFloat4(&eye),
+        //    DirectX::XMLoadFloat4(&lookAt), DirectX::XMLoadFloat4(&up));
+        const auto aspect = static_cast<float>(viewport.Width)
+            / static_cast<float>(viewport.Height);
+        const auto fovyDeg = 60.0f;
+        point_type bbs, bbe;
+
+        // Retrieve the bounding box of the data.
+        this->data->bounding_box(bbs, bbe);
+        for (size_t i = 0; i < 3; ++i) {
+            bboxSize[i] = std::abs(bbe[i] - bbs[1]);
+        }
+
+        // Set basic view parameters.
+        this->cam.set_fovy(fovyDeg);
+        this->cam.set_aspect_ratio(aspect);
+
+        // Apply the current step of the manoeuvre.
+        this->apply_manoeuvre(this->cam, config, bbs, bbe);
+
+        // Compute the clipping planes based on the current view.
+        const auto clipping = this->data->clipping_planes(cam,
+            sphereConstants.GlobalRadius);
+        this->cam.set_near_plane_dist(clipping.first);
+        this->cam.set_far_plane_dist(clipping.second);
+
+        // Retrieve the matrices.
+        auto mat = DirectX::XMFLOAT4X4(
+            glm::value_ptr(this->cam.get_projection_mx()));
+        auto projection = DirectX::XMLoadFloat4x4(&mat);
+        DirectX::XMStoreFloat4x4(viewConstants.ProjMatrix,
+            DirectX::XMMatrixTranspose(projection));
+
+        mat = DirectX::XMFLOAT4X4(glm::value_ptr(this->cam.get_view_mx()));
+        auto view = DirectX::XMLoadFloat4x4(&mat);
+        DirectX::XMStoreFloat4x4(viewConstants.ViewMatrix,
+            DirectX::XMMatrixTranspose(view));
+
+        auto viewDet = DirectX::XMMatrixDeterminant(view);
+        auto viewInv = DirectX::XMMatrixInverse(&viewDet, view);
+        DirectX::XMStoreFloat4x4(viewConstants.ViewInvMatrix,
+            DirectX::XMMatrixTranspose(viewInv));
+
+        auto viewProj = view * projection;
+        DirectX::XMStoreFloat4x4(viewConstants.ViewProjMatrix,
+            DirectX::XMMatrixTranspose(viewProj));
+
+        auto viewProjDet = DirectX::XMMatrixDeterminant(viewProj);
+        auto viewProjInv = DirectX::XMMatrixInverse(&viewProjDet, viewProj);
+        DirectX::XMStoreFloat4x4(viewConstants.ViewProjInvMatrix,
+            DirectX::XMMatrixTranspose(viewProjInv));
     }
 
     // Set tessellation constants.
@@ -437,10 +466,12 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
     // Determine the number of primitives to emit.
     auto cntPrimitives = this->data->size();
     auto cntInstances = 0;
+    auto isInstanced = false;
     if (is_technique(shaderCode, SPHERE_TECHNIQUE_QUAD_INST)) {
         // Instancing of quads requires 4 vertices per particle.
         cntInstances = cntPrimitives;
         cntPrimitives = 4;
+        isInstanced = true;
     }
 
 #if 0
@@ -452,54 +483,126 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
     }
 #endif
 
-    // Render it.
-    for (int i = 0; i < cntIterations;) {
-        log::instance().write_line(log_level::debug, "Iteration %d.", i);
-        cpuTimer.start();
+    // Do prewarming and compute number of CPU iterations at the same time.
+    log::instance().write_line(log_level::debug, "Prewarming ...");
+    {
+       auto batchTime = 0.0;
+       auto cntPrewarms = (std::max)(1u,
+           config.get<std::uint32_t>(factor_min_prewarms));
+
+        do {
+            cntCpuIterations = 0;
+            assert(cntPrewarms >= 1);
+
+            cpuTimer.start();
+            for (; cntCpuIterations < cntPrewarms; ++cntCpuIterations) {
+                this->clear_target();
+                if (isInstanced) {
+                    ctx->DrawInstanced(cntPrimitives, cntInstances, 0, 0);
+                } else {
+                    ctx->Draw(cntPrimitives, 0);
+                }
+                this->present_target();
+            }
+
+            ctx->End(this->done_query);
+            wait_for_event_query(ctx, this->done_query);
+            batchTime = cpuTimer.elapsed_millis();
+
+            if (batchTime < minWallTime) {
+                cntPrewarms = static_cast<std::uint32_t>(std::ceil(
+                    static_cast<double>(minWallTime * cntCpuIterations)
+                    / batchTime));
+                if (cntPrewarms < 1) {
+                    cntPrewarms = 1;
+                }
+            }
+        } while (batchTime < minWallTime);
+    }
+
+    // Do the GPU counter measurements
+    gpuTimes.resize(cntGpuIterations);
+    for (std::uint32_t i = 0; i < cntGpuIterations;) {
+        log::instance().write_line(log_level::debug, "GPU counter measurement "
+            "#%d.", i);
         gpuTimer.start_frame();
         gpuTimer.start(0);
         this->clear_target();
-        ctx->Begin(this->stats_query);
-        if (is_technique(shaderCode, SPHERE_TECHNIQUE_QUAD_INST)) {
+        if (isInstanced) {
             ctx->DrawInstanced(cntPrimitives, cntInstances, 0, 0);
         } else {
             ctx->Draw(cntPrimitives, 0);
         }
-        ctx->End(this->stats_query);
         this->present_target();
-        ctx->End(this->done_query);
         gpuTimer.end(0);
         gpuTimer.end_frame();
-        wait_for_event_query(ctx, this->done_query);
-        auto cpuTime = cpuTimer.elapsed_millis();
 
-        gpuTimer.evaluate_frame(isDisjoint, gpuFreq, 5 * 1000);
+        gpuTimer.evaluate_frame(isDisjoint, gpuFreq);
         if (!isDisjoint) {
-            D3D11_QUERY_DATA_PIPELINE_STATISTICS pipeStats;
-            auto hr = ctx->GetData(this->stats_query, &pipeStats, sizeof(pipeStats), 0);
-            assert(SUCCEEDED(hr));
-
-            auto gpuTime = gpu_timer_type::to_milliseconds(
+            gpuTimes[i] = gpu_timer_type::to_milliseconds(
                     gpuTimer.evaluate(0), gpuFreq);
-            retval->add({
-                i,
-                this->data->size(),
-                pipeStats.IAVertices,
-                pipeStats.IAPrimitives,
-                pipeStats.VSInvocations,
-                pipeStats.HSInvocations,
-                pipeStats.DSInvocations,
-                pipeStats.GSInvocations,
-                pipeStats.GSPrimitives,
-                pipeStats.PSInvocations,
-                gpuTime,
-                cpuTime
-            });
-            ++i;
+            ++i;    // Only proceed in case of success.
         }
-
-        //this->save_target();    // TODO
     }
+
+    // Obtain pipeline statistics
+    log::instance().write_line(log_level::debug, "Collecting pipeline "
+        "statistics ...");
+    this->clear_target();
+    ctx->Begin(this->stats_query);
+    if (isInstanced) {
+        ctx->DrawInstanced(cntPrimitives, cntInstances, 0, 0);
+    } else {
+        ctx->Draw(cntPrimitives, 0);
+    }
+    ctx->End(this->stats_query);
+    this->present_target();
+    wait_for_stats_query(pipeStats, ctx, this->stats_query);
+
+    // Do the wall clock measurement.
+    log::instance().write_line(log_level::debug, "Measuring wall clock "
+        "timings over %u iterations ...", cntCpuIterations);
+    cpuTimer.start();
+    for (std::uint32_t i = 0; i < cntCpuIterations; ++i) {
+        this->clear_target();
+        if (isInstanced) {
+            ctx->DrawInstanced(cntPrimitives, cntInstances, 0, 0);
+        } else {
+            ctx->Draw(cntPrimitives, 0);
+        }
+        this->present_target();
+    }
+    ctx->End(this->done_query);
+    wait_for_event_query(ctx, this->done_query);
+    auto cpuTime = cpuTimer.elapsed_millis();
+
+    // Compute derived statistics for GPU counters.
+    std::sort(gpuTimes.begin(), gpuTimes.end());
+    auto gpuMedian = gpuTimes[gpuTimes.size() / 2];
+    if (gpuTimes.size() % 2 == 0) {
+        gpuMedian += gpuTimes[gpuTimes.size() / 2 - 1];
+        gpuMedian *= 0.5;
+    }
+
+    // Output the results.
+    retval->add({
+        this->data->size(),
+        bboxSize,
+        pipeStats.IAVertices,
+        pipeStats.IAPrimitives,
+        pipeStats.VSInvocations,
+        pipeStats.HSInvocations,
+        pipeStats.DSInvocations,
+        pipeStats.GSInvocations,
+        pipeStats.GSPrimitives,
+        pipeStats.PSInvocations,
+        gpuTimes.front(),
+        gpuMedian,
+        gpuTimes.back(),
+        cntCpuIterations,
+        cpuTime,
+        static_cast<double>(cpuTime) / cntCpuIterations
+        });
 
     return retval;
 }
@@ -613,12 +716,6 @@ trrojan::d3d11::sphere_benchmark::get_data_properties(
         ? this->data->properties()
         : 0;
 
-    if ((shaderCode & SPHERE_TECHNIQUE_USE_SRV) == 0) {
-        // If no shader resource view is used, the floating point data flag is
-        // not relevant. Therefore, erase it from the result.
-        retval &= ~SPHERE_INPUT_FLT_COLOUR;
-    }
-
     if ((retval & SPHERE_INPUT_PV_INTENSITY) != 0) {
         // If we need a transfer function, let the shader code decide where to
         // apply it.
@@ -641,14 +738,15 @@ trrojan::d3d11::rendering_technique&
 trrojan::d3d11::sphere_benchmark::get_technique(ID3D11Device *device,
         shader_id_type shaderCode) {
     auto dataCode = this->get_data_properties(shaderCode);
-    auto id = shaderCode | dataCode;
-    auto isPsTex = ((id & SPHERE_INPUT_PP_INTENSITY) != 0);
-    auto isVsTex = ((id & SPHERE_INPUT_PV_INTENSITY) != 0);
-    auto isSrv = ((id & SPHERE_TECHNIQUE_USE_SRV) != 0);
-    auto isRay = ((id & SPHERE_TECHNIQUE_USE_RAYCASTING) != 0);
-    auto isInst = ((id & SPHERE_TECHNIQUE_USE_INSTANCING) != 0);
+    const auto id = shaderCode | dataCode;
+    auto isFlt = ((id & SPHERE_INPUT_FLT_COLOUR) != 0);
     auto isGeo = ((id & SPHERE_TECHNIQUE_USE_GEO) != 0);
+    auto isInst = ((id & SPHERE_TECHNIQUE_USE_INSTANCING) != 0);
+    auto isPsTex = ((id & SPHERE_INPUT_PP_INTENSITY) != 0);
+    auto isRay = ((id & SPHERE_TECHNIQUE_USE_RAYCASTING) != 0);
+    auto isSrv = ((id & SPHERE_TECHNIQUE_USE_SRV) != 0);
     auto isTess = ((id & SPHERE_TECHNIQUE_USE_TESS) != 0);
+    auto isVsTex = ((id & SPHERE_INPUT_PV_INTENSITY) != 0);
 
     auto retval = this->technique_cache.find(id);
     if (retval == this->technique_cache.end()) {
@@ -668,12 +766,20 @@ trrojan::d3d11::sphere_benchmark::get_technique(ID3D11Device *device,
         rendering_technique::shader_resources gsRes;
         rendering_technique::shader_resources psRes;
         auto pt = D3D11_PRIMITIVE_TOPOLOGY_POINTLIST;
+        auto sid = id;
 
-        auto it = this->shader_resources.find(id);
+        if (!isSrv) {
+            // The type of colour is only relevant for SRVs, VB-based methods do
+            // not declare this in their shader flags because the layout is
+            // handled via the input layout of the technique.
+            sid &= ~SPHERE_INPUT_FLT_COLOUR;
+        }
+
+        auto it = this->shader_resources.find(sid);
         if (it == this->shader_resources.end()) {
             std::stringstream msg;
             msg << "Shader sources for sphere rendering method 0x"
-                << std::hex << id << " was not found." << std::ends;
+                << std::hex << sid << " was not found." << std::ends;
             throw std::runtime_error(msg.str());
         }
 
