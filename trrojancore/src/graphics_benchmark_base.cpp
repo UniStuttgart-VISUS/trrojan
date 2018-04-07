@@ -56,3 +56,16 @@ void trrojan::graphics_benchmark_base::get_manoeuvre(
     outCurStep = config.get<manoeuvre_step_type>(factor_manoeuvre_step);
     outTotalSteps = config.get<manoeuvre_step_type>(factor_manoeuvre_steps);
 }
+
+
+/*
+ * trrojan::graphics_benchmark_base::add_default_manoeuvre
+ */
+void trrojan::graphics_benchmark_base::add_default_manoeuvre(void) {
+    this->_default_configs.add_factor(factor::from_manifestations(
+        factor_manoeuvre, manoeuvre_type("diagonal")));
+    this->_default_configs.add_factor(factor::from_manifestations(
+        factor_manoeuvre_step, static_cast<manoeuvre_step_type>(0)));
+    this->_default_configs.add_factor(factor::from_manifestations(
+        factor_manoeuvre_steps, static_cast<manoeuvre_step_type>(64)));
+}

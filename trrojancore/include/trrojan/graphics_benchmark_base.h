@@ -163,6 +163,16 @@ namespace trrojan {
         /// tested.</param>
         inline graphics_benchmark_base(const std::string& name,
                 trrojan::configuration_set default_configs)
-            : benchmark_base(name, default_configs){ }
+            : benchmark_base(name, default_configs) { }
+
+        /// <summary>
+        /// Adds a 64-step diagonal manoeuvre to the default configuration.
+        /// </summary>
+        /// <remarks>
+        /// The constructor does not do this, because subclasses might not
+        /// support, eg if they do not produce images controlled by the default
+        /// camera implementation.
+        /// </remarks>
+        void add_default_manoeuvre(void);
     };
 }
