@@ -43,11 +43,19 @@ namespace d3d11 {
 
     private:
 
-        //static const UINT shader_resource_id = 10000;
+        static const UINT compute_shader_resource_id = 20002;
+        static const UINT pixel_shader_resource_id = 20001;
+        static const UINT vertex_shader_resource_id = 20000;
 
-        ATL::CComPtr<ID3D11Texture2D> back_faces;
-        ATL::CComPtr<ID3D11Texture2D> front_faces;
-        ATL::CComPtr<ID3D11RasterizerState> rasteriser_state;
+        void enable_ray_target(ID3D11DeviceContext *ctx,
+            const viewport_type& viewport);
+
+        rendering_technique::srv_type ray_source;
+        ATL::CComPtr<ID3D11RenderTargetView> ray_target;
+        rendering_technique ray_technique;
+        rendering_technique::buffer_type raycasting_constants;
+        rendering_technique::buffer_type view_constants;
+        rendering_technique volume_technique;
 
     };
 

@@ -5,6 +5,8 @@
 
 #include "trrojan/d3d11/utilities.h"
 
+#include <DirectXMath.h>
+
 #include "trrojan/io.h"
 
 
@@ -52,6 +54,89 @@ ATL::CComPtr<ID3D11ComputeShader> trrojan::d3d11::create_compute_shader(
         &retval);
     if (FAILED(hr)) {
         throw ATL::CAtlException(hr);
+    }
+
+    return retval;
+}
+
+
+/*
+ * trrojan::d3d11::create_cube
+ */
+std::vector<D3D11_INPUT_ELEMENT_DESC>  trrojan::d3d11::create_cube(
+        ID3D11Device *device, ID3D11Buffer **outVertices,
+        ID3D11Buffer **outIndices, const float size) {
+    assert(device != nullptr);
+    assert(outVertices != nullptr);
+    assert(outIndices != nullptr);
+    assert(*outVertices == nullptr);
+    assert(*outIndices == nullptr);
+
+    static const std::vector<D3D11_INPUT_ELEMENT_DESC> retval = {
+        { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 }
+    };
+
+    static const DirectX::XMFLOAT3 vertices[] = {
+        { -0.5f * size, 0.5f * size, -0.5f * size },
+        { 0.5f * size, 0.5f * size, -0.5f * size },
+        { -0.5f * size, -0.5f * size, -0.5f * size },
+        { 0.5f * size, -0.5f * size, -0.5f * size },
+        { -0.5f * size, 0.5f * size, 0.5f * size },
+        { 0.5f * size, 0.5f * size, 0.5f * size },
+        { -0.5f * size, -0.5f * size, 0.5f * size },
+        { 0.5f * size, -0.5f * size, 0.5f * size }
+    };
+
+    static const short indices[] = {
+        0, 1, 2,
+        2, 1, 3,
+        4, 0, 6,
+        6, 0, 2,
+        7, 5, 6,
+        6, 5, 4,
+        3, 1, 7,
+        7, 1, 5,
+        4, 5, 0,
+        0, 5, 1,
+        3, 7, 2,
+        2, 7, 6,
+    };
+
+    D3D11_BUFFER_DESC desc;
+    D3D11_SUBRESOURCE_DATA id;
+
+    {
+        ::ZeroMemory(&desc, sizeof(desc));
+        desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+        desc.ByteWidth = sizeof(vertices);
+        desc.Usage = D3D11_USAGE_IMMUTABLE;
+
+        ::ZeroMemory(&id, sizeof(id));
+        id.pSysMem = vertices;
+
+        auto hr = device->CreateBuffer(&desc, &id, outVertices);
+        if (FAILED(hr)) {
+            throw ATL::CAtlException(hr);
+        }
+
+        set_debug_object_name(*outVertices, "Cube vertex buffer");
+    }
+
+    {
+        ::ZeroMemory(&desc, sizeof(desc));
+        desc.BindFlags = D3D11_BIND_INDEX_BUFFER;
+        desc.ByteWidth = sizeof(vertices);
+        desc.Usage = D3D11_USAGE_IMMUTABLE;
+
+        ::ZeroMemory(&id, sizeof(id));
+        id.pSysMem = indices;
+
+        auto hr = device->CreateBuffer(&desc, &id, outIndices);
+        if (FAILED(hr)) {
+            throw ATL::CAtlException(hr);
+        }
+
+        set_debug_object_name(*outIndices, "Cube index buffer");
     }
 
     return retval;

@@ -35,6 +35,17 @@ namespace d3d11 {
         return create_compute_shader(device, byteCode.data(), byteCode.size());
     }
 
+    /// <summary>
+    /// Creates a vertex and an index buffer for a cube of
+    /// <see cref="DirectX::XMFLOAT3" /> vertices.
+    /// </summary>
+    /// <remarks>
+    /// 
+    /// </remarks>
+    std::vector<D3D11_INPUT_ELEMENT_DESC> create_cube(ID3D11Device *device,
+        ID3D11Buffer **outVertices, ID3D11Buffer **outIndices,
+        const float size = 1.0f);
+
     ATL::CComPtr<ID3D11DomainShader> create_domain_shader(ID3D11Device *device,
         const BYTE *byteCode, const size_t cntByteCode);
 

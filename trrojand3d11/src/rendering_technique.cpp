@@ -116,6 +116,37 @@ trrojan::d3d11::rendering_technique::rendering_technique(
  * trrojan::d3d11::rendering_technique::rendering_technique
  */
 trrojan::d3d11::rendering_technique::rendering_technique(
+        const std::string & name, std::vector<vertex_buffer>&& vb,
+        ID3D11InputLayout *il, const D3D11_PRIMITIVE_TOPOLOGY pt,
+        ID3D11VertexShader *vs, shader_resources&& vsRes,
+        ID3D11PixelShader *ps, shader_resources && psRes)
+    : inputLayout(il), _name(name), pixelShader(ps), primitiveTopology(pt),
+        vertexBuffers(std::move(vb)), vertexShader(vs) {
+    this->_resources[shader_stage::vertex] = std::move(vsRes);
+    this->_resources[shader_stage::pixel] = std::move(psRes);
+}
+
+
+/*
+ * trrojan::d3d11::rendering_technique::rendering_technique
+ */
+trrojan::d3d11::rendering_technique::rendering_technique(
+        const std::string & name, std::vector<vertex_buffer>&& vb,
+        index_buffer&& ib, ID3D11InputLayout *il,
+        const D3D11_PRIMITIVE_TOPOLOGY pt,
+        ID3D11VertexShader *vs, shader_resources&& vsRes,
+        ID3D11PixelShader *ps, shader_resources && psRes)
+    : indexBuffer(std::move(ib)), inputLayout(il), _name(name), pixelShader(ps),
+        primitiveTopology(pt), vertexBuffers(std::move(vb)), vertexShader(vs) {
+    this->_resources[shader_stage::vertex] = std::move(vsRes);
+    this->_resources[shader_stage::pixel] = std::move(psRes);
+}
+
+
+/*
+ * trrojan::d3d11::rendering_technique::rendering_technique
+ */
+trrojan::d3d11::rendering_technique::rendering_technique(
         const std::string& name, ID3D11InputLayout *il,
         const D3D11_PRIMITIVE_TOPOLOGY pt,
         ID3D11VertexShader *vs, shader_resources&& vsRes,
@@ -187,6 +218,9 @@ void trrojan::d3d11::rendering_technique::apply(ID3D11DeviceContext *ctx) {
             ctx->IASetVertexBuffers(0, static_cast<UINT>(vbs.size()),
                 vbs.data(), strides.data(), offsets.data());
         }
+
+        ctx->IASetIndexBuffer(this->indexBuffer.buffer,
+            this->indexBuffer.format, this->indexBuffer.offset);
     }
 
     /* Configure shaders. */
@@ -267,9 +301,6 @@ void trrojan::d3d11::rendering_technique::apply(ID3D11DeviceContext *ctx) {
                     auto samplers = unsmart(res.second.sampler_states);
                     ctx->PSSetSamplers(0, static_cast<UINT>(samplers.size()),
                         samplers.data());
-                    auto uavs = unsmart(res.second.uavs);
-                    ctx->CSSetUnorderedAccessViews(0,
-                        static_cast<UINT>(uavs.size()), uavs.data(), nullptr);
                 }
                 break;
 
@@ -284,9 +315,12 @@ void trrojan::d3d11::rendering_technique::apply(ID3D11DeviceContext *ctx) {
                     auto samplers = unsmart(res.second.sampler_states);
                     ctx->CSSetSamplers(0, static_cast<UINT>(samplers.size()),
                         samplers.data());
-                    auto uavs = unsmart(res.second.uavs);
-                    ctx->CSSetUnorderedAccessViews(0,
-                        static_cast<UINT>(uavs.size()), uavs.data(), nullptr);
+                    if (!res.second.uavs.empty()) {
+                        auto uavs = unsmart(res.second.uavs);
+                        auto cnt = static_cast<UINT>(uavs.size());
+                        ctx->CSSetUnorderedAccessViews(0, cnt, uavs.data(),
+                            nullptr);
+                    }
                 }
                 break;
         }
@@ -294,6 +328,12 @@ void trrojan::d3d11::rendering_technique::apply(ID3D11DeviceContext *ctx) {
 
     /* Apply specific rasteriser state. */
     ctx->RSSetState(this->rasteriserState.p);
+
+    /* Apply specific depth/stencil state. */
+    ctx->OMSetDepthStencilState(this->depthStencilState.p, 0);
+
+    /* Apply the blend state. */
+    ctx->OMSetBlendState(this->blendState, nullptr, 0xffffffff);
 }
 
 
@@ -307,6 +347,20 @@ void trrojan::d3d11::rendering_technique::set_constant_buffers(
         auto& dst = r.constant_buffers;
         assert_range(dst, buffers, start);
         std::copy(buffers.begin(), buffers.end(), dst.begin() + start);
+    });
+}
+
+
+/*
+ * trrojan::d3d11::rendering_technique::set_constant_buffers
+ */
+void trrojan::d3d11::rendering_technique::set_constant_buffers(
+        const buffer_type buffer, const shader_stages stages,
+        const UINT start) {
+    this->foreach_stage(stages, [&buffer, &start](shader_resources& r) {
+        auto& dst = r.constant_buffers;
+        assert_range(dst, start);
+        dst[start] = buffer;
     });
 }
 

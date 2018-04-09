@@ -373,7 +373,7 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
         this->cam.set_aspect_ratio(aspect);
 
         // Apply the current step of the manoeuvre.
-        this->apply_manoeuvre(this->cam, config, bbs, bbe);
+        sphere_benchmark::apply_manoeuvre(this->cam, config, bbs, bbe);
 
         // Compute the clipping planes based on the current view.
         const auto clipping = this->data->clipping_planes(cam,

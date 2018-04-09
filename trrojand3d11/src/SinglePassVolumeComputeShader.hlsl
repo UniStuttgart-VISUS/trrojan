@@ -100,7 +100,6 @@ void Main(uint3 threadID : SV_DispatchThreadID) {
         pos += physicalStep;
     }
 
-
     Output[threadID.xy] = colour;
 }
 
