@@ -32,17 +32,17 @@ DXGI_FORMAT trrojan::d3d11::volume_benchmark_base::get_format(
     switch (info.format()) {
         case datraw::scalar_type::int8:
             switch (components) {
-                case 1: return DXGI_FORMAT_R8_SINT;
-                case 2: return DXGI_FORMAT_R8G8_SINT;
-                case 4: return DXGI_FORMAT_R8G8B8A8_SINT;
+                case 1: return DXGI_FORMAT_R8_SNORM;
+                case 2: return DXGI_FORMAT_R8G8_SNORM;
+                case 4: return DXGI_FORMAT_R8G8B8A8_SNORM;
             }
             break;
 
         case datraw::scalar_type::int16:
             switch (components) {
-                case 1: return DXGI_FORMAT_R16_SINT;
-                case 2: return DXGI_FORMAT_R16G16_SINT;
-                case 4: return DXGI_FORMAT_R16G16B16A16_SINT;
+                case 1: return DXGI_FORMAT_R16_SNORM;
+                case 2: return DXGI_FORMAT_R16G16_SNORM;
+                case 4: return DXGI_FORMAT_R16G16B16A16_SNORM;
             }
             break;
 
@@ -57,17 +57,17 @@ DXGI_FORMAT trrojan::d3d11::volume_benchmark_base::get_format(
 
         case datraw::scalar_type::uint8:
             switch (components) {
-                case 1: return DXGI_FORMAT_R8_UINT;
-                case 2: return DXGI_FORMAT_R8G8_UINT;
-                case 4: return DXGI_FORMAT_R8G8B8A8_UINT;
+                case 1: return DXGI_FORMAT_R8_UNORM;
+                case 2: return DXGI_FORMAT_R8G8_UNORM;
+                case 4: return DXGI_FORMAT_R8G8B8A8_UNORM;
             }
             break;
 
         case datraw::scalar_type::uint16:
             switch (components) {
-                case 1: return DXGI_FORMAT_R16_UINT;
-                case 2: return DXGI_FORMAT_R16G16_UINT;
-                case 4: return DXGI_FORMAT_R16G16B16A16_UINT;
+                case 1: return DXGI_FORMAT_R16_UNORM;
+                case 2: return DXGI_FORMAT_R16G16_UNORM;
+                case 4: return DXGI_FORMAT_R16G16B16A16_UNORM;
             }
             break;
 
@@ -107,39 +107,15 @@ DXGI_FORMAT trrojan::d3d11::volume_benchmark_base::get_format(
 const char *trrojan::d3d11::volume_benchmark_base::factor_##f = #f
 
 _VOL_BENCH_DEFINE_FACTOR(data_set);
+_VOL_BENCH_DEFINE_FACTOR(ert_threshold);
 _VOL_BENCH_DEFINE_FACTOR(frame);
+_VOL_BENCH_DEFINE_FACTOR(fovy_deg);
 _VOL_BENCH_DEFINE_FACTOR(gpu_counter_iterations);
+_VOL_BENCH_DEFINE_FACTOR(max_steps);
 _VOL_BENCH_DEFINE_FACTOR(min_prewarms);
 _VOL_BENCH_DEFINE_FACTOR(min_wall_time);
 _VOL_BENCH_DEFINE_FACTOR(step_size);
 _VOL_BENCH_DEFINE_FACTOR(xfer_func);
-
-
-/*
- * trrojan::d3d11::volume_benchmark_base::calc_physical_size
- */
-std::array<float, 3> trrojan::d3d11::volume_benchmark_base::calc_physical_size(
-        const info_type& info) {
-    auto resolution = info.resolution();
-    auto dists = info.contains(info_type::property_slice_thickness)
-        ? info.slice_thickness()
-        : std::vector<float> { 1.0f, 1.0f, 1.0f };
-
-    if (resolution.size() != 3) {
-        throw std::invalid_argument("Only three-dimensional data are "
-            "supported.");
-    }
-    if (resolution.size() != dists.size()) {
-        throw std::invalid_argument("The slice distances and the resolution "
-            "do not share the same number of components.");
-    }
-
-    return std::array<float, 3> {
-        static_cast<float>(resolution[0]) * dists[0],
-        static_cast<float>(resolution[1]) * dists[1],
-        static_cast<float>(resolution[2]) * dists[2]
-    };
-}
 
 
 /*
@@ -149,7 +125,6 @@ void trrojan::d3d11::volume_benchmark_base::load_volume(const char *path,
         const frame_type frame, ID3D11Device *device, info_type& outInfo,
         ID3D11Texture3D **outTexture, ID3D11ShaderResourceView **outSrv) {
     auto reader = reader_type::open(path);
-    
 
     if (outTexture == nullptr) {
         throw std::invalid_argument("'outTexture' must not be nullptr.");
@@ -252,16 +227,77 @@ void trrojan::d3d11::volume_benchmark_base::load_xfer_func(const char *path,
 
 
 /*
+ * trrojan::d3d11::volume_benchmark_base::load_xfer_func
+ */
+void trrojan::d3d11::volume_benchmark_base::load_xfer_func(
+        const configuration& config, d3d11::device& device,
+        ID3D11Texture1D **outTexture, ID3D11ShaderResourceView **outSrv) {
+    try {
+        auto path = config.get<std::string>(factor_xfer_func);
+        return volume_benchmark_base::load_xfer_func(path.c_str(),
+            device.d3d_device(), outTexture, outSrv);
+    } catch (...) {
+        // Fall back to a fully linear transfer function.
+        auto dev = device.d3d_device();
+        std::array<std::uint32_t, 256> linearXfer;
+
+        {
+            size_t i = 0;
+            std::generate(linearXfer.begin(), linearXfer.end(), [&i]() {
+                auto retval = (i << 24) | (i << 16) | (i << 8) | i;
+                ++i;
+                return retval;
+            });
+        }
+
+        {
+            D3D11_TEXTURE1D_DESC desc;
+            ::ZeroMemory(&desc, sizeof(desc));
+            desc.ArraySize = 1;
+            desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+            desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+            desc.MipLevels = 1;
+            desc.Usage = D3D11_USAGE_IMMUTABLE;
+            desc.Width = static_cast<UINT>(linearXfer.size());
+
+            D3D11_SUBRESOURCE_DATA id;
+            ::ZeroMemory(&id, sizeof(id));
+            id.pSysMem = linearXfer.data();
+
+            auto hr = dev->CreateTexture1D(&desc, &id, outTexture);
+            if (FAILED(hr)) {
+                throw ATL::CAtlException(hr);
+            }
+        }
+
+        if (outSrv != nullptr) {
+            auto hr = dev->CreateShaderResourceView(*outTexture, nullptr,
+                outSrv);
+            if (FAILED(hr)) {
+                throw ATL::CAtlException(hr);
+            }
+        }
+    }
+}
+
+
+/*
  * trrojan::d3d11::volume_benchmark_base::volume_benchmark_base
  */
 trrojan::d3d11::volume_benchmark_base::volume_benchmark_base(
         const std::string& name) : benchmark_base(name) {
     this->_default_configs.add_factor(factor::from_manifestations(
+        factor_ert_threshold, 0.0f));
+    this->_default_configs.add_factor(factor::from_manifestations(
         factor_frame, static_cast<frame_type>(0)));
+    this->_default_configs.add_factor(factor::from_manifestations(
+        factor_fovy_deg, 60.0f));
     this->_default_configs.add_factor(factor::from_manifestations(
         factor_gpu_counter_iterations, static_cast<unsigned int>(7)));
     this->_default_configs.add_factor(factor::from_manifestations(
         factor_step_size, static_cast<step_size_type>(1)));
+    this->_default_configs.add_factor(factor::from_manifestations(
+        factor_max_steps, static_cast<unsigned int>(0)));
     this->_default_configs.add_factor(factor::from_manifestations(
         factor_min_prewarms, static_cast<unsigned int>(4)));
     this->_default_configs.add_factor(factor::from_manifestations(
@@ -310,11 +346,11 @@ trrojan::result trrojan::d3d11::volume_benchmark_base::on_run(
     // Recreate resources.
     if (this->data_view == nullptr) {
         ATL::CComPtr<ID3D11Texture3D> tex;
-        volume_benchmark_base::load_volume(config, device, this->data_info,
+        volume_benchmark_base::load_volume(config, device, this->volume_info,
             &tex, &this->data_view);
     }
 
-    if (this->xfer_func_view) {
+    if (this->xfer_func_view == nullptr) {
         ATL::CComPtr<ID3D11Texture1D> tex;
         volume_benchmark_base::load_xfer_func(config, device, &tex,
             &this->xfer_func_view);

@@ -19,8 +19,9 @@ file(GLOB_RECURSE HullShaderFiles RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${Sour
 file(GLOB_RECURSE DomainShaderFiles RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${SourceDirectory}/*DomainShader*.hlsl")
 file(GLOB_RECURSE GeometryShaderFiles RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${SourceDirectory}/*GeometryShader*.hlsl")
 file(GLOB_RECURSE PixelShaderFiles RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${SourceDirectory}/*PixelShader*.hlsl")
+file(GLOB_RECURSE ComputeShaderFiles RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${SourceDirectory}/*ComputeShader*.hlsl")
 file(GLOB_RECURSE ShaderHeaderFiles RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${IncludeDirectory}/*.hlsli" "${SourceDirectory}/*.hlsli")
-set(ShaderFiles ${VertexShaderFiles} ${DomainShaderFiles} ${HullShaderFiles} ${GeometryShaderFiles} ${PixelShaderFiles})
+set(ShaderFiles ${VertexShaderFiles} ${DomainShaderFiles} ${HullShaderFiles} ${GeometryShaderFiles} ${PixelShaderFiles} ${ComputeShaderFiles})
 
 # Configure fxc
 set_property(SOURCE ${ShaderFiles} PROPERTY VS_SHADER_ENTRYPOINT Main)
@@ -33,6 +34,7 @@ set_property(SOURCE ${HullShaderFiles} PROPERTY VS_SHADER_TYPE Hull)
 set_property(SOURCE ${DomainShaderFiles} PROPERTY VS_SHADER_TYPE Domain)
 set_property(SOURCE ${GeometryShaderFiles} PROPERTY VS_SHADER_TYPE Geometry)
 set_property(SOURCE ${PixelShaderFiles} PROPERTY VS_SHADER_TYPE Pixel)
+set_property(SOURCE ${ComputeShaderFiles} PROPERTY VS_SHADER_TYPE Compute)
 
 # Add hlsli files such that we have them in the solution.
 file(GLOB_RECURSE ShaderHeaderFiles RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${IncludeDirectory}/*.hlsli" "${SourceDirectory}/*.hlsli")

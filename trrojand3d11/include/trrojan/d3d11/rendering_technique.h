@@ -29,6 +29,7 @@ namespace d3d11 {
     public:
 
         typedef ATL::CComPtr<ID3D11Buffer> buffer_type;
+        typedef ATL::CComPtr<ID3D11ComputeShader> compute_shader_type;
         typedef ATL::CComPtr<ID3D11DomainShader> domain_shader_type;
         typedef ATL::CComPtr<ID3D11GeometryShader> geometry_shader_type;
         typedef ATL::CComPtr<ID3D11HullShader> hull_shader_type;
@@ -37,6 +38,7 @@ namespace d3d11 {
         typedef ATL::CComPtr<ID3D11RasterizerState> rasteriser_state_type;
         typedef ATL::CComPtr<ID3D11SamplerState> sampler_state_type;
         typedef ATL::CComPtr<ID3D11ShaderResourceView> srv_type;
+        typedef ATL::CComPtr<ID3D11UnorderedAccessView> uav_type;
         typedef ATL::CComPtr<ID3D11VertexShader> vertex_shader_type;
 
         /// <summary>
@@ -46,6 +48,7 @@ namespace d3d11 {
             std::vector<buffer_type> constant_buffers;
             std::vector<srv_type> resource_views;
             std::vector<sampler_state_type> sampler_states;
+            std::vector<uav_type> uavs;
         };
 
         /// <summary>
@@ -63,7 +66,8 @@ namespace d3d11 {
             hull = 0x0002,
             domain = 0x0004,
             geometry = 0x0008,
-            pixel = 0x0010
+            pixel = 0x0010,
+            compute = 0x0020
         };
 
         /// <summary>
@@ -111,6 +115,11 @@ namespace d3d11 {
         /// Initialises a new instance.
         /// </summary>
         rendering_technique(void);
+
+        /// <summary>
+        /// Initialises a new instance.
+        /// </summary>
+        rendering_technique(const std::string& name);
 
         /// <summary>
         /// Initialises a new instance.
@@ -174,6 +183,12 @@ namespace d3d11 {
             ID3D11PixelShader *ps, shader_resources&& psRes);
 
         /// <summary>
+        /// Initialises a new instance.
+        /// </summary>
+        rendering_technique(const std::string& name,
+            ID3D11ComputeShader *cs, shader_resources&& csRes);
+
+        /// <summary>
         /// Finalise the instance.
         /// </summary>
         ~rendering_technique(void) = default;
@@ -184,6 +199,15 @@ namespace d3d11 {
         /// </summary>
         /// <param name="ctx"></param>
         void apply(ID3D11DeviceContext *ctx);
+
+        /// <summary>
+        /// Get, if used, the compute shader for the rendering technique.
+        /// </summary>
+        /// <returns>A pointer to the shader or <c>nullptr</c> if no shader is
+        /// required.</returns>
+        inline compute_shader_type compute_shader(void) {
+            return this->computeShader;
+        }
 
         /// <summary>
         /// Get, if used, the domain shader for the rendering technique.
@@ -298,6 +322,20 @@ namespace d3d11 {
             const UINT start = 0);
 
         /// <summary>
+        /// Add or replace the UAVs starting at index
+        /// <paramref name="start" /> in the given stages.
+        /// </summary>
+        void set_uavs(const std::vector<uav_type> &uavs,
+            const shader_stages stages, const UINT start = 0);
+
+        /// <summary>
+        /// Add or replace the UAVs starting at index
+        /// <paramref name="start" /> in the given stages.
+        /// </summary>
+        void set_uavs(const uav_type& uav,
+            const shader_stages stages, const UINT start = 0);
+
+        /// <summary>
         /// Gets the vertex buffers to be bound.
         /// </summary>
         /// <returns></returns>
@@ -347,6 +385,7 @@ namespace d3d11 {
         void foreach_stage(const shader_stages stages,
             const std::function<void(shader_resources&)>& action);
 
+        compute_shader_type computeShader;
         domain_shader_type domainShader;
         geometry_shader_type geometryShader;
         hull_shader_type hullShader;

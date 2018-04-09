@@ -5,8 +5,8 @@
 
 #pragma once
 
+#include "trrojan/d3d11/rendering_technique.h"
 #include "trrojan/d3d11/volume_benchmark_base.h"
-
 
 
 namespace trrojan {
@@ -40,6 +40,13 @@ namespace d3d11 {
             const std::vector<std::string>& changed);
 
     private:
+
+        static const UINT shader_resource_id = 10000;
+
+        rendering_technique::uav_type compute_target;
+        rendering_technique::buffer_type raycasting_constants;
+        rendering_technique technique;
+        rendering_technique::buffer_type view_constants;
 
     };
 

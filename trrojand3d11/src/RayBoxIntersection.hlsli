@@ -28,8 +28,8 @@ bool RayBoxIntersection(float3 rayOrigin, float3 rayDirection, float3 boxMin,
     float3 ttop = invR * (boxMax - rayOrigin);
 
     // re-order intersections to find smallest and largest on each axis
-    float3 tmin = fminf(ttop, tbot);
-    float3 tmax = fmaxf(ttop, tbot);
+    float3 tmin = min(ttop, tbot);
+    float3 tmax = max(ttop, tbot);
 
     // find the largest tmin and the smallest tmax
     float largest_tmin = max(max(tmin.x, tmin.y), max(tmin.x, tmin.z));

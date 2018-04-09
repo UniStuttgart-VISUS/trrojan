@@ -39,7 +39,7 @@ namespace d3d11 {
         /// A device must have been set and the render target must have been
         /// resized at least once before this method can be called.
         /// </remarks>
-        void clear(void);
+        virtual void clear(void);
 
         /// <summary>
         /// Answer the device the render target belongs to.
@@ -87,6 +87,12 @@ namespace d3d11 {
         /// of the extension determines the image codec.
         /// </summary>
         void save(const std::string& path);
+
+        /// <summary>
+        /// Creates an unordered access view for the back buffer, which must
+        /// have been created before.
+        /// </summary>
+        virtual ATL::CComPtr<ID3D11UnorderedAccessView> to_uav(void);
 
         /// <summary>
         /// Enables or disables used of reversed 32-bit depth buffer.

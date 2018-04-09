@@ -5,10 +5,12 @@
 
 #pragma once
 
-#include "datraw.h"
+#include <limits>
+
+#include "trrojan/camera.h"
+#include "trrojan/datraw_base.h"
 
 #include "trrojan/d3d11/benchmark_base.h"
-
 
 
 namespace trrojan {
@@ -17,24 +19,28 @@ namespace d3d11 {
     /// <summary>
     /// Base class for D3D11 volume rendering benchmarks.
     /// </summary>
-    class TRROJAND3D11_API volume_benchmark_base : public benchmark_base {
+    class TRROJAND3D11_API volume_benchmark_base : public benchmark_base,
+            public trrojan::datraw_base {
 
     public:
 
-        typedef datraw::raw_reader<char>::time_step_type frame_type;
-        typedef datraw::info<char> info_type;
+        typedef datraw_base::frame_type frame_type;
+        typedef datraw_base::info_type info_type;
         typedef benchmark_base::manoeuvre_step_type manoeuvre_step_type;
         typedef benchmark_base::manoeuvre_type manoeuvre_type;
         typedef benchmark_base::point_type point_type;
-        typedef datraw::raw_reader<char> reader_type;
+        typedef datraw_base::reader_type reader_type;
         typedef float step_size_type;
         typedef benchmark_base::viewport_type viewport_type;
 
         static DXGI_FORMAT get_format(const info_type& info);
 
         static const char *factor_data_set;
+        static const char *factor_ert_threshold;
         static const char *factor_frame;
+        static const char *factor_fovy_deg;
         static const char *factor_gpu_counter_iterations;
+        static const char *factor_max_steps;
         static const char *factor_min_prewarms;
         static const char *factor_min_wall_time;
         static const char *factor_step_size;
@@ -43,8 +49,6 @@ namespace d3d11 {
         virtual ~volume_benchmark_base(void) = default;
 
     protected:
-
-        static std::array<float, 3> calc_physical_size(const info_type& info);
 
         static void load_volume(const char *path, const frame_type frame,
             ID3D11Device *device, info_type& outInfo,
@@ -65,12 +69,15 @@ namespace d3d11 {
             ID3D11Texture1D **outTexture,
             ID3D11ShaderResourceView **outSrv = nullptr);
 
-        static inline void load_xfer_func(const configuration& config,
-                d3d11::device& device, ID3D11Texture1D **outTexture,
-                ID3D11ShaderResourceView **outSrv = nullptr) {
-            auto path = config.get<std::string>(factor_xfer_func);
-            return volume_benchmark_base::load_xfer_func(path.c_str(),
-                device.d3d_device(), outTexture, outSrv);
+        static void load_xfer_func(const configuration& config,
+            d3d11::device& device, ID3D11Texture1D **outTexture,
+            ID3D11ShaderResourceView **outSrv = nullptr);
+
+        template<class T> static inline T zero_is_max(T& value) {
+            if (value == static_cast<T>(0)) {
+                value = (std::numeric_limits<T>::max)();
+            }
+            return value;
         }
 
         volume_benchmark_base(const std::string& name);
@@ -91,7 +98,7 @@ namespace d3d11 {
             const configuration& config,
             const std::vector<std::string>& changed);
 
-        info_type data_info;
+        trrojan::perspective_camera camera;
         ATL::CComPtr<ID3D11ShaderResourceView> data_view;
         ATL::CComPtr<ID3D11SamplerState> linear_sampler;
         ATL::CComPtr<ID3D11ShaderResourceView> xfer_func_view;

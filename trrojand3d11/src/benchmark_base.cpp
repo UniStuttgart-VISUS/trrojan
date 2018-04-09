@@ -161,3 +161,17 @@ void trrojan::d3d11::benchmark_base::save_target(const char *path) {
         this->render_target->save(p);
     }
 }
+
+
+/*
+ * trrojan::d3d11::benchmark_base::switch_to_uav_target
+ */
+ATL::CComPtr<ID3D11UnorderedAccessView>
+trrojan::d3d11::benchmark_base::switch_to_uav_target(void) {
+    assert(this->render_target != nullptr);
+    auto ctx = this->render_target->device_context();
+    ID3D11RenderTargetView *rtv[] = { nullptr };
+    ctx->OMSetDepthStencilState(nullptr, 0);
+    ctx->OMSetRenderTargets(1, rtv, nullptr);
+    return this->render_target->to_uav();
+}

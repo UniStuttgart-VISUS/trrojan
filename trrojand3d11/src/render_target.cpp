@@ -10,6 +10,8 @@
 #include "trrojan/image_helper.h"
 #include "trrojan/log.h"
 
+#include "trrojan/d3d11/utilities.h"
+
 
 /*
  * trrojan::d3d11::render_target_base::~render_target_base
@@ -104,6 +106,24 @@ void trrojan::d3d11::render_target_base::save(const std::string& path) {
     }
 }
 
+
+/*
+ * trrojan::d3d11::render_target_base::to_uav
+ */
+ATL::CComPtr<ID3D11UnorderedAccessView>
+trrojan::d3d11::render_target_base::to_uav(void) {
+    if (this->_rtv != nullptr) {
+        ATL::CComPtr<ID3D11Resource> backBuffer;
+        ATL::CComPtr<ID3D11Texture2D> texture;
+        this->_rtv->GetResource(&backBuffer);
+        this->_rtv = nullptr;
+        backBuffer.QueryInterface(&texture);
+        return create_uav(texture);
+
+    } else {
+        return nullptr;
+    }
+}
 
 /*
  * trrojan::d3d11::render_target_base::use_reversed_depth_buffer

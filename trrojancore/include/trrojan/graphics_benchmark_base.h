@@ -6,6 +6,7 @@
 #pragma once
 
 #include "trrojan/benchmark.h"
+#include "trrojan/camera.h"
 
 
 namespace trrojan {
@@ -95,8 +96,16 @@ namespace trrojan {
         /// <exception cref="std::runtime_error">If one of the factors is
         /// missing in in <paramref name="config" />.</exception>
         static void apply_manoeuvre(trrojan::camera& camera,
-            const configuration& config, const point_type& bboxMin,
-            const point_type& bboxMax);
+                const configuration& config, const point_type& bboxMin,
+                const point_type& bboxMax) {
+            glm::vec3 bbe(bboxMax[0], bboxMax[1], bboxMax[2]);
+            glm::vec3 bbs(bboxMin[0], bboxMin[1], bboxMin[2]);
+            graphics_benchmark_base::apply_manoeuvre(camera, config, bbs, bbe);
+        }
+
+        static void apply_manoeuvre(trrojan::camera& camera,
+            const configuration& config, const glm::vec3& bbs,
+            const glm::vec3& bbe);
 
         /// <summary>
         /// Gets the aspect ration of the viewport from the given configuration.
