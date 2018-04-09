@@ -46,7 +46,7 @@ void Main(uint3 threadID : SV_DispatchThreadID) {
     const float4 dir = normalize(end);
 
     // Terminate all threads that did not hit the volume.
-    if (all(dir == 0.0f)) {
+    if (length(end) == 0.0f) {
         Output[threadID.xy] = 0.0f.xxxx;
         return;
     }
@@ -76,5 +76,5 @@ void Main(uint3 threadID : SV_DispatchThreadID) {
     }
 #endif
 
-    Output[threadID.xy] = dir;
+    Output[threadID.xy] = float4(end.xyz, 1.0f);
 }

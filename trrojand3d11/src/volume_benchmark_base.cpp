@@ -212,6 +212,7 @@ void trrojan::d3d11::volume_benchmark_base::load_xfer_func(const char *path,
         if (FAILED(hr)) {
             throw ATL::CAtlException(hr);
         }
+        set_debug_object_name(*outTexture, "volume_data_Set");
     }
 
     if (outSrv != nullptr) {
@@ -268,6 +269,7 @@ void trrojan::d3d11::volume_benchmark_base::load_xfer_func(
             if (FAILED(hr)) {
                 throw ATL::CAtlException(hr);
             }
+            set_debug_object_name(*outTexture, "transfer_function");
         }
 
         if (outSrv != nullptr) {

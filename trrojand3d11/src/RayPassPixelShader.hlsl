@@ -22,7 +22,7 @@ PsOutput Main(PsInput input, bool isFrontFace : SV_IsFrontFace) {
     float scale = isFrontFace ? -1.0f : 1.0f;
     //scale = isFrontFace ? 1.0f : 0.0f;
     //scale = isFrontFace ? 0.0f : 1.0f;
-    retval.Front = scale * input.Ray;
+    retval.Ray = scale * input.Ray;
 
     return retval;
 }

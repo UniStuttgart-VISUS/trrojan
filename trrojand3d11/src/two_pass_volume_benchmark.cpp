@@ -30,10 +30,6 @@ trrojan::result trrojan::d3d11::two_pass_volume_benchmark::on_run(
         const std::vector<std::string>& changed) {
     volume_benchmark_base::on_run(device, config, changed);
 
-    static const float BLACK[] = { 0.0f, 0.0f, 0.0f, 0.0f };
-    static const auto COMPUTE = static_cast<rendering_technique::shader_stages>(
-        rendering_technique::shader_stage::compute);
-
     glm::vec3 bbe, bbs;
     const auto ctx = device.d3d_context();
     const auto dev = device.d3d_device();
@@ -81,7 +77,8 @@ trrojan::result trrojan::d3d11::two_pass_volume_benchmark::on_run(
                 ps.p, rendering_technique::shader_resources());
 
             this->ray_technique.set_constant_buffers(this->view_constants,
-                COMPUTE);
+                static_cast<rendering_technique::shader_stages>(
+                rendering_technique::shader_stage::vertex));
         }
 
         // Add a rasteriser state without backface culling.
@@ -177,9 +174,6 @@ trrojan::result trrojan::d3d11::two_pass_volume_benchmark::on_run(
             throw ATL::CAtlException(hr);
         }
         set_debug_object_name(this->ray_target.p, "ray_source_view");
-        this->volume_technique.set_shader_resource_views(this->ray_source,
-            static_cast<rendering_technique::shader_stages>(
-            rendering_technique::shader_stage::compute), 2);
     }
 
     // Update the raycasting parameters.
@@ -248,7 +242,8 @@ trrojan::result trrojan::d3d11::two_pass_volume_benchmark::on_run(
         auto up = DirectX::XMFLOAT4(0, 1, 0, 0);
         auto view = DirectX::XMMatrixLookAtRH(DirectX::XMLoadFloat4(&eye),
             DirectX::XMLoadFloat4(&lookAt), DirectX::XMLoadFloat4(&up));
-        auto mvp = sm * view * pm;
+        //auto mvp = sm * view * pm;
+        auto mvp = sm * vm * pm;
 
         DirectX::XMStoreFloat4x4(&viewConstants.ViewProjMatrix,
             DirectX::XMMatrixTranspose(mvp));
@@ -265,27 +260,15 @@ trrojan::result trrojan::d3d11::two_pass_volume_benchmark::on_run(
         / 16.0f));
 
     for (int i = 0; i < 10; ++i) {
-        this->enable_ray_target(ctx, vp);
-        ctx->ClearRenderTargetView(this->ray_target, BLACK);
+        this->begin_ray_pass(ctx, vp);
         this->ray_technique.apply(ctx);
         ctx->DrawIndexed(36, 0, 0);
 
-        ID3D11RenderTargetView *x = nullptr;
-        ctx->OMSetRenderTargets(0, &x, 0);
+        this->begin_volume_pass(ctx);
         this->volume_technique.apply(ctx);
-        {
-            auto target = this->switch_to_uav_target();
-            if (target != nullptr) {
-                this->volume_technique.set_uavs(target, COMPUTE);
-            }
-        }
         ctx->Dispatch(groupX, groupY, 1);
         this->present_target();
-
-
-        ID3D11ShaderResourceView *y = nullptr;
-        ctx->CSSetShaderResources(2, 1, &y);
-        Sleep(123);
+        ::Sleep(120);
     }
 
     // TODO: implement the benchmark.
@@ -295,11 +278,13 @@ trrojan::result trrojan::d3d11::two_pass_volume_benchmark::on_run(
 
 
 /*
- * trrojan::d3d11::two_pass_volume_benchmark::enable_ray_target
+ * trrojan::d3d11::two_pass_volume_benchmark::begin_ray_pass
  */
-void trrojan::d3d11::two_pass_volume_benchmark::enable_ray_target(
+void trrojan::d3d11::two_pass_volume_benchmark::begin_ray_pass(
         ID3D11DeviceContext *ctx, const viewport_type& viewport) {
     assert(ctx != nullptr);
+    static const float BLACK[] = { 0.0f, 0.0f, 0.0f, 0.0f };
+
     D3D11_VIEWPORT vp;
     vp.TopLeftX = vp.TopLeftY = 0.0f;
     vp.Height = static_cast<float>(viewport[1]);
@@ -307,6 +292,50 @@ void trrojan::d3d11::two_pass_volume_benchmark::enable_ray_target(
     vp.MinDepth = 0.0f;
     vp.MaxDepth = 1.0f;
 
+    ctx->CSSetShaderResources(ray_slot, 1, &empty_srv);
+
+    ctx->ClearRenderTargetView(this->ray_target, BLACK);
     ctx->OMSetRenderTargets(1, &this->ray_target.p, nullptr);
     ctx->RSSetViewports(1, &vp);
 }
+
+
+/*
+ * trrojan::d3d11::two_pass_volume_benchmark::begin_volume_pass
+ */
+void trrojan::d3d11::two_pass_volume_benchmark::begin_volume_pass(
+        ID3D11DeviceContext *ctx) {
+    assert(ctx != nullptr);
+
+    // Enable the UAV instead of the actual render target. This will also
+    // ensure that the UAV is copied to the back buffer on present if a debug
+    // target is enabled.
+    auto target = this->switch_to_uav_target();
+    if (target != nullptr) {
+        this->volume_technique.set_uavs(target,
+            static_cast<rendering_technique::shader_stages>(
+            rendering_technique::shader_stage::compute));
+    }
+
+    // Make also sure that our ray render target is not bound any more.
+    ctx->OMSetRenderTargets(1, &empty_rtv, nullptr);
+
+    // Make sure that the most recent ray texture is bound.
+    this->volume_technique.set_shader_resource_views(this->ray_source,
+        static_cast<rendering_technique::shader_stages>(
+        rendering_technique::shader_stage::compute), ray_slot);
+}
+
+
+/*
+ * trrojan::d3d11::two_pass_volume_benchmark::empty_rtv
+ */
+ID3D11RenderTargetView *const
+trrojan::d3d11::two_pass_volume_benchmark::empty_rtv = nullptr;
+
+
+/*
+ * trrojan::d3d11::two_pass_volume_benchmark::empty_srv
+ */
+ID3D11ShaderResourceView *const
+trrojan::d3d11::two_pass_volume_benchmark::empty_srv = nullptr;

@@ -44,11 +44,16 @@ namespace d3d11 {
     private:
 
         static const UINT compute_shader_resource_id = 20002;
+        static ID3D11RenderTargetView *const empty_rtv;
+        static ID3D11ShaderResourceView *const  empty_srv;
         static const UINT pixel_shader_resource_id = 20001;
+        static const UINT ray_slot = 2;
         static const UINT vertex_shader_resource_id = 20000;
 
-        void enable_ray_target(ID3D11DeviceContext *ctx,
+        void begin_ray_pass(ID3D11DeviceContext *ctx,
             const viewport_type& viewport);
+
+        void begin_volume_pass(ID3D11DeviceContext *ctx);
 
         rendering_technique::srv_type ray_source;
         ATL::CComPtr<ID3D11RenderTargetView> ray_target;

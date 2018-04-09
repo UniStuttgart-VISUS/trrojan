@@ -33,8 +33,7 @@ typedef VsOutput PsInput;
 /// The output of the pixel shader stage.
 /// </summary>
 struct PsOutput {
-    float4 Front : SV_TARGET0;
-    float4 Back : SV_TARGET1;
+    float4 Ray : SV_TARGET0;
 };
 
 #endif /* _MSC_VER */
