@@ -8,6 +8,8 @@
 #include <limits>
 #include <memory>
 
+#include "trrojan/log.h"
+
 #include "trrojan/d3d11/device.h"
 #include "trrojan/d3d11/plugin.h"
 #include "trrojan/d3d11/utilities.h"
@@ -32,10 +34,16 @@ trrojan::result trrojan::d3d11::cs_volume_benchmark::on_run(
 
     glm::vec3 bbe, bbs;
     auto cntCpuIterations = static_cast<std::uint32_t>(0);
+    trrojan::timer cpuTimer;
     const auto cntGpuIterations = config.get<std::uint32_t>(
         factor_gpu_counter_iterations);
     auto ctx = device.d3d_context();
     auto dev = device.d3d_device();
+    gpu_timer_type::value_type gpuFreq;
+    gpu_timer_type gpuTimer;
+    std::vector<gpu_timer_type::millis_type> gpuTimes;
+    auto isDisjoint = true;
+    const auto minWallTime = config.get<std::uint32_t>(factor_min_wall_time);
     RaycastingConstants raycastingConstants;
     ViewConstants viewConstants;
     const auto viewport = config.get<viewport_type>(factor_viewport);
@@ -69,6 +77,9 @@ trrojan::result trrojan::d3d11::cs_volume_benchmark::on_run(
         res.constant_buffers.push_back(this->raycasting_constants);
         this->technique = rendering_technique("Compute shader single pass "
             "volume raycasting", cs, std::move(res));
+
+        // Queries.
+        this->done_query = create_event_query(dev);
     }
 
     // Switch to an UAV for the compute shader. If the render target cannot
@@ -162,6 +173,9 @@ trrojan::result trrojan::d3d11::cs_volume_benchmark::on_run(
             &viewConstants, 0, 0);
     }
 
+    // Initialise the GPU timer.
+    gpuTimer.initialise(dev);
+
     // Prepare the result set.
     auto retval = std::make_shared<basic_result>(std::move(config),
         std::initializer_list<std::string> {
@@ -177,16 +191,97 @@ trrojan::result trrojan::d3d11::cs_volume_benchmark::on_run(
     // Activate the technique.
     this->technique.apply(ctx);
 
-    // Determine the size of the dispatch groups.
+    // Determine the size of the dispatch groups. This must be synchronised with
+    // the group size in the shader itself.
     const auto groupX = static_cast<UINT>(ceil(static_cast<float>(viewport[0])
         / 16.0f));
     const auto groupY = static_cast<UINT>(ceil(static_cast<float>(viewport[1])
         / 16.0f));
 
-    for (int i = 0; i < 1000; ++i) {
+    // Do prewarming and compute number of CPU iterations at the same time.
+    log::instance().write_line(log_level::debug, "Prewarming ...");
+    {
+        auto batchTime = 0.0;
+        auto cntPrewarms = (std::max)(1u,
+            config.get<std::uint32_t>(factor_min_prewarms));
+
+        do {
+            cntCpuIterations = 0;
+            assert(cntPrewarms >= 1);
+
+            cpuTimer.start();
+            for (; cntCpuIterations < cntPrewarms; ++cntCpuIterations) {
+                ctx->Dispatch(groupX, groupY, 1u);
+                this->present_target();
+            }
+
+            ctx->End(this->done_query);
+            wait_for_event_query(ctx, this->done_query);
+            batchTime = cpuTimer.elapsed_millis();
+
+            if (batchTime < minWallTime) {
+                cntPrewarms = static_cast<std::uint32_t>(std::ceil(
+                    static_cast<double>(minWallTime * cntCpuIterations)
+                    / batchTime));
+                if (cntPrewarms < 1) {
+                    cntPrewarms = 1;
+                }
+            }
+        } while (batchTime < minWallTime);
+    }
+
+    // Do the GPU counter measurements
+    gpuTimes.resize(cntGpuIterations);
+    for (std::uint32_t i = 0; i < cntGpuIterations;) {
+        log::instance().write_line(log_level::debug, "GPU counter measurement "
+            "#%d.", i);
+        gpuTimer.start_frame();
+        gpuTimer.start(0);
+        this->clear_target();
+        ctx->Dispatch(groupX, groupY, 1u);
+        this->present_target();
+        gpuTimer.end(0);
+        gpuTimer.end_frame();
+
+        gpuTimer.evaluate_frame(isDisjoint, gpuFreq);
+        if (!isDisjoint) {
+            gpuTimes[i] = gpu_timer_type::to_milliseconds(
+                gpuTimer.evaluate(0), gpuFreq);
+            ++i;    // Only proceed in case of success.
+        }
+    }
+
+    // Do the wall clock measurement.
+    log::instance().write_line(log_level::debug, "Measuring wall clock "
+        "timings over %u iterations ...", cntCpuIterations);
+    cpuTimer.start();
+    for (std::uint32_t i = 0; i < cntCpuIterations; ++i) {
+        this->clear_target();
         ctx->Dispatch(groupX, groupY, 1u);
         this->present_target();
     }
+    ctx->End(this->done_query);
+    wait_for_event_query(ctx, this->done_query);
+    auto cpuTime = cpuTimer.elapsed_millis();
+
+    // Compute derived statistics for GPU counters.
+    std::sort(gpuTimes.begin(), gpuTimes.end());
+    auto gpuMedian = gpuTimes[gpuTimes.size() / 2];
+    if (gpuTimes.size() % 2 == 0) {
+        gpuMedian += gpuTimes[gpuTimes.size() / 2 - 1];
+        gpuMedian *= 0.5;
+    }
+
+    // Output the results.
+    retval->add({
+        volSize,
+        gpuTimes.front(),
+        gpuMedian,
+        gpuTimes.back(),
+        cntCpuIterations,
+        cpuTime,
+        static_cast<double>(cpuTime) / cntCpuIterations
+    });
 
     return retval;
 }

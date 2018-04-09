@@ -8,6 +8,8 @@
 #include "trrojan/d3d11/rendering_technique.h"
 #include "trrojan/d3d11/volume_benchmark_base.h"
 
+#include "trrojan/d3d11/gpu_timer.h"
+
 
 namespace trrojan {
 namespace d3d11 {
@@ -20,6 +22,7 @@ namespace d3d11 {
     public:
 
         typedef volume_benchmark_base::frame_type frame_type;
+        typedef trrojan::d3d11::gpu_timer<1> gpu_timer_type;
         typedef volume_benchmark_base::info_type info_type;
         typedef volume_benchmark_base::manoeuvre_step_type manoeuvre_step_type;
         typedef volume_benchmark_base::manoeuvre_type manoeuvre_type;
@@ -44,6 +47,7 @@ namespace d3d11 {
         static const UINT shader_resource_id = 10000;
 
         rendering_technique::uav_type compute_target;
+        ATL::CComPtr<ID3D11Query> done_query;
         rendering_technique::buffer_type raycasting_constants;
         rendering_technique technique;
         rendering_technique::buffer_type view_constants;
