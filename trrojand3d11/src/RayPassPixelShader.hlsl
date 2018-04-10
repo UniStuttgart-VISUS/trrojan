@@ -19,9 +19,11 @@
 PsOutput Main(PsInput input, bool isFrontFace : SV_IsFrontFace) {
     PsOutput retval = (PsOutput) 0;
 
-    float scale = isFrontFace ? -1.0f : 1.0f;
+    float hide = isFrontFace ? 1.0f : 0.0f;
+    float scale = isFrontFace ? 1.0f : -1.0f;
     //scale = isFrontFace ? 1.0f : 0.0f;
     //scale = isFrontFace ? 0.0f : 1.0f;
+    retval.EntryPoint = hide * input.Ray;
     retval.Ray = scale * input.Ray;
 
     return retval;

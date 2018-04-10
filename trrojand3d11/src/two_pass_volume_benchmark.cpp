@@ -103,14 +103,17 @@ trrojan::result trrojan::d3d11::two_pass_volume_benchmark::on_run(
 
             D3D11_BLEND_DESC desc;
             ::ZeroMemory(&desc, sizeof(desc));
-            desc.RenderTarget[0].BlendEnable = TRUE;
-            desc.RenderTarget[0].SrcBlend = D3D11_BLEND_ONE;
-            desc.RenderTarget[0].DestBlend = D3D11_BLEND_ONE;
-            desc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
-            desc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
-            desc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ONE;
-            desc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
-            desc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+            for (size_t i = 0; i < 2; ++i) {
+                desc.RenderTarget[i].BlendEnable = TRUE;
+                desc.RenderTarget[i].SrcBlend = D3D11_BLEND_ONE;
+                desc.RenderTarget[i].DestBlend = D3D11_BLEND_ONE;
+                desc.RenderTarget[i].BlendOp = D3D11_BLEND_OP_ADD;
+                desc.RenderTarget[i].SrcBlendAlpha = D3D11_BLEND_ONE;
+                desc.RenderTarget[i].DestBlendAlpha = D3D11_BLEND_ONE;
+                desc.RenderTarget[i].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+                desc.RenderTarget[i].RenderTargetWriteMask
+                    = D3D11_COLOR_WRITE_ENABLE_ALL;
+            }
 
             auto hr = dev->CreateBlendState(&desc, &state);
             if (FAILED(hr)) {
@@ -138,14 +141,17 @@ trrojan::result trrojan::d3d11::two_pass_volume_benchmark::on_run(
     // If the device or the viewport changed, invalidate the intermediate
     // buffers.
     if (contains_any(changed, factor_device, factor_viewport)) {
+        this->entry_source = nullptr;
+        this->entry_target = nullptr;
         this->ray_source = nullptr;
         this->ray_target = nullptr;
     }
 
     if (this->ray_target == nullptr) {
+        assert(this->entry_source == nullptr);
+        assert(this->entry_target == nullptr);
         assert(this->ray_source == nullptr);
         D3D11_TEXTURE2D_DESC desc;
-        ATL::CComPtr<ID3D11Texture2D> tex;
 
         ::ZeroMemory(&desc, sizeof(desc));
         desc.ArraySize = 1;
@@ -157,23 +163,48 @@ trrojan::result trrojan::d3d11::two_pass_volume_benchmark::on_run(
         desc.Usage = D3D11_USAGE_DEFAULT;
         desc.Width = vp[0];
 
-        auto hr = dev->CreateTexture2D(&desc, nullptr, &tex);
-        if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
-        }
-        set_debug_object_name(tex.p, "ray_target_texture");
+        {
+            ATL::CComPtr<ID3D11Texture2D> tex;
+            auto hr = dev->CreateTexture2D(&desc, nullptr, &tex);
+            if (FAILED(hr)) {
+                throw ATL::CAtlException(hr);
+            }
+            set_debug_object_name(tex.p, "entry_target_texture");
 
-        hr = dev->CreateRenderTargetView(tex, nullptr, &this->ray_target);
-        if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
-        }
-        set_debug_object_name(this->ray_target.p, "ray_target_view");
+            hr = dev->CreateRenderTargetView(tex, nullptr, &this->entry_target);
+            if (FAILED(hr)) {
+                throw ATL::CAtlException(hr);
+            }
+            set_debug_object_name(this->entry_target.p, "entry_target_view");
 
-        hr = dev->CreateShaderResourceView(tex, nullptr, &this->ray_source);
-        if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            hr = dev->CreateShaderResourceView(tex, nullptr,
+                &this->entry_source);
+            if (FAILED(hr)) {
+                throw ATL::CAtlException(hr);
+            }
+            set_debug_object_name(this->entry_source.p, "entry_source_view");
         }
-        set_debug_object_name(this->ray_target.p, "ray_source_view");
+
+        {
+            ATL::CComPtr<ID3D11Texture2D> tex;
+            auto hr = dev->CreateTexture2D(&desc, nullptr, &tex);
+            if (FAILED(hr)) {
+                throw ATL::CAtlException(hr);
+            }
+            set_debug_object_name(tex.p, "ray_target_texture");
+
+            hr = dev->CreateRenderTargetView(tex, nullptr, &this->ray_target);
+            if (FAILED(hr)) {
+                throw ATL::CAtlException(hr);
+            }
+            set_debug_object_name(this->ray_target.p, "ray_target_view");
+
+            hr = dev->CreateShaderResourceView(tex, nullptr, &this->ray_source);
+            if (FAILED(hr)) {
+                throw ATL::CAtlException(hr);
+            }
+            set_debug_object_name(this->ray_source.p, "ray_source_view");
+        }
     }
 
     // Update the raycasting parameters.
@@ -235,16 +266,14 @@ trrojan::result trrojan::d3d11::two_pass_volume_benchmark::on_run(
             vm = DirectX::XMLoadFloat4x4(&mat);
         }
         auto sm = DirectX::XMMatrixScaling(volSize[0], volSize[1], volSize[2]);
-        vm = sm * vm;
 
-        auto eye = DirectX::XMFLOAT4(300, 0, 0.5f * volSize[2] + 500.0f, 0);
+        auto eye = DirectX::XMFLOAT4(0, -(0.5f * volSize[2] + 500.0f), 0, 0);
         auto lookAt = DirectX::XMFLOAT4(0, 0, 0, 0);
         auto up = DirectX::XMFLOAT4(0, 1, 0, 0);
-        auto view = DirectX::XMMatrixLookAtRH(DirectX::XMLoadFloat4(&eye),
+        vm = DirectX::XMMatrixLookAtRH(DirectX::XMLoadFloat4(&eye),
             DirectX::XMLoadFloat4(&lookAt), DirectX::XMLoadFloat4(&up));
-        //auto mvp = sm * view * pm;
-        auto mvp = sm * vm * pm;
 
+        auto mvp = sm * vm * pm;
         DirectX::XMStoreFloat4x4(&viewConstants.ViewProjMatrix,
             DirectX::XMMatrixTranspose(mvp));
 
@@ -284,6 +313,7 @@ void trrojan::d3d11::two_pass_volume_benchmark::begin_ray_pass(
         ID3D11DeviceContext *ctx, const viewport_type& viewport) {
     assert(ctx != nullptr);
     static const float BLACK[] = { 0.0f, 0.0f, 0.0f, 0.0f };
+    static ID3D11ShaderResourceView *const SRV[] = { nullptr, nullptr };
 
     D3D11_VIEWPORT vp;
     vp.TopLeftX = vp.TopLeftY = 0.0f;
@@ -291,12 +321,18 @@ void trrojan::d3d11::two_pass_volume_benchmark::begin_ray_pass(
     vp.Width = static_cast<float>(viewport[0]);
     vp.MinDepth = 0.0f;
     vp.MaxDepth = 1.0f;
-
-    ctx->CSSetShaderResources(ray_slot, 1, &empty_srv);
-
-    ctx->ClearRenderTargetView(this->ray_target, BLACK);
-    ctx->OMSetRenderTargets(1, &this->ray_target.p, nullptr);
     ctx->RSSetViewports(1, &vp);
+
+    // Disable the SRVs for the render targets.
+    ctx->CSSetShaderResources(first_ray_slot, 2, SRV);
+
+    // Set the render targets.
+    ID3D11RenderTargetView *rtvs[] = {
+        this->entry_target.p, this->ray_target.p
+    };
+    ctx->ClearRenderTargetView(this->entry_target, BLACK);
+    ctx->ClearRenderTargetView(this->ray_target, BLACK);
+    ctx->OMSetRenderTargets(2, rtvs, nullptr);
 }
 
 
@@ -306,36 +342,22 @@ void trrojan::d3d11::two_pass_volume_benchmark::begin_ray_pass(
 void trrojan::d3d11::two_pass_volume_benchmark::begin_volume_pass(
         ID3D11DeviceContext *ctx) {
     assert(ctx != nullptr);
+    static ID3D11RenderTargetView *const RTV[] = { nullptr, nullptr };
+    static const auto STAGE = static_cast<rendering_technique::shader_stages>(
+        rendering_technique::shader_stage::compute);
 
     // Enable the UAV instead of the actual render target. This will also
     // ensure that the UAV is copied to the back buffer on present if a debug
     // target is enabled.
     auto target = this->switch_to_uav_target();
     if (target != nullptr) {
-        this->volume_technique.set_uavs(target,
-            static_cast<rendering_technique::shader_stages>(
-            rendering_technique::shader_stage::compute));
+        this->volume_technique.set_uavs(target, STAGE);
     }
 
     // Make also sure that our ray render target is not bound any more.
-    ctx->OMSetRenderTargets(1, &empty_rtv, nullptr);
+    ctx->OMSetRenderTargets(2, RTV, nullptr);
 
     // Make sure that the most recent ray texture is bound.
-    this->volume_technique.set_shader_resource_views(this->ray_source,
-        static_cast<rendering_technique::shader_stages>(
-        rendering_technique::shader_stage::compute), ray_slot);
+    this->volume_technique.set_shader_resource_views(
+        { this->entry_source, this->ray_source }, STAGE, first_ray_slot);
 }
-
-
-/*
- * trrojan::d3d11::two_pass_volume_benchmark::empty_rtv
- */
-ID3D11RenderTargetView *const
-trrojan::d3d11::two_pass_volume_benchmark::empty_rtv = nullptr;
-
-
-/*
- * trrojan::d3d11::two_pass_volume_benchmark::empty_srv
- */
-ID3D11ShaderResourceView *const
-trrojan::d3d11::two_pass_volume_benchmark::empty_srv = nullptr;

@@ -7,6 +7,11 @@
 
 
 /// <summary>
+/// The texture with the pre-computed entry points.
+/// </summary>
+Texture2D EntryPoints : register(t2);
+
+/// <summary>
 /// Linear sampler for texture lookups.
 /// </summary>
 SamplerState LinearSampler : register(s0);
@@ -19,7 +24,7 @@ RWTexture2D<unorm float4> Output : register(u0);
 /// <summary>
 /// The texture with the pre-computed rays.
 /// </summary>
-Texture2D Rays : register(t2);
+Texture2D Rays : register(t3);
 
 /// <summary>
 /// Transfer function.
@@ -33,8 +38,12 @@ Texture3D Volume : register(t0);
 
 
 /// <summary>
-/// Entry point of the compute shader.
+/// Entry point of the volume raycasting compute shader.
 /// </summary>
+/// <remarks>
+/// The compute shader requires two textures representing the ray entry points
+/// and the directions of the rays to be filled by a pre-rendering pass.
+/// </remarks>
 [numthreads(16, 16, 1)]
 void Main(uint3 threadID : SV_DispatchThreadID) {
     // Terminate threads which do not produce a pixel.
@@ -42,28 +51,16 @@ void Main(uint3 threadID : SV_DispatchThreadID) {
         return;
     }
 
-    const float4 end = Rays[threadID.xy];
-    const float4 dir = normalize(end);
+    const float3 ray = Rays[threadID.xy].xyz;
+    const float len = length(ray);
+    const float3 step = StepSize * normalize(ray);
 
-    // Terminate all threads that did not hit the volume.
-    if (length(end) == 0.0f) {
-        Output[threadID.xy] = 0.0f.xxxx;
-        return;
-    }
-
-#if 0
-    // March along ray from front to back, accumulating colour.
-    const float tstep = (BoxMax.x - BoxMin.x) / (float) StepLimit;
     float4 colour = 0.0f.xxxx;
-    float3 physicalStep = tstep * dir;
+    float3 pos = EntryPoints[threadID.xy].xyz;
 
-    float lambda = tnear;
-    float3 pos = camPos + lambda * dir;
-    for (uint i = 0; (i < StepLimit) && (lambda < tfar); ++i) {
-        float3 texCoords = (pos - BoxMin.xyz) / volSize;
-        float4 intensity = Volume.SampleLevel(LinearSampler, texCoords, 0);
-        //if (MaxValue != 0) intensity /= MaxValue;
-        float4 emission = TransferFunction.SampleLevel(LinearSampler, intensity.x, 0);
+    for (uint i = 0; (i < StepLimit) && (i * StepSize < len); ++i) {
+        float4 value = Volume.SampleLevel(LinearSampler, pos, 0);
+        float4 emission = TransferFunction.SampleLevel(LinearSampler, value.x, 0);
         emission.rgb *= emission.a;
         colour += emission * (1.0f - colour.a);
 
@@ -71,10 +68,9 @@ void Main(uint3 threadID : SV_DispatchThreadID) {
             break;
         }
 
-        lambda += tstep;
-        pos += physicalStep;
+        pos += step;
     }
-#endif
 
-    Output[threadID.xy] = float4(end.xyz, 1.0f);
+    Output[threadID.xy] = colour;
+    Output[threadID.xy] = float4(Rays[threadID.xy].xyz, 1.0f);
 }
