@@ -20,6 +20,7 @@ VsOutput Main(VsInput input) {
 
     retval.TexCoords = float4(input.Position, 1.0f);
     retval.Position = mul(retval.TexCoords, ViewProjMatrix);
+    retval.TexCoords.xyz += 0.5f.xxx;
     retval.TexCoords.w = 0.0f;
 
     return retval;

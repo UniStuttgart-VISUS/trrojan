@@ -62,13 +62,11 @@ cbuffer ViewConstants CBUFFER(0) {
 
 
 cbuffer RaycastingConstants CBUFFER(1) {
-    float4 BoxMin;
-    float4 BoxMax;
     float ErtThreshold;
     float StepSize;
-    float MaxValue;
-    uint StepLimit;
     uint2 ImageSize;
+    uint StepLimit;
+    uint3 _Padding;
 };
 
 #ifdef _MSC_VER

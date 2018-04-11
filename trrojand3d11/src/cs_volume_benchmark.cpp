@@ -97,21 +97,26 @@ trrojan::result trrojan::d3d11::cs_volume_benchmark::on_run(
 
     // Update the raycasting parameters.
     ::ZeroMemory(&raycastingConstants, sizeof(raycastingConstants));
+
     raycastingConstants.BoxMax.x = bbe[0];
     raycastingConstants.BoxMax.y = bbe[1];
     raycastingConstants.BoxMax.z = bbe[2];
     raycastingConstants.BoxMax.w = 0.0f;
+
     raycastingConstants.BoxMin.x = bbs[0];
     raycastingConstants.BoxMin.y = bbs[1];
     raycastingConstants.BoxMin.z = bbs[2];
     raycastingConstants.BoxMin.w = 0.0f;
+
     raycastingConstants.ErtThreshold = config.get<float>(factor_ert_threshold);
     volume_benchmark_base::zero_is_max(raycastingConstants.ErtThreshold);
-    raycastingConstants.MaxValue = 255.0f;  // TODO
+
     raycastingConstants.StepLimit = config.get<std::uint32_t>(factor_max_steps);
     volume_benchmark_base::zero_is_max(raycastingConstants.StepLimit);
+
     raycastingConstants.StepSize = this->calc_base_step_size()
         * config.get<float>(factor_step_size);
+    
     ctx->UpdateSubresource(this->raycasting_constants.p, 0, nullptr,
         &raycastingConstants, 0, 0);
 
@@ -211,6 +216,7 @@ trrojan::result trrojan::d3d11::cs_volume_benchmark::on_run(
 
             cpuTimer.start();
             for (; cntCpuIterations < cntPrewarms; ++cntCpuIterations) {
+                this->clear_target();
                 ctx->Dispatch(groupX, groupY, 1u);
                 this->present_target();
             }

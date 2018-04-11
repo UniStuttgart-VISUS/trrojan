@@ -54,7 +54,7 @@ void Main(uint3 threadID : SV_DispatchThreadID) {
     const float3 start = EntryPoints[threadID.xy].xyz;
     const float3 ray = Rays[threadID.xy].xyz;
     const float len = length(ray);
-    const float3 step = StepSize * -normalize(ray);
+    const float3 step = StepSize * normalize(ray);
 
     float4 colour = 0.0f.xxxx;
     float3 pos = start;
@@ -73,5 +73,4 @@ void Main(uint3 threadID : SV_DispatchThreadID) {
     }
 
     Output[threadID.xy] = colour;
-    Output[threadID.xy] = float4(start, 1.0f);
 }

@@ -49,8 +49,8 @@ cbuffer RaycastingConstants CBUFFER(1) {
     float4 BoxMax;
     float ErtThreshold;
     float StepSize;
-    float MaxValue;
     uint StepLimit;
+    uint _Padding;
 };
 
 #ifdef _MSC_VER

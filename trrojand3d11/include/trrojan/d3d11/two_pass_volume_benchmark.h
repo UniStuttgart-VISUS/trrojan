@@ -22,6 +22,7 @@ namespace d3d11 {
     public:
 
         typedef volume_benchmark_base::frame_type frame_type;
+        typedef trrojan::d3d11::gpu_timer<1> gpu_timer_type;
         typedef volume_benchmark_base::info_type info_type;
         typedef volume_benchmark_base::manoeuvre_step_type manoeuvre_step_type;
         typedef volume_benchmark_base::manoeuvre_type manoeuvre_type;
@@ -53,6 +54,7 @@ namespace d3d11 {
 
         void begin_volume_pass(ID3D11DeviceContext *ctx);
 
+        ATL::CComPtr<ID3D11Query> done_query;
         rendering_technique::srv_type entry_source;
         ATL::CComPtr<ID3D11RenderTargetView> entry_target;
         rendering_technique::srv_type ray_source;

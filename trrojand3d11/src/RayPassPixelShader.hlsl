@@ -20,9 +20,8 @@
 PsOutput Main(PsInput input, bool isFrontFace : SV_IsFrontFace) {
     PsOutput retval = (PsOutput) 0;
 
-    float4 texCoords = input.TexCoords + float4(0.5f.xxx, 0.0f);
-    retval.EntryPoint = isFrontFace ? texCoords : 0.0f.xxxx;
-    retval.Ray = isFrontFace ? input.TexCoords : -input.TexCoords;
+    retval.EntryPoint = isFrontFace ? input.TexCoords : 0.0f.xxxx;
+    retval.Ray = isFrontFace ? -input.TexCoords : input.TexCoords;
 
     return retval;
 }

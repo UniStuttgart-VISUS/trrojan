@@ -43,7 +43,7 @@ void Main(uint3 threadID : SV_DispatchThreadID) {
     const float3 camUp = normalize(CameraUp.xyz);
     const float3 camRight = normalize(CameraRight.xyz);
     const float2 fov = 0.5f * FieldOfView;
-    const float3 volSize = BoxMax.xyz - BoxMin.xyz;
+    const float3 volSize = abs(BoxMax.xyz - BoxMin.xyz);
 
     // Scale pixel coordinates to [0, 1].
     float2 uv = (float2) threadID / (float2) ImageSize;
@@ -61,34 +61,31 @@ void Main(uint3 threadID : SV_DispatchThreadID) {
     float3 il = lerp(bl, tl, uv.y);
     float3 ir = lerp(br, tr, uv.y);
 
-    float3 intersection = lerp(il, ir, uv.x);
+    const float3 intersection = lerp(il, ir, uv.x);
 
     // Compute the ray in world space.
-    float3 dir = normalize(intersection - camPos);
+    const float3 dir = normalize(intersection - camPos);
 
     // Find intersection with data bounding box.
-    float tnear, tfar;
-    if (!RayBoxIntersection(camPos, dir, BoxMin.xyz, BoxMax.xyz, tnear, tfar)) {
+    float start, end;
+    if (!RayBoxIntersection(camPos, dir, BoxMin.xyz, BoxMax.xyz, start, end)) {
         //Output[threadID.xy] = float4(dir, 1.0f);
         //Output[threadID.xy] = float4(BoxMax.xyz / 128.0f, 1.0f);
         Output[threadID.xy] = 0.0f.xxxx;
         return;
     }
-
-    if (tnear < 0.0f) tnear = 0.0f; // Clamp to near plane.
+    if (start < 0.0f) start = 0.0f; // Clamp to near plane.
 
     // March along ray from front to back, accumulating colour.
-    const float tstep = (BoxMax.x - BoxMin.x) / (float) StepLimit;
-    float4 colour = 0.0f.xxxx;
-    float3 physicalStep = tstep * dir;
+    const float3 step = StepSize * dir;
 
-    float lambda = tnear;
-    float3 pos = camPos + lambda * dir;
-    for (uint i = 0; (i < StepLimit) && (lambda < tfar); ++i) {
-        float3 texCoords = (pos - BoxMin.xyz) / volSize;
-        float4 intensity = Volume.SampleLevel(LinearSampler, texCoords, 0);
-        //if (MaxValue != 0) intensity /= MaxValue;
-        float4 emission = TransferFunction.SampleLevel(LinearSampler, intensity.x, 0);
+    float4 colour = 0.0f.xxxx;
+    float3 pos = (camPos + start * dir - BoxMin.xyz) / volSize;
+    float lambda = start;
+
+    for (uint i = 0; (i < StepLimit) && (lambda < end); ++i) {
+        float4 value = Volume.SampleLevel(LinearSampler, pos, 0);
+        float4 emission = TransferFunction.SampleLevel(LinearSampler, value.x, 0);
         emission.rgb *= emission.a;
         colour += emission * (1.0f - colour.a);
 
@@ -96,11 +93,14 @@ void Main(uint3 threadID : SV_DispatchThreadID) {
             break;
         }
 
-        lambda += tstep;
-        pos += physicalStep;
+        lambda += StepSize * volSize;
+        pos += step;
     }
 
     Output[threadID.xy] = colour;
+    //Output[threadID.xy] = float4((pos - BoxMin.xyz) / volSize, 1.0f);
+    //Output[threadID.xy] = float4(dir, 1.0f);
+    //Output[threadID.xy] = float4((camPos + start * dir - BoxMin.xyz) / volSize, 1.0f);
 }
 
 #if 0
@@ -115,25 +115,6 @@ uint groupIndex : SV_GroupIndex
 
 uint3 dispatchThreadID : SV_DispatchThreadID
 - Global thread index within the whole dispatch
-#endif
-
-#if 0
-float3 f = front[threadID.xy].xyz;
-float3 b = back[threadID.xy].xyz;
-float3 dir = normalize(b - f);
-float3 stepSize = float3(1, 1, 1);
-float3 step = dir * stepSize;
-float4 pos = float4(f, 0);
-float4 src = 0;
-float4 result = float4(0, 0, 0, 0);
-for (int i = 0; i < 512; i++) {
-    src = (float4)volume.Load(pos).r;
-    src.a *= 0.1f;
-    src.rgb *= src.a;
-    result = (1.0f - result.a)*src + result;
-    pos.xyz += step;
-}
-output[threadID.xy] = result;
 #endif
 
 #if 0
