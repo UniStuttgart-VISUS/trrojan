@@ -12,19 +12,17 @@
 /// <remarks>
 /// The shader assumes an additive blending state being active and scales the
 /// incoming fragments according to whether they are a front face or a back
-/// face of the unit-sized cube.
+/// face of the unit-sized cube around the origin. The coordinates must be
+/// within [-0.5, 0.5] on all axes.
 /// </remarks>
 /// <param name="input"></param>
 /// <returns></returns>
 PsOutput Main(PsInput input, bool isFrontFace : SV_IsFrontFace) {
     PsOutput retval = (PsOutput) 0;
 
-    float hide = isFrontFace ? 1.0f : 0.0f;
-    float scale = isFrontFace ? 1.0f : -1.0f;
-    //scale = isFrontFace ? 1.0f : 0.0f;
-    //scale = isFrontFace ? 0.0f : 1.0f;
-    retval.EntryPoint = hide * input.Ray;
-    retval.Ray = scale * input.Ray;
+    float4 texCoords = input.TexCoords + float4(0.5f.xxx, 0.0f);
+    retval.EntryPoint = isFrontFace ? texCoords : 0.0f.xxxx;
+    retval.Ray = isFrontFace ? input.TexCoords : -input.TexCoords;
 
     return retval;
 }

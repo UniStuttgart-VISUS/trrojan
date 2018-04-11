@@ -40,7 +40,6 @@ namespace d3d11 {
     /// <see cref="DirectX::XMFLOAT3" /> vertices.
     /// </summary>
     /// <remarks>
-    /// 
     /// </remarks>
     std::vector<D3D11_INPUT_ELEMENT_DESC> create_cube(ID3D11Device *device,
         ID3D11Buffer **outVertices, ID3D11Buffer **outIndices,

@@ -21,7 +21,7 @@ struct VsInput {
 /// </summary>
 struct VsOutput {
     float4 Position : SV_Position;
-    float4 Ray: TEXCOORD0;
+    float4 TexCoords: TEXCOORD0;
 };
 
 /// <summary>

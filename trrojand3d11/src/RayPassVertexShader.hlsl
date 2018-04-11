@@ -18,8 +18,9 @@
 VsOutput Main(VsInput input) {
     VsOutput retval = (VsOutput) 0;
 
-    retval.Ray = float4(input.Position, 1.0f);
-    retval.Position = mul(retval.Ray, ViewProjMatrix);
+    retval.TexCoords = float4(input.Position, 1.0f);
+    retval.Position = mul(retval.TexCoords, ViewProjMatrix);
+    retval.TexCoords.w = 0.0f;
 
     return retval;
 }

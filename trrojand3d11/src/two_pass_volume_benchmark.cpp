@@ -270,8 +270,8 @@ trrojan::result trrojan::d3d11::two_pass_volume_benchmark::on_run(
         auto eye = DirectX::XMFLOAT4(0, -(0.5f * volSize[2] + 500.0f), 0, 0);
         auto lookAt = DirectX::XMFLOAT4(0, 0, 0, 0);
         auto up = DirectX::XMFLOAT4(0, 1, 0, 0);
-        vm = DirectX::XMMatrixLookAtRH(DirectX::XMLoadFloat4(&eye),
-            DirectX::XMLoadFloat4(&lookAt), DirectX::XMLoadFloat4(&up));
+        //vm = DirectX::XMMatrixLookAtRH(DirectX::XMLoadFloat4(&eye),
+        //    DirectX::XMLoadFloat4(&lookAt), DirectX::XMLoadFloat4(&up));
 
         auto mvp = sm * vm * pm;
         DirectX::XMStoreFloat4x4(&viewConstants.ViewProjMatrix,

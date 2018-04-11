@@ -147,6 +147,7 @@ void trrojan::camera::set_from_maneuver(const std::string &name, const glm::vec3
         float bbox_length_x = bbox_max.x - bbox_min.x;
         bbox_length_x = data_max;
         float camera_dist = (bbox_length_x * 0.5f) / std::tan(pi*fovy*0.5f/180.f);
+        camera_dist *= 1.1f;
         this->set_look_from(this->_look_to - glm::vec3(0, 0, bbox_min.z - camera_dist));
         // rotation in radians
         float angle = (2.f*pi / samples) * iteration;
