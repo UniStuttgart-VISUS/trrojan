@@ -29,9 +29,22 @@ namespace detail {
     template<class C> C *clone_string(const C *src);
 
     /// <summary>
+    /// Clone <paramref name="src" /> and store it to <paramref name="dst" />,
+    /// deallocating <paramref name="dst" /> with delete[]  as necessary.
+    /// </summary>
+    template<class C> void clone_string(C *&dst, const C *src);
+
+
+    /// <summary>
     /// Read all contents of a binary file.
     /// </summary>
     std::vector<std::uint8_t> read_all_bytes(const char *path);
+
+    /// <summary>
+    /// Invokes the given command and returns it output.
+    /// </summary>
+    /// <exception cref="std::system_error"></exception>
+    std::string invoke(const char *cmd);
 
 #if defined(_WIN32)
     /// <summary>

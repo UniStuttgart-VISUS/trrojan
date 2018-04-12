@@ -10,14 +10,31 @@
 #include <system_error>
 
 
-#if defined(WIN32)
+#if defined(_WIN32)
 /*
- * trrojan::sysinfo::detail::display_device_class
+ * trrojan::sysinfo::detail::add_device_install_flags
  */
-extern const GUID trrojan::sysinfo::detail::display_device_class = {
-    0x4d36e968, 0xe325, 0x11ce,
-    { 0xbf, 0xc1, 0x08, 0x00, 0x2b, 0xe1, 0x03, 0x18 }
-};
+void trrojan::sysinfo::detail::add_device_install_flags(HDEVINFO hDevInfo,
+        SP_DEVINFO_DATA *devInfo, const DWORD flags, const DWORD flagsEx) {
+    SP_DEVINSTALL_PARAMS params;
+    ::ZeroMemory(&params, sizeof(params));
+    params.cbSize = sizeof(params);
+
+    if (!::SetupDiGetDeviceInstallParams(hDevInfo, devInfo, &params)) {
+        auto ec = std::error_code(::GetLastError(), std::system_category());
+        throw std::system_error(ec, "Failed to get device installation "
+            "parameters.");
+    }
+
+    params.Flags |= flags;
+    params.FlagsEx |= flagsEx;
+
+    if (!::SetupDiSetDeviceInstallParams(hDevInfo, devInfo, &params)) {
+        auto ec = std::error_code(::GetLastError(), std::system_category());
+        throw std::system_error(ec, "Failed to set device installation "
+            "parameters.");
+    }
+}
 
 
 /*
@@ -88,6 +105,44 @@ size_t trrojan::sysinfo::detail::enum_device_interfaces(HDEVINFO hDevInfo,
 
 
 /*
+ * trrojan::sysinfo::detail::enum_driver_info
+ */
+size_t trrojan::sysinfo::detail::enum_driver_info(HDEVINFO hDevInfo,
+        SP_DEVINFO_DATA *devInfo, const DWORD driverType,
+        const enum_driver_info_cb& cb) {
+    SP_DRVINFO_DATA driverInfo;
+    DWORD i = 0;
+
+    if (hDevInfo == INVALID_HANDLE_VALUE) {
+        throw std::invalid_argument("A valid device info handle must be "
+            "supplied.");
+    }
+
+    if (!::SetupDiBuildDriverInfoList(hDevInfo, devInfo, driverType)) {
+        auto ec = std::error_code(::GetLastError(), std::system_category());
+        throw std::system_error(ec, "Failed to build driver list.");
+    }
+
+    ::ZeroMemory(&driverInfo, sizeof(driverInfo));
+    driverInfo.cbSize = sizeof(driverInfo);
+    for (i = 0; ::SetupDiEnumDriverInfo(hDevInfo, devInfo, driverType, i,
+            &driverInfo); ++i) {
+        if (!cb(hDevInfo, devInfo, driverInfo)) {
+            break;
+        }
+    } /* end  for (i = 0; ::SetupDiEnumDriverInfo(... */
+
+    auto error = ::GetLastError();
+    if (error != ERROR_NO_MORE_ITEMS) {
+        auto ec = std::error_code(error, std::system_category());
+        throw std::system_error(ec, "Failed to enumerate device drivers.");
+    }
+
+    return static_cast<size_t>(i);
+}
+
+
+/*
  * trrojan::sysinfo::detail::get_device_interface_detail
  */
 std::vector<std::uint8_t> trrojan::sysinfo::detail::get_device_interface_detail(
@@ -147,7 +202,25 @@ trrojan::sysinfo::detail::get_device_registry_property(HDEVINFO hDevInfo,
 
     return retval;
 }
-#endif /* defined(WIN32) */
+
+
+/*
+ * trrojan::sysinfo::detail::split_driver_version
+ */
+std::array<std::uint16_t, 4> trrojan::sysinfo::detail::split_driver_version(
+        decltype(SP_DRVINFO_DATA::DriverVersion) version) {
+    auto revision = static_cast<std::uint16_t>(version & 0xFFFF);
+    version >>= 16;
+    auto build = static_cast<std::uint16_t>(version & 0xFFFF);
+    version >>= 16;
+    auto minor = static_cast<std::uint16_t>(version & 0xFFFF);
+    version >>= 16;
+    auto major = static_cast<std::uint16_t>(version & 0xFFFF);
+    version >>= 16;
+
+    return { major, minor, build, revision };
+}
+#endif /* defined(_WIN32) */
 
 
 

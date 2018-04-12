@@ -22,6 +22,19 @@ template<class C> C *trrojan::sysinfo::detail::clone_string(const C *src) {
 
 
 /*
+ * trrojan::sysinfo::detail::clone_string
+ */
+template<class C> void trrojan::sysinfo::detail::clone_string(C *&dst,
+        const C *src) {
+    if (dst != nullptr) {
+        delete[] dst;
+    }
+
+    dst = clone_string(src);
+}
+
+
+/*
  * trrojan::sysinfo::detail::return_string
  */
 template<class C>
