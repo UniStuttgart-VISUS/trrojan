@@ -16,3 +16,4 @@ The TRRojan is a benchmarking framework for visual computing applications develo
 | `--cool-down-frequency <minutes>`  | If not zero, instructs the benchmark to suspend execution after the given number of minutes. Not all benchmarks might support this. |
 | `--cool-down-duration <seconds>`   | If not zero, instructs the benchmark to suspend execution for the given number of seconds after the `--cool-down-frequency` period has elapsed. Not all benchmarks might support this. |
 | `--with-basic-render-driver`         | Specifies that the Microsoft Basic Render driver should be considered a valid device. By default, this software device is excluded from the Direct3D environment. |
+| `--unique-devices`                 | If this flag is specified, the Direct3D 11 environment will skip a device if another device with the same PCI ID was already enumerated. |
