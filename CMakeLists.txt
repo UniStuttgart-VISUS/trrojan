@@ -72,6 +72,7 @@ endif (TRROJAN_WITH_CHAKRA AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/chakra")
 # Include headers for all of TRRojan.
 include_directories("glm")
 include_directories("spdlog/include")
+include_directories("datraw/datraw")
 
 # Build the system information library.
 add_subdirectory(trrojansnfo)

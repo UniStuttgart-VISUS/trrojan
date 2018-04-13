@@ -5,7 +5,150 @@
 
 #include "trrojan/d3d11/utilities.h"
 
+#include <DirectXMath.h>
+
 #include "trrojan/io.h"
+
+
+/*
+ * trrojan::d3d11::create_buffer
+ */
+ATL::CComPtr<ID3D11Buffer> trrojan::d3d11::create_buffer(ID3D11Device *device,
+        const D3D11_USAGE usage, const D3D11_BIND_FLAG binding,
+        const void *data, const UINT cntData, const UINT cpuAccess) {
+    assert(device != nullptr);
+    D3D11_BUFFER_DESC bufferDesc;
+    D3D11_SUBRESOURCE_DATA id;
+    ATL::CComPtr<ID3D11Buffer> retval;
+
+    ::ZeroMemory(&bufferDesc, sizeof(bufferDesc));
+    bufferDesc.ByteWidth = static_cast<UINT>(cntData);
+    bufferDesc.Usage = usage;
+    bufferDesc.BindFlags = binding;
+    bufferDesc.CPUAccessFlags = cpuAccess;
+
+    if (data != nullptr) {
+        ::ZeroMemory(&id, sizeof(id));
+        id.pSysMem = data;
+    }
+
+    auto hr = device->CreateBuffer(&bufferDesc,
+        (data != nullptr) ? &id : nullptr, &retval);
+    if (FAILED(hr)) {
+        throw ATL::CAtlException(hr);
+    }
+
+    return retval;
+}
+
+
+/*
+ * trrojan::d3d11::create_compute_shader
+ */
+ATL::CComPtr<ID3D11ComputeShader> trrojan::d3d11::create_compute_shader(
+        ID3D11Device *device, const BYTE *byteCode, const size_t cntByteCode) {
+    assert(device != nullptr);
+    ATL::CComPtr<ID3D11ComputeShader> retval;
+
+    auto hr = device->CreateComputeShader(byteCode, cntByteCode, nullptr,
+        &retval);
+    if (FAILED(hr)) {
+        throw ATL::CAtlException(hr);
+    }
+
+    return retval;
+}
+
+
+/*
+ * trrojan::d3d11::create_cube
+ */
+std::vector<D3D11_INPUT_ELEMENT_DESC>  trrojan::d3d11::create_cube(
+        ID3D11Device *device, ID3D11Buffer **outVertices,
+        ID3D11Buffer **outIndices, const float size) {
+    assert(device != nullptr);
+    assert(outVertices != nullptr);
+    assert(outIndices != nullptr);
+    assert(*outVertices == nullptr);
+    assert(*outIndices == nullptr);
+
+    static const std::vector<D3D11_INPUT_ELEMENT_DESC> retval = {
+        { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 }
+    };
+
+    static const DirectX::XMFLOAT3 vertices[] = {
+        // front
+        {-0.5f * size, -0.5f * size, 0.5f * size },
+        { 0.5f * size, -0.5f * size, 0.5f * size },
+        { 0.5f * size, 0.5f * size, 0.5f * size },
+        { -0.5f * size, 0.5f * size, 0.5f * size },
+        // back
+        { -0.5f * size, -0.5f * size, -0.5f * size },
+        { 0.5f * size, -0.5f * size, -0.5f * size },
+        { 0.5f * size, 0.5f * size, -0.5f * size },
+        { -0.5f * size, 0.5f * size, -0.5f * size },
+    };
+
+    static const short indices[] = {
+        // front
+        2, 1, 0,
+        0, 3, 2,
+        // right
+        6, 5, 1,
+        1, 2, 6,
+        // back
+        5, 6, 7,
+        7, 4, 5,
+        // left
+        3, 0, 4,
+        4, 7, 3,
+        // bottom
+        1, 5, 4,
+        4, 0, 1,
+        // top
+        6, 2, 3,
+        3, 7, 6
+    };
+
+    D3D11_BUFFER_DESC desc;
+    D3D11_SUBRESOURCE_DATA id;
+
+    {
+        ::ZeroMemory(&desc, sizeof(desc));
+        desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+        desc.ByteWidth = sizeof(vertices);
+        desc.Usage = D3D11_USAGE_IMMUTABLE;
+
+        ::ZeroMemory(&id, sizeof(id));
+        id.pSysMem = vertices;
+
+        auto hr = device->CreateBuffer(&desc, &id, outVertices);
+        if (FAILED(hr)) {
+            throw ATL::CAtlException(hr);
+        }
+
+        set_debug_object_name(*outVertices, "Cube vertex buffer");
+    }
+
+    {
+        ::ZeroMemory(&desc, sizeof(desc));
+        desc.BindFlags = D3D11_BIND_INDEX_BUFFER;
+        desc.ByteWidth = sizeof(vertices);
+        desc.Usage = D3D11_USAGE_IMMUTABLE;
+
+        ::ZeroMemory(&id, sizeof(id));
+        id.pSysMem = indices;
+
+        auto hr = device->CreateBuffer(&desc, &id, outIndices);
+        if (FAILED(hr)) {
+            throw ATL::CAtlException(hr);
+        }
+
+        set_debug_object_name(*outIndices, "Cube index buffer");
+    }
+
+    return retval;
+}
 
 
 /*
@@ -197,6 +340,78 @@ ATL::CComPtr<ID3D11PixelShader> trrojan::d3d11::create_pixel_shader(
 
     auto hr = device->CreatePixelShader(byteCode,
         static_cast<UINT>(cntByteCode), nullptr, &retval);
+    if (FAILED(hr)) {
+        throw ATL::CAtlException(hr);
+    }
+
+    return retval;
+}
+
+
+/*
+ * trrojan::d3d11::create_uav
+ */
+ATL::CComPtr<ID3D11UnorderedAccessView> trrojan::d3d11::create_uav(
+        ID3D11Device *device, const UINT width, const UINT height,
+        const UINT elementSize) {
+    ATL::CComPtr<ID3D11Buffer> buffer;
+    ATL::CComPtr<ID3D11UnorderedAccessView> retval;
+
+    // Allocate a new buffer.
+    {
+        D3D11_BUFFER_DESC desc;
+        ::ZeroMemory(&desc, sizeof(desc));
+        desc.BindFlags = D3D11_BIND_UNORDERED_ACCESS
+            | D3D11_BIND_SHADER_RESOURCE;
+        desc.ByteWidth = elementSize * width * height;
+        desc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+        desc.StructureByteStride = elementSize;
+
+        auto hr = device->CreateBuffer(&desc, nullptr, &buffer);
+        if (FAILED(hr)) {
+            throw ATL::CAtlException(hr);
+        }
+    }
+
+    // Allocate the UAV for the buffer.
+    {
+        D3D11_UNORDERED_ACCESS_VIEW_DESC desc;
+        ::ZeroMemory(&desc, sizeof(desc));
+        desc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
+        desc.Buffer.FirstElement = 0;
+        desc.Format = DXGI_FORMAT_UNKNOWN;
+        desc.Buffer.NumElements = width * height;
+
+        auto hr = device->CreateUnorderedAccessView(buffer, &desc, &retval);
+        if (FAILED(hr)) {
+            throw ATL::CAtlException(hr);
+        }
+    }
+
+    return retval;
+}
+
+
+/*
+ * trrojan::d3d11::create_uav
+ */
+ATL::CComPtr<ID3D11UnorderedAccessView> trrojan::d3d11::create_uav(
+        ID3D11Texture2D *texture) {
+    assert(texture != nullptr);
+    D3D11_TEXTURE2D_DESC texDesc;
+    ATL::CComPtr<ID3D11Device> device;
+    ATL::CComPtr<ID3D11UnorderedAccessView> retval;
+    D3D11_UNORDERED_ACCESS_VIEW_DESC uavDesc;
+
+    texture->GetDesc(&texDesc);
+    texture->GetDevice(&device);
+
+    ::ZeroMemory(&uavDesc, sizeof(uavDesc));
+    uavDesc.Format = texDesc.Format;
+    //uavDesc.Format = DXGI_FORMAT_UNKNOWN;
+    uavDesc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2D;
+
+    auto hr = device->CreateUnorderedAccessView(texture, &uavDesc, &retval);
     if (FAILED(hr)) {
         throw ATL::CAtlException(hr);
     }
@@ -521,38 +736,6 @@ ATL::CComPtr<ID3D11Texture1D> trrojan::d3d11::create_viridis_colour_map(
         if (FAILED(hr)) {
             throw ATL::CAtlException(hr);
         }
-    }
-
-    return retval;
-}
-
-
-/*
- * trrojan::d3d11::create_buffer
- */
-ATL::CComPtr<ID3D11Buffer> trrojan::d3d11::create_buffer(ID3D11Device *device,
-        const D3D11_USAGE usage, const D3D11_BIND_FLAG binding,
-        const void *data, const UINT cntData, const UINT cpuAccess) {
-    assert(device != nullptr);
-    D3D11_BUFFER_DESC bufferDesc;
-    D3D11_SUBRESOURCE_DATA id;
-    ATL::CComPtr<ID3D11Buffer> retval;
-
-    ::ZeroMemory(&bufferDesc, sizeof(bufferDesc));
-    bufferDesc.ByteWidth = static_cast<UINT>(cntData);
-    bufferDesc.Usage = usage;
-    bufferDesc.BindFlags = binding;
-    bufferDesc.CPUAccessFlags = cpuAccess;
-
-    if (data != nullptr) {
-        ::ZeroMemory(&id, sizeof(id));
-        id.pSysMem = data;
-    }
-
-    auto hr = device->CreateBuffer(&bufferDesc,
-        (data != nullptr) ? &id : nullptr, &retval);
-    if (FAILED(hr)) {
-        throw ATL::CAtlException(hr);
     }
 
     return retval;

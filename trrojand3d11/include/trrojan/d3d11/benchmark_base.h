@@ -81,6 +81,13 @@ namespace d3d11 {
 
         void save_target(const char *path = nullptr);
 
+        /// <summary>
+        /// Disables the render target view and returns an UAV for its back
+        /// buffer instead.
+        /// </summary>
+        virtual ATL::CComPtr<ID3D11UnorderedAccessView> switch_to_uav_target(
+            void);
+
     private:
 
         typedef trrojan::benchmark_base base;

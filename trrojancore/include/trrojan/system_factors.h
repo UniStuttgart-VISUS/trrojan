@@ -12,7 +12,7 @@
 #include "trrojan/named_variant.h"
 #include "trrojan/variant.h"
 
-//#include "trrojan/sysinfo/hardware_info.h"
+#include "trrojan/sysinfo/hardware_info.h"
 #include "trrojan/sysinfo/os_info.h"
 #include "trrojan/sysinfo/smbios_information.h"
 
@@ -183,9 +183,11 @@ namespace trrojan {
 
         system_factors& operator =(const system_factors&) = delete;
 
-        sysinfo::smbios_information smbios;
+        sysinfo::hardware_info hwinfo;
 
         sysinfo::os_info osinfo;
+
+        sysinfo::smbios_information smbios;
 
     };
 }

@@ -105,19 +105,7 @@ trrojan::d3d11::sphere_benchmark::sphere_benchmark(void)
     this->_default_configs.add_factor(factor::from_manifestations(
         factor_vs_xfer_function, false));
 
-    this->_default_configs.add_factor(factor::from_manifestations(
-        factor_manoeuvre, manoeuvre_type("diagonal")));
-    this->_default_configs.add_factor(factor::from_manifestations(
-        factor_manoeuvre_step, static_cast<manoeuvre_step_type>(0)));
-    this->_default_configs.add_factor(factor::from_manifestations(
-        factor_manoeuvre_steps, static_cast<manoeuvre_step_type>(64)));
-#if 0
-    this->_default_configs.add_factor(factor::from_range(
-        factor_manoeuvre_step, static_cast<manoeuvre_step_type>(0),
-        static_cast<manoeuvre_step_type>(1000), 1000));
-    this->_default_configs.add_factor(factor::from_manifestations(
-        factor_manoeuvre_steps, static_cast<manoeuvre_step_type>(1000)));
-#endif
+    this->add_default_manoeuvre();
 
     // Build the lookup table for the shader resources.
     _ADD_SPHERE_SHADERS(this->shader_resources);
@@ -385,7 +373,7 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
         this->cam.set_aspect_ratio(aspect);
 
         // Apply the current step of the manoeuvre.
-        this->apply_manoeuvre(this->cam, config, bbs, bbe);
+        sphere_benchmark::apply_manoeuvre(this->cam, config, bbs, bbe);
 
         // Compute the clipping planes based on the current view.
         const auto clipping = this->data->clipping_planes(cam,

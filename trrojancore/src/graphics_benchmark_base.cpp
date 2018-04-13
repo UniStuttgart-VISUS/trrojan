@@ -7,8 +7,6 @@
 
 #include <stdexcept>
 
-#include "trrojan/camera.h"
-
 
 #define _GRAPH_BENCH_BASE_DEFINE_FACTOR(f)                                     \
 const std::string trrojan::graphics_benchmark_base::factor_##f(#f)
@@ -25,10 +23,8 @@ _GRAPH_BENCH_BASE_DEFINE_FACTOR(viewport);
  * trrojan::graphics_benchmark_base::apply_manoeuvre
  */
 void trrojan::graphics_benchmark_base::apply_manoeuvre(trrojan::camera& camera,
-        const configuration& config, const point_type& bboxMin,
-        const point_type& bboxMax) {
-    glm::vec3 bbe(bboxMax[0], bboxMax[1], bboxMax[2]);
-    glm::vec3 bbs(bboxMin[0], bboxMin[1], bboxMin[2]);
+        const configuration& config, const glm::vec3& bbs,
+        const glm::vec3& bbe) {
     auto curStep = config.get<manoeuvre_step_type>(factor_manoeuvre_step);
     auto manoeuvre = config.get<manoeuvre_type>(factor_manoeuvre);
     auto totalSteps = config.get<manoeuvre_step_type>(factor_manoeuvre_steps);
@@ -55,4 +51,17 @@ void trrojan::graphics_benchmark_base::get_manoeuvre(
     outManoeuvre = config.get<manoeuvre_type>(factor_manoeuvre);
     outCurStep = config.get<manoeuvre_step_type>(factor_manoeuvre_step);
     outTotalSteps = config.get<manoeuvre_step_type>(factor_manoeuvre_steps);
+}
+
+
+/*
+ * trrojan::graphics_benchmark_base::add_default_manoeuvre
+ */
+void trrojan::graphics_benchmark_base::add_default_manoeuvre(void) {
+    this->_default_configs.add_factor(factor::from_manifestations(
+        factor_manoeuvre, manoeuvre_type("diagonal")));
+    this->_default_configs.add_factor(factor::from_manifestations(
+        factor_manoeuvre_step, static_cast<manoeuvre_step_type>(0)));
+    this->_default_configs.add_factor(factor::from_manifestations(
+        factor_manoeuvre_steps, static_cast<manoeuvre_step_type>(64)));
 }

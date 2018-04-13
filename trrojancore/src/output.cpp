@@ -95,9 +95,11 @@ trrojan::output trrojan::open_output(const trrojan::cmd_line& cmdLine) {
         params = basic_output_params::create<csv_output_params>(*output,
             cmdLine.begin(), cmdLine.end());
 
+#if defined(_WIN32)
     } else if (std::dynamic_pointer_cast<excel_output>(retval) != nullptr) {
         params = basic_output_params::create<excel_output_params>(*output,
             cmdLine.begin(), cmdLine.end());
+#endif /* defined(_WIN32) */
 
     } else if (std::dynamic_pointer_cast<r_output>(retval) != nullptr) {
         params = basic_output_params::create<r_output_params>(*output,

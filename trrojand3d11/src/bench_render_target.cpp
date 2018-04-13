@@ -33,8 +33,9 @@ void trrojan::d3d11::bench_render_target::resize(
     // TODO: could optimise this to prevent unnecessary re-creates.
     ::ZeroMemory(&texDesc, sizeof(texDesc));
     texDesc.ArraySize = 1;
-    texDesc.BindFlags = D3D11_BIND_RENDER_TARGET;
-    texDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+    texDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_UNORDERED_ACCESS;
+    // UAV does not support BGRA: texDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+    texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
     texDesc.Height = height;
     texDesc.MipLevels = 1;
     texDesc.SampleDesc.Count = 1;

@@ -27,6 +27,24 @@ namespace d3d11 {
         const D3D11_BIND_FLAG binding, const void *data, const UINT cntData,
         const UINT cpuAccess = 0);
 
+    ATL::CComPtr<ID3D11ComputeShader> create_compute_shader(ID3D11Device *device,
+        const BYTE *byteCode, const size_t cntByteCode);
+
+    inline ATL::CComPtr<ID3D11ComputeShader> create_compute_shader(
+            ID3D11Device *device, const std::vector<std::uint8_t>& byteCode) {
+        return create_compute_shader(device, byteCode.data(), byteCode.size());
+    }
+
+    /// <summary>
+    /// Creates a vertex and an index buffer for a cube of
+    /// <see cref="DirectX::XMFLOAT3" /> vertices.
+    /// </summary>
+    /// <remarks>
+    /// </remarks>
+    std::vector<D3D11_INPUT_ELEMENT_DESC> create_cube(ID3D11Device *device,
+        ID3D11Buffer **outVertices, ID3D11Buffer **outIndices,
+        const float size = 1.0f);
+
     ATL::CComPtr<ID3D11DomainShader> create_domain_shader(ID3D11Device *device,
         const BYTE *byteCode, const size_t cntByteCode);
 
@@ -145,6 +163,19 @@ namespace d3d11 {
             ID3D11Device *device, std::nullptr_t) {
         return nullptr;
     }
+
+    /// <summary>
+    /// Creates an unordered access view for a structured resource buffer of
+    /// the specified element size.
+    /// </summary>
+    ATL::CComPtr<ID3D11UnorderedAccessView> create_uav(ID3D11Device *device,
+        const UINT width, const UINT height, const UINT elementSize);
+
+    /// <summary>
+    /// Creates an unordered access view for the given texture.
+    /// </summary>
+    ATL::CComPtr<ID3D11UnorderedAccessView> create_uav(
+        ID3D11Texture2D *texture);
 
     /// <summary>
     /// Create a vertex shader from the given byte code.

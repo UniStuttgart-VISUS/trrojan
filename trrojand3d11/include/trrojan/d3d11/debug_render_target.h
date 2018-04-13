@@ -46,6 +46,9 @@ namespace d3d11 {
         virtual void resize(const unsigned int width,
             const unsigned int height);
 
+        /// <inheritdoc />
+        virtual ATL::CComPtr<ID3D11UnorderedAccessView> to_uav(void);
+
     private:
 
         typedef render_target_base base;
@@ -81,6 +84,17 @@ namespace d3d11 {
         /// The swap chain for the window.
         /// </summary>
         ATL::CComPtr<IDXGISwapChain> swapChain;
+
+        /// <summary>
+        /// An unordered access view for compute shaders.
+        /// </summary>
+        /// <remarks>
+        /// In contrast to the real benchmarking render target, the debug target
+        /// uses an intermediate buffer (this one) and blits it on present. The
+        /// reason for that is that mapping the back buffer is not recommended
+        /// anymore and is also not supported on D3D12.
+        /// </remarks>
+        ATL::CComPtr<ID3D11UnorderedAccessView> _uav;
     };
 }
 }

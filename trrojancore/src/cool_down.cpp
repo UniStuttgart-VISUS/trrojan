@@ -3,8 +3,6 @@
 /// </copyright>
 /// <author>Christoph Müller</author>
 
-#pragma once
-
 #include "trrojan/cool_down.h"
 
 #include <thread>
@@ -16,12 +14,14 @@
  * trrojan::cool_down_evaluator::check
  */
 void trrojan::cool_down_evaluator::check(void) {
-    auto dt = std::chrono::system_clock::now() - last;
-    if (dt > this->config.frequency) {
-        log::instance().write_line(log_level::information, "A cool-down period "
-            "was requested. Pausing for %u seconds ...",
-            this->config.duration.count());
-        std::this_thread::sleep_for(this->config.duration);
-        this->last = std::chrono::system_clock::now();
+    if (this->config.enabled()) {
+        auto dt = std::chrono::system_clock::now() - last;
+        if (dt > this->config.frequency) {
+            log::instance().write_line(log_level::information, "A cool-down "
+                "period was requested. Pausing for %u seconds ...",
+                this->config.duration.count());
+            std::this_thread::sleep_for(this->config.duration);
+            this->last = std::chrono::system_clock::now();
+        }
     }
 }

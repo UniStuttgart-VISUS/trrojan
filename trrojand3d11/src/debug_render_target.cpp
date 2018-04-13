@@ -44,6 +44,31 @@ trrojan::d3d11::debug_render_target::~debug_render_target(void) {
  * trrojan::d3d11::debug_render_target::present
  */
 void trrojan::d3d11::debug_render_target::present(void) {
+    if (this->_uav != nullptr) {
+        assert(this->swapChain != nullptr);
+        ATL::CComPtr<ID3D11Texture2D> dst;
+        ATL::CComPtr<ID3D11Resource> res;
+        ATL::CComPtr<ID3D11Texture2D> src;
+
+        {
+            auto hr = this->swapChain->GetBuffer(0, IID_ID3D11Texture2D,
+                reinterpret_cast<void **>(&dst));
+            if (FAILED(hr)) {
+                throw ATL::CAtlException(hr);
+            }
+        }
+
+        {
+            this->_uav->GetResource(&res);
+            auto hr = res->QueryInterface(&src);
+            if (FAILED(hr)) {
+                throw ATL::CAtlException(hr);
+            }
+        }
+
+        this->device_context()->CopyResource(dst, src);
+    }
+
     if (this->swapChain != nullptr) {
         this->swapChain->Present(0, 0);
     }
@@ -63,6 +88,7 @@ void trrojan::d3d11::debug_render_target::resize(const unsigned int width,
         /* Initial resize. */
         assert(this->_dsv == nullptr);
         assert(this->_rtv == nullptr);
+        assert(this->_uav == nullptr);
         assert(this->device() == nullptr);
         assert(this->device_context() == nullptr);
 
@@ -73,10 +99,11 @@ void trrojan::d3d11::debug_render_target::resize(const unsigned int width,
 
         ::ZeroMemory(&desc, sizeof(desc));
         desc.BufferCount = 2;
-        desc.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+        // desc.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+        desc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
         desc.BufferDesc.Height = width;
         desc.BufferDesc.Width = height;
-        desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+        desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT; // | DXGI_USAGE_UNORDERED_ACCESS;
         desc.OutputWindow = this->hWnd;
         desc.SampleDesc.Count = 1;
         desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
@@ -110,6 +137,7 @@ void trrojan::d3d11::debug_render_target::resize(const unsigned int width,
         assert(this->hWnd.load() != NULL);
         this->_rtv = nullptr;
         this->_dsv = nullptr;
+        this->_uav = nullptr;
 
         hr = this->swapChain->GetDesc(&desc);
         if (FAILED(hr)) {
@@ -157,6 +185,41 @@ void trrojan::d3d11::debug_render_target::resize(const unsigned int width,
     set_debug_object_name(backBuffer.p, "debug_render_target (colour buffer)");
 
     this->set_back_buffer(backBuffer.p);
+}
+
+
+/*
+ * trrojan::d3d11::debug_render_target::to_uav
+ */
+ATL::CComPtr<ID3D11UnorderedAccessView>
+trrojan::d3d11::debug_render_target::to_uav(void) {
+    if (this->_uav == nullptr) {
+        D3D11_TEXTURE2D_DESC desc;
+        ATL::CComPtr<ID3D11Texture2D> texture;
+
+        {
+            auto hr = this->swapChain->GetBuffer(0, IID_ID3D11Texture2D,
+                reinterpret_cast<void **>(&texture));
+            if (FAILED(hr)) {
+                throw ATL::CAtlException(hr);
+            }
+        }
+
+        texture->GetDesc(&desc);
+        desc.BindFlags = D3D11_BIND_UNORDERED_ACCESS;
+        texture = nullptr;
+
+        {
+            auto hr = this->device()->CreateTexture2D(&desc, nullptr, &texture);
+            if (FAILED(hr)) {
+                throw ATL::CAtlException(hr);
+            }
+        }
+
+        this->_uav = create_uav(texture);
+    }
+
+    return this->_uav;
 }
 
 

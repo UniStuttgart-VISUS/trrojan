@@ -6,8 +6,47 @@
 
 #include "utilities.h"
 
+#include <array>
+#include <cerrno>
+#include <cstdio>
 #include <fstream>
+#include <memory>
 #include <sstream>
+#include <system_error>
+
+
+
+/*
+ * trrojan::sysinfo::detail::invoke
+ */
+std::string trrojan::sysinfo::detail::invoke(const char *cmd) {
+    if (cmd == nullptr) {
+        throw std::invalid_argument("'cmd' must not be nullptr.");
+    }
+
+    std::array<char, 128> buffer;
+    std::string retval;
+
+#if defined(_WIN32)
+    std::shared_ptr<FILE> fp(::_popen(cmd, "r"), ::_pclose);
+#else /* defined(_WIN32) */
+    std::shared_ptr<FILE> fp(::popen(cmd, "r"), ::pclose);
+#endif /* defined(_WIN32) */
+
+    if (fp == nullptr) {
+        throw std::system_error(errno, std::system_category(),
+            "Failed to open a pipe for the command.");
+    }
+
+    while (!::feof(fp.get())) {
+        if (::fgets(buffer.data(), static_cast<int>(buffer.size()),
+                fp.get()) != nullptr) {
+            retval += buffer.data();
+        }
+    }
+
+    return retval;
+}
 
 
 /*

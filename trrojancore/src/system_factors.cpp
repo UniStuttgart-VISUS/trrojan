@@ -642,7 +642,16 @@ trrojan::system_factors::get_retrievers(void) {
  */
 trrojan::system_factors::system_factors(void) {
     try {
+        this->hwinfo = sysinfo::hardware_info::collect();
+    } catch (std::exception ex) {
+        log::instance().write(log_level::warning, ex);
+    }
+    try {
         this->osinfo = sysinfo::os_info::collect();
+    } catch (std::exception ex) {
+        log::instance().write(log_level::warning, ex);
+    }
+    try {
         this->smbios = sysinfo::smbios_information::read();
     } catch (std::exception ex) {
         log::instance().write(log_level::warning, ex);
