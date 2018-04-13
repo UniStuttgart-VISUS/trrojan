@@ -194,9 +194,9 @@ void trrojan::sysinfo::detail::os_info_impl::update(void) {
             "information.");
     }
 
-    retval._name = detail::clone_string(vi.sysname);
-    retval._version = detail::clone_string(vi.release);
-    retval._word_size = (::strstr(vi.machine, "64") == nullptr) ? 32 : 64;
+    this->name = vi.sysname;
+    this->version = vi.release;
+    this->word_size = (::strstr(vi.machine, "64") == nullptr) ? 32 : 64;
 
 #endif /* defined(_WIN32) */
 }
