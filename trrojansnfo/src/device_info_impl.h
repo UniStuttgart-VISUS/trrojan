@@ -32,7 +32,7 @@ namespace detail {
 
 #if defined(WIN32)
         device_info_impl(HDEVINFO hDev, SP_DEVINFO_DATA& data);
-#endif /* defined(WIN32) */r
+#endif /* defined(WIN32) */
 
         virtual ~device_info_impl(void) = default;
 

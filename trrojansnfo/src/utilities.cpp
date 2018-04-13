@@ -30,7 +30,7 @@ std::string trrojan::sysinfo::detail::invoke(const char *cmd) {
 #if defined(_WIN32)
     std::shared_ptr<FILE> fp(::_popen(cmd, "r"), ::_pclose);
 #else /* defined(_WIN32) */
-    std::shared_ptr<FILE> fp(::_popen(cmd, "r"), ::_pclose);
+    std::shared_ptr<FILE> fp(::popen(cmd, "r"), ::pclose);
 #endif /* defined(_WIN32) */
 
     if (fp == nullptr) {
