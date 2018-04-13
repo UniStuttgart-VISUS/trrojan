@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include "trrojan/cmd_line.h"
 #include "trrojan/output_params.h"
 
 
