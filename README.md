@@ -15,4 +15,4 @@ The TRRojan is a benchmarking framework for visual computing applications develo
 | `--line-break <string>`            | If the output is a CSV file, use the specified new line string. The default depends on the platform. |
 | `--cool-down-frequency <minutes>`  | If not zero, instructs the benchmark to suspend execution after the given number of minutes. Not all benchmarks might support this. |
 | `--cool-down-duration <seconds>`   | If not zero, instructs the benchmark to suspend execution for the given number of seconds after the `--cool-down-frequency` period has elapsed. Not all benchmarks might support this. |
-| --with-basic-render-driver         | Specifies that the Microsoft Basic Render driver should be considered a valid device. By default, this software device is excluded from the Direct3D environment. |
+| `--with-basic-render-driver`         | Specifies that the Microsoft Basic Render driver should be considered a valid device. By default, this software device is excluded from the Direct3D environment. |
