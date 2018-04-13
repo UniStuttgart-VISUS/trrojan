@@ -3,8 +3,6 @@
 /// </copyright>
 /// <author>Christoph Müller</author>
 
-#pragma once
-
 #include "trrojan/cool_down.h"
 
 #include <thread>
