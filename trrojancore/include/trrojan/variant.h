@@ -126,10 +126,10 @@ namespace detail {
 
 #define __TRROJAN_VARIANT_VEC(type, dim) val_##type##vec##dim
 #define __TRROJAN_VARIANT_IVECS(type)                                          \
-    std::array<std::type##_t, 2> __TRROJAN_VARIANT_VEC(type, 2);             \
-    std::array<std::type##_t, 3> __TRROJAN_VARIANT_VEC(type, 3);             \
+    std::array<std::type##_t, 2> __TRROJAN_VARIANT_VEC(type, 2);               \
+    std::array<std::type##_t, 3> __TRROJAN_VARIANT_VEC(type, 3);               \
     std::array<std::type##_t, 4> __TRROJAN_VARIANT_VEC(type, 4)
-#define __TRROJAN_VARIANT_XVECS(type, name)                                     \
+#define __TRROJAN_VARIANT_XVECS(type, name)                                    \
     std::array<type, 2> __TRROJAN_VARIANT_VEC(name, 2);                        \
     std::array<type, 3> __TRROJAN_VARIANT_VEC(name, 3);                        \
     std::array<type, 4> __TRROJAN_VARIANT_VEC(name, 4)
