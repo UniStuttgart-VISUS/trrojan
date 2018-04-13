@@ -17,6 +17,9 @@
 namespace trrojan {
 namespace sysinfo {
 
+    /* Forward declarations. */
+    namespace detail { struct os_info_impl; }
+
     /// <summary>
     /// Provides information about the operating system the software is
     /// running on.
@@ -38,28 +41,19 @@ namespace sysinfo {
         /// <summary>
         /// Initialises a new instance.
         /// </summary>
-        inline os_info(void)
-            : _name(nullptr),
-            _tdr_ddi_delay(os_info::invalid_tdr_value),
-            _tdr_debug_mode(sysinfo::tdr_debug_mode::unknown),
-            _tdr_delay(os_info::invalid_tdr_value),
-            _tdr_level(sysinfo::tdr_level::unknown),
-            _tdr_limit_count(os_info::invalid_tdr_value),
-            _tdr_limit_time(os_info::invalid_tdr_value),
-            _version(nullptr),
-            _word_size(0) { }
+        inline os_info(void) : impl(nullptr) { }
 
         /// <summary>
         /// Clone <paramref name="rhs" />.
         /// </summary>
-        inline os_info(const os_info& rhs) : _name(nullptr), _version(nullptr) {
+        inline os_info(const os_info& rhs) : impl(nullptr) {
             *this = rhs;
         }
 
         /// <summary>
         /// Move <paramref name="rhs" />.
         /// </summary>
-        inline os_info(os_info&& rhs) : _name(nullptr), _version(nullptr) {
+        inline os_info(os_info&& rhs) : impl(nullptr) {
             *this = std::move(rhs);
         }
 
@@ -71,88 +65,69 @@ namespace sysinfo {
         /// <summary>
         /// Gets the name of the operating system.
         /// </summary>
-        inline const char *const name(void) const {
-            return this->_name;
-        }
+        const char *const name(void) const;
 
         /// <summary>
         /// Gets the number of seconds that the operating system allows threads
         /// to leave the driver.
         /// </summary>
-        inline size_t tdr_ddi_delay(void) const {
-            return this->_tdr_ddi_delay;
-        }
+        size_t tdr_ddi_delay(void) const;
 
         /// <summary>
         /// Gets the number of seconds that the operating system allows threads
         /// to leave the driver.
         /// </summary>
-        inline sysinfo::tdr_debug_mode tdr_debug_mode(void) const {
-            return this->_tdr_debug_mode;
-        }
+        sysinfo::tdr_debug_mode tdr_debug_mode(void) const;
 
         /// <summary>
         /// Gets the number of seconds that the GPU can delay the preempt
         /// request from the GPU scheduler.
         /// </summary>
-        inline size_t tdr_delay(void) const {
-            return this->_tdr_delay;
-        }
+        size_t tdr_delay(void) const;
 
         /// <summary>
         /// Gets the system behaviour when a GPU timeout is detected.
         /// </summary>
-        sysinfo::tdr_level tdr_level(void) const {
-            return this->_tdr_level;
-        }
+        sysinfo::tdr_level tdr_level(void) const;
 
         /// <summary>
         /// Gets the default number of TDRs that are allowed during the time
         /// specified by the <see cref="tdr_limit_time" /> without crashing
         /// the computer.
         /// </summary>
-        size_t tdr_limit_count(void) const {
-            return this->_tdr_limit_count;
-        }
+        size_t tdr_limit_count(void) const;
 
         /// <summary>
         /// Gets the default time within which a specific number of TDRs
         /// (specified by <see cref="tdr_limit_count" />) are allowed 
         /// without crashing the computer.
         /// </summary>
-        size_t tdr_limit_time(void) const {
-            return this->_tdr_limit_time;
-        }
+        size_t tdr_limit_time(void) const;
 
         /// <summary>
         /// Gets the version of the operating system.
         /// </summary>
-        const char *const version(void) const {
-            return this->_version;
-        }
+        const char *const version(void) const;
 
         /// <summary>
         /// Gets the word size of the operating system.
         /// </summary>
-        inline size_t word_size(void) const {
-            return this->_word_size;
-        }
+        size_t word_size(void) const;
 
         os_info& operator =(const os_info& rhs);
 
         os_info& operator =(os_info&& rhs);
 
+        /// <summary>
+        /// Answer whether the OS information is valid.
+        /// </summary>
+        inline operator bool(void) const {
+            return (this->impl != nullptr);
+        }
+
     private:
 
-        char *_name;
-        size_t _tdr_ddi_delay;
-        sysinfo::tdr_debug_mode _tdr_debug_mode;
-        size_t _tdr_delay;
-        sysinfo::tdr_level _tdr_level;
-        size_t _tdr_limit_count;
-        size_t _tdr_limit_time;
-        char *_version;
-        size_t _word_size;
+        detail::os_info_impl *impl;
 
     };
 

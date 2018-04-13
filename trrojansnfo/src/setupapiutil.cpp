@@ -62,7 +62,7 @@ size_t trrojan::sysinfo::detail::enum_class_devices(const GUID *class_guid,
 
     auto error = ::GetLastError();
     ::SetupDiDestroyDeviceInfoList(hDevInfo);
-    if (error != ERROR_NO_MORE_ITEMS) {
+    if ((error != NO_ERROR) && (error != ERROR_NO_MORE_ITEMS)) {
         auto ec = std::error_code(error, std::system_category());
         throw std::system_error(ec, "Failed to enumerate class devices.");
     }
@@ -95,7 +95,7 @@ size_t trrojan::sysinfo::detail::enum_device_interfaces(HDEVINFO hDevInfo,
     } /* end  for (i = 0; ::SetupDiEnumDeviceInterfaces(... */
 
     auto error = ::GetLastError();
-    if (error != ERROR_NO_MORE_ITEMS) {
+    if ((error != NO_ERROR) && (error != ERROR_NO_MORE_ITEMS)) {
         auto ec = std::error_code(error, std::system_category());
         throw std::system_error(ec, "Failed to enumerate device interfaces.");
     }
@@ -133,7 +133,7 @@ size_t trrojan::sysinfo::detail::enum_driver_info(HDEVINFO hDevInfo,
     } /* end  for (i = 0; ::SetupDiEnumDriverInfo(... */
 
     auto error = ::GetLastError();
-    if (error != ERROR_NO_MORE_ITEMS) {
+    if ((error != NO_ERROR) && (error != ERROR_NO_MORE_ITEMS)) {
         auto ec = std::error_code(error, std::system_category());
         throw std::system_error(ec, "Failed to enumerate device drivers.");
     }

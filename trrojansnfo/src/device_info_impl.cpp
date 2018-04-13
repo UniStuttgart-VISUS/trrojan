@@ -1,20 +1,19 @@
-/// <copyright file="hardware_info.cpp" company="SFB-TRR 161 Quantitative Methods for Visual Computing">
+/// <copyright file="device_info_impl.cpp" company="SFB-TRR 161 Quantitative Methods for Visual Computing">
 /// Copyright © 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
 /// Copyright © 2018 SFB-TRR 161. Alle Rechte vorbehalten.
 /// </copyright>
 /// <author>Christoph Müller</author>
 
-#if defined(_WIN32)
-#include "win32_device_info.h"
-
+#include "device_info_impl.h"
 #include "setupapiutil.h"
 #include "utilities.h"
 
 
+#if defined(_WIN32)
 /*
- * trrojan::sysinfo::detail::win32_device_info::win32_device_info
+ * trrojan::sysinfo::detail::device_info_impl::device_info_impl
  */
-trrojan::sysinfo::detail::win32_device_info::win32_device_info(HDEVINFO hDev,
+trrojan::sysinfo::detail::device_info_impl::device_info_impl(HDEVINFO hDev,
         SP_DEVINFO_DATA& data) {
     auto desc = detail::get_device_registry_property(hDev, data,
         SPDRP_DEVICEDESC);
@@ -47,21 +46,57 @@ trrojan::sysinfo::detail::win32_device_info::win32_device_info(HDEVINFO hDev,
     this->_hardware_id = reinterpret_cast<char *>(hwid.data());
     this->_name = reinterpret_cast<char *>(desc.data());
 }
+#endif /* defined(_WIN32) */
 
 
 /*
- * trrojan::sysinfo::detail::win32_device_info::win32_device_info
+ * trrojan::sysinfo::detail::device_info_impl::driver_date
  */
-trrojan::sysinfo::detail::win32_device_info::win32_device_info(
-        const device_info *rhs) {
-    assert(rhs != nullptr);
-    auto& r = dynamic_cast<const win32_device_info&>(*rhs);
-    this->_driver_date = r._driver_date;
-    this->_driver_provider = r._driver_provider;
-    this->_driver_version = r._driver_version;
-    this->_hardware_id = r._hardware_id;
-    this->_manufacturer = r._manufacturer;
-    this->_name = r._name;
+const trrojan::sysinfo::detail::device_info_impl::date_type&
+trrojan::sysinfo::detail::device_info_impl::driver_date(void) const {
+    return this->_driver_date;
 }
 
-#endif /* defined(_WIN32) */
+
+/*
+ * trrojan::sysinfo::detail::device_info_impl::driver_provider
+ */
+const char *trrojan::sysinfo::detail::device_info_impl::driver_provider(
+        void) const {
+    return this->_driver_provider.c_str();
+}
+
+
+/*
+ * trrojan::sysinfo::detail::device_info_impl::driver_version
+ */
+const trrojan::sysinfo::detail::device_info_impl::version_type&
+trrojan::sysinfo::detail::device_info_impl::driver_version(void) const {
+    return this->_driver_version;
+}
+
+
+/*
+ * trrojan::sysinfo::detail::device_info_impl::hardware_id
+ */
+const char *trrojan::sysinfo::detail::device_info_impl::hardware_id(
+        void) const {
+    return this->_hardware_id.c_str();
+}
+
+
+/*
+ * trrojan::sysinfo::detail::device_info_impl::manufacturer
+ */
+const char *trrojan::sysinfo::detail::device_info_impl::manufacturer(
+        void) const {
+    return this->_manufacturer.c_str();
+}
+
+
+/*
+ * trrojan::sysinfo::detail::device_info_impl::name
+ */
+const char *trrojan::sysinfo::detail::device_info_impl::name(void) const {
+    return this->_name.c_str();
+}
