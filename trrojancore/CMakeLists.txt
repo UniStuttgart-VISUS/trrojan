@@ -18,11 +18,44 @@ add_definitions("-DTRROJANCORE_EXPORTS")
 
 set(TrrojanCoreIncludeDir "${CMAKE_CURRENT_SOURCE_DIR}/${IncludeDirectory}" PARENT_SCOPE)
 
-if (WITH_CHAKRA==ON)
-endif (WITH_CHAKRA==ON)
-
 add_library(trrojancore SHARED ${HeaderFiles} ${SourceFiles})
+
+# Build Chakra core if possible
+if (EXISTS ${CHAKRA_DIR})
+    set(CHAKRA_CONFIGURATION "release")
+
+    add_definitions("-DWITH_CHAKRA")
+    include_directories("${CHAKRA_DIR}/lib/Jsrt")
+
+    # On Windows, we need to determine whether we are cross-compiling or
+    # building for the native platform.
+    if ("${CMAKE_SIZEOF_VOID_P}" STREQUAL "4")
+        set(CHAKRA_PLATFORM "x86")
+    else ("${CMAKE_SIZEOF_VOID_P}" STREQUAL "4")
+        set (CHAKRA_PLATFORM "x64")
+    endif ("${CMAKE_SIZEOF_VOID_P}" STREQUAL "4")
+
+    if (WIN32)
+        set (CHAKRA_BIN_DIR "${CHAKRA_DIR}/Build/VcBuild/bin/${CHAKRA_PLATFORM}_${CHAKRA_CONFIGURATION}")
+        set (CHAKRA_BIN "${CHAKRA_BIN_DIR}/chakracore.dll")
+        set (CHAKRA_LIB "${CHAKRA_BIN_DIR}/chakracore.lib")
+        add_custom_command(TARGET trrojancore
+                           PRE_BUILD
+                           COMMAND msbuild /m /p:Platform=${CHAKRA_PLATFORM} /p:Configuration=${CHAKRA_CONFIGURATION} /p:RuntimeLib=static_library "${CHAKRA_DIR}/Build/Chakra.Core.sln"
+                           COMMENT "Building Chakra Core ...")
+    else (WIN32)
+        MESSAGE(WARNING "Not yet implemented.")
+        #add_subdirectory("chakra")
+        #    add_custom_command(OUTPUT asd COMMAND "chakra/Build/build.sh --static")
+    endif (WIN32)
+endif (EXISTS ${CHAKRA_DIR})
+
+# Configure the linker.
 target_link_libraries(trrojancore trrojansnfo)
+
+if (EXISTS ${CHAKRA_DIR})
+    target_link_libraries(trrojancore ${CHAKRA_LIB})
+endif (EXISTS ${CHAKRA_DIR})
 
 if (${CMAKE_COMPILER_IS_GNUCXX})
     target_link_libraries(trrojancore dl)
