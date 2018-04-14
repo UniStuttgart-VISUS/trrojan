@@ -43,7 +43,7 @@ int main(const int argc, const char **argv) {
                 "der Universität Stuttgart."
                 << std::endl << "All rights reserved."
                 << std::endl << std::endl;
-            std::cout << "The way it's meant to be trrolled." 
+            std::cout << "The way you're meant to be trrolled." 
                 << std::endl << std::endl;
         }
 
