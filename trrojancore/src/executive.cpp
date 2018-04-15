@@ -18,6 +18,8 @@
 #include "trrojan/log.h"
 #include "trrojan/text.h"
 
+#include "scripting_host.h"
+
 
 /*
  * trrojan::executive::~executive
@@ -53,6 +55,15 @@ trrojan::plugin trrojan::executive::find_plugin(const std::string& name) {
     }
 }
 
+
+/*
+ * trrojan::executive::javascript
+ */
+void trrojan::executive::javascript(const std::string& path,
+        output_base& output, const cool_down& coolDown) {
+    scripting_host host;
+    host.run_code(L"trrojan.log(log_level.error, \"hugo\");");
+}
 
 /*
  * trrojan::executive::load_plugins

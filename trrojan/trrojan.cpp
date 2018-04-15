@@ -85,6 +85,18 @@ int main(const int argc, const char **argv) {
             }
         }
 
+        /* Run JavaScript if any. */
+        {
+            auto it = trrojan::find_argument("--javascript", cmdLine.begin(),
+                cmdLine.end());
+            if (it != cmdLine.end()) {
+                trrojan::log::instance().write_line(
+                    trrojan::log_level::information, "Running JavaScript "
+                    "\"%s\" to conduct benchmarks ...", *it);
+                exe.javascript(*it, *output, coolDown);
+            }
+        }
+
         return 0;
 
     } catch (std::exception& ex) {

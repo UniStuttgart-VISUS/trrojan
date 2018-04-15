@@ -43,6 +43,9 @@ if (EXISTS ${CHAKRA_DIR})
                            PRE_BUILD
                            COMMAND msbuild /m /p:Platform=${CHAKRA_PLATFORM} /p:Configuration=${CHAKRA_CONFIGURATION} /p:RuntimeLib=static_library "${CHAKRA_DIR}/Build/Chakra.Core.sln"
                            COMMENT "Building Chakra Core ...")
+        add_custom_command(TARGET trrojancore
+                           POST_BUILD
+                           COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CHAKRA_BIN} $<TARGET_FILE_DIR:trrojancore>)
     else (WIN32)
         MESSAGE(WARNING "Not yet implemented.")
         #add_subdirectory("chakra")

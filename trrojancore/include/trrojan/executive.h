@@ -66,6 +66,13 @@ namespace trrojan {
         }
 
         /// <summary>
+        /// Runs the given JavaScript to conduct benchmarks wiring the results
+        /// to the given <paramref name="output" />.
+        /// <s/ummary>
+        void javascript(const std::string& path, output_base& output,
+            const cool_down& coolDown);
+
+        /// <summary>
         /// Loads all plugins in the current directory, retrieves their
         /// environments and initialises those with the given command line.
         /// </summary>
@@ -75,7 +82,7 @@ namespace trrojan {
 
         /// <summary>
         /// Runs the benchmarks in the given TRROLL script writing the results
-        // to the given <paramref name="output" />.
+        /// to the given <paramref name="output" />.
         /// </summary>
         void trroll(const std::string& path, output_base& output,
             const cool_down& coolDown);
