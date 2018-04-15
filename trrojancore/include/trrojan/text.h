@@ -29,6 +29,22 @@ namespace trrojan {
         const std::basic_string<T>& needle);
 
     /// <summary>
+    /// Convert an UTF-8 string to a wide string.
+    /// </summary>
+    inline std::wstring from_utf8(const std::string& str) {
+#if (!defined(__GNUC__) || (__GNUC__ >= 5))
+        static std::wstring_convert<std::codecvt_utf8<wchar_t>> cvt;
+        return cvt.from_bytes(str);
+#else /* (!defined(__GNUC__) || (__GNUC__ >= 5)) */
+        std::wstring retval;
+        for (auto c : str) {
+            retval += static_cast<wchar_t>(c);
+        }
+        return retval;
+#endif /* (!defined(__GNUC__) || (__GNUC__ >= 5)) */
+    }
+
+    /// <summary>
     /// Joins a set of strings with the given separator between them.
     /// </summary>
     template<class... P> std::string join(

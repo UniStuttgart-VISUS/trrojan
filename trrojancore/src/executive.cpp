@@ -6,6 +6,7 @@
 #include "trrojan/executive.h"
 
 #include <algorithm>
+#include <fstream>
 #include <iostream>
 #include <iterator>
 #include <stdexcept>
@@ -27,6 +28,7 @@
 trrojan::executive::~executive(void) {
     if (this->cur_environment != nullptr) {
         this->cur_environment->on_deactivate();
+        this->cur_environment.reset();
     }
 
     for (auto e : this->environments) {
@@ -37,6 +39,49 @@ trrojan::executive::~executive(void) {
         }
     }
     this->environments.clear();
+}
+
+
+/*
+ * trrojan::executive::enable_environment
+ */
+void trrojan::executive::enable_environment(const std::string& name) {
+    auto it = this->environments.find(name);
+    if (it != this->environments.end()) {
+        this->enable_environment(it->second);
+
+    } else {
+        std::stringstream msg;
+        msg << "The environment \"" << name << "\" does not exist or has not "
+            "been loaded." << std::ends;
+        throw std::invalid_argument(msg.str());
+    }
+}
+
+
+/*
+ * trrojan::executive::enable_environment
+ */
+void trrojan::executive::enable_environment(environment env) {
+    if ((this->cur_environment != nullptr) && (this->cur_environment != env)) {
+        log::instance().write_line(log_level::information, "Disabling "
+            "environment \"%s\" ...", this->cur_environment->name().c_str());
+        this->cur_environment->on_deactivate();
+        this->cur_environment = nullptr;
+    }
+
+    if (this->cur_environment == nullptr) {
+        this->cur_environment = env;
+
+        if (this->cur_environment != nullptr) {
+            log::instance().write_line(log_level::information, "Enabling "
+                "environment \"%s\" ...", env->name().c_str());
+            this->cur_environment->on_activate();
+        } else {
+            log::instance().write_line(log_level::information, "Enabling "
+                "empty environment ...");
+        }
+    }
 }
 
 
@@ -62,8 +107,9 @@ trrojan::plugin trrojan::executive::find_plugin(const std::string& name) {
 void trrojan::executive::javascript(const std::string& path,
         output_base& output, const cool_down& coolDown) {
     scripting_host host;
-    host.run_code(L"trrojan.log(log_level.error, \"hugo\");");
+    host.run_script(*this, path);
 }
+
 
 /*
  * trrojan::executive::load_plugins
@@ -257,49 +303,6 @@ void trrojan::executive::trroll(const std::string& path, output_base& output,
             }
         }
     } /* end for (auto b : bcss) */
-}
-
-
-/*
- * trrojan::executive::enable_environment
- */
-void trrojan::executive::enable_environment(const std::string& name) {
-    auto it = this->environments.find(name);
-    if (it != this->environments.end()) {
-        this->enable_environment(it->second);
-
-    } else {
-        std::stringstream msg;
-        msg << "The environment \"" << name << "\" does not exist or has not "
-            "been loaded." << std::ends;
-        throw std::invalid_argument(msg.str());
-    }
-}
-
-
-/*
- * trrojan::executive::enable_environment
- */
-void trrojan::executive::enable_environment(environment env) {
-    if ((this->cur_environment != nullptr) && (this->cur_environment != env)) {
-        log::instance().write_line(log_level::information, "Disabling "
-            "environment \"%s\" ...", this->cur_environment->name().c_str());
-        this->cur_environment->on_deactivate();
-        this->cur_environment = nullptr;
-    }
-
-    if (this->cur_environment == nullptr) {
-        this->cur_environment = env;
-
-        if (this->cur_environment != nullptr) {
-            log::instance().write_line(log_level::information, "Enabling "
-                "environment \"%s\" ...", env->name().c_str());
-            this->cur_environment->on_activate();
-        } else {
-            log::instance().write_line(log_level::information, "Enabling "
-                "empty environment ...");
-        }
-    }
 }
 
 

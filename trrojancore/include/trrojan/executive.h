@@ -1,13 +1,15 @@
 /// <copyright file="executive.h" company="SFB-TRR 161 Quantitative Methods for Visual Computing">
-/// Copyright © 2016 SFB-TRR 161. Alle Rechte vorbehalten.
+/// Copyright © 2016 - 2018 SFB-TRR 161. Alle Rechte vorbehalten.
 /// </copyright>
 /// <author>Christoph Müller</author>
 
 #pragma once
 
+#include <iterator>
 #include <map>
 #include <memory>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #ifdef _WIN32
@@ -20,6 +22,7 @@
 #include "trrojan/image_helper.h"
 #include "trrojan/output.h"
 #include "trrojan/plugin.h"
+#include "trrojan/qualified_benchmark.h"
 #include "trrojan/trroll_parser.h"
 
 
@@ -49,12 +52,53 @@ namespace trrojan {
         ~executive(void);
 
         /// <summary>
+        /// Enables the environment with the specified name.
+        /// </summary>
+        /// <remarks>
+        /// Any previously enabled environment stored at
+        /// <see cref="cur_environment" /> will be properly deactivated by the
+        /// method.
+        /// </remarks>
+        /// <param name="name"></param>
+        /// <exception cref="std::invalid_argument>If the specified environment
+        /// does not exist.</exception>
+        void enable_environment(const std::string& name);
+
+        /// <summary>
+        /// Enables the given environment.
+        /// </summary>
+        /// <remarks>
+        /// Any previously enabled environment stored at
+        /// <see cref="cur_environment" /> will be properly deactivated by the
+        /// method.
+        /// </remarks>
+        /// <param name="env"></param>
+        /// <exception cref="std::invalid_argument>If <paramref name="env" /> is
+        /// <c>nullptr</c>.</exception>
+        void enable_environment(environment env);
+
+        /// <summary>
         /// Search for the plugin with the specified name.
         /// </summary>
         /// <param name="name"></param>
         /// <returns>A pointer to the respective plugin or <c>nullptr</c> if the
         /// plugin was not found.</returns>
         plugin find_plugin(const std::string& name);
+
+        /// <summary>
+        /// Returns all benchmarks in form of
+        /// <see cref="qualified_benchmark" />s.
+        /// </summary>
+        /// <param name="oit">An output iterator like a back insert
+        /// iterator for <see cref="qualified_benchmark" />s.</param>
+        template<class I> void get_benchmarks(I oit) const;
+
+        /// <summary>
+        /// Returns all environments to the given output iterator.
+        /// </summary>
+        /// <param name="oit">An output iterator like a back insert
+        /// iterator.</param>
+        template<class I> void get_environments(I oit) const;
 
         /// <summary>
         /// Answer whether an environment with the given name is available.
@@ -206,32 +250,6 @@ namespace trrojan {
         };
 
         /// <summary>
-        /// Enables the environment with the specified name.
-        /// </summary>
-        /// <remarks>
-        /// Any previously enabled environment stored at
-        /// <see cref="cur_environment" /> will be properly deactivated by the
-        /// method.
-        /// </remarks>
-        /// <param name="name"></param>
-        /// <exception cref="std::invalid_argument>If the specified environment
-        /// does not exist.</exception>
-        void enable_environment(const std::string& name);
-
-        /// <summary>
-        /// Enables the given environment.
-        /// </summary>
-        /// <remarks>
-        /// Any previously enabled environment stored at
-        /// <see cref="cur_environment" /> will be properly deactivated by the
-        /// method.
-        /// </remarks>
-        /// <param name="env"></param>
-        /// <exception cref="std::invalid_argument>If <paramref name="env" /> is
-        /// <c>nullptr</c>.</exception>
-        void enable_environment(environment env);
-
-        /// <summary>
         /// Finds the environment designated by the given string variant, or
         /// return the environment if the variant specified an actual
         /// environment pointer.
@@ -270,3 +288,5 @@ namespace trrojan {
         std::vector<plugin> plugins;
     };
 }
+
+#include "trrojan/executive.inl"

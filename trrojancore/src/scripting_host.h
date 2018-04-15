@@ -6,6 +6,8 @@
 #pragma once
 
 #include <array>
+#include <map>
+#include <memory>
 #include <queue>
 #include <vector>
 
@@ -13,8 +15,15 @@
 #include "ChakraCore.h"
 #endif /* defined(WITH_CHAKRA) */
 
+#include "trrojan/qualified_benchmark.h"
+
 
 namespace trrojan {
+
+    /* Forward declarations. */
+    class device_base;
+    class environment_base;
+    class executive;
 
     /// <summary>
     /// The scripting host is responsible for embedding the Chakra Core
@@ -71,33 +80,124 @@ namespace trrojan {
 
         ~scripting_host(void);
 
-        void run_code(const char_type *code);
+        /// <summary>
+        /// Runs the given JavaScript code.
+        /// </summary>
+        /// <remarks>
+        /// The scripting host projects the given
+        /// <see cref="trrojan::executive" /> into the JavaScript runtime.
+        /// Therefore, the caller must make sure that the object exists until
+        /// this method returns and that the object is not modified while the
+        /// script is runninng.
+        /// </remarks>
+        /// <param name="exe"></param>
+        /// <param name="code"></param>
+        /// <exception cref="trrojan::scripting_exception"></exception> 
+        void run_code(trrojan::executive& exe, const char_type *code);
 
+        inline void run_code(trrojan::executive& exe,
+                const std::basic_string<char_type>& code) {
+            this->run_code(exe, code.c_str());
+        }
+
+        void run_script(trrojan::executive& exe, const std::string& path);
 
     private:
 
 #if defined(WITH_CHAKRA)
+        typedef std::vector<trrojan::qualified_benchmark> bench_list;
+        typedef std::vector<std::shared_ptr<trrojan::environment_base>> env_list;
+
+        static JsValueRef call(JsValueRef object, const char_type *name,
+            JsValueRef *args, const unsigned short cntArgs);
+
+        static bool get_bool(JsValueRef value);
+
+        static void *get_external_data(JsValueRef value);
+
+        template<class T> static inline T *get_external_data(JsValueRef value) {
+            return static_cast<T *>(scripting_host::get_external_data(value));
+        }
+
         static int get_int(JsValueRef value);
 
         static std::vector<char> get_string(JsValueRef value);
 
-        static JsValueRef CALLBACK on_trrojan_log(JsValueRef callee,
+        static JsValueType get_type(JsValueRef value);
+
+        static JsValueRef global(void);
+
+        static JsValueRef CHAKRA_CALLBACK on_configuration_add(JsValueRef callee,
             bool isConstruct, JsValueRef *arguments,
             unsigned short cntArguments, void *callbackState);
 
-        static void project_method(JsValueRef object, const char_type *name,
-            JsNativeFunction callback, void *callbackState);
+        static JsValueRef CHAKRA_CALLBACK on_configuration_ctor(JsValueRef callee,
+            bool isConstruct, JsValueRef *arguments,
+            unsigned short cntArguments, void *callbackState);
 
-        static JsValueRef project_number(const int number);
+        static void CHAKRA_CALLBACK on_configuration_dtor(void *data);
+
+        static JsValueRef CHAKRA_CALLBACK on_environment_devices(
+            JsValueRef callee, bool isConstruct, JsValueRef *arguments,
+            unsigned short cntArguments, void *callbackState);
+
+        static JsValueRef CHAKRA_CALLBACK on_trrojan_benchmarks(
+            JsValueRef callee, bool isConstruct, JsValueRef *arguments,
+            unsigned short cntArguments, void *callbackState);
+
+        static JsValueRef CHAKRA_CALLBACK on_trrojan_environments(
+            JsValueRef callee, bool isConstruct, JsValueRef *arguments,
+            unsigned short cntArguments, void *callbackState);
+
+        static JsValueRef CHAKRA_CALLBACK on_trrojan_log(JsValueRef callee,
+            bool isConstruct, JsValueRef *arguments,
+            unsigned short cntArguments, void *callbackState);
+
+        static JsValueRef CHAKRA_CALLBACK on_trrojan_run(JsValueRef callee,
+            bool isConstruct, JsValueRef *arguments,
+            unsigned short cntArguments, void *callbackState);
+
+        static JsValueRef project_array(const size_t size);
+
+        static JsValueRef project_class(const char_type *name,
+            const JsNativeFunction ctor,
+            const std::map<std::wstring, JsNativeFunction>& methods);
+
+        static JsValueRef project_method(JsValueRef object,
+            const char_type *name, JsNativeFunction callback,
+            void *callbackState = nullptr);
+
+        static JsValueRef project_object(void);
 
         static JsValueRef project_object(const char_type *name);
+
+        static JsValueRef project_object(
+            trrojan::qualified_benchmark& benchmark);
+
+        static JsValueRef project_object(device_base *env);
+
+        static JsValueRef project_object(environment_base *env);
 
         static void project_property(JsValueRef object, const char_type *name,
             JsValueRef property);
 
+        static JsValueRef project_value(const bool value);
+
+        static JsValueRef project_value(const int value);
+
+        static JsValueRef project_value(const double value);
+
+        static JsValueRef project_value(const char *value);
+
+        static JsValueRef undefined(void);
+
+        static void set_indexed_property(JsValueRef property,
+            const size_t index, JsValueRef value);
+
         static JsValueRef unproject_property(JsValueRef object,
             const char_type *name);
 
+        static JsValueRef configPrototype;
         unsigned int currentSourceContext;
         JsRuntimeHandle runtime;
         //std::queue<task *> taskQueue;

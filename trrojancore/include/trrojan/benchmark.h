@@ -289,6 +289,7 @@ namespace trrojan {
     /// A device.
     /// </summary>
     typedef std::shared_ptr<benchmark_base> benchmark;
+
 }
 
 #include "trrojan/benchmark.inl"
