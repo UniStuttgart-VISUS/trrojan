@@ -59,7 +59,7 @@ if (TRROJAN_WITH_CHAKRA)
         MESSAGE(WARNING "Not yet implemented.")
         add_custom_command(TARGET trrojancore
                            PRE_BUILD
-                           COMMAND "${CHAKRA_DIR}/Build/build.sh --static"
+                           COMMAND "${CHAKRA_DIR}/build.sh --static"
                            COMMENT "Building Chakra Core ...")
         #add_subdirectory("chakra")
         #    add_custom_command(OUTPUT asd COMMAND "chakra/Build/build.sh --static")
