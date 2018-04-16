@@ -22,7 +22,6 @@
 #include "trrojan/image_helper.h"
 #include "trrojan/output.h"
 #include "trrojan/plugin.h"
-#include "trrojan/qualified_benchmark.h"
 #include "trrojan/trroll_parser.h"
 
 
@@ -52,32 +51,6 @@ namespace trrojan {
         ~executive(void);
 
         /// <summary>
-        /// Enables the environment with the specified name.
-        /// </summary>
-        /// <remarks>
-        /// Any previously enabled environment stored at
-        /// <see cref="cur_environment" /> will be properly deactivated by the
-        /// method.
-        /// </remarks>
-        /// <param name="name"></param>
-        /// <exception cref="std::invalid_argument>If the specified environment
-        /// does not exist.</exception>
-        void enable_environment(const std::string& name);
-
-        /// <summary>
-        /// Enables the given environment.
-        /// </summary>
-        /// <remarks>
-        /// Any previously enabled environment stored at
-        /// <see cref="cur_environment" /> will be properly deactivated by the
-        /// method.
-        /// </remarks>
-        /// <param name="env"></param>
-        /// <exception cref="std::invalid_argument>If <paramref name="env" /> is
-        /// <c>nullptr</c>.</exception>
-        void enable_environment(environment env);
-
-        /// <summary>
         /// Search for the plugin with the specified name.
         /// </summary>
         /// <param name="name"></param>
@@ -86,11 +59,10 @@ namespace trrojan {
         plugin find_plugin(const std::string& name);
 
         /// <summary>
-        /// Returns all benchmarks in form of
-        /// <see cref="qualified_benchmark" />s.
+        /// Returns all benchmarks currently known to the TRRojan.
         /// </summary>
         /// <param name="oit">An output iterator like a back insert
-        /// iterator for <see cref="qualified_benchmark" />s.</param>
+        /// iterator for <see cref="benchmark" />s.</param>
         template<class I> void get_benchmarks(I oit) const;
 
         /// <summary>
@@ -123,6 +95,14 @@ namespace trrojan {
         /// <param name="cmdLine">The command line arguments passed to the
         /// environments.</param>
         void load_plugins(const cmd_line& cmdLine);
+
+        /// <summary>
+        /// Runs the given benchmark using the given configuration.
+        /// </summary>
+        /// <param name="benchmark">The plugin and bechmark to be run.</param>
+        /// <param name="config">The configuration holding the factors to be
+        /// applied.</param>
+        void run(const benchmark& benchmark, const configuration& config);
 
         /// <summary>
         /// Runs the benchmarks in the given TRROLL script writing the results
@@ -248,6 +228,32 @@ namespace trrojan {
             /// </summary>
             handle_type handle;
         };
+
+        /// <summary>
+        /// Enables the environment with the specified name.
+        /// </summary>
+        /// <remarks>
+        /// Any previously enabled environment stored at
+        /// <see cref="cur_environment" /> will be properly deactivated by the
+        /// method.
+        /// </remarks>
+        /// <param name="name"></param>
+        /// <exception cref="std::invalid_argument>If the specified environment
+        /// does not exist.</exception>
+        void enable_environment(const std::string& name);
+
+        /// <summary>
+        /// Enables the given environment.
+        /// </summary>
+        /// <remarks>
+        /// Any previously enabled environment stored at
+        /// <see cref="cur_environment" /> will be properly deactivated by the
+        /// method.
+        /// </remarks>
+        /// <param name="env"></param>
+        /// <exception cref="std::invalid_argument>If <paramref name="env" /> is
+        /// <c>nullptr</c>.</exception>
+        void enable_environment(environment env);
 
         /// <summary>
         /// Finds the environment designated by the given string variant, or

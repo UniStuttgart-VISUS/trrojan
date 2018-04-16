@@ -12,7 +12,7 @@ template<class I> void trrojan::executive::get_benchmarks(I oit) const {
         plugin_base::benchmark_list benchmarks;
         p->create_benchmarks(benchmarks);
         for (auto& b : benchmarks) {
-            *oit++ = qualified_benchmark{ p, b };
+            *oit++ = b;
         }
     }
 }

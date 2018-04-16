@@ -11,6 +11,7 @@
 #include <sstream>
 #include <stdexcept>
 
+#include "trrojan/benchmark.h"
 #include "trrojan/configuration.h"
 #include "trrojan/executive.h"
 #include "trrojan/io.h"
@@ -564,7 +565,7 @@ JsValueRef trrojan::scripting_host::on_trrojan_benchmarks(JsValueRef callee,
     auto retval = scripting_host::project_array(elements->size());
 
     for (size_t i = 0; i < elements->size(); ++i) {
-        auto b = scripting_host::project_object((*elements)[i]);
+        auto b = scripting_host::project_object((*elements)[i].get());
         scripting_host::set_indexed_property(retval, i, b);
     }
 
@@ -736,7 +737,8 @@ JsValueRef trrojan::scripting_host::project_object(const char_type *name) {
  * trrojan::scripting_host::project_object
  */
 JsValueRef trrojan::scripting_host::project_object(
-        trrojan::qualified_benchmark& benchmark) {
+        trrojan::benchmark_base *benchmark) {
+    assert(benchmark != nullptr);
     JsValueRef retval = JS_INVALID_REFERENCE;
 
     auto r = ::JsCreateExternalObject(&benchmark, nullptr, &retval);
@@ -745,11 +747,8 @@ JsValueRef trrojan::scripting_host::project_object(
             "JavaScript.");
     }
 
-    auto p = scripting_host::project_value(benchmark.plugin->name().c_str());
-    scripting_host::project_property(retval, L"plugin", p);
-
-    auto b = scripting_host::project_value(benchmark.benchmark->name().c_str());
-    scripting_host::project_property(retval, L"benchmark", b);
+    auto b = scripting_host::project_value(benchmark->name().c_str());
+    scripting_host::project_property(retval, L"name", b);
 
     return retval;
 }

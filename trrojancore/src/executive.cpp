@@ -43,49 +43,6 @@ trrojan::executive::~executive(void) {
 
 
 /*
- * trrojan::executive::enable_environment
- */
-void trrojan::executive::enable_environment(const std::string& name) {
-    auto it = this->environments.find(name);
-    if (it != this->environments.end()) {
-        this->enable_environment(it->second);
-
-    } else {
-        std::stringstream msg;
-        msg << "The environment \"" << name << "\" does not exist or has not "
-            "been loaded." << std::ends;
-        throw std::invalid_argument(msg.str());
-    }
-}
-
-
-/*
- * trrojan::executive::enable_environment
- */
-void trrojan::executive::enable_environment(environment env) {
-    if ((this->cur_environment != nullptr) && (this->cur_environment != env)) {
-        log::instance().write_line(log_level::information, "Disabling "
-            "environment \"%s\" ...", this->cur_environment->name().c_str());
-        this->cur_environment->on_deactivate();
-        this->cur_environment = nullptr;
-    }
-
-    if (this->cur_environment == nullptr) {
-        this->cur_environment = env;
-
-        if (this->cur_environment != nullptr) {
-            log::instance().write_line(log_level::information, "Enabling "
-                "environment \"%s\" ...", env->name().c_str());
-            this->cur_environment->on_activate();
-        } else {
-            log::instance().write_line(log_level::information, "Enabling "
-                "empty environment ...");
-        }
-    }
-}
-
-
-/*
  * trrojan::executive::find_plugin
  */
 trrojan::plugin trrojan::executive::find_plugin(const std::string& name) {
@@ -228,6 +185,41 @@ void trrojan::executive::load_plugins(const cmd_line& cmdLine) {
 
 
 /*
+ * trrojan::executive::run
+ */
+void trrojan::executive::run(const benchmark& benchmark,
+        const configuration& config) {
+    if (benchmark == nullptr) {
+        throw std::runtime_error("The benchmark to run must not be nullptr.");
+    }
+
+    {
+        auto it = config.find(benchmark_base::factor_environment);
+        if (it != config.end()) {
+            auto env = this->find_environment(*it);
+            if (env == nullptr) {
+                std::stringstream msg;
+                msg << "The environment \"" << it->value() << "\", which was "
+                    "requested by the user-provided configuration, could not "
+                    "be found.";
+                throw std::runtime_error(msg.str());
+            }
+
+            this->enable_environment(env);
+        }
+    }
+
+    {
+        //auto it = config.find()
+    }
+
+
+    //config[benchmark_base::factor_device]
+   
+}
+
+
+/*
  * trrojan::executive::trroll
  */
 void trrojan::executive::trroll(const std::string& path, output_base& output,
@@ -303,6 +295,49 @@ void trrojan::executive::trroll(const std::string& path, output_base& output,
             }
         }
     } /* end for (auto b : bcss) */
+}
+
+
+/*
+ * trrojan::executive::enable_environment
+ */
+void trrojan::executive::enable_environment(const std::string& name) {
+    auto it = this->environments.find(name);
+    if (it != this->environments.end()) {
+        this->enable_environment(it->second);
+
+    } else {
+        std::stringstream msg;
+        msg << "The environment \"" << name << "\" does not exist or has not "
+            "been loaded." << std::ends;
+        throw std::invalid_argument(msg.str());
+    }
+}
+
+
+/*
+ * trrojan::executive::enable_environment
+ */
+void trrojan::executive::enable_environment(environment env) {
+    if ((this->cur_environment != nullptr) && (this->cur_environment != env)) {
+        log::instance().write_line(log_level::information, "Disabling "
+            "environment \"%s\" ...", this->cur_environment->name().c_str());
+        this->cur_environment->on_deactivate();
+        this->cur_environment = nullptr;
+    }
+
+    if (this->cur_environment == nullptr) {
+        this->cur_environment = env;
+
+        if (this->cur_environment != nullptr) {
+            log::instance().write_line(log_level::information, "Enabling "
+                "environment \"%s\" ...", env->name().c_str());
+            this->cur_environment->on_activate();
+        } else {
+            log::instance().write_line(log_level::information, "Enabling "
+                "empty environment ...");
+        }
+    }
 }
 
 

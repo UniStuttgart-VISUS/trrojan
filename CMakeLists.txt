@@ -22,6 +22,11 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/include")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/bin")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/bin")
 
+
+# Configure optional features
+option(TRROJAN_WITH_CHAKRA "Enable JavaScript support." OFF)
+
+
 # Configure the compiler.
 if (WIN32)
 	add_compile_options(/wd4251)	# We cannot fix that - TRRojan just needs to be compiled in a single step.

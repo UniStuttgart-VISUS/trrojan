@@ -20,8 +20,16 @@ set(TrrojanCoreIncludeDir "${CMAKE_CURRENT_SOURCE_DIR}/${IncludeDirectory}" PARE
 
 add_library(trrojancore SHARED ${HeaderFiles} ${SourceFiles})
 
+# Disable Chakra core if we cannot build it.
+if (NOT EXISTS ${CHAKRA_DIR})
+    set(TRROJAN_WITH_CHAKRA OFF)
+endif()
+if (NOT WIN32)
+    set(TRROJAN_WITH_CHAKRA OFF)
+endif()
+
 # Build Chakra core if possible
-if (EXISTS ${CHAKRA_DIR})
+if (TRROJAN_WITH_CHAKRA)
     set(CHAKRA_CONFIGURATION "release")
 
     add_definitions("-DWITH_CHAKRA")
@@ -56,9 +64,9 @@ endif (EXISTS ${CHAKRA_DIR})
 # Configure the linker.
 target_link_libraries(trrojancore trrojansnfo)
 
-if (EXISTS ${CHAKRA_DIR})
+if (TRROJAN_WITH_CHAKRA)
     target_link_libraries(trrojancore ${CHAKRA_LIB})
-endif (EXISTS ${CHAKRA_DIR})
+endif (TRROJAN_WITH_CHAKRA)
 
 if (${CMAKE_COMPILER_IS_GNUCXX})
     target_link_libraries(trrojancore dl)

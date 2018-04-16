@@ -15,12 +15,11 @@
 #include "ChakraCore.h"
 #endif /* defined(WITH_CHAKRA) */
 
-#include "trrojan/qualified_benchmark.h"
-
 
 namespace trrojan {
 
     /* Forward declarations. */
+    class benchmark_base;
     class device_base;
     class environment_base;
     class executive;
@@ -105,7 +104,7 @@ namespace trrojan {
     private:
 
 #if defined(WITH_CHAKRA)
-        typedef std::vector<trrojan::qualified_benchmark> bench_list;
+        typedef std::vector<std::shared_ptr<trrojan::benchmark_base>> bench_list;
         typedef std::vector<std::shared_ptr<trrojan::environment_base>> env_list;
 
         static JsValueRef call(JsValueRef object, const char_type *name,
@@ -171,8 +170,7 @@ namespace trrojan {
 
         static JsValueRef project_object(const char_type *name);
 
-        static JsValueRef project_object(
-            trrojan::qualified_benchmark& benchmark);
+        static JsValueRef project_object(benchmark_base *benchmark);
 
         static JsValueRef project_object(device_base *env);
 
