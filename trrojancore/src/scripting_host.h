@@ -5,10 +5,13 @@
 
 #pragma once
 
+#include <algorithm>
 #include <array>
+#include <limits>
 #include <map>
 #include <memory>
 #include <queue>
+#include <stdexcept>
 #include <vector>
 
 #if defined(WITH_CHAKRA)
@@ -165,13 +168,31 @@ namespace trrojan {
         static JsValueRef call(JsValueRef object, const char_type *name,
             JsValueRef *args, const unsigned short cntArgs);
 
+        template<class T> static bool fits_range(const double value);
+
+        template<class T> static inline bool fits_range(
+                const std::vector<double>& values) {
+            return std::all_of(values.begin(), values.end(),
+                [](double v) { return scripting_host::fits_range<T>(v); });
+        }
+
+        static size_t get_array_length(JsValueRef value);
+
         static bool get_bool(JsValueRef value);
+
+        static double get_double(JsValueRef value);
 
         static void *get_ext_data(JsValueRef value);
 
         template<class T> static inline T *get_ext_data(JsValueRef value) {
             return static_cast<T *>(scripting_host::get_ext_data(value));
         }
+
+        static JsValueRef get_indexed_property(JsValueRef property,
+            const size_t index);
+
+        static std::vector<JsValueRef> get_indexed_property(
+            JsValueRef property);
 
         static int get_int(JsValueRef value);
 
@@ -181,15 +202,15 @@ namespace trrojan {
 
         static JsValueRef global(void);
 
-        static JsValueRef CHAKRA_CALLBACK on_configuration_set_add(
-            JsValueRef callee, bool isConstruct, JsValueRef *arguments,
-            unsigned short cntArguments, void *callbackState);
-
         static JsValueRef CHAKRA_CALLBACK on_configuration_set_ctor(
             JsValueRef callee, bool isConstruct, JsValueRef *arguments,
             unsigned short cntArguments, void *callbackState);
 
         static void CHAKRA_CALLBACK on_configuration_set_dtor(void *data);
+
+        static JsValueRef CHAKRA_CALLBACK on_configuration_set_set(
+            JsValueRef callee, bool isConstruct, JsValueRef *arguments,
+            unsigned short cntArguments, void *callbackState);
 
         static JsValueRef CHAKRA_CALLBACK on_environment_devices(
             JsValueRef callee, bool isConstruct, JsValueRef *arguments,
@@ -248,6 +269,14 @@ namespace trrojan {
         static void set_indexed_property(JsValueRef property,
             const size_t index, JsValueRef value);
 
+        static trrojan::variant to_variant(JsValueRef value);
+
+        template<class T> static trrojan::variant to_variant(
+            const std::vector<double>& value);
+
+        static std::vector<trrojan::variant> to_variant_list(JsValueRef value,
+            const bool isRecursion = false);
+
         static JsValueRef unproject_property(JsValueRef object,
             const char_type *name);
 
@@ -262,3 +291,5 @@ namespace trrojan {
 
     };
 }
+
+#include "scripting_host.inl"

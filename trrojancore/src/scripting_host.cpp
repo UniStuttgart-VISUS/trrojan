@@ -6,10 +6,10 @@
 #include "scripting_host.h"
 
 #include <climits>
+#include <cmath>
 #include <cstring>
 #include <ctime>
 #include <sstream>
-#include <stdexcept>
 
 #include "trrojan/benchmark.h"
 #include "trrojan/configuration.h"
@@ -154,7 +154,10 @@ trrojan::scripting_host::scripting_host(trrojan::output_base& output,
 
         {
             std::map<std::wstring, JsNativeFunction> methods;
-            methods[L"add"] =  scripting_host::on_configuration_set_add;
+            methods[L"add"] = scripting_host::on_configuration_set_set;
+            // Note: for sake of simplicity, do not distinguish between add and
+            // set/replace in the scripting interface.
+            methods[L"set"] =  scripting_host::on_configuration_set_set;
             this->configSetPrototype = scripting_host::project_class(
                 L"ConfigurationSet", scripting_host::on_configuration_set_ctor,
                 methods, this);
@@ -346,6 +349,17 @@ JsValueRef trrojan::scripting_host::call(JsValueRef object,
 
 
 /*
+ * trrojan::scripting_host::get_array_length
+ */
+size_t trrojan::scripting_host::get_array_length(JsValueRef value) {
+    assert(value != JS_INVALID_REFERENCE);
+    assert(scripting_host::get_type(value) == JsValueType::JsArray);
+    auto length = scripting_host::unproject_property(value, L"length");
+    return scripting_host::get_int(length);
+}
+
+
+/*
  *  trrojan::scripting_host::get_bool
  */
 bool trrojan::scripting_host::get_bool(JsValueRef value) {
@@ -358,6 +372,24 @@ bool trrojan::scripting_host::get_bool(JsValueRef value) {
 
     // Retrieve the number as integer.
     ::JsBooleanToBool(boolean, &retval);
+
+    return retval;
+}
+
+
+/*
+ * trrojan::scripting_host::get_double
+ */
+double trrojan::scripting_host::get_double(JsValueRef value) {
+    assert(value != JS_INVALID_REFERENCE);
+    double retval = 0;
+    JsValueRef num = JS_INVALID_REFERENCE;
+
+    // Make sure that the object is a number in JavaScript.
+    ::JsConvertValueToNumber(value, &num);
+
+    // Retrieve the number as integer.
+    ::JsNumberToDouble(num, &retval);
 
     return retval;
 }
@@ -380,6 +412,46 @@ void *trrojan::scripting_host::get_ext_data(JsValueRef value) {
 
 
 /*
+ * trrojan::scripting_host::get_indexed_property
+ */
+JsValueRef trrojan::scripting_host::get_indexed_property(JsValueRef property,
+        const size_t index) {
+    assert(property != JS_INVALID_REFERENCE);
+    assert(index <= INT_MAX);
+    JsValueRef retval = JS_INVALID_REFERENCE;
+
+    auto i = scripting_host::project_value(static_cast<int>(index));
+    auto r = ::JsGetIndexedProperty(property, i, &retval);
+    if (r != JsNoError) {
+        throw scripting_exception(r, "Failed to get indexed property.");
+    }
+
+    return retval;
+}
+
+
+/*
+ * trrojan::scripting_host::get_indexed_property
+ */
+std::vector<JsValueRef> trrojan::scripting_host::get_indexed_property(
+        JsValueRef property) {
+    auto len = scripting_host::get_array_length(property);
+    std::vector<JsValueRef> retval;
+
+    for (size_t i = 0; i < len; ++i) {
+        retval.emplace_back();
+        auto j = scripting_host::project_value(static_cast<int>(i));
+        auto r = ::JsGetIndexedProperty(property, j, &retval.back());
+        if (r != JsNoError) {
+            throw scripting_exception(r, "Failed to get indexed property.");
+        }
+    }
+
+    return retval;
+}
+
+
+/*
  * trrojan::scripting_host::get_int
  */
 int trrojan::scripting_host::get_int(JsValueRef value) {
@@ -387,7 +459,7 @@ int trrojan::scripting_host::get_int(JsValueRef value) {
     int retval = 0;
     JsValueRef num = JS_INVALID_REFERENCE;
 
-    // Make sure that the object is an int in JavaScript.
+    // Make sure that the object is a number in JavaScript.
     ::JsConvertValueToNumber(value, &num);
 
     // Retrieve the number as integer.
@@ -452,54 +524,6 @@ JsValueRef trrojan::scripting_host::global(void) {
 
 
 /*
- * trrojan::scripting_host::on_configuration_set_add
- */
-JsValueRef trrojan::scripting_host::on_configuration_set_add(JsValueRef callee,
-        bool isConstruct, JsValueRef *arguments, unsigned short cntArguments,
-        void *callbackState) {
-    JsValueRef retval = JS_INVALID_REFERENCE;
-
-    if (cntArguments != 3) {
-        throw std::runtime_error("Configuration::add must have two arguments.");
-    }
-
-    auto cs = scripting_host::get_ext_data<configuration_set>(arguments[0]);
-    auto factor = scripting_host::get_string(arguments[1]);
-    auto type = scripting_host::get_type(arguments[2]);
-
-    log::instance().write_line(log_level::debug, "Adding factor \"%s\" from "
-        "JavaScript ...", factor.data());
-
-    switch (type) {
-        case JsValueType::JsBoolean:
-            cs->add_factor(factor::from_manifestations(factor.data(),
-                scripting_host::get_bool(arguments[2])));
-            break;
-
-        case JsValueType::JsNumber:
-            // TODO
-            break;
-
-        //case JsValueType::JsObject:
-        //    break;
-
-        case JsValueType::JsTypedArray:
-            // TODO
-            //::JsGetTypedArrayInfo()
-            break;
-
-        case JsValueType::JsString:
-        default: {
-            std::string value(scripting_host::get_string(arguments[2]).data());
-            cs->add_factor(factor::from_manifestations(factor.data(), value));
-            } break;
-    }
-
-    return retval;
-}
-
-
-/*
  * trrojan::scripting_host::on_configuration_set_ctor
  */
 JsValueRef trrojan::scripting_host::on_configuration_set_ctor(JsValueRef callee,
@@ -553,6 +577,30 @@ void trrojan::scripting_host::on_configuration_set_dtor(void *data) {
         "after garbage collection in JavaScript ...");
     auto cs = static_cast<trrojan::configuration_set *>(data);
     delete cs;
+}
+
+
+/*
+ * trrojan::scripting_host::on_configuration_set_set
+ */
+JsValueRef trrojan::scripting_host::on_configuration_set_set(JsValueRef callee,
+        bool isConstruct, JsValueRef *arguments, unsigned short cntArguments,
+        void *callbackState) {
+    JsValueRef retval = JS_INVALID_REFERENCE;
+
+    if (cntArguments != 3) {
+        throw std::runtime_error("Configuration::set must have two arguments.");
+    }
+
+    auto cs = scripting_host::get_ext_data<configuration_set>(arguments[0]);
+    auto factor = scripting_host::get_string(arguments[1]);
+    auto value = scripting_host::to_variant_list(arguments[2]);
+
+    log::instance().write_line(log_level::debug, "Setting factor \"%s\" from "
+        "JavaScript ...", factor.data());
+    cs->replace_factor(factor::from_manifestations(factor.data(), value));
+
+    return retval;
 }
 
 
@@ -960,6 +1008,86 @@ void trrojan::scripting_host::set_indexed_property(JsValueRef property,
     auto r = ::JsSetIndexedProperty(property, i, value);
     if (r != JsNoError) {
         throw scripting_exception(r, "Failed to set indexed property.");
+    }
+}
+
+
+/*
+ * trrojan::variant trrojan::scripting_host::to_variant
+ */
+trrojan::variant trrojan::scripting_host::to_variant(JsValueRef value) {
+    assert(value != JS_INVALID_REFERENCE);
+    auto type = scripting_host::get_type(value);
+
+    switch (type) {
+        case JsValueType::JsBoolean:
+            return scripting_host::get_bool(value);
+
+        case JsValueType::JsNumber: {
+            auto v = scripting_host::get_double(value);
+            if (scripting_host::fits_range<unsigned int>(v)) {
+                return static_cast<unsigned int>(v);
+            } else if (scripting_host::fits_range<int>(v)) {
+                return static_cast<int>(v);
+            } else if (scripting_host::fits_range<size_t>(v)) {
+                return static_cast<size_t>(v);
+            } else if (scripting_host::fits_range<float>(v)) {
+                return static_cast<float>(v);
+            }
+            // No better representation that double found at this point.
+            return v;
+            }
+
+        case JsValueType::JsArray: {
+            auto variables = scripting_host::get_indexed_property(value);
+            std::vector<double> values;
+            std::transform(variables.begin(),
+                variables.end(),
+                std::back_inserter(values),
+                [](JsValueRef v) { return scripting_host::get_double(v); });
+
+            if (scripting_host::fits_range<unsigned int>(values)) {
+                return scripting_host::to_variant<unsigned int>(values);
+            } else if (scripting_host::fits_range<int>(values)) {
+                return scripting_host::to_variant<int>(values);
+            } else if (scripting_host::fits_range<size_t>(values)) {
+                return scripting_host::to_variant<size_t>(values);
+            } else if (scripting_host::fits_range<float>(values)) {
+                return scripting_host::to_variant<float>(values);
+            } else {
+                return scripting_host::to_variant<double>(values);
+            }
+            } break;
+
+        case JsValueType::JsString:
+        default:
+            // If in doubt, stringify the value ...
+            return std::string(scripting_host::get_string(value).data());
+    }
+}
+
+
+/*
+ * trrojan::scripting_host::to_variant_list
+ */
+std::vector<trrojan::variant> trrojan::scripting_host::to_variant_list(
+        JsValueRef value, const bool isRecursion) {
+    assert(value != JS_INVALID_REFERENCE);
+    auto type = scripting_host::get_type(value);
+
+    switch (type) {
+        case JsValueType::JsArray:
+            if (!isRecursion) {
+                auto variables = scripting_host::get_indexed_property(value);
+                std::vector<trrojan::variant> retval(variables.size());
+                for (size_t i = 0; i < retval.size(); ++i) {
+                    retval[i] = scripting_host::to_variant(variables[i]);
+                }
+                return retval;
+            }
+            /* Falls through. */
+        default:
+            return { scripting_host::to_variant(value) };
     }
 }
 
