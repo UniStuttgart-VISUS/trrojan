@@ -24,9 +24,9 @@ add_library(trrojancore SHARED ${HeaderFiles} ${SourceFiles})
 if (NOT EXISTS ${CHAKRA_DIR})
     set(TRROJAN_WITH_CHAKRA OFF)
 endif()
-if (NOT WIN32)
-    set(TRROJAN_WITH_CHAKRA OFF)
-endif()
+#if (NOT WIN32)
+#    set(TRROJAN_WITH_CHAKRA OFF)
+#endif()
 
 # Build Chakra core if possible
 if (TRROJAN_WITH_CHAKRA)

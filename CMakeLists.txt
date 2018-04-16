@@ -24,7 +24,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/bin")
 
 
 # Configure optional features
-option(TRROJAN_WITH_CHAKRA "Enable JavaScript support." OFF)
+option(TRROJAN_WITH_CHAKRA "Enable JavaScript support." ON)
 
 
 # Configure the compiler.

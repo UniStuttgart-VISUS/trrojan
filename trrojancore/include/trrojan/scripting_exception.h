@@ -18,7 +18,7 @@ namespace trrojan {
     /// An exception thrown if an error in the scripting enging occurs.
     /// </summary>
     /// <remarks>
-    class scripting_exception: public std::exception {
+    class scripting_exception: public std::runtime_error {
 
     public:
 
@@ -35,7 +35,7 @@ namespace trrojan {
         /// Initialises a new instance.
         /// </summary>
         inline scripting_exception(const error_type errorCode, const char *msg)
-            : std::exception(msg), errorCode(errorCode) { }
+            : std::runtime_error(msg), errorCode(errorCode) { }
 
         /// <summary>
         /// Answer the error code.
