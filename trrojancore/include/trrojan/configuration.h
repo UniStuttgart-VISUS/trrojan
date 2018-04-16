@@ -116,6 +116,12 @@ namespace trrojan {
         }
 
         /// <summary>
+        /// Answe whether the configuration contains a factor with the
+        /// specified name that also has the specified value type.
+        /// </summary>
+        bool contains(const std::string& factor, const variant_type type) const;
+
+        /// <summary>
         /// Gets an iterator for the end of the factors.
         /// </summary>
         inline iterator_type end(void) const {

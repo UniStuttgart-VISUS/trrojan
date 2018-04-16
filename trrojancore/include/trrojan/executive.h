@@ -97,12 +97,19 @@ namespace trrojan {
         void load_plugins(const cmd_line& cmdLine);
 
         /// <summary>
-        /// Runs the given benchmark using the given configuration.
+        /// Runs the given benchmark using the given configurations.
         /// </summary>
         /// <param name="benchmark">The plugin and bechmark to be run.</param>
-        /// <param name="config">The configuration holding the factors to be
-        /// applied.</param>
-        void run(const benchmark& benchmark, const configuration& config);
+        /// <param name="configs">The set of configurations to be tested. This
+        /// parameter is passed by value because it will be modified by the
+        /// method before actually starting the benchmark. For instance, all
+        /// names of <see cref="environment" /> and <see cref="device" />s need
+        /// to be replaces with their actual instantiation.</param>
+        void run(benchmark_base& benchmark, configuration_set configs,
+            output_base& output, const cool_down& coolDown);
+
+        void run(const benchmark& benchmark, const configuration_set& configs,
+            output_base& output, const cool_down& coolDown);
 
         /// <summary>
         /// Runs the benchmarks in the given TRROLL script writing the results

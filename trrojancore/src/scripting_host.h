@@ -15,6 +15,9 @@
 #include "ChakraCore.h"
 #endif /* defined(WITH_CHAKRA) */
 
+#include "trrojan/cool_down.h"
+#include "trrojan/output.h"
+
 
 namespace trrojan {
 
@@ -40,9 +43,57 @@ namespace trrojan {
     /// https://github.com/Microsoft/Chakra-Samples.</para>
     /// <para>The <see cref="scripting_host" /> projects the following
     /// functionality of the TRRojan into JavaScript:
-    /// log_level.debug, log_level.verbose, log_level.information,
-    /// log_level.warning, log_level.error
-    /// trrojan.log(level, ...)
+    /// <list type="bullet">
+    /// <item>
+    ///     <term>LogLevel</term>
+    ///     <description>A global object holding the possible log levels that
+    /// can be passed to <c>trrojan.log</c>.</description>
+    /// </item>
+    /// <item>
+    ///     <term>LogLevel.DEBUG</term>
+    ///     <description>A constant value identifying the debugging log
+    /// level.</description>
+    /// </item>
+    /// <item>
+    ///     <term>LogLevel.VERBOSE</term>
+    ///     <description>A constant value identifying the verbose log
+    /// level.</description>
+    /// </item>
+    /// <item>
+    ///     <term>LogLevel.INFORMATION</term>
+    ///     <description>A constant value identifying the information log
+    /// level.</description>
+    /// </item>
+    /// <item>
+    ///     <term>LogLevel.WARNING</term>
+    ///     <description>A constant value identifying the warning log
+    /// level.</description>
+    /// </item>
+    /// <item>
+    ///     <term>LogLevel.ERROR</term>
+    ///     <description>A constant value identifying the error log
+    /// level.</description>
+    /// </item>
+    /// <item>
+    ///     <term>trrojan</term>
+    ///     <description>The global handle providing access to the TRRojan.
+    /// </description>
+    /// </item>
+    /// <item>
+    ///     <term>trrojan.log(level, msg)</term>
+    ///     <description>Writes a message to the logging facility of the
+    /// TRRojan.</description>
+    /// </item>
+    /// <item>
+    ///     <term>trrojan.benchmarks()</term>
+    ///     <description>Provides a list of all loaded benchmarsk.</description>
+    /// </item>
+    /// <item>
+    ///     <term>trrojan.environments()</term>
+    ///     <description>Provides a list of all available benchmarking
+    /// environments.</description>
+    /// </item>
+    /// </list>
     /// </para>
     /// </remarks>
     class scripting_host {
@@ -75,7 +126,9 @@ namespace trrojan {
         //    int time;
         //};
 
-        scripting_host(void);
+        scripting_host(trrojan::output_base& output, const cool_down& coolDown);
+
+        scripting_host(const scripting_host&) = delete;
 
         ~scripting_host(void);
 
@@ -101,6 +154,8 @@ namespace trrojan {
 
         void run_script(trrojan::executive& exe, const std::string& path);
 
+        scripting_host& operator =(const scripting_host&) = delete;
+
     private:
 
 #if defined(WITH_CHAKRA)
@@ -112,10 +167,10 @@ namespace trrojan {
 
         static bool get_bool(JsValueRef value);
 
-        static void *get_external_data(JsValueRef value);
+        static void *get_ext_data(JsValueRef value);
 
-        template<class T> static inline T *get_external_data(JsValueRef value) {
-            return static_cast<T *>(scripting_host::get_external_data(value));
+        template<class T> static inline T *get_ext_data(JsValueRef value) {
+            return static_cast<T *>(scripting_host::get_ext_data(value));
         }
 
         static int get_int(JsValueRef value);
@@ -126,15 +181,15 @@ namespace trrojan {
 
         static JsValueRef global(void);
 
-        static JsValueRef CHAKRA_CALLBACK on_configuration_add(JsValueRef callee,
-            bool isConstruct, JsValueRef *arguments,
+        static JsValueRef CHAKRA_CALLBACK on_configuration_set_add(
+            JsValueRef callee, bool isConstruct, JsValueRef *arguments,
             unsigned short cntArguments, void *callbackState);
 
-        static JsValueRef CHAKRA_CALLBACK on_configuration_ctor(JsValueRef callee,
-            bool isConstruct, JsValueRef *arguments,
+        static JsValueRef CHAKRA_CALLBACK on_configuration_set_ctor(
+            JsValueRef callee, bool isConstruct, JsValueRef *arguments,
             unsigned short cntArguments, void *callbackState);
 
-        static void CHAKRA_CALLBACK on_configuration_dtor(void *data);
+        static void CHAKRA_CALLBACK on_configuration_set_dtor(void *data);
 
         static JsValueRef CHAKRA_CALLBACK on_environment_devices(
             JsValueRef callee, bool isConstruct, JsValueRef *arguments,
@@ -160,7 +215,8 @@ namespace trrojan {
 
         static JsValueRef project_class(const char_type *name,
             const JsNativeFunction ctor,
-            const std::map<std::wstring, JsNativeFunction>& methods);
+            const std::map<std::wstring, JsNativeFunction>& methods,
+            void *ctorCallbackState = nullptr);
 
         static JsValueRef project_method(JsValueRef object,
             const char_type *name, JsNativeFunction callback,
@@ -195,8 +251,11 @@ namespace trrojan {
         static JsValueRef unproject_property(JsValueRef object,
             const char_type *name);
 
-        static JsValueRef configPrototype;
+        JsValueRef configSetPrototype;
+        const cool_down& coolDown;
         unsigned int currentSourceContext;
+        trrojan::executive *executive;
+        trrojan::output_base& output;
         JsRuntimeHandle runtime;
         //std::queue<task *> taskQueue;
 #endif /* defined(WITH_CHAKRA) */

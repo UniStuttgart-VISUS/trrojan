@@ -40,6 +40,20 @@ void trrojan::configuration::check_consistency(
 
 
 /*
+ * trrojan::configuration::contains
+ */
+bool trrojan::configuration::contains(const std::string& factor,
+        const variant_type type) const {
+    auto it = this->find(factor);
+    if (it != this->_factors.end()) {
+        return (it->value().type() == type);
+    } else {
+        return false;
+    }
+}
+
+
+/*
  * trrojan::configuration::find
  */
 trrojan::configuration::iterator_type trrojan::configuration::find(

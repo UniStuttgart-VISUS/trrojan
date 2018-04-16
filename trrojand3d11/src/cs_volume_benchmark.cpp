@@ -216,7 +216,6 @@ trrojan::result trrojan::d3d11::cs_volume_benchmark::on_run(
 
             cpuTimer.start();
             for (; cntCpuIterations < cntPrewarms; ++cntCpuIterations) {
-                this->clear_target();
                 ctx->Dispatch(groupX, groupY, 1u);
                 this->present_target();
             }
@@ -243,7 +242,6 @@ trrojan::result trrojan::d3d11::cs_volume_benchmark::on_run(
             "#%d.", i);
         gpuTimer.start_frame();
         gpuTimer.start(0);
-        this->clear_target();
         ctx->Dispatch(groupX, groupY, 1u);
         this->present_target();
         gpuTimer.end(0);
@@ -262,7 +260,6 @@ trrojan::result trrojan::d3d11::cs_volume_benchmark::on_run(
         "timings over %u iterations ...", cntCpuIterations);
     cpuTimer.start();
     for (std::uint32_t i = 0; i < cntCpuIterations; ++i) {
-        this->clear_target();
         ctx->Dispatch(groupX, groupY, 1u);
         this->present_target();
     }

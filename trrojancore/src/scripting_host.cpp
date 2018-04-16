@@ -13,6 +13,7 @@
 
 #include "trrojan/benchmark.h"
 #include "trrojan/configuration.h"
+#include "trrojan/configuration_set.h"
 #include "trrojan/executive.h"
 #include "trrojan/io.h"
 #include "trrojan/log.h"
@@ -79,9 +80,12 @@ JsValueRef trrojan::scripting_host::task::invoke(void) {
 /*
  * trrojan::scripting_host::scripting_host
  */
-trrojan::scripting_host::scripting_host(void)
+trrojan::scripting_host::scripting_host(trrojan::output_base& output,
+        const cool_down& coolDown)
 #if defined(WITH_CHAKRA)
-        : currentSourceContext(0), runtime(JS_INVALID_RUNTIME_HANDLE) {
+        : configSetPrototype(JS_INVALID_REFERENCE), coolDown(coolDown),
+        currentSourceContext(0), executive(nullptr), output(output),
+        runtime(JS_INVALID_RUNTIME_HANDLE) {
     JsContextRef context;
 
     /* Create the runtime and a single execution context. */
@@ -148,12 +152,12 @@ trrojan::scripting_host::scripting_host(void)
             scripting_host::project_property(logLevel, L"ERROR", constant);
         }
 
-        if (scripting_host::configPrototype == JS_INVALID_REFERENCE) {
+        {
             std::map<std::wstring, JsNativeFunction> methods;
-            methods[L"add"] =  scripting_host::on_configuration_add;
-            scripting_host::configPrototype = scripting_host::project_class(
-                L"Configuration", scripting_host::on_configuration_ctor,
-                methods);
+            methods[L"add"] =  scripting_host::on_configuration_set_add;
+            this->configSetPrototype = scripting_host::project_class(
+                L"ConfigurationSet", scripting_host::on_configuration_set_ctor,
+                methods, this);
         }
     }
 #else /* defined(WITH_CHAKRA) */
@@ -184,9 +188,13 @@ void trrojan::scripting_host::run_code(trrojan::executive& exe,
     env_list environments;
     JsValueRef result;
 
+    // Retrieve benchmarks etc. and make sure that we hold the pointers until
+    // the script has exited. This is required because we can only expose raw
+    // pointers to JavaScript.
     exe.get_benchmarks(std::back_inserter(benchmarks));
     exe.get_environments(std::back_inserter(environments));
 
+    // Project the TRRojan executive as entry point to JavaScript.
     auto executive = scripting_host::project_object(L"trrojan");
 
     scripting_host::project_method(executive, L"benchmarks",
@@ -195,9 +203,13 @@ void trrojan::scripting_host::run_code(trrojan::executive& exe,
         scripting_host::on_trrojan_environments, &environments);
     scripting_host::project_method(executive, L"log",
         scripting_host::on_trrojan_log, nullptr);
+    scripting_host::project_method(executive, L"run",
+        scripting_host::on_trrojan_run, this);
 
+    this->executive = &exe;
     auto r = ::JsRunScript(code, this->currentSourceContext++, L"", &result);
     ::JsCollectGarbage(this->runtime);
+    this->executive = nullptr;
 
     if (r != JsNoError) {
         JsValueRef exception;
@@ -352,9 +364,9 @@ bool trrojan::scripting_host::get_bool(JsValueRef value) {
 
 
 /*
- * trrojan::scripting_host::get_external_data
+ * trrojan::scripting_host::get_ext_data
  */
-void *trrojan::scripting_host::get_external_data(JsValueRef value) {
+void *trrojan::scripting_host::get_ext_data(JsValueRef value) {
     assert(value != JS_INVALID_REFERENCE);
     void *retval = nullptr;
 
@@ -440,18 +452,18 @@ JsValueRef trrojan::scripting_host::global(void) {
 
 
 /*
- * trrojan::scripting_host::on_configuration_add
+ * trrojan::scripting_host::on_configuration_set_add
  */
-JsValueRef trrojan::scripting_host::on_configuration_add(JsValueRef callee,
+JsValueRef trrojan::scripting_host::on_configuration_set_add(JsValueRef callee,
         bool isConstruct, JsValueRef *arguments, unsigned short cntArguments,
-        void * callbackState) {
+        void *callbackState) {
     JsValueRef retval = JS_INVALID_REFERENCE;
 
     if (cntArguments != 3) {
         throw std::runtime_error("Configuration::add must have two arguments.");
     }
 
-    auto config = scripting_host::get_external_data<configuration>(arguments[0]);
+    auto cs = scripting_host::get_ext_data<configuration_set>(arguments[0]);
     auto factor = scripting_host::get_string(arguments[1]);
     auto type = scripting_host::get_type(arguments[2]);
 
@@ -460,7 +472,8 @@ JsValueRef trrojan::scripting_host::on_configuration_add(JsValueRef callee,
 
     switch (type) {
         case JsValueType::JsBoolean:
-            config->add(factor.data(), scripting_host::get_bool(arguments[2]));
+            cs->add_factor(factor::from_manifestations(factor.data(),
+                scripting_host::get_bool(arguments[2])));
             break;
 
         case JsValueType::JsNumber:
@@ -478,7 +491,7 @@ JsValueRef trrojan::scripting_host::on_configuration_add(JsValueRef callee,
         case JsValueType::JsString:
         default: {
             std::string value(scripting_host::get_string(arguments[2]).data());
-            config->add(factor.data(), value);
+            cs->add_factor(factor::from_manifestations(factor.data(), value));
             } break;
     }
 
@@ -487,29 +500,43 @@ JsValueRef trrojan::scripting_host::on_configuration_add(JsValueRef callee,
 
 
 /*
- * trrojan::scripting_host::on_configuration_ctor
+ * trrojan::scripting_host::on_configuration_set_ctor
  */
-JsValueRef trrojan::scripting_host::on_configuration_ctor(JsValueRef callee,
+JsValueRef trrojan::scripting_host::on_configuration_set_ctor(JsValueRef callee,
         bool isConstruct, JsValueRef *arguments, unsigned short cntArguments,
         void *callbackState) {
     assert(isConstruct);
     JsValueRef retval = JS_INVALID_REFERENCE;
+    benchmark_base *benchmark = nullptr;
+    auto that = static_cast<scripting_host *>(callbackState);
 
-    log::instance().write_line(log_level::debug, "Creating configuration from "
-        "JavaScript ...");
+    log::instance().write_line(log_level::debug, "Creating configuration_set "
+        "from JavaScript ...");
+
+    if (cntArguments > 1) {
+        benchmark = scripting_host::get_ext_data<benchmark_base>(arguments[1]);
+        log::instance().write_line(log_level::debug, "Initialising "
+            "configuration_set from the default configuration of benchmark "
+            "%p (native object %p).", reinterpret_cast<void *>(arguments[1]),
+            static_cast<void *>(benchmark));
+    }
+
     {
-        auto r = ::JsCreateExternalObject(new trrojan::configuration(),
-            scripting_host::on_configuration_dtor, &retval);
+        auto nativeConfigurationSet = (benchmark != nullptr)
+            ? new trrojan::configuration_set(benchmark->default_configs())
+            : new trrojan::configuration_set();
+        auto r = ::JsCreateExternalObject(nativeConfigurationSet,
+            scripting_host::on_configuration_set_dtor, &retval);
         if (r != JsNoError) {
-            throw scripting_exception(r, "Failed to create configuration "
+            throw scripting_exception(r, "Failed to create configuration_set "
                 "object.");
         }
     }
 
     {
-        auto r = ::JsSetPrototype(retval, scripting_host::configPrototype);
+        auto r = ::JsSetPrototype(retval, that->configSetPrototype);
         if (r != JsNoError) {
-            throw scripting_exception(r, "Failed to assign configuration "
+            throw scripting_exception(r, "Failed to assign configuration_set "
                 "prototye.");
         }
     }
@@ -519,13 +546,13 @@ JsValueRef trrojan::scripting_host::on_configuration_ctor(JsValueRef callee,
 
 
 /*
- * trrojan::scripting_host::on_configuration_dtor
+ * trrojan::scripting_host::on_configuration_set_dtor
  */
-void trrojan::scripting_host::on_configuration_dtor(void *data) {
-    log::instance().write_line(log_level::debug, "Releasing configuration from "
-        "JavaScript ...");
-    auto config = static_cast<trrojan::configuration *>(data);
-    delete config;
+void trrojan::scripting_host::on_configuration_set_dtor(void *data) {
+    log::instance().write_line(log_level::debug, "Releasing configuration_set "
+        "after garbage collection in JavaScript ...");
+    auto cs = static_cast<trrojan::configuration_set *>(data);
+    delete cs;
 }
 
 
@@ -636,8 +663,22 @@ JsValueRef CALLBACK trrojan::scripting_host::on_trrojan_log(
 JsValueRef trrojan::scripting_host::on_trrojan_run(JsValueRef callee,
         bool isConstruct, JsValueRef *arguments, unsigned short cntArguments,
         void *callbackState) {
+    assert(arguments != nullptr);
+    assert(callbackState != nullptr);
     JsValueRef retval = JS_INVALID_REFERENCE;
-    // TODO
+    auto that = static_cast<scripting_host *>(callbackState);
+    assert(that->executive != nullptr);
+
+    if (cntArguments != 3) {
+        throw std::runtime_error("trrojan.run must be called with exactly two "
+            "parameters, which are the benchmark and the configuration set.");
+    }
+
+    auto b = scripting_host::get_ext_data<benchmark_base>(arguments[1]);
+    auto c = scripting_host::get_ext_data<configuration_set>(arguments[2]);
+
+    that->executive->run(*b, *c, that->output, that->coolDown);
+
     return retval;
 }
 
@@ -663,12 +704,13 @@ JsValueRef trrojan::scripting_host::project_array(const size_t size) {
  */
 JsValueRef trrojan::scripting_host::project_class(const char_type *name,
         const JsNativeFunction ctor,
-        const std::map<std::wstring, JsNativeFunction>& methods) {
+        const std::map<std::wstring, JsNativeFunction>& methods,
+        void *ctorCallbackState) {
     assert(name != nullptr);
 
     // Create ctor at global scope.
     auto clazz = scripting_host::project_method(scripting_host::global(), name,
-        ctor);
+        ctor, ctorCallbackState);
 
     // Create the prototype object.
     auto retval = scripting_host::project_object();
@@ -741,11 +783,19 @@ JsValueRef trrojan::scripting_host::project_object(
     assert(benchmark != nullptr);
     JsValueRef retval = JS_INVALID_REFERENCE;
 
-    auto r = ::JsCreateExternalObject(&benchmark, nullptr, &retval);
+    log::instance().write_line(log_level::debug, "Projecting benchmark \"%s\" "
+        "(%p) to JavaScript...", benchmark->name(),
+        static_cast<void *>(benchmark));
+
+    auto r = ::JsCreateExternalObject(benchmark, nullptr, &retval);
     if (r != JsNoError) {
         throw scripting_exception(r, "Failed to project benchmark to "
             "JavaScript.");
     }
+
+    log::instance().write_line(log_level::debug, "Benchmark \"%s\" "
+        "(%p) is represented by JavaScript object %p.", benchmark->name(),
+        static_cast<void *>(benchmark), reinterpret_cast<void *>(retval));
 
     auto b = scripting_host::project_value(benchmark->name().c_str());
     scripting_host::project_property(retval, L"name", b);
@@ -942,10 +992,4 @@ JsValueRef trrojan::scripting_host::unproject_property(JsValueRef object,
 
     return retval;
 }
-
-
-/*
- * trrojan::scripting_host::configPrototype
- */
-JsValueRef trrojan::scripting_host::configPrototype = JS_INVALID_REFERENCE;
 #endif /* defined(WITH_CHAKRA) */
