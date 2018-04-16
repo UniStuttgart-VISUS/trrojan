@@ -23,7 +23,7 @@ add_library(trrojancore SHARED ${HeaderFiles} ${SourceFiles})
 # Disable Chakra core if we cannot build it.
 if (NOT EXISTS ${CHAKRA_DIR})
     set(TRROJAN_WITH_CHAKRA OFF)
-endif()
+endif(NOT EXISTS ${CHAKRA_DIR})
 #if (NOT WIN32)
 #    set(TRROJAN_WITH_CHAKRA OFF)
 #endif()
@@ -56,10 +56,14 @@ if (TRROJAN_WITH_CHAKRA)
                            COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CHAKRA_BIN} $<TARGET_FILE_DIR:trrojancore>)
     else (WIN32)
         MESSAGE(WARNING "Not yet implemented.")
+        add_custom_command(TARGET trrojancore
+                           PRE_BUILD
+                           COMMAND "${CHAKRA_DIR}/Build/build.sh --static"
+                           COMMENT "Building Chakra Core ...")
         #add_subdirectory("chakra")
         #    add_custom_command(OUTPUT asd COMMAND "chakra/Build/build.sh --static")
     endif (WIN32)
-endif (EXISTS ${CHAKRA_DIR})
+endif (TRROJAN_WITH_CHAKRA)
 
 # Configure the linker.
 target_link_libraries(trrojancore trrojansnfo)
