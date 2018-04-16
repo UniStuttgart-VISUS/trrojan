@@ -6,7 +6,6 @@
 #include "scripting_host.h"
 
 #include <climits>
-#include <cmath>
 #include <cstring>
 #include <ctime>
 #include <sstream>

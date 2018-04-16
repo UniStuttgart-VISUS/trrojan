@@ -22,6 +22,7 @@ add_library(trrojancore SHARED ${HeaderFiles} ${SourceFiles})
 
 # Disable Chakra core if we cannot build it.
 if (NOT EXISTS ${CHAKRA_DIR})
+    MESSAGE(WARNING "Chakra Core is being disabled because the source directory does not exist.")
     set(TRROJAN_WITH_CHAKRA OFF)
 endif(NOT EXISTS ${CHAKRA_DIR})
 #if (NOT WIN32)
