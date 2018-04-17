@@ -74,6 +74,23 @@ JsValueRef trrojan::scripting_host::task::invoke(void) {
 }
 #endif
 
+#if defined(WITH_CHAKRA)
+#define THROW_ON_FAIL(call, msg)                                                \
+    {                                                                           \
+        auto r = call;                                                          \
+        if (r != JsNoError) {                                                   \
+            throw scripting_exception(r, msg);                                  \
+        }                                                                       \
+    }
+#else /* defined(WITH_CHAKRA) */
+#define THROW_ON_FAIL(call, msg)
+#endif /* defined(WITH_CHAKRA) */
+
+#if defined(_WIN32)
+#define _JS(x) L##x
+#else /* defined(_WIN32) */
+#define _JS(x) x
+#endif /* defined(_WIN32) */
 
 
 /*
@@ -88,29 +105,12 @@ trrojan::scripting_host::scripting_host(trrojan::output_base& output,
     JsContextRef context;
 
     /* Create the runtime and a single execution context. */
-    {
-        auto r = ::JsCreateRuntime(JsRuntimeAttributeNone, nullptr, &runtime);
-        if (r != JsNoError) {
-            throw scripting_exception(r, "Failed to create JavaScript "
-                "runtime.");
-        }
-    }
-
-    {
-        auto r = ::JsCreateContext(runtime, &context);
-        if (r != JsNoError) {
-            throw scripting_exception(r, "Failed to create JavaScript "
-                "execution context.");
-        }
-    }
-
-    {
-        auto r =::JsSetCurrentContext(context);
-        if (r != JsNoError) {
-            throw scripting_exception(r, "Failed to set JavaScript execution "
-                "context.");
-        }
-    }
+    THROW_ON_FAIL(::JsCreateRuntime(JsRuntimeAttributeNone, nullptr, &runtime),
+        "Failed to create JavaScript runtime.");
+    THROW_ON_FAIL(::JsCreateContext(runtime, &context),
+        "Failed to create JavaScript execution context.");
+    THROW_ON_FAIL(::JsSetCurrentContext(context),
+        "Failed to set JavaScript execution context.");
 
     /* Set up ES6 promise. */
     //if (JsSetPromiseContinuationCallback(PromiseContinuationCallback, &taskQueue) != JsNoError)
@@ -118,47 +118,48 @@ trrojan::scripting_host::scripting_host(trrojan::output_base& output,
 
     /* Project immutable native objects and methods into JavaScript. */
     {
-        auto logLevel = scripting_host::project_object(L"LogLevel");
+        auto logLevel = scripting_host::project_object(_JS("LogLevel"));
 
         {
             auto constant = scripting_host::project_value(
                 static_cast<int>(log_level::debug));
-            scripting_host::project_property(logLevel, L"DEBUG", constant);
+            scripting_host::project_property(logLevel, _JS("DEBUG"), constant);
         }
 
         {
             auto constant = scripting_host::project_value(
                 static_cast<int>(log_level::verbose));
-            scripting_host::project_property(logLevel, L"VERBOSE", constant);
+            scripting_host::project_property(logLevel, _JS("VERBOSE"), constant);
         }
 
         {
             auto constant = scripting_host::project_value(
                 static_cast<int>(log_level::information));
-            scripting_host::project_property(logLevel, L"INFORMATION",
+            scripting_host::project_property(logLevel, _JS("INFORMATION"),
                 constant);
         }
 
         {
             auto constant = scripting_host::project_value(
                 static_cast<int>(log_level::warning));
-            scripting_host::project_property(logLevel, L"WARNING", constant);
+            scripting_host::project_property(logLevel, _JS("WARNING"),
+                constant);
         }
 
         {
             auto constant = scripting_host::project_value(
                 static_cast<int>(log_level::error));
-            scripting_host::project_property(logLevel, L"ERROR", constant);
+            scripting_host::project_property(logLevel, _JS("ERROR"), constant);
         }
 
         {
-            std::map<std::wstring, JsNativeFunction> methods;
-            methods[L"add"] = scripting_host::on_configuration_set_set;
+            method_map_type methods;
+            methods[_JS("add")] = scripting_host::on_configuration_set_set;
             // Note: for sake of simplicity, do not distinguish between add and
             // set/replace in the scripting interface.
-            methods[L"set"] =  scripting_host::on_configuration_set_set;
+            methods[_JS("set")] =  scripting_host::on_configuration_set_set;
             this->configSetPrototype = scripting_host::project_class(
-                L"ConfigurationSet", scripting_host::on_configuration_set_ctor,
+                _JS("ConfigurationSet"), scripting_host::on_configuration_set_ctor,
                 methods, this);
         }
     }
@@ -197,56 +198,32 @@ void trrojan::scripting_host::run_code(trrojan::executive& exe,
     exe.get_environments(std::back_inserter(environments));
 
     // Project the TRRojan executive as entry point to JavaScript.
-    auto executive = scripting_host::project_object(L"trrojan");
+    auto executive = scripting_host::project_object(_JS("trrojan"));
 
-    scripting_host::project_method(executive, L"benchmark",
+    scripting_host::project_method(executive, _JS("benchmark"),
         scripting_host::on_trrojan_benchmark, &exe);
-    scripting_host::project_method(executive, L"benchmarks",
+    scripting_host::project_method(executive, _JS("benchmarks"),
         scripting_host::on_trrojan_benchmarks, &benchmarks);
-    scripting_host::project_method(executive, L"environments",
+    scripting_host::project_method(executive, _JS("environments"),
         scripting_host::on_trrojan_environments, &environments);
-    scripting_host::project_method(executive, L"log",
+    scripting_host::project_method(executive, _JS("log"),
         scripting_host::on_trrojan_log, nullptr);
-    scripting_host::project_method(executive, L"run",
+    scripting_host::project_method(executive, _JS("run"),
         scripting_host::on_trrojan_run, this);
 
     this->executive = &exe;
+#if defined(_WIN32)
     auto r = ::JsRunScript(code, this->currentSourceContext++, L"", &result);
+#else /* defined(_WIN32) */
+    auto source = scripting_host::project_value(code);
+    auto name = scripting_host::project_value("");
+    auto r = ::JsRun(source, this->currentSourceContext++, name,
+        JsParseScriptAttributeNone, &result);
+#endif /* defined(_WIN32) */
+    scripting_host::unproject_exception(r);
     ::JsCollectGarbage(this->runtime);
     this->executive = nullptr;
 
-    if (r != JsNoError) {
-        JsValueRef exception;
-        JsPropertyIdRef msgName;
-        JsValueRef msgValue;
-
-        {
-            auto r = ::JsGetAndClearException(&exception);
-            if (r != JsNoError) {
-                throw scripting_exception(r, "Failed to retrieve JavaScript "
-                    "exception.");
-            }
-        }
-
-        {
-            auto r = ::JsGetPropertyIdFromName(L"message", &msgName);
-            if (r != JsNoError) {
-                throw scripting_exception(r, "Failed to retrieve error message "
-                    "ID.");
-            }
-        }
-
-        {
-            auto r = ::JsGetProperty(exception, msgName, &msgValue);
-            if (r != JsNoError) {
-                throw scripting_exception(r, "Failed to retrieve error "
-                    "message.");
-            }
-        }
-
-        auto message = scripting_host::get_string(msgValue);
-        throw scripting_exception(r, message.data());
-    }
 
 #else  /* defined(WITH_CHAKRA) */
     throw std::logic_error("Cannot run JavaScript, because this version of "
@@ -355,7 +332,7 @@ JsValueRef trrojan::scripting_host::call(JsValueRef object,
 size_t trrojan::scripting_host::get_array_length(JsValueRef value) {
     assert(value != JS_INVALID_REFERENCE);
     assert(scripting_host::get_type(value) == JsValueType::JsArray);
-    auto length = scripting_host::unproject_property(value, L"length");
+    auto length = scripting_host::unproject_property(value, _JS("length"));
     return scripting_host::get_int(length);
 }
 
@@ -678,7 +655,7 @@ JsValueRef trrojan::scripting_host::on_trrojan_benchmarks(JsValueRef callee,
 /*
  * trrojan::scripting_host::on_trrojan_environments
  */
-JsValueRef CALLBACK trrojan::scripting_host::on_trrojan_environments(
+JsValueRef trrojan::scripting_host::on_trrojan_environments(
         JsValueRef callee, bool isConstruct, JsValueRef *arguments,
         unsigned short cntArguments, void *callbackState) {
     assert(!isConstruct);
@@ -779,7 +756,7 @@ JsValueRef trrojan::scripting_host::project_array(const size_t size) {
  */
 JsValueRef trrojan::scripting_host::project_class(const char_type *name,
         const JsNativeFunction ctor,
-        const std::map<std::wstring, JsNativeFunction>& methods,
+        const method_map_type& methods,
         void *ctorCallbackState) {
     assert(name != nullptr);
 
@@ -795,7 +772,7 @@ JsValueRef trrojan::scripting_host::project_class(const char_type *name,
         scripting_host::project_method(retval, m.first.c_str(), m.second);
     }
 
-    scripting_host::project_property(clazz, L"prototype", retval);
+    scripting_host::project_property(clazz, _JS("prototype"), retval);
 
     return retval;
 }
@@ -873,7 +850,7 @@ JsValueRef trrojan::scripting_host::project_object(
         static_cast<void *>(benchmark), reinterpret_cast<void *>(retval));
 
     auto b = scripting_host::project_value(benchmark->name().c_str());
-    scripting_host::project_property(retval, L"name", b);
+    scripting_host::project_property(retval, _JS("name"), b);
 
     return retval;
 }
@@ -885,7 +862,7 @@ JsValueRef trrojan::scripting_host::project_object(
 JsValueRef trrojan::scripting_host::project_object(device_base *dev) {
     if (dev != nullptr) {
         auto retval = scripting_host::project_object();
-        scripting_host::project_property(retval, L"name",
+        scripting_host::project_property(retval, _JS("name"),
             scripting_host::project_value(dev->name().c_str()));
         return retval;
 
@@ -901,9 +878,9 @@ JsValueRef trrojan::scripting_host::project_object(device_base *dev) {
 JsValueRef trrojan::scripting_host::project_object(environment_base *env) {
     if (env != nullptr) {
         auto retval = scripting_host::project_object();
-        scripting_host::project_property(retval, L"name", 
+        scripting_host::project_property(retval, _JS("name"),
             scripting_host::project_value(env->name().c_str()));
-        scripting_host::project_method(retval, L"devices",
+        scripting_host::project_method(retval, _JS("devices"),
             scripting_host::on_environment_devices, env);
         return retval;
 
@@ -924,20 +901,16 @@ void trrojan::scripting_host::project_property(JsValueRef object,
     assert(property != JS_INVALID_REFERENCE);
     JsPropertyIdRef id;
 
-    {
-        auto r = ::JsGetPropertyIdFromName(name, &id);
-        if (r != JsNoError) {
-            throw scripting_exception(r, "Failed to retrieve JavaScript "
-                "property ID from a name.");
-        }
-    }
+#if defined(_WIN32)
+    THROW_ON_FAIL(::JsGetPropertyIdFromName(name, &id),
+        "Failed to retrieve JavaScript property ID from a name.");
+#else /* defined(_WIN32) */
+    THROW_ON_FAIL(::JsCreatePropertyId(name, ::strlen(name), &id),
+        "Failed to create a property ID from a name.");
+#endif /* defined(_WIN32) */
 
-    {
-        auto r = ::JsSetProperty(object, id, property, true);
-        if (r != JsNoError) {
-            throw scripting_exception(r, "Failed to set JavaScript property.");
-        }
-    }
+    THROW_ON_FAIL(::JsSetProperty(object, id, property, true),
+        "Failed to set JavaScript property.");
 }
 
 
@@ -1120,6 +1093,23 @@ std::vector<trrojan::variant> trrojan::scripting_host::to_variant_list(
 
 
 /*
+ * trrojan::scripting_host::unproject_exception
+ */
+void trrojan::scripting_host::unproject_exception(const JsErrorCode state) {
+    if (state != JsNoError) {
+        JsValueRef exception;
+        THROW_ON_FAIL(::JsGetAndClearException(&exception),
+            "Failed to retrieve and clear JavaScript exception.");
+
+        auto pMsg = scripting_host::unproject_property(exception,
+            _JS("message"));
+        auto msg = scripting_host::get_string(pMsg);
+        throw scripting_exception(state, msg.data());
+    }
+}
+
+
+/*
  * trrojan::scripting_host::unproject_property
  */
 JsValueRef trrojan::scripting_host::unproject_property(JsValueRef object,
@@ -1129,21 +1119,17 @@ JsValueRef trrojan::scripting_host::unproject_property(JsValueRef object,
     JsValueRef retval = JS_INVALID_REFERENCE;
     JsPropertyIdRef id;
 
-    {
-        auto r = ::JsGetPropertyIdFromName(name, &id);
-        if (r != JsNoError) {
-            throw scripting_exception(r, "Failed to retrieve JavaScript "
-                "property ID from a name.");
-        }
-    }
 
-    {
-        auto r = ::JsGetProperty(object, id, &retval);
-        if (r != JsNoError) {
-            throw scripting_exception(r, "Failed to retrieve JavaScript "
-                "property by its ID.");
-        }
-    }
+#if defined(_WIN32)
+    THROW_ON_FAIL(::JsGetPropertyIdFromName(name, &id),
+        "Failed to retrieve JavaScript property ID from a name.");
+#else /* defined(_WIN32) */
+    THROW_ON_FAIL(::JsCreatePropertyId(name, ::strlen(name), &id),
+        "Failed to create a property ID from a name.");
+#endif /* defined(_WIN32) */
+
+    THROW_ON_FAIL(::JsGetProperty(object, id, &retval),
+        "Failed to retrieve JavaScript property by its ID.");
 
     return retval;
 }

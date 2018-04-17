@@ -104,7 +104,11 @@ namespace trrojan {
 
     public:
 
+#if defined(_WIN32)
         typedef wchar_t char_type;
+#else /* defined(_WIN32) */
+        typedef char char_type;
+#endif /* defined(_WIN32) */
 
         /// <summary>
         /// Represents an ES6 task.
@@ -165,6 +169,8 @@ namespace trrojan {
 #if defined(WITH_CHAKRA)
         typedef std::vector<std::shared_ptr<trrojan::benchmark_base>> bench_list;
         typedef std::vector<std::shared_ptr<trrojan::environment_base>> env_list;
+        typedef std::map<std::basic_string<char_type>, JsNativeFunction>
+            method_map_type;
 
         static JsValueRef call(JsValueRef object, const char_type *name,
             JsValueRef *args, const unsigned short cntArgs);
@@ -241,7 +247,7 @@ namespace trrojan {
 
         static JsValueRef project_class(const char_type *name,
             const JsNativeFunction ctor,
-            const std::map<std::wstring, JsNativeFunction>& methods,
+            const method_map_type& methods,
             void *ctorCallbackState = nullptr);
 
         static JsValueRef project_method(JsValueRef object,
@@ -281,6 +287,8 @@ namespace trrojan {
 
         static std::vector<trrojan::variant> to_variant_list(JsValueRef value,
             const bool isRecursion = false);
+
+        static void unproject_exception(const JsErrorCode state);
 
         static JsValueRef unproject_property(JsValueRef object,
             const char_type *name);
