@@ -199,6 +199,8 @@ void trrojan::scripting_host::run_code(trrojan::executive& exe,
     // Project the TRRojan executive as entry point to JavaScript.
     auto executive = scripting_host::project_object(L"trrojan");
 
+    scripting_host::project_method(executive, L"benchmark",
+        scripting_host::on_trrojan_benchmark, &exe);
     scripting_host::project_method(executive, L"benchmarks",
         scripting_host::on_trrojan_benchmarks, &benchmarks);
     scripting_host::project_method(executive, L"environments",
@@ -623,6 +625,32 @@ JsValueRef trrojan::scripting_host::on_environment_devices(JsValueRef callee,
     }
 
     return retval;
+}
+
+
+/*
+ * trrojan::scripting_host::on_trrojan_benchmark
+ */
+JsValueRef trrojan::scripting_host::on_trrojan_benchmark(JsValueRef callee,
+        bool isConstruct, JsValueRef *arguments, unsigned short cntArguments,
+        void *callbackState) {
+    assert(!isConstruct);
+    assert(arguments != nullptr);
+    assert(callbackState != nullptr);
+    auto exe = static_cast<trrojan::executive *>(callbackState);
+
+    //exe->find_plugin()
+
+
+    //auto retval = scripting_host::project_array(elements->size());
+
+    //for (size_t i = 0; i < elements->size(); ++i) {
+    //    auto b = scripting_host::project_object((*elements)[i].get());
+    //    scripting_host::set_indexed_property(retval, i, b);
+    //}
+
+    //return retval;
+    return JS_INVALID_REFERENCE;
 }
 
 

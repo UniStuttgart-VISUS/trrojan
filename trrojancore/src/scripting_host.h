@@ -217,6 +217,10 @@ namespace trrojan {
             JsValueRef callee, bool isConstruct, JsValueRef *arguments,
             unsigned short cntArguments, void *callbackState);
 
+        static JsValueRef CHAKRA_CALLBACK on_trrojan_benchmark(
+            JsValueRef callee, bool isConstruct, JsValueRef *arguments,
+            unsigned short cntArguments, void *callbackState);
+
         static JsValueRef CHAKRA_CALLBACK on_trrojan_benchmarks(
             JsValueRef callee, bool isConstruct, JsValueRef *arguments,
             unsigned short cntArguments, void *callbackState);

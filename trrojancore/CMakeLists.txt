@@ -56,13 +56,13 @@ if (TRROJAN_WITH_CHAKRA)
                            POST_BUILD
                            COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CHAKRA_BIN} $<TARGET_FILE_DIR:trrojancore>)
     else (WIN32)
-        MESSAGE(WARNING "Not yet implemented.")
+        set (CHAKRA_BIN_DIR "${CHAKRA_DIR}/out/${CHAKRA_CONFIGURATION}/lib")
+        set (CHAKRA_LIB "ChakraCoreStatic")
         add_custom_command(TARGET trrojancore
                            PRE_BUILD
                            COMMAND "${CHAKRA_DIR}/build.sh --static"
                            COMMENT "Building Chakra Core ...")
-        #add_subdirectory("chakra")
-        #    add_custom_command(OUTPUT asd COMMAND "chakra/Build/build.sh --static")
+        link_directories(${CHAKRA_BIN_DIR})
     endif (WIN32)
 endif (TRROJAN_WITH_CHAKRA)
 
