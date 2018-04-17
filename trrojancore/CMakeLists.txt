@@ -50,7 +50,8 @@ if (TRROJAN_WITH_CHAKRA)
         set (CHAKRA_LIB "${CHAKRA_BIN_DIR}/chakracore.lib")
         add_custom_command(TARGET trrojancore
                            PRE_BUILD
-                           COMMAND msbuild /m /p:Platform=${CHAKRA_PLATFORM} /p:Configuration=${CHAKRA_CONFIGURATION} /p:RuntimeLib=static_library "${CHAKRA_DIR}/Build/Chakra.Core.sln"
+                           COMMAND msbuild
+                           ARGS /m /p:Platform=${CHAKRA_PLATFORM} /p:Configuration=${CHAKRA_CONFIGURATION} /p:RuntimeLib=static_library "${CHAKRA_DIR}/Build/Chakra.Core.sln"
                            COMMENT "Building Chakra Core ...")
         add_custom_command(TARGET trrojancore
                            POST_BUILD
@@ -58,11 +59,12 @@ if (TRROJAN_WITH_CHAKRA)
     else (WIN32)
         set (CHAKRA_BIN_DIR "${CHAKRA_DIR}/out/${CHAKRA_CONFIGURATION}/lib")
         set (CHAKRA_LIB "ChakraCoreStatic")
-        add_custom_command(OUTPUT ${CHAKRA_BIN_DIR}/${CHAKRA_LIB}.a
-                           COMMAND ${CHAKRA_DIR}/build.sh
-                           ARGS --static
-                           COMMENT "Building Chakra Core ...")
-        link_directories(${CHAKRA_BIN_DIR})
+        add_custom_target(ChakraCore
+                          COMMAND ${CHAKRA_DIR}/build.sh
+                          ARGS --static
+                          COMMENT "Building Chakra Core ...")
+        add_dependencies(trrojancore ChakraCore)
+        link_directories(trrojancore ${CHAKRA_BIN_DIR})
     endif (WIN32)
 endif (TRROJAN_WITH_CHAKRA)
 
