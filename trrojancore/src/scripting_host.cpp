@@ -301,7 +301,11 @@ void trrojan::scripting_host::run_code(trrojan::executive& exe,
 void trrojan::scripting_host::run_script(trrojan::executive& exe,
         const std::string& path) {
     auto code = read_text_file(path);
+#if defined(_WIN32)
     this->run_code(exe, from_utf8(code));
+#else /* defined(_WIN32) */
+    this->run_code(exe, code);
+#endif /* defined(_WIN32) */
 }
 
 
@@ -676,7 +680,7 @@ JsValueRef trrojan::scripting_host::on_trrojan_environments(
 /*
  * trrojan::scripting_host::on_executive_log
  */
-JsValueRef CALLBACK trrojan::scripting_host::on_trrojan_log(
+JsValueRef trrojan::scripting_host::on_trrojan_log(
         JsValueRef callee, bool isConstruct, JsValueRef *arguments,
         unsigned short cntArguments, void *callbackState) {
     assert(!isConstruct);
