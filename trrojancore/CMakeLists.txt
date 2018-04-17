@@ -59,7 +59,8 @@ if (TRROJAN_WITH_CHAKRA)
         set (CHAKRA_BIN_DIR "${CHAKRA_DIR}/out/${CHAKRA_CONFIGURATION}/lib")
         set (CHAKRA_LIB "ChakraCoreStatic")
         add_custom_command(OUTPUT ${CHAKRA_BIN_DIR}/${CHAKRA_LIB}.a
-                           COMMAND ${CHAKRA_DIR}/build.sh --static
+                           COMMAND ${CHAKRA_DIR}/build.sh
+                           ARGS --static
                            COMMENT "Building Chakra Core ...")
         link_directories(${CHAKRA_BIN_DIR})
     endif (WIN32)
