@@ -4,12 +4,14 @@
 /// <author>Christoph Müller</author>
 
 #include <iostream>
+#include <memory>
 #include <numeric>
 
 #include "trrojan/cmd_line.h"
 #include "trrojan/console_output.h"
 #include "trrojan/executive.h"
 #include "trrojan/log.h"
+#include "trrojan/power_state_scope.h"
 
 
 /// <summary>
@@ -21,6 +23,7 @@
 /// </returns>
 int main(const int argc, const char **argv) {
     const trrojan::cmd_line cmdLine(argv, argv + argc);
+    std::unique_ptr<trrojan::power_state_scope> powerStateScope;
 
     try {
         /* Configure the log, which must be the very first step. */
@@ -66,6 +69,14 @@ int main(const int argc, const char **argv) {
             if (it != cmdLine.end()) {
                 typedef decltype(coolDown.duration) v_t;
                 coolDown.duration = v_t(trrojan::parse<v_t::rep>(it->c_str()));
+            }
+        }
+
+        /* Configure GPU boost behaviour. */
+        {
+            if (trrojan::contains_switch("--stable-power-state",
+                    cmdLine.begin(), cmdLine.end())) {
+                powerStateScope.reset(new trrojan::power_state_scope());
             }
         }
 
