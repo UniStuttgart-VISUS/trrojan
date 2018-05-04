@@ -31,7 +31,7 @@ endif(NOT EXISTS ${CHAKRA_DIR})
 
 # Build Chakra core if possible
 if (TRROJAN_WITH_CHAKRA)
-    set(CHAKRA_CONFIGURATION "release")
+    set(CHAKRA_CONFIGURATION "Release")
 
     add_definitions("-DWITH_CHAKRA")
     include_directories("${CHAKRA_DIR}/lib/Jsrt")
