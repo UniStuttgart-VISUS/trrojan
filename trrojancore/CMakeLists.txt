@@ -59,7 +59,7 @@ if (TRROJAN_WITH_CHAKRA)
 
     else (WIN32)
         set (CHAKRA_BIN_DIR "${CHAKRA_DIR}/out/${CHAKRA_CONFIGURATION}/lib")
-        set (CHAKRA_LIB "${CHAKRA_DIR}/libChakraCoreStatic.a")
+        set (CHAKRA_LIB "${CHAKRA_BIN_DIR}/libChakraCoreStatic.a")
 
         add_custom_command(OUTPUT ${CHAKRA_LIB}
                            COMMAND ${CHAKRA_DIR}/build.sh  --static
