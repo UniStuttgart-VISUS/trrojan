@@ -55,23 +55,27 @@ if (TRROJAN_WITH_CHAKRA)
         add_custom_command(TARGET trrojancore
                            POST_BUILD
                            COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CHAKRA_BIN} $<TARGET_FILE_DIR:trrojancore>)
+        target_link_libraries(trrojancore ${CHAKRA_LIB})
+
     else (WIN32)
         set (CHAKRA_BIN_DIR "${CHAKRA_DIR}/out/${CHAKRA_CONFIGURATION}/lib")
-        set (CHAKRA_LIB "ChakraCoreStatic")
-        add_custom_target(ChakraCore
-                          COMMAND ${CHAKRA_DIR}/build.sh  --static
-                          COMMENT "Building Chakra Core ...")
-        add_dependencies(trrojancore ChakraCore)
-        link_directories(trrojancore ${CHAKRA_BIN_DIR})
+        set (CHAKRA_LIB "${CHAKRA_DIR}/libChakraCoreStatic.a")
+
+        add_custom_command(OUTPUT ${CHAKRA_LIB}
+                           COMMAND ${CHAKRA_DIR}/build.sh  --static
+                           COMMENT "Building Chakra Core ...")
+        add_custom_target(chakra DEPENDS ${CHAKRA_LIB})
+        add_dependencies(trrojancore chakra)
+
+        add_library(ChakraCore STATIC IMPORTED)
+        set_property(TARGET ChakraCore PROPERTY IMPORTED_LOCATION ${CHAKRA_LIB})
+
+        target_link_libraries(trrojancore ChakraCore)
     endif (WIN32)
 endif (TRROJAN_WITH_CHAKRA)
 
 # Configure the linker.
 target_link_libraries(trrojancore trrojansnfo)
-
-if (TRROJAN_WITH_CHAKRA)
-    target_link_libraries(trrojancore ${CHAKRA_LIB})
-endif (TRROJAN_WITH_CHAKRA)
 
 if (${CMAKE_COMPILER_IS_GNUCXX})
     target_link_libraries(trrojancore dl)
