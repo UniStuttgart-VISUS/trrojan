@@ -62,7 +62,7 @@ if (TRROJAN_WITH_CHAKRA)
         set (CHAKRA_LIB "${CHAKRA_BIN_DIR}/libChakraCore.so")
 
         add_custom_command(OUTPUT ${CHAKRA_LIB}
-                           COMMAND ${CHAKRA_DIR}/build.sh --libs-only --extra-defines CMAKE_POSITION_INDEPENDENT_CODE=ON
+                           COMMAND ${CHAKRA_DIR}/build.sh --libs-only
                            COMMENT "Building Chakra Core ...")
         add_custom_target(chakra DEPENDS ${CHAKRA_LIB})
         add_dependencies(trrojancore chakra)
