@@ -58,11 +58,11 @@ if (TRROJAN_WITH_CHAKRA)
         target_link_libraries(trrojancore ${CHAKRA_LIB})
 
     else (WIN32)
-        set (CHAKRA_BIN_DIR "${CHAKRA_DIR}/out/${CHAKRA_CONFIGURATION}/lib")
-        set (CHAKRA_LIB "${CHAKRA_BIN_DIR}/libChakraCoreStatic.a")
+        set (CHAKRA_BIN_DIR "${CHAKRA_DIR}/out/${CHAKRA_CONFIGURATION}")
+        set (CHAKRA_LIB "${CHAKRA_BIN_DIR}/libChakraCore.so")
 
         add_custom_command(OUTPUT ${CHAKRA_LIB}
-                           COMMAND ${CHAKRA_DIR}/build.sh  --static
+                           COMMAND ${CHAKRA_DIR}/build.sh --libs-only --extra-defines CMAKE_POSITION_INDEPENDENT_CODE=ON
                            COMMENT "Building Chakra Core ...")
         add_custom_target(chakra DEPENDS ${CHAKRA_LIB})
         add_dependencies(trrojancore chakra)
