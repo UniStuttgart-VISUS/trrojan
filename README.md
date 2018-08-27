@@ -1,5 +1,5 @@
 # TRRojan
-The TRRojan is a benchmarking framework for visual computing applications developed in context of SFB-TRR 161.
+The TRRojan is a benchmarking framework for visual computing applications developed in context of SFB/Transregio 161.
 
 ## Command line arguments of trrojan.exe
 
