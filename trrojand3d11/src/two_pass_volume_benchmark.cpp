@@ -32,6 +32,9 @@ trrojan::result trrojan::d3d11::two_pass_volume_benchmark::on_run(
         const std::vector<std::string>& changed) {
     volume_benchmark_base::on_run(device, config, changed);
 
+    static const auto DATA_STAGE = static_cast<rendering_technique::shader_stages>(
+        rendering_technique::shader_stage::compute);
+
     glm::vec3 bbe, bbs;
     auto cntCpuIterations = static_cast<std::uint32_t>(0);
     trrojan::timer cpuTimer;
@@ -151,6 +154,19 @@ trrojan::result trrojan::d3d11::two_pass_volume_benchmark::on_run(
         // Queries.
         this->done_query = create_event_query(dev);
     }
+
+    // The data set has changed, so update SRV in the technique.
+    if (contains(changed, factor_data_set)) {
+        this->volume_technique.set_shader_resource_views(this->data_view,
+            DATA_STAGE, 0);
+    }
+
+    // The transfer function has changed, so update the SRV in the technique.
+    if (contains(changed, factor_data_set)) {
+        this->volume_technique.set_shader_resource_views(this->xfer_func_view,
+            DATA_STAGE, 1);
+    }
+
 
     // If the device or the viewport changed, invalidate the intermediate
     // buffers.

@@ -6,6 +6,7 @@
 #include "trrojan/executive.h"
 
 #include <algorithm>
+#include <fstream>
 #include <iostream>
 #include <iterator>
 #include <stdexcept>
@@ -18,6 +19,8 @@
 #include "trrojan/log.h"
 #include "trrojan/text.h"
 
+#include "scripting_host.h"
+
 
 /*
  * trrojan::executive::~executive
@@ -25,6 +28,7 @@
 trrojan::executive::~executive(void) {
     if (this->cur_environment != nullptr) {
         this->cur_environment->on_deactivate();
+        this->cur_environment.reset();
     }
 
     for (auto e : this->environments) {
@@ -51,6 +55,16 @@ trrojan::plugin trrojan::executive::find_plugin(const std::string& name) {
             "does not exist or was not loaded.\n", name.c_str());
         return nullptr;
     }
+}
+
+
+/*
+ * trrojan::executive::javascript
+ */
+void trrojan::executive::javascript(const std::string& path,
+        output_base& output, const cool_down& coolDown) {
+    scripting_host host(output, coolDown);
+    host.run_script(*this, path);
 }
 
 
@@ -171,6 +185,75 @@ void trrojan::executive::load_plugins(const cmd_line& cmdLine) {
 
 
 /*
+ * trrojan::executive::run
+ */
+void trrojan::executive::run(benchmark_base& benchmark,
+        configuration_set configs, output_base& output,
+        const cool_down& coolDown) {
+    // Note: This method is called from the scripting interface and possibly
+    // from other places we do not yet know. Therefore, we do not optimise
+    // the order of the parameters, but keep them as they have been passed
+    // to the method.
+
+    auto eds = this->prepare_env_devs(configs);
+    for (auto e : eds) {
+        this->enable_environment(e.environment);
+        configs.replace_factor(factor::from_manifestations(
+            environment_base::factor_name, e.environment));
+
+        for (auto d : e.devices) {
+            configs.replace_factor(factor::from_manifestations(
+                device_base::factor_name, d));
+
+            benchmark.run(configs, [&output](result&& r) {
+                output << r;
+                return true;
+            }, coolDown);
+        }
+    }
+
+#if 0
+    {
+        auto it = config.find(benchmark_base::factor_environment);
+        if (it != config.end()) {
+            auto env = this->find_environment(*it);
+            if (env == nullptr) {
+                std::stringstream msg;
+                msg << "The environment \"" << it->value() << "\", which was "
+                    "requested by the user-provided configuration, could not "
+                    "be found.";
+                throw std::runtime_error(msg.str());
+            }
+
+            this->enable_environment(env);
+        }
+    }
+
+    {
+        auto it = config.find(benchmark_base::factor_device);
+        if ((it != config.end())
+                && (it->value().type() != variant_type::device)) {
+        }
+    }
+#endif
+}
+
+
+/*
+ * trrojan::executive::run
+ */
+void trrojan::executive::run(const benchmark& benchmark,
+        const configuration_set& configs, output_base& output,
+        const cool_down& coolDown) {
+    if (benchmark == nullptr) {
+        throw std::runtime_error("The benchmark to run must not be nullptr.");
+    }
+
+    this->run(*benchmark, configs, output, coolDown);
+}
+
+
+/*
  * trrojan::executive::trroll
  */
 void trrojan::executive::trroll(const std::string& path, output_base& output,
@@ -219,25 +302,8 @@ void trrojan::executive::trroll(const std::string& path, output_base& output,
                     "benchmark \"%s\" from plugin \"%s\".\n",
                     b.benchmark.c_str(), b.plugin.c_str());
 
-                auto eds = this->prepare_env_devs(b.configs);
-
                 (**it).optimise_order(b.configs);
-
-                for (auto e : eds) {
-                    this->enable_environment(e.environment);
-                    b.configs.replace_factor(factor::from_manifestations(
-                        environment_base::factor_name, e.environment));
-
-                    for (auto d : e.devices) {
-                        b.configs.replace_factor(factor::from_manifestations(
-                            device_base::factor_name, d));
-
-                        (**it).run(b.configs, [&output](result&& r) {
-                            output << r;
-                            return true;
-                        }, coolDown);
-                    }
-                }
+                this->run(*it, b.configs, output, coolDown);
 
             } else {
                 log::instance().write(log_level::warning, "No benchmark named "

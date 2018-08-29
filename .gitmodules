@@ -7,3 +7,6 @@
 [submodule "datraw"]
 	path = datraw
 	url = https://github.com/UniStuttgart-VISUS/datraw.git
+[submodule "chakra"]
+	path = chakra
+	url = https://github.com/Microsoft/ChakraCore.git

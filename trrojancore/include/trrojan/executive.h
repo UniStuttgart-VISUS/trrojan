@@ -1,13 +1,15 @@
 /// <copyright file="executive.h" company="SFB-TRR 161 Quantitative Methods for Visual Computing">
-/// Copyright © 2016 SFB-TRR 161. Alle Rechte vorbehalten.
+/// Copyright © 2016 - 2018 SFB-TRR 161. Alle Rechte vorbehalten.
 /// </copyright>
 /// <author>Christoph Müller</author>
 
 #pragma once
 
+#include <iterator>
 #include <map>
 #include <memory>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #ifdef _WIN32
@@ -57,6 +59,20 @@ namespace trrojan {
         plugin find_plugin(const std::string& name);
 
         /// <summary>
+        /// Returns all benchmarks currently known to the TRRojan.
+        /// </summary>
+        /// <param name="oit">An output iterator like a back insert
+        /// iterator for <see cref="benchmark" />s.</param>
+        template<class I> void get_benchmarks(I oit) const;
+
+        /// <summary>
+        /// Returns all environments to the given output iterator.
+        /// </summary>
+        /// <param name="oit">An output iterator like a back insert
+        /// iterator.</param>
+        template<class I> void get_environments(I oit) const;
+
+        /// <summary>
         /// Answer whether an environment with the given name is available.
         /// </summary>
         /// <param name="name"></param>
@@ -64,6 +80,13 @@ namespace trrojan {
         inline bool has_environment(const std::string& name) const {
             return (this->environments.find(name) != this->environments.cend());
         }
+
+        /// <summary>
+        /// Runs the given JavaScript to conduct benchmarks wiring the results
+        /// to the given <paramref name="output" />.
+        /// <s/ummary>
+        void javascript(const std::string& path, output_base& output,
+            const cool_down& coolDown);
 
         /// <summary>
         /// Loads all plugins in the current directory, retrieves their
@@ -74,8 +97,23 @@ namespace trrojan {
         void load_plugins(const cmd_line& cmdLine);
 
         /// <summary>
+        /// Runs the given benchmark using the given configurations.
+        /// </summary>
+        /// <param name="benchmark">The plugin and bechmark to be run.</param>
+        /// <param name="configs">The set of configurations to be tested. This
+        /// parameter is passed by value because it will be modified by the
+        /// method before actually starting the benchmark. For instance, all
+        /// names of <see cref="environment" /> and <see cref="device" />s need
+        /// to be replaces with their actual instantiation.</param>
+        void run(benchmark_base& benchmark, configuration_set configs,
+            output_base& output, const cool_down& coolDown);
+
+        void run(const benchmark& benchmark, const configuration_set& configs,
+            output_base& output, const cool_down& coolDown);
+
+        /// <summary>
         /// Runs the benchmarks in the given TRROLL script writing the results
-        // to the given <paramref name="output" />.
+        /// to the given <paramref name="output" />.
         /// </summary>
         void trroll(const std::string& path, output_base& output,
             const cool_down& coolDown);
@@ -263,3 +301,5 @@ namespace trrojan {
         std::vector<plugin> plugins;
     };
 }
+
+#include "trrojan/executive.inl"

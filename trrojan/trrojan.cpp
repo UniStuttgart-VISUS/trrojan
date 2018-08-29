@@ -4,12 +4,14 @@
 /// <author>Christoph Müller</author>
 
 #include <iostream>
+#include <memory>
 #include <numeric>
 
 #include "trrojan/cmd_line.h"
 #include "trrojan/console_output.h"
 #include "trrojan/executive.h"
 #include "trrojan/log.h"
+#include "trrojan/power_state_scope.h"
 
 
 /// <summary>
@@ -21,6 +23,7 @@
 /// </returns>
 int main(const int argc, const char **argv) {
     const trrojan::cmd_line cmdLine(argv, argv + argc);
+    std::unique_ptr<trrojan::power_state_scope> powerStateScope;
 
     try {
         /* Configure the log, which must be the very first step. */
@@ -43,7 +46,7 @@ int main(const int argc, const char **argv) {
                 "der Universität Stuttgart."
                 << std::endl << "All rights reserved."
                 << std::endl << std::endl;
-            std::cout << "The way it's meant to be trrolled." 
+            std::cout << "The way you're meant to be trrolled." 
                 << std::endl << std::endl;
         }
 
@@ -69,6 +72,14 @@ int main(const int argc, const char **argv) {
             }
         }
 
+        /* Configure GPU boost behaviour. */
+        {
+            if (trrojan::contains_switch("--stable-power-state",
+                    cmdLine.begin(), cmdLine.end())) {
+                powerStateScope.reset(new trrojan::power_state_scope());
+            }
+        }
+
         /* Configure the executive. */
         trrojan::executive exe;
         exe.load_plugins(cmdLine);
@@ -82,6 +93,18 @@ int main(const int argc, const char **argv) {
                     trrojan::log_level::information, "Running benchmarks "
                     "configured in TRROLL script \"%s\" ...", *it);
                 exe.trroll(*it, *output, coolDown);
+            }
+        }
+
+        /* Run JavaScript if any. */
+        {
+            auto it = trrojan::find_argument("--javascript", cmdLine.begin(),
+                cmdLine.end());
+            if (it != cmdLine.end()) {
+                trrojan::log::instance().write_line(
+                    trrojan::log_level::information, "Running JavaScript "
+                    "\"%s\" to conduct benchmarks ...", *it);
+                exe.javascript(*it, *output, coolDown);
             }
         }
 

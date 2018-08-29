@@ -18,11 +18,60 @@ add_definitions("-DTRROJANCORE_EXPORTS")
 
 set(TrrojanCoreIncludeDir "${CMAKE_CURRENT_SOURCE_DIR}/${IncludeDirectory}" PARENT_SCOPE)
 
-if (WITH_CHAKRA==ON)
-endif (WITH_CHAKRA==ON)
-
 add_library(trrojancore SHARED ${HeaderFiles} ${SourceFiles})
+
+# Disable Chakra core if we cannot build it.
+if (NOT EXISTS ${CHAKRA_DIR})
+    MESSAGE(WARNING "Chakra Core is being disabled because the source directory does not exist.")
+    set(TRROJAN_WITH_CHAKRA OFF)
+endif(NOT EXISTS ${CHAKRA_DIR})
+#if (NOT WIN32)
+#    set(TRROJAN_WITH_CHAKRA OFF)
+#endif()
+
+# Build Chakra core if possible
+if (TRROJAN_WITH_CHAKRA)
+    set(CHAKRA_CONFIGURATION "release")
+
+    add_definitions("-DWITH_CHAKRA")
+    include_directories("${CHAKRA_DIR}/lib/Jsrt")
+
+    # On Windows, we need to determine whether we are cross-compiling or
+    # building for the native platform.
+    if ("${CMAKE_SIZEOF_VOID_P}" STREQUAL "4")
+        set(CHAKRA_PLATFORM "x86")
+    else ("${CMAKE_SIZEOF_VOID_P}" STREQUAL "4")
+        set (CHAKRA_PLATFORM "x64")
+    endif ("${CMAKE_SIZEOF_VOID_P}" STREQUAL "4")
+
+    if (WIN32)
+        set (CHAKRA_BIN_DIR "${CHAKRA_DIR}/Build/VcBuild/bin/${CHAKRA_PLATFORM}_${CHAKRA_CONFIGURATION}")
+        set (CHAKRA_BIN "${CHAKRA_BIN_DIR}/chakracore.dll")
+        set (CHAKRA_LIB "${CHAKRA_BIN_DIR}/chakracore.lib")
+        add_custom_command(TARGET trrojancore
+                           PRE_BUILD
+                           COMMAND msbuild /m /p:Platform=${CHAKRA_PLATFORM} /p:Configuration=${CHAKRA_CONFIGURATION} /p:RuntimeLib=static_library "${CHAKRA_DIR}/Build/Chakra.Core.sln"
+                           COMMENT "Building Chakra Core ...")
+        add_custom_command(TARGET trrojancore
+                           POST_BUILD
+                           COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CHAKRA_BIN} $<TARGET_FILE_DIR:trrojancore>)
+    else (WIN32)
+        set (CHAKRA_BIN_DIR "${CHAKRA_DIR}/out/${CHAKRA_CONFIGURATION}/lib")
+        set (CHAKRA_LIB "ChakraCoreStatic")
+        add_custom_target(ChakraCore
+                          COMMAND ${CHAKRA_DIR}/build.sh  --static
+                          COMMENT "Building Chakra Core ...")
+        add_dependencies(trrojancore ChakraCore)
+        link_directories(trrojancore ${CHAKRA_BIN_DIR})
+    endif (WIN32)
+endif (TRROJAN_WITH_CHAKRA)
+
+# Configure the linker.
 target_link_libraries(trrojancore trrojansnfo)
+
+if (TRROJAN_WITH_CHAKRA)
+    target_link_libraries(trrojancore ${CHAKRA_LIB})
+endif (TRROJAN_WITH_CHAKRA)
 
 if (${CMAKE_COMPILER_IS_GNUCXX})
     target_link_libraries(trrojancore dl)

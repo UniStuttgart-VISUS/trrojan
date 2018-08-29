@@ -882,6 +882,7 @@ trrojan::sysinfo::smbios_information trrojan::sysinfo::smbios_information::read(
     }
 
 #else /* defined(_WIN32) */
+    // https://github.com/lyonel/lshw/blob/master/src/core/dmi.cc
     // Cf. http://git.savannah.gnu.org/cgit/dmidecode.git/tree/dmidecode.c
     uint16_t version = 0;
 

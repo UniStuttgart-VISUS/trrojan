@@ -14,6 +14,7 @@
 #include "utilities.h"
 
 // $  udevadm info -a -n /dev/video11
+// lspci -k | grep -EA3 'VGA|3D|Display'
 
 
 /*

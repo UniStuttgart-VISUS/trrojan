@@ -89,7 +89,7 @@ namespace trrojan {
         /// <summary>
         /// Creates a new factor with a single manifestation.
         /// </summary>
-        /// <parama name="name">The name which uniquely identifies the factor.
+        /// <param name="name">The name which uniquely identifies the factor.
         /// </param>
         /// <parama name="manifestation">The manifestation of the factor.
         /// </param>
