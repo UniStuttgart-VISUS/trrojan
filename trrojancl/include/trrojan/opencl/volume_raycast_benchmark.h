@@ -29,11 +29,10 @@ namespace opencl
     /// The implementation of a basic volume raycasting benchmark.
     /// </summary>
     /// <remarks>
-    /// The implementation of this benchmark is related to the volume renderer
-    /// from the NVIDIA OpenCL SDK:
-    /// http://developer.download.nvidia.com/compute/cuda/3_0/sdk/website/OpenCL/website/samples.html#oclVolumeRender
-    /// However, instead of using back-to-front compositing, rays are cast in
-    /// front-to-back order, which also enables the use of early ray termination (ERT).
+    /// Volume raycasting benchmark with front to back compositing 
+    /// using a 1D transfer function to map density values to color and opacity. 
+    /// Optionally, early ray termination (ERT) and empty space skipping (ESS)
+    /// are used as acceleration techniques.
     /// </remarks>
     class TRROJANCL_API volume_raycast_benchmark : public trrojan::benchmark_base
     {

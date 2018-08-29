@@ -1,9 +1,9 @@
-/// <copyright file="environment.h" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+/// <copyright file="environment.h" company="Visualisierungsinstitut der UniversitÃ¤t Stuttgart">
+/// Copyright Â© 2016 - 2018 Visualisierungsinstitut der UniversitÃ¤t Stuttgart. Alle Rechte vorbehalten.
 /// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 /// </copyright>
 /// <author>Valentin Bruder</author>
-/// <author>Christoph Müller</author>
+/// <author>Christoph MÃ¼ller</author>
 
 #pragma once
 
@@ -35,7 +35,7 @@ struct properties
 /// OpenCL environment and basic utility class.
 /// </summary>
 /// <remarks>
-/// This implementation is related and uses some code of Eric Smistad's OpenCL utilities:
+/// This implementation is roughly based on Eric Smistad's OpenCL utilities:
 /// https://www.eriksmistad.no/opencl-utilities/
 /// </remarks>
 class TRROJANCL_API environment : public trrojan::environment_base
