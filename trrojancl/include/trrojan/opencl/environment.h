@@ -1,8 +1,8 @@
 /// <copyright file="environment.h" company="SFB-TRR 161 Quantitative Methods for Visual Computing">
-/// Copyright © 2016 SFB-TRR 161. Alle Rechte vorbehalten.
+/// Copyright Â© 2016 SFB-TRR 161. Alle Rechte vorbehalten.
 /// </copyright>
 /// <author>Valentin Bruder</author>
-/// <author>Christoph Müller</author>
+/// <author>Christoph MÃ¼ller</author>
 
 #pragma once
 
@@ -34,7 +34,7 @@ struct properties
 /// OpenCL environment and basic utility class.
 /// </summary>
 /// <remarks>
-/// This implementation is related and uses some code of Eric Smistad's OpenCL utilities:
+/// This implementation is roughly based on Eric Smistad's OpenCL utilities:
 /// https://www.eriksmistad.no/opencl-utilities/
 /// </remarks>
 class TRROJANCL_API environment : public trrojan::environment_base
