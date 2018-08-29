@@ -1,5 +1,6 @@
-/// <copyright file="configuration.cpp" company="SFB-TRR 161 Quantitative Methods for Visual Computing">
-/// Copyright ? 2017 SFB-TRR 161. Alle Rechte vorbehalten.
+/// <copyright file="configuration.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
+/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 /// </copyright>
 /// <author>Christoph M?ller</author>
 

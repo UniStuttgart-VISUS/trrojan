@@ -1,6 +1,6 @@
-/// <copyright file="smbios_information.h" company="SFB-TRR 161 Quantitative Methods for Visual Computing">
+/// <copyright file="smbios_information.h" company="Visualisierungsinstitut der Universität Stuttgart">
 /// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
-/// Copyright © 2016 - 2018 SFB-TRR 161. Alle Rechte vorbehalten.
+/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 /// </copyright>
 /// <author>Christoph Müller</author>
 
