@@ -482,7 +482,8 @@ trrojan::result trrojan::opencl::volume_raycast_benchmark::run(const configurati
         getcwd(buff, FILENAME_MAX);
         std::string dir(buff);
         dir += "/output_renderings/";
-        nError = mkdir(dir, 0733);
+        mode_t nMode = 0733;
+        nError = mkdir(dir.c_str(), nMode);
 #endif
         if (nError == ENOENT)
         {
