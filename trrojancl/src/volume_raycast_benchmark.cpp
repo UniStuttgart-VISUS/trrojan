@@ -75,17 +75,14 @@ const std::string trrojan::opencl::volume_raycast_benchmark::kernel_snippet_path
     "\\..\\..\\trrojancl\\include\\kernel\\volume_raycast_snippets";
 const std::string trrojan::opencl::volume_raycast_benchmark::kernel_source_path =
     "\\..\\..\\trrojancl\\include\\kernel\\volume_raycast_base.cl";
-const std::string trrojan::opencl::volume_raycast_benchmark::test_volume =
-    "\\\\trr161store.visus.uni-stuttgart.de\\SFB-TRR 161\\A02\\data\\volumes\\bonsai.dat";
+const std::string trrojan::opencl::volume_raycast_benchmark::test_volume = "";
 #else   // UNIX
 const std::string trrojan::opencl::volume_raycast_benchmark::kernel_snippet_path =
     "/../trrojancl/include/kernel/volume_raycast_snippets";
 const std::string trrojan::opencl::volume_raycast_benchmark::kernel_source_path =
     "/../trrojancl/include/kernel/volume_raycast_base.cl";
 const std::string trrojan::opencl::volume_raycast_benchmark::test_volume =
-//      "/home/brudervn/netshare/trrstore/A02/data/volumes/bonsai.dat";
-    "/media/brudervn/Daten/volTest/vol/bonsai.dat";
-//    "//trr161store.visus.uni-stuttgart.de/SFB-TRR 161/A02/data/volumes/bonsai.dat";
+    "";
 #endif
 
 /*
@@ -98,10 +95,6 @@ trrojan::opencl::volume_raycast_benchmark::volume_raycast_benchmark(void)
 
     // default config
     //
-    // TODO: @christoph empty factors (aka required factor)
-//    this->_default_configs.add_factor(factor::empty("environment"));
-//    this->_default_configs.add_factor(factor::from_manifestations(factor_device,
-//                                                                  std::string("device")));
     this->_default_configs.add_factor(factor::from_manifestations(
         factor_environment_vendor, static_cast<int>(VENDOR_ANY)));
     this->_default_configs.add_factor(
@@ -114,7 +107,6 @@ trrojan::opencl::volume_raycast_benchmark::volume_raycast_benchmark(void)
     // volume and view properties -> basic config
     //
     // volume .dat file name is a required factor
-//    this->_default_configs.add_factor(factor::empty("volume_file_name"));
     this->_default_configs.add_factor(factor::from_manifestations(
                                           factor_volume_file_name,
                                           test_volume));
@@ -129,10 +121,6 @@ trrojan::opencl::volume_raycast_benchmark::volume_raycast_benchmark(void)
     auto viewport = std::array<unsigned int, 2> { 1024, 1024 };
     add_kernel_run_factor(factor_viewport, viewport);
     add_kernel_run_factor(factor_step_size_factor, 0.5);
-//    add_kernel_run_factor(factor_roll, 0.0*CL_M_PI);
-//    add_kernel_run_factor(factor_pitch, 0.0*CL_M_PI);
-//    add_kernel_run_factor(factor_yaw, 0.25*CL_M_PI);
-//    add_kernel_run_factor(factor_zoom, -2.0);
 
     auto pos = std::array<float, 3> {0, 0, 2};
     add_kernel_run_factor(factor_cam_position, pos);
@@ -362,11 +350,16 @@ size_t trrojan::opencl::volume_raycast_benchmark::run(const configuration_set& c
                     _precision_div = 1.0f;
                 }
             }
+            std::string params = "-w"; // Inhibit all warning messages.
+#ifdef _WIN32
+            params += " -D _WIN32";
+#endif // _WIN32
+
             build_kernel(std::dynamic_pointer_cast<environment>(env),
                          std::dynamic_pointer_cast<device>(dev),
                          _kernel_source,
                          _precision_div,
-                         std::string("-w"));
+                         params);
         }
 
         // reset volume kernel argument if volume data changed
@@ -454,7 +447,7 @@ trrojan::result trrojan::opencl::volume_raycast_benchmark::run(const configurati
                                                              0,
                                                              0,
                                                              _output_data.data(),
-                                                             NULL,
+                                                             nullptr,
                                                              &read_evt);
             env_ptr->get_properties().queue.flush();    // global sync
             evt_status = CL_QUEUED;
@@ -471,18 +464,51 @@ trrojan::result trrojan::opencl::volume_raycast_benchmark::run(const configurati
         // write output as image
         auto dev = cfg.find(factor_device)->value().as<trrojan::device>();
         device::pointer dev_ptr = std::dynamic_pointer_cast<device>(dev);
-        auto file = cfg.find(factor_volume_file_name)->value().as<std::string>();
-        std::size_t foundFile = file.find_last_of("/\\");
-//        auto rot = cfg.find(factor_cam_rotation)->value().as<std::array<float, 4>>();
+        auto file = cfg.find(factor_volume_file_name)->value().as<std::string>(); 
+        auto pos = cfg.find(factor_cam_position)->value().as<std::array<float, 3>>();
+        auto rot = cfg.find(factor_cam_rotation)->value().as<std::array<float, 4>>();
         auto iteration = cfg.find(factor_maneuver_iteration)->value().as<int>();
         auto maneuver = cfg.find(factor_maneuver)->value().as<std::string>();
         auto tff = cfg.find(factor_tff_file_name)->value().as<std::string>();
-        std::size_t foundTff = tff.find_last_of("/\\");
-        trrojan::save_image("imgTest/"
-                            + dev_ptr->name() + "_" + file.substr(foundFile + 1) + "_"
-                            + tff.substr(foundTff + 1) + "_" + maneuver + "_" +
-                            std::to_string(iteration) + ".bmp", _output_data.data(),
-                            imgSize.at(0), imgSize.at(1), 4);
+
+        int nError = 0;
+        char buff[FILENAME_MAX];
+#ifdef _WIN32
+        _getcwd(buff, FILENAME_MAX);
+        std::string dir(buff);
+        dir += "\\output_renderings\\";
+        nError = _mkdir(dir.c_str());
+#else 
+        getcwd(buff, FILENAME_MAX);
+        std::string dir(buff);
+        dir += "/output_renderings/";
+        nError = mkdir(dir, 0733);
+#endif
+        if (nError == ENOENT)
+        {
+            std::ostringstream os;
+            os << "Could not create output directory ";
+            os << dir;
+            os << " to save rendered images. No images will be saved.";
+            log::instance().write(log_level::error, os.str().c_str());
+        }
+        else
+        {
+            std::string filename = dev_ptr->name() + "_" + trrojan::get_file_name(file) + "_"
+                + trrojan::get_file_name(tff) + "_" + maneuver + "_"
+                + std::to_string(iteration);
+            if (maneuver == "manual")
+                filename += "_" + std::to_string(rot[0]) + "_" + std::to_string(pos[2]);
+#ifdef _WIN32
+            filename += ".bmp";
+#else
+            filename += ".png";
+#endif // _Win32
+            std::string msg = "Writing image " + dir + filename;
+            log::instance().write(log_level::information, msg.c_str());
+            trrojan::save_image("output_renderings/" + filename, _output_data.data(), 
+                                imgSize.at(0), imgSize.at(1), 4);
+        }
     }
 
     // TODO: move to own method
@@ -628,11 +654,16 @@ void trrojan::opencl::volume_raycast_benchmark::setup_volume_data(
         auto env = cfg.find(factor_environment)->value().as<trrojan::environment>();
         auto dev = cfg.find(factor_device)->value().as<trrojan::device>();
         compose_kernel(cfg);
+        std::string params = "-w"; // Inhibit all warning messages.
+#ifdef _WIN32
+        params += " -D _WIN32";
+#endif // _WIN32
+
         build_kernel(std::dynamic_pointer_cast<environment>(env),
                      std::dynamic_pointer_cast<device>(dev),
                      _kernel_source,
                      _precision_div,
-                     std::string("-w"));
+                     params);
         generate_bricks(std::dynamic_pointer_cast<environment>(env));
     }
 }

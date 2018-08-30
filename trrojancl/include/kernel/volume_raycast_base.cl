@@ -208,7 +208,9 @@ __kernel void volumeRender(
     /***SAMPLECNT***/
 
     color.w = alpha;
-    //color *= (float4)(255.f);	// cimg scaling
+#ifndef _WIN32
+    color *= (float4)(255.f);	// cimg scaling
+#endif // _WIN32
     write_imagef(outData, texCoords, color);
 }
 
