@@ -102,7 +102,6 @@ trrojan::opencl::volume_raycast_benchmark::volume_raycast_benchmark(void)
 //    this->_default_configs.add_factor(factor::empty("environment"));
 //    this->_default_configs.add_factor(factor::from_manifestations(factor_device,
 //                                                                  std::string("device")));
-
     this->_default_configs.add_factor(factor::from_manifestations(
         factor_environment_vendor, static_cast<int>(VENDOR_ANY)));
     this->_default_configs.add_factor(
@@ -239,7 +238,8 @@ void trrojan::opencl::volume_raycast_benchmark::add_kernel_build_factor(std::str
  * trrojan::opencl::volume_raycast_benchmark::run
  */
 size_t trrojan::opencl::volume_raycast_benchmark::run(const configuration_set& configs,
-                                                      const on_result_callback& result_callback)
+                                                      const on_result_callback& result_callback,
+                                                      const cool_down& coolDown)
 {
     std::unordered_set<std::string> changed;
     size_t retval;
