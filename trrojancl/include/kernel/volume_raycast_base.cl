@@ -151,12 +151,15 @@ __kernel void volumeRender(
     
     /***CAMERA***/
     /***ORTHO_NEAR***/
-
+    
     float4 color = (float4)(1.f, 1.f, 1.f, 0.f);
+  
     if (!hit)
     {
+#ifndef _WIN32
+        color *= (float4)(255.f);
+#endif // _WIN32  
         // write output color: transparent white
-        // color *= (float4)(255.f);
         write_imagef(outData, texCoords, color);
         return;
     }

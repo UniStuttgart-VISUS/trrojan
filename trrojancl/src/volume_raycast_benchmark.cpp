@@ -430,6 +430,14 @@ trrojan::result trrojan::opencl::volume_raycast_benchmark::run(const configurati
             log_cl_error(err);
         }
     }
+
+    // calc median of execution times of all runs
+    //std::sort(times.begin(), times.end());
+    double median = times.at(times.size() / 2);
+    std::ostringstream os;
+    os << "Kernel time sample: " << median << std::endl;
+    log::instance().write(log_level::information, os.str().c_str());
+
     if (cfg.find(factor_img_output)->value().as<bool>())    // output resulting image
     {
         try
@@ -470,6 +478,8 @@ trrojan::result trrojan::opencl::volume_raycast_benchmark::run(const configurati
         auto iteration = cfg.find(factor_maneuver_iteration)->value().as<int>();
         auto maneuver = cfg.find(factor_maneuver)->value().as<std::string>();
         auto tff = cfg.find(factor_tff_file_name)->value().as<std::string>();
+        auto stepSize = cfg.find(factor_step_size_factor)->value().as<float>();
+        auto resolution = cfg.find(factor_viewport)->value().as<std::array<unsigned int, 2>>();
 
         int nError = 0;
         char buff[FILENAME_MAX];
@@ -496,8 +506,9 @@ trrojan::result trrojan::opencl::volume_raycast_benchmark::run(const configurati
         else
         {
             std::string filename = dev_ptr->name() + "_" + trrojan::get_file_name(file) + "_"
-                + trrojan::get_file_name(tff) + "_" + maneuver + "_"
-                + std::to_string(iteration);
+                + trrojan::get_file_name(tff) + "_" + std::to_string(stepSize) + "_"
+                + std::to_string(resolution[0]) + "_" + maneuver + "_"
+                + std::to_string(iteration) + "_" + std::to_string(median);
             if (maneuver == "manual")
                 filename += "_" + std::to_string(rot[0]) + "_" + std::to_string(pos[2]);
 #ifdef _WIN32
@@ -523,16 +534,9 @@ trrojan::result trrojan::opencl::volume_raycast_benchmark::run(const configurati
     std::vector<std::string> result_names;
     for (int i = 0; i < run_iterations; ++i)
         result_names.push_back("execution_time_" + std::to_string(i));
+
     auto retval = std::make_shared<basic_result>(result_cfg, std::move(result_names));
     retval->add(times);
-
-    // calc median of execution times of all runs
-    //std::sort(times.begin(), times.end());
-    double median = times.at(times.size() / 2);
-    std::ostringstream os;
-    os << "Kernel time sample: " << median << std::endl;
-    log::instance().write(log_level::information, os.str().c_str());
-
     return retval;
 }
 
