@@ -781,9 +781,9 @@ void trrojan::opencl::volume_raycast_benchmark::generate_bricks(environment::poi
         // calculate brick size
         const unsigned int numBricks = 64u;
         std::array<unsigned int, 3> brickRes = {1u, 1u, 1u};
-        brickRes.at(0) = RoundPow2(_dr.properties().volume_res.at(0)/numBricks);
-        brickRes.at(1) = RoundPow2(_dr.properties().volume_res.at(1)/numBricks);
-        brickRes.at(2) = RoundPow2(_dr.properties().volume_res.at(2)/numBricks);
+        brickRes.at(0) = std::max(1u, (_dr.properties().volume_res.at(0)/numBricks));
+        brickRes.at(1) = std::max(1u, RoundPow2(_dr.properties().volume_res.at(1)/numBricks));
+        brickRes.at(2) = std::max(1u, RoundPow2(_dr.properties().volume_res.at(2)/numBricks));
         std::array<unsigned int, 3> bricksTexSize = {1u, 1u, 1u};
         bricksTexSize.at(0) = ceil(_dr.properties().volume_res.at(0)/(double)brickRes.at(0));
         bricksTexSize.at(1) = ceil(_dr.properties().volume_res.at(1)/(double)brickRes.at(1));
