@@ -481,27 +481,7 @@ trrojan::variant trrojan::system_factors::system_desc(void) const {
  * trrojan::system_factors::timestamp
  */
 trrojan::variant trrojan::system_factors::timestamp(void) const {
-    std::vector<char> buffer;
-    struct tm tm;
-    auto time = ::time(nullptr);
-
-    {
-#ifdef _WIN32
-        auto error = ::gmtime_s(&tm, &time);
-#else /* _WIN32 */
-        auto error = (::gmtime_r(&time, &tm) != nullptr) ? 0 : EOVERFLOW;
-#endif /* _WIN32 */
-        if (error != 0) {
-            throw std::system_error(error, std::system_category(),
-                "Failed to convert timestamp.");
-        }
-    }
-
-    buffer.resize(128);
-    ::strftime(buffer.data(), buffer.size(), "%FT%TZ", &tm);
-    buffer.back() = static_cast<char>(0);
-
-    return std::string(buffer.data());
+    return to_string<char>(std::chrono::system_clock::now());
 }
 
 

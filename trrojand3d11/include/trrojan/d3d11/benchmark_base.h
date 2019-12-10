@@ -46,6 +46,11 @@ namespace d3d11 {
         /// </summary>
         static const std::string factor_debug_view;
 
+        /// <summary>
+        /// Boolean factor enabling output of the frame buffer to disk.
+        /// </summary>
+        static const std::string factor_save_view;
+
         virtual ~benchmark_base(void);
 
         virtual bool can_run(trrojan::environment env,
