@@ -19,25 +19,45 @@
 trrojan::d3d12::device::device(const ATL::CComPtr<ID3D12Device>& d3dDevice,
         const ATL::CComPtr<IDXGIFactory4>& dxgiFactory)
         : _d3d_device(d3dDevice), _dxgi_factory(dxgiFactory) {
-    assert(this->_d3d_device != nullptr);
-    assert(this->_dxgi_factory != nullptr);
     DXGI_ADAPTER_DESC desc;
-    auto adapter = this->dxgi_adapter();
-    HRESULT hr = (adapter != nullptr) ? S_OK : E_POINTER;
 
-    if (SUCCEEDED(hr)) {
-        hr = adapter->GetDesc(&desc);
+    if (this->_d3d_device == nullptr) {
+        throw std::invalid_argument("The Direct3D 12 device passed to a "
+            "TRRojan device wrapper must not be nullptr.");
     }
 
-    if (SUCCEEDED(hr)) {
+    if (this->_dxgi_factory == nullptr) {
+        throw std::invalid_argument("The DXGI factory passed to a TRRojan "
+            "device wrapper must not be nullptr.");
+    }
+
+    {
+        auto hr = this->dxgi_adapter()->GetDesc(&desc);
+        if (FAILED(hr)) {
+            throw ATL::CAtlException(hr);
+        }
+    }
+
+    {
         std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
         this->_name = conv.to_bytes(desc.Description);
         this->_unique_id = desc.DeviceId;
     }
 
-    //if (SUCCEEDED(hr)) {
-    //    this->d3dDevice->GetImmediateContext(&this->d3dContext);
-    //}
+    {
+        D3D12_COMMAND_QUEUE_DESC desc;
+        ::ZeroMemory(&desc, sizeof(desc));
+        desc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
+
+        auto hr = this->_d3d_device->CreateCommandQueue(&desc,
+            ::IID_ID3D12CommandQueue,
+            reinterpret_cast<void **>(&this->_command_queue));
+        if (FAILED(hr)) {
+            throw ATL::CAtlException(hr);
+        }
+        // Note: _command_queue must be deallocated manually if the ctor fails
+        // after this line.
+    }
 }
 
 

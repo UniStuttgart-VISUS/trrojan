@@ -47,12 +47,13 @@ namespace d3d12 {
         /// </summary>
         virtual ~device(void);
 
-        ///// <summary>
-        ///// Answer the immediate context of the underlying Direct3D device.
-        ///// </summary>
-        //inline ATL::CComPtr<ID3D12DeviceContext>& d3d_context(void) {
-        //    return this->d3dContext;
-        //}
+        /// <summary>
+        /// Answer the direct command queue of the device.
+        /// </summary>
+        /// <returns></returns>
+        inline ATL::CComPtr<ID3D12CommandQueue> command_queue(void) {
+            return this->_command_queue;
+        }
 
         /// <summary>
         /// Answer the underlying Direct3D device.
@@ -77,7 +78,7 @@ namespace d3d12 {
 
     private:
 
-        //ATL::CComPtr<ID3D12DeviceContext> d3dContext;
+        ATL::CComPtr<ID3D12CommandQueue> _command_queue;
         ATL::CComPtr<ID3D12Device> _d3d_device;
         ATL::CComPtr<IDXGIFactory4> _dxgi_factory;
 
