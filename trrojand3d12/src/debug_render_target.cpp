@@ -17,8 +17,8 @@
 /*
  * trrojan::d3d12::debug_render_target::debug_render_target
  */
-trrojan::d3d12::debug_render_target::debug_render_target(void) : base(nullptr),
-        _wnd(NULL) {
+trrojan::d3d12::debug_render_target::debug_render_target(
+        const trrojan::device& device) : base(device, 2), _wnd(NULL) {
     this->_msg_pump = std::thread(std::bind(&debug_render_target::do_msg,
         std::ref(*this)));
 }
@@ -84,65 +84,25 @@ void trrojan::d3d12::debug_render_target::present(ID3D12GraphicsCommandList *cmd
  */
 void trrojan::d3d12::debug_render_target::resize(const unsigned int width,
         const unsigned int height) {
-    throw "TODO";
-#if 0
-    ATL::CComPtr<ID3D12Texture2D> backBuffer;
-    DXGI_SWAP_CHAIN_DESC desc;
-    HRESULT hr = S_OK;
 
     if (this->_swap_chain == nullptr) {
         /* Initial resize. */
-        //assert(this->_dsv == nullptr);
-        //assert(this->_rtv == nullptr);
-        //assert(this->_uav == nullptr);
         assert(this->device() == nullptr);
-        //assert(this->device_context() == nullptr);
 
-        while (this->hWnd.load() == nullptr) {
+        while (this->_wnd.load() == NULL) {
             log::instance().write_line(log_level::verbose, "Waiting for the "
-                "debug view becoming available ...");
+                "debug view become available ...");
         }
 
-        ::ZeroMemory(&desc, sizeof(desc));
-        desc.BufferCount = 2;
-        // desc.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
-        desc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-        desc.BufferDesc.Height = width;
-        desc.BufferDesc.Width = height;
-        desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-        desc.OutputWindow = this->_wnd;
-        desc.SampleDesc.Count = 1;
-        desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
-        desc.Windowed = TRUE;
+        this->_swap_chain = this->create_swap_chain(this->_wnd);
 
-        {
-            ATL::CComPtr<ID3D12Device> device;
-            UINT deviceFlags = D3D12_CREATE_DEVICE_DISABLE_GPU_TIMEOUT;
-
-#if (defined(DEBUG) || defined(_DEBUG))
-            if (supports_debug_layer()) {
-                deviceFlags |= D3D12_CREATE_DEVICE_DEBUG;
-            }
-#endif /* (defined(DEBUG) || defined(_DEBUG)) */
-
-            ::D3D12CreateDevice()
-
-            hr = ::D3D12CreateDeviceAndSwapChain(nullptr,
-                D3D_DRIVER_TYPE_HARDWARE, NULL, deviceFlags, nullptr, 0,
-                D3D12_SDK_VERSION, &desc, &this->swapChain, &device,
-                nullptr, nullptr);
-            if (FAILED(hr)) {
-                throw ATL::CAtlException(hr);
-            }
-
-            this->set_device(device);
-        }
-
-        ::ShowWindow(this->hWnd, SW_SHOW);
+        ::ShowWindow(this->_wnd, SW_SHOW);
 
     } else {
         /* Have existing swap chain. */
-        assert(this->hWnd.load() != NULL);
+        throw "TODO"
+#if 0
+        assert(this->_wnd.load() != NULL);
         this->_rtv = nullptr;
         this->_dsv = nullptr;
         this->_uav = nullptr;
@@ -157,11 +117,9 @@ void trrojan::d3d12::debug_render_target::resize(const unsigned int width,
         if (FAILED(hr)) {
             throw ATL::CAtlException(hr);
         }
+#endif
 
     } /* end if (this->swapChain == nullptr) */
-    assert(this->_dsv == nullptr);
-    assert(this->_rtv == nullptr);
-#endif
 
     /* Resize the window to match the requested client area. */
     {

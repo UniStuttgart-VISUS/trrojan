@@ -33,7 +33,7 @@ namespace d3d12 {
         /// <summary>
         /// Initialises a new instance.
         /// </summary>
-        debug_render_target(void);
+        debug_render_target(const trrojan::device& device);
 
         /// <summary>
         /// Finalises the instance.

@@ -257,6 +257,7 @@ trrojan::d3d12::render_target_base::render_target_base(
 
     this->_command_queue = d->command_queue();
     this->_device = d->d3d_device();
+    this->_dxgi_factory = d->dxgi_factory();
     ::ZeroMemory(&this->_viewport, sizeof(this->_viewport));
 }
 
@@ -330,6 +331,63 @@ void trrojan::d3d12::render_target_base::create_rtv_heap(void) {
         D3D12_DESCRIPTOR_HEAP_TYPE_RTV, this->pipeline_depth());
     this->_rtv_descriptor_size = this->_device->GetDescriptorHandleIncrementSize(
         D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+}
+
+
+/*
+ * trrojan::d3d12::render_target_base::create_swap_chain
+ */
+ATL::CComPtr<IDXGISwapChain3>
+trrojan::d3d12::render_target_base::create_swap_chain(HWND hWnd) {
+    assert(this->_command_queue != nullptr);
+    assert(this->_dxgi_factory != nullptr);
+    ATL::CComPtr<IDXGISwapChain3> retval;
+    UINT height = 1;
+    ATL:CComPtr<IDXGISwapChain1> swapChain;
+    UINT width = 1;
+
+    {
+        RECT clientRect;
+        if (::GetClientRect(hWnd, &clientRect)) {
+            height = std::abs(clientRect.bottom - clientRect.top);
+            width = std::abs(clientRect.right - clientRect.left);
+        }
+    }
+
+    {
+        DXGI_SWAP_CHAIN_DESC1 desc;
+        ::ZeroMemory(&desc, sizeof(desc));
+        desc.BufferCount = this->pipeline_depth();
+        desc.Width = width;
+        desc.Height = height;
+        desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+        desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+        desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+        desc.SampleDesc.Count = 1;
+
+        auto hr = this->_dxgi_factory->CreateSwapChainForHwnd(
+            this->_command_queue, hWnd, &desc, nullptr, nullptr, &swapChain);
+        if (FAILED(hr)) {
+            throw ATL::CAtlException(hr);
+        }
+    }
+
+    {
+        auto hr = this->_dxgi_factory->MakeWindowAssociation(hWnd,
+            DXGI_MWA_NO_ALT_ENTER);
+        if (FAILED(hr)) {
+            throw ATL::CAtlException(hr);
+        }
+    }
+
+    {
+        auto hr = swapChain.QueryInterface(&retval);
+        if (FAILED(hr)) {
+            throw ATL::CAtlException(hr);
+        }
+    }
+
+    return retval;
 }
 
 

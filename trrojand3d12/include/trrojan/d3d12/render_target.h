@@ -157,6 +157,8 @@ namespace d3d12 {
         /// </summary>
         void create_rtv_heap(void);
 
+        ATL::CComPtr<IDXGISwapChain3> create_swap_chain(HWND hWnd);
+
         /// <summary>
         /// Answer the CPU handle of the DSV of the current frame.
         /// </summary>
@@ -170,6 +172,7 @@ namespace d3d12 {
         /// </summary>
         /// <returns></returns>
         D3D12_CPU_DESCRIPTOR_HANDLE current_rtv_handle(void);
+
 
         /// <summary>
         /// Set <paramref name="buffers" /> as the buffers for the render target
@@ -225,6 +228,11 @@ namespace d3d12 {
         /// The heap holding the depth-stencil views.
         /// </summary>
         ATL::CComPtr<ID3D12DescriptorHeap> _dsv_heap;
+
+        /// <summary>
+        /// The DXGI factory from which the underlying device was obtained.
+        /// </summary>
+        ATL::CComPtr<IDXGIFactory4> _dxgi_factory;
 
         /// <summary>
         /// A fence for waiting on the GPU to complete a task.
