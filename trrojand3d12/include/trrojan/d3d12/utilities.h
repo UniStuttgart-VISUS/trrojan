@@ -178,6 +178,13 @@ namespace d3d12 {
 
     void set_debug_object_name(ID3D12Object *obj, const char *name);
 
+    /// <summary>
+    /// Converts a vector of smart pointers into dumb pointers without
+    /// increasing the reference count.
+    /// </summary>
+    template<class T>
+    std::vector<T *> unsmart(std::vector<ATL::CComPtr<T>>& input);
+
     //void wait_for_event_query(ID3D12DeviceContext *ctx,
     //    ID3D12Asynchronous *query);
 
@@ -186,3 +193,5 @@ namespace d3d12 {
 
 } /* end namespace d3d12 */
 } /* end namespace trrojan */
+
+#include "trrojan/d3d12/utilities.inl"

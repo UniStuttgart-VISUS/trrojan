@@ -2,11 +2,12 @@
 // Copyright © 2022 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
-/// <author>Christoph Müller</author>
+// <author>Christoph Müller</author>
 
 #pragma once
 
 #include <memory>
+#include <vector>
 
 #include <Windows.h>
 #include <atlbase.h>
@@ -31,16 +32,17 @@ namespace d3d12 {
         /// <summary>
         /// Finalises the instance.
         /// </summary>
-        virtual ~render_target_base(void) = default;
+        virtual ~render_target_base(void);
 
         /// <summary>
-        /// Clears the render target.
+        /// Queues clearing the render (and depth) target.
         /// </summary>
         /// <remarks>
         /// A device must have been set and the render target must have been
         /// resized at least once before this method can be called.
         /// </remarks>
-        virtual void clear(void);
+        /// <param name="cmdList"></param>
+        virtual void clear(ID3D12GraphicsCommandList *cmdList);
 
         /// <summary>
         /// Answer the device the render target belongs to.
@@ -50,28 +52,33 @@ namespace d3d12 {
             return this->_device;
         }
 
-        ///// <summary>
-        ///// Answer the device context belonging to
-        ///// <see cref="render_target_base::device" />.
-        ///// </summary>
-        ///// <returns></returns>
-        //inline ATL::CComPtr<ID3D11DeviceContext> device_context(void) {
-        //    return this->_device_context;
-        //}
-
         /// <summary>
-        /// Sets the render target as active target of the output merger of its
-        /// associated device.
+        /// Queues the render target as active target in the given command list.
         /// </summary>
-        void enable(void);
+        /// <remarks>
+        /// <para>This method also sets the viewport and the scissor
+        /// rectangle.</para>
+        /// </remarks>
+        /// <param name="cmdList"></param>
+        void enable(ID3D12GraphicsCommandList *cmdList);
 
         /// <summary>
         /// Performs cleanup operations once a frame was completed.
         /// </summary>
         /// <remarks>
-        /// The default implementation does nothing.
+        /// The default implementation transitions the render target view to
+        /// present mode.
         /// </remarks>
-        virtual void present(void);
+        /// <param name="cmdList"></param>
+        virtual void present(ID3D12GraphicsCommandList *cmdList);
+
+        /// <summary>
+        /// Answer the number of buffers used by the render target.
+        /// </summary>
+        /// <returns></returns>
+        inline UINT pipeline_depth(void) const {
+            return static_cast<UINT>(this->_buffers.size());
+        }
 
         /// <summary>
         /// Resizes the swap chain of the render target to the given dimension.
@@ -100,6 +107,17 @@ namespace d3d12 {
         /// </summary>
         void use_reversed_depth_buffer(const bool isEnabled);
 
+        /// <summary>
+        /// Wait until the GPU is ready to being the next frame.
+        /// </summary>
+        virtual void wait_for_frame(void) = 0;
+
+        /// <summary>
+        /// Inject a single into the command queue for the current frame and
+        /// wait until the GPU singals it.
+        /// </summary>
+        void wait_for_gpu(void);
+
         render_target_base& operator =(const render_target_base&) = delete;
 
     protected:
@@ -108,23 +126,68 @@ namespace d3d12 {
         /// Initialises a new instance.
         /// </summary>
         /// <param name="device">The device to create the target on.</param>
-        render_target_base(const trrojan::device& device);
+        /// <param name="pipelineDepth">The number of buffers to be used by the
+        /// render target. The default is 2, which means one front buffer and
+        /// one back buffer.</param>
+        render_target_base(const trrojan::device& device,
+            const UINT pipelineDepth = 2);
 
         /// <summary>
-        /// Set <paramref name="backBuffer" /> as back buffer and creates the
-        /// render target view for it. Furthermore, allocate a depth buffer of
-        /// the same size and create the view for it.
+        /// Convenience method for allocating a descriptor heap.
         /// </summary>
-        /// <remarks>
-        /// <see cref="_dsv" /> and <see cref="_rtv" /> must have been deleted
-        /// before this method can be called.
-        /// </remarks>
-        void set_back_buffer(ID3D11Texture2D *backBuffer);
+        /// <param name="type"></param>
+        /// <param name="cnt"></param>
+        /// <returns></returns>
+        ATL::CComPtr<ID3D12DescriptorHeap> create_descriptor_heap(
+            const D3D12_DESCRIPTOR_HEAP_TYPE type, const UINT cnt);
 
         /// <summary>
-        /// Sets the D3D device and updates the immediate context.
+        /// Allocate a descriptor heap for depth-stencil views.
         /// </summary>
-        void set_device(ID3D11Device *device);
+        /// <param name=""></param>
+        void create_dsv_heap(void);
+
+        /// <summary>
+        /// Lazily initialises the fence and the event for waiting on it.
+        /// </summary>
+        void create_fence(void);
+
+        /// <summary>
+        /// Allocate a descriptor heap for render target views.
+        /// </summary>
+        void create_rtv_heap(void);
+
+        /// <summary>
+        /// Answer the CPU handle of the DSV of the current frame.
+        /// </summary>
+        /// <returns></returns>
+        inline D3D12_CPU_DESCRIPTOR_HANDLE current_dsv_handle(void) {
+            return this->_dsv_heap->GetCPUDescriptorHandleForHeapStart();
+        }
+
+        /// <summary>
+        /// Answer the CPU handle of the RTV of the current frame.
+        /// </summary>
+        /// <returns></returns>
+        D3D12_CPU_DESCRIPTOR_HANDLE current_rtv_handle(void);
+
+        /// <summary>
+        /// Set <paramref name="buffers" /> as the buffers for the render target
+        /// views.
+        /// </summary>
+        void set_buffers(
+            const std::vector<ATL::CComPtr<ID3D12Resource>>& buffers);
+
+        /// <summary>
+        /// Waits for the frame in the given buffer to complete.
+        /// </summary>
+        /// <param name="nextFrame"></param>
+        void wait_for_frame(const UINT nextFrame);
+
+        /// <summary>
+        /// Identifies the back buffer currently used for rendering.
+        /// </summary>
+        UINT _buffer_index;
 
         /// <summary>
         /// Clear value for the depth buffer.
@@ -137,16 +200,21 @@ namespace d3d12 {
         //ATL::CComPtr<ID3D11DepthStencilState> _dss;
 
         /// <summary>
-        /// The depth/stencil view.
+        /// The viewport matching the size of the render target.
         /// </summary>
-        //ATL::CComPtr<ID3D11DepthStencilView> _dsv;
-
-        /// <summary>
-        /// The render target view.
-        /// </summary>
-        //ATL::CComPtr<ID3D11RenderTargetView> _rtv;
+        D3D12_VIEWPORT _viewport;
 
     private:
+
+        /// <summary>
+        /// Holds the resources of the render target buffers.
+        /// </summary>
+        std::vector<ATL::CComPtr<ID3D12Resource>> _buffers;
+
+        /// <summary>
+        /// The direct command queue assoicated with <see cref="_device" />.
+        /// </summary>
+        ATL::CComPtr<ID3D12CommandQueue> _command_queue;
 
         /// <summary>
         /// The device the render target lives on.
@@ -154,14 +222,40 @@ namespace d3d12 {
         ATL::CComPtr<ID3D12Device> _device;
 
         /// <summary>
-        /// The immediate context of <see cref="_device" />.
+        /// The heap holding the depth-stencil views.
         /// </summary>
-        //ATL::CComPtr<ID3D11DeviceContext> _device_context;
+        ATL::CComPtr<ID3D12DescriptorHeap> _dsv_heap;
+
+        /// <summary>
+        /// A fence for waiting on the GPU to complete a task.
+        /// </summary>
+        ATL::CComPtr<ID3D12Fence> _fence;
+
+        /// <summary>
+        /// An event for blocking the calling thread until a fence in the GPU
+        /// command stream was reached.
+        /// </summary>
+        HANDLE _fence_event;
+
+        /// <summary>
+        /// The values of the fence for each frame.
+        /// </summary>
+        std::vector<UINT64> _fence_values;
+
+        /// <summary>
+        /// The size of the render target view descriptor.
+        /// </summary>
+        UINT _rtv_descriptor_size;
+
+        /// <summary>
+        /// The heap holding the render target views.
+        /// </summary>
+        ATL::CComPtr<ID3D12DescriptorHeap> _rtv_heap;
 
         /// <summary>
         /// A staging texture for saving the back buffer to disk.
         /// </summary>
-        //ATL::CComPtr<ID3D11Texture2D> _staging_texture;
+        ATL::CComPtr<ID3D12Resource> _staging_texture;
     };
 
 

@@ -41,14 +41,16 @@ namespace d3d12 {
         virtual ~debug_render_target(void);
 
         /// <inheritdoc />
-        virtual void present(void);
+        void present(ID3D12GraphicsCommandList *cmdList) override;
 
         /// <inheritdoc />
-        virtual void resize(const unsigned int width,
-            const unsigned int height);
+        void resize(const unsigned int width, const unsigned int height) override;
 
         /// <inheritdoc />
-        //virtual ATL::CComPtr<ID3D11UnorderedAccessView> to_uav(void);
+        //ATL::CComPtr<ID3D11UnorderedAccessView> to_uav(void) override;
+
+        /// <inheritdoc />
+        void wait_for_frame(void) override;
 
     private:
 
@@ -72,19 +74,19 @@ namespace d3d12 {
         void do_msg(void);
 
         /// <summary>
-        /// The handle of the debug window.
-        /// </summary>
-        std::atomic<HWND> hWnd;
-
-        /// <summary>
         /// The message pumping thread.
         /// </summary>
-        std::thread msgPump;
+        std::thread _msg_pump;
 
         /// <summary>
         /// The swap chain for the window.
         /// </summary>
-        ATL::CComPtr<IDXGISwapChain> swapChain;
+        ATL::CComPtr<IDXGISwapChain3> _swap_chain;
+
+        /// <summary>
+        /// The handle of the debug window.
+        /// </summary>
+        std::atomic<HWND> _wnd;
 
         /// <summary>
         /// An unordered access view for compute shaders.

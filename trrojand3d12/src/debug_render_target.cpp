@@ -1,4 +1,3 @@
-#if 0
 // <copyright file="debug_render_target.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
 // Copyright © 2022 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
@@ -19,8 +18,8 @@
  * trrojan::d3d12::debug_render_target::debug_render_target
  */
 trrojan::d3d12::debug_render_target::debug_render_target(void) : base(nullptr),
-        hWnd(NULL) {
-    this->msgPump = std::thread(std::bind(&debug_render_target::do_msg,
+        _wnd(NULL) {
+    this->_msg_pump = std::thread(std::bind(&debug_render_target::do_msg,
         std::ref(*this)));
 }
 
@@ -34,10 +33,10 @@ trrojan::d3d12::debug_render_target::~debug_render_target(void) {
     //    ::SendMessage(hWnd, WM_CLOSE, 0, 0);
     //}
 
-    if (this->msgPump.joinable()) {
+    if (this->_msg_pump.joinable()) {
         log::instance().write_line(log_level::information, "Please close the "
             "debug view to end the programme.");
-        this->msgPump.join();
+        this->_msg_pump.join();
     }
 }
 
@@ -45,7 +44,9 @@ trrojan::d3d12::debug_render_target::~debug_render_target(void) {
 /*
  * trrojan::d3d12::debug_render_target::present
  */
-void trrojan::d3d12::debug_render_target::present(void) {
+void trrojan::d3d12::debug_render_target::present(ID3D12GraphicsCommandList *cmdList) {
+    throw "TODO";
+#if 0
     if (this->_uav != nullptr) {
         assert(this->swapChain != nullptr);
         ATL::CComPtr<ID3D12Texture2D> dst;
@@ -74,6 +75,7 @@ void trrojan::d3d12::debug_render_target::present(void) {
     if (this->swapChain != nullptr) {
         this->swapChain->Present(0, 0);
     }
+#endif
 }
 
 
@@ -82,11 +84,13 @@ void trrojan::d3d12::debug_render_target::present(void) {
  */
 void trrojan::d3d12::debug_render_target::resize(const unsigned int width,
         const unsigned int height) {
+    throw "TODO";
+#if 0
     ATL::CComPtr<ID3D12Texture2D> backBuffer;
     DXGI_SWAP_CHAIN_DESC desc;
     HRESULT hr = S_OK;
 
-    if (this->swapChain == nullptr) {
+    if (this->_swap_chain == nullptr) {
         /* Initial resize. */
         //assert(this->_dsv == nullptr);
         //assert(this->_rtv == nullptr);
@@ -106,7 +110,7 @@ void trrojan::d3d12::debug_render_target::resize(const unsigned int width,
         desc.BufferDesc.Height = width;
         desc.BufferDesc.Width = height;
         desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-        desc.OutputWindow = this->hWnd;
+        desc.OutputWindow = this->_wnd;
         desc.SampleDesc.Count = 1;
         desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
         desc.Windowed = TRUE;
@@ -148,7 +152,7 @@ void trrojan::d3d12::debug_render_target::resize(const unsigned int width,
             throw ATL::CAtlException(hr);
         }
 
-        hr = this->swapChain->ResizeBuffers(desc.BufferCount, width,
+        hr = this->_swap_chain->ResizeBuffers(desc.BufferCount, width,
             height, desc.BufferDesc.Format, 0);
         if (FAILED(hr)) {
             throw ATL::CAtlException(hr);
@@ -157,11 +161,12 @@ void trrojan::d3d12::debug_render_target::resize(const unsigned int width,
     } /* end if (this->swapChain == nullptr) */
     assert(this->_dsv == nullptr);
     assert(this->_rtv == nullptr);
+#endif
 
     /* Resize the window to match the requested client area. */
     {
-        DWORD style = ::GetWindowLong(this->hWnd, GWL_STYLE);
-        DWORD styleEx = ::GetWindowLong(this->hWnd, GWL_EXSTYLE);
+        DWORD style = ::GetWindowLong(this->_wnd, GWL_STYLE);
+        DWORD styleEx = ::GetWindowLong(this->_wnd, GWL_EXSTYLE);
         RECT wndRect;
 
         wndRect.left = 0;
@@ -173,22 +178,39 @@ void trrojan::d3d12::debug_render_target::resize(const unsigned int width,
             throw ATL::CAtlException(hr);
         }
 
-        ::SetWindowPos(this->hWnd, HWND_TOP, 0, 0,
+        ::SetWindowPos(this->_wnd, HWND_TOP, 0, 0,
             wndRect.right - wndRect.left,
             wndRect.bottom - wndRect.top,
             SWP_NOMOVE | SWP_SHOWWINDOW);
     }
 
     /* Re-create the RTV/DSV. */
-    hr = this->swapChain->GetBuffer(0, IID_ID3D12Texture2D,
-        reinterpret_cast<void **>(&backBuffer));
-    if (FAILED(hr)) {
-        throw ATL::CAtlException(hr);
+    {
+        std::vector<ATL::CComPtr<ID3D12Resource>> buffers(
+            this->pipeline_depth());
+
+        for (UINT i = 0; i < this->pipeline_depth(); ++i) {
+            auto hr = this->_swap_chain->GetBuffer(i, ::IID_ID3D12Resource,
+                reinterpret_cast<void **>(&buffers[i]));
+            if (FAILED(hr)) {
+                throw ATL::CAtlException(hr);
+            }
+
+            set_debug_object_name(buffers[i].p, "debug_render_target "
+                "(colour buffer)");
+        }
+
+        this->set_buffers(buffers);
     }
+}
 
-    set_debug_object_name(backBuffer.p, "debug_render_target (colour buffer)");
 
-    this->set_back_buffer(backBuffer.p);
+/*
+ * trrojan::d3d12::debug_render_target::wait_for_frame
+ */
+void trrojan::d3d12::debug_render_target::wait_for_frame(void) {
+    render_target_base::wait_for_frame(
+        this->_swap_chain->GetCurrentBackBufferIndex());
 }
 
 
@@ -308,7 +330,7 @@ void trrojan::d3d12::debug_render_target::do_msg(void) {
         DWORD styleEx = 0;
 
         /* Create the window. */
-        this->hWnd = ::CreateWindowEx(styleEx,
+        this->_wnd = ::CreateWindowEx(styleEx,
             WINDOW_CLASS,
             _T("TRRojan"),
             style,
@@ -317,7 +339,7 @@ void trrojan::d3d12::debug_render_target::do_msg(void) {
             NULL, NULL,
             hInstance,
             this);
-        if (this->hWnd.load() == NULL) {
+        if (this->_wnd.load() == NULL) {
             auto hr = __HRESULT_FROM_WIN32(::GetLastError());
             throw ATL::CAtlException(hr);
         }
@@ -328,4 +350,3 @@ void trrojan::d3d12::debug_render_target::do_msg(void) {
         ::DispatchMessage(&msg);
     }
 }
-#endif
