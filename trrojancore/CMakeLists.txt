@@ -12,7 +12,7 @@ file(GLOB_RECURSE SourceFiles RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${SourceDi
 
 include_directories("${IncludeDirectory}")
 include_directories("${LibraryDirectory}")
-if(NOT _UWP)
+if(NOT UWP)
 include_directories("${TrrojanSysInfoIncludeDir}")
 endif()
 
@@ -77,7 +77,7 @@ if (TRROJAN_WITH_CHAKRA)
 endif (TRROJAN_WITH_CHAKRA)
 
 # Configure the linker.
-if(NOT _UWP)
+if(NOT UWP)
 target_link_libraries(trrojancore trrojansnfo)
 endif()
 

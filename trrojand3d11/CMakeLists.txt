@@ -42,7 +42,7 @@ set(ShaderFiles ${ShaderHeaderFiles} ${ShaderFiles})
 
 include_directories("${IncludeDirectory}")
 include_directories("${TrrojanCoreIncludeDir}")
-if(NOT _UWP)
+if(NOT UWP)
 include_directories("${TrrojanSysInfoIncludeDir}")
 endif()
 
