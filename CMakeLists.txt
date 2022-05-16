@@ -13,9 +13,11 @@ find_package(OpenMP)
 
 set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_USE_RELATIVE_PATHS ON)
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+
+add_compile_definitions(_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING)
 
 # ????????????
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/include")
@@ -26,10 +28,16 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/bin")
 # Configure optional features
 option(TRROJAN_WITH_CHAKRA "Enable JavaScript support." OFF)
 
+# Add compile defintion for UWP via cmake optioon
+option(UWP "Compile for UWP" OFF)
+if(UWP)
+add_compile_definitions(_UWP)
+endif()
 
 # Configure the compiler.
 if (WIN32)
 	add_compile_options(/wd4251)	# We cannot fix that - TRRojan just needs to be compiled in a single step.
+	#add_compile_options(/ZW)	# Windows Runtime Compilation
 endif (WIN32)
 
 if (${CMAKE_COMPILER_IS_GNUCXX})
@@ -72,7 +80,9 @@ include_directories("spdlog/include")
 include_directories("datraw/datraw")
 
 # Build the system information library.
+if(NOT UWP)
 add_subdirectory(trrojansnfo)
+endif()
 
 # Build the core library
 add_subdirectory(trrojancore)

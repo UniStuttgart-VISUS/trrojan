@@ -9,6 +9,7 @@
 #include "trrojan/d3d11/rendering_technique.h"
 #include "trrojan/d3d11/volume_benchmark_base.h"
 
+#ifndef _UWP
 
 namespace trrojan {
 namespace d3d11 {
@@ -69,3 +70,5 @@ namespace d3d11 {
 
 } /* end namespace d3d11 */
 } /* end namespace trrojan */
+
+#endif

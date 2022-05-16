@@ -89,6 +89,27 @@ void trrojan::executive::load_plugins(const cmd_line& cmdLine) {
             false, trrojan::has_extension(plugin_dll::extension));
 
 #ifdef _WIN32
+#ifdef _UWP
+            std::array<wchar_t, MAX_PATH>  mfn;
+            uint32_t path_size = MAX_PATH;
+            DWORD actual_size{};
+
+            actual_size = ::GetModuleFileName(NULL, mfn.data(), path_size);
+
+            {
+                auto it = std::find(mfn.rbegin(), mfn.rend(),
+                    directory_separator_char);
+                auto p = std::wstring(mfn.begin(), it.base()-1);
+                std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+                std::string np = converter.to_bytes(p);
+
+                log::instance().write(log_level::verbose, "Considering plugins "
+                    "from the directory \"%s\" holding the executable.\n",
+                    np.c_str());
+                get_file_system_entries(std::back_inserter(paths), np,
+                    false, trrojan::has_extension(plugin_dll::extension));
+            }
+#else
         {
             std::vector<char> mfn(MAX_PATH);
             if (::GetModuleFileName(NULL, mfn.data(),
@@ -103,6 +124,7 @@ void trrojan::executive::load_plugins(const cmd_line& cmdLine) {
                     false, trrojan::has_extension(plugin_dll::extension));
             }
         }
+#endif // _UWP
 #endif /* _WIN32 */
 
         log::instance().write(log_level::verbose, "Found %u potential "
@@ -508,10 +530,18 @@ trrojan::executive::plugin_dll trrojan::executive::plugin_dll::open(
     plugin_dll retval;
 
 #ifdef _WIN32
+
+#ifdef _UWP
+    std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+    std::wstring wpath = converter.from_bytes(path.c_str());
+    retval.handle = ::LoadPackagedLibrary(wpath.c_str(),0);
+    auto nec = ::GetLastError();
+#else
     auto oldErrorMode = ::SetErrorMode(SEM_FAILCRITICALERRORS);
     retval.handle = ::LoadLibraryExA(path.c_str(), NULL, 0);
     auto nec = ::GetLastError();
     ::SetErrorMode(oldErrorMode);
+#endif // _UWP
 
     if (retval.handle == plugin_dll::invalid_handle) {
         std::stringstream msg;

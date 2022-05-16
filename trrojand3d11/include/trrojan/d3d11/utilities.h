@@ -7,6 +7,8 @@
 #pragma once
 
 #include <cassert>
+#include <filesystem>
+#include <fstream>
 #include <sstream>
 #include <stdexcept>
 #include <vector>
@@ -17,6 +19,55 @@
 
 #include "trrojan/d3d11/export.h"
 
+#ifdef _UWP
+
+namespace trrojan {
+    // Copyright (c) Microsoft Corporation.
+    // Licensed under the MIT License.
+    //
+    // Modified to use std::filesystem
+    inline std::vector<uint8_t> ReadFileBytes(const std::filesystem::path& path) {
+        bool fileExists = false;
+        try {
+            std::ifstream file;
+            file.exceptions(std::ios::failbit | std::ios::badbit);
+            file.open(path, std::ios::binary | std::ios::ate);
+            fileExists = true;
+            // If tellg fails then it will throw an exception instead of returning -1.
+            std::vector<uint8_t> data(static_cast<size_t>(file.tellg()));
+            file.seekg(0, std::ios::beg);
+            file.read(reinterpret_cast<char*>(data.data()), data.size());
+            return data;
+        }
+        catch (const std::ios::failure&) {
+            // The exception only knows that the failbit was set so it doesn't contain anything useful.
+            //throw std::runtime_error(std::format("Failed to {} file: {}", fileExists ? "read" : "open", path.string()));
+            throw std::runtime_error(std::string("Failed to " + std::string(fileExists ? "read" : "open") + " file: " + path.string()));
+        }
+    }
+
+    // Copyright (c) Microsoft Corporation.
+    // Licensed under the MIT License.
+    //
+    // Modified to use only UWP version
+    inline std::filesystem::path GetAppFolder() {
+        HMODULE thisModule;
+        thisModule = nullptr;
+
+        wchar_t moduleFilename[MAX_PATH];
+        ::GetModuleFileName(thisModule, moduleFilename, (DWORD)std::size(moduleFilename));
+        std::filesystem::path fullPath(moduleFilename);
+        return fullPath.remove_filename();
+    }
+
+    // Copyright (c) Microsoft Corporation.
+    // Licensed under the MIT License.
+    inline std::filesystem::path GetPathInAppFolder(const std::filesystem::path& filename) {
+        return GetAppFolder() / filename;
+    }
+
+#endif
+}
 
 namespace trrojan {
 namespace d3d11 {

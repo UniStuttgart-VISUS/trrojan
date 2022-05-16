@@ -11,6 +11,7 @@
 
 #include "trrojan/d3d11/gpu_timer.h"
 
+#ifndef _UWP
 
 namespace trrojan {
 namespace d3d11 {
@@ -57,3 +58,5 @@ namespace d3d11 {
 
 } /* end namespace d3d11 */
 } /* end namespace trrojan */
+
+#endif

@@ -17,6 +17,7 @@
 
 #include "TwoPassVolumePipeline.hlsli"
 
+#ifndef _UWP
 
 /*
  * trrojan::d3d11::two_pass_volume_benchmark::two_pass_volume_benchmark
@@ -485,3 +486,5 @@ void trrojan::d3d11::two_pass_volume_benchmark::begin_volume_pass(
     this->volume_technique.set_shader_resource_views(
         { this->entry_source, this->ray_source }, STAGE, first_ray_slot);
 }
+
+#endif

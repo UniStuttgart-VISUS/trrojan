@@ -49,6 +49,8 @@ extern "C" TRROJAND3D11_API trrojan::plugin_base *get_trrojan_plugin(void) {
  */
 std::vector<std::uint8_t> trrojan::d3d11::plugin::load_resource(LPCTSTR name,
         LPCSTR type) {
+#ifndef _UWP
+
     auto hRes = ::FindResource(::hTrrojanDll, name, type);
     if (hRes == NULL) {
         std::error_code ec(::GetLastError(), std::system_category());
@@ -69,6 +71,7 @@ std::vector<std::uint8_t> trrojan::d3d11::plugin::load_resource(LPCTSTR name,
         throw std::system_error(ec, "Failed to lock a resource.");
     }
 
+
     auto retval = std::vector<std::uint8_t>(::SizeofResource(::hTrrojanDll,
         hRes));
     ::memcpy(retval.data(), hLock, retval.size());
@@ -76,6 +79,9 @@ std::vector<std::uint8_t> trrojan::d3d11::plugin::load_resource(LPCTSTR name,
     UnlockResource(hLock);
 
     return std::move(retval);
+#else
+    return {};
+#endif // !_UWP
 }
 
 
@@ -89,10 +95,12 @@ trrojan::d3d11::plugin::~plugin(void) { }
  * trrojan::d3d11::plugin::create_benchmarks
  */
 size_t trrojan::d3d11::plugin::create_benchmarks(benchmark_list& dst) const {
-    dst.emplace_back(std::make_shared<cs_volume_benchmark>());
     dst.emplace_back(std::make_shared<sphere_benchmark>());
+#ifndef _UWP
+    dst.emplace_back(std::make_shared<cs_volume_benchmark>());
     dst.emplace_back(std::make_shared<two_pass_volume_benchmark>());
-    return 3;
+#endif
+    return dst.size(); //3;
 }
 
 

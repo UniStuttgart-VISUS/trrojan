@@ -22,7 +22,7 @@
 
 namespace trrojan {
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(_UWP)
     /// <summary>
     /// Base class for output handlers.
     /// </summary>

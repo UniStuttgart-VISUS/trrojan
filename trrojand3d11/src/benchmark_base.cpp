@@ -68,6 +68,8 @@ trrojan::result trrojan::d3d11::benchmark_base::run(const configuration& c) {
     }
 
     if (isDebugView) {
+#ifndef _UWP
+
         log::instance().write_line(log_level::warning, "Using the debug view "
             "restricts the benchmark to the GPU connected to the display. The "
             "device parameter has no effect.");
@@ -84,7 +86,7 @@ trrojan::result trrojan::d3d11::benchmark_base::run(const configuration& c) {
         device = this->debug_device;
         this->render_target = this->debug_target;
         //this->render_target->use_reversed_depth_buffer(true);
-
+#endif
     } else {
         // Check whether the device has been changed. This should always be done
         // first, because all GPU resources, which depend on the content of the

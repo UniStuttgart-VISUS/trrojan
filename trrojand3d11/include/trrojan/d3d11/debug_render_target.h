@@ -15,6 +15,7 @@
 
 #include "trrojan/d3d11/render_target.h"
 
+#ifndef _UWP
 
 /* Forward declatations. */
 struct DebugConstants;
@@ -99,3 +100,6 @@ namespace d3d11 {
     };
 }
 }
+
+
+#endif

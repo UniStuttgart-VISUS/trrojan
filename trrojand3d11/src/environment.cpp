@@ -79,10 +79,13 @@ void trrojan::d3d11::environment::on_initialise(const cmd_line& cmdLine) {
     std::set<std::pair<UINT, UINT>> pciIds;
 
     /* Initialise COM (for WIC). */
+#ifndef _UWP
+
     hr = ::CoInitialize(nullptr);
     if (FAILED(hr)) {
         throw ATL::CAtlException(hr);
     }
+#endif
 
     /* Create DXGI factory. */
     hr = ::CreateDXGIFactory1(IID_IDXGIFactory1, reinterpret_cast<void **>(

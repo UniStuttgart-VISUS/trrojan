@@ -7,7 +7,8 @@
 #include "trrojan/excel_output.h"
 
 
-#ifdef _WIN32
+//#ifdef _WIN32
+#if defined(_WIN32) && !defined(_UWP)
 #include <codecvt>
 #include <locale>
 #include <memory>

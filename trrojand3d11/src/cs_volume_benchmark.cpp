@@ -17,6 +17,7 @@
 
 #include "SinglePassVolumePipeline.hlsli"
 
+#ifndef _UWP
 
 /*
  * trrojan::d3d11::cs_volume_benchmark::cs_volume_benchmark
@@ -304,3 +305,5 @@ trrojan::result trrojan::d3d11::cs_volume_benchmark::on_run(
 
     return retval;
 }
+
+#endif

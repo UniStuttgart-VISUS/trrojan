@@ -5,7 +5,7 @@
 /// <author>Christoph Müller</author>
 
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(_UWP)
 /*
  * trrojan::excel_output::invoke
  */

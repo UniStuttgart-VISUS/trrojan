@@ -53,10 +53,10 @@ trrojan::output TRROJANCORE_API trrojan::make_output(const std::string& path) {
 
     if ((ext == ".csv") || (ext == ".txt")) {
         return std::make_shared<csv_output>();
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(_UWP)
     } else if (ext == ".xslx") {
         return std::make_shared<excel_output>();
-#endif /* _WIN32 */
+#endif /* defined(_WIN32) && !defined(_UWP) */
     } else if (ext == ".r") {
         return std::make_shared<r_output>();
     } else {
@@ -96,11 +96,11 @@ trrojan::output trrojan::open_output(const trrojan::cmd_line& cmdLine) {
         params = basic_output_params::create<csv_output_params>(*output,
             cmdLine.begin(), cmdLine.end());
 
-#if defined(_WIN32)
+#if defined(_WIN32) && !defined(_UWP)
     } else if (std::dynamic_pointer_cast<excel_output>(retval) != nullptr) {
         params = basic_output_params::create<excel_output_params>(*output,
             cmdLine.begin(), cmdLine.end());
-#endif /* defined(_WIN32) */
+#endif /* defined(_WIN32) && !defined(_UWP) */
 
     } else if (std::dynamic_pointer_cast<r_output>(retval) != nullptr) {
         params = basic_output_params::create<r_output_params>(*output,

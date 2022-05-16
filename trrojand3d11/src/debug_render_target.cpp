@@ -13,6 +13,7 @@
 
 #include "trrojan/d3d11/utilities.h"
 
+#ifndef _UWP
 
 /*
  * trrojan::d3d11::debug_render_target::debug_render_target
@@ -326,3 +327,5 @@ void trrojan::d3d11::debug_render_target::doMsg(void) {
         ::DispatchMessage(&msg);
     }
 }
+
+#endif

@@ -97,6 +97,7 @@ __TRROJAN_DEFINE_FACTOR(user_name);
  * trrojan::system_factors::bios
  */
 trrojan::variant trrojan::system_factors::bios(void) const {
+#ifndef _UWP
     typedef sysinfo::smbios_information::bios_information_type entry_type;
     std::vector<const entry_type *> entries;
     smbios.entries_by_type<entry_type>(std::back_inserter(entries));
@@ -114,6 +115,11 @@ trrojan::variant trrojan::system_factors::bios(void) const {
             << e->get_release_date() << ")";
         return variant(value.str());
     }
+#else
+    log::instance().write(log_level::warning, "No information about the "
+        "BIOS could be retrieved from SMBIOS.");
+    return variant();
+#endif
 }
 
 
@@ -122,6 +128,9 @@ trrojan::variant trrojan::system_factors::bios(void) const {
 */
 trrojan::variant trrojan::system_factors::computer_name(void) const {
 #ifdef _WIN32
+#ifdef _UWP
+    return std::string("uwp-computer");
+#else
     std::vector<char> buffer;
     buffer.resize(UNLEN + 1);
     auto oldBufSize = static_cast<DWORD>(buffer.size());
@@ -140,7 +149,7 @@ trrojan::variant trrojan::system_factors::computer_name(void) const {
     }
 
     return std::string(buffer.data());
-
+#endif
 #else /* _WIN32 */
     utsname names;
 
@@ -159,6 +168,7 @@ trrojan::variant trrojan::system_factors::computer_name(void) const {
  * trrojan::system_factors::cpu
  */
 trrojan::variant trrojan::system_factors::cpu(void) const {
+#ifndef _UWP
     typedef sysinfo::smbios_information::processor_information_type entry_type;
     std::vector<const entry_type *> entries;
     smbios.entries_by_type<entry_type>(std::back_inserter(entries));
@@ -231,6 +241,11 @@ trrojan::variant trrojan::system_factors::cpu(void) const {
 
         return variant(value.str());
     }
+#else
+    log::instance().write(log_level::warning, "No information about the "
+        "installed CPUs could be retrieved from SMBIOS.");
+    return variant();
+#endif
 
     //{
     //    typedef smbios_information::processor_information_type entry_type;
@@ -321,6 +336,7 @@ trrojan::variant trrojan::system_factors::logical_cores(void) const {
  * trrojan::system_factors::mainboard
  */
 trrojan::variant trrojan::system_factors::mainboard(void) const {
+#ifndef _UWP
     typedef sysinfo::smbios_information::baseboard_information_type entry_type;
     std::vector<const entry_type *> entries;
     smbios.entries_by_type<entry_type>(std::back_inserter(entries));
@@ -338,6 +354,11 @@ trrojan::variant trrojan::system_factors::mainboard(void) const {
             << e->get_version() << ")";
         return variant(value.str());
     }
+#else
+    log::instance().write(log_level::warning, "No information about the "
+        "mainboard could be retrieved from SMBIOS.");
+    return variant();
+#endif
 }
 
 
@@ -345,7 +366,13 @@ trrojan::variant trrojan::system_factors::mainboard(void) const {
  * trrojan::system_factors::os
  */
 trrojan::variant trrojan::system_factors::os(void) const {
+#ifndef _UWP
     return std::string(this->osinfo.name());
+#else
+    log::instance().write(log_level::warning, "No information about the "
+        "os could be retrieved from SMBIOS.");
+    return variant();
+#endif
 }
 
 
@@ -353,7 +380,13 @@ trrojan::variant trrojan::system_factors::os(void) const {
  * trrojan::system_factors::os_version
  */
 trrojan::variant trrojan::system_factors::os_version(void) const {
+#ifndef _UWP
     return std::string(this->osinfo.version());
+#else
+    log::instance().write(log_level::warning, "No information about the "
+        "os version could be retrieved from SMBIOS.");
+    return variant();
+#endif
 }
 
 
@@ -406,6 +439,7 @@ trrojan::variant trrojan::system_factors::process_elevated(void) const {
  * trrojan::system_factors::ram
  */
 trrojan::variant trrojan::system_factors::ram(void) const {
+#ifndef _UWP
     typedef sysinfo::smbios_information::memory_device_type entry_type;
     std::vector<const entry_type *> entries;
     smbios.entries_by_type<entry_type>(std::back_inserter(entries));
@@ -434,6 +468,11 @@ trrojan::variant trrojan::system_factors::ram(void) const {
 
         return variant(value.str());
     }
+#else
+    log::instance().write(log_level::warning, "No information about the "
+        "ram version could be retrieved from SMBIOS.");
+    return variant();
+#endif
     //for (auto h : entries) {
     //    if (e->size != 0) {
     //        std::cout << e->get_manufacturer() << std::endl;
@@ -457,6 +496,7 @@ trrojan::variant trrojan::system_factors::ram(void) const {
  * trrojan::system_factors::system_desc
  */
 trrojan::variant trrojan::system_factors::system_desc(void) const {
+#ifndef _UWP
     typedef sysinfo::smbios_information::system_information_type entry_type;
     std::vector<const entry_type *> entries;
     smbios.entries_by_type<entry_type>(std::back_inserter(entries));
@@ -474,6 +514,11 @@ trrojan::variant trrojan::system_factors::system_desc(void) const {
             << e->get_version() << ")";
         return variant(value.str());
     }
+#else
+    log::instance().write(log_level::warning, "No information about the "
+        "system version could be retrieved from SMBIOS.");
+    return variant();
+#endif
 }
 
 
@@ -510,6 +555,9 @@ trrojan::variant trrojan::system_factors::timestamp(void) const {
  */
 trrojan::variant trrojan::system_factors::user_name(void) const {
 #ifdef _WIN32
+#ifdef _UWP
+    return std::string("uwp-user");
+#else
     std::vector<char> buffer;
     buffer.resize(UNLEN + 1);
     auto oldBufSize = static_cast<DWORD>(buffer.size());
@@ -528,7 +576,7 @@ trrojan::variant trrojan::system_factors::user_name(void) const {
     }
 
     return std::string(buffer.data());
-
+#endif
 #else /* _WIN32 */
     uid_t uid = ::getuid();
     auto passwd = ::getpwuid(uid);
@@ -642,6 +690,7 @@ trrojan::system_factors::get_retrievers(void) {
  * trrojan::system_factors::system_factors
  */
 trrojan::system_factors::system_factors(void) {
+#ifndef _UWP
     try {
         this->hwinfo = sysinfo::hardware_info::collect();
     } catch (std::exception ex) {
@@ -657,4 +706,5 @@ trrojan::system_factors::system_factors(void) {
     } catch (std::exception ex) {
         log::instance().write(log_level::warning, ex);
     }
+#endif
 }

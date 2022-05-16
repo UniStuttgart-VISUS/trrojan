@@ -13,10 +13,11 @@
 #include "trrojan/named_variant.h"
 #include "trrojan/variant.h"
 
+#ifndef _UWP
 #include "trrojan/sysinfo/hardware_info.h"
 #include "trrojan/sysinfo/os_info.h"
 #include "trrojan/sysinfo/smbios_information.h"
-
+#endif
 
 namespace trrojan {
 
@@ -162,11 +163,19 @@ namespace trrojan {
         variant system_desc(void) const;
 
         inline variant tdr_delay(void) const {
+#ifndef _UWP
             return static_cast<std::uint32_t>(this->osinfo.tdr_delay());
+#else
+            return static_cast<std::uint32_t>(0);
+#endif
         }
 
         inline variant tdr_level(void) const {
+#ifndef _UWP
             return static_cast<std::uint32_t>(this->osinfo.tdr_level());
+#else
+            return static_cast<std::uint32_t>(0);
+#endif
         }
 
         variant timestamp(void) const;
@@ -184,11 +193,13 @@ namespace trrojan {
 
         system_factors& operator =(const system_factors&) = delete;
 
+#ifndef _UWP
         sysinfo::hardware_info hwinfo;
 
         sysinfo::os_info osinfo;
 
         sysinfo::smbios_information smbios;
+#endif
 
     };
 }
