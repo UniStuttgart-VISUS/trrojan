@@ -195,7 +195,7 @@ SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CIMG_CFLAGS}")
 
 ######################
 ##
-add_executable(trrojanuwp ${SourceFiles})
+add_executable(trrojanuwp WIN32 ${SourceFiles} ${HeaderFiles})
 target_link_libraries(trrojanuwp LINK_PUBLIC ${SYSTEM_LIBS} trrojancore)
 target_link_libraries(trrojanuwp LINK_PUBLIC ${SYSTEM_LIBS} trrojand3d11)
 
