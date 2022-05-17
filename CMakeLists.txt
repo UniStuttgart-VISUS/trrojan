@@ -37,7 +37,6 @@ endif()
 # Configure the compiler.
 if (WIN32)
 	add_compile_options(/wd4251)	# We cannot fix that - TRRojan just needs to be compiled in a single step.
-	#add_compile_options(/ZW)	# Windows Runtime Compilation
 endif (WIN32)
 
 if (${CMAKE_COMPILER_IS_GNUCXX})
@@ -79,24 +78,31 @@ include_directories("glm")
 include_directories("spdlog/include")
 include_directories("datraw/datraw")
 
-# Build the system information library.
-if(NOT UWP)
-add_subdirectory(trrojansnfo)
+if(UWP)
+	# Build the core library
+	add_subdirectory(trrojancore)
+	# Build the D3D plugin
+	add_subdirectory(trrojand3d11)
+	# Build the executable
+	add_subdirectory(trrojanuwp)
+else()
+	# Build the system information library.
+	add_subdirectory(trrojansnfo)
+
+	# Build the core library
+	add_subdirectory(trrojancore)
+
+	# Build the OpenCL plugin
+	add_subdirectory(trrojancl)
+
+	# Build the RAM stream plugin
+	add_subdirectory(trrojanstream)
+
+	# Build the D3D plugin
+	if (WIN32)
+	    add_subdirectory(trrojand3d11)
+	endif (WIN32)
+
+	# Build the executable
+	add_subdirectory(trrojan)
 endif()
-
-# Build the core library
-add_subdirectory(trrojancore)
-
-# Build the OpenCL plugin
-add_subdirectory(trrojancl)
-
-# Build the RAM stream plugin
-add_subdirectory(trrojanstream)
-
-# Build the D3D plugin
-if (WIN32)
-    add_subdirectory(trrojand3d11)
-endif (WIN32)
-
-# Build the executable
-add_subdirectory(trrojan)

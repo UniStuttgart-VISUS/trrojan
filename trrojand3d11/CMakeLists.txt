@@ -52,8 +52,14 @@ include_directories("${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${CMAKE_CFG_INTDIR}")
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTRROJAND3D11_EXPORTS")
 
+set(TrrojanD3D11IncludeDir "${CMAKE_CURRENT_SOURCE_DIR}/${IncludeDirectory}" PARENT_SCOPE)
+
 if (WIN32)
-    add_library(trrojand3d11 MODULE ${HeaderFiles} ${SourceFiles} ${ShaderFiles} ${ResourceFiles})
+    if (UWP)
+        add_library(trrojand3d11 SHARED ${HeaderFiles} ${SourceFiles} ${ShaderFiles} ${ResourceFiles})
+    else()
+        add_library(trrojand3d11 MODULE ${HeaderFiles} ${SourceFiles} ${ShaderFiles} ${ResourceFiles})
+    endif()
     target_link_libraries(trrojand3d11 trrojancore)
     target_link_libraries(trrojand3d11 d3d11 dxgi dxguid)
 
