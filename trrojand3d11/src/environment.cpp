@@ -59,7 +59,9 @@ void trrojan::d3d11::environment::on_deactivate(void) { }
  */
 void trrojan::d3d11::environment::on_finalise(void) {
     this->_devices.clear();
+#ifndef _UWP
     ::CoUninitialize();
+#endif
 }
 
 

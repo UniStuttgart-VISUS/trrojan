@@ -43,7 +43,11 @@ struct App : implements<App, IFrameworkViewSource, IFrameworkView>
         window.Activate();
 
         /* Configure the executive. */
-        const trrojan::cmd_line cmdLine;
+        trrojan::cmd_line cmdLine;
+        //cmdLine.push_back("--output");
+        // cmdLine.push_back(trrojan::GetAppFolder().string()+"test.csv");
+        //cmdLine.push_back("--log");
+        //cmdLine.push_back(trrojan::GetAppFolder().string() + "log.txt");
         auto output = trrojan::open_output(cmdLine);
         trrojan::cool_down cool_down;
         trrojan::executive exe;
