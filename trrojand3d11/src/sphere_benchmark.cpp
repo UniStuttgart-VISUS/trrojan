@@ -766,31 +766,34 @@ trrojan::d3d11::sphere_benchmark::get_technique(ID3D11Device *device,
 
 #ifdef _UWP
 
+        std::stringstream stringid;
+        stringid << std::setfill('0') << std::setw(16) << std::hex << sid;
+
         {
-            auto filepath = GetAppFolder().string() + "trrojand3d11" + "/" + "SphereVertexShader" + std::to_string(id) + ".cso";
+            auto filepath = GetAppFolder().string() + "trrojand3d11" + "/" + "SphereVertexShader" + stringid.str() + ".cso";
             auto src = ReadFileBytes(filepath);
             vs = create_vertex_shader(device, src);
             il = create_input_layout(device, this->data->layout(), src);
         }
 
         if (isTess) {
-            auto filepath = GetAppFolder().string()  + "trrojand3d11" + "/" + "SphereVertexShader" + std::to_string(id) + ".cso";
+            auto filepath = GetAppFolder().string()  + "trrojand3d11" + "/" + "SphereVertexShader" + stringid.str() + ".cso";
             auto src = ReadFileBytes(filepath);
             hs = create_hull_shader(device, src);
             
-            filepath = GetAppFolder().string() + "trrojand3d11" + "/" + "SphereVertexShader" + std::to_string(id) + ".cso";
+            filepath = GetAppFolder().string() + "trrojand3d11" + "/" + "SphereVertexShader" + stringid.str() + ".cso";
             src = ReadFileBytes(filepath);
             ds = create_domain_shader(device, src);
         }
 
         if (isGeo) {
-            auto filepath = GetAppFolder().string() + "trrojand3d11" + "/" + "SphereVertexShader" + std::to_string(id) + ".cso";
+            auto filepath = GetAppFolder().string() + "trrojand3d11" + "/" + "SphereVertexShader" + stringid.str() + ".cso";
             auto src = ReadFileBytes(filepath);
             gs = create_geometry_shader(device, src);
         }
 
         {
-            auto filepath = GetAppFolder().string() + "trrojand3d11" + "/" + "SpherePixelShader" + std::to_string(id) + ".cso";
+            auto filepath = GetAppFolder().string() + "trrojand3d11" + "/" + "SpherePixelShader" + stringid.str() + ".cso";
             auto src = ReadFileBytes(filepath);
             ps = create_pixel_shader(device, src);
         }
