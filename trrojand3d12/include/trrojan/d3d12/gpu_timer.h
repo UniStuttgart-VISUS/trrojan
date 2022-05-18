@@ -1,44 +1,13 @@
 // <copyright file="gpu_timer.h" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2016 - 2022 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+// Copyright © 2022 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
 // <author>Christoph Müller</author>
 
-/*
- * include\the\graphics\directx\d3d11_performance_counter.h
- *
- * Copyright (C) 2015 TheLib Team (http://www.thelib.org/license)
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *
- * - Redistributions of source code must retain the above copyright notice,
- *   this list of conditions and the following disclaimer.
- * - Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * - Neither the name of TheLib, TheLib Team, nor the names of its
- *   contributors may be used to endorse or promote products derived from this
- *   software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THELIB TEAM AS IS AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO
- * EVENT SHALL THELIB TEAM BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
- * TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
- * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
-
 #pragma once
 
-#include <array>
 #include <cassert>
-#include <limits>
+#include <iterator>
 #include <stdexcept>
 #include <vector>
 
@@ -62,71 +31,34 @@ namespace d3d12 {
     /// <para>At most one counter should be created for each device. If multiple
     /// timings should be taken in each frame, allocate sufficient timestamp
     /// queries in this single counter.</para>
-    /// <para>The performance counter is <tparamref name="L" />-buffered, ie
-    /// there are <tparamref name="L" /> complete sets of counters. One is 
-    /// active and used for issuing queries, the one before that is used for
-    /// evaluating the queries. This ensures that reading the queries does not
-    /// stall the CPU.</para>
-    /// <para>You can also set the number of buffers to 1 and use the
-    /// <c>try_</c>... methods to check for yourself whether you can read the
-    /// buffers. However, you cannot render the next frame in this case.</para>
-    /// <para>The implementation follows the description on
-    /// http://www.reedbeta.com/blog/2012/10/12/gpu-profiling-101/ and is
-    /// heavily borrowed from THElib
-    /// (https://sourceforge.net/p/thelib/thesvn/HEAD/tree/trunk/thelib++/include/the/graphics/directx/d3d11_performance_counter.h).
-    /// </para>
     /// <para>A typical way of using the counter would be:
     /// <code>
-    /// the::graphics::directx::d3d12_performance_counter<2> pc;
-    /// pc.initialise(device, 2);
+    /// the::graphics::directx::d3d12_performance_counter pc(device, 2);
     /// 
     /// foreach frame {
     ///     pc.start_frame();
-    ///     pc.start(0);
+    ///     pc.start(cmd_list, 0);
     ///     // Do something.
-    ///     pc.start(1);
+    ///     pc.start(cmd_list, 1);
     ///     // Do something you want to measure separately.
-    ///     pc.end(1);
+    ///     pc.end(cmd_list, 1);
     ///     // Continue doing something.
-    ///     pc.end(0)
-    ///     pc.end_frame();
-    ///     if (pc.can_evaluate()) {
-    ///         bool isDisjoint = false;
-    ///         UINT64 frequency = 0;
-    ///         INT64 difference = 0;
-    ///         pc.evaluate_frame(isDisjoint, frequency);
-    ///         if (!isDisjoint) {
-    ///             difference = pc.evaluate(0);
-    ///             difference = pc.evaluate(1);
-    ///         }
-    ///     }
+    ///     pc.end(cmd_list, 0)
+    ///     auto frame = pc.end_frame();
+    ///     auto outer_difference = pc.evaluate(frame, 0);
+    ///     auto inner_difference = pc.evaluate(frame, 1);
     /// }
     /// </code>
     /// </para>
-    /// <para>Alternatively, you can replace <c>pc.end_frame()</c> and everything
-    /// below with:
-    /// <code>
-    /// std::vector<d3d12_performance_counter::fractional_value_type> diffs;
-    /// pc.end_frame(std::back_inserter(diffs));
-    /// <code>
-    /// to end the frame and to retrieve all available data in milliseconds at
-    /// the same time.This method might, however, not return anything in case
-    /// insufficient data are available or the timer is disjoint.</para>
     /// </remarks>
-    /// <tparam name="L">The latency when reading the results. This should be
-    /// two or more in order to double buffer the evaluation of the resuls.
-    /// </tparam>
-    template<size_t L = 1> class gpu_timer {
-
-        static_assert(L >= 1, "There must be at least one slot for counters, "
-            "better would be two or more.");
+    class gpu_timer final {
 
     public:
 
         /// <summary>
         /// Represents the difference between two points in time.
         /// </summary>
-        typedef trrojan::timer::difference_type difference_type;
+        typedef INT64 difference_type;
 
         /// <summary>
         /// The type to represent milliseconds.
@@ -136,48 +68,95 @@ namespace d3d12 {
         /// <summary>
         /// The type that is used to count the number of available queries.
         /// </summary>
-        typedef size_t size_type;
+        typedef UINT size_type;
 
         /// <summary>
         /// Represents a point in time.
         /// </summary>
-        typedef trrojan::timer::value_type value_type;
+        typedef UINT64 value_type;
 
-        /**
-        * Convert a full resolution performance counter difference to
-        * milliseconds assuming the given frequency.
-        *
-        * @param value The full resolution value to be converted.
-        *
-        * @return The milliseconds that 'value' represents.
-        */
-        static millis_type to_milliseconds(
-            const difference_type value, const value_type frequency);
+        /// <summary>
+        /// Samples the CPU clock and the GPU timestamp counter of the given
+        /// <paramref name="queue" /> at the same time.
+        /// </summary>
+        /// <remarks>
+        /// This method can be used to correlate the result of the CPU
+        /// performance counter with GPU timestamps as described on
+        /// https://docs.microsoft.com/en-us/windows/win32/direct3d12/timing.
+        /// </remarks>
+        /// <param name="queue">The direct/compute/copy queue to obtain the
+        /// correlated timestamps for.</param>
+        /// <param name="gpu_timestamp">Receives the value of the GPU timestamp
+        /// counter.</param>
+        /// <param name="cpu_timestamp">Receives the value of the CPU
+        /// performance counter.</param>
+        /// <exception cref="std::argument_exception">If
+        /// <paramref name="queue" /> is <c>nullptr</c>.</exception>
+        /// <exception cref="ATL::CAtlException">If the operation failed, eg
+        /// because the queue does not support timestamp queries.</exception>
+        static void get_clock_calibration(ID3D12CommandQueue *queue,
+            value_type& gpu_timestamp,
+            value_type& cpu_timestamp);
 
-        /**
-        * Convert a full resolution performance counter value to
-        * milliseconds assuming the given frequency.
-        *
-        * @param value The full resolution value to be converted.
-        *
-        * @return The milliseconds that 'value' represents.
-        */
+        /// <summary>
+        /// Gets the timestamp frequency in Hertz for the given command
+        /// <paramref name="queue" />.
+        /// </summary>
+        /// <param name="queue">The queue to get the frequency for.</param>
+        /// <returns>The timestamp frequency in Hertz.</returns>
+        /// <exception cref="std::argument_exception">If
+        /// <paramref name="queue" /> is <c>nullptr</c>.</exception>
+        /// <exception cref="ATL::CAtlException">If the operation failed, eg
+        /// because the queue does not support timestamp queries.</exception>
+        static value_type get_timestamp_frequency(ID3D12CommandQueue *queue);
+
+        /// <summary>
+        /// Convert a full resolution performance counter difference to
+        /// milliseconds assuming the given frequency.
+        /// </summary>
+        /// <param name="value">The full resolution value to be converted.
+        /// </param>
+        /// <param name="frequency">The timestamp frequency in Hertz (ticks
+        /// per second) as returned by 
+        /// <see cref="ID3D12CommandQueue::GetTimestampFrequency" />.</param>
+        /// <returns>The milliseconds that <paramref name="value" />
+        /// represents.</returns>
+        static millis_type to_milliseconds(const difference_type value,
+            const value_type frequency);
+
+        /// <summary>
+        /// Convert a full resolution performance counter value to
+        /// milliseconds assuming the given frequency.
+        /// </summary>
+        /// <param name="value">The full resolution value to be converted.
+        /// </param>
+        /// <param name="frequency">The timestamp frequency in Hertz (ticks
+        /// per second) as returned by 
+        /// <see cref="ID3D12CommandQueue::GetTimestampFrequency" />.</param>
+        /// <returns>The milliseconds that <paramref name="value" />
+        /// represents.</returns>
         static millis_type to_milliseconds(const value_type value,
             const value_type frequency);
 
         /// <summary>
-        /// Indicates an infinite number of retries.
+        /// Initialise a new instance.
         /// </summary>
-        static const size_type infinite;
+        /// <param name="device"></param>
+        /// <param name="queries"></param>
+        /// <param name="buffers"></param>
+        /// <param name="heap"></param>
+        gpu_timer(ID3D12Device *device, const size_type queries = 1,
+            const size_type buffers = 2,
+            const D3D12_QUERY_HEAP_TYPE heap = D3D12_QUERY_HEAP_TYPE_TIMESTAMP);
 
         /// <summary>
-        /// Initialises a new instance.
+        /// Initialise a new instance.
         /// </summary>
-        /// <remarks>
-        /// The performance counter cannot yet be used, but must be associated
-        /// with a specific D3D device using <see cref="initialise" />.
-        /// </remarks>
-        inline gpu_timer(void) : idxActiveQuery(0) { }
+        /// <param name="queue"></param>
+        /// <param name="queries"></param>
+        /// <param name="buffers"></param>
+        gpu_timer(ID3D12CommandQueue *queue, const size_type queries = 1,
+            const size_type buffers = 2);
 
         gpu_timer(const gpu_timer&) = delete;
 
@@ -186,255 +165,190 @@ namespace d3d12 {
         /// <summary>
         /// Finalise the instance.
         /// </summary>
-        virtual ~gpu_timer(void);
+        ~gpu_timer(void);
 
-        /**
-        * Answer whether enough frames have been measured to evaluate one.
-        *
-        * @return true if it is possible to evaluate a frame, false otherwise.
-        */
-        inline bool can_evaluate(void) const {
-            auto that = const_cast<gpu_timer *>(this);
-            return (that->passive_query().disjoint_query != nullptr);
-        }
+        /// <summary>
+        /// End a frame by resolving the query results of all queries into
+        /// the query heap for readback.
+        /// </summary>
+        /// <remarks>
+        /// <para>The query results must be resolved into the buffer in this
+        /// timer object before it can be downloaded to the CPU. The recommended
+        /// way is downloading everything at once after this method returned.
+        /// The data remains available until the next frame is started on the
+        /// same slot.</para>
+        /// <para>This method does not perform a <c>nullptr</c> check of
+        /// <paramref name="cmd_list" /> for performance reasons. Please make
+        /// sure to pass only valid command lists.</para>
+        /// </remarks>
+        /// <param name="cmd_list">The command list to perform the operation
+        /// on.</param>
+        /// <returns>The frame index that can be used to evaluate (download)
+        /// the query results afterwards.</returns>
+        size_type end_frame(ID3D12GraphicsCommandList *cmd_list);
 
-        /**
-        * Ends a frame by finalising the timestamp disjoint query.
-        *
-        * The performance counter must have been initialised before this method
-        * can be called. The method does, however, not check this!
-        */
-        void end_frame(void);
+        //template<class TContainer>
+        //typename std::enable_if<std::is_same<
+        //    typename TContainer::value_type, millis_type>::value>::type
+        //end_frame(std::back_insert_iterator<TContainer> oit,
+        //    ID3D12GraphicsCommandList *cmd_list);
 
-        /**
-        * Convenience method that ends a frame and retrieves the values of
-        * all counters (in milliseconds) as far as possible.
-        *
-        * All preconditions of end_frame(), evaluate_frame() and
-        * evaluate() must be fulfiled as the method combines there for
-        * ease of use.
-        *
-        * This is the most convenient way of ending a frame and retrieving
-        * everything that was measured.
-        *
-        * @param oit       An output iterator for writing the counter values.
-        * @param isLenient If true, the method will not fail if a counter value
-        *                  could not be retrieved (eg because it was not
-        *                  measured during the last frame). The value will be
-        *                  negative in this case.
-        *
-        * @return true if values have been retrieve, false otherwise, ie if
-        *         not enough frames have been measured before.
-        *
-        * @throws the::system::com_exception In case the operation failed.
-        */
-        template<class C>
-        typename std::enable_if<std::is_same<
-            typename C::value_type,
-            typename trrojan::d3d12::gpu_timer<L>::millis_type>::value,
-            bool>::type
-            end_frame(std::back_insert_iterator<C> oit,
-                const bool isLenient = false);
+        /// <summary>
+        /// End the <paramref name="query" />th performance query by issuing
+        /// the timestamp query for the end.
+        /// </summary>
+        /// <remarks>
+        /// <para><see cref="start" /> must have been called before for the same
+        /// query in the same frame.The method does, however, not check this.
+        /// </para>
+        /// <para>This method does not perform a <c>nullptr</c> check of
+        /// <paramref name="cmd_list" /> for performance reasons. Please make
+        /// sure to pass only valid command lists.</para>
+        /// <para> Please make also sure to end the performance query on the
+        /// same command list that it has been started, because D3D12 guranatees
+        /// that two timestamp queries are not disjoint if and only if they are
+        /// in the same command list.</para>
+        /// <para>This method does not perform a range check of
+        /// <paramref name="query" /> for performance reasons. Make sure to pass
+        /// only valid indices.</para>
+        /// </remarks>
+        /// <param name="cmd_list">The command list in which the timestamp
+        /// query is being queued. The same command list should be used for
+        /// <see cref="start" /> and <see cref="end" />. This parameter must
+        /// not be <c>nullptr</c>.</param>
+        /// <param name="query">The index of the query, which must be within
+        /// *[0, <see cref="size" />[.</param>
+        void end(ID3D12GraphicsCommandList *cmd_list, const size_type query);
 
-        /**
-        * End the 'query'th performance query.
-        *
-        * start() must have been called before for the same query in the same
-        * frame. The method does, however, not check this, nor does it perform
-        * a range check of 'query'!
-        *
-        * @param query The index of the query, which must be within
-        *              [0, this->size()[.
-        */
-        void end(const size_type query);
-
-        /**
-        * Evaluates the 'query'th timestamp query.
-        *
-        * You should only call this method after you have evaluated the frame
-        * and verified that the GPU counter is not disjoint using
-        * evaluate_frame() or try_evaluate_frame().
-        *
-        * The performance counter must have been initialised before this method
-        * can be called and can_evaluate() must yield true. The method does,
-        * however, not check this, not does it perform a range check of
-        * 'query'!
-        *
-        * @param outStart Receives the value of the 'query'th start query.
-        * @param outEnd   Receives the value of the 'query'th end query.
-        * @param query    The number of the query to be evaluated. This must be
-        *                 within [0, this->size()[.
-        *
-        * @throws the::system::com_exception In case the operation failed and
-        *                                    cannot be retried.
-        * @throws the::invalid_operation_exception If can_evaluate() yields
-        *                                          false. The query can never
-        *                                          succeed in this case.
-        */
+        /// <summary>
+        /// Evaluates the <paramref name="query" />th timestamp query.
+        /// </summary>
+        /// <remarks>
+        /// <para>This method must only be called after <see cref="end_frame" />
+        /// and before <see cref="start_frame" /> was called for the frame index
+        /// returned by <see cref="end_frame" /> again (you have the number of
+        /// buffers specified as latency for retrieving results). Otherwise,
+        /// invalid data will be returned.</para>
+        /// <para>It is strongly recommended to use the overload accepting
+        /// the output iterator to obtain the results for all queries in a
+        /// frame, because this method maps the range if each query individually
+        /// wherease the iterator variant maps all results at once.</para>
+        /// </remarks>
+        /// <param name="outStart">Recevies the result of the timestamp query
+        /// at the begin of the measured range.</param>
+        /// <param name="outEnd">Receives the result of the timestamp query
+        /// at the end of the measured range.</param>
+        /// <param name="buffer">The frame/buffer index for which the queries
+        /// should be retrieved.</param>
+        /// <param name="query">The query index to retrieve, which must be
+        /// within [0, <see cref="size" />[.</param>
+        /// <exception cref="std::invalid_argument">If either
+        /// <paramref name="buffer" /> or <paramref name="query" /> are out of
+        /// range.</exception>
+        /// <exception cref="ATL::CAtlException">If the buffer holding the
+        /// results could not be mapped.</exception>
         void evaluate(value_type& outStart, value_type& outEnd,
-            const size_type query);
+            const size_type buffer, const size_type query) const;
 
-        /**
-        * Evaluates the 'query'th timestamp query.
-        *
-        * You should only call this method after you have evaluated the frame
-        * and verified that the GPU counter is not disjoint using
-        * evaluate_frame() or try_evaluate_frame().
-        *
-        * The performance counter must have been initialised before this method
-        * can be called and can_evaluate() must yield true. The method does,
-        * however, not check this, not does it perform a range check of
-        * 'query'!
-        *
-        * @param query The number of the query to be evaluated. This must be
-        *              within [0, this->size()[.
-        *
-        * @return The difference between the end and the start of the 'query'th
-        *         query.
-        *
-        * @throws the::system::com_exception In case the operation failed and
-        *                                    cannot be retried.
-        * @throws the::invalid_operation_exception If can_evaluate() yields
-        *                                          false. The query can never
-        *                                          succeed in this case.
-        */
-        difference_type evaluate(const size_type query);
+        /// <summary>
+        /// Evaluates the <paramref name="query" />th timestamp query.
+        /// </summary>
+        /// <remarks>
+        /// <para>This method must only be called after <see cref="end_frame" />
+        /// and before <see cref="start_frame" /> was called for the frame index
+        /// returned by <see cref="end_frame" /> again (you have the number of
+        /// buffers specified as latency for retrieving results). Otherwise,
+        /// invalid data will be returned.</para>
+        /// <para>It is strongly recommended to use the overload accepting
+        /// the output iterator to obtain the results for all queries in a
+        /// frame, because this method maps the range if each query individually
+        /// wherease the iterator variant maps all results at once.</para>
+        /// </remarks>
+        /// <param name="buffer">The frame/buffer index for which the queries
+        /// should be retrieved.</param>
+        /// <param name="query">The query index to retrieve, which must be
+        /// within [0, <see cref="size" />[.</param>
+        /// <returns>The difference between the end and the begin of the
+        /// requested query.</returns>
+        /// <exception cref="std::invalid_argument">If either
+        /// <paramref name="buffer" /> or <paramref name="query" /> are out of
+        /// range.</exception>
+        /// <exception cref="ATL::CAtlException">If the buffer holding the
+        /// results could not be mapped.</exception>
+        difference_type evaluate(const size_type buffer,
+            const size_type query) const;
 
-        /**
-        * Evaluates the timestamp distjoint query thus determining  whether
-        * the timer values are valid.
-        *
-        * The performance counter must have been initialised before this method
-        * can be called. The method does, however, not check this!
-        *
-        * @param outIsDisjoint true if the counter has become disjoint, ie if
-        *                      the timestamp valued cannot be used.
-        * @param outFrequency  The frequency of the GPU counter in Hz.
-        *
-        * @throws the::system::com_exception In case the operation failed and
-        *                                    cannot be retried.
-        * @throws the::invalid_operation_exception If can_evaluate() yields
-        *                                          false. The query can never
-        *                                          succeed in this case.
-        */
-        void evaluate_frame(bool& outIsDisjoint, value_type& outFrequency,
-            value_type timeout = gpu_timer::infinite);
+        /// <summary>
+        /// Evaluates all queries of the given <paramref name="buffer" />.
+        /// </summary>
+        /// <typeparam name="TIterator">An output iterator for
+        /// <see cref="difference_type" />, which must allow for writing at
+        /// least <see cref="size" /> elements.</typeparam>
+        /// <param name="oit">The output iterator to receive the differences
+        /// between all timestamp queries of the specified frame.</param>
+        /// <param name="buffer">The buffer index of the frame for which the
+        /// differences should be returned.</param>
+        /// <exception cref="std::invalid_argument">If
+        /// <paramref name="buffer" /> is out of range.</exception>
+        /// <exception cref="ATL::CAtlException">If the buffer holding the
+        /// results could not be mapped.</exception>
+        template<class TIterator>
+        void evaluate(TIterator oit, const size_type buffer) const;
 
-        /**
-        * Associates the performance counter with the specified device and
-        * prepares 'cntPerFrameQueries' for being issued between the calls
-        * to start_frame() and end_frame().
-        *
-        * @param device
-        * @param cntPerFrameQueries
-        *
-        * @throws the::argument_null_exception If 'device' is nullptr.
-        * @throws the::invalid_operation_exception If the object has already
-        *                                          been initialised.
-        * @throws the::system::com_exception If one or more queries could not
-        *                                    be created.
-        */
-        void initialise(ID3D12Device *device,
-            const size_type cntPerFrameQueries = 1);
+        /// <summary>
+        /// Resizes the buffer of the timer to support
+        /// <paramref name="queries" /> per <paramref name="buffers" />
+        /// frame buffers.
+        /// </summary>
+        /// <param name="queries"></param>
+        /// <param name="buffers"></param>
+        /// <exception cref="CAtlException">If the result buffer could not be
+        /// allocated.</exception>
+        void resize(const size_type queries, const size_type buffers = 2);
 
-        /**
-        * Resizes the number of queries that can be issued per frame.
-        *
-        * This should only performed if there are not outstanding queries, ie
-        * not between start_frame() and end_frame().
-        *
-        * Resizing the number of buffers invalidates all possibly collected
-        * data.
-        *
-        * @param cntPerFrameQueries
-        *
-        * @throws the::system::com_exception If one or more queries could not
-        *                                    be created.
-        */
-        void resize(const size_type cntPerFrameQueries);
-
-        /**
-        * Answer the number of queries that can be issued for each frame.
-        *
-        * @return The number of queries that can the performance counter has.
-        */
+        /// <summary>
+        /// Answer the number of queries that can be issued for each frame.
+        /// </summary>
+        /// <remarks>
+        /// The returned value represents the number of user-define ranges, not
+        /// the actual number of queries on the hardware. In practice, each of
+        /// the returned number requires two timestamp queries, one at the begin
+        /// of the timespan and one at the end.
+        /// </remarks>
+        /// <returns>The number of queries that can the performance counter has
+        /// per frame.</returns>
         inline size_type size(void) const {
-            auto that = const_cast<d3d12_performance_counter *>(this);
-            assert(that->active_query().timestamp_end_query.size()
-                == that->active_query().timestamp_start_query.size());
-            assert(that->active_query().timestamp_end_query.size()
-                == that->passive_query().timestamp_end_query.size());
-            return that->active_query().timestamp_end_query.size();
+            return this->_cnt_queries;
         }
 
-        /**
-        * Starts a new frame by issuing a timestamp disjoint query into the
-        * command stream.
-        *
-        * The performance counter must have been initialised before this method
-        * can be called. The method does, however, not check this!
-        */
+        /// <summary>
+        /// Start the <paramref name="query" />th performance query on the given
+        /// command list.
+        /// </summary>
+        /// <remarks>
+        /// <para>This method does not perform a <c>nullptr</c> check of
+        /// <paramref name="cmd_list" /> for performance reasons. Please make
+        /// sure to pass only valid command lists.</para>
+        /// <para> Please make also sure to end the performance query on the
+        /// same command list that it has been started, because D3D12 guranatees
+        /// that two timestamp queries are not disjoint if and only if they are
+        /// in the same command list.</para>
+        /// <para>This method does not perform a range check of
+        /// <paramref name="query" /> for performance reasons. Make sure to pass
+        /// only valid indices.</para>
+        /// </remarks>
+        /// <param name="cmd_list">The command list in which the timestamp
+        /// query is being queued. The same command list should be used for
+        /// <see cref="start" /> and <see cref="end" />. This parameter must
+        /// not be <c>nullptr</c>.</param>
+        /// <param name="query">The index of the query, which must be within
+        /// *[0, <see cref="size" />.</param>
+        void start(ID3D12GraphicsCommandList *cmd_list, const size_type query);
+
+        /// <summary>
+        /// Starts a new frame by advancing the buffer index.
+        /// </summary>
         void start_frame(void);
-
-        /**
-        * Start the 'query'th performance query.
-        *
-        * start_frame() must have been called before. The method does, however,
-        * not check this, nor does it perform a range check of 'query'!
-        *
-        * @param query The index of the query, which must be within
-        *              [0, this->size()[.
-        */
-        void start(const size_type query);
-
-        /**
-        * Tries to evaluate the 'query'th timestamp query.
-        *
-        * You should only call this method after you have evaluated the frame
-        * and verified that the GPU counter is not disjoint.
-        *
-        * The performance counter must have been initialised before this method
-        * can be called. The method does, however, not check this, not does
-        * it perform a range check of 'query'!
-        *
-        * @param outStart Receives the value of the 'query'th start query.
-        * @param outEnd   Receives the value of the 'query'th end query.
-        * @param query    The number of the query to be evaluated. This must be
-        *                 within [0, this->size()[.
-        *
-        * @return true if both queries have been successfully retrieved and
-        *         stored in 'outStart' and 'outEnd',
-        *         false if the method should be called again later. In case
-        *         can_evaluate() returns false, measure more frames before
-        *         calling the method again.
-        *
-        * @throws the::system::com_exception In case the operation failed and
-        *                                    cannot be retried.
-        */
-        bool try_evaluate(value_type& outStart, value_type& outEnd,
-            const size_type query);
-
-        /**
-        * Tries to evaluate the timestamp distjoint query thus determining
-        * whether the timer values are valid.
-        *
-        * The performance counter must have been initialised before this method
-        * can be called. The method does, however, not check this!
-        *
-        * @param outIsDisjoint true if the counter has become disjoint, ie if
-        *                      the timestamp valued cannot be used.
-        * @param outFrequency  The frequency of the GPU counter in Hz.
-        *
-        * @return true if the data have been retrieved and stored to
-        *         'outIsDisjoint' and 'outFrequency',
-        *         false if the method should be called again later. In case
-        *         can_evaluate() returns false, measure more frames before
-        *         calling the method again.
-        *
-        * @throws the::system::com_exception In case the operation failed and
-        *                                    cannot be retried.
-        */
-        bool try_evaluate_frame(bool& outIsDisjoint, value_type& outFrequency);
 
         gpu_timer& operator =(const gpu_timer&) = delete;
 
@@ -442,83 +356,91 @@ namespace d3d12 {
 
     private:
 
-        typedef ATL::CComPtr<ID3D12DeviceContext> context_type;
-        typedef ATL::CComPtr<ID3D12Device> device_type;
-        typedef ATL::CComPtr<ID3D12Query> query_type;
-        typedef std::vector<query_type> query_list_type;
 
         /// <summary>
-        /// Groups the data which are used for latency buffering.
+        /// Determines whether a query is a start query or an end query.
         /// </summary>
-        struct query_data {
-
-            /// <summary>
-            /// Answer whether a timestamp query returns reliable values and 
-            /// provides the frequency of the performance counter.
-            /// </summary>
-            /// <remarks>
-            /// The timestamp disjoint query encloses the whole frame, ie there
-            /// is only one per device.
-            /// </remarks>
-            query_type disjoint_query;
-
-            /// <summary>
-            /// The timestamp query issued at the end of the measurement.
-            /// </summary>
-            query_list_type timestamp_end_query;
-
-            /// <summary>
-            /// The timestamp query issued at the begin of the measurement.
-            /// </summary>
-            query_list_type timestamp_start_query;
+        enum class query_location : size_type {
+            start = 0,
+            end = 1
         };
 
+        typedef ATL::CComPtr<ID3D12Device> device_type;
+        typedef ATL::CComPtr<ID3D12QueryHeap> heap_type;
+        typedef ATL::CComPtr<ID3D12Resource> result_buffer_type;
+
         /// <summary>
-        /// Answer the active query block (the one, we are using to measure the
-        /// current frame).
+        /// Compute the location of the query result.
         /// </summary>
-        inline query_data& active_query(void) {
-            return this->queries[this->idxActiveQuery];
+        /// <param name="buffer"></param>
+        /// <param name="query"></param>
+        /// <param name="location"></param>
+        /// <returns></returns>
+        inline size_type result_index(const size_type buffer,
+                const size_type query, const query_location location) const {
+            return buffer * this->queries_per_buffer()
+                + 2 * query + static_cast<size_type>(location);
         }
 
         /// <summary>
-        /// Ensures that <paramref name="size" /> timestamp queries are in
-        /// <paramref name="list" />.
+        /// Compute the location of the query result.
         /// </summary>
-        /// <param name="list">The list to be modified.</param>
-        /// <param name="size">The requested number of queries.</param>
-        /// <exception cref="ATL::CAtlException">If one or more queries could
-        /// not be created.</exception>
-        void assert_queries(query_list_type& list, const size_type size);
+        /// <param name="query"></param>
+        /// <param name="location"></param>
+        /// <returns></returns>
+        inline size_type result_index(const size_type query,
+                const query_location location) const {
+            return this->result_index(this->_idx_active_buffer, query,
+                location);
+        }
 
         /// <summary>
-        /// Answer the passive query block (the one, we are using to evaluate the
-        /// queries).
+        /// Answer how many queries are actually issues per buffer/frame.
         /// </summary>
-        inline query_data& passive_query(void) {
-            size_t idxPassiveQuery = (this->idxActiveQuery + 1) % L;
-            return this->queries[idxPassiveQuery];
+        /// <returns></returns>
+        inline size_type queries_per_buffer(void) const {
+            return 2 * this->_cnt_queries;
         }
+
+        /// <summary>
+        /// The number of buffers.
+        /// </summary>
+        size_type _cnt_buffers;
+
+        /// <summary>
+        /// The number of queries.
+        /// </summary>
+        size_type _cnt_queries;
 
         /// <summary>
         /// The device that we create the queries on.
         /// </summary>
-        device_type device;
+        device_type _device;
 
         /// <summary>
-        /// The index of the queries that are used for the current frame.
+        /// The heap on which the queries are allocated.
         /// </summary>
-        size_t idxActiveQuery;
+        heap_type _heap;
 
         /// <summary>
-        /// The immediate context of <see cref="device" />.
+        /// The type of <see cref="_heap" />, which is required for reallocating
+        /// a descriptor heap of different size.
         /// </summary>
-        context_type immediateContext;
+        D3D12_QUERY_HEAP_TYPE _heap_type;
 
         /// <summary>
-        /// The buffer for the queries.
+        /// The index of the current buffer/frame that is being queried.
         /// </summary>
-        std::array<query_data, L> queries;
+        /// <remarks>
+        /// The frame index is automatically rotated by the timer once the end
+        /// of a frame was requested.
+        /// </remarks>
+        size_type _idx_active_buffer;
+
+        /// <summary>
+        /// The buffer receiving the results of the timestamp queries.
+        /// </summary>
+        result_buffer_type _result_buffer;
     };
 
 }

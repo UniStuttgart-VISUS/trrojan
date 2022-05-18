@@ -40,7 +40,7 @@ namespace d3d12 {
         /// integer identifier of the given resource type. </param>
         /// <returns>The content of the resource.</returns>
         static std::vector<std::uint8_t> load_resource(LPCTSTR name,
-            LPCSTR type);
+            LPCTSTR type);
 
         inline plugin(void) : trrojan::plugin_base("d3d12") { }
 

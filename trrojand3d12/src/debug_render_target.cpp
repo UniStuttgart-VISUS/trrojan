@@ -19,6 +19,7 @@
  */
 trrojan::d3d12::debug_render_target::debug_render_target(
         const trrojan::device& device) : base(device, 2), _wnd(NULL) {
+    assert(this->_wnd.is_lock_free());
     this->_msg_pump = std::thread(std::bind(&debug_render_target::do_msg,
         std::ref(*this)));
 }
@@ -46,9 +47,22 @@ trrojan::d3d12::debug_render_target::~debug_render_target(void) {
  */
 void trrojan::d3d12::debug_render_target::present(ID3D12GraphicsCommandList *cmdList) {
     throw "TODO";
+    if (this->_staging_buffer != nullptr) {
+        cmdList->CopyResource(this->current_buffer(), this->_staging_buffer);
+
+        //D3D12_RESOURCE_BARRIER barrier;
+        //::ZeroMemory(&barrier, sizeof(barrier));
+        //barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_;
+        //barrier.Transition.pResource = this->_buffers[this->_buffer_index].p;
+        //barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_;
+        //barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
+
+//        cmdList->ResourceBarrier(1, &barrier);
+    }
+
 #if 0
-    if (this->_uav != nullptr) {
-        assert(this->swapChain != nullptr);
+    if (this->_staging_buffer != nullptr) {
+        assert(this->_swapChain != nullptr);
         ATL::CComPtr<ID3D12Texture2D> dst;
         ATL::CComPtr<ID3D12Resource> res;
         ATL::CComPtr<ID3D12Texture2D> src;
@@ -84,9 +98,8 @@ void trrojan::d3d12::debug_render_target::present(ID3D12GraphicsCommandList *cmd
  */
 void trrojan::d3d12::debug_render_target::resize(const unsigned int width,
         const unsigned int height) {
-
     if (this->_swap_chain == nullptr) {
-        /* Initial resize. */
+        // Initial call to resize, need to create the swap chain.
         assert(this->device() == nullptr);
 
         while (this->_wnd.load() == NULL) {
@@ -99,29 +112,29 @@ void trrojan::d3d12::debug_render_target::resize(const unsigned int width,
         ::ShowWindow(this->_wnd, SW_SHOW);
 
     } else {
-        /* Have existing swap chain. */
-        throw "TODO"
-#if 0
-        assert(this->_wnd.load() != NULL);
-        this->_rtv = nullptr;
-        this->_dsv = nullptr;
-        this->_uav = nullptr;
+        // Resize an existing swap chain.
+        DXGI_SWAP_CHAIN_DESC desc;
 
-        hr = this->swapChain->GetDesc(&desc);
-        if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+        this->reset_buffers();
+
+        {
+            auto hr = this->_swap_chain->GetDesc(&desc);
+            if (FAILED(hr)) {
+                throw ATL::CAtlException(hr);
+            }
         }
 
-        hr = this->_swap_chain->ResizeBuffers(desc.BufferCount, width,
-            height, desc.BufferDesc.Format, 0);
-        if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+        {
+            auto hr = this->_swap_chain->ResizeBuffers(desc.BufferCount,
+                width, height, desc.BufferDesc.Format, 0);
+            if (FAILED(hr)) {
+                throw ATL::CAtlException(hr);
+            }
         }
-#endif
 
     } /* end if (this->swapChain == nullptr) */
 
-    /* Resize the window to match the requested client area. */
+    // Resize the window to match the requested client area.
     {
         DWORD style = ::GetWindowLong(this->_wnd, GWL_STYLE);
         DWORD styleEx = ::GetWindowLong(this->_wnd, GWL_EXSTYLE);
@@ -142,7 +155,7 @@ void trrojan::d3d12::debug_render_target::resize(const unsigned int width,
             SWP_NOMOVE | SWP_SHOWWINDOW);
     }
 
-    /* Re-create the RTV/DSV. */
+    // Re-create the RTV/DSV.
     {
         std::vector<ATL::CComPtr<ID3D12Resource>> buffers(
             this->pipeline_depth());
@@ -172,39 +185,63 @@ void trrojan::d3d12::debug_render_target::wait_for_frame(void) {
 }
 
 
-///*
-// * trrojan::d3d12::debug_render_target::to_uav
-// */
-//ATL::CComPtr<ID3D12UnorderedAccessView>
-//trrojan::d3d12::debug_render_target::to_uav(void) {
-//    if (this->_uav == nullptr) {
-//        D3D12_TEXTURE2D_DESC desc;
-//        ATL::CComPtr<ID3D12Texture2D> texture;
-//
-//        {
-//            auto hr = this->swapChain->GetBuffer(0, IID_ID3D12Texture2D,
-//                reinterpret_cast<void **>(&texture));
-//            if (FAILED(hr)) {
-//                throw ATL::CAtlException(hr);
-//            }
-//        }
-//
-//        texture->GetDesc(&desc);
-//        desc.BindFlags = D3D12_BIND_UNORDERED_ACCESS;
-//        texture = nullptr;
-//
-//        {
-//            auto hr = this->device()->CreateTexture2D(&desc, nullptr, &texture);
-//            if (FAILED(hr)) {
-//                throw ATL::CAtlException(hr);
-//            }
-//        }
-//
-//        this->_uav = create_uav(texture);
-//    }
-//
-//    return this->_uav;
-//}
+/*
+ * trrojan::d3d12::debug_render_target::reset_buffers
+ */
+void trrojan::d3d12::debug_render_target::reset_buffers(void) {
+    render_target_base::reset_buffers();
+    // Make sure that the staging buffer is re-created when the target UAV
+    // is requested the next time.
+    this->_staging_buffer = nullptr;
+}
+
+
+/*
+ * trrojan::d3d12::debug_render_target::to_uav
+ */
+D3D12_CPU_DESCRIPTOR_HANDLE trrojan::d3d12::debug_render_target::to_uav(void) {
+    if (this->_staging_buffer == nullptr) {
+        ATL::CComPtr<ID3D12Resource> texture;
+
+        {
+            auto hr = this->_swap_chain->GetBuffer(0, ::IID_ID3D12Resource,
+                reinterpret_cast<void **>(&texture));
+            if (FAILED(hr)) {
+                throw ATL::CAtlException(hr);
+            }
+        }
+
+        auto texDesc = texture->GetDesc();
+        texture = nullptr;
+
+        {
+            D3D12_HEAP_PROPERTIES heap;
+            ::ZeroMemory(&heap, sizeof(heap));
+            heap.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_NOT_AVAILABLE;
+            heap.Type = D3D12_HEAP_TYPE_DEFAULT;
+
+            auto hr = this->device()->CreateCommittedResource(
+                &heap, D3D12_HEAP_FLAG_NONE,
+                &texDesc, D3D12_RESOURCE_STATE_COPY_DEST, nullptr,
+                ::IID_ID3D12Resource,
+                reinterpret_cast<void **>(&texture));
+            if (FAILED(hr)) {
+                throw ATL::CAtlException(hr);
+            }
+        }
+
+        {
+            D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc;
+            ::ZeroMemory(&uavDesc, sizeof(uavDesc));
+            uavDesc.Format = texDesc.Format;
+            uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
+            this->device()->CreateUnorderedAccessView(texture, nullptr,
+                &uavDesc, this->_uav);
+        }
+    }
+
+    return this->_uav;
+}
 
 
 /*

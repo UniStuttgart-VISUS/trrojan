@@ -242,7 +242,7 @@ void trrojan::d3d12::render_target_base::wait_for_gpu(void) {
  */
 trrojan::d3d12::render_target_base::render_target_base(
         const trrojan::device& device, const UINT pipelineDepth)
-    : _buffer_index(0), _depth_clear(1.0f), _buffers(pipelineDepth),
+    : _depth_clear(1.0f), _buffer_index(0), _buffers(pipelineDepth),
         _fence_event(NULL), _fence_values(pipelineDepth, 0),
         _rtv_descriptor_size(0) {
     auto d = std::dynamic_pointer_cast<trrojan::d3d12::device>(device);
@@ -343,7 +343,7 @@ trrojan::d3d12::render_target_base::create_swap_chain(HWND hWnd) {
     assert(this->_dxgi_factory != nullptr);
     ATL::CComPtr<IDXGISwapChain3> retval;
     UINT height = 1;
-    ATL:CComPtr<IDXGISwapChain1> swapChain;
+    ATL::CComPtr<IDXGISwapChain1> swapChain;
     UINT width = 1;
 
     {
@@ -392,6 +392,15 @@ trrojan::d3d12::render_target_base::create_swap_chain(HWND hWnd) {
 
 
 /*
+ * trrojan::d3d12::render_target_base::current_buffer
+ */
+ATL::CComPtr<ID3D12Resource> trrojan::d3d12::render_target_base::current_buffer(
+        void) {
+    return this->_buffers[this->_buffer_index];
+}
+
+
+/*
  * trrojan::d3d12::render_target_base::current_rtv_handle
  */
 D3D12_CPU_DESCRIPTOR_HANDLE
@@ -400,6 +409,19 @@ trrojan::d3d12::render_target_base::current_rtv_handle(void) {
     retval.ptr += static_cast<SIZE_T>(this->_buffer_index)
         * this->_rtv_descriptor_size;
     return retval;
+}
+
+
+/*
+ * trrojan::d3d12::render_target_base::reset_buffers
+ */
+void trrojan::d3d12::render_target_base::reset_buffers(void) {
+    this->wait_for_gpu();
+
+    for (UINT i = 0; i < this->pipeline_depth(); ++i) {
+        this->_buffers[i] = nullptr;
+        this->_fence_values[i] = this->_fence_values[this->_buffer_index];
+    }
 }
 
 
@@ -415,6 +437,7 @@ void trrojan::d3d12::render_target_base::set_buffers(
     }
 
     // Retain the buffers.
+    this->_buffers.reserve(buffers.size());
     std::copy_n(buffers.begin(), this->_buffers.size(),
         this->_buffers.begin());
 
@@ -503,6 +526,7 @@ void trrojan::d3d12::render_target_base::wait_for_frame(
     assert(nextFrame != this->_buffer_index);
     const auto currentFenceValue = this->_fence_values[this->_buffer_index];
 
+    // Assert that the fence was created.
     this->create_fence();
 
     // Schedule a signal in the queue.
@@ -536,6 +560,6 @@ void trrojan::d3d12::render_target_base::wait_for_frame(
         }
     }
 
-    // Set the value for the next frame.
+    // Set the value for the next frame ('fenceValue' is ref!).
     fenceValue = currentFenceValue + 1;
 }

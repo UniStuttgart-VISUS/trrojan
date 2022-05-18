@@ -19,6 +19,8 @@ namespace trrojan {
 
     public:
 
+        typedef UINT32 size_type;
+
         direct_storage_file(direct_storage_scope& scope,
             const wchar_t *path);
 
@@ -27,8 +29,8 @@ namespace trrojan {
         BY_HANDLE_FILE_INFORMATION get_file_information(void) const;
 
         void queue_request(IDStorageQueue *queue,
-            const std::size_t srcOffset, const std::size_t count,
-            ID3D12Resource *dst, const std::size_t dstOffset = 0);
+            const size_type srcOffset, const size_type count,
+            ID3D12Resource *dst, const size_type dstOffset = 0);
 
         direct_storage_file operator =(const direct_storage_file&) = delete;
 

@@ -1,8 +1,8 @@
-/// <copyright file="result.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Valentin Bruder</author>
+// <copyright file="result.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
+// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Valentin Bruder</author>
 
 #include "trrojan/result.h"
 
@@ -58,7 +58,7 @@ std::vector<std::vector<trrojan::named_variant>> trrojan::basic_result::results(
         }
     }
 
-    return std::move(retval);
+    return retval;
 }
 
 
@@ -80,5 +80,5 @@ trrojan::basic_result::result_type trrojan::basic_result::results(
         retval.push_back(this->_results[i]);
     }
 
-    return std::move(retval);
+    return retval;
 }

@@ -26,130 +26,12 @@ namespace d3d12 {
     //    const D3D12_BIND_FLAG binding, const void *data, const UINT cntData,
     //    const UINT cpuAccess = 0);
 
-    //ATL::CComPtr<ID3D12ComputeShader> create_compute_shader(ID3D12Device *device,
-    //    const BYTE *byteCode, const size_t cntByteCode);
-
-    //inline ATL::CComPtr<ID3D12ComputeShader> create_compute_shader(
-    //        ID3D12Device *device, const std::vector<std::uint8_t>& byteCode) {
-    //    return create_compute_shader(device, byteCode.data(), byteCode.size());
-    //}
-
     //std::vector<D3D12_INPUT_ELEMENT_DESC> create_cube(ID3D12Device *device,
     //    ID3D12Buffer **outVertices, ID3D12Buffer **outIndices,
     //    const float size = 1.0f);
 
-    //ATL::CComPtr<ID3D12DomainShader> create_domain_shader(ID3D12Device *device,
-    //    const BYTE *byteCode, const size_t cntByteCode);
-
-    //template<size_t N>
-    //inline ATL::CComPtr<ID3D12DomainShader> create_domain_shader(
-    //        ID3D12Device *device, const BYTE(&byteCode)[N]) {
-    //    return create_domain_shader(device, byteCode, N);
-    //}
-
-    //inline ATL::CComPtr<ID3D12DomainShader> create_domain_shader(
-    //        ID3D12Device *device, const std::vector<std::uint8_t>& byteCode) {
-    //    return create_domain_shader(device, byteCode.data(), byteCode.size());
-    //}
-
-    //inline ATL::CComPtr<ID3D12DomainShader> create_domain_shader(
-    //        ID3D12Device *device, std::nullptr_t) {
-    //    return nullptr;
-    //}
-
-    //ATL::CComPtr<ID3D12Query> create_event_query(ID3D12Device *device);
-
-    //ATL::CComPtr<ID3D12GeometryShader> create_geometry_shader(
-    //    ID3D12Device *device, const BYTE *byteCode, const size_t cntByteCode);
-
-    //template<size_t N>
-    //inline ATL::CComPtr<ID3D12GeometryShader> create_geometry_shader(
-    //        ID3D12Device *device, const BYTE(&byteCode)[N]) {
-    //    return create_geometry_shader(device, byteCode, N);
-    //}
-
-    //inline ATL::CComPtr<ID3D12GeometryShader> create_geometry_shader(
-    //        ID3D12Device *device, const std::vector<std::uint8_t>& byteCode) {
-    //    return create_geometry_shader(device, byteCode.data(), byteCode.size());
-    //}
-
-    //inline ATL::CComPtr<ID3D12GeometryShader> create_geometry_shader(
-    //        ID3D12Device *device, std::nullptr_t) {
-    //    return nullptr;
-    //}
-
-    //ATL::CComPtr<ID3D12GeometryShader> create_geometry_shader(
-    //    ID3D12Device *device, const std::string& path);
-
-    //ATL::CComPtr<ID3D12GeometryShader> create_geometry_shader(
-    //    ID3D12Device *device, const BYTE *byteCode, const size_t cntByteCode,
-    //    const D3D12_SO_DECLARATION_ENTRY *soDecls, const size_t cntSoDecls,
-    //    const UINT *bufferStrides = nullptr, const size_t cntBufferStrides = 0,
-    //    const UINT rasterisedStream = 0);
-
-    //ATL::CComPtr<ID3D12HullShader> create_hull_shader(ID3D12Device *device,
-    //    const BYTE *byteCode, const size_t cntByteCode);
-
-    //template<size_t N>
-    //inline ATL::CComPtr<ID3D12HullShader> create_hull_shader(
-    //        ID3D12Device *device, const BYTE(&byteCode)[N]) {
-    //    return create_hull_shader(device, byteCode, N);
-    //}
-
-    //inline ATL::CComPtr<ID3D12HullShader> create_hull_shader(
-    //        ID3D12Device *device, const std::vector<std::uint8_t>& byteCode) {
-    //    return create_hull_shader(device, byteCode.data(), byteCode.size());
-    //}
-
-
-    //inline ATL::CComPtr<ID3D12HullShader> create_hull_shader(
-    //        ID3D12Device *device, std::nullptr_t) {
-    //    return nullptr;
-    //}
-
-    //ATL::CComPtr<ID3D12InputLayout> create_input_layout(ID3D12Device *device,
-    //    const std::vector<D3D12_INPUT_ELEMENT_DESC>& elements,
-    //    const BYTE *byteCode, const size_t cntByteCode);
-
-    //inline ATL::CComPtr<ID3D12InputLayout> create_input_layout(
-    //        ID3D12Device *device,
-    //        const std::vector<D3D12_INPUT_ELEMENT_DESC>& elements,
-    //        const std::vector<std::uint8_t>& byteCode) {
-    //    return create_input_layout(device, elements, byteCode.data(),
-    //        byteCode.size());
-    //}
-
-    //template<size_t N>
-    //inline ATL::CComPtr<ID3D12InputLayout> create_input_layout(
-    //        ID3D12Device *device,
-    //        const std::vector<D3D12_INPUT_ELEMENT_DESC>& elements,
-    //        const BYTE(&byteCode)[N]) {
-    //    return create_input_layout(device, elements, byteCode, N);
-    //}
-
     //ATL::CComPtr<ID3D12SamplerState> create_linear_sampler(
     //    ID3D12Device *device);
-
-    //ATL::CComPtr<ID3D12Query> create_pipline_stats_query(ID3D12Device *device);
-
-    //ATL::CComPtr<ID3D12PixelShader> create_pixel_shader(ID3D12Device *device,
-    //    const BYTE *byteCode, const size_t cntByteCode);
-
-    //template<size_t N>
-    //inline ATL::CComPtr<ID3D12PixelShader> create_pixel_shader(
-    //        ID3D12Device *device, const BYTE(&byteCode)[N]) {
-    //    return create_pixel_shader(device, byteCode, N);
-    //}
-
-    //inline ATL::CComPtr<ID3D12PixelShader> create_pixel_shader(
-    //        ID3D12Device *device, const std::vector<std::uint8_t>& byteCode) {
-    //    return create_pixel_shader(device, byteCode.data(), byteCode.size());
-    //}
-
-    //inline ATL::CComPtr<ID3D12PixelShader> create_pixel_shader(
-    //        ID3D12Device *device, std::nullptr_t) {
-    //    return nullptr;
-    //}
 
     //ATL::CComPtr<ID3D12UnorderedAccessView> create_uav(ID3D12Device *device,
     //    const UINT width, const UINT height, const UINT elementSize);
@@ -157,24 +39,29 @@ namespace d3d12 {
     //ATL::CComPtr<ID3D12UnorderedAccessView> create_uav(
     //    ID3D12Texture2D *texture);
 
-    //ATL::CComPtr<ID3D12VertexShader> create_vertex_shader(ID3D12Device *device,
-    //    const BYTE *byteCode, const size_t cntByteCode);
+    /// <summary>
+    /// Initialises the given <see cref="D3D12_SHADER_BYTECODE" />.
+    /// </summary>
+    /// <param name="dst">The object to be initialised.</param>
+    /// <param name="byte_code">The shader byte code.</param>
+    /// <param name="cnt_byte_code">The length of <see cref="byte_code" />.
+    /// </param>
+    inline void set_shader(D3D12_SHADER_BYTECODE& dst, const BYTE *byte_code,
+            const std::size_t cnt_byte_code) {
+        dst.BytecodeLength = static_cast<UINT>(cnt_byte_code);
+        dst.pShaderBytecode = byte_code;
+    }
 
-    //template<size_t N>
-    //inline ATL::CComPtr<ID3D12VertexShader> create_vertex_shader(
-    //        ID3D12Device *device, const BYTE(&byteCode)[N]) {
-    //    return create_vertex_shader(device, byteCode, N);
-    //}
+    template<size_t N>
+    inline void set_shader(D3D12_SHADER_BYTECODE& dst,
+            const BYTE(&byte_code)[N]) {
+        set_shader(dst, byte_code, N);
+    }
 
-    //inline ATL::CComPtr<ID3D12VertexShader> create_vertex_shader(
-    //        ID3D12Device *device, const std::vector<std::uint8_t>& byteCode) {
-    //    return create_vertex_shader(device, byteCode.data(), byteCode.size());
-    //}
-
-    //inline ATL::CComPtr<ID3D12VertexShader> create_vertex_shader(
-    //        ID3D12Device *device, std::nullptr_t) {
-    //    return nullptr;
-    //}
+    inline void set_shader(D3D12_SHADER_BYTECODE& dst,
+            const std::vector<std::uint8_t>& byte_code) {
+        set_shader(dst, byte_code.data(), byte_code.size());
+    }
 
     void set_debug_object_name(ID3D12Object *obj, const char *name);
 

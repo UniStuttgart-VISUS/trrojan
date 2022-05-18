@@ -96,11 +96,11 @@ namespace d3d12 {
         /// </summary>
         void save(const std::string& path);
 
-        ///// <summary>
-        ///// Creates an unordered access view for the back buffer, which must
-        ///// have been created before.
-        ///// </summary>
-        //virtual ATL::CComPtr<ID3D11UnorderedAccessView> to_uav(void);
+        /// <summary>
+        /// Creates an unordered access view for the back buffer, which must
+        /// have been created before.
+        /// </summary>
+        virtual D3D12_CPU_DESCRIPTOR_HANDLE to_uav(void) = 0;
 
         /// <summary>
         /// Enables or disables used of reversed 32-bit depth buffer.
@@ -160,6 +160,12 @@ namespace d3d12 {
         ATL::CComPtr<IDXGISwapChain3> create_swap_chain(HWND hWnd);
 
         /// <summary>
+        /// Answer the current buffer.
+        /// </summary>
+        /// <returns></returns>
+        ATL::CComPtr<ID3D12Resource> current_buffer(void);
+
+        /// <summary>
         /// Answer the CPU handle of the DSV of the current frame.
         /// </summary>
         /// <returns></returns>
@@ -173,6 +179,14 @@ namespace d3d12 {
         /// <returns></returns>
         D3D12_CPU_DESCRIPTOR_HANDLE current_rtv_handle(void);
 
+        /// <summary>
+        /// Wait for the GPU to finish all work and reset the buffers
+        /// afterwards.
+        /// </summary>
+        /// <remarks>
+        /// This method must be called before resizing swap chain buffers.
+        /// </remarks>
+        virtual void reset_buffers(void);
 
         /// <summary>
         /// Set <paramref name="buffers" /> as the buffers for the render target
@@ -186,11 +200,6 @@ namespace d3d12 {
         /// </summary>
         /// <param name="nextFrame"></param>
         void wait_for_frame(const UINT nextFrame);
-
-        /// <summary>
-        /// Identifies the back buffer currently used for rendering.
-        /// </summary>
-        UINT _buffer_index;
 
         /// <summary>
         /// Clear value for the depth buffer.
@@ -208,6 +217,11 @@ namespace d3d12 {
         D3D12_VIEWPORT _viewport;
 
     private:
+
+        /// <summary>
+        /// Identifies the back buffer currently used for rendering.
+        /// </summary>
+        UINT _buffer_index;
 
         /// <summary>
         /// Holds the resources of the render target buffers.

@@ -48,7 +48,7 @@ extern "C" TRROJAND3D12_API trrojan::plugin_base *get_trrojan_plugin(void) {
  * trrojan::d3d12::plugin::load_resource
  */
 std::vector<std::uint8_t> trrojan::d3d12::plugin::load_resource(LPCTSTR name,
-        LPCSTR type) {
+        LPCTSTR type) {
     auto hRes = ::FindResource(::hTrrojanDll, name, type);
     if (hRes == NULL) {
         std::error_code ec(::GetLastError(), std::system_category());

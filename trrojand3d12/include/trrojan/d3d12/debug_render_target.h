@@ -26,6 +26,12 @@ namespace d3d12 {
     /// <summary>
     /// The debug view is a render target using a visible window.
     /// </summary>
+    /// <remarks>
+    /// This debug render target works by copying the data from a UAV that is
+    /// used as the actual render target. This way, it is ensured that we
+    /// actually see what the real thing is doing rather than having a
+    /// completely different setup that might hide or induce undesired effects.
+    /// </remarks>
     class TRROJAND3D12_API debug_render_target : public render_target_base {
 
     public:
@@ -47,10 +53,15 @@ namespace d3d12 {
         void resize(const unsigned int width, const unsigned int height) override;
 
         /// <inheritdoc />
-        //ATL::CComPtr<ID3D11UnorderedAccessView> to_uav(void) override;
+        D3D12_CPU_DESCRIPTOR_HANDLE to_uav(void) override;
 
         /// <inheritdoc />
         void wait_for_frame(void) override;
+
+    protected:
+
+        /// <inheritdoc />
+        void reset_buffers(void) override;
 
     private:
 
@@ -79,6 +90,15 @@ namespace d3d12 {
         std::thread _msg_pump;
 
         /// <summary>
+        /// The staging buffer used to back the UAV that we provide to external
+        /// users for writing to the debug render target. If the render target
+        /// is enabled, this staging buffer will actually become the target.
+        /// Before presenting the debug target, its content will be copied to
+        /// the back buffer of the swap chain.
+        /// </summary>
+        ATL::CComPtr<ID3D12Resource> _staging_buffer;
+
+        /// <summary>
         /// The swap chain for the window.
         /// </summary>
         ATL::CComPtr<IDXGISwapChain3> _swap_chain;
@@ -97,7 +117,7 @@ namespace d3d12 {
         /// reason for that is that mapping the back buffer is not recommended
         /// anymore and is also not supported on D3D12.
         /// </remarks>
-        //ATL::CComPtr<ID3D11UnorderedAccessView> _uav;
+        D3D12_CPU_DESCRIPTOR_HANDLE _uav;
     };
 }
 }

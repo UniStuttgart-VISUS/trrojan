@@ -48,8 +48,8 @@ BY_HANDLE_FILE_INFORMATION trrojan::direct_storage_file::get_file_information(
  * trrojan::direct_storage_file::queue_request
  */
 void trrojan::direct_storage_file::queue_request(IDStorageQueue *queue,
-        const std::size_t srcOffset, const std::size_t count,
-        ID3D12Resource *dst, const std::size_t dstOffset) {
+        const size_type srcOffset, const size_type count,
+        ID3D12Resource *dst, const size_type dstOffset) {
     assert(this->_file != nullptr);
     assert(queue != nullptr);
     assert(dst != nullptr);
