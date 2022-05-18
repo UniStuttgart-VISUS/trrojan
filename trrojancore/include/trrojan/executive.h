@@ -97,6 +97,8 @@ namespace trrojan {
         /// environments.</param>
         void load_plugins(const cmd_line& cmdLine);
 
+        void add_plugin(const plugin& plugin, const cmd_line& cmdLine);
+
         /// <summary>
         /// Runs the given benchmark using the given configurations.
         /// </summary>

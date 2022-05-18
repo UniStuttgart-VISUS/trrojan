@@ -9,6 +9,10 @@ using namespace Windows::UI;
 using namespace Windows::UI::Core;
 using namespace Windows::UI::Composition;
 
+#include "trrojan/executive.h"
+#include "trrojan/d3d11/plugin.h"
+#include "trrojan/d3d11/utilities.h"
+
 struct App : implements<App, IFrameworkViewSource, IFrameworkView>
 {
     CompositionTarget m_target{ nullptr };
@@ -38,8 +42,22 @@ struct App : implements<App, IFrameworkViewSource, IFrameworkView>
         CoreWindow window = CoreWindow::GetForCurrentThread();
         window.Activate();
 
+        /* Configure the executive. */
+        const trrojan::cmd_line cmdLine;
+        auto output = trrojan::open_output(cmdLine);
+        trrojan::cool_down cool_down;
+        trrojan::executive exe;
+
+        trrojan::plugin plugin = std::make_shared<trrojan::d3d11::plugin>();
+        exe.add_plugin(plugin, cmdLine);
+
+        auto trroll_path = trrojan::GetAppFolder().string() + "demo.trroll";
+
+        exe.trroll(trroll_path, *output, cool_down);
+
         CoreDispatcher dispatcher = window.Dispatcher();
         dispatcher.ProcessEvents(CoreProcessEventsOption::ProcessUntilQuit);
+
     }
 
     void SetWindow(CoreWindow const & window)

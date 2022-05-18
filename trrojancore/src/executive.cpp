@@ -206,6 +206,59 @@ void trrojan::executive::load_plugins(const cmd_line& cmdLine) {
     }
 }
 
+void trrojan::executive::add_plugin(const plugin& plugin, const cmd_line& cmdLine)
+{
+    try {
+        
+        this->plugins.push_back(std::move(plugin));
+
+        std::vector<environment> envs;
+        this->plugins.back()->create_environments(envs);
+
+        for (auto e : envs) {
+            // First, handle potential violations of the contract with the
+            // plugin. If the plugin returns invalid stuff, just skip it.
+            if (e == nullptr) {
+                log::instance().write(log_level::debug, "The plugin \"%s\" "
+                    "returned a nullptr as environment.\n",
+                    this->plugins.back()->name().c_str());
+                continue;
+            }
+
+            auto name = e->name();
+            if (this->environments.find(name) != this->environments.end()) {
+                log::instance().write(log_level::debug, "The plugin \"%s\" "
+                    "returned the environment \"%s\", which conflicts with "
+                    "an already loaded environment. The new environment "
+                    "will be ignored.\n", this->plugins.back()->name().c_str(), name.c_str());
+                continue;
+            }
+
+            // Secon, initialise the plugin and add it to the map.
+            try {
+                e->on_initialise(cmdLine);
+                this->environments.insert(std::make_pair(name, e));
+                log::instance().write(log_level::verbose, "The "
+                    "environment \"%s\", provided by plugin \"%s\", was "
+                    "successfully initialised.\n", name.c_str(),
+                    this->plugins.back()->name().c_str());
+
+            }
+            catch (std::exception& ex) {
+                log::instance().write_line(ex);
+                log::instance().write(log_level::verbose, "The "
+                    "environment \"%s\", provided by plugin \"%s\", failed "
+                    "to initialise. The environment will be ignored.\n",
+                    name.c_str(), this->plugins.back()->name().c_str());
+            }
+        }
+
+    }
+    catch (std::exception& ex) {
+        log::instance().write_line(ex);
+    }
+}
+
 
 /*
  * trrojan::executive::run

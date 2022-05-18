@@ -67,7 +67,8 @@ trrojan::result trrojan::d3d11::benchmark_base::run(const configuration& c) {
         changed.push_back(factor_viewport);
     }
 
-    if (isDebugView) {
+    if(false) {
+    //if (isDebugView) {
 #ifndef _UWP
 
         log::instance().write_line(log_level::warning, "Using the debug view "
