@@ -10,7 +10,7 @@
 
 #include <Windows.h>
 #include <atlbase.h>
-#include <d3d11.h>
+#include <d3d11_2.h>
 
 #include "trrojan/device.h"
 

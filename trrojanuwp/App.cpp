@@ -42,43 +42,48 @@ struct App : implements<App, IFrameworkViewSource, IFrameworkView>
         CoreWindow window = CoreWindow::GetForCurrentThread();
         window.Activate();
 
+        //CoreDispatcher dispatcher = window.Dispatcher();
+        //dispatcher.ProcessEvents(CoreProcessEventsOption::ProcessUntilQuit);
+
+        //get AppData folder with write access
+        winrt::Windows::Storage::StorageFolder localFolder{ winrt::Windows::Storage::ApplicationData::Current().LocalFolder() };//for local saving for future
+        //convert folder name from wchar to ascii
+        std::wstring folderNameW(localFolder.Path());
+        std::string folderNameA(folderNameW.begin(), folderNameW.end());
+
         /* Configure the executive. */
         trrojan::cmd_line cmdLine;
-        //cmdLine.push_back("--output");
-        // cmdLine.push_back(trrojan::GetAppFolder().string()+"test.csv");
-        //cmdLine.push_back("--log");
-        //cmdLine.push_back(trrojan::GetAppFolder().string() + "log.txt");
+        cmdLine.push_back("--output");
+        cmdLine.push_back(folderNameA +"\\test.csv");
+        cmdLine.push_back("--log");
+        cmdLine.push_back(folderNameA + "\\log.txt");
         auto output = trrojan::open_output(cmdLine);
         trrojan::cool_down cool_down;
         trrojan::executive exe;
 
-        trrojan::plugin plugin = std::make_shared<trrojan::d3d11::plugin>();
+        trrojan::plugin plugin = std::make_shared<trrojan::d3d11::plugin>(window);
         exe.add_plugin(plugin, cmdLine);
 
         auto trroll_path = trrojan::GetAppFolder().string() + "demo.trroll";
 
         exe.trroll(trroll_path, *output, cool_down);
-
-        CoreDispatcher dispatcher = window.Dispatcher();
-        dispatcher.ProcessEvents(CoreProcessEventsOption::ProcessUntilQuit);
-
     }
 
     void SetWindow(CoreWindow const & window)
     {
-        Compositor compositor;
-        ContainerVisual root = compositor.CreateContainerVisual();
-        m_target = compositor.CreateTargetForCurrentView();
-        m_target.Root(root);
-        m_visuals = root.Children();
-
-        window.PointerPressed({ this, &App::OnPointerPressed });
-        window.PointerMoved({ this, &App::OnPointerMoved });
-
-        window.PointerReleased([&](auto && ...)
-        {
-            m_selected = nullptr;
-        });
+        //Compositor compositor;
+        //ContainerVisual root = compositor.CreateContainerVisual();
+        //m_target = compositor.CreateTargetForCurrentView();
+        //m_target.Root(root);
+        //m_visuals = root.Children();
+        //
+        //window.PointerPressed({ this, &App::OnPointerPressed });
+        //window.PointerMoved({ this, &App::OnPointerMoved });
+        //
+        //window.PointerReleased([&](auto && ...)
+        //{
+        //    m_selected = nullptr;
+        //});
     }
 
     void OnPointerPressed(IInspectable const &, PointerEventArgs const & args)

@@ -14,6 +14,7 @@
 #include "trrojan/d3d11/environment.h"
 #include "trrojan/d3d11/bench_render_target.h"
 #include "trrojan/d3d11/debug_render_target.h"
+#include "trrojan/d3d11/uwp_debug_render_target.h"
 #include "trrojan/d3d11/utilities.h"
 
 
@@ -67,27 +68,34 @@ trrojan::result trrojan::d3d11::benchmark_base::run(const configuration& c) {
         changed.push_back(factor_viewport);
     }
 
-    if(false) {
-    //if (isDebugView) {
-#ifndef _UWP
-
+    if (isDebugView) {
         log::instance().write_line(log_level::warning, "Using the debug view "
             "restricts the benchmark to the GPU connected to the display. The "
             "device parameter has no effect.");
         if (this->debug_target == nullptr) {
+#ifdef _UWP
+            log::instance().write_line(log_level::verbose, "Lazy creation of "
+                "D3D11 debug render target.");
+            auto uwp_debug_target = std::make_shared<uwp_debug_render_target>();
+            uwp_debug_target->SetWindow(m_window);
+            this->debug_target = uwp_debug_target;
+            //this->debug_target->resize(1, 1);   // Force resource allocation.
+            this->debug_device = std::make_shared<d3d11::device>(
+                this->debug_target->device());
+#else
             log::instance().write_line(log_level::verbose, "Lazy creation of "
                 "D3D11 debug render target.");
             this->debug_target = std::make_shared<debug_render_target>();
             this->debug_target->resize(1, 1);   // Force resource allocation.
             this->debug_device = std::make_shared<d3d11::device>(
                 this->debug_target->device());
+#endif
         }
 
         // Overwrite device and render target.
         device = this->debug_device;
         this->render_target = this->debug_target;
         //this->render_target->use_reversed_depth_buffer(true);
-#endif
     } else {
         // Check whether the device has been changed. This should always be done
         // first, because all GPU resources, which depend on the content of the
@@ -124,11 +132,17 @@ trrojan::result trrojan::d3d11::benchmark_base::run(const configuration& c) {
 }
 
 
+void trrojan::d3d11::benchmark_base::SetWindow(winrt::agile_ref<winrt::Windows::UI::Core::CoreWindow> const& window)
+{
+    m_window = window;
+}
+
 /*
  * trrojan::d3d11::benchmark_base::benchmark_base
  */
 trrojan::d3d11::benchmark_base::benchmark_base(const std::string& name)
-        : trrojan::graphics_benchmark_base(name) {
+        : trrojan::graphics_benchmark_base(name)
+{
     this->_default_configs.add_factor(factor::from_manifestations(
         factor_debug_view, false));
 

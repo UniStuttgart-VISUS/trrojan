@@ -11,6 +11,10 @@
 #include <stdexcept>
 #include <vector>
 
+#ifdef _UWP
+#include <winrt/windows.ui.core.h>
+#endif
+
 #include <Windows.h>
 #include <d3d11.h>
 
@@ -52,6 +56,12 @@ namespace d3d11 {
             trrojan::device device) const noexcept;
 
         virtual trrojan::result run(const configuration& c);
+
+        /// <summary>
+        /// Interface to existing UWP window
+        /// </summary>
+        /// <param name="window"></param>
+        void SetWindow(winrt::agile_ref<winrt::Windows::UI::Core::CoreWindow> const& window);
 
     protected:
 
@@ -96,6 +106,11 @@ namespace d3d11 {
         std::shared_ptr<trrojan::d3d11::device> debug_device;
         render_target debug_target;
         render_target render_target;
+
+#ifdef _UWP
+        // Cached reference to the Window.
+        winrt::agile_ref<winrt::Windows::UI::Core::CoreWindow> m_window{ nullptr };
+#endif // _UWP
 
     };
 
