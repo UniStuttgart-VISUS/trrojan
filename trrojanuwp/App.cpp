@@ -42,9 +42,6 @@ struct App : implements<App, IFrameworkViewSource, IFrameworkView>
         CoreWindow window = CoreWindow::GetForCurrentThread();
         window.Activate();
 
-        //CoreDispatcher dispatcher = window.Dispatcher();
-        //dispatcher.ProcessEvents(CoreProcessEventsOption::ProcessUntilQuit);
-
         //get AppData folder with write access
         winrt::Windows::Storage::StorageFolder localFolder{ winrt::Windows::Storage::ApplicationData::Current().LocalFolder() };//for local saving for future
         //convert folder name from wchar to ascii
@@ -67,6 +64,9 @@ struct App : implements<App, IFrameworkViewSource, IFrameworkView>
         auto trroll_path = trrojan::GetAppFolder().string() + "demo.trroll";
 
         exe.trroll(trroll_path, *output, cool_down);
+
+        CoreDispatcher dispatcher = window.Dispatcher();
+        dispatcher.ProcessEvents(CoreProcessEventsOption::ProcessUntilQuit);
     }
 
     void SetWindow(CoreWindow const & window)

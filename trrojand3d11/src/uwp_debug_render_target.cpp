@@ -62,17 +62,12 @@ void trrojan::d3d11::uwp_debug_render_target::present(void) {
         this->device_context()->CopyResource(dst, src);
     }
 
+    m_window.get().Dispatcher().ProcessEvents(winrt::Windows::UI::Core::CoreProcessEventsOption::ProcessAllIfPresent);
+
     if (this->swapChain != nullptr) {
-        this->swapChain->Present(0, 0);
+        this->swapChain->Present(1, 0);
     }
 
-    // Discard the contents of the render target.
-    // This is a valid operation only when the existing contents will be entirely
-    // overwritten. If dirty or scroll rects are used, this call should be removed.
-    this->device_context()->DiscardView(m_d3dRenderTargetView.get());
-
-    // Discard the contents of the depth stencil.
-    this->device_context()->DiscardView(m_d3dDepthStencilView.get());
 }
 
 
@@ -94,15 +89,16 @@ void trrojan::d3d11::uwp_debug_render_target::resize(const unsigned int width,
         assert(this->device_context() == nullptr);
 
         ::ZeroMemory(&desc, sizeof(desc));
-        desc.BufferCount = 2;
         // desc.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
         desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
         desc.Height = width;
         desc.Width = height;
         desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT; // | DXGI_USAGE_UNORDERED_ACCESS;
-        desc.BufferCount = 2; // Use double-buffering to minimize latency.
+        desc.BufferCount = 2; // Use double-buffering to minimize latency. Also required by swap effect.
         desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL; // All Windows Store apps must use this SwapEffect.
+        desc.Flags = 0;
         desc.SampleDesc.Count = 1;
+        desc.SampleDesc.Quality = 0;
         //desc.Windowed = TRUE;
 
         {
@@ -133,8 +129,8 @@ void trrojan::d3d11::uwp_debug_render_target::resize(const unsigned int width,
             }
 
             // This sequence obtains the DXGI factory that was used to create the Direct3D device above.
-            winrt::com_ptr<IDXGIDevice> dxgiDevice;
-            hr = device->QueryInterface(__uuidof(IDXGIDevice), reinterpret_cast<void**>(&dxgiDevice));
+            winrt::com_ptr<IDXGIDevice3> dxgiDevice;
+            hr = device->QueryInterface(__uuidof(IDXGIDevice3), reinterpret_cast<void**>(&dxgiDevice));
             if (FAILED(hr) || !dxgiDevice) {
                 throw ATL::CAtlException(hr);
             }
@@ -206,11 +202,35 @@ void trrojan::d3d11::uwp_debug_render_target::resize(const unsigned int width,
     }
 
     /* Re-create the RTV/DSV. */
-    hr = this->swapChain->GetBuffer(0, IID_ID3D11Texture2D,
-        reinterpret_cast<void **>(&backBuffer));
+    //hr = this->swapChain->GetBuffer(0, IID_ID3D11Texture2D,
+    //    reinterpret_cast<void **>(&backBuffer));
+    //if (FAILED(hr)) {
+    //    throw ATL::CAtlException(hr);
+    //}
+    //winrt::com_ptr<ID3D11Texture2D> bb 
+    //    = winrt::capture<ID3D11Texture2D>(this->swapChain, &IDXGISwapChain1::GetBuffer, 0);
+
+    // Draw to texture and reference texture in uav to copy it to swap chain each frame
+    D3D11_TEXTURE2D_DESC texDesc;
+    
+    // TODO: could optimise this to prevent unnecessary re-creates.
+    ::ZeroMemory(&texDesc, sizeof(texDesc));
+    texDesc.ArraySize = 1;
+    texDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_UNORDERED_ACCESS;
+    // UAV does not support BGRA: texDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+    texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    texDesc.Height = height;
+    texDesc.MipLevels = 1;
+    texDesc.SampleDesc.Count = 1;
+    texDesc.Usage = D3D11_USAGE_DEFAULT;
+    texDesc.Width = width;
+    
+    hr = this->device()->CreateTexture2D(&texDesc, nullptr, &backBuffer);
     if (FAILED(hr)) {
         throw ATL::CAtlException(hr);
     }
+    
+    this->_uav = create_uav(backBuffer);
 
     set_debug_object_name(backBuffer.p, "uwp_debug_render_target (colour buffer)");
 

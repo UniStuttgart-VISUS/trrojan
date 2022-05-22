@@ -99,7 +99,8 @@ namespace d3d11 {
         virtual ATL::CComPtr<ID3D11UnorderedAccessView> switch_to_uav_target(
             void);
 
-    private:
+    //private:
+    protected:
 
         typedef trrojan::benchmark_base base;
 

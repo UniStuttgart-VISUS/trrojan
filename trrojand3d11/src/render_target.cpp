@@ -40,7 +40,10 @@ void trrojan::d3d11::render_target_base::clear(void) {
 void trrojan::d3d11::render_target_base::enable(void) {
     assert(this->_device_context != nullptr);
     this->_device_context->OMSetDepthStencilState(this->_dss.p, 0);
-    this->_device_context->OMSetRenderTargets(1, &this->_rtv.p, this->_dsv.p);
+
+    ID3D11RenderTargetView* const targets[1] = { this->_rtv.p };
+    this->_device_context->OMSetRenderTargets(1, targets, this->_dsv.p);
+    //this->_device_context->OMSetRenderTargets(1, &this->_rtv.p, this->_dsv.p);
 }
 
 

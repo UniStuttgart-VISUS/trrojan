@@ -485,6 +485,7 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
 
             cpuTimer.start();
             for (; cntCpuIterations < cntPrewarms; ++cntCpuIterations) {
+                this->render_target->enable();
                 this->clear_target();
                 if (isInstanced) {
                     ctx->DrawInstanced(cntPrimitives, cntInstances, 0, 0);
