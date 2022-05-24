@@ -6,6 +6,31 @@ cmake_minimum_required(VERSION 3.1.0)
 file(GLOB_RECURSE HeaderFiles RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"  "*.h")
 file(GLOB_RECURSE SourceFiles RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"  "*.cpp")
 
+set(AssetFiles
+  Assets/demo.trroll
+  Assets/spheres.trroll
+  Assets/Logo.png
+  Assets/SmallLogo.png
+  Assets/SmallLogo44x44.png
+  Assets/SplashScreen.png
+  Assets/StoreLogo.png
+)
+
+set(ContentFiles
+  Package.appxmanifest
+)
+
+set(ResourceFiles
+  ${ContentFiles} ${AssetFiles} trrojanuwp_TemporaryKey.pfx
+)
+
+
+set_property(SOURCE ${ContentFiles} PROPERTY VS_DEPLOYMENT_CONTENT 1)
+set_property(SOURCE ${AssetFiles} PROPERTY VS_DEPLOYMENT_CONTENT 1)
+set_property(SOURCE ${AssetFiles} PROPERTY VS_DEPLOYMENT_LOCATION "Assets")
+
+source_group("Resource Files" FILES ${ResourceFiles})
+
 include_directories(${TrrojanCoreIncludeDir})
 include_directories(${TrrojanD3D11IncludeDir})
 
@@ -195,7 +220,7 @@ SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CIMG_CFLAGS}")
 
 ######################
 ##
-add_executable(trrojanuwp WIN32 ${SourceFiles} ${HeaderFiles})
+add_executable(trrojanuwp WIN32 ${SourceFiles} ${HeaderFiles} ${ResourceFiles})
 target_link_libraries(trrojanuwp LINK_PUBLIC ${SYSTEM_LIBS} trrojancore)
 target_link_libraries(trrojanuwp LINK_PUBLIC ${SYSTEM_LIBS} trrojand3d11)
 
