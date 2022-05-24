@@ -61,12 +61,12 @@ struct App : implements<App, IFrameworkViewSource, IFrameworkView>
         trrojan::plugin plugin = std::make_shared<trrojan::d3d11::plugin>(window);
         exe.add_plugin(plugin, cmdLine);
 
-        auto trroll_path = trrojan::GetAppFolder().string() + "demo.trroll";
+        auto trroll_path = trrojan::GetAppFolder().string() + "spheres.trroll";
 
         exe.trroll(trroll_path, *output, cool_down);
 
         CoreDispatcher dispatcher = window.Dispatcher();
-        dispatcher.ProcessEvents(CoreProcessEventsOption::ProcessUntilQuit);
+        dispatcher.ProcessEvents(CoreProcessEventsOption::ProcessOneAndAllPending);
     }
 
     void SetWindow(CoreWindow const & window)
