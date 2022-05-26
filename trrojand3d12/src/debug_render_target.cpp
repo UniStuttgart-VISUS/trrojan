@@ -100,7 +100,7 @@ void trrojan::d3d12::debug_render_target::resize(const unsigned int width,
 
     } else {
         /* Have existing swap chain. */
-        throw "TODO"
+        throw "TODO";
 #if 0
         assert(this->_wnd.load() != NULL);
         this->_rtv = nullptr;
