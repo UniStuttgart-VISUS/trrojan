@@ -492,6 +492,11 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
                     ctx->Draw(cntPrimitives, 0);
                 }
                 this->present_target();
+#if defined(CREATE_D2D_OVERLAY)
+                // Using the overlay will change the state such that we need to
+                // re-apply it after presenting.
+                technique.apply(ctx);
+#endif /* defined(CREATE_D2D_OVERLAY) */
             }
 
             ctx->End(this->done_query);
@@ -522,7 +527,11 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
         } else {
             ctx->Draw(cntPrimitives, 0);
         }
-        this->present_target();
+#if defined(CREATE_D2D_OVERLAY)
+        // Using the overlay will change the state such that we need to
+        // re-apply it after presenting.
+        technique.apply(ctx);
+#endif /* defined(CREATE_D2D_OVERLAY) */
         gpuTimer.end(0);
         gpuTimer.end_frame();
 
@@ -546,6 +555,11 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
     }
     ctx->End(this->stats_query);
     this->present_target();
+#if defined(CREATE_D2D_OVERLAY)
+    // Using the overlay will change the state such that we need to
+    // re-apply it after presenting.
+    technique.apply(ctx);
+#endif /* defined(CREATE_D2D_OVERLAY) */
     wait_for_stats_query(pipeStats, ctx, this->stats_query);
 
     // Do the wall clock measurement.
@@ -560,6 +574,11 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
             ctx->Draw(cntPrimitives, 0);
         }
         this->present_target();
+#if defined(CREATE_D2D_OVERLAY)
+        // Using the overlay will change the state such that we need to
+        // re-apply it after presenting.
+        technique.apply(ctx);
+#endif /* defined(CREATE_D2D_OVERLAY) */
     }
     ctx->End(this->done_query);
     wait_for_event_query(ctx, this->done_query);

@@ -14,6 +14,7 @@
 #include <atlbase.h>
 #include <Windows.h>
 #include <d3d11.h>
+#include <dxgi.h>
 
 #include "trrojan/d3d11/export.h"
 
@@ -27,6 +28,16 @@ namespace d3d11 {
         ID3D11Device *device, const D3D11_USAGE usage,
         const D3D11_BIND_FLAG binding, const void *data, const UINT cntData,
         const UINT cpuAccess = 0);
+
+    /// <summary>
+    /// Create a DXGI surface that can be used as Direct2D render target with
+    /// the same size as the given swap chain.
+    /// </summary>
+    /// <param name="device"></param>
+    /// <param name="swap_chain"></param>
+    /// <returns></returns>
+    ATL::CComPtr<ID3D11Texture2D> create_compatible_surface(
+        ID3D11Device *device, IDXGISwapChain *swap_chain);
 
     ATL::CComPtr<ID3D11ComputeShader> create_compute_shader(ID3D11Device *device,
         const BYTE *byteCode, const size_t cntByteCode);
@@ -242,6 +253,34 @@ namespace d3d11 {
     /// created.</exception>
     ATL::CComPtr<ID3D11Texture1D> create_viridis_colour_map(
         ID3D11Device *device, ID3D11ShaderResourceView **outOptSrv = nullptr);
+
+    /// <summary>
+    /// Gets the back buffer texture of the given swap chain.
+    /// </summary>
+    /// <param name="swap_chain"></param>
+    /// <returns></returns>
+    ATL::CComPtr<ID3D11Texture2D> get_back_buffer(IDXGISwapChain *swap_chain);
+
+    /// <summary>
+    /// Gets the device the texture is resident on.
+    /// </summary>
+    /// <param name="texture"></param>
+    /// <returns></returns>
+    ATL::CComPtr<ID3D11Device> get_device(ID3D11Texture2D *texture);
+
+    /// <summary>
+    /// Gets the underlying DXGI device for a given D3D device.
+    /// </summary>
+    /// <param name="device"></param>
+    /// <returns></returns>
+    ATL::CComPtr<IDXGIDevice> get_device(ID3D11Device *device);
+
+    /// <summary>
+    /// Gets the underlying DXGI resource for a given texture.
+    /// </summary>
+    /// <param name="texture"></param>
+    /// <returns></returns>
+    ATL::CComPtr<IDXGISurface> get_surface(ID3D11Texture2D *texture);
 
     /// <summary>
     /// Sets the <c>WKPDID_D3DDebugObjectName</c> of the given object.
