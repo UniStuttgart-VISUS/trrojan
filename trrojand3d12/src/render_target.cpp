@@ -19,7 +19,6 @@
  */
 trrojan::d3d12::render_target_base::~render_target_base(void) {
     this->wait_for_gpu();
-    ::CloseHandle(this->_fence_event);
 }
 
 
@@ -62,16 +61,8 @@ void trrojan::d3d12::render_target_base::enable(
         cmdList->RSSetScissorRects(1, &rect);
     }
 
-    {
-        D3D12_RESOURCE_BARRIER barrier;
-        ::ZeroMemory(&barrier, sizeof(barrier));
-        barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-        barrier.Transition.pResource = this->_buffers[this->_buffer_index].p;
-        barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
-        barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
-
-        cmdList->ResourceBarrier(1, &barrier);
-    }
+    transition_subresource(cmdList, this->_buffers[this->_buffer_index], 0,
+        D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
     {
         auto hDsv = this->current_dsv_handle();
@@ -91,14 +82,9 @@ void trrojan::d3d12::render_target_base::enable(
 void trrojan::d3d12::render_target_base::present(
         ID3D12GraphicsCommandList *cmdList) {
     assert(cmdList != nullptr);
-    D3D12_RESOURCE_BARRIER barrier;
-    ::ZeroMemory(&barrier, sizeof(barrier));
-    barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-    barrier.Transition.pResource = this->_buffers[this->_buffer_index].p;
-    barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
-    barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
-
-    cmdList->ResourceBarrier(1, &barrier);
+    transition_subresource(cmdList, this->_buffers[this->_buffer_index], 0,
+        D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+    this->_buffer_index = ++this->_buffer_index % this->pipeline_depth();
 }
 
 
@@ -148,23 +134,20 @@ void trrojan::d3d12::render_target_base::save(const std::string& path) {
 }
 
 
-///*
-// * trrojan::d3d12::render_target_base::to_uav
-// */
-//ATL::CComPtr<ID3D12UnorderedAccessView>
-//trrojan::d3d12::render_target_base::to_uav(void) {
-//    if (this->_rtv != nullptr) {
-//        ATL::CComPtr<ID3D12Resource> backBuffer;
-//        ATL::CComPtr<ID3D12Texture2D> texture;
-//        this->_rtv->GetResource(&backBuffer);
-//        this->_rtv = nullptr;
-//        backBuffer.QueryInterface(&texture);
-//        return create_uav(texture);
-//
-//    } else {
-//        return nullptr;
-//    }
+/*
+ * trrojan::d3d12::render_target_base::to_uav
+ */
+//void trrojan::d3d12::render_target_base::to_uav(
+//        const D3D12_CPU_DESCRIPTOR_HANDLE dst,
+//        ID3D12GraphicsCommandList *cmd_list) {
+//    transition_subresource(cmd_list,
+//        this->current_buffer(), 0,
+//        D3D12_RESOURCE_STATE_RENDER_TARGET,
+//        D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+//    this->device()->CreateUnorderedAccessView(this->current_buffer(), nullptr,
+//        nullptr, dst);
 //}
+
 
 /*
  * trrojan::d3d12::render_target_base::use_reversed_depth_buffer
@@ -203,11 +186,9 @@ void trrojan::d3d12::render_target_base::use_reversed_depth_buffer(
  */
 void trrojan::d3d12::render_target_base::wait_for_gpu(void) {
     assert(this->_command_queue != nullptr);
-
-    this->create_fence();
-
     auto& fenceValue = this->_fence_values[this->_buffer_index];
 
+    // Make the fence signal in the command queue with its current value.
     assert(this->_fence != nullptr);
     {
         auto hr = this->_command_queue->Signal(this->_fence, fenceValue);
@@ -216,6 +197,7 @@ void trrojan::d3d12::render_target_base::wait_for_gpu(void) {
         }
     }
 
+    // Signal the event if the fence singalled with its current value.
     assert(this->_fence_event != NULL);
     {
         auto hr = this->_fence->SetEventOnCompletion(fenceValue,
@@ -225,6 +207,7 @@ void trrojan::d3d12::render_target_base::wait_for_gpu(void) {
         }
     }
 
+    // Wait for the event to signal.
     switch (::WaitForSingleObjectEx(this->_fence_event, INFINITE, FALSE)) {
         case WAIT_FAILED:
             throw ATL::CAtlException(HRESULT_FROM_WIN32(::GetLastError()));
@@ -233,6 +216,7 @@ void trrojan::d3d12::render_target_base::wait_for_gpu(void) {
             break;
     }
 
+    // Increase the fence for the next call ('fenceValue' is a ref!).
     ++fenceValue;
 }
 
@@ -243,8 +227,7 @@ void trrojan::d3d12::render_target_base::wait_for_gpu(void) {
 trrojan::d3d12::render_target_base::render_target_base(
         const trrojan::device& device, const UINT pipelineDepth)
     : _depth_clear(1.0f), _buffer_index(0), _buffers(pipelineDepth),
-        _fence_event(NULL), _fence_values(pipelineDepth, 0),
-        _rtv_descriptor_size(0) {
+        _fence_values(pipelineDepth, 0), _rtv_descriptor_size(0) {
     auto d = std::dynamic_pointer_cast<trrojan::d3d12::device>(device);
     if (d == nullptr) {
         throw std::invalid_argument("The device passed to the Direct3D 12 "
@@ -259,6 +242,24 @@ trrojan::d3d12::render_target_base::render_target_base(
     this->_device = d->d3d_device();
     this->_dxgi_factory = d->dxgi_factory();
     ::ZeroMemory(&this->_viewport, sizeof(this->_viewport));
+
+    {
+        auto hr = this->_device->CreateFence(
+            this->_fence_values[this->_buffer_index],
+            D3D12_FENCE_FLAG_NONE,
+            ::IID_ID3D12Fence,
+            reinterpret_cast<void **>(&this->_fence));
+        if (FAILED(hr)) {
+            throw ATL::CAtlException(hr);
+        }
+
+        ++this->_fence_values[this->_buffer_index];
+    }
+
+    this->_fence_event = ::CreateEvent(nullptr, FALSE, FALSE, nullptr);
+    if (!this->_fence_event) {
+        throw ATL::CAtlException(HRESULT_FROM_WIN32(GetLastError()));
+    }
 }
 
 
@@ -297,33 +298,6 @@ void trrojan::d3d12::render_target_base::create_dsv_heap(void) {
 
 
 /*
- * trrojan::d3d12::render_target_base::create_fence
- */
-void trrojan::d3d12::render_target_base::create_fence(void) {
-    assert(this->_device != nullptr);
-
-    if (this->_fence == nullptr) {
-        auto hr = this->_device->CreateFence(
-            this->_fence_values[this->_buffer_index],
-            D3D12_FENCE_FLAG_NONE,
-            ::IID_ID3D12Fence,
-            reinterpret_cast<void **>(&this->_fence));
-        if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
-        }
-    }
-
-    if (this->_fence_event == NULL) {
-        this->_fence_event = ::CreateEvent(nullptr, FALSE, FALSE, nullptr);
-        if (this->_fence_event == NULL) {
-            this->_fence = nullptr;
-            throw ATL::CAtlException(HRESULT_FROM_WIN32(GetLastError()));
-        }
-    }
-}
-
-
-/*
  * trrojan::d3d12::render_target_base::create_rtv_heap
  */
 void trrojan::d3d12::render_target_base::create_rtv_heap(void) {
@@ -341,6 +315,7 @@ ATL::CComPtr<IDXGISwapChain3>
 trrojan::d3d12::render_target_base::create_swap_chain(HWND hWnd) {
     assert(this->_command_queue != nullptr);
     assert(this->_dxgi_factory != nullptr);
+    assert(this->pipeline_depth() >= 1);
     ATL::CComPtr<IDXGISwapChain3> retval;
     UINT height = 1;
     ATL::CComPtr<IDXGISwapChain1> swapChain;
@@ -429,17 +404,25 @@ void trrojan::d3d12::render_target_base::reset_buffers(void) {
  * trrojan::d3d12::render_target_base::set_buffers
  */
 void trrojan::d3d12::render_target_base::set_buffers(
-        const std::vector<ATL::CComPtr<ID3D12Resource>>& buffers) {
+        const std::vector<ATL::CComPtr<ID3D12Resource>> &buffers,
+        const UINT buffer_index) {
     if (buffers.size() < this->_buffers.size()) {
         throw std::invalid_argument("A buffer must be provided for each stage "
             "of the pipeline. You have provided less buffers than there are "
             "render target views.");
     }
+    if (buffer_index >= this->pipeline_depth()) {
+        throw std::invalid_argument("The current buffer index cannot be "
+            "outside the range of valid buffers.");
+    }
 
     // Retain the buffers.
-    this->_buffers.reserve(buffers.size());
     std::copy_n(buffers.begin(), this->_buffers.size(),
         this->_buffers.begin());
+
+    // Reset the current buffer to the user-defined value. This allows swap
+    // chain-based subclasses to force the current index of the swap chain.
+    this->_buffer_index = buffer_index;
 
     // Lazily create the RTV heap.
     if (this->_rtv_heap == nullptr) {
@@ -525,9 +508,6 @@ void trrojan::d3d12::render_target_base::wait_for_frame(
     assert(nextFrame < this->_fence_values.size());
     assert(nextFrame != this->_buffer_index);
     const auto currentFenceValue = this->_fence_values[this->_buffer_index];
-
-    // Assert that the fence was created.
-    this->create_fence();
 
     // Schedule a signal in the queue.
     assert(this->_fence != nullptr);

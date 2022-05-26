@@ -27,6 +27,7 @@ namespace d3d12 {
         /// <param name="device">The device to create the target on.</param>
         bench_render_target(const trrojan::device& device);
 
+        /// <inheritdoc />
         virtual void resize(const unsigned int width,
             const unsigned int height) override;
 

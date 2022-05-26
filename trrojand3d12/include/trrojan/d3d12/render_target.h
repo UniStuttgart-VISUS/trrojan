@@ -15,6 +15,7 @@
 
 #include "trrojan/d3d12/device.h"
 #include "trrojan/d3d12/export.h"
+#include "trrojan/d3d12/handle.h"
 
 
 namespace trrojan {
@@ -96,11 +97,16 @@ namespace d3d12 {
         /// </summary>
         void save(const std::string& path);
 
-        /// <summary>
-        /// Creates an unordered access view for the back buffer, which must
-        /// have been created before.
-        /// </summary>
-        virtual D3D12_CPU_DESCRIPTOR_HANDLE to_uav(void) = 0;
+        ///// <summary>
+        ///// Creates an unordered access view for the back buffer, which must
+        ///// have been created before.
+        ///// </summary>
+        ///// <param name="dst">The CPU descriptor handle that represents the
+        ///// start of the heap holding the UAV.</param>
+        ///// <param name="cmd_list">The command list used to transition the
+        ///// resource.</param>
+        //virtual void to_uav(const D3D12_CPU_DESCRIPTOR_HANDLE dst,
+        //    ID3D12GraphicsCommandList *cmd_list);
 
         /// <summary>
         /// Enables or disables used of reversed 32-bit depth buffer.
@@ -148,15 +154,20 @@ namespace d3d12 {
         void create_dsv_heap(void);
 
         /// <summary>
-        /// Lazily initialises the fence and the event for waiting on it.
-        /// </summary>
-        void create_fence(void);
-
-        /// <summary>
         /// Allocate a descriptor heap for render target views.
         /// </summary>
         void create_rtv_heap(void);
 
+        /// <summary>
+        /// Allocate a swap chain for the pipeline depth of the render target
+        /// and associated with the given window.
+        /// </summary>
+        /// <remarks>
+        /// This method is a convenience method for subclasses to create a
+        /// compatible swap chain.
+        /// </remarks>
+        /// <param name="hWnd"></param>
+        /// <returns></returns>
         ATL::CComPtr<IDXGISwapChain3> create_swap_chain(HWND hWnd);
 
         /// <summary>
@@ -193,10 +204,12 @@ namespace d3d12 {
         /// views.
         /// </summary>
         void set_buffers(
-            const std::vector<ATL::CComPtr<ID3D12Resource>>& buffers);
+            const std::vector<ATL::CComPtr<ID3D12Resource>>& buffers,
+            const UINT buffer_index = 0);
 
         /// <summary>
-        /// Waits for the frame in the given buffer to complete.
+        /// Waits for the current frame to complete and sets the given value as
+        /// the next one..
         /// </summary>
         /// <param name="nextFrame"></param>
         void wait_for_frame(const UINT nextFrame);
@@ -257,7 +270,7 @@ namespace d3d12 {
         /// An event for blocking the calling thread until a fence in the GPU
         /// command stream was reached.
         /// </summary>
-        HANDLE _fence_event;
+        handle<> _fence_event;
 
         /// <summary>
         /// The values of the fence for each frame.

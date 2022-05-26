@@ -192,6 +192,14 @@ ATL::CComPtr<IDXGIAdapter> trrojan::d3d12::device::dxgi_adapter(void) {
 
 
 /*
+ * trrojan::d3d12::device::execute_command_list
+ */
+void trrojan::d3d12::device::execute_command_list(ID3D12CommandList *cmd_list) {
+    assert(cmd_list != nullptr);
+    this->command_queue()->ExecuteCommandLists(1, &cmd_list);
+}
+
+/*
  * trrojan::d3d12::device::set_stable_power_state
  */
 void trrojan::d3d12::device::set_stable_power_state(const bool enabled) {

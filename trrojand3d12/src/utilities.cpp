@@ -12,38 +12,6 @@
 
 
 ///*
-// * trrojan::d3d12::create_buffer
-// */
-//ATL::CComPtr<ID3D12Buffer> trrojan::d3d12::create_buffer(ID3D12Device *device,
-//        const D3D12_USAGE usage, const D3D12_BIND_FLAG binding,
-//        const void *data, const UINT cntData, const UINT cpuAccess) {
-//    assert(device != nullptr);
-//    D3D12_BUFFER_DESC bufferDesc;
-//    D3D12_SUBRESOURCE_DATA id;
-//    ATL::CComPtr<ID3D12Buffer> retval;
-//
-//    ::ZeroMemory(&bufferDesc, sizeof(bufferDesc));
-//    bufferDesc.ByteWidth = static_cast<UINT>(cntData);
-//    bufferDesc.Usage = usage;
-//    bufferDesc.BindFlags = binding;
-//    bufferDesc.CPUAccessFlags = cpuAccess;
-//
-//    if (data != nullptr) {
-//        ::ZeroMemory(&id, sizeof(id));
-//        id.pSysMem = data;
-//    }
-//
-//    auto hr = device->CreateBuffer(&bufferDesc,
-//        (data != nullptr) ? &id : nullptr, &retval);
-//    if (FAILED(hr)) {
-//        throw ATL::CAtlException(hr);
-//    }
-//
-//    return retval;
-//}
-//
-//
-///*
 // * trrojan::d3d12::create_compute_shader
 // */
 //ATL::CComPtr<ID3D12ComputeShader> trrojan::d3d12::create_compute_shader(
@@ -349,77 +317,7 @@
 //}
 //
 //
-///*
-// * trrojan::d3d12::create_uav
-// */
-//ATL::CComPtr<ID3D12UnorderedAccessView> trrojan::d3d12::create_uav(
-//        ID3D12Device *device, const UINT width, const UINT height,
-//        const UINT elementSize) {
-//    ATL::CComPtr<ID3D12Buffer> buffer;
-//    ATL::CComPtr<ID3D12UnorderedAccessView> retval;
-//
-//    // Allocate a new buffer.
-//    {
-//        D3D12_BUFFER_DESC desc;
-//        ::ZeroMemory(&desc, sizeof(desc));
-//        desc.BindFlags = D3D12_BIND_UNORDERED_ACCESS
-//            | D3D12_BIND_SHADER_RESOURCE;
-//        desc.ByteWidth = elementSize * width * height;
-//        desc.MiscFlags = D3D12_RESOURCE_MISC_BUFFER_STRUCTURED;
-//        desc.StructureByteStride = elementSize;
-//
-//        auto hr = device->CreateBuffer(&desc, nullptr, &buffer);
-//        if (FAILED(hr)) {
-//            throw ATL::CAtlException(hr);
-//        }
-//    }
-//
-//    // Allocate the UAV for the buffer.
-//    {
-//        D3D12_UNORDERED_ACCESS_VIEW_DESC desc;
-//        ::ZeroMemory(&desc, sizeof(desc));
-//        desc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
-//        desc.Buffer.FirstElement = 0;
-//        desc.Format = DXGI_FORMAT_UNKNOWN;
-//        desc.Buffer.NumElements = width * height;
-//
-//        auto hr = device->CreateUnorderedAccessView(buffer, &desc, &retval);
-//        if (FAILED(hr)) {
-//            throw ATL::CAtlException(hr);
-//        }
-//    }
-//
-//    return retval;
-//}
-//
-//
-///*
-// * trrojan::d3d12::create_uav
-// */
-//ATL::CComPtr<ID3D12UnorderedAccessView> trrojan::d3d12::create_uav(
-//        ID3D12Texture2D *texture) {
-//    assert(texture != nullptr);
-//    D3D12_TEXTURE2D_DESC texDesc;
-//    ATL::CComPtr<ID3D12Device> device;
-//    ATL::CComPtr<ID3D12UnorderedAccessView> retval;
-//    D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc;
-//
-//    texture->GetDesc(&texDesc);
-//    texture->GetDevice(&device);
-//
-//    ::ZeroMemory(&uavDesc, sizeof(uavDesc));
-//    uavDesc.Format = texDesc.Format;
-//    //uavDesc.Format = DXGI_FORMAT_UNKNOWN;
-//    uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
-//
-//    auto hr = device->CreateUnorderedAccessView(texture, &uavDesc, &retval);
-//    if (FAILED(hr)) {
-//        throw ATL::CAtlException(hr);
-//    }
-//
-//    return retval;
-//}
-//
+
 //
 ///*
 // * trrojan::d3d12::create_vertex_shader
@@ -770,6 +668,277 @@
 //}
 
 
+/// <summary>
+/// Check whether <paramref name="ptr" /> is non-null.
+/// </summary>
+/// <typeparam name="TPointer"></typeparam>
+/// <param name="ptr"></param>
+template<class TPointer>
+static void check_not_null(const TPointer *ptr) {
+    if (ptr == nullptr) {
+        throw ATL::CAtlException(E_POINTER);
+    }
+}
+
+
+/// <summary>
+/// Check whether <paramref name="resource" /> is a valid staging buffer.
+/// </summary>
+static void check_staging_buffer(ID3D12Resource *resource, const UINT64 cnt) {
+    if (resource == nullptr) {
+        throw std::invalid_argument("A valid resource is required to stage "
+            "data.");
+    }
+
+    {
+        auto desc = resource->GetDesc();
+        if (desc.Dimension != D3D12_RESOURCE_DIMENSION_BUFFER) {
+            throw std::invalid_argument("The staging resource must be a "
+                "buffer.");
+        }
+    }
+
+    {
+        auto device = trrojan::d3d12::get_device(resource);
+        UINT64 size;
+        device->GetCopyableFootprints(&resource->GetDesc(), 0, 1, 0, nullptr,
+            nullptr, nullptr, &size);
+        if (size < cnt) {
+            throw std::invalid_argument("The staging buffer is too small for "
+                "the amount of data specified.");
+        }
+    }
+}
+
+
+/*
+ * trrojan::d3d12::create_buffer
+ */
+ATL::CComPtr<ID3D12Resource> trrojan::d3d12::create_buffer(ID3D12Device *device,
+        const UINT64 size, const UINT64 alignment,
+        const D3D12_RESOURCE_FLAGS flags, const D3D12_HEAP_TYPE heap_type,
+        const D3D12_RESOURCE_STATES state) {
+    assert(device != nullptr);
+
+    D3D12_RESOURCE_DESC desc;
+    ::ZeroMemory(&desc, sizeof(desc));
+    desc.MipLevels = 1;
+    desc.Format = DXGI_FORMAT_UNKNOWN;
+    desc.Width = size;
+    desc.Alignment = alignment;
+    desc.Flags = flags;
+    desc.DepthOrArraySize = 1;
+    desc.SampleDesc.Count = 1;
+    desc.SampleDesc.Quality = 0;
+    desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+    desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+
+    return create_resource(device, desc, heap_type, state);
+}
+
+
+/*
+ * trrojan::d3d12::create_event
+ */
+std::unique_ptr<void> trrojan::d3d12::create_event(
+        const bool manual_reset, const bool initial_state) {
+    auto hEvent = ::CreateEvent(nullptr, manual_reset, initial_state, nullptr);
+    if (hEvent == NULL) {
+        throw ATL::CAtlException(HRESULT_FROM_WIN32(GetLastError()));
+    }
+
+    return std::unique_ptr<void>(hEvent, [](void *h) { ::CloseHandle(h); });
+}
+
+
+/*
+ * trrojan::d3d12::create_render_target
+ */
+ATL::CComPtr<ID3D12Resource> trrojan::d3d12::create_render_target(
+        ID3D12Device *device, const UINT width, const UINT height,
+        const DXGI_FORMAT format, const D3D12_RESOURCE_FLAGS flags) {
+    assert(device != nullptr);
+
+    D3D12_RESOURCE_DESC desc;
+    ::ZeroMemory(&desc, sizeof(desc));
+    desc.MipLevels = 1;
+    desc.Format = format;
+    desc.Width = width;
+    desc.Height = height;
+    desc.Flags = flags;
+    desc.DepthOrArraySize = 1;
+    desc.SampleDesc.Count = 1;
+    desc.SampleDesc.Quality = 0;
+    desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+
+    return create_resource(device, desc, D3D12_HEAP_TYPE_DEFAULT,
+        D3D12_RESOURCE_STATE_RENDER_TARGET);
+}
+
+
+/*
+ * trrojan::d3d12::create_resource
+ */
+ATL::CComPtr<ID3D12Resource> trrojan::d3d12::create_resource(
+        ID3D12Device *device, const D3D12_RESOURCE_DESC& desc,
+        const D3D12_HEAP_TYPE heap_type,
+        const D3D12_RESOURCE_STATES state) {
+    assert(device != nullptr);
+
+    D3D12_HEAP_PROPERTIES props;
+    ::ZeroMemory(&props, sizeof(props));
+    props.CreationNodeMask = 0x1;
+    props.VisibleNodeMask = 0x1;
+    props.Type = heap_type;
+
+    ATL::CComPtr<ID3D12Resource> retval;
+    auto hr = device->CreateCommittedResource(&props, D3D12_HEAP_FLAG_NONE,
+        &desc, state, nullptr, ::IID_ID3D12Resource,
+        reinterpret_cast<void **>(&retval));
+    if (FAILED(hr)) {
+        throw ATL::CAtlException(hr);
+    }
+
+    return retval;
+}
+
+
+/*
+ * trrojan::d3d12::create_texture
+ */
+ATL::CComPtr<ID3D12Resource> trrojan::d3d12::create_texture(
+        ID3D12Device *device, const UINT64 width, const DXGI_FORMAT format,
+        const D3D12_RESOURCE_FLAGS flags) {
+    assert(device != nullptr);
+
+    D3D12_RESOURCE_DESC desc;
+    ::ZeroMemory(&desc, sizeof(desc));
+    desc.MipLevels = 1;
+    desc.Format = format;
+    desc.Width = width;
+    desc.Flags = flags;
+    desc.DepthOrArraySize = 1;
+    desc.SampleDesc.Count = 1;
+    desc.SampleDesc.Quality = 0;
+    desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE1D;
+
+    return create_resource(device, desc);
+}
+
+
+/*
+ * trrojan::d3d12::create_texture
+ */
+ATL::CComPtr<ID3D12Resource> trrojan::d3d12::create_texture(
+        ID3D12Device *device, const UINT64 width, const DXGI_FORMAT format,
+        ID3D12GraphicsCommandList *cmd_list, const void *data,
+        const UINT row_pitch, const D3D12_RESOURCE_FLAGS flags) {
+    assert(device != nullptr);
+    assert(cmd_list != nullptr);
+
+    auto texture = create_texture(device, width, format, flags);
+    auto buffer = create_upload_buffer(texture);
+
+    D3D12_SUBRESOURCE_DATA init_data;
+    ::ZeroMemory(&init_data, sizeof(init_data));
+    init_data.pData = data;
+    init_data.RowPitch = row_pitch;
+
+
+
+    return ATL::CComPtr<ID3D12Resource>();
+}
+
+
+/*
+ * trrojan::d3d12::create_texture
+ */
+ATL::CComPtr<ID3D12Resource> trrojan::d3d12::create_texture(
+        ID3D12Device *device, const UINT64 width, const UINT height,
+        const DXGI_FORMAT format, const D3D12_RESOURCE_FLAGS flags) {
+    assert(device != nullptr);
+
+    D3D12_RESOURCE_DESC desc;
+    ::ZeroMemory(&desc, sizeof(desc));
+    desc.MipLevels = 1;
+    desc.Format = format;
+    desc.Width = width;
+    desc.Height = height;
+    desc.Flags = flags;
+    desc.DepthOrArraySize = 1;
+    desc.SampleDesc.Count = 1;
+    desc.SampleDesc.Quality = 0;
+    desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+
+    return create_resource(device, desc);
+}
+
+
+/*
+ * trrojan::d3d12::create_upload_buffer
+ */
+ATL::CComPtr<ID3D12Resource> trrojan::d3d12::create_upload_buffer(
+        ID3D12Resource *resource, const UINT first_subresource,
+        const UINT cnt_subresources) {
+    assert(resource != nullptr);
+    // Cf. https://github.com/microsoft/DirectX-Graphics-Samples/blob/164b072185a5360c43c5f0b64e2f672b7f423f95/Libraries/D3D12RaytracingFallback/Include/d3dx12.h#L1875
+    const auto desc = resource->GetDesc();
+    auto device = get_device(resource);
+    UINT64 size;
+
+    device->GetCopyableFootprints(&desc, first_subresource, cnt_subresources,
+        0, nullptr, nullptr, nullptr, &size);
+
+    return create_buffer(device, size, 0, D3D12_RESOURCE_FLAG_NONE,
+        D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ);
+}
+
+
+/*
+ * trrojan::d3d12::get_device
+ */
+ATL::CComPtr<ID3D12Device> trrojan::d3d12::get_device(
+        ID3D12Resource *resource) {
+    check_not_null(resource);
+    ATL::CComPtr<ID3D12Device> retval;
+
+    auto hr = resource->GetDevice(::IID_ID3D12Device,
+        reinterpret_cast<void **>(&retval));
+    if (FAILED(hr)) {
+        throw ATL::CAtlException(hr);
+    }
+
+    return retval;
+}
+
+
+/*
+ * trrojan::d3d12::get_copy_location
+ */
+D3D12_TEXTURE_COPY_LOCATION trrojan::d3d12::get_copy_location(
+        ID3D12Resource *resource, const UINT subresource) {
+    auto device = get_device(resource);
+    auto desc = resource->GetDesc();
+
+    D3D12_TEXTURE_COPY_LOCATION retval;
+    ::ZeroMemory(&retval, sizeof(retval));
+
+    retval.pResource = resource;
+
+    if (desc.Dimension == D3D12_RESOURCE_DIMENSION_BUFFER) {
+        retval.Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
+        device->GetCopyableFootprints(&desc, 0, 1, 0, &retval.PlacedFootprint,
+            nullptr, nullptr, nullptr);
+
+    } else {
+        retval.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
+        retval.SubresourceIndex = subresource;
+    }
+
+    return retval;
+}
+
+
 /*
  * trrojan::d3d12::set_debug_object_name
  */
@@ -786,34 +955,143 @@ void trrojan::d3d12::set_debug_object_name(ID3D12Object *obj,
 }
 
 
-///*
-// * trrojan::d3d12::wait_for_event_query
-// */
-//void trrojan::d3d12::wait_for_event_query(ID3D12DeviceContext *ctx,
-//        ID3D12Asynchronous *query) {
-//    assert(ctx != nullptr);
-//    assert(query != nullptr);
-//    HRESULT hr = S_FALSE;
-//
-//    while ((hr = ctx->GetData(query, nullptr, 0, 0)) == S_FALSE);
-//    if (FAILED(hr)) {
-//        throw ATL::CAtlException(hr);
-//    }
-//}
-//
-//
-///*
-// * trrojan::d3d12::wait_for_stats_query
-// */
-//void trrojan::d3d12::wait_for_stats_query(
-//        D3D12_QUERY_DATA_PIPELINE_STATISTICS& dst,
-//        ID3D12DeviceContext *ctx, ID3D12Asynchronous *query) {
-//    assert(ctx != nullptr);
-//    assert(query != nullptr);
-//    HRESULT hr = S_FALSE;
-//
-//    while ((hr = ctx->GetData(query, &dst, sizeof(dst), 0)) == S_FALSE);
-//    if (FAILED(hr)) {
-//        throw ATL::CAtlException(hr);
-//    }
-//}
+/*
+ * trrojan::d3d12::stage_data
+ */
+void trrojan::d3d12::stage_data(ID3D12Resource *resource, const void *data,
+        const UINT64 cnt) {
+    check_staging_buffer(resource, cnt);
+    check_not_null(data);
+
+    BYTE *dst;
+    auto hr = resource->Map(0, nullptr, reinterpret_cast<void **>(&dst));
+    if (FAILED(hr)) {
+        throw ATL::CAtlException(hr);
+    }
+
+    ::memcpy(dst, data, cnt);
+
+    resource->Unmap(0, nullptr);
+}
+
+
+#if 0
+inline void MemcpySubresource(
+    _In_ const D3D12_MEMCPY_DEST *pDest,
+    _In_ const D3D12_SUBRESOURCE_DATA *pSrc,
+    SIZE_T RowSizeInBytes,
+    UINT NumRows,
+    UINT NumSlices)
+{
+    for (UINT z = 0; z < NumSlices; ++z)
+    {
+        BYTE *pDestSlice = reinterpret_cast<BYTE *>(pDest->pData) + pDest->SlicePitch * z;
+        const BYTE *pSrcSlice = reinterpret_cast<const BYTE *>(pSrc->pData) + pSrc->SlicePitch * z;
+        for (UINT y = 0; y < NumRows; ++y)
+        {
+            memcpy(pDestSlice + pDest->RowPitch * y,
+                pSrcSlice + pSrc->RowPitch * y,
+                RowSizeInBytes);
+        }
+    }
+}
+#endif
+
+/*
+ * trrojan::d3d12::stage_data
+ */
+void trrojan::d3d12::stage_data(ID3D12Resource *resource, const void *data,
+        const UINT64 cnt_cols, const UINT cnt_rows, UINT64 row_pitch) {
+    check_staging_buffer(resource, cnt_cols * cnt_rows);
+
+    if (row_pitch < cnt_cols) {
+        row_pitch = cnt_cols;
+    }
+
+    BYTE *dst;
+    auto hr = resource->Map(0, nullptr, reinterpret_cast<void **>(&dst));
+    if (FAILED(hr)) {
+        throw ATL::CAtlException(hr);
+    }
+
+    auto src = static_cast<const BYTE *>(data);
+
+    for (UINT64 r = 0; r < cnt_rows; ++r) {
+        ::memcpy(dst + r * cnt_cols, src + r * row_pitch, cnt_cols);
+    }
+
+    resource->Unmap(0, nullptr);
+}
+
+
+/*
+ * trrojan::d3d12::transition_subresource
+ */
+void trrojan::d3d12::transition_subresource(ID3D12GraphicsCommandList *cmd_list,
+        ID3D12Resource *resource, const UINT subresource,
+        const D3D12_RESOURCE_STATES state_before,
+        const D3D12_RESOURCE_STATES state_after) {
+    assert(cmd_list != nullptr);
+
+    D3D12_RESOURCE_BARRIER barrier;
+    ::ZeroMemory(&barrier, sizeof(barrier));
+    barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+    barrier.Transition.pResource = resource;
+    barrier.Transition.StateBefore = state_before;
+    barrier.Transition.StateAfter = state_after;
+    barrier.Transition.Subresource = subresource;
+
+    cmd_list->ResourceBarrier(1, &barrier);
+}
+
+
+/*
+ * trrojan::d3d12::update_subresource
+ */
+void trrojan::d3d12::update_subresource(ID3D12GraphicsCommandList *cmd_list,
+        ID3D12Resource *dst, const UINT subresource,
+        const D3D12_RESOURCE_STATES state_after, ID3D12Resource *staging,
+        const void *data, const UINT64 cnt) {
+    check_not_null(cmd_list);
+    check_not_null(dst);
+
+    stage_data(staging, data, cnt);
+
+    if (dst->GetDesc().Dimension == D3D12_RESOURCE_DIMENSION_BUFFER) {
+        cmd_list->CopyBufferRegion(dst, 0, staging, 0, cnt);
+
+    } else {
+        auto dst_loc = get_copy_location(dst, subresource);
+        auto src_loc = get_copy_location(staging, 0);
+        cmd_list->CopyTextureRegion(&dst_loc, 0, 0, 0, &src_loc, nullptr);
+    }
+
+    if (state_after != D3D12_RESOURCE_STATE_COPY_DEST) {
+        transition_subresource(cmd_list, dst, subresource,
+            D3D12_RESOURCE_STATE_COPY_DEST, state_after);
+    }
+}
+
+
+/*
+ * trrojan::d3d12::update_subresource
+ */
+void trrojan::d3d12::update_subresource(ID3D12GraphicsCommandList *cmd_list,
+        ID3D12Resource *dst, const UINT subresource,
+        const D3D12_RESOURCE_STATES state_after, ID3D12Resource *staging,
+        const void *data, const UINT64 cnt_cols, const UINT cnt_rows,
+        const UINT64 row_pitch) {
+    check_not_null(cmd_list);
+    check_not_null(dst);
+
+    stage_data(staging, data, cnt_cols, cnt_rows, row_pitch);
+
+    auto dst_loc = get_copy_location(dst, subresource);
+    auto src_loc = get_copy_location(staging, 0);
+    cmd_list->CopyTextureRegion(&dst_loc, 0, 0, 0, &src_loc, nullptr);
+
+    if (state_after != D3D12_RESOURCE_STATE_COPY_DEST) {
+        transition_subresource(cmd_list, dst, subresource,
+            D3D12_RESOURCE_STATE_COPY_DEST, state_after);
+    }
+}

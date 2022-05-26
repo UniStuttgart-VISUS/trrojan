@@ -102,6 +102,7 @@ namespace d3d12 {
 
         typedef trrojan::benchmark_base base;
 
+        ATL::CComPtr<ID3D12GraphicsCommandList> _cmd_list_transition;
         std::shared_ptr<trrojan::d3d12::device> _debug_device;
         render_target _debug_target;
         render_target _render_target;

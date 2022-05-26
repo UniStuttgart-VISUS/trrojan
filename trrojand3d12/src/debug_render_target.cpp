@@ -45,19 +45,14 @@ trrojan::d3d12::debug_render_target::~debug_render_target(void) {
 /*
  * trrojan::d3d12::debug_render_target::present
  */
-void trrojan::d3d12::debug_render_target::present(ID3D12GraphicsCommandList *cmdList) {
-    throw "TODO";
-    if (this->_staging_buffer != nullptr) {
-        cmdList->CopyResource(this->current_buffer(), this->_staging_buffer);
+void trrojan::d3d12::debug_render_target::present(
+        ID3D12GraphicsCommandList *cmd_list) {
+    // Use base class to transition back buffer to present state.
+    render_target_base::present(cmd_list);
 
-        //D3D12_RESOURCE_BARRIER barrier;
-        //::ZeroMemory(&barrier, sizeof(barrier));
-        //barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_;
-        //barrier.Transition.pResource = this->_buffers[this->_buffer_index].p;
-        //barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_;
-        //barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
-
-//        cmdList->ResourceBarrier(1, &barrier);
+    // Swap the buffers.
+    if (this->_swap_chain != nullptr) {
+        this->_swap_chain->Present(0, 0);
     }
 
 #if 0
@@ -171,9 +166,36 @@ void trrojan::d3d12::debug_render_target::resize(const unsigned int width,
                 "(colour buffer)");
         }
 
-        this->set_buffers(buffers);
+        this->set_buffers(std::move(buffers),
+            this->_swap_chain->GetCurrentBackBufferIndex());
     }
 }
+
+
+/*
+ * trrojan::d3d12::debug_render_target::to_uav
+ */
+//void trrojan::d3d12::debug_render_target::to_uav(
+//        const D3D12_CPU_DESCRIPTOR_HANDLE dst,
+//        ID3D12GraphicsCommandList *cmd_list) {
+//    if (this->_staging_buffer == nullptr) {
+//        ATL::CComPtr<ID3D12Resource> texture;
+//
+//        {
+//            auto hr = this->_swap_chain->GetBuffer(0, ::IID_ID3D12Resource,
+//                reinterpret_cast<void **>(&texture));
+//            if (FAILED(hr)) {
+//                throw ATL::CAtlException(hr);
+//            }
+//        }
+//
+//        auto desc = texture->GetDesc();
+//        this->_staging_buffer = create_resource(this->device(), desc);
+//    }
+//
+//    this->device()->CreateUnorderedAccessView(this->_staging_buffer, nullptr,
+//        nullptr, dst);
+//}
 
 
 /*
@@ -193,54 +215,6 @@ void trrojan::d3d12::debug_render_target::reset_buffers(void) {
     // Make sure that the staging buffer is re-created when the target UAV
     // is requested the next time.
     this->_staging_buffer = nullptr;
-}
-
-
-/*
- * trrojan::d3d12::debug_render_target::to_uav
- */
-D3D12_CPU_DESCRIPTOR_HANDLE trrojan::d3d12::debug_render_target::to_uav(void) {
-    if (this->_staging_buffer == nullptr) {
-        ATL::CComPtr<ID3D12Resource> texture;
-
-        {
-            auto hr = this->_swap_chain->GetBuffer(0, ::IID_ID3D12Resource,
-                reinterpret_cast<void **>(&texture));
-            if (FAILED(hr)) {
-                throw ATL::CAtlException(hr);
-            }
-        }
-
-        auto texDesc = texture->GetDesc();
-        texture = nullptr;
-
-        {
-            D3D12_HEAP_PROPERTIES heap;
-            ::ZeroMemory(&heap, sizeof(heap));
-            heap.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_NOT_AVAILABLE;
-            heap.Type = D3D12_HEAP_TYPE_DEFAULT;
-
-            auto hr = this->device()->CreateCommittedResource(
-                &heap, D3D12_HEAP_FLAG_NONE,
-                &texDesc, D3D12_RESOURCE_STATE_COPY_DEST, nullptr,
-                ::IID_ID3D12Resource,
-                reinterpret_cast<void **>(&texture));
-            if (FAILED(hr)) {
-                throw ATL::CAtlException(hr);
-            }
-        }
-
-        {
-            D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc;
-            ::ZeroMemory(&uavDesc, sizeof(uavDesc));
-            uavDesc.Format = texDesc.Format;
-            uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
-            this->device()->CreateUnorderedAccessView(texture, nullptr,
-                &uavDesc, this->_uav);
-        }
-    }
-
-    return this->_uav;
 }
 
 

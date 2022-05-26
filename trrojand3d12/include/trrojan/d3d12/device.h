@@ -154,6 +154,13 @@ namespace d3d12 {
         }
 
         /// <summary>
+        /// Execute the given command list on the direct command queue of the
+        ///  device.
+        /// </summary>
+        /// <param name="cmd_list"></param>
+        void execute_command_list(ID3D12CommandList *cmd_list);
+
+        /// <summary>
         /// Enables or disables the stable power state on the device.
         /// </summary>
         /// <remarks>

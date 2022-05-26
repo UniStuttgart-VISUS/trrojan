@@ -62,7 +62,9 @@ trrojan::result trrojan::d3d12::benchmark_base::run(const configuration& c) {
     }
 
     // Allocate a command list that is used to perform all transition tasks.
-    auto cmdList = device->create_graphics_command_list();
+    if (this->_cmd_list_transition == nullptr) {
+        this->_cmd_list_transition = device->create_graphics_command_list();
+    }
 
     // Determine whether we are in debug viewing mode, which will block all
     // device-related factors.
@@ -115,7 +117,7 @@ trrojan::result trrojan::d3d12::benchmark_base::run(const configuration& c) {
         this->_render_target->resize(vp[0], vp[1]);
     }
 
-    this->_render_target->enable(cmdList);
+    this->_render_target->enable(this->_cmd_list_transition);
     auto retval = this->on_run(*device, c, changed);
 
     if (c.get<bool>(factor_save_view)) {

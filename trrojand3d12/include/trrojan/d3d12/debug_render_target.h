@@ -47,13 +47,15 @@ namespace d3d12 {
         virtual ~debug_render_target(void);
 
         /// <inheritdoc />
-        void present(ID3D12GraphicsCommandList *cmdList) override;
+        void present(ID3D12GraphicsCommandList *cmd_list) override;
 
-        /// <inheritdoc />
-        void resize(const unsigned int width, const unsigned int height) override;
+        // <inheritdoc />
+        void resize(const unsigned int width,
+            const unsigned int height) override;
 
-        /// <inheritdoc />
-        D3D12_CPU_DESCRIPTOR_HANDLE to_uav(void) override;
+        ///// <inheritdoc />
+        //void to_uav(const D3D12_CPU_DESCRIPTOR_HANDLE dst,
+        //    ID3D12GraphicsCommandList *cmd_list) override;
 
         /// <inheritdoc />
         void wait_for_frame(void) override;
@@ -107,17 +109,6 @@ namespace d3d12 {
         /// The handle of the debug window.
         /// </summary>
         std::atomic<HWND> _wnd;
-
-        /// <summary>
-        /// An unordered access view for compute shaders.
-        /// </summary>
-        /// <remarks>
-        /// In contrast to the real benchmarking render target, the debug target
-        /// uses an intermediate buffer (this one) and blits it on present. The
-        /// reason for that is that mapping the back buffer is not recommended
-        /// anymore and is also not supported on D3D12.
-        /// </remarks>
-        D3D12_CPU_DESCRIPTOR_HANDLE _uav;
     };
 }
 }

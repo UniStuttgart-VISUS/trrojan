@@ -27,7 +27,7 @@ namespace d3d11 {
     /// <summary>
     /// Base class for D3D11 benchmarks.
     /// </summary>
-    class TRROJAND3D11_API benchmark_base 
+    class TRROJAND3D11_API benchmark_base
             : public trrojan::graphics_benchmark_base {
 
     public:
