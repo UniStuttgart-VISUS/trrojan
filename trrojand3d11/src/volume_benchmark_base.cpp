@@ -1,8 +1,8 @@
-/// <copyright file="volume_benchmark_base.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Christoph Müller</author>
+// <copyright file="volume_benchmark_base.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
+// Copyright © 2016 - 2022 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Christoph Müller</author>
 
 #include "trrojan/d3d11/volume_benchmark_base.h"
 
@@ -349,7 +349,7 @@ trrojan::result trrojan::d3d11::volume_benchmark_base::on_run(
     // Recreate resources.
     if (this->data_view == nullptr) {
         ATL::CComPtr<ID3D11Texture3D> tex;
-        volume_benchmark_base::load_volume(config, device, this->volume_info,
+        volume_benchmark_base::load_volume(config, device, this->_volume_info,
             &tex, &this->data_view);
     }
 

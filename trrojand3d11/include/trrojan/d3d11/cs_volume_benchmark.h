@@ -45,8 +45,6 @@ namespace d3d11 {
 
     private:
 
-        static const UINT shader_resource_id = 10000;
-
         rendering_technique::uav_type compute_target;
         ATL::CComPtr<ID3D11Query> done_query;
         rendering_technique::buffer_type raycasting_constants;

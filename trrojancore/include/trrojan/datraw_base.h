@@ -1,8 +1,8 @@
-/// <copyright file="datraw_benchmark_base.h" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Christoph Müller</author>
+// <copyright file="datraw_benchmark_base.h" company="Visualisierungsinstitut der Universität Stuttgart">
+// Copyright © 2016 - 2022 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Christoph Müller</author>
 
 #pragma once
 
@@ -76,7 +76,7 @@ namespace trrojan {
         /// Computes the base step size for the currently loaded volume.
         /// </summary>
         inline float calc_base_step_size(void) const {
-            return datraw_base::calc_base_step_size(this->volume_info);
+            return datraw_base::calc_base_step_size(this->_volume_info);
         }
 
         /// <summary>
@@ -101,7 +101,7 @@ namespace trrojan {
         /// described in <see cref="volume_info" />.
         /// </summary>
         inline std::array<float, 3> calc_physical_volume_size(void) const {
-            return datraw_base::calc_physical_size(this->volume_info);
+            return datraw_base::calc_physical_size(this->_volume_info);
         }
 
         /// <summary>
@@ -109,12 +109,12 @@ namespace trrojan {
         /// distances of the volume descriibed in <see cref="volume_info" />.
         /// </summary>
         inline std::array<float, 3> calc_ray_scale(void) const {
-            return datraw_base::calc_ray_scale(this->volume_info);
+            return datraw_base::calc_ray_scale(this->_volume_info);
         }
 
         /// <summary>
         /// Stores the dat file currently being processed.
         /// </summary>
-        info_type volume_info;
+        info_type _volume_info;
     };
 }

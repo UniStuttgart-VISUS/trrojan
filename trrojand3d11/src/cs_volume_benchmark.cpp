@@ -1,8 +1,8 @@
-/// <copyright file="cs_volume_benchmark.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Christoph Müller</author>
+// <copyright file="cs_volume_benchmark.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
+// Copyright © 2016 - 2022 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Christoph Müller</author>
 
 #include "trrojan/d3d11/cs_volume_benchmark.h"
 
@@ -16,6 +16,7 @@
 #include "trrojan/d3d11/utilities.h"
 
 #include "SinglePassVolumePipeline.hlsli"
+#include "volume_techniques.h"
 
 
 /*
@@ -71,7 +72,7 @@ trrojan::result trrojan::d3d11::cs_volume_benchmark::on_run(
 
         // Rebuild the technique.
         auto src = d3d11::plugin::load_resource(
-            MAKEINTRESOURCE(shader_resource_id), _T("SHADER"));
+            MAKEINTRESOURCE(SINGLE_PASS_VOLUME_COMPUTE_SHADER), _T("SHADER"));
         auto cs = create_compute_shader(dev, src);
         auto res = rendering_technique::shader_resources();
         res.sampler_states.push_back(this->linear_sampler);

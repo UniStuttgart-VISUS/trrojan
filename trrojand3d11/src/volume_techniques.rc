@@ -1,4 +1,5 @@
-10000 SHADER SinglePassVolumeComputeShader.cso
-20000 SHADER RayPassVertexShader.cso
-20001 SHADER RayPassPixelShader.cso
-20002 SHADER VolumePassComputeShader.cso
+// This file was auto-generated using .\Create-VolumeShaders.ps1 -OutPath . -ResourceStart 2000 on 05/26/2022 22:55:33
+2000 SHADER SinglePassVolumeComputeShader.cso
+2001 SHADER VolumePassComputeShader.cso
+2002 SHADER VolumeRayPassPixelShader.cso
+2003 SHADER VolumeRayPassVertexShader.cso

@@ -21,7 +21,7 @@ namespace d3d12 {
 
         static const char *factor_clear_colour;
 
-        inline empty_benchmark(void) : benchmark_base("empty") { }
+        inline empty_benchmark(void) : benchmark_base("empty-benchmark") { }
 
         virtual ~empty_benchmark(void);
 
