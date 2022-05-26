@@ -30,6 +30,8 @@ if (WIN32)
 else (WIN32)
     set(TRROJAN_WITH_DSTORAGE OFF)
 endif (WIN32)
+option(TRROJAN_DEBUG_OVERLAY "Enable overlay in debug view." OFF)
+
 
 # Configure the compiler.
 if (WIN32)
@@ -44,7 +46,8 @@ if (${CMAKE_COMPILER_IS_GNUCXX})
 endif (${CMAKE_COMPILER_IS_GNUCXX})
 
 if (${MSVC})
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNOMINMAX -EHsc")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNOMINMAX -EHsc")
+	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DDEBUG -D_DEBUG")
 endif (${MSVC})
 
 if (NOT WIN32 OR ${PNG_FOUND})

@@ -50,10 +50,17 @@ include_directories("${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${CMAKE_CFG_INTDIR}")
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTRROJAND3D11_EXPORTS")
 
+
+# Enable debug overlay on rquest.
+if (TRROJAN_DEBUG_OVERLAY)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DCREATE_D2D_OVERLAY")
+endif (TRROJAN_DEBUG_OVERLAY)
+
+
 if (WIN32)
     add_library(trrojand3d11 MODULE ${HeaderFiles} ${SourceFiles} ${ShaderFiles} ${ResourceFiles})
     target_link_libraries(trrojand3d11 trrojancore)
-    target_link_libraries(trrojand3d11 d3d11 dxgi dxguid)
+    target_link_libraries(trrojand3d11 d3d11 dxgi dxguid d2d1 dwrite)
 
     # Group all HLSL into a new filter (cf. https://stackoverflow.com/questions/33808087/cmake-how-to-create-visual-studio-filters).
     source_group("Shader Files" FILES ${ShaderFiles})
