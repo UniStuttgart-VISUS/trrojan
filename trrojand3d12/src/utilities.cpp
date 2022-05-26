@@ -738,20 +738,6 @@ ATL::CComPtr<ID3D12Resource> trrojan::d3d12::create_buffer(ID3D12Device *device,
 
 
 /*
- * trrojan::d3d12::create_event
- */
-std::unique_ptr<void> trrojan::d3d12::create_event(
-        const bool manual_reset, const bool initial_state) {
-    auto hEvent = ::CreateEvent(nullptr, manual_reset, initial_state, nullptr);
-    if (hEvent == NULL) {
-        throw ATL::CAtlException(HRESULT_FROM_WIN32(GetLastError()));
-    }
-
-    return std::unique_ptr<void>(hEvent, [](void *h) { ::CloseHandle(h); });
-}
-
-
-/*
  * trrojan::d3d12::create_render_target
  */
 ATL::CComPtr<ID3D12Resource> trrojan::d3d12::create_render_target(

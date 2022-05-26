@@ -49,15 +49,6 @@ namespace d3d12 {
         const D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_COPY_DEST);
 
     /// <summary>
-    /// Create an event object.
-    /// </summary>
-    /// <param name="manual_reset"></param>
-    /// <param name="initial_state"></param>
-    /// <returns></returns>
-    std::unique_ptr<void> create_event(const bool manual_reset = false,
-        const bool initial_state = false);
-
-    /// <summary>
     /// Creates a 2D texture which is initially in the render target state.
     /// </summary>
     /// <param name="device"></param>
