@@ -169,7 +169,7 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
     // data-independent ones.
     if (contains(changed, factor_device)) {
         log::instance().write_line(log_level::verbose, "Preparing GPU "
-            "resources for device \"%s\" ...", device.name().c_str());
+            "resources for device \"{}\" ...", device.name().c_str());
         this->technique_cache.clear();
 
         if (this->data != nullptr) {
@@ -216,7 +216,7 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
 
             auto path = config.get<std::string>(factor_data_set);
             log::instance().write_line(log_level::verbose, "Loading MMPLD data "
-                "set \"%s\" ...", path.c_str());
+                "set \"{}\" ...", path.c_str());
             this->data = mmpld_data_set::create(path);
         }
     }
@@ -514,7 +514,7 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
     gpuTimes.resize(cntGpuIterations);
     for (std::uint32_t i = 0; i < cntGpuIterations;) {
         log::instance().write_line(log_level::debug, "GPU counter measurement "
-            "#%d.", i);
+            "#{}.", i);
         gpuTimer.start_frame();
         gpuTimer.start(0);
         this->clear_target();
@@ -532,6 +532,9 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
             gpuTimes[i] = gpu_timer_type::to_milliseconds(
                     gpuTimer.evaluate(0), gpuFreq);
             ++i;    // Only proceed in case of success.
+
+            log::instance().write_line(log_level::debug, "GPU counter "
+                "{}ms.", gpuTimes[i-1]);
         }
     }
 
@@ -551,7 +554,7 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
 
     // Do the wall clock measurement.
     log::instance().write_line(log_level::debug, "Measuring wall clock "
-        "timings over %u iterations ...", cntCpuIterations);
+        "timings over {} iterations ...", cntCpuIterations);
     cpuTimer.start();
     for (std::uint32_t i = 0; i < cntCpuIterations; ++i) {
         this->clear_target();
@@ -677,7 +680,7 @@ bool trrojan::d3d11::sphere_benchmark::check_data_compatibility(
             != (dataCode & SPHERE_TECHNIQUE_USE_SRV)) {
         log::instance().write_line(log_level::debug, "Data set is not "
             "compatible with rendering technique because the technique has the "
-            "shader resource view flag %sset in contrast to the data set.",
+            "shader resource view flag {}set in contrast to the data set.",
             ((shaderCode & SPHERE_TECHNIQUE_USE_SRV) != 0) ? "" : "not ");
         return false;
     }
@@ -953,7 +956,7 @@ void trrojan::d3d11::sphere_benchmark::load_mmpld_frame(ID3D11Device *dev,
         flags |= mmpld_data_set::load_flag_fit_bounding_box;
     }
 
-    log::instance().write_line(log_level::verbose, "Loading MMPLD frame %u ...",
+    log::instance().write_line(log_level::verbose, "Loading MMPLD frame {} ...",
         f);
     d->read_frame(dev, f, flags);
 }

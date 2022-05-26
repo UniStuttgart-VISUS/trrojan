@@ -326,8 +326,8 @@ trrojan::d3d11::mmpld_data_set::read_frame(ID3D11Device *device,
         }
 
         log::instance().write_line(log_level::verbose, "Recomputed "
-            "single-frame bounding box of MMPLD data is (%f, %f, %f) - "
-            "(%f, %f, %f) with maximum radius of %f.",
+            "single-frame bounding box of MMPLD data is ({}, {}, {}) - "
+            "({}, {}, {}) with maximum radius of {}.",
             this->_header.bounding_box[0], this->_header.bounding_box[1],
             this->_header.bounding_box[2], this->_header.bounding_box[3],
             this->_header.bounding_box[4], this->_header.bounding_box[5],
@@ -429,7 +429,7 @@ trrojan::d3d11::mmpld_data_set::get_mmpld_input_properties(void) const  {
     auto retval = static_cast<mmpld_input_properties>(
         mmpld_reader::calc_shader_properties(this->_list));
     log::instance().write_line(log_level::debug, "Computed MMPLD input "
-        "properties as %u.", retval);
+        "properties as {}.", retval);
     return retval;
 }
 

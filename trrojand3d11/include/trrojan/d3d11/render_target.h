@@ -146,7 +146,7 @@ namespace d3d11 {
         /// </summary>
         ATL::CComPtr<ID3D11RenderTargetView> _rtv;
 
-    private:
+    protected:
 
         /// <summary>
         /// The device the render target lives on.

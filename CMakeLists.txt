@@ -16,6 +16,7 @@ set(CMAKE_USE_RELATIVE_PATHS ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION 19043)
 
 add_compile_definitions(_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING)
 
@@ -32,6 +33,7 @@ option(TRROJAN_WITH_CHAKRA "Enable JavaScript support." OFF)
 option(UWP "Compile for UWP" OFF)
 if(UWP)
 add_compile_definitions(_UWP)
+add_compile_definitions(__cplusplus_winrt)
 endif()
 
 # Configure the compiler.

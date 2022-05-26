@@ -6,6 +6,10 @@
 
 #pragma once
 
+#include <d2d1_3.h>
+#include <dwrite_3.h>
+#include <wincodec.h>
+
 #include <winrt/windows.ui.core.h>
 #include <winrt/windows.graphics.display.h>
 
@@ -89,6 +93,24 @@ namespace d3d11 {
         /// anymore and is also not supported on D3D12.
         /// </remarks>
         ATL::CComPtr<ID3D11UnorderedAccessView> _uav;
+
+        /// Direct2D drawing components.
+        winrt::com_ptr<ID2D1Factory3>       m_d2dFactory;
+        winrt::com_ptr<ID2D1Device2>        m_d2dDevice;
+        winrt::com_ptr<ID2D1DeviceContext2> m_d2dContext;
+        winrt::com_ptr<ID2D1Bitmap1>        m_d2dTargetBitmap;
+
+        // DirectWrite drawing components.
+        winrt::com_ptr<IDWriteFactory3>		m_dwriteFactory;
+        winrt::com_ptr<IWICImagingFactory2>	m_wicFactory;
+
+        // Resources related to text rendering.
+        std::wstring                            m_text;
+        DWRITE_TEXT_METRICS	                    m_textMetrics;
+        winrt::com_ptr<ID2D1SolidColorBrush>    m_whiteBrush;
+        winrt::com_ptr<ID2D1DrawingStateBlock1> m_stateBlock;
+        winrt::com_ptr<IDWriteTextLayout3>      m_textLayout;
+        winrt::com_ptr<IDWriteTextFormat2>      m_textFormat;
     };
 }
 }

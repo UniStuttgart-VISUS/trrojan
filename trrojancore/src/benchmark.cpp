@@ -185,7 +185,7 @@ void trrojan::benchmark_base::check_required_factors(
     auto fs = this->required_factors();
     for (auto& f : fs) {
         log::instance().write(log_level::verbose, "Checking availability of "
-            "factor \"%s\" in the given configuration ...\n", f.c_str());
+            "factor \"{}\" in the given configuration ...\n", f.c_str());
         if ((f.size() == 0) && !cs.contains_factor(f)) {
             std::stringstream msg;
             msg << "The given configuration_set does not contain the required "
@@ -201,6 +201,6 @@ void trrojan::benchmark_base::check_required_factors(
  */
 void trrojan::benchmark_base::log_run(const trrojan::configuration& c) const {
     auto factors = trrojan::to_string(c);
-    log::instance().write(log_level::information, "Running \"%s\" with %s\n",
+    log::instance().write(log_level::information, "Running \"{}\" with {}\n",
         this->name().c_str(), factors.c_str());
 }

@@ -8,8 +8,12 @@
 
 #include <cstdio>
 #include <iostream>
+#include <sstream>
 
 #include <spdlog/spdlog.h>
+#include <spdlog/sinks/basic_file_sink.h>
+#include <spdlog/sinks/ostream_sink.h>
+#include <spdlog/sinks/ringbuffer_sink.h>
 
 #include "trrojan/export.h"
 
@@ -67,7 +71,7 @@ namespace trrojan {
         }
 
         inline void write(const log_level level, const std::exception& ex) {
-            this->write(level, "%s", ex.what());
+            this->write(level, "{}", ex.what());
         }
 
         inline void write(const std::exception& ex) {
@@ -93,31 +97,76 @@ namespace trrojan {
 
         inline void write_line(const log_level level,
                 const std::exception& ex) {
-            this->write(level, "%s\n", ex.what());
+            this->write(level, "{}\n", ex.what());
         }
 
         inline void write_line(const std::exception& ex) {
             this->write_line(log_level::error, ex);
         }
 
+#ifdef _UWP
+        inline std::string getFullLogString() { return oss.str(); }
+
+        inline std::vector<std::string> getLogStrings(size_t cnt) { return ringbuffer_sink->last_formatted(cnt); }
+#endif
+
     private:
 
-        static std::shared_ptr<spdlog::logger> create_logger(const char *file) {
+        static std::shared_ptr<spdlog::logger> create_logger(
+            const char *file
+#ifdef _UWP
+            , std::shared_ptr<spdlog::sinks::ostream_sink_st> ostream_sink
+            , std::shared_ptr<spdlog::sinks::ringbuffer_sink<std::mutex>> ringbuffer_sink
+#endif
+        ) {
             if (file != nullptr) {
                 return spdlog::basic_logger_mt("file", file);
             } else {
+#ifdef _UWP
+                std::vector<spdlog::sink_ptr> sinks;
+                sinks.push_back(ostream_sink);
+                sinks.push_back(ringbuffer_sink);
+                return std::make_shared<spdlog::logger>("console", std::begin(sinks), std::end(sinks));
+                //return spdlog::create("console", );
+                //auto ostream_sink = std::make_shared<spdlog::sinks::ostream_sink_st>(oss);
+                //ostream_logger = std::make_shared<spdlog::logger>("console", ostream_sink);
+                //ostream_logger->set_pattern(">%v<");
+                //ostream_logger->set_level(spdlog::level::debug);
+                //spdlog::set_default_logger(ostream_logger);
+#else
                 return spdlog::stdout_color_mt("console");
+#endif // _UWP
             }
         }
 
         /// <summary>
         /// Initialises a new instance.
         /// </summary>
-        inline log(const char *file) : logger(log::create_logger(file)) {
+        inline log(
+            const char *file
+        ) : 
+            oss(),
+            ostream_sink(std::make_shared<spdlog::sinks::ostream_sink_st>(oss)),
+            ringbuffer_sink(std::make_shared<spdlog::sinks::ringbuffer_sink<std::mutex>>(128)),
+            logger(log::create_logger(
+                file
+#ifdef _UWP
+                , ostream_sink
+                , ringbuffer_sink
+#endif
+            ))
+        {
+            logger->set_level(spdlog::level::trace);
 #if (defined(DEBUG) || defined(_DEBUG))
             spdlog::set_level(spdlog::level::trace);
 #endif /* (defined(DEBUG) || defined(_DEBUG)) */
         }
+
+#ifdef _UWP
+        std::ostringstream oss;
+        std::shared_ptr<spdlog::sinks::ostream_sink_st> ostream_sink;
+        std::shared_ptr<spdlog::sinks::ringbuffer_sink<std::mutex>> ringbuffer_sink;
+#endif
 
         std::shared_ptr<spdlog::logger> logger;
 

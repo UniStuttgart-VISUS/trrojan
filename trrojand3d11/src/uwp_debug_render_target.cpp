@@ -11,6 +11,7 @@
 #include <winrt/windows.graphics.display.h>
 
 #include <cassert>
+#include <codecvt>
 #include <sstream>
 
 #include "trrojan/log.h"
@@ -62,6 +63,83 @@ void trrojan::d3d11::uwp_debug_render_target::present(void) {
         this->device_context()->CopyResource(dst, src);
     }
 
+    // present log as text rendering on screen
+    {
+        // update text
+        //m_text = L" - FPS";
+        auto log = log::instance().getFullLogString();
+        //std::wstring_convert<std::codecvt_utf8_utf16 <wchar_t>> conv;
+        //m_text = conv.from_bytes(log);
+
+        log = "";
+        auto log_entries = log::instance().getLogStrings(30);
+        for (auto ls : log_entries) {
+            log += ls;
+        }
+
+        int wchars_num = MultiByteToWideChar(CP_UTF8, 0, log.c_str(), -1, NULL, 0);
+        wchar_t* wstr = new wchar_t[wchars_num];
+        MultiByteToWideChar(CP_UTF8, 0, log.c_str(), -1, wstr, wchars_num);
+        // do whatever with wstr
+        m_text = std::wstring(&wstr[0], &wstr[0] + wchars_num);
+        delete[] wstr;
+
+        winrt::com_ptr<IDWriteTextLayout> textLayout;
+        winrt::check_hresult(
+            m_dwriteFactory->CreateTextLayout(
+                m_text.c_str(),
+                m_text.length(),
+                m_textFormat.get(),
+                m_logicalSize.Width*0.9,//1500.0f, // Max width of the input text.
+                600.0f, // Max height of the input text.
+                textLayout.put()
+            )
+        );
+
+        //winrt::check_hresult(
+        textLayout.as(m_textLayout);
+        //);
+
+        winrt::check_hresult(
+            m_textLayout->GetMetrics(&m_textMetrics)
+        );
+
+        // start drawing
+        m_d2dContext->SaveDrawingState(m_stateBlock.get());
+        m_d2dContext->BeginDraw();
+
+        // Position on the bottom right corner
+        D2D1::Matrix3x2F screenTranslation = D2D1::Matrix3x2F::Translation(
+            0.0,//m_logicalSize.Width - m_textMetrics.layoutWidth,
+            0.0//m_logicalSize.Height - m_textMetrics.height
+        );
+
+        m_d2dContext->SetTransform(screenTranslation);// *m_deviceResources->GetOrientationTransform2D());
+
+        winrt::check_hresult(
+            m_textFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING)
+        );
+
+        m_d2dContext->DrawTextLayout(
+            D2D1::Point2F(0.f, 0.f),
+            m_textLayout.get(),
+            m_whiteBrush.get()
+        );
+
+        // Ignore D2DERR_RECREATE_TARGET here. This error indicates that the device
+        // is lost. It will be handled during the next call to Present.
+        HRESULT hr = m_d2dContext->EndDraw();
+        if (hr != D2DERR_RECREATE_TARGET)
+        {
+            if (FAILED(hr)) {
+                throw ATL::CAtlException(hr);
+            }
+        }
+
+        m_d2dContext->RestoreDrawingState(m_stateBlock.get());
+    }
+
+
     m_window.get().Dispatcher().ProcessEvents(winrt::Windows::UI::Core::CoreProcessEventsOption::ProcessAllIfPresent);
 
     if (this->swapChain != nullptr) {
@@ -90,7 +168,7 @@ void trrojan::d3d11::uwp_debug_render_target::resize(const unsigned int width,
 
         ::ZeroMemory(&desc, sizeof(desc));
         // desc.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
-        desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+        desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
         desc.Height = width;
         desc.Width = height;
         desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT; // | DXGI_USAGE_UNORDERED_ACCESS;
@@ -103,7 +181,7 @@ void trrojan::d3d11::uwp_debug_render_target::resize(const unsigned int width,
 
         {
             ATL::CComPtr<ID3D11Device> device;
-            UINT deviceFlags = D3D11_CREATE_DEVICE_DISABLE_GPU_TIMEOUT;
+            UINT deviceFlags = D3D11_CREATE_DEVICE_DISABLE_GPU_TIMEOUT | D3D11_CREATE_DEVICE_BGRA_SUPPORT;
 
 #if (defined(DEBUG) || defined(_DEBUG))
             if (supports_debug_layer()) {
@@ -156,6 +234,92 @@ void trrojan::d3d11::uwp_debug_render_target::resize(const unsigned int width,
             );
 
             this->set_device(device);
+
+            // Initialize Direct2D resources
+            {
+                // Initialize the Direct2D Factory.
+                D2D1_FACTORY_OPTIONS options;
+                ZeroMemory(&options, sizeof(D2D1_FACTORY_OPTIONS));
+
+                winrt::check_hresult(
+                    D2D1CreateFactory(
+                        D2D1_FACTORY_TYPE_SINGLE_THREADED,
+                        __uuidof(ID2D1Factory3),
+                        &options,
+                        m_d2dFactory.put_void()
+                    )
+                );
+
+                // Initialize the DirectWrite Factory.
+                winrt::check_hresult(
+                    DWriteCreateFactory(
+                        DWRITE_FACTORY_TYPE_SHARED,
+                        __uuidof(IDWriteFactory3),
+                        reinterpret_cast<IUnknown**>(m_dwriteFactory.put())
+                    )
+                );
+
+                // Initialize the Windows Imaging Component (WIC) Factory.
+                winrt::check_hresult(
+                    CoCreateInstance(
+                        CLSID_WICImagingFactory2,
+                        nullptr,
+                        CLSCTX_INPROC_SERVER,
+                        IID_PPV_ARGS(&m_wicFactory)
+                    )
+                );
+
+                // Create the Direct2D device object and a corresponding context.
+                //winrt::com_ptr<IDXGIDevice3> dxgiDevice;
+                //hr = _device->QueryInterface(__uuidof(IDXGIDevice3), reinterpret_cast<void**>(&dxgiDevice));
+                //if (FAILED(hr) || !dxgiDevice) {
+                //    throw ATL::CAtlException(hr);
+                //}
+
+                winrt::check_hresult(
+                    m_d2dFactory->CreateDevice(
+                        dxgiDevice.get(), 
+                        m_d2dDevice.put()
+                    )
+                );
+                
+                winrt::check_hresult(
+                    m_d2dDevice->CreateDeviceContext(
+                        D2D1_DEVICE_CONTEXT_OPTIONS_NONE,
+                        m_d2dContext.put()
+                    )
+                );
+
+                winrt::com_ptr<IDWriteTextFormat> textFormat;
+                winrt::check_hresult(
+                        m_dwriteFactory->CreateTextFormat(
+                        L"Segoe UI",
+                        nullptr,
+                        DWRITE_FONT_WEIGHT_LIGHT,
+                        DWRITE_FONT_STYLE_NORMAL,
+                        DWRITE_FONT_STRETCH_NORMAL,
+                        14.0f,
+                        L"en-US",
+                        textFormat.put()
+                    )
+                );
+
+                //winrt::check_hresult(
+                textFormat.as(m_textFormat);
+                //);
+
+                winrt::check_hresult(
+                    m_textFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_NEAR)
+                );
+
+                winrt::check_hresult(
+                    m_d2dFactory->CreateDrawingStateBlock(m_stateBlock.put())
+                );
+
+                winrt::check_hresult(
+                    m_d2dContext->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White), m_whiteBrush.put())
+                );
+            }
         }
 
     } else {
@@ -163,6 +327,8 @@ void trrojan::d3d11::uwp_debug_render_target::resize(const unsigned int width,
         this->_rtv = nullptr;
         this->_dsv = nullptr;
         this->_uav = nullptr;
+        this->m_d2dContext->SetTarget(nullptr);
+        this->m_d2dTargetBitmap = nullptr;
 
         hr = this->swapChain->GetDesc1(&desc);
         if (FAILED(hr)) {
@@ -218,7 +384,8 @@ void trrojan::d3d11::uwp_debug_render_target::resize(const unsigned int width,
     texDesc.ArraySize = 1;
     texDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_UNORDERED_ACCESS;
     // UAV does not support BGRA: texDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
-    texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    //texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    texDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
     texDesc.Height = height;
     texDesc.MipLevels = 1;
     texDesc.SampleDesc.Count = 1;
@@ -235,6 +402,35 @@ void trrojan::d3d11::uwp_debug_render_target::resize(const unsigned int width,
     set_debug_object_name(backBuffer.p, "uwp_debug_render_target (colour buffer)");
 
     this->set_back_buffer(backBuffer.p);
+
+
+    // 2D rendering stuff
+    D2D1_BITMAP_PROPERTIES1 bitmapProperties =
+        D2D1::BitmapProperties1(
+            D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
+            D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED),
+            m_dpi,
+            m_dpi
+        );
+
+    winrt::com_ptr<IDXGISurface2> dxgiBackBuffer;
+    winrt::check_hresult(
+        this->swapChain->GetBuffer(0, IID_PPV_ARGS(&dxgiBackBuffer))
+    );
+
+    winrt::check_hresult(
+        m_d2dContext->CreateBitmapFromDxgiSurface(
+            dxgiBackBuffer.get(),
+            &bitmapProperties,
+            m_d2dTargetBitmap.put()
+        )
+    );
+
+    m_d2dContext->SetTarget(m_d2dTargetBitmap.get());
+    //m_d2dContext->SetDpi(m_effectiveDpi, m_effectiveDpi);
+
+    // Grayscale text anti-aliasing is recommended for all Microsoft Store apps.
+    m_d2dContext->SetTextAntialiasMode(D2D1_TEXT_ANTIALIAS_MODE_GRAYSCALE);
 }
 
 

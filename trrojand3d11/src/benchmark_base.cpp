@@ -114,7 +114,7 @@ trrojan::result trrojan::d3d11::benchmark_base::run(const configuration& c) {
     if (contains(changed, factor_viewport)) {
         auto vp = c.get<viewport_type>(factor_viewport);
         log::instance().write_line(log_level::verbose, "Resizing the "
-            "benchmarking render target to %d × %d px ...", vp[0], vp[1]);
+            "benchmarking render target to {} × {} px ...", vp[0], vp[1]);
         this->render_target->resize(vp[0], vp[1]);
     }
 
@@ -147,7 +147,7 @@ trrojan::d3d11::benchmark_base::benchmark_base(const std::string& name)
         factor_debug_view, false));
 
     {
-        auto dftViewport = std::array<unsigned int, 2> { 1024, 1024 };
+        auto dftViewport = std::array<unsigned int, 2> { 1920, 1080 };
         this->_default_configs.add_factor(factor::from_manifestations(
             factor_viewport, dftViewport));
     }

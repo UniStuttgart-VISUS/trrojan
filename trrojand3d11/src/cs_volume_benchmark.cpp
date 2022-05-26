@@ -256,7 +256,7 @@ trrojan::result trrojan::d3d11::cs_volume_benchmark::on_run(
     gpuTimes.resize(cntGpuIterations);
     for (std::uint32_t i = 0; i < cntGpuIterations;) {
         log::instance().write_line(log_level::debug, "GPU counter measurement "
-            "#%d.", i);
+            "#{}.", i);
         gpuTimer.start_frame();
         gpuTimer.start(0);
         ctx->Dispatch(groupX, groupY, 1u);

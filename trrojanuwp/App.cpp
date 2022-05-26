@@ -52,8 +52,8 @@ struct App : implements<App, IFrameworkViewSource, IFrameworkView>
         trrojan::cmd_line cmdLine;
         cmdLine.push_back("--output");
         cmdLine.push_back(folderNameA +"\\test.csv");
-        cmdLine.push_back("--log");
-        cmdLine.push_back(folderNameA + "\\log.txt");
+        //cmdLine.push_back("--log");
+        //cmdLine.push_back(folderNameA + "\\log.txt");
         auto output = trrojan::open_output(cmdLine);
         trrojan::cool_down cool_down;
         trrojan::executive exe;
@@ -61,7 +61,7 @@ struct App : implements<App, IFrameworkViewSource, IFrameworkView>
         trrojan::plugin plugin = std::make_shared<trrojan::d3d11::plugin>(window);
         exe.add_plugin(plugin, cmdLine);
 
-        auto trroll_path = trrojan::GetAppFolder().string() + "Assets/demo.trroll";
+        auto trroll_path = trrojan::GetAppFolder().string() + "Assets/spheres.trroll";
 
         exe.trroll(trroll_path, *output, cool_down);
 

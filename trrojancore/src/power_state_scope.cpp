@@ -61,7 +61,7 @@ trrojan::power_state_scope::power_state_scope(void) {
             this->devices.push_back(std::move(device));
             log::instance().write_line(log_level::information, "The stable "
                 "power state has been enabled for the graphics adapter "
-                "\%s\".", W2A(desc.Description));
+                "\{}\".", W2A(desc.Description));
         }
     }
 #else  /* defined(TRROJAN_WITH_POWER_STATE_SCOPE) */

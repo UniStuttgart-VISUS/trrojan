@@ -134,7 +134,7 @@ std::pair<float, float> trrojan::d3d11::sphere_data_set_base::clipping_planes(
             for (auto z = 0; z < 2; ++z) {
                 auto pt = glm::vec3(bbox[x][0], bbox[y][1], bbox[z][2]);
                 //log::instance().write_line(log_level::debug, "Testing "
-                //    "(%f, %f, %f) ...", pt.x, pt.y, pt.z);
+                //    "({}, {}, {}) ...", pt.x, pt.y, pt.z);
                 auto ray = pt - camPos;
                 auto dist = glm::dot(view, ray);
                 if (dist < nearPlane) nearPlane = dist;
@@ -155,7 +155,7 @@ std::pair<float, float> trrojan::d3d11::sphere_data_set_base::clipping_planes(
     //farPlane *= 1.1f;
 
     log::instance().write_line(log_level::debug, "Dynamic clipping planes are "
-        "located at %f and %f.", nearPlane, farPlane);
+        "located at {} and {}.", nearPlane, farPlane);
     return std::make_pair(nearPlane, farPlane);
 }
 
