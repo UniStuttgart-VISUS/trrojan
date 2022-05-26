@@ -15,6 +15,7 @@
 
 #ifdef _WIN32
 #include <Windows.h>
+#include <direct.h>
 #else /* _WIN32 */
 #include <dirent.h>
 #include <errno.h>

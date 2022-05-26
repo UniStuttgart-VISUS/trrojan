@@ -6,10 +6,14 @@
 
 #include "trrojan/d3d11/benchmark_base.h"
 
+#include <chrono>
 #include <ctime>
 
 #include "trrojan/factor.h"
+#include "trrojan/io.h"
 #include "trrojan/log.h"
+#include "trrojan/system_factors.h"
+#include "trrojan/text.h"
 
 #include "trrojan/d3d11/environment.h"
 #include "trrojan/d3d11/bench_render_target.h"
@@ -21,6 +25,7 @@
 const std::string trrojan::d3d11::benchmark_base::factor_##f(#f)
 
 _D3D_BENCH_DEFINE_FACTOR(debug_view);
+_D3D_BENCH_DEFINE_FACTOR(save_view);
 
 #undef _D3D_BENCH_DEFINE_FACTOR
 
@@ -110,12 +115,12 @@ trrojan::result trrojan::d3d11::benchmark_base::run(const configuration& c) {
     this->render_target->enable();
     auto retval = this->on_run(*device, c, changed);
 
-    //auto benchTarget = std::dynamic_pointer_cast<bench_render_target>(
-    //    this->render_target);
-    //if (benchTarget != nullptr) {
-    //    benchTarget->save("honcho.png");
-    //}
-
+    if (c.get<bool>(factor_save_view)) {
+        auto ts = c.get<std::string>(system_factors::factor_timestamp);
+        std::replace(ts.begin(), ts.end(), ':', '-');
+        std::replace(ts.begin(), ts.end(), '.', '-');
+        this->save_target(ts.c_str());
+    }
 
     return retval;
 }
@@ -128,6 +133,8 @@ trrojan::d3d11::benchmark_base::benchmark_base(const std::string& name)
         : trrojan::graphics_benchmark_base(name) {
     this->_default_configs.add_factor(factor::from_manifestations(
         factor_debug_view, false));
+    this->_default_configs.add_factor(factor::from_manifestations(
+        factor_save_view, false));
 
     {
         auto dftViewport = std::array<unsigned int, 2> { 1024, 1024 };
@@ -144,19 +151,17 @@ void trrojan::d3d11::benchmark_base::save_target(const char *path) {
     if (this->render_target != nullptr) {
         std::string p;
 
-        if (path == nullptr) {
-            std::vector<char> buffer;
-            struct tm tm;
-            auto time = ::time(nullptr);
-            ::localtime_s(&tm, &time);
-
-            buffer.resize(128);
-            ::strftime(buffer.data(), buffer.size(), "%Y%m%d%H%M%S.png", &tm);
-            buffer.back() = static_cast<char>(0);
-
-            p = buffer.data();
-        } else {
+        if (path != nullptr) {
             p = path;
+        } else {
+            p = to_string<char>(std::chrono::system_clock::now());
+        }
+
+        {
+            auto ext = p.find_last_of(extension_separator_char);
+            if (ext == std::string::npos) {
+                p += ".png";
+            }
         }
 
         this->render_target->save(p);

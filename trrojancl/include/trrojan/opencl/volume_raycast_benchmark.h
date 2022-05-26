@@ -114,7 +114,8 @@ namespace opencl
         /// Overrides benchmark run method.
         /// </summary>
         virtual size_t run(const configuration_set &configs,
-                           const on_result_callback& result_callback);
+                           const on_result_callback& result_callback,
+                           const cool_down& coolDown);
 
         /// <summary>
         /// Overrides benchmark run method.
