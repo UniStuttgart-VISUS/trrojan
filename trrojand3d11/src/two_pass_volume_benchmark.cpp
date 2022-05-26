@@ -164,7 +164,7 @@ trrojan::result trrojan::d3d11::two_pass_volume_benchmark::on_run(
     }
 
     // The transfer function has changed, so update the SRV in the technique.
-    if (contains(changed, factor_data_set)) {
+    if (contains(changed, factor_xfer_func)) {
         this->volume_technique.set_shader_resource_views(this->xfer_func_view,
             DATA_STAGE, 1);
     }

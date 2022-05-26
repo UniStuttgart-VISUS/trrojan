@@ -10,6 +10,7 @@
 
 #include "trrojan/io.h"
 #include "trrojan/log.h"
+#include "trrojan/text.h"
 
 #include "trrojan/d3d11/utilities.h"
 
@@ -120,6 +121,33 @@ _VOL_BENCH_DEFINE_FACTOR(xfer_func);
 
 
 /*
+ * trrojan::d3d11::volume_benchmark_base::load_brudervn_xfer_func
+ */
+void trrojan::d3d11::volume_benchmark_base::load_brudervn_xfer_func(
+        const char *path, ID3D11Device *device, ID3D11Texture1D **outTexture,
+        ID3D11ShaderResourceView **outSrv) {
+    std::vector<char> data;
+    int value;
+
+    std::ifstream file(path, std::ios::in);
+    if (file.is_open()) {
+        data.reserve(256);
+
+        while (file >> value) {
+            data.push_back(static_cast<char>(value));
+        }
+
+    } else {
+        std::stringstream msg;
+        msg << "Failed to open \"" << path << "\"." << std::ends;
+        throw std::runtime_error(msg.str());
+    }
+
+    load_xfer_func(data, device, outTexture, outSrv);
+}
+
+
+/*
  * trrojan::d3d11::volume_benchmark_base::load_volume
  */
 void trrojan::d3d11::volume_benchmark_base::load_volume(const char *path,
@@ -184,10 +212,9 @@ void trrojan::d3d11::volume_benchmark_base::load_volume(const char *path,
 /*
  * trrojan::d3d11::volume_benchmark_base::load_xfer_func
  */
-void trrojan::d3d11::volume_benchmark_base::load_xfer_func(const char *path,
-        ID3D11Device *device, ID3D11Texture1D **outTexture,
-        ID3D11ShaderResourceView **outSrv) {
-    auto data = read_binary_file(path);
+void trrojan::d3d11::volume_benchmark_base::load_xfer_func(
+        const std::vector<char>& data, ID3D11Device *device,
+        ID3D11Texture1D **outTexture, ID3D11ShaderResourceView **outSrv) {
     auto cnt = std::div(static_cast<long>(data.size()), 4l);
 
     if (cnt.rem != 0) {
@@ -213,7 +240,7 @@ void trrojan::d3d11::volume_benchmark_base::load_xfer_func(const char *path,
         if (FAILED(hr)) {
             throw ATL::CAtlException(hr);
         }
-        set_debug_object_name(*outTexture, "volume_data_Set");
+        set_debug_object_name(*outTexture, "volume_data_set");
     }
 
     if (outSrv != nullptr) {
@@ -227,6 +254,16 @@ void trrojan::d3d11::volume_benchmark_base::load_xfer_func(const char *path,
     }
 }
 
+/*
+ * trrojan::d3d11::volume_benchmark_base::load_xfer_func
+ */
+void trrojan::d3d11::volume_benchmark_base::load_xfer_func(const char *path,
+        ID3D11Device *device, ID3D11Texture1D **outTexture,
+        ID3D11ShaderResourceView **outSrv) {
+    auto data = read_binary_file(path);
+    load_xfer_func(data, device, outTexture, outSrv);
+}
+
 
 /*
  * trrojan::d3d11::volume_benchmark_base::load_xfer_func
@@ -236,8 +273,15 @@ void trrojan::d3d11::volume_benchmark_base::load_xfer_func(
         ID3D11Texture1D **outTexture, ID3D11ShaderResourceView **outSrv) {
     try {
         auto path = config.get<std::string>(factor_xfer_func);
-        return volume_benchmark_base::load_xfer_func(path.c_str(),
-            device.d3d_device(), outTexture, outSrv);
+
+        if (ends_with(path, std::string(".brudervn"))) {
+            return volume_benchmark_base::load_brudervn_xfer_func(path.c_str(),
+                device.d3d_device(), outTexture, outSrv);
+        } else {
+            return volume_benchmark_base::load_xfer_func(path.c_str(),
+                device.d3d_device(), outTexture, outSrv);
+        }
+
     } catch (...) {
         // Fall back to a fully linear transfer function.
         auto dev = device.d3d_device();
