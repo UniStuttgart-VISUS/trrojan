@@ -72,7 +72,7 @@ void trrojan::d3d11::uwp_debug_render_target::present(void) {
         //m_text = conv.from_bytes(log);
 
         log = "";
-        auto log_entries = log::instance().getLogStrings(30);
+        auto log_entries = log::instance().getLogStrings(16);
         for (auto ls : log_entries) {
             log += ls;
         }
@@ -298,7 +298,7 @@ void trrojan::d3d11::uwp_debug_render_target::resize(const unsigned int width,
                         DWRITE_FONT_WEIGHT_LIGHT,
                         DWRITE_FONT_STYLE_NORMAL,
                         DWRITE_FONT_STRETCH_NORMAL,
-                        14.0f,
+                        12.0f,
                         L"en-US",
                         textFormat.put()
                     )

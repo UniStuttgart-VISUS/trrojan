@@ -156,8 +156,8 @@ namespace trrojan {
 #endif
             ))
         {
-            logger->set_level(spdlog::level::trace);
 #if (defined(DEBUG) || defined(_DEBUG))
+            logger->set_level(spdlog::level::trace);
             spdlog::set_level(spdlog::level::trace);
 #endif /* (defined(DEBUG) || defined(_DEBUG)) */
         }
