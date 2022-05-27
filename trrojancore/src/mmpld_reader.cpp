@@ -123,6 +123,10 @@ std::ifstream& trrojan::mmpld_reader::read_file_header(std::ifstream& outStream,
     outStream.close();
     outStream.open(path, std::ios::binary);
 
+    if (!outStream.is_open()) {
+        throw std::runtime_error("MMPLD file could not be opened");
+    }
+
     // Read and check the header.
     outStream.read(reinterpret_cast<char *>(&outHeader), sizeof(outHeader));
     if (::strcmp(outHeader.magic_identifier, "MMPLD") != 0) {

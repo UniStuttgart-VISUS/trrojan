@@ -416,7 +416,6 @@ bool trrojan::d3d11::mmpld_data_set::is_non_float_colour(
 trrojan::d3d11::mmpld_data_set::mmpld_data_set(void) : _max_radius(0.0f) {
     ::memset(&this->_header, 0, sizeof(this->_header));
     ::memset(&this->_list, 0, sizeof(this->_list));
-    ::memset(&this->_seek_table, 0, sizeof(this->_seek_table));
 }
 
 
