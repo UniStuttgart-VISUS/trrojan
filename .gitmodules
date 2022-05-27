@@ -10,3 +10,6 @@
 [submodule "chakra"]
 	path = chakra
 	url = https://github.com/Microsoft/ChakraCore.git
+[submodule "mmpld"]
+	path = mmpld
+	url = https://github.com/UniStuttgart-VISUS/mmpld.git
