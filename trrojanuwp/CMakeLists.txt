@@ -14,6 +14,10 @@ set(AssetFiles
   Assets/SmallLogo44x44.png
   Assets/SplashScreen.png
   Assets/StoreLogo.png
+  Assets/mmpld.trroll
+  Assets/testspheres_old.mmpld
+  #Assets/coronadir_16_100.mmpld
+  #Assets/laser.charge.00104.mmpld
 )
 
 set(ContentFiles
