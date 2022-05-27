@@ -89,6 +89,7 @@ add_subdirectory(spdlog)
 include_directories("glm")
 include_directories("spdlog/include")
 include_directories("datraw/datraw")
+include_directories("mmpld/mmpld")
 
 # Build the system information library.
 add_subdirectory(trrojansnfo)
