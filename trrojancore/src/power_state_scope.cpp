@@ -1,8 +1,8 @@
-/// <copyright file="power_state_scope.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+/// <copyright file="power_state_scope.cpp" company="Visualisierungsinstitut der Universitï¿½t Stuttgart">
+/// Copyright ï¿½ 2016 - 2018 Visualisierungsinstitut der Universitï¿½t Stuttgart. Alle Rechte vorbehalten.
 /// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 /// </copyright>
-/// <author>Christoph Müller</author>
+/// <author>Christoph Mï¿½ller</author>
 
 #include "trrojan/power_state_scope.h"
 
@@ -61,7 +61,7 @@ trrojan::power_state_scope::power_state_scope(void) {
             this->devices.push_back(std::move(device));
             log::instance().write_line(log_level::information, "The stable "
                 "power state has been enabled for the graphics adapter "
-                "\{}\".", W2A(desc.Description));
+                "\"{}\".", W2A(desc.Description));
         }
     }
 #else  /* defined(TRROJAN_WITH_POWER_STATE_SCOPE) */

@@ -8,10 +8,12 @@
 
 #include <algorithm>
 #include <cctype>
+#include <chrono>
 #if (!defined(__GNUC__) || (__GNUC__ >= 5))
 #include <codecvt>
 #endif /* (!defined(__GNUC__) || (__GNUC__ >= 5)) */
 #include <functional>
+#include <iomanip>
 #include <iterator>
 #include <locale>
 #include <sstream>
@@ -121,6 +123,37 @@ namespace trrojan {
         std::transform(str.cbegin(), str.cend(), std::back_inserter(retval),
             ::tolower);
         return retval;
+    }
+
+    /// <summary>
+    /// Convert a time point into a string including milliseconds.
+    /// </summary>
+    template<class T, class C>
+    std::basic_string<T> to_string(const std::chrono::time_point<C>& tp) {
+        // From https://codereview.stackexchange.com/questions/156695/converting-stdchronotime-point-to-from-stdstring
+        using namespace std::chrono;
+        typedef time_point<C> TimePoint;
+
+        auto millis = duration_cast<milliseconds>(tp.time_since_epoch());
+        auto secs = duration_cast<seconds>(millis);
+
+        std::time_t tt = secs.count();
+        std::size_t rem = millis.count() % 1000;
+
+#if defined(_MSC_VER)
+        std::tm tm;
+        if (localtime_s(&tm, &tt) != 0) {
+#else
+        if (std::localtime(&tt) == nullptr) {
+#endif
+            throw std::system_error(errno, std::system_category());
+        }
+
+        std::basic_ostringstream<T> stream;
+        stream << std::put_time(&tm, "%Y-%m-%dT%H:%M:%S.")
+            << std::setw(3) << std::setfill('0') << rem;
+
+        return stream.str();
     }
 
     /// <summary>

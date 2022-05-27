@@ -1,8 +1,8 @@
-/// <copyright file="benchmark_base.h" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+/// <copyright file="benchmark_base.h" company="Visualisierungsinstitut der Universitï¿½t Stuttgart">
+/// Copyright ï¿½ 2016 - 2018 Visualisierungsinstitut der Universitï¿½t Stuttgart. Alle Rechte vorbehalten.
 /// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 /// </copyright>
-/// <author>Christoph Müller</author>
+/// <author>Christoph Mï¿½ller</author>
 
 #pragma once
 
@@ -49,6 +49,11 @@ namespace d3d11 {
         /// Boolean factor enabling the debug view.
         /// </summary>
         static const std::string factor_debug_view;
+
+        /// <summary>
+        /// Boolean factor enabling output of the frame buffer to disk.
+        /// </summary>
+        static const std::string factor_save_view;
 
         virtual ~benchmark_base(void);
 

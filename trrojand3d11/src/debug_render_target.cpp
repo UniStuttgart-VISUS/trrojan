@@ -1,8 +1,8 @@
-/// <copyright file="debug_render_target.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Christoph Müller</author>
+// <copyright file="debug_render_target.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
+// Copyright © 2016 - 2022 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Christoph Müller</author>
 
 #include "trrojan/d3d11/debug_render_target.h"
 
@@ -71,8 +71,22 @@ void trrojan::d3d11::debug_render_target::present(void) {
         this->device_context()->CopyResource(dst, src);
     }
 
+#if defined(CREATE_D2D_OVERLAY)
+    if (this->_overlay) {
+        this->_overlay->begin_draw();
+        this->_overlay->clear();
+        this->_overlay->draw_text(L"The way you're meant to be trrolled.",
+            L"Segoue UI", 14.0f, D2D1::ColorF::White);
+        this->_overlay->end_draw();
+        this->_overlay->draw();
+    }
+#endif /* defined(CREATE_D2D_OVERLAY) */
+
     if (this->swapChain != nullptr) {
         this->swapChain->Present(0, 0);
+        // Present might clear OM target depending on settings, so re-enable
+        // immediately.
+        this->enable();
     }
 }
 
@@ -108,12 +122,15 @@ void trrojan::d3d11::debug_render_target::resize(const unsigned int width,
         desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT; // | DXGI_USAGE_UNORDERED_ACCESS;
         desc.OutputWindow = this->hWnd;
         desc.SampleDesc.Count = 1;
-        desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+        desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
         desc.Windowed = TRUE;
 
         {
             ATL::CComPtr<ID3D11Device> device;
             UINT deviceFlags = D3D11_CREATE_DEVICE_DISABLE_GPU_TIMEOUT;
+#if defined(CREATE_D2D_OVERLAY)
+            deviceFlags |= D3D11_CREATE_DEVICE_BGRA_SUPPORT;
+#endif /* defined(CREATE_D2D_OVERLAY) */
 
 #if (defined(DEBUG) || defined(_DEBUG))
             if (supports_debug_layer()) {
@@ -131,6 +148,10 @@ void trrojan::d3d11::debug_render_target::resize(const unsigned int width,
 
             this->set_device(device);
         }
+
+#if defined(CREATE_D2D_OVERLAY)
+        this->_overlay.reset(new d2d_overlay(this->device(), this->swapChain));
+#endif /* defined(CREATE_D2D_OVERLAY) */
 
         ::ShowWindow(this->hWnd, SW_SHOW);
 
@@ -187,6 +208,12 @@ void trrojan::d3d11::debug_render_target::resize(const unsigned int width,
     set_debug_object_name(backBuffer.p, "debug_render_target (colour buffer)");
 
     this->set_back_buffer(backBuffer.p);
+
+#if defined(CREATE_D2D_OVERLAY)
+    if (this->_overlay) {
+        this->_overlay->resize(width, height);
+    }
+#endif /* defined(CREATE_D2D_OVERLAY) */
 }
 
 

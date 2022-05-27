@@ -51,6 +51,11 @@ namespace d3d11 {
 
     protected:
 
+        static void load_brudervn_xfer_func(const char *path,
+            ID3D11Device *device,
+            ID3D11Texture1D **outTexture,
+            ID3D11ShaderResourceView **outSrv = nullptr);
+
         static void load_volume(const char *path, const frame_type frame,
             ID3D11Device *device, info_type& outInfo,
             ID3D11Texture3D **outTexture,
@@ -65,6 +70,11 @@ namespace d3d11 {
             return volume_benchmark_base::load_volume(path.c_str(), frame,
                 device.d3d_device(), outInfo, outTexture, outSrv);
         }
+
+        static void load_xfer_func(const std::vector<char>& data,
+            ID3D11Device *device,
+            ID3D11Texture1D **outTexture,
+            ID3D11ShaderResourceView **outSrv = nullptr);
 
         static void load_xfer_func(const char *path, ID3D11Device *device,
             ID3D11Texture1D **outTexture,

@@ -38,16 +38,16 @@ namespace sysinfo {
         // See http://www.dmtf.org/sites/default/files/standards/documents/DSP0134_3.0.0.pdf
 #pragma pack(push)
 #pragma pack(1)
-        typedef struct {
+        struct dmi_entry_point_type {
             byte_type anchor[5];
             byte_type checksum;
             word_type table_length;
             dword_type table_address;
             word_type table_num_structs;
             byte_type bcd_revision;
-        } dmi_entry_point_type;
+        };
 
-        typedef struct {
+        struct smbios_2_1_entry_point_type {
             byte_type anchor[4];
             byte_type checksum;
             byte_type struct_size;
@@ -63,9 +63,9 @@ namespace sysinfo {
             word_type table_num_structs;
             byte_type bcd_revision;
             byte_type _padding;
-        } smbios_2_1_entry_point_type;
+        };
 
-        typedef struct {
+        struct smbios_3_0_entry_point_type {
             byte_type anchor[5];
             byte_type checksum;
             byte_type struct_size;
@@ -76,15 +76,15 @@ namespace sysinfo {
             byte_type _reserved;
             dword_type max_struct_size;
             qword_type table_address;
-        } smbios_3_0_entry_point_type;
+        };
 
-        typedef struct {
+        struct header_type {
             byte_type type;
             byte_type length;
             handle_type handle;
-        } header_type;
+        };
 
-        typedef struct {
+        struct bios_information_type {
             header_type header;
             string_type vendor;
             string_type version;
@@ -112,9 +112,9 @@ namespace sysinfo {
             inline const char *get_release_date(void) const {
                 return smbios_information::get_string(this, this->release_date);
             }
-        } bios_information_type;
+        };
 
-        typedef struct {
+        struct system_information_type {
             header_type header;
             string_type manufacturer;
             string_type product_name;
@@ -142,9 +142,9 @@ namespace sysinfo {
             inline const char *get_serial_number(void) const {
                 return smbios_information::get_string(this, this->serial_number);
             }
-        } system_information_type;
+        };
 
-        typedef struct {
+        struct baseboard_information_type {
             header_type header;
             string_type manufacturer;
             string_type product_name;
@@ -177,9 +177,9 @@ namespace sysinfo {
             inline const char *get_asset_tag(void) const {
                 return smbios_information::get_string(this, this->asset_tag);
             }
-        } baseboard_information_type;
+        };
 
-        typedef struct {
+        struct chassis_information_type {
             header_type header;
             string_type manufacturer;
             string_type type;
@@ -198,9 +198,9 @@ namespace sysinfo {
             byte_type contained_element_count;
             byte_type contained_element_record_length;
             byte_type contained_elements[255 * 255];
-        } chassis_information_type;
+        };
 
-        typedef struct {
+        struct processor_information_type {
             header_type header;
             string_type socket_designation;
             byte_type type;
@@ -260,9 +260,9 @@ namespace sysinfo {
                 // TODO: Range check!
                 return smbios_information::get_string(this, this->part_number);
             }
-        } processor_information_type;
+        };
 
-        typedef struct {
+        struct memory_controller_information_type {
             header_type header;
             byte_type error_detecting_method;
             byte_type error_correction_capability;
@@ -276,9 +276,9 @@ namespace sysinfo {
             handle_type memory_module_configuration_handles[1]; // (2x -1)
             /* SMBIOS 2.1+ */
             //byte_type enabled_error_correcting_capabilities;
-        } memory_controller_information_type;
+        };
 
-        typedef struct {
+        struct memory_module_information_type {
             header_type header;
             string_type socket_designation;
             byte_type bank_connections;
@@ -287,9 +287,9 @@ namespace sysinfo {
             byte_type installed_size;
             byte_type enabled_size;
             byte_type error_status;
-        } memory_module_information_type;
+        };
 
-        typedef struct {
+        struct cache_information_type {
             header_type header;
             string_type socket_designation;
             word_type configuration;
@@ -301,9 +301,9 @@ namespace sysinfo {
             byte_type error_correction_type;
             byte_type system_cache_type;
             byte_type associativity;
-        } cache_information_type;
+        };
 
-        typedef struct {
+        struct physical_memory_array_type {
             header_type header;
             /* SMBIOS 2.1+ */
             byte_type location;
@@ -314,9 +314,9 @@ namespace sysinfo {
             word_type number_of_memory_devices;
             /* SMBIOS 2.7+ */
             qword_type extended_maximum_capacity;
-        } physical_memory_array_type;
+        };
 
-        typedef struct {
+        struct memory_device_type {
             header_type header;
             /* SMBIOS 2.1+ */
             handle_type physical_memory_array_handle;
@@ -370,9 +370,9 @@ namespace sysinfo {
                 // TODO: Range check!
                 return smbios_information::get_string(this, this->part_number);
             }
-        } memory_device_type;
+        };
 
-        typedef struct {
+        struct memory_error_information_type {
             header_type header;
             /* SMBIOS 2.1+ */
             byte_type type;
@@ -382,7 +382,7 @@ namespace sysinfo {
             dword_type memory_array_error_address;
             dword_type device_error_address;
             dword_type resolution;
-        } memory_error_information_type;
+        };
 
 #pragma pack(pop)
 

@@ -173,7 +173,8 @@ namespace stream {
         /// <param name="parallelism"></param>
         /// <returns></returns>
         static inline barrier_type make_barrier(const size_t parallelism) {
-            return std::make_shared<barrier_type::element_type>(parallelism);
+            return std::make_shared<barrier_type::element_type>(
+                static_cast<int>(parallelism));
         }
 
         /// <summary>

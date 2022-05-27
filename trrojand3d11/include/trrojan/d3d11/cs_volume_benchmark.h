@@ -1,8 +1,8 @@
-/// <copyright file="cs_volume_benchmark.h" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+/// <copyright file="cs_volume_benchmark.h" company="Visualisierungsinstitut der Universitï¿½t Stuttgart">
+/// Copyright ï¿½ 2016 - 2018 Visualisierungsinstitut der Universitï¿½t Stuttgart. Alle Rechte vorbehalten.
 /// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 /// </copyright>
-/// <author>Christoph Müller</author>
+/// <author>Christoph Mï¿½ller</author>
 
 #pragma once
 
@@ -11,7 +11,6 @@
 
 #include "trrojan/d3d11/gpu_timer.h"
 
-#ifndef _UWP
 
 namespace trrojan {
 namespace d3d11 {
@@ -46,8 +45,6 @@ namespace d3d11 {
 
     private:
 
-        static const UINT shader_resource_id = 10000;
-
         rendering_technique::uav_type compute_target;
         ATL::CComPtr<ID3D11Query> done_query;
         rendering_technique::buffer_type raycasting_constants;
@@ -58,5 +55,3 @@ namespace d3d11 {
 
 } /* end namespace d3d11 */
 } /* end namespace trrojan */
-
-#endif

@@ -1,7 +1,7 @@
 ﻿# CMakeLists.txt
-# Copyright © 2016 - 2017 SFB-TRR 161. Alle Rechte vorbehalten.
+# Copyright © 2016 - 2022 SFB-TRR 161. Alle Rechte vorbehalten.
 
-cmake_minimum_required(VERSION 3.1.0)
+cmake_minimum_required(VERSION 3.15.0)
 
 project(TRRojan)
 
@@ -28,6 +28,12 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/bin")
 
 # Configure optional features
 option(TRROJAN_WITH_CHAKRA "Enable JavaScript support." OFF)
+if (WIN32)
+    option(TRROJAN_WITH_DSTORAGE "Enable support for DirectStorage in Direct3D 12 plugin." ON)
+else (WIN32)
+    set(TRROJAN_WITH_DSTORAGE OFF)
+endif (WIN32)
+option(TRROJAN_DEBUG_OVERLAY "Enable overlay in debug view." OFF)
 
 # Add compile defintion for UWP via cmake optioon
 option(UWP "Compile for UWP" OFF)
@@ -38,31 +44,44 @@ endif()
 
 # Configure the compiler.
 if (WIN32)
-	add_compile_options(/wd4251)	# We cannot fix that - TRRojan just needs to be compiled in a single step.
+    add_compile_options(/wd4251)	# We cannot fix that - TRRojan just needs to be compiled in a single step.
 endif (WIN32)
 
 if (${CMAKE_COMPILER_IS_GNUCXX})
-	add_definitions(-DUNIX)
-	set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic")
-	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -DDEBUG -D_DEBUG -ggdb")
+    add_definitions(-DUNIX)
+    set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -DDEBUG -D_DEBUG -ggdb")
 endif (${CMAKE_COMPILER_IS_GNUCXX})
+
 if (${MSVC})
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNOMINMAX -EHsc")
+	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DDEBUG -D_DEBUG")
 endif (${MSVC})
 
 if (NOT WIN32 OR ${PNG_FOUND})
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTRROJAN_WITH_CIMG -Dcimg_display=0")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTRROJAN_WITH_CIMG -Dcimg_display=0")
 endif (NOT WIN32 OR ${PNG_FOUND})
 
 if (OPENMP_FOUND)
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 endif()
+
+if (TRROJAN_WITH_DSTORAGE)
+    # Include our downloaded version of DirectStorage, because VS_PACKAGE_REFERENCES
+    # is not working for CMAKE C++ projects.
+    include_directories("${DSTORAGE_DIR}/Include/DirectStorage")
+    add_definitions(-DTRROJAN_WITH_DSTORAGE)
+    link_directories("${DSTORAGE_DIR}/bin/${CMAKE_VS_PLATFORM_NAME}")
+endif (TRROJAN_WITH_DSTORAGE)
 
 
 # Set the directory where we expect Chakra Core.
 set(CHAKRA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/chakra" CACHE STRING "Directory holding the source of Chakra Core.")
+
+# Set the directory where we expect DirectStorage.
+set(DSTORAGE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Microsoft.Direct3D.DirectStorage.1.0.0" CACHE STRING "Directory holding the DirectStorage APIs.")
 
 # Build glm
 #set(GLM_STATIC_LIBRARY_ENABLE "YES")
@@ -100,10 +119,11 @@ else()
 	# Build the RAM stream plugin
 	add_subdirectory(trrojanstream)
 
-	# Build the D3D plugin
-	if (WIN32)
-	    add_subdirectory(trrojand3d11)
-	endif (WIN32)
+# Build the D3D plugin
+if (WIN32)
+    add_subdirectory(trrojand3d11)
+    add_subdirectory(trrojand3d12)
+endif (WIN32)
 
 	# Build the executable
 	add_subdirectory(trrojan)

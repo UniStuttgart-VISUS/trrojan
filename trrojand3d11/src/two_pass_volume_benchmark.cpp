@@ -1,8 +1,8 @@
-/// <copyright file="two_pass_volume_benchmark.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Christoph Müller</author>
+// <copyright file="two_pass_volume_benchmark.cpp" company="Visualisierungsinstitut der Universitï¿½t Stuttgart">
+// Copyright ï¿½ 2016 - 2022 Visualisierungsinstitut der Universitï¿½t Stuttgart. Alle Rechte vorbehalten.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Christoph Mï¿½ller</author>
 
 #include "trrojan/d3d11/two_pass_volume_benchmark.h"
 
@@ -16,8 +16,8 @@
 #include "trrojan/d3d11/utilities.h"
 
 #include "TwoPassVolumePipeline.hlsli"
+#include "volume_techniques.h"
 
-#ifndef _UWP
 
 /*
  * trrojan::d3d11::two_pass_volume_benchmark::two_pass_volume_benchmark
@@ -72,7 +72,7 @@ trrojan::result trrojan::d3d11::two_pass_volume_benchmark::on_run(
         // Rebuild the ray computation technique.
         {
             auto vss = d3d11::plugin::load_resource(
-                MAKEINTRESOURCE(vertex_shader_resource_id), _T("SHADER"));
+                MAKEINTRESOURCE(VOLUME_RAY_PASS_VERTEX_SHADER), _T("SHADER"));
             auto vs = create_vertex_shader(dev, vss);
 
             ATL::CComPtr<ID3D11Buffer> ib;
@@ -81,7 +81,7 @@ trrojan::result trrojan::d3d11::two_pass_volume_benchmark::on_run(
             auto il = create_input_layout(dev, ils, vss);
 
             auto pss = d3d11::plugin::load_resource(
-                MAKEINTRESOURCE(pixel_shader_resource_id), _T("SHADER"));
+                MAKEINTRESOURCE(VOLUME_RAY_PASS_PIXEL_SHADER), _T("SHADER"));
             auto ps = create_pixel_shader(dev, pss);
 
             auto stride = static_cast<UINT>(sizeof(DirectX::XMFLOAT3));
@@ -141,7 +141,7 @@ trrojan::result trrojan::d3d11::two_pass_volume_benchmark::on_run(
         // Rebuild the raycasting technique.
         {
             auto src = d3d11::plugin::load_resource(MAKEINTRESOURCE(
-                compute_shader_resource_id), _T("SHADER"));
+                VOLUME_PASS_COMPUTE_SHADER), _T("SHADER"));
             auto cs = create_compute_shader(dev, src);
             auto res = rendering_technique::shader_resources();
             res.sampler_states.push_back(this->linear_sampler);
@@ -164,7 +164,7 @@ trrojan::result trrojan::d3d11::two_pass_volume_benchmark::on_run(
     }
 
     // The transfer function has changed, so update the SRV in the technique.
-    if (contains(changed, factor_data_set)) {
+    if (contains(changed, factor_xfer_func)) {
         this->volume_technique.set_shader_resource_views(this->xfer_func_view,
             DATA_STAGE, 1);
     }
@@ -355,7 +355,7 @@ trrojan::result trrojan::d3d11::two_pass_volume_benchmark::on_run(
 
             if (batchTime < minWallTime) {
                 cntPrewarms = static_cast<std::uint32_t>(std::ceil(
-                    static_cast<double>(minWallTime * cntCpuIterations)
+                    static_cast<double>(minWallTime) * cntCpuIterations
                     / batchTime));
                 if (cntPrewarms < 1) {
                     cntPrewarms = 1;
@@ -368,7 +368,7 @@ trrojan::result trrojan::d3d11::two_pass_volume_benchmark::on_run(
     gpuTimes.resize(cntGpuIterations);
     for (std::uint32_t i = 0; i < cntGpuIterations;) {
         log::instance().write_line(log_level::debug, "GPU counter measurement "
-            "#{}.", i);
+            "#%d.", i);
         gpuTimer.start_frame();
         gpuTimer.start(0);
         this->clear_target();
@@ -486,5 +486,3 @@ void trrojan::d3d11::two_pass_volume_benchmark::begin_volume_pass(
     this->volume_technique.set_shader_resource_views(
         { this->entry_source, this->ray_source }, STAGE, first_ray_slot);
 }
-
-#endif

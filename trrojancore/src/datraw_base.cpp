@@ -1,8 +1,8 @@
-/// <copyright file="datraw_base.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Christoph Müller</author>
+// <copyright file="datraw_base.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
+// Copyright © 2016 - 2022 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Christoph Müller</author>
 
 #include "trrojan/datraw_base.h"
 
@@ -122,7 +122,7 @@ std::pair<float, float> trrojan::datraw_base::calc_clipping_planes(
     }
 
     log::instance().write_line(log_level::debug, "Dynamic clipping planes are "
-        "located at %f and %f.", nearPlane, farPlane);
+        "located at {} and {}.", nearPlane, farPlane);
     return std::make_pair(nearPlane, farPlane);
 
 }

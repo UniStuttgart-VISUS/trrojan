@@ -1,8 +1,8 @@
-/// <copyright file="cs_volume_benchmark.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Christoph Müller</author>
+// <copyright file="cs_volume_benchmark.cpp" company="Visualisierungsinstitut der Universitï¿½t Stuttgart">
+// Copyright ï¿½ 2016 - 2022 Visualisierungsinstitut der Universitï¿½t Stuttgart. Alle Rechte vorbehalten.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Christoph Mï¿½ller</author>
 
 #include "trrojan/d3d11/cs_volume_benchmark.h"
 
@@ -16,8 +16,8 @@
 #include "trrojan/d3d11/utilities.h"
 
 #include "SinglePassVolumePipeline.hlsli"
+#include "volume_techniques.h"
 
-#ifndef _UWP
 
 /*
  * trrojan::d3d11::cs_volume_benchmark::cs_volume_benchmark
@@ -72,7 +72,7 @@ trrojan::result trrojan::d3d11::cs_volume_benchmark::on_run(
 
         // Rebuild the technique.
         auto src = d3d11::plugin::load_resource(
-            MAKEINTRESOURCE(shader_resource_id), _T("SHADER"));
+            MAKEINTRESOURCE(SINGLE_PASS_VOLUME_COMPUTE_SHADER), _T("SHADER"));
         auto cs = create_compute_shader(dev, src);
         auto res = rendering_technique::shader_resources();
         res.sampler_states.push_back(this->linear_sampler);
@@ -94,7 +94,7 @@ trrojan::result trrojan::d3d11::cs_volume_benchmark::on_run(
     }
 
     // The transfer function has changed, so update the SRV in the technique.
-    if (contains(changed, factor_data_set)) {
+    if (contains(changed, factor_xfer_func)) {
         this->technique.set_shader_resource_views(this->xfer_func_view,
             DATA_STAGE, 1);
     }
@@ -305,5 +305,3 @@ trrojan::result trrojan::d3d11::cs_volume_benchmark::on_run(
 
     return retval;
 }
-
-#endif

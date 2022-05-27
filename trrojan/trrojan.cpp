@@ -43,7 +43,7 @@ int main(const int argc, const char **argv) {
         if (!trrojan::contains_switch("--nologo", cmdLine.begin(),
                 cmdLine.end())) {
             std::cout << "TRRojan" << std::endl;
-            std::cout << "Copyright (C) 2016 - 2018 Visualisierungsinstitut "
+            std::cout << "Copyright (C) 2016 - 2022 Visualisierungsinstitut "
                 "der Universität Stuttgart."
                 << std::endl << "All rights reserved."
                 << std::endl << std::endl;

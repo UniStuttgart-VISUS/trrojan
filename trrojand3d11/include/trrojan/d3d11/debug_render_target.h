@@ -1,8 +1,8 @@
-/// <copyright file="debug_render_target.h" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Christoph Müller</author>
+// <copyright file="debug_render_target.h" company="Visualisierungsinstitut der Universität Stuttgart">
+// Copyright © 2016 - 2022 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Christoph Müller</author>
 
 #pragma once
 
@@ -13,6 +13,7 @@
 #include <atlbase.h>
 #include <Windows.h>
 
+#include "trrojan/d3d11/d2d_overlay.h"
 #include "trrojan/d3d11/render_target.h"
 
 #ifndef _UWP
@@ -81,6 +82,11 @@ namespace d3d11 {
         /// The message pumping thread.
         /// </summary>
         std::thread msgPump;
+
+        /// <summary>
+        /// A Direct2D/DirectWrite overlay for printing stupid messages.
+        /// </summary>
+        std::unique_ptr<d2d_overlay> _overlay;
 
         /// <summary>
         /// The swap chain for the window.

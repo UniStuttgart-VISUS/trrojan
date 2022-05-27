@@ -1,15 +1,14 @@
-/// <copyright file="two_pass_volume_benchmark.h" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Christoph Müller</author>
+// <copyright file="two_pass_volume_benchmark.h" company="Visualisierungsinstitut der Universitï¿½t Stuttgart">
+// Copyright ï¿½ 2016 - 2022 Visualisierungsinstitut der Universitï¿½t Stuttgart. Alle Rechte vorbehalten.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Christoph Mï¿½ller</author>
 
 #pragma once
 
 #include "trrojan/d3d11/rendering_technique.h"
 #include "trrojan/d3d11/volume_benchmark_base.h"
 
-#ifndef _UWP
 
 namespace trrojan {
 namespace d3d11 {
@@ -70,5 +69,3 @@ namespace d3d11 {
 
 } /* end namespace d3d11 */
 } /* end namespace trrojan */
-
-#endif

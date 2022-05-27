@@ -1,8 +1,8 @@
-/// <copyright file="sphere_benchmark.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+/// <copyright file="sphere_benchmark.cpp" company="Visualisierungsinstitut der Universitï¿½t Stuttgart">
+/// Copyright ï¿½ 2016 - 2018 Visualisierungsinstitut der Universitï¿½t Stuttgart. Alle Rechte vorbehalten.
 /// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 /// </copyright>
-/// <author>Christoph Müller</author>
+/// <author>Christoph Mï¿½ller</author>
 
 #include "trrojan/d3d11/sphere_benchmark.h"
 
@@ -493,6 +493,11 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
                     ctx->Draw(cntPrimitives, 0);
                 }
                 this->present_target();
+#if defined(CREATE_D2D_OVERLAY)
+                // Using the overlay will change the state such that we need to
+                // re-apply it after presenting.
+                technique.apply(ctx);
+#endif /* defined(CREATE_D2D_OVERLAY) */
             }
 
             ctx->End(this->done_query);
@@ -523,6 +528,11 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
         } else {
             ctx->Draw(cntPrimitives, 0);
         }
+#if defined(CREATE_D2D_OVERLAY)
+        // Using the overlay will change the state such that we need to
+        // re-apply it after presenting.
+        technique.apply(ctx);
+#endif /* defined(CREATE_D2D_OVERLAY) */
         gpuTimer.end(0);
         gpuTimer.end_frame();
         this->present_target();
@@ -547,6 +557,11 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
     }
     ctx->End(this->stats_query);
     this->present_target();
+#if defined(CREATE_D2D_OVERLAY)
+    // Using the overlay will change the state such that we need to
+    // re-apply it after presenting.
+    technique.apply(ctx);
+#endif /* defined(CREATE_D2D_OVERLAY) */
     wait_for_stats_query(pipeStats, ctx, this->stats_query);
 
     // Do the wall clock measurement.
@@ -561,6 +576,11 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
             ctx->Draw(cntPrimitives, 0);
         }
         this->present_target();
+#if defined(CREATE_D2D_OVERLAY)
+        // Using the overlay will change the state such that we need to
+        // re-apply it after presenting.
+        technique.apply(ctx);
+#endif /* defined(CREATE_D2D_OVERLAY) */
     }
     ctx->End(this->done_query);
     wait_for_event_query(ctx, this->done_query);

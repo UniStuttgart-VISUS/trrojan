@@ -16,7 +16,8 @@ trrojan::result trrojan::stream::stream_benchmark::collect_results(
 
     assert(problem != nullptr);
     auto cntResults = problem->iterations();
-    auto cntThreads = std::distance(begin, end);
+    assert(std::distance(begin, end) >= 0);
+    auto cntThreads = static_cast<std::size_t>(std::distance(begin, end));
     std::vector<std::string> names = { result_name_range_start,
         result_name_range_total, result_name_time_maximum,
         result_name_time_average, result_name_time_minimum,

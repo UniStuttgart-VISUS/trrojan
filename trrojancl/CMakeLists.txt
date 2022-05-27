@@ -21,12 +21,16 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTRROJANCL_EXPORTS -DTRROJANCORE_WITH_S
 
 #set_source_files_properties(plugin.def PROPERTIES HEADER_FILE_ONLY TRUE)
 
-if (${OpenCL_FOUND} AND ${OPENGL_FOUND})
+if (${OpenCL_FOUND})
     add_library(trrojancl SHARED ${HeaderFiles} ${SourceFiles})
 
     include_directories("${OpenCL_INCLUDE_DIR}")
 
     target_link_libraries(trrojancl LINK_PUBLIC trrojancore)
     target_link_libraries(trrojancl LINK_PUBLIC ${OpenCL_LIBRARY})
-    target_link_libraries(trrojancl LINK_PUBLIC ${OPENGL_gl_LIBRARY})
-endif (${OpenCL_FOUND} AND ${OPENGL_FOUND})
+    if (${OPENGL_FOUND})
+        target_link_libraries(trrojancl LINK_PUBLIC ${OPENGL_gl_LIBRARY})
+    ENDIF (${OPENGL_FOUND})
+endif (${OpenCL_FOUND})
+
+

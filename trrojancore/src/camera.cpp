@@ -8,6 +8,7 @@
 
 #include <stdexcept>
 #include <iostream>
+#include <algorithm>
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include "glm/gtc/constants.hpp"

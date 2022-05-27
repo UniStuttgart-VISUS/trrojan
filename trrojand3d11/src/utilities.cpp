@@ -44,6 +44,36 @@ ATL::CComPtr<ID3D11Buffer> trrojan::d3d11::create_buffer(ID3D11Device *device,
 
 
 /*
+ * trrojan::d3d11::create_compatible_surface
+ */
+ATL::CComPtr<ID3D11Texture2D> trrojan::d3d11::create_compatible_surface(
+        ID3D11Device *device, IDXGISwapChain *swap_chain) {
+    if (device == nullptr) {
+        throw ATL::CAtlException(E_POINTER);
+    }
+
+    // Get the back buffer texture to obtain its properties.
+    auto texture = get_back_buffer(swap_chain);
+
+    // Get texture properties and adjust such that they are compatible
+    // with Direct2D.
+    D3D11_TEXTURE2D_DESC desc;
+    texture->GetDesc(&desc);
+    desc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+    desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+    desc.Usage = D3D11_USAGE_DEFAULT;
+
+    texture = nullptr;
+    auto hr = device->CreateTexture2D(&desc, nullptr, &texture);
+    if (FAILED(hr)) {
+        throw ATL::CAtlException(hr);
+    }
+
+    return texture;
+}
+
+
+/*
  * trrojan::d3d11::create_compute_shader
  */
 ATL::CComPtr<ID3D11ComputeShader> trrojan::d3d11::create_compute_shader(
@@ -737,6 +767,82 @@ ATL::CComPtr<ID3D11Texture1D> trrojan::d3d11::create_viridis_colour_map(
         if (FAILED(hr)) {
             throw ATL::CAtlException(hr);
         }
+    }
+
+    return retval;
+}
+
+
+/*
+ * trrojan::d3d11::get_back_buffer
+ */
+ATL::CComPtr<ID3D11Texture2D> trrojan::d3d11::get_back_buffer(
+        IDXGISwapChain *swap_chain) {
+    if (swap_chain == nullptr) {
+        throw ATL::CAtlException(E_POINTER);
+    }
+
+    ATL::CComPtr<ID3D11Texture2D> retval;
+
+    auto hr = swap_chain->GetBuffer(0, IID_ID3D11Texture2D,
+        reinterpret_cast<void **>(&retval));
+    if (FAILED(hr)) {
+        throw ATL::CAtlException(E_POINTER);
+    }
+
+    return retval;
+}
+
+
+/*
+ * trrojan::d3d11::get_device
+ */
+ATL::CComPtr<ID3D11Device> trrojan::d3d11::get_device(
+        ID3D11Texture2D *texture) {
+    if (texture == nullptr) {
+        throw ATL::CAtlException(E_POINTER);
+    }
+
+    ATL::CComPtr<ID3D11Device> retval;
+    texture->GetDevice(&retval);
+
+    return retval;
+}
+
+
+/*
+ * trrojan::d3d11::get_device
+ */
+ATL::CComPtr<IDXGIDevice> trrojan::d3d11::get_device(ID3D11Device *device) {
+    if (device == nullptr) {
+        throw ATL::CAtlException(E_POINTER);
+    }
+
+    ATL::CComPtr<IDXGIDevice> retval;
+    auto hr = device->QueryInterface(::IID_IDXGIDevice,
+        reinterpret_cast<void **>(&retval));
+    if (FAILED(hr)) {
+        throw ATL::CAtlException(E_POINTER);
+    }
+
+    return retval;
+}
+
+
+/*
+ * trrojan::d3d11::get_surface
+ */
+ATL::CComPtr<IDXGISurface> trrojan::d3d11::get_surface(
+        ID3D11Texture2D *texture) {
+    if (texture == nullptr) {
+        throw ATL::CAtlException(E_POINTER);
+    }
+
+    ATL::CComPtr<IDXGISurface> retval;
+    auto hr = texture->QueryInterface(::IID_IDXGISurface,
+        reinterpret_cast<void **>(&retval));
+    if (FAILED(hr)) {
+        throw ATL::CAtlException(E_POINTER);
     }
 
     return retval;
