@@ -68,23 +68,46 @@ namespace d3d12 {
             this->_render_target->clear(cmd_list);
         }
 
+        inline void clear_target(const std::array<float, 4>& clear_colour,
+                ID3D12GraphicsCommandList *cmd_list) {
+            assert(this->_render_target != nullptr);
+            assert(cmd_list != nullptr);
+            this->_render_target->clear(clear_colour, cmd_list);
+        }
+
+        inline void disable_target(ID3D12GraphicsCommandList *cmd_list) {
+            assert(this->_render_target != nullptr);
+            assert(cmd_list != nullptr);
+            this->_render_target->disable(cmd_list);
+        }
+
+        inline void enable_target(ID3D12GraphicsCommandList *cmd_list) {
+            assert(this->_render_target != nullptr);
+            assert(cmd_list != nullptr);
+            this->_render_target->disable(cmd_list);
+        }
+
         /// <summary>
         /// Performs the actual test on behalf of the <see cref="run" /> method.
         /// </summary>
         /// <param name="device">The device to use. It is guaranteed that the
         /// device is obtained from <paramref name="config" />.</param>
+        /// <param name="current_frame">Specifies the index of the currently
+        /// active frame.</param>
+        /// <param name="total_frames">Specifies the total number of frames that
+        /// can be in-flight for the render target in use.</param>
         /// <param name="config">The configuration to run.</param>
         /// <param name="changed">The names of the factors that have been
         /// changed since the last test run.</param>
         /// <returns>The test results.</returns>
         virtual trrojan::result on_run(d3d12::device& device,
+            const UINT current_frame, const UINT total_frames,
             const configuration& config,
             const std::vector<std::string>& changed) = 0;
 
-        inline void present_target(ID3D12GraphicsCommandList *cmd_list) {
+        inline void present_target(void) {
             assert(this->_render_target != nullptr);
-            assert(cmd_list != nullptr);
-            this->_render_target->present(cmd_list);
+            this->_render_target->present();
         }
 
         void save_target(const char *path = nullptr);
@@ -102,7 +125,6 @@ namespace d3d12 {
 
         typedef trrojan::benchmark_base base;
 
-        ATL::CComPtr<ID3D12GraphicsCommandList> _cmd_list_transition;
         std::shared_ptr<trrojan::d3d12::device> _debug_device;
         render_target _debug_target;
         render_target _render_target;

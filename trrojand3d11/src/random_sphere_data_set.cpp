@@ -361,9 +361,9 @@ void trrojan::d3d11::random_sphere_data_set::recreate(ID3D11Device *device,
     prng.seed(this->_seed);
     particles.resize(this->_size * stride);
 
-    log::instance().write_line(log_level::verbose, "Creating %u random "
-        "sphere(s) of type %u on a domain of [%f, %f, %f] with a uniformly "
-        "distributed size in [%f, %f]. The random seed is %u.", this->_size,
+    log::instance().write_line(log_level::verbose, "Creating {} random "
+        "sphere(s) of type {} on a domain of [{}, {}, {}] with a uniformly "
+        "distributed size in [{}, {}]. The random seed is {}.", this->_size,
         static_cast<std::uint32_t>(this->_type), domainSize[0], domainSize[1],
         domainSize[2], this->_sphere_size[0], this->_sphere_size[1],
         this->_seed);

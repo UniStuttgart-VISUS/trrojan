@@ -67,7 +67,7 @@ namespace trrojan {
         }
 
         inline void write(const log_level level, const std::exception& ex) {
-            this->write(level, "%s", ex.what());
+            this->write(level, "{}", ex.what());
         }
 
         inline void write(const std::exception& ex) {
@@ -93,7 +93,7 @@ namespace trrojan {
 
         inline void write_line(const log_level level,
                 const std::exception& ex) {
-            this->write(level, "%s\n", ex.what());
+            this->write(level, "{}\n", ex.what());
         }
 
         inline void write_line(const std::exception& ex) {

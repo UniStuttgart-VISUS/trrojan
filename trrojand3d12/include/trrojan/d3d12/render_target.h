@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include <array>
 #include <memory>
 #include <vector>
 
@@ -36,14 +37,45 @@ namespace d3d12 {
         virtual ~render_target_base(void);
 
         /// <summary>
+        /// Gets the index of the buffer in the pipeline that is currently being
+        /// rendered.
+        /// </summary>
+        /// <remarks>
+        /// Having access to this information in combination with
+        /// <see cref="pipeline_depth" />allows benchmarks to overlap their work
+        /// in a similar fashion.
+        /// </remarks>
+        /// <returns></returns>
+        inline UINT buffer_index(void) const {
+            return this->_buffer_index;
+        }
+
+        /// <summary>
         /// Queues clearing the render (and depth) target.
         /// </summary>
         /// <remarks>
         /// A device must have been set and the render target must have been
         /// resized at least once before this method can be called.
         /// </remarks>
-        /// <param name="cmdList"></param>
-        virtual void clear(ID3D12GraphicsCommandList *cmdList);
+        /// <param name="clear_colour"></param>
+        /// <param name="cmd_list"></param>
+        virtual void clear(const std::array<float, 4>& clear_colour,
+            ID3D12GraphicsCommandList *cmd_list);
+
+        /// <summary>
+        /// Queues clearing the render (and depth) target to the default clear
+        /// colour.
+        /// </summary>
+        /// <remarks>
+        /// A device must have been set and the render target must have been
+        /// resized at least once before this method can be called.
+        /// </remarks>
+        /// <param name="cmd_list"></param>
+        inline void clear(ID3D12GraphicsCommandList *cmd_list) {
+            static const std::array<float, 4> CLEAR_COLOUR
+                = { 0.0f, 0.0f, 0.0f, 0.0f };
+            this->clear(CLEAR_COLOUR, cmd_list);
+        }
 
         /// <summary>
         /// Answer the device the render target belongs to.
@@ -52,6 +84,16 @@ namespace d3d12 {
         inline ATL::CComPtr<ID3D12Device>& device(void) {
             return this->_device;
         }
+
+        /// <summary>
+        /// Performs cleanup operations once a frame was completed.
+        /// </summary>
+        /// <remarks>
+        /// The default implementation transitions the render target view to
+        /// present mode.
+        /// </remarks>
+        /// <param name="cmdList"></param>
+        virtual void disable(ID3D12GraphicsCommandList *cmdList);
 
         /// <summary>
         /// Queues the render target as active target in the given command list.
@@ -64,22 +106,26 @@ namespace d3d12 {
         void enable(ID3D12GraphicsCommandList *cmdList);
 
         /// <summary>
-        /// Performs cleanup operations once a frame was completed.
-        /// </summary>
-        /// <remarks>
-        /// The default implementation transitions the render target view to
-        /// present mode.
-        /// </remarks>
-        /// <param name="cmdList"></param>
-        virtual void present(ID3D12GraphicsCommandList *cmdList);
-
-        /// <summary>
         /// Answer the number of buffers used by the render target.
         /// </summary>
         /// <returns></returns>
         inline UINT pipeline_depth(void) const {
             return static_cast<UINT>(this->_buffers.size());
         }
+
+        /// <summary>
+        /// Rotates the active buffer in a ring-buffer fashion and waits for the
+        /// new active one to become ready.
+        /// </summary>
+        /// <remarks>
+        /// <para>This method (the very implementation in
+        /// <see cref="render_target_base" />) should only be used for offscreen
+        /// targets for which the base class manages the active buffer. Targets
+        /// with swap chains should actually present the swap chain and must ask
+        /// the swap chain what the next buffer is and override this method to
+        /// switch to the buffer index reported by the swap chain.</para>
+        /// </remarks>
+        virtual void present(void);
 
         /// <summary>
         /// Resizes the swap chain of the render target to the given dimension.
@@ -112,17 +158,6 @@ namespace d3d12 {
         /// Enables or disables used of reversed 32-bit depth buffer.
         /// </summary>
         void use_reversed_depth_buffer(const bool isEnabled);
-
-        /// <summary>
-        /// Wait until the GPU is ready to being the next frame.
-        /// </summary>
-        virtual void wait_for_frame(void) = 0;
-
-        /// <summary>
-        /// Inject a single into the command queue for the current frame and
-        /// wait until the GPU singals it.
-        /// </summary>
-        void wait_for_gpu(void);
 
         render_target_base& operator =(const render_target_base&) = delete;
 
@@ -208,11 +243,21 @@ namespace d3d12 {
             const UINT buffer_index = 0);
 
         /// <summary>
-        /// Waits for the current frame to complete and sets the given value as
-        /// the next one..
+        /// Waits for the specified butter becoming ready and then sets this
+        /// buffer the active one.
         /// </summary>
-        /// <param name="nextFrame"></param>
-        void wait_for_frame(const UINT nextFrame);
+        /// <remarks>
+        /// This method is intended for subclasses that use swap chains and
+        /// need to override the parameterless overload of the method.
+        /// </remarks>
+        /// <param name="next_buffer">The index of the next buffer. The swap
+        /// chain should provide callers with this value.</param>
+        void switch_buffer(const UINT next_buffer);
+
+        /// <summary>
+        /// Block the calling thread until the GPU completed all pending work.
+        /// </summary>
+        void wait_for_gpu(void);
 
         /// <summary>
         /// Clear value for the depth buffer.
@@ -245,6 +290,16 @@ namespace d3d12 {
         /// The direct command queue assoicated with <see cref="_device" />.
         /// </summary>
         ATL::CComPtr<ID3D12CommandQueue> _command_queue;
+
+        /// <summary>
+        /// The depth buffer of the render target.
+        /// </summary>
+        /// <remarks>
+        /// In contrast to D3D11, the resource view is not an object any more
+        /// that keeps the resource alive. Therefore, the render target must
+        /// keep a reference to the depth buffer.
+        /// </remarks>
+        ATL::CComPtr<ID3D12Resource> _depth_buffer;
 
         /// <summary>
         /// The device the render target lives on.

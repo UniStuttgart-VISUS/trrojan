@@ -21,13 +21,14 @@ namespace d3d12 {
 
         static const char *factor_clear_colour;
 
-        inline empty_benchmark(void) : benchmark_base("empty-benchmark") { }
+        empty_benchmark(void);
 
         virtual ~empty_benchmark(void);
 
     protected:
 
         virtual trrojan::result on_run(d3d12::device& device,
+            const UINT current_frame, const UINT total_frames,
             const configuration& config,
             const std::vector<std::string>& changed) override;
 

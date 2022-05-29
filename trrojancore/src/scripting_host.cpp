@@ -524,7 +524,7 @@ JsValueRef trrojan::scripting_host::on_configuration_set_ctor(JsValueRef callee,
         benchmark = scripting_host::get_ext_data<benchmark_base>(arguments[1]);
         log::instance().write_line(log_level::debug, "Initialising "
             "configuration_set from the default configuration of benchmark "
-            "%p (native object %p).", reinterpret_cast<void *>(arguments[1]),
+            "{} (native object {}).", reinterpret_cast<void *>(arguments[1]),
             static_cast<void *>(benchmark));
     }
 
@@ -579,7 +579,7 @@ JsValueRef trrojan::scripting_host::on_configuration_set_set(JsValueRef callee,
     auto factor = scripting_host::get_string(arguments[1]);
     auto value = scripting_host::to_variant_list(arguments[2]);
 
-    log::instance().write_line(log_level::debug, "Setting factor \"%s\" from "
+    log::instance().write_line(log_level::debug, "Setting factor \"{}\" from "
         "JavaScript ...", factor.data());
     cs->replace_factor(factor::from_manifestations(factor.data(), value));
 
@@ -840,8 +840,8 @@ JsValueRef trrojan::scripting_host::project_object(
     assert(benchmark != nullptr);
     JsValueRef retval = JS_INVALID_REFERENCE;
 
-    log::instance().write_line(log_level::debug, "Projecting benchmark \"%s\" "
-        "(%p) to JavaScript...", benchmark->name(),
+    log::instance().write_line(log_level::debug, "Projecting benchmark \"{}\" "
+        "({}) to JavaScript...", benchmark->name(),
         static_cast<void *>(benchmark));
 
     auto r = ::JsCreateExternalObject(benchmark, nullptr, &retval);
@@ -850,8 +850,8 @@ JsValueRef trrojan::scripting_host::project_object(
             "JavaScript.");
     }
 
-    log::instance().write_line(log_level::debug, "Benchmark \"%s\" "
-        "(%p) is represented by JavaScript object %p.", benchmark->name(),
+    log::instance().write_line(log_level::debug, "Benchmark \"{}\" "
+        "({}) is represented by JavaScript object {}.", benchmark->name(),
         static_cast<void *>(benchmark), reinterpret_cast<void *>(retval));
 
     auto b = scripting_host::project_value(benchmark->name().c_str());

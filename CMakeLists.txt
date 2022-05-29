@@ -81,7 +81,7 @@ set(DSTORAGE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Microsoft.Direct3D.DirectStorage.1
 
 # Build spdlog
 set(SPDLOG_BUILD_TESTING "NO" FORCE)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DSPDLOG_FMT_PRINTF")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DSPDLOG_FMT_PRINTF")
 add_subdirectory(spdlog)
 
 

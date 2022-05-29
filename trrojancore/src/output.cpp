@@ -61,7 +61,7 @@ trrojan::output TRROJANCORE_API trrojan::make_output(const std::string& path) {
         return std::make_shared<r_output>();
     } else {
         log::instance().write_line(log_level::warning, "The file name "
-            "extension \"%s\" of path \"%s\" cannot be use to determine "
+            "extension \"{}\" of path \"{}\" cannot be use to determine "
             "the output type.", path);
         return nullptr;
     }

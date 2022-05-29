@@ -108,7 +108,7 @@ trrojan::result trrojan::d3d11::benchmark_base::run(const configuration& c) {
     if (contains(changed, factor_viewport)) {
         auto vp = c.get<viewport_type>(factor_viewport);
         log::instance().write_line(log_level::verbose, "Resizing the "
-            "benchmarking render target to %d × %d px ...", vp[0], vp[1]);
+            "benchmarking render target to {} × {} px ...", vp[0], vp[1]);
         this->render_target->resize(vp[0], vp[1]);
     }
 

@@ -52,7 +52,7 @@ trrojan::plugin trrojan::executive::find_plugin(const std::string& name) {
     if (it != this->plugins.end()) {
         return *it;
     } else {
-        log::instance().write(log_level::warning, "The plugin named \"%s\" "
+        log::instance().write(log_level::warning, "The plugin named \"{}\" "
             "does not exist or was not loaded.\n", name.c_str());
         return nullptr;
     }
@@ -97,7 +97,7 @@ void trrojan::executive::load_plugins(const cmd_line& cmdLine) {
                     directory_separator_char);
                 auto p = std::string(mfn.begin(), it.base());
                 log::instance().write(log_level::verbose, "Considering plugins "
-                    "from the directory \"%s\" holding the executable.\n",
+                    "from the directory \"{}\" holding the executable.\n",
                     p.c_str());
                 get_file_system_entries(std::back_inserter(paths), p,
                     false, trrojan::has_extension(plugin_dll::extension));
@@ -105,7 +105,7 @@ void trrojan::executive::load_plugins(const cmd_line& cmdLine) {
         }
 #endif /* _WIN32 */
 
-        log::instance().write(log_level::verbose, "Found %u potential "
+        log::instance().write(log_level::verbose, "Found {} potential "
             "plugin(s).\n", paths.size());
 
         for (auto& path : paths) {
@@ -114,16 +114,16 @@ void trrojan::executive::load_plugins(const cmd_line& cmdLine) {
                 auto ep = dll.find_entry_point();
                 if (ep == nullptr) {
                     log::instance().write_line(log_level::warning, "Plugin "
-                        "entry point was not found in \"%s\".", path.c_str());
+                        "entry point was not found in \"{}\".", path.c_str());
                     continue;
                 }
 
                 log::instance().write(log_level::verbose, "Found a plugin "
-                    "entry point in \"%s\".\n", path.c_str());
+                    "entry point in \"{}\".\n", path.c_str());
                 auto plugin = trrojan::plugin(ep());
                 if (plugin != nullptr) {
                     log::instance().write(log_level::verbose, "Found plugin "
-                        "\"%s\" in \"%s\".\n", plugin->name().c_str(),
+                        "\"{}\" in \"{}\".\n", plugin->name().c_str(),
                         path.c_str());
                     this->plugins.push_back(std::move(plugin));
                     this->plugin_dlls.push_back(std::move(dll));
@@ -133,7 +133,7 @@ void trrojan::executive::load_plugins(const cmd_line& cmdLine) {
             }
         }
 
-        log::instance().write(log_level::verbose, "%u plugin(s) have been "
+        log::instance().write(log_level::verbose, "{} plugin(s) have been "
             "loaded. Retrieving execution environments from them ...\n", 
             this->plugins.size());
 
@@ -145,7 +145,7 @@ void trrojan::executive::load_plugins(const cmd_line& cmdLine) {
                 // First, handle potential violations of the contract with the
                 // plugin. If the plugin returns invalid stuff, just skip it.
                 if (e == nullptr) {
-                    log::instance().write(log_level::debug, "The plugin \"%s\" "
+                    log::instance().write(log_level::debug, "The plugin \"{}\" "
                         "returned a nullptr as environment.\n",
                         p->name().c_str());
                     continue;
@@ -153,8 +153,8 @@ void trrojan::executive::load_plugins(const cmd_line& cmdLine) {
 
                 auto name = e->name();
                 if (this->environments.find(name) != this->environments.end()) {
-                    log::instance().write(log_level::debug, "The plugin \"%s\" "
-                        "returned the environment \"%s\", which conflicts with "
+                    log::instance().write(log_level::debug, "The plugin \"{}\" "
+                        "returned the environment \"{}\", which conflicts with "
                         "an already loaded environment. The new environment "
                         "will be ignored.\n", p->name().c_str(), name.c_str());
                     continue;
@@ -165,14 +165,14 @@ void trrojan::executive::load_plugins(const cmd_line& cmdLine) {
                     e->on_initialise(cmdLine);
                     this->environments.insert(std::make_pair(name, e));
                     log::instance().write(log_level::verbose, "The "
-                        "environment \"%s\", provided by plugin \"%s\", was "
+                        "environment \"{}\", provided by plugin \"{}\", was "
                         "successfully initialised.\n", name.c_str(),
                         p->name().c_str());
 
                 } catch (std::exception& ex) {
                     log::instance().write_line(ex);
                     log::instance().write(log_level::verbose, "The "
-                        "environment \"%s\", provided by plugin \"%s\", failed "
+                        "environment \"{}\", provided by plugin \"{}\", failed "
                         "to initialise. The environment will be ignored.\n",
                         name.c_str(), p->name().c_str());
                 }
@@ -284,8 +284,8 @@ void trrojan::executive::trroll(const std::string& path, output_base& output,
                 curPlugin->create_benchmarks(benchmarks);
 
             } else {
-                log::instance().write(log_level::warning, "The plugin \"%s\" "
-                    "required for the benchmark \"%s\" does not exist or was "
+                log::instance().write(log_level::warning, "The plugin \"{}\" "
+                    "required for the benchmark \"{}\" does not exist or was "
                     "not loaded. The benchmark will be skipped.\n",
                     b.plugin.c_str(), b.benchmark.c_str());
             }
@@ -300,7 +300,7 @@ void trrojan::executive::trroll(const std::string& path, output_base& output,
             // Think about either preventing this or emitting new headers.
             if (it != benchmarks.end() && (*it != nullptr)) {
                 log::instance().write(log_level::information, "Running "
-                    "benchmark \"%s\" from plugin \"%s\".\n",
+                    "benchmark \"{}\" from plugin \"{}\".\n",
                     b.benchmark.c_str(), b.plugin.c_str());
 
                 (**it).optimise_order(b.configs);
@@ -308,7 +308,7 @@ void trrojan::executive::trroll(const std::string& path, output_base& output,
 
             } else {
                 log::instance().write(log_level::warning, "No benchmark named "
-                    "\"%s\" was found in plugin \"%s\". The benchmark will be "
+                    "\"{}\" was found in plugin \"{}\". The benchmark will be "
                     "skipped.\n", b.benchmark.c_str(), b.plugin.c_str());
             }
         }
@@ -339,7 +339,7 @@ void trrojan::executive::enable_environment(const std::string& name) {
 void trrojan::executive::enable_environment(environment env) {
     if ((this->cur_environment != nullptr) && (this->cur_environment != env)) {
         log::instance().write_line(log_level::information, "Disabling "
-            "environment \"%s\" ...", this->cur_environment->name().c_str());
+            "environment \"{}\" ...", this->cur_environment->name().c_str());
         this->cur_environment->on_deactivate();
         this->cur_environment = nullptr;
     }
@@ -349,7 +349,7 @@ void trrojan::executive::enable_environment(environment env) {
 
         if (this->cur_environment != nullptr) {
             log::instance().write_line(log_level::information, "Enabling "
-                "environment \"%s\" ...", env->name().c_str());
+                "environment \"{}\" ...", env->name().c_str());
             this->cur_environment->on_activate();
         } else {
             log::instance().write_line(log_level::information, "Enabling "
@@ -370,7 +370,7 @@ trrojan::environment trrojan::executive::find_environment(const variant& v) {
         retval = this->environments.find(name);
         if (retval == this->environments.end()) {
             log::instance().write(log_level::error, "The environment "
-                "\"%s\" does not exist.\n", name.c_str());
+                "\"{}\" does not exist.\n", name.c_str());
         }
 
     } else if (v.type() == variant_type::wstring) {
@@ -379,7 +379,7 @@ trrojan::environment trrojan::executive::find_environment(const variant& v) {
         retval = this->environments.find(name);
         if (retval == this->environments.end()) {
             log::instance().write(log_level::error, "The environment "
-                "\"%s\" does not exist.\n", name.c_str());
+                "\"{}\" does not exist.\n", name.c_str());
         }
 
     } else if (v.type() == variant_type::environment) {
@@ -457,7 +457,7 @@ trrojan::executive::prepare_env_devs(const configuration_set& cs,
             e->get_devices(devices);
             if (devices.empty()) {
                 log::instance().write_line(log_level::verbose, "The "
-                    "environment \"%s\" has no devices, so use an empty dummy.",
+                    "environment \"{}\" has no devices, so use an empty dummy.",
                     e->name().c_str());
                 devices.push_back(static_cast<device>(nullptr));
             }

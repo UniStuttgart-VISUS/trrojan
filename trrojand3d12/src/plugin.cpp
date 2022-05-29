@@ -7,6 +7,7 @@
 #include "trrojan/d3d12/plugin.h"
 
 //#include "trrojan/d3d12/cs_volume_benchmark.h"
+#include "trrojan/d3d12/empty_benchmark.h"
 #include "trrojan/d3d12/environment.h"
 //#include "trrojan/d3d12/sphere_benchmark.h"
 //#include "trrojan/d3d12/two_pass_volume_benchmark.h"
@@ -89,11 +90,12 @@ trrojan::d3d12::plugin::~plugin(void) { }
  * trrojan::d3d12::plugin::create_benchmarks
  */
 size_t trrojan::d3d12::plugin::create_benchmarks(benchmark_list& dst) const {
+    dst.emplace_back(std::make_shared<empty_benchmark>());
     // TODO
     //dst.emplace_back(std::make_shared<cs_volume_benchmark>());
     //dst.emplace_back(std::make_shared<sphere_benchmark>());
     //dst.emplace_back(std::make_shared<two_pass_volume_benchmark>());
-    return 0;
+    return 1;
 }
 
 

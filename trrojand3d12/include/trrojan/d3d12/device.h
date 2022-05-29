@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include <atomic>
 #include <memory>
 
 #include <Windows.h>
@@ -173,6 +174,19 @@ namespace d3d12 {
         /// enabled or disabled.</param>
         void set_stable_power_state(const bool enabled);
 
+        /// <summary>
+        /// Inject a signal into the command queue and wait for the GPU to reach
+        /// it, ie completes all processing until the signal.
+        /// </summary>
+        /// <remarks>
+        /// <para>This method uses a fence allocated in the device. The value of
+        /// the fence is atomically incremented, wherefore it is safe to call
+        /// this method from different threads. A new event is allocated for
+        /// each call to block the calling thread until the fence becomes
+        /// signalled.</para>
+        /// </remarks>
+        void wait_for_gpu(void);
+
     private:
 
         ATL::CComPtr<ID3D12CommandQueue> _command_queue;
@@ -181,6 +195,8 @@ namespace d3d12 {
         ATL::CComPtr<ID3D12Device> _d3d_device;
         ATL::CComPtr<ID3D12CommandAllocator> _direct_command_allocator;
         ATL::CComPtr<IDXGIFactory4> _dxgi_factory;
+        ATL::CComPtr<ID3D12Fence> _fence;
+        std::atomic<UINT64> _next_fence;
 
     };
 }

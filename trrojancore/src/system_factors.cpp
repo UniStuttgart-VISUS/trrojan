@@ -281,7 +281,7 @@ trrojan::variant trrojan::system_factors::installed_memory(void) const {
     } else {
         auto err = ::GetLastError();
         log::instance().write(log_level::warning, "Failed to retrieve amount "
-            "of installed physical memory with error code 0x%x.", err);
+            "of installed physical memory with error code {:x}.", err);
     }
 
 #else /* _WIN32 */
@@ -300,7 +300,7 @@ trrojan::variant trrojan::system_factors::installed_memory(void) const {
     } else {
         auto err = errno;
         log::instance().write(log_level::warning, "Failed to retrieve amount "
-            "of installed physical memory with error code 0x%x.", err);
+            "of installed physical memory with error code {:x}.", err);
     }
 
 #endif /* _WIN32 */

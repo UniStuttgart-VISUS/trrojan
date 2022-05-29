@@ -7,6 +7,7 @@
 #pragma once
 
 #include <cassert>
+#include <functional>
 #include <memory>
 #include <sstream>
 #include <stdexcept>
@@ -17,6 +18,7 @@
 #include <d3d12.h>
 
 #include "trrojan/d3d12/export.h"
+#include "trrojan/d3d12/handle.h"
 
 
 namespace trrojan {
@@ -47,6 +49,9 @@ namespace d3d12 {
         const D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE,
         const D3D12_HEAP_TYPE heap_type = D3D12_HEAP_TYPE_DEFAULT,
         const D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_COPY_DEST);
+
+    handle<> create_event(const bool manual_reset,
+        const bool initially_signalled);
 
     /// <summary>
     /// Creates a 2D texture which is initially in the render target state.
@@ -187,6 +192,15 @@ namespace d3d12 {
         const UINT64 cnt);
 
     /// <summary>
+    /// Allow <paramref name="producer" /> to copy data into
+    /// <paramref name="resource" />.
+    /// </summary>
+    /// <param name="resource"></param>
+    /// <param name="producer"></param>
+    void stage_data(ID3D12Resource *resource,
+        const std::function<void(void *, const UINT64)>& producer);
+
+    /// <summary>
     /// Copies the given 2D data into <paramref name="resource" />.
     /// </summary>
     /// <param name="resource"></param>
@@ -245,6 +259,12 @@ namespace d3d12 {
         const D3D12_RESOURCE_STATES state_after, ID3D12Resource *staging,
         const void *data, const UINT64 cnt_cols, const UINT cnt_rows,
         const UINT64 row_pitch = 0);
+
+    /// <summary>
+    /// Infinitely wait for the given event to become signalled.
+    /// </summary>
+    /// <param name="handle"></param>
+    void wait_for_event(handle<>& handle);
 
 } /* end namespace d3d12 */
 } /* end namespace trrojan */

@@ -113,7 +113,7 @@ void trrojan::d3d11::environment::on_initialise(const cmd_line& cmdLine) {
                 // Skip Microsoft's software emulation (cf.
                 // https://msdn.microsoft.com/en-us/library/windows/desktop/bb205075(v=vs.85).aspx)
                 log::instance().write_line(log_level::information, "Excluding "
-                    "\"%s\" from list of device eligible for benchmarking "
+                    "\"{}\" from list of device eligible for benchmarking "
                     "because --with-basic-render-driver was not specified.",
                     W2A(desc.Description));
                 continue;
@@ -124,7 +124,7 @@ void trrojan::d3d11::environment::on_initialise(const cmd_line& cmdLine) {
                 if (std::find(pciIds.begin(), pciIds.end(), pciId)
                         != pciIds.end()) {
                     log::instance().write_line(log_level::information,
-                        "Excluding \"%s\" from list of device eligible for "
+                        "Excluding \"{}\" from list of device eligible for "
                         "benchmarking because another device with the same PCI "
                         "IDs was already added.", W2A(desc.Description));
                     continue;

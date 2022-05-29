@@ -62,9 +62,7 @@ trrojan::result trrojan::d3d12::benchmark_base::run(const configuration& c) {
     }
 
     // Allocate a command list that is used to perform all transition tasks.
-    if (this->_cmd_list_transition == nullptr) {
-        this->_cmd_list_transition = device->create_graphics_command_list();
-    }
+    auto cmd_list = device->create_graphics_command_list();
 
     // Determine whether we are in debug viewing mode, which will block all
     // device-related factors.
@@ -78,16 +76,18 @@ trrojan::result trrojan::d3d12::benchmark_base::run(const configuration& c) {
     }
 
     if (isDebugView) {
-        log::instance().write_line(log_level::warning, "Using the debug view "
-            "restricts the benchmark to the GPU connected to the display. The "
-            "device parameter has no effect.");
+        if (contains(changed, factor_device)) {
+            log::instance().write_line(log_level::verbose, "Forcing the "
+                "debug to be re-created as the device has changed.");
+            this->_debug_target = nullptr;
+        }
+        
         if (this->_debug_target == nullptr) {
             log::instance().write_line(log_level::verbose, "Lazy creation of "
-                "d3d12 debug render target.");
-            this->_debug_target = std::make_shared<debug_render_target>();
-            this->_debug_target->resize(1, 1);  // Force resource allocation.
-            this->_debug_device = std::make_shared<d3d12::device>(
-                this->_debug_target->device());
+                "d3d12 debug render target on {}.", device->name());
+            this->_debug_device = device;
+            this->_debug_target = std::make_shared<debug_render_target>(device);
+            changed.push_back(factor_viewport); // Force resize of target.
         }
 
         // Overwrite device and render target.
@@ -113,13 +113,27 @@ trrojan::result trrojan::d3d12::benchmark_base::run(const configuration& c) {
     if (contains(changed, factor_viewport)) {
         auto vp = c.get<viewport_type>(factor_viewport);
         log::instance().write_line(log_level::verbose, "Resizing the "
-            "benchmarking render target to %d × %d px ...", vp[0], vp[1]);
+            "benchmarking render target to {} × {} px ...", vp[0], vp[1]);
         this->_render_target->resize(vp[0], vp[1]);
     }
 
-    this->_render_target->enable(this->_cmd_list_transition);
-    auto retval = this->on_run(*device, c, changed);
+    // Perform all transition tasks to enable the correct render target. This
+    // is a fire-and-forget operation as we create a new command list every
+    // time.
+    this->_render_target->enable(cmd_list);
+    {
+        auto hr = cmd_list->Close();
+        if (FAILED(hr)) {
+            throw ATL::CAtlException(hr);
+        }
+    }
+    device->execute_command_list(cmd_list);
 
+    // Run the bechmark.
+    auto retval = this->on_run(*device, this->_render_target->buffer_index(),
+        this->_render_target->pipeline_depth(), c, changed);
+
+    // Save the resulting image if requested.
     if (c.get<bool>(factor_save_view)) {
         auto ts = c.get<std::string>(system_factors::factor_timestamp);
         std::replace(ts.begin(), ts.end(), ':', '-');

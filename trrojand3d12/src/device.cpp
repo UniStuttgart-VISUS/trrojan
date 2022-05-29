@@ -12,6 +12,8 @@
 
 #include "trrojan/log.h"
 
+#include "trrojan/d3d12/utilities.h"
+
 
 
 /*
@@ -26,7 +28,7 @@ trrojan::d3d12::device::create_command_allocator(ID3D12Device *device,
     }
 
     ATL::CComPtr<ID3D12CommandAllocator> retval;
-    auto hr = device->CreateCommandAllocator(type, ::IID_ID3D12CommandQueue,
+    auto hr = device->CreateCommandAllocator(type, ::IID_ID3D12CommandAllocator,
         reinterpret_cast<void **>(&retval));
     if (FAILED(hr)) {
         throw ATL::CAtlException(hr);
@@ -74,7 +76,8 @@ trrojan::d3d12::device::device(const ATL::CComPtr<ID3D12Device>& d3dDevice,
         _d3d_device(d3dDevice),
         _direct_command_allocator(create_command_allocator(d3dDevice,
             D3D12_COMMAND_LIST_TYPE_DIRECT)),
-        _dxgi_factory(dxgiFactory) {
+        _dxgi_factory(dxgiFactory),
+        _next_fence(0) {
     assert(this->_command_queue != nullptr);
     assert(this->_compute_command_allocator != nullptr);
     assert(this->_copy_command_allocator != nullptr);
@@ -98,6 +101,15 @@ trrojan::d3d12::device::device(const ATL::CComPtr<ID3D12Device>& d3dDevice,
         std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
         this->_name = conv.to_bytes(desc.Description);
         this->_unique_id = desc.DeviceId;
+    }
+
+    {
+        auto hr = this->_d3d_device->CreateFence(this->_next_fence++,
+            D3D12_FENCE_FLAG_NONE, ::IID_ID3D12Fence,
+            reinterpret_cast<void **>(&this->_fence));
+        if (FAILED(hr)) {
+            throw ATL::CAtlException(hr);
+        }
     }
 }
 
@@ -208,4 +220,33 @@ void trrojan::d3d12::device::set_stable_power_state(const bool enabled) {
     if (FAILED(hr)) {
         throw CAtlException(hr);
     }
+}
+
+
+/*
+ * trrojan::d3d12::device::wait_for_gpu
+ */
+void trrojan::d3d12::device::wait_for_gpu(void) {
+    auto value = this->_next_fence++;
+
+    // Make the fence signal in the command queue with its current value.
+    assert(this->_fence != nullptr);
+    {
+        auto hr = this->_command_queue->Signal(this->_fence, value);
+        if (FAILED(hr)) {
+            throw ATL::CAtlException(hr);
+        }
+    }
+
+    // Signal the event if the fence singalled with its current value.
+    auto evt = create_event(false, false);
+    {
+        auto hr = this->_fence->SetEventOnCompletion(value, this->_fence);
+        if (FAILED(hr)) {
+            throw ATL::CAtlException(hr);
+        }
+    }
+
+    // Wait for the event to signal.
+    wait_for_event(evt);
 }

@@ -62,8 +62,8 @@ bool trrojan::stream::worker_thread::verify(const S *a, const S *b, const S *c,
             &expected, s, 0);
         if (expected != c[i]) {
             trrojan::log::instance().write(trrojan::log_level::warning,
-                "Verification of stream results failed for item %u: found %s, "
-                "but expected %s.\n", i, std::to_string(c[i]).c_str(),
+                "Verification of stream results failed for item {}: found {}, "
+                "but expected {}.\n", i, std::to_string(c[i]).c_str(),
                 std::to_string(expected).c_str());
             return false;
         }
@@ -71,7 +71,7 @@ bool trrojan::stream::worker_thread::verify(const S *a, const S *b, const S *c,
     /* No problem found at this point. */
 
     trrojan::log::instance().write(trrojan::log_level::information,
-        "Verification of %u stream results succeeded.\n", cnt);
+        "Verification of {} stream results succeeded.\n", cnt);
     return true;
 }
 
@@ -125,10 +125,10 @@ void trrojan::stream::worker_thread::dispatch(
         auto cnt = this->_problem->iterations();
         trrojan::timer timer;
 
-        log::instance().write(log_level::verbose, "Worker thread %u is "
-            "performing the following test: size = %u, offset = %u, "
-            "step = %u, task = %i, access pattern = %i, scalar type = %i, "
-            "scalar value = %i, iterations = %u\n", this->rank, P, offset, o,
+        log::instance().write(log_level::verbose, "Worker thread {} is "
+            "performing the following test: size = {}, offset = {}, "
+            "step = {}, task = {}, access pattern = {}, scalar type = {}, "
+            "scalar value = {}, iterations = {}\n", this->rank, P, offset, o,
             static_cast<int>(T), static_cast<int>(A), static_cast<int>(S),
             s, cnt);
 

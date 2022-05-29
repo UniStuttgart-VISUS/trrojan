@@ -684,7 +684,7 @@ static void check_not_null(const TPointer *ptr) {
 /// <summary>
 /// Check whether <paramref name="resource" /> is a valid staging buffer.
 /// </summary>
-static void check_staging_buffer(ID3D12Resource *resource, const UINT64 cnt) {
+static void check_staging_buffer(ID3D12Resource *resource) {
     if (resource == nullptr) {
         throw std::invalid_argument("A valid resource is required to stage "
             "data.");
@@ -697,6 +697,16 @@ static void check_staging_buffer(ID3D12Resource *resource, const UINT64 cnt) {
                 "buffer.");
         }
     }
+}
+
+
+/// <summary>
+/// Check whether <paramref name="resource" /> is a valid staging buffer holding
+/// at least <paramref name="cnt" /> bytes.
+/// </summary>
+static void check_staging_buffer(ID3D12Resource *resource, const UINT64 cnt) {
+    check_staging_buffer(resource);
+    assert(resource != nullptr);
 
     {
         auto device = trrojan::d3d12::get_device(resource);
@@ -734,6 +744,20 @@ ATL::CComPtr<ID3D12Resource> trrojan::d3d12::create_buffer(ID3D12Device *device,
     desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
 
     return create_resource(device, desc, heap_type, state);
+}
+
+
+/*
+ * trrojan::d3d12::create_event
+ */
+trrojan::d3d12::handle<> trrojan::d3d12::create_event(const bool manual_reset,
+        const bool initially_signalled) {
+    handle<> retval = ::CreateEvent(nullptr, manual_reset, initially_signalled,
+        nullptr);
+    if (!retval) {
+        throw ATL::CAtlException(HRESULT_FROM_WIN32(GetLastError()));
+    }
+    return retval;
 }
 
 
@@ -830,8 +854,7 @@ ATL::CComPtr<ID3D12Resource> trrojan::d3d12::create_texture(
     init_data.pData = data;
     init_data.RowPitch = row_pitch;
 
-
-
+    throw "TODO";
     return ATL::CComPtr<ID3D12Resource>();
 }
 
@@ -946,8 +969,29 @@ void trrojan::d3d12::set_debug_object_name(ID3D12Object *obj,
  */
 void trrojan::d3d12::stage_data(ID3D12Resource *resource, const void *data,
         const UINT64 cnt) {
-    check_staging_buffer(resource, cnt);
     check_not_null(data);
+    stage_data(resource, [data, cnt](void *dst, const UINT64 size) {
+        if (size < cnt) {
+            throw std::invalid_argument("The staging buffer is too small for "
+                "the amount of data specified.");
+        }
+
+        ::memcpy(dst, data, cnt);
+    });
+}
+
+
+/*
+ * trrojan::d3d12::stage_data
+ */
+void trrojan::d3d12::stage_data(ID3D12Resource *resource,
+        const std::function<void(void *, const UINT64)>& producer) {
+    check_staging_buffer(resource);
+    assert(resource != nullptr);
+    if (!producer) {
+        throw std::invalid_argument("A valid producer callback must be "
+            "specified.");
+    }
 
     BYTE *dst;
     auto hr = resource->Map(0, nullptr, reinterpret_cast<void **>(&dst));
@@ -955,7 +999,12 @@ void trrojan::d3d12::stage_data(ID3D12Resource *resource, const void *data,
         throw ATL::CAtlException(hr);
     }
 
-    ::memcpy(dst, data, cnt);
+    auto device = trrojan::d3d12::get_device(resource);
+    UINT64 size;
+    device->GetCopyableFootprints(&resource->GetDesc(), 0, 1, 0, nullptr,
+        nullptr, nullptr, &size);
+
+    producer(dst, size);
 
     resource->Unmap(0, nullptr);
 }
@@ -1079,5 +1128,19 @@ void trrojan::d3d12::update_subresource(ID3D12GraphicsCommandList *cmd_list,
     if (state_after != D3D12_RESOURCE_STATE_COPY_DEST) {
         transition_subresource(cmd_list, dst, subresource,
             D3D12_RESOURCE_STATE_COPY_DEST, state_after);
+    }
+}
+
+
+/*
+ * trrojan::d3d12::wait_for_event
+ */
+void trrojan::d3d12::wait_for_event(handle<>& handle) {
+    switch (::WaitForSingleObjectEx(handle, INFINITE, FALSE)) {
+        case WAIT_FAILED:
+            throw ATL::CAtlException(HRESULT_FROM_WIN32(::GetLastError()));
+
+        default:
+            break;
     }
 }

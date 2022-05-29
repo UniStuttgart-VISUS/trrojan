@@ -130,9 +130,9 @@ std::ifstream& trrojan::mmpld_reader::read_file_header(std::ifstream& outStream,
             "MMPLD header.");
     }
 
-    log::instance().write_line(log_level::verbose, "Read MMPLD version %hu; "
-        "%u frames; data within (%f, %f, %f) - (%f, %f, %f); clipping box "
-        "(%f, %f, %f) - (%f, %f, %f)", outHeader.version, outHeader.frames,
+    log::instance().write_line(log_level::verbose, "Read MMPLD version {}; "
+        "{} frames; data within ({}, {}, {}) - ({}, {}, {}); clipping box "
+        "({}, {}, {}) - ({}, {}, {})", outHeader.version, outHeader.frames,
         outHeader.bounding_box[0], outHeader.bounding_box[1],
         outHeader.bounding_box[2], outHeader.bounding_box[3],
         outHeader.bounding_box[4], outHeader.bounding_box[5],
@@ -169,7 +169,7 @@ void trrojan::mmpld_reader::read_frame_header(frame_header& outHeader,
     mmpld_reader::read(outHeader.lists, file);
 
     log::instance().write_line(log_level::verbose, "Read MMPLD frame header: "
-        "%i lists; timestamp %f", outHeader.lists, outHeader.timestamp);
+        "{} lists; timestamp {}", outHeader.lists, outHeader.timestamp);
 }
 
 
@@ -221,9 +221,9 @@ void trrojan::mmpld_reader::read_list_header(list_header& outHeader,
 
     mmpld_reader::read(outHeader.particles, file);
 
-    log::instance().write_line(log_level::verbose, "Read MMPLD list header: %"
-        PRIu64 " particles; position type %d; colour type %d; constant colour "
-        "(%f, %f, %f, %f); intensity range %f - %f; constant radius %f",
+    log::instance().write_line(log_level::verbose, "Read MMPLD list header: {}"
+        " particles; position type {}; colour type {}; constant colour "
+        "({}, {}, {}, {}); intensity range {} - {}; constant radius {}",
         outHeader.particles, static_cast<int>(outHeader.vertex_type),
         static_cast<int>(outHeader.colour_type), outHeader.colour[0],
         outHeader.colour[1], outHeader.colour[2], outHeader.colour[3],

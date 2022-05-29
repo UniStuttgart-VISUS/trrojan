@@ -23,6 +23,16 @@ _EMPTY_BENCH_DEFINE_FACTOR(clear_colour);
 
 
 /*
+ * trrojan::d3d12::empty_benchmark::empty_benchmark
+ */
+trrojan::d3d12::empty_benchmark::empty_benchmark(void) : benchmark_base("empty") {
+    // Declare the configuration data we need to have.
+    this->_default_configs.add_factor(factor::from_manifestations(
+        factor_clear_colour, std::array<float, 4> { 0.0f, 0.0f, 0.0f, 0.0f}));
+}
+
+
+/*
  * trrojan::d3d12::empty_benchmark::~empty_benchmark
  */
 trrojan::d3d12::empty_benchmark::~empty_benchmark(void) { }
@@ -32,19 +42,21 @@ trrojan::d3d12::empty_benchmark::~empty_benchmark(void) { }
  * trrojan::result trrojan::d3d12::empty_benchmark::on_run
  */
 trrojan::result trrojan::d3d12::empty_benchmark::on_run(d3d12::device& device,
+        const UINT current_frame, const UINT total_frames,
         const configuration& config, const std::vector<std::string>& changed) {
     auto clear_colour = config.get<std::array<float, 4>>(factor_clear_colour);
     auto cmd_list = device.create_graphics_command_list(
         D3D12_COMMAND_LIST_TYPE_DIRECT);
     timer cpu_timer;
     auto gpu_freq = gpu_timer::get_timestamp_frequency(device.command_queue());
-    gpu_timer gpu_timer(device.d3d_device());
+    gpu_timer gpu_timer(device.d3d_device(), 2, 1);
 
     // Prepare the result set.
     auto retval = std::make_shared<basic_result>(config,
         std::initializer_list<std::string> {
             "clear_colour",
-            "gpu_time",
+            "clear_time",
+            "total_gpu_time",
     });
 
     // Record the command list.
@@ -52,19 +64,27 @@ trrojan::result trrojan::d3d12::empty_benchmark::on_run(d3d12::device& device,
     gpu_timer.start_frame();
 
     gpu_timer.start(cmd_list, 0);
-    this->clear_target(cmd_list);
-    this->present_target(cmd_list);
+
+    gpu_timer.start(cmd_list, 1);
+    this->clear_target(clear_colour, cmd_list);
+    gpu_timer.end(cmd_list, 1);
+
     gpu_timer.end(cmd_list, 0);
 
+    this->disable_target(cmd_list);
     auto result_index = gpu_timer.end_frame(cmd_list);
 
     // Run the benchmark.
+    cmd_list->Close();
     device.execute_command_list(cmd_list);
-    // TODO: wait for gpu
+
+    // Present and prepare the next frame.
+    this->present_target();
 
     // Collect the results.
     retval->add({
         clear_colour,
+        gpu_timer::to_milliseconds(gpu_timer.evaluate(result_index, 1), gpu_freq),
         gpu_timer::to_milliseconds(gpu_timer.evaluate(result_index, 0), gpu_freq)
         });
 
