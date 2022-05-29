@@ -72,7 +72,12 @@ trrojan::result trrojan::d3d11::two_pass_volume_benchmark::on_run(
         // Rebuild the ray computation technique.
         {
             auto vss = d3d11::plugin::load_resource(
-                MAKEINTRESOURCE(VOLUME_RAY_PASS_VERTEX_SHADER), _T("SHADER"));
+                MAKEINTRESOURCE(VOLUME_RAY_PASS_VERTEX_SHADER),
+#ifndef _UWP
+                _T("SHADER"));
+#else
+                "SHADER");
+#endif // !_UWP
             auto vs = create_vertex_shader(dev, vss);
 
             ATL::CComPtr<ID3D11Buffer> ib;
@@ -81,7 +86,12 @@ trrojan::result trrojan::d3d11::two_pass_volume_benchmark::on_run(
             auto il = create_input_layout(dev, ils, vss);
 
             auto pss = d3d11::plugin::load_resource(
-                MAKEINTRESOURCE(VOLUME_RAY_PASS_PIXEL_SHADER), _T("SHADER"));
+                MAKEINTRESOURCE(VOLUME_RAY_PASS_PIXEL_SHADER),
+#ifndef _UWP
+                _T("SHADER"));
+#else
+                "SHADER");
+#endif // !_UWP
             auto ps = create_pixel_shader(dev, pss);
 
             auto stride = static_cast<UINT>(sizeof(DirectX::XMFLOAT3));
@@ -141,7 +151,12 @@ trrojan::result trrojan::d3d11::two_pass_volume_benchmark::on_run(
         // Rebuild the raycasting technique.
         {
             auto src = d3d11::plugin::load_resource(MAKEINTRESOURCE(
-                VOLUME_PASS_COMPUTE_SHADER), _T("SHADER"));
+                VOLUME_PASS_COMPUTE_SHADER),
+#ifndef _UWP
+                _T("SHADER"));
+#else
+                "SHADER");
+#endif // !_UWP
             auto cs = create_compute_shader(dev, src);
             auto res = rendering_technique::shader_resources();
             res.sampler_states.push_back(this->linear_sampler);

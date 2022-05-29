@@ -18,6 +18,8 @@ set(AssetFiles
   Assets/testspheres_old.mmpld
   #Assets/coronadir_16_100.mmpld
   #Assets/laser.charge.00104.mmpld
+  #Assets/foot.dat
+  #Assets/foot.raw
 )
 
 set(ContentFiles

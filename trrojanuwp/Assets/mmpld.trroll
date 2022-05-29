@@ -1,7 +1,7 @@
 d3d11::sphere-renderer {
 	#string data_set = Assets/laser.charge.00104.mmpld
    #string data_set = Assets/coronadir_16_100.mmpld
-   #string data_set = Assets/testspheres_old.mmpld
+   string data_set = Assets/testspheres_old.mmpld
 	uint32 frame = 0
 	boolean debug_view = true
 	float32 global_radius = 0.07

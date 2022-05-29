@@ -1,7 +1,21 @@
+d3d11::cs-volume-renderer {
+	string data_set = Assets/foot.dat
+   uint32vec2 viewport = 1920 1080
+	boolean debug_view = true
+
+	float32 step_size = 0.5; 1; 2
+
+	string manoeuvre = path_z
+	uint32 manoeuvre_steps = 100
+	uint32 iterations = 2
+	uint32 manoeuvre_step = 0; 24; 49; 74; 99
+}
+
 d3d11::sphere-renderer {
 	string data_set =  pos_rad_intensity : 2000000 : 0 : 10 10 10 : 0.01 0.1
    #string data_set =  pos_rad_intensity : 200 : 0 : 10 10 10 : 0.01 0.1
 	uint32 frame = 0
+   uint32vec2 viewport = 1920 1080
 	boolean debug_view = true
 	float32 global_radius = 0.07
 

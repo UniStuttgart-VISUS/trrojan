@@ -99,6 +99,9 @@ size_t trrojan::d3d11::plugin::create_benchmarks(benchmark_list& dst) const {
     auto sb = std::make_shared<sphere_benchmark>();
     sb->SetWindow(m_window);
     dst.emplace_back(sb);
+    auto vb = std::make_shared<cs_volume_benchmark>();
+    vb->SetWindow(m_window);
+    dst.emplace_back(vb);
 #endif
 #ifndef _UWP
     dst.emplace_back(std::make_shared<sphere_benchmark>());

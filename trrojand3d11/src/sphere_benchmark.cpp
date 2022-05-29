@@ -614,41 +614,8 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
         static_cast<double>(cpuTime) / cntCpuIterations
         });
 
-
-    auto result_to_string = [](std::ostringstream& oss, const basic_result& result) {
-
-        auto print_name = [](std::ostringstream& oss, const std::string& str) {
-            const auto len = str.length();
-
-            oss << str;
-
-            for (size_t i = len; i < 0/*padding*/; ++i) {
-                std::cout << ' ';
-            }
-
-            oss << ": ";
-        };
-
-        for (size_t i = 0; i < result.measurements(); ++i) {
-            for (auto& c : result.configuration()) {
-                print_name(oss,c.name());
-                oss << c.value() << std::endl;
-            }
-
-            for (size_t j = 0; j < result.values_per_measurement(); ++j) {
-                print_name(oss,result.result_names()[j]);
-                oss << result.raw_result(i, j) << std::endl;
-            }
-
-            oss << std::endl;
-        }
-
-        oss << std::endl;
-    };
-
     std::ostringstream retval_log_output;
     result_to_string(retval_log_output, *retval);
-
     log::instance().write_line(log_level::information, retval_log_output.str());
 
     return retval;

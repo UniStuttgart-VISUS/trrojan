@@ -31,6 +31,16 @@ trrojan::d3d11::uwp_debug_render_target::uwp_debug_render_target(void) : base(nu
  * trrojan::d3d11::uwp_debug_render_target::~uwp_debug_render_target
  */
 trrojan::d3d11::uwp_debug_render_target::~uwp_debug_render_target(void) {
+    // release all things?
+    this->_rtv = nullptr;
+    this->_dsv = nullptr;
+    this->_uav = nullptr;
+    this->m_d2dContext->SetTarget(nullptr);
+    this->m_d2dTargetBitmap = nullptr;
+    this->swapChain = nullptr;
+
+    this->device_context()->ClearState();
+    this->device_context()->Flush();
 }
 
 

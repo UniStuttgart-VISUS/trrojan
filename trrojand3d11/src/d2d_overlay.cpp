@@ -366,16 +366,26 @@ void trrojan::d3d11::d2d_overlay::create_target_independent_resources(void) {
 
     assert(this->_d3d_device != nullptr);
     {
-        auto src = d3d11::plugin::load_resource(MAKEINTRESOURCE(100),
-            _T("SHADER"));
+        std::vector<uint8_t> src;
+#ifndef _UWP
+        src = d3d11::plugin::load_resource(MAKEINTRESOURCE(100),_T("SHADER"));
+#else
+        auto filepath = GetAppFolder().string() + "trrojand3d11" + "/" + "OverlayVertexShader.cso";
+        src = ReadFileBytes(filepath);
+#endif // !_UWP
         this->_vs = create_vertex_shader(this->_d3d_device, src);
         set_debug_object_name(this->_vs.p, "D2D overlay vertex shader");
         this->_input_layout = nullptr;
     }
 
     {
-        auto src = d3d11::plugin::load_resource(MAKEINTRESOURCE(101),
-            _T("SHADER"));
+        std::vector<uint8_t> src;
+#ifndef _UWP
+        src = d3d11::plugin::load_resource(MAKEINTRESOURCE(101), _T("SHADER"));
+#else
+        auto filepath = GetAppFolder().string() + "trrojand3d11" + "/" + "OverlayPixelShader.cso";
+        src = ReadFileBytes(filepath);
+#endif // !_UWP
         this->_ps = create_pixel_shader(this->_d3d_device, src);
         set_debug_object_name(this->_ps.p, "D2D overlay pixel shader");
     }

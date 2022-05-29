@@ -138,6 +138,12 @@ trrojan::result trrojan::d3d11::benchmark_base::run(const configuration& c) {
 }
 
 
+void trrojan::d3d11::benchmark_base::SetWindow(winrt::agile_ref<winrt::Windows::UI::Core::CoreWindow> const& window)
+{
+    m_window = window;
+}
+
+
 /*
  * trrojan::d3d11::benchmark_base::benchmark_base
  */
