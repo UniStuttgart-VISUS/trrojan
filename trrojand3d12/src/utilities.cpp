@@ -775,14 +775,14 @@ ATL::CComPtr<ID3D12Resource> trrojan::d3d12::create_render_target(
     desc.Format = format;
     desc.Width = width;
     desc.Height = height;
-    desc.Flags = flags;
+    desc.Flags = flags | D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
     desc.DepthOrArraySize = 1;
     desc.SampleDesc.Count = 1;
     desc.SampleDesc.Quality = 0;
     desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
 
     return create_resource(device, desc, D3D12_HEAP_TYPE_DEFAULT,
-        D3D12_RESOURCE_STATE_RENDER_TARGET);
+        D3D12_RESOURCE_STATE_PRESENT);
 }
 
 

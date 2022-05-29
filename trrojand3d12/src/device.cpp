@@ -241,7 +241,7 @@ void trrojan::d3d12::device::wait_for_gpu(void) {
     // Signal the event if the fence singalled with its current value.
     auto evt = create_event(false, false);
     {
-        auto hr = this->_fence->SetEventOnCompletion(value, this->_fence);
+        auto hr = this->_fence->SetEventOnCompletion(value, evt);
         if (FAILED(hr)) {
             throw ATL::CAtlException(hr);
         }

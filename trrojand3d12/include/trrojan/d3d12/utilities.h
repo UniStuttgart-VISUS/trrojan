@@ -54,7 +54,7 @@ namespace d3d12 {
         const bool initially_signalled);
 
     /// <summary>
-    /// Creates a 2D texture which is initially in the render target state.
+    /// Creates a 2D texture which is initially in the present state.
     /// </summary>
     /// <param name="device"></param>
     /// <param name="width"></param>

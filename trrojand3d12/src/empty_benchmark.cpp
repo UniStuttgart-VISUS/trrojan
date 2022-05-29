@@ -80,6 +80,7 @@ trrojan::result trrojan::d3d12::empty_benchmark::on_run(d3d12::device& device,
 
     // Present and prepare the next frame.
     this->present_target();
+    device.wait_for_gpu();
 
     // Collect the results.
     retval->add({
