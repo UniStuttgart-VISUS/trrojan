@@ -18,8 +18,14 @@ set(AssetFiles
   Assets/testspheres_old.mmpld
   #Assets/coronadir_16_100.mmpld
   #Assets/laser.charge.00104.mmpld
-  #Assets/foot.dat
-  #Assets/foot.raw
+  Assets/volume-tf_demo.trroll
+  Assets/foot.dat
+  Assets/foot.raw
+  Assets/bonsai.dat
+  Assets/bonsai.raw
+  Assets/trrojan_cham1.brudervn
+  Assets/trrojan_zeiss1.brudervn
+  Assets/trrojan_zeiss2.brudervn
 )
 
 set(ContentFiles

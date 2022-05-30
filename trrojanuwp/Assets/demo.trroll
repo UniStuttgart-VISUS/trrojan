@@ -1,14 +1,17 @@
 d3d11::cs-volume-renderer {
-	string data_set = Assets/foot.dat
+	string data_set = Assets/bonsai.dat
+   string xfer_func = Assets/trrojan_zeiss1.brudervn
    uint32vec2 viewport = 1920 1080
 	boolean debug_view = true
 
-	float32 step_size = 0.5; 1; 2
+	float32 step_size = 0.25; 0.5; 1; 2
 
 	string manoeuvre = path_z
 	uint32 manoeuvre_steps = 100
 	uint32 iterations = 2
 	uint32 manoeuvre_step = 0; 24; 49; 74; 99
+
+   uint32 min_wall_time = 200
 }
 
 d3d11::sphere-renderer {
