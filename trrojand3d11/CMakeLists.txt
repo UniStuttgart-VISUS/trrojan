@@ -25,7 +25,7 @@ set(ShaderFiles ${VertexShaderFiles} ${DomainShaderFiles} ${HullShaderFiles} ${G
 
 # Configure fxc
 set_property(SOURCE ${ShaderFiles} PROPERTY VS_SHADER_ENTRYPOINT Main)
-set_property(SOURCE ${ShaderFiles} PROPERTY VS_SHADER_MODEL 5.0)
+set_property(SOURCE ${ShaderFiles} PROPERTY VS_SHADER_MODEL 5.1)
 set_property(SOURCE ${ShaderFiles} PROPERTY VS_SHADER_FLAGS /Zi)
 
 # Configure shader types

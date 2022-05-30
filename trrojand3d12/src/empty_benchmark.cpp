@@ -57,7 +57,10 @@ trrojan::result trrojan::d3d12::empty_benchmark::on_run(d3d12::device& device,
             "clear_colour",
             "clear_time",
             "total_gpu_time",
-    });
+            "total_cpu_time",
+        });
+
+    cpu_timer.start();
 
     // Record the command list.
     cpu_timer.start();
@@ -82,11 +85,14 @@ trrojan::result trrojan::d3d12::empty_benchmark::on_run(d3d12::device& device,
     this->present_target();
     device.wait_for_gpu();
 
+    const auto cpu_time = cpu_timer.elapsed_millis();
+
     // Collect the results.
     retval->add({
         clear_colour,
         gpu_timer::to_milliseconds(gpu_timer.evaluate(result_index, 1), gpu_freq),
-        gpu_timer::to_milliseconds(gpu_timer.evaluate(result_index, 0), gpu_freq)
+        gpu_timer::to_milliseconds(gpu_timer.evaluate(result_index, 0), gpu_freq),
+        cpu_time
         });
 
     return retval;
