@@ -125,7 +125,8 @@ namespace d3d12 {
         /// the swap chain what the next buffer is and override this method to
         /// switch to the buffer index reported by the swap chain.</para>
         /// </remarks>
-        virtual void present(void);
+        /// <returns>The buffer index of the next frame.</returns>
+        virtual UINT present(void);
 
         /// <summary>
         /// Resizes the swap chain of the render target to the given dimension.

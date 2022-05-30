@@ -92,22 +92,21 @@ namespace d3d12 {
         /// </summary>
         /// <param name="device">The device to use. It is guaranteed that the
         /// device is obtained from <paramref name="config" />.</param>
-        /// <param name="current_frame">Specifies the index of the currently
-        /// active frame.</param>
-        /// <param name="total_frames">Specifies the total number of frames that
-        /// can be in-flight for the render target in use.</param>
         /// <param name="config">The configuration to run.</param>
         /// <param name="changed">The names of the factors that have been
         /// changed since the last test run.</param>
         /// <returns>The test results.</returns>
         virtual trrojan::result on_run(d3d12::device& device,
-            const UINT current_frame, const UINT total_frames,
             const configuration& config,
             const std::vector<std::string>& changed) = 0;
 
-        inline void present_target(void) {
+        inline UINT pipeline_depth(void) const {
+            return this->_render_target->pipeline_depth();
+        }
+
+        inline UINT present_target(void) {
             assert(this->_render_target != nullptr);
-            this->_render_target->present();
+            return this->_render_target->present();
         }
 
         void save_target(const char *path = nullptr);

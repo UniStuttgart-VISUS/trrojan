@@ -42,7 +42,6 @@ trrojan::d3d12::empty_benchmark::~empty_benchmark(void) { }
  * trrojan::result trrojan::d3d12::empty_benchmark::on_run
  */
 trrojan::result trrojan::d3d12::empty_benchmark::on_run(d3d12::device& device,
-        const UINT current_frame, const UINT total_frames,
         const configuration& config, const std::vector<std::string>& changed) {
     auto clear_colour = config.get<std::array<float, 4>>(factor_clear_colour);
     auto cmd_list = device.create_graphics_command_list(
@@ -83,7 +82,7 @@ trrojan::result trrojan::d3d12::empty_benchmark::on_run(d3d12::device& device,
 
     // Present and prepare the next frame.
     this->present_target();
-    device.wait_for_gpu();
+    //device.wait_for_gpu();
 
     const auto cpu_time = cpu_timer.elapsed_millis();
 

@@ -1,11 +1,12 @@
-/// <copyright file="io.h" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Christoph Müller</author>
+// <copyright file="io.h" company="Visualisierungsinstitut der Universität Stuttgart">
+// Copyright © 2016 - 2022 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Christoph Müller</author>
 
 #pragma once
 
+#include <cinttypes>
 #include <cstdio>
 #include <string>
 #include <vector>
@@ -139,7 +140,7 @@ namespace trrojan {
     /// </summary>
     /// <param name="path"></param>
     /// <returns></returns>
-    std::vector<char> TRROJANCORE_API read_binary_file(const char *path);
+    std::vector<std::uint8_t> TRROJANCORE_API read_binary_file(const char *path);
 
     /// <summary>
     /// Read a whole binary file at the location designated by
@@ -147,7 +148,7 @@ namespace trrojan {
     /// </summary>
     /// <param name="path"></param>
     /// <returns></returns>
-    inline std::vector<char> TRROJANCORE_API read_binary_file(
+    inline std::vector<std::uint8_t> TRROJANCORE_API read_binary_file(
             const std::string& path) {
         return read_binary_file(path.c_str());
     }

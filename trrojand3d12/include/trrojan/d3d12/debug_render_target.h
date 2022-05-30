@@ -47,7 +47,7 @@ namespace d3d12 {
         virtual ~debug_render_target(void);
 
         /// <inheritdoc />
-        void present(void) override;
+        UINT present(void) override;
 
         // <inheritdoc />
         void resize(const unsigned int width,

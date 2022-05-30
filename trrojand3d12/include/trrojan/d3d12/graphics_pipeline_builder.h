@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include "trrojan/io.h"
+
 #include "trrojan/d3d12/plugin.h"
 #include "trrojan/d3d12/utilities.h"
 
@@ -48,12 +50,16 @@ namespace d3d12 {
         }
 
 #if !defined(TRROJAN_FOR_UWP)
-        inline graphics_pipeline_builder& set_domain_shader(LPCTSTR name,
-                LPCTSTR type = _T("SHADER")) {
+        inline graphics_pipeline_builder& set_domain_shader_from_resource(
+                LPCTSTR name, LPCTSTR type = _T("SHADER")) {
             return this->set_domain_shader(d3d12::plugin::load_resource(name,
                 type));
         }
 #endif /* !defined(TRROJAN_FOR_UWP) */
+
+        inline graphics_pipeline_builder& set_domain_shader(LPCSTR path) {
+            return this->set_domain_shader(read_binary_file(path));
+        }
 
         inline graphics_pipeline_builder& set_geometry_shader(
                 const BYTE *byte_code,
@@ -76,11 +82,21 @@ namespace d3d12 {
         }
 
 #if !defined(TRROJAN_FOR_UWP)
-        inline graphics_pipeline_builder& set_geometry_shader(LPCTSTR name,
-                LPCTSTR type = _T("SHADER")) {
+        inline graphics_pipeline_builder& set_geometry_shader_from_resource(
+                LPCTSTR name, LPCTSTR type = _T("SHADER")) {
             return this->set_geometry_shader(plugin::load_resource(name, type));
         }
 #endif /* !defined(TRROJAN_FOR_UWP) */
+
+        inline graphics_pipeline_builder& set_geometry_shader_from_file(
+                LPCSTR path) {
+            return this->set_geometry_shader(read_binary_file(path));
+        }
+
+        inline graphics_pipeline_builder& set_geometry_shader_from_file(
+                const std::string& path) {
+            return this->set_geometry_shader_from_file(path.data());
+        }
 
         inline graphics_pipeline_builder& set_hull_shader(const BYTE *byte_code,
                 const std::size_t cnt_byte_code) {
@@ -102,11 +118,21 @@ namespace d3d12 {
         }
 
 #if !defined(TRROJAN_FOR_UWP)
-        inline graphics_pipeline_builder& set_hull_shader(LPCTSTR name,
-                LPCTSTR type = _T("SHADER")) {
+        inline graphics_pipeline_builder& set_hull_shader_from_resource(
+                LPCTSTR name, LPCTSTR type = _T("SHADER")) {
             return this->set_hull_shader(plugin::load_resource(name, type));
         }
 #endif /* !defined(TRROJAN_FOR_UWP) */
+
+        inline graphics_pipeline_builder& set_hull_shader_from_file(
+                LPCSTR path) {
+            return this->set_hull_shader(read_binary_file(path));
+        }
+
+        inline graphics_pipeline_builder& set_hull_shader_from_file(
+                const std::string& path) {
+            return this->set_hull_shader_from_file(path.data());
+        }
 
         inline graphics_pipeline_builder& set_input_layout(
                 const D3D12_INPUT_ELEMENT_DESC *elements,
@@ -161,11 +187,21 @@ namespace d3d12 {
         }
 
 #if !defined(TRROJAN_FOR_UWP)
-        inline graphics_pipeline_builder& set_pixel_shader(LPCTSTR name,
-                LPCTSTR type = _T("SHADER")) {
+        inline graphics_pipeline_builder& set_pixel_shader_from_resource(
+                LPCTSTR name, LPCTSTR type = _T("SHADER")) {
             return this->set_pixel_shader(plugin::load_resource(name, type));
         }
 #endif /* !defined(TRROJAN_FOR_UWP) */
+
+        inline graphics_pipeline_builder& set_pixel_shader_from_file(
+                LPCSTR path) {
+            return this->set_pixel_shader(read_binary_file(path));
+        }
+
+        inline graphics_pipeline_builder& set_pixel_shader_from_file(
+                const std::string& path) {
+            return this->set_pixel_shader_from_file(path.data());
+        }
 
         inline graphics_pipeline_builder& set_primitive_topology(
                 const D3D12_PRIMITIVE_TOPOLOGY_TYPE topology) {
@@ -194,11 +230,21 @@ namespace d3d12 {
         }
 
 #if !defined(TRROJAN_FOR_UWP)
-        inline graphics_pipeline_builder& set_vertex_shader(LPCTSTR name,
-                LPCTSTR type = _T("SHADER")) {
+        inline graphics_pipeline_builder& set_vertex_shader_from_resource(
+                LPCTSTR name, LPCTSTR type = _T("SHADER")) {
             return this->set_vertex_shader(plugin::load_resource(name, type));
         }
 #endif /* !defined(TRROJAN_FOR_UWP) */
+
+        inline graphics_pipeline_builder& set_vertex_shader_from_file(
+                LPCSTR path) {
+            return this->set_vertex_shader(read_binary_file(path));
+        }
+
+        inline graphics_pipeline_builder& set_vertex_shader_from_file(
+                const std::string& path) {
+            return this->set_vertex_shader_from_file(path.data());
+        }
 
         /// <summary>
         /// Converts the builder into the underlying descriptor object.

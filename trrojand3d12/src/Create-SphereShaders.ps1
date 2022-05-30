@@ -32,15 +32,15 @@ begin {
     # Note: Number of techniques must be below 32!
 
     # Properties of the input data.
-    $SPHERE_INPUT_PV_COLOUR = ([uint64] 1) -shl 0
-    $SPHERE_INPUT_PV_RADIUS = ([uint64] 1) -shl 1
-    $SPHERE_INPUT_PV_INTENSITY = ([uint64] 1) -shl 2
-    $SPHERE_INPUT_PP_INTENSITY = ([uint64] 1) -shl 16
-    $SPHERE_INPUT_FLT_COLOUR = ([uint64] 1) -shl 17
+    $SPHERE_INPUT_PV_COLOUR = ([uint64] 1) -shl 0       # mmpld::particle_properties::per_particle_colour
+    $SPHERE_INPUT_PV_RADIUS = ([uint64] 1) -shl 1       # mmpld::particle_properties::per_particle_radius
+    $SPHERE_INPUT_PV_INTENSITY = ([uint64] 1) -shl 2    # mmpld::particle_properties::per_particle_intensity
+    $SPHERE_INPUT_FLT_COLOUR = ([uint64] 1) -shl 3      # mmpld::particle_properties::float_colour
 
     # Variants of the renderer.
-    $SPHERE_VARIANT_PV_RAY = ([uint64] 1) -shl 18
-    $SPHERE_VARIANT_CONSERVATIVE_DEPTH = ([uint64] 1) -shl 19
+    $SPHERE_INPUT_PP_INTENSITY = ([uint64] 1) -shl 8
+    $SPHERE_VARIANT_PV_RAY = ([uint64] 1) -shl 9
+    $SPHERE_VARIANT_CONSERVATIVE_DEPTH = ([uint64] 1) -shl 10
 
     # List of all techniques that have been created.
     $shaders = @{}
@@ -157,7 +157,7 @@ process {
                     $cntFlt = 0
                     if (($technique -band $SPHERE_TECHNIQUE_USE_SRV) -and ($pvColour -ne 0)) {
                         # Technique uses structured resource view and format
-                        # includes colour, so we need to include in-shader RGB8 to 
+                        # includes colour, so we need to include in-shader RGB8 to
                         # float conversion and host code conversion.
                         $cntFlt = 1
                     }
@@ -251,9 +251,12 @@ process {
     $resID = $ResourceStart
 
 
-    $includes += "#define _ADD_SPHERE_SHADERS(ht)\"
-    $shaders.Keys | %{
-        $isFirst = ($resID -eq $ResourceStart)
+    $resLookup = @("#define _LOOKUP_SPHERE_SHADER_RESOURCES(builder, id)\")
+    $fileLookup = @("#define _LOOKUP_SPHERE_SHADER_FILES(builder, id, resolve_path)\")
+    $resLookup += "switch (id) {\"
+    $fileLookup += "switch (id) {\"
+
+    $shaders.Keys | Foreach-Object {
         $id = $_
         $shader = $shaders[$id]
         $vs = $shader.VertexShader
@@ -262,46 +265,52 @@ process {
         $gs = $shader.GeometryShader
         $ps = $shader.PixelShader
 
+        $resLookup += "    case ($($id)):\"
+        $fileLookup += "   case ($($id)):\"
         if ($vs) {
             $resources += "$resID $ResourceType $vs.cso"
-            $vs = $resID++
-        } else {
-            $vs = 0
+            $resLookup += "        builder.set_vertex_shader_from_resource(MAKEINTRESOURCE($resID), _T(`"$ResourceType`"));\"
+            $fileLookup += "        builder.set_vertex_shader_from_file(resolve_path(`"$vs.cso`"));\"
+            ++$resID
         }
 
         if ($hs) {
             $resources += "$resID $ResourceType $hs.cso"
-            $hs = $resID++
-        } else {
-            $hs = 0
+            $resLookup += "        builder.set_hull_shader_from_resource(MAKEINTRESOURCE($resID), _T(`"$ResourceType`"));\"
+            $fileLookup += "        builder.set_vertex_shader_from_file(resolve_path(`"$hs.cso`"));\"
+            ++$resID
         }
 
         if ($ds) {
             $resources += "$resID $ResourceType $ds.cso"
-            $ds = $resID++
-        } else {
-            $ds = 0
+            $resLookup += "        builder.set_domain_shader_from_resource(MAKEINTRESOURCE($resID), _T(`"$ResourceType`"));\"
+            $fileLookup += "        builder.set_vertex_shader_from_file(resolve_path(`"$ds.cso`"));\"
+            ++$resID
         }
 
         if ($gs) {
             $resources += "$resID $ResourceType $gs.cso"
-            $gs = $resID++
-        } else {
-            $gs = 0
+            $resLookup += "        builder.set_geometry_shader_from_resource(MAKEINTRESOURCE($resID), _T(`"$ResourceType`"));\"
+            $fileLookup += "        builder.set_vertex_shader_from_file(resolve_path(`"$gs.cso`"));\"
+            ++$resID
         }
 
         if ($ps) {
             $resources += "$resID $ResourceType $ps.cso"
-            $ps = $resID++
-        } else {
-            $ps = 0
+            $resLookup += "        builder.set_pixel_shader_from_resource(MAKEINTRESOURCE($resID), _T(`"$ResourceType`"));\"
+            $fileLookup += "        builder.set_vertex_shader_from_file(resolve_path(`"$ps.cso`"));\"
+            ++$resID
         }
 
-        if (-not $isFirst) {
-            $includes[-1] += ";\"
-        }
-        $includes += "ht[$id] = { $vs, $hs, $ds, $gs, $ps }"
+        $resLookup += "        break;\"
+        $fileLookup += "        break;\"
     }
+
+    $resLookup += "    }"
+    $fileLookup += "    }"
+
+    $includes += $resLookup
+    $includes += $fileLookup
 
     $includes | Out-File -FilePath (Join-Path $OutPath $IncludeFile) -Encoding ascii 
     $resources | Out-File -FilePath (Join-Path $OutPath $ResourceFile) -Encoding ascii

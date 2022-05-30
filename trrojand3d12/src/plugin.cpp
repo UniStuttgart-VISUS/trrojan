@@ -6,6 +6,8 @@
 
 #include "trrojan/d3d12/plugin.h"
 
+#include "trrojan/io.h"
+
 //#include "trrojan/d3d12/cs_volume_benchmark.h"
 #include "trrojan/d3d12/empty_benchmark.h"
 #include "trrojan/d3d12/environment.h"
@@ -42,6 +44,39 @@ BOOL WINAPI DllMain(HINSTANCE hDll, DWORD reason, LPVOID reserved) {
 /// </summary>
 extern "C" TRROJAND3D12_API trrojan::plugin_base *get_trrojan_plugin(void) {
     return new trrojan::d3d12::plugin();
+}
+
+
+/*
+ * trrojan::d3d12::plugin::get_directory
+ */
+std::string trrojan::d3d12::plugin::get_directory(void) {
+    auto retval = get_location();
+    auto it = std::find(retval.rbegin(), retval.rend(),
+        directory_separator_char);
+    return std::string(retval.begin(), it.base());
+}
+
+
+/*
+ * trrojan::d3d12::plugin::get_location
+ */
+std::string trrojan::d3d12::plugin::get_location(void) {
+    std::vector<char> retval(MAX_PATH);
+
+    auto len = ::GetModuleFileNameA(::hTrrojanDll, retval.data(),
+        static_cast<DWORD>(retval.size()));
+
+    while (len == retval.size()) {
+        assert(retval.size() > 1);
+        retval.resize(retval.size() + retval.size() / 2);
+        len = ::GetModuleFileNameA(::hTrrojanDll, retval.data(),
+            static_cast<DWORD>(retval.size()));
+    }
+
+    retval[len] = 0;
+
+    return retval.data();
 }
 
 

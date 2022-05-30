@@ -126,15 +126,15 @@ _VOL_BENCH_DEFINE_FACTOR(xfer_func);
 void trrojan::d3d11::volume_benchmark_base::load_brudervn_xfer_func(
         const char *path, ID3D11Device *device, ID3D11Texture1D **outTexture,
         ID3D11ShaderResourceView **outSrv) {
-    std::vector<char> data;
-    int value;
+    std::vector<std::uint8_t> data;
+    std::uint8_t value;
 
     std::ifstream file(path, std::ios::in);
     if (file.is_open()) {
         data.reserve(256);
 
         while (file >> value) {
-            data.push_back(static_cast<char>(value));
+            data.push_back(value);
         }
 
     } else {
@@ -213,7 +213,7 @@ void trrojan::d3d11::volume_benchmark_base::load_volume(const char *path,
  * trrojan::d3d11::volume_benchmark_base::load_xfer_func
  */
 void trrojan::d3d11::volume_benchmark_base::load_xfer_func(
-        const std::vector<char>& data, ID3D11Device *device,
+        const std::vector<std::uint8_t>& data, ID3D11Device *device,
         ID3D11Texture1D **outTexture, ID3D11ShaderResourceView **outSrv) {
     auto cnt = std::div(static_cast<long>(data.size()), 4l);
 
@@ -253,6 +253,7 @@ void trrojan::d3d11::volume_benchmark_base::load_xfer_func(
         }
     }
 }
+
 
 /*
  * trrojan::d3d11::volume_benchmark_base::load_xfer_func

@@ -102,8 +102,9 @@ void trrojan::d3d12::render_target_base::enable(
 /*
  * trrojan::d3d12::render_target_base::present
  */
-void trrojan::d3d12::render_target_base::present(void) {
+UINT trrojan::d3d12::render_target_base::present(void) {
     this->switch_buffer((this->_buffer_index + 1) % this->pipeline_depth());
+    return this->_buffer_index;
 }
 
 

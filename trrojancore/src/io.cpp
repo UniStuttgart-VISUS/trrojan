@@ -17,7 +17,8 @@
 /*
  * trrojan::read_binary_file
  */
-std::vector<char> TRROJANCORE_API trrojan::read_binary_file(const char *path) {
+std::vector<std::uint8_t> TRROJANCORE_API trrojan::read_binary_file(
+        const char *path) {
     if (path == nullptr) {
         throw std::invalid_argument("'path' must not be nullptr.");
     }
@@ -29,17 +30,17 @@ std::vector<char> TRROJANCORE_API trrojan::read_binary_file(const char *path) {
         throw std::runtime_error(msg.str());
     }
 
-    std::vector<char> retval(file.tellg());
+    std::vector<std::uint8_t> retval(file.tellg());
     file.seekg(0, std::ios::beg);
 
-    if (!file.read(retval.data(), retval.size())) {
+    if (!file.read(reinterpret_cast<char *>(retval.data()), retval.size())) {
         std::stringstream msg;
         msg << "Failed to read all " << retval.size()
             << " bytes from \"" << path << "\"." << std::ends;
         throw std::runtime_error(msg.str());
     }
 
-    return std::move(retval);
+    return retval;
 }
 
 

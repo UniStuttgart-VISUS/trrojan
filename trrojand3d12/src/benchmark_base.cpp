@@ -130,8 +130,7 @@ trrojan::result trrojan::d3d12::benchmark_base::run(const configuration& c) {
     device->execute_command_list(cmd_list);
 
     // Run the bechmark.
-    auto retval = this->on_run(*device, this->_render_target->buffer_index(),
-        this->_render_target->pipeline_depth(), c, changed);
+    auto retval = this->on_run(*device, c, changed);
 
     // Save the resulting image if requested.
     if (c.get<bool>(factor_save_view)) {

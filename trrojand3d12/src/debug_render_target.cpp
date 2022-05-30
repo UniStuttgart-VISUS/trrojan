@@ -45,7 +45,7 @@ trrojan::d3d12::debug_render_target::~debug_render_target(void) {
 /*
  * trrojan::d3d12::debug_render_target::present
  */
-void trrojan::d3d12::debug_render_target::present(void) {
+UINT trrojan::d3d12::debug_render_target::present(void) {
     // Use base class to transition back buffer to present state.
     render_target_base::present();
 
@@ -55,39 +55,10 @@ void trrojan::d3d12::debug_render_target::present(void) {
     }
 
     // Switch to the next buffer used by the swap chain.
-    auto index = this->_swap_chain->GetCurrentBackBufferIndex();
-    render_target_base::switch_buffer(index);
+    auto retval = this->_swap_chain->GetCurrentBackBufferIndex();
+    render_target_base::switch_buffer(retval);
 
-#if 0
-    if (this->_staging_buffer != nullptr) {
-        assert(this->_swapChain != nullptr);
-        ATL::CComPtr<ID3D12Texture2D> dst;
-        ATL::CComPtr<ID3D12Resource> res;
-        ATL::CComPtr<ID3D12Texture2D> src;
-
-        {
-            auto hr = this->swapChain->GetBuffer(0, IID_ID3D12Texture2D,
-                reinterpret_cast<void **>(&dst));
-            if (FAILED(hr)) {
-                throw ATL::CAtlException(hr);
-            }
-        }
-
-        {
-            this->_uav->GetResource(&res);
-            auto hr = res->QueryInterface(&src);
-            if (FAILED(hr)) {
-                throw ATL::CAtlException(hr);
-            }
-        }
-
-        this->device_context()->CopyResource(dst, src);
-    }
-
-    if (this->swapChain != nullptr) {
-        this->swapChain->Present(0, 0);
-    }
-#endif
+    return retval;
 }
 
 

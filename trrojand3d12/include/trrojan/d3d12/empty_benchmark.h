@@ -28,7 +28,6 @@ namespace d3d12 {
     protected:
 
         virtual trrojan::result on_run(d3d12::device& device,
-            const UINT current_frame, const UINT total_frames,
             const configuration& config,
             const std::vector<std::string>& changed) override;
 
