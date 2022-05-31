@@ -105,6 +105,7 @@ add_subdirectory(trrojanstream)
 
 # Build the D3D plugin
 if (WIN32)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMMPLD_WITH_DIRECT3D")
     add_subdirectory(trrojand3d11)
     add_subdirectory(trrojand3d12)
 endif (WIN32)

@@ -1,10 +1,12 @@
-/// <copyright file="sphere_data_set.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Christoph Müller</author>
+// <copyright file="sphere_data_set.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
+// Copyright © 2016 - 2022 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Christoph Müller</author>
 
 #include "trrojan/d3d11/sphere_data_set.h"
+
+#include <mmpld.h>
 
 #include "trrojan/log.h"
 
@@ -17,6 +19,9 @@
 const trrojan::d3d11::sphere_data_set_base::properties_type
 trrojan::d3d11::sphere_data_set_base::property_float_colour
     = SPHERE_INPUT_FLT_COLOUR;
+static_assert(mmpld::particle_properties::float_colour
+    == static_cast<mmpld::particle_properties>(SPHERE_INPUT_FLT_COLOUR),
+    "Constant value SPHERE_INPUT_FLT_COLOUR must match MMLPD library.");
 
 
 /*
@@ -25,6 +30,9 @@ trrojan::d3d11::sphere_data_set_base::property_float_colour
 const trrojan::d3d11::sphere_data_set_base::properties_type
 trrojan::d3d11::sphere_data_set_base::property_per_sphere_colour
     = SPHERE_INPUT_PV_COLOUR;
+static_assert(mmpld::particle_properties::per_particle_colour
+    == static_cast<mmpld::particle_properties>(SPHERE_INPUT_PV_COLOUR),
+    "Constant value SPHERE_INPUT_PV_COLOUR must match MMLPD library.");
 
 
 /*
@@ -33,6 +41,9 @@ trrojan::d3d11::sphere_data_set_base::property_per_sphere_colour
 const trrojan::d3d11::sphere_data_set_base::properties_type
 trrojan::d3d11::sphere_data_set_base::property_per_sphere_intensity
     = SPHERE_INPUT_PP_INTENSITY | SPHERE_INPUT_PV_INTENSITY;
+static_assert(mmpld::particle_properties::per_particle_intensity
+    == static_cast<mmpld::particle_properties>(SPHERE_INPUT_PV_INTENSITY),
+    "Constant value SPHERE_INPUT_PV_INTENSITY must match MMLPD library.");
 
 
 /*
@@ -41,6 +52,9 @@ trrojan::d3d11::sphere_data_set_base::property_per_sphere_intensity
 const trrojan::d3d11::sphere_data_set_base::properties_type
 trrojan::d3d11::sphere_data_set_base::property_per_sphere_radius
     = SPHERE_INPUT_PV_RADIUS;
+static_assert(mmpld::particle_properties::per_particle_radius
+    == static_cast<mmpld::particle_properties>(SPHERE_INPUT_PV_RADIUS),
+    "Constant value SPHERE_INPUT_PV_RADIUS must match MMLPD library.");
 
 
 /*

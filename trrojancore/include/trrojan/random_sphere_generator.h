@@ -166,6 +166,17 @@ namespace trrojan {
             const create_flags flags = create_flags::none);
 
         /// <summary>
+        /// Generates the D3D11 or D3D12 input layout for the given type of
+        /// sphere.
+        /// </summary>
+        /// <typeparam name="TInputElement"></typeparam>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        template<class TInputElement>
+        static std::vector<TInputElement> get_input_layout(
+            const sphere_type type);
+
+        /// <summary>
         /// Retrieves the data properties inherent to the type of spheres.
         /// </summary>
         static properties_type get_properties(const sphere_type type);
@@ -186,3 +197,5 @@ namespace trrojan {
 
     };
 }
+
+#include "trrojan/random_sphere_generator.inl"

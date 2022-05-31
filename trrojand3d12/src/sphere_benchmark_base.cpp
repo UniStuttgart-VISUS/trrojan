@@ -364,6 +364,8 @@ trrojan::d3d12::sphere_benchmark_base::get_pipeline_state(ID3D12Device *device,
 
         // Set the shaders from the big generated lookup table.
         set_shaders(builder, id);
+
+        //builder.set_input_layout(random_sphere_generator<>)
 #if false
         rendering_technique::shader_resources vsRes;
         rendering_technique::shader_resources hsRes;
