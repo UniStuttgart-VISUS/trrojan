@@ -1,5 +1,5 @@
 // <copyright file="sphere_benchmark_base.h" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2016 - 2020 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+// Copyright © 2016 - 2022 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
 // <author>Christoph Müller</author>
@@ -161,12 +161,38 @@ namespace d3d12 {
         property_mask_type get_data_properties(const shader_id_type shader_code);
 
         /// <summary>
+        /// Gets a <see cref="graphics_pipeline_builder" /> preconfigured for
+        /// the given shader and the loaded data set.
+        /// </summary>
+        /// <param name="shader_code"></param>
+        /// <returns></returns>
+        graphics_pipeline_builder get_pipeline_builder(
+            const shader_id_type shader_code);
+
+        /// <summary>
         /// Gets the pipeline state for the given shading technique.
         /// </summary>
         /// <param name="shader_code"></param>
         /// <returns></returns>
         ATL::CComPtr<ID3D12PipelineState> get_pipeline_state(
             ID3D12Device *device, const shader_id_type shader_code);
+
+        /// <summary>
+        /// Load the data set into an upload buffer and store its properties in
+        /// the class.
+        /// </summary>
+        /// <remarks>
+        /// The buffer returned is an upload buffer in read state. Callers need
+        /// to copy its content to a resource that can be used as vertex buffer
+        /// or structured resource buffer for rendering. The benchmark class
+        /// will not keep any copy of this buffer, ie it will be in the same
+        /// state as if one had called <see cref="load_data_properties" />.
+        /// </remarks>
+        /// <param name="device"></param>
+        /// <param name="shader_code"></param>
+        /// <param name="config"></param>
+        ATL::CComPtr<ID3D12Resource> load_data(ID3D12Device *device,
+            const shader_id_type shader_code, const configuration& config);
 
         /// <summary>
         /// Load the data set properties and input layout for the given
@@ -177,31 +203,21 @@ namespace d3d12 {
         void load_data_properties(const shader_id_type shader_code,
             const configuration& config);
 
-        /// <summary>
-        /// Try processing the data set in <paramref name="config" /> as
-        /// configuration for random sphere generation and upload it to the
-        /// given device in case of success.
-        /// </summary>
-        /// <param name="device"></param>
-        /// <param name="shader_code"></param>
-        /// <param name="config"></param>
-        void make_random_spheres(ID3D12Device *device,
-            const shader_id_type shader_code, const configuration& config);
 
-        /// <summary>
-        /// The camera for computing the transformation matrices.
-        /// </summary>
         trrojan::perspective_camera _camera;
+        ATL::CComPtr<ID3D12Resource> _colour_map;
+        ATL::CComPtr<ID3D12Resource> _sphere_constants;
+        ATL::CComPtr<ID3D12Resource> _tessellation_constants;
+        ATL::CComPtr<ID3D12Resource> _view_constants;
 
     private:
 
-        /// <summary>
-        /// A hash table for caching pipeline states.
-        /// </summary>
+        typedef std::unordered_map<shader_id_type,
+            graphics_pipeline_builder> pipeline_builder_map_type;
         typedef std::unordered_map<shader_id_type,
             ATL::CComPtr<ID3D12PipelineState>> pipline_state_map_type;
 
-        ATL::CComPtr<ID3D12Resource> _data;
+        pipeline_builder_map_type _builder_cache;
         properties_type _data_properties;
         std::vector<D3D12_INPUT_ELEMENT_DESC> _input_layout;
         pipline_state_map_type _pipeline_cache;
@@ -233,34 +249,6 @@ namespace d3d12 {
         bool check_data_compatibility(const shader_id_type shaderCode);
 
 
-        /// <summary>
-        /// Gets or creates a rendering technique using the given rendering
-        /// method and input data properties set.
-        /// </summary>
-        /// <param name=""></param>
-        /// <param name=""></param>
-        /// <returns>A reference to the cached technique.</returns>
-        rendering_technique& get_technique(ID3D11Device *device,
-            shader_id_type shaderCode);
-
-        /// <summary>
-        /// Loads the MMPLD frame with the given number from the already opened
-        /// MMPLD file.
-        /// </summary>
-        void load_mmpld_frame(ID3D11Device *dev,
-            const shader_id_type shaderCode, const configuration& config);
-
-        /// <summary>
-        /// Try processing the data set in <paramref name="config" /> as
-        /// configuration for random sphere generation and load
-        /// <see cref="data_buffer" /> with the random spheres in case
-        /// of success.
-        /// </summary>
-        /// <param name=""></param>
-        /// <param name=""></param>
-        /// <param name=""></param>
-        void make_random_spheres(ID3D11Device *dev,
-            const shader_id_type shaderCode, const configuration& config);
 
         /// <summary>
         /// The camera for computing the transformation matrices.
