@@ -80,7 +80,12 @@ namespace d3d12 {
         /// A type to express the properties of a particle data set as a
         /// bitmask.
         /// </summary>
-        typedef std::uint64_t properties_type;
+        typedef random_sphere_generator::properties_type properties_type;
+
+        /// <summary>
+        /// The underlying bitmask type of <see cref="properties_type" />.
+        /// </summary>
+        typedef std::underlying_type<properties_type>::type property_mask_type;
 
         /// <summary>
         /// An identifier for a single shader variant.
@@ -138,11 +143,11 @@ namespace d3d12 {
         static void set_shaders(graphics_pipeline_builder& builder,
             const shader_id_type shader_id);
 
-        static const properties_type property_float_colour;
-        static const properties_type property_per_sphere_colour;
-        static const properties_type property_per_sphere_intensity;
-        static const properties_type property_per_sphere_radius;
-        static const properties_type property_structured_resource;
+        static const property_mask_type property_float_colour;
+        static const property_mask_type property_per_sphere_colour;
+        static const property_mask_type property_per_sphere_intensity;
+        static const property_mask_type property_per_sphere_radius;
+        static const property_mask_type property_structured_resource;
 
         /// <summary>
         /// Initialise a new instance.
@@ -153,7 +158,7 @@ namespace d3d12 {
         /// Retrieves the properties of the currently loaded data set and erases
         /// all flags which are not relevant for the given shader technique.
         /// </summary>
-        properties_type get_data_properties(const shader_id_type shader_code);
+        property_mask_type get_data_properties(const shader_id_type shader_code);
 
         /// <summary>
         /// Gets the pipeline state for the given shading technique.
@@ -162,6 +167,15 @@ namespace d3d12 {
         /// <returns></returns>
         ATL::CComPtr<ID3D12PipelineState> get_pipeline_state(
             ID3D12Device *device, const shader_id_type shader_code);
+
+        /// <summary>
+        /// Load the data set properties and input layout for the given
+        /// configuration, but not the data itself.
+        /// </summary>
+        /// <param name="shader_code"></param>
+        /// <param name="config"></param>
+        void load_data_properties(const shader_id_type shader_code,
+            const configuration& config);
 
         /// <summary>
         /// Try processing the data set in <paramref name="config" /> as
@@ -189,7 +203,7 @@ namespace d3d12 {
 
         ATL::CComPtr<ID3D12Resource> _data;
         properties_type _data_properties;
-        std::vector<D3D12_INPUT_LAYOUT_DESC> _input_layout;
+        std::vector<D3D12_INPUT_ELEMENT_DESC> _input_layout;
         pipline_state_map_type _pipeline_cache;
 
 #if 0

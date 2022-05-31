@@ -146,12 +146,13 @@ trrojan::d3d12::sphere_benchmark_base::get_shader_id(const configuration& config
 trrojan::random_sphere_generator::description
 trrojan::d3d12::sphere_benchmark_base::parse_random_sphere_desc(
         const configuration& config, const shader_id_type shader_code) {
-    static const auto ERASE_PROPERTIES = property_structured_resource;
+    static const auto ERASE_PROPERTIES = ~static_cast<property_mask_type>(
+        property_structured_resource);
 
     const auto data_set = config.get<std::string>(factor_data_set);
 
     auto flags = static_cast<random_sphere_generator::create_flags>(
-        shader_code & ~ERASE_PROPERTIES);
+        shader_code & ERASE_PROPERTIES);
     if (config.get<bool>(factor_force_float_colour)) {
         flags |= random_sphere_generator::create_flags::float_colour;
     }
@@ -177,7 +178,7 @@ void trrojan::d3d12::sphere_benchmark_base::set_shaders(
 /*
  * trrojan::d3d12::sphere_benchmark_base::property_float_colour
  */
-const trrojan::d3d12::sphere_benchmark_base::properties_type
+const trrojan::d3d12::sphere_benchmark_base::property_mask_type
 trrojan::d3d12::sphere_benchmark_base::property_float_colour
     = SPHERE_INPUT_FLT_COLOUR;
 static_assert(mmpld::particle_properties::float_colour
@@ -188,7 +189,7 @@ static_assert(mmpld::particle_properties::float_colour
 /*
  * trrojan::d3d12::sphere_benchmark_base::property_per_sphere_colour
  */
-const trrojan::d3d12::sphere_benchmark_base::properties_type
+const trrojan::d3d12::sphere_benchmark_base::property_mask_type
 trrojan::d3d12::sphere_benchmark_base::property_per_sphere_colour
     = SPHERE_INPUT_PV_COLOUR;
 static_assert(mmpld::particle_properties::per_particle_colour
@@ -199,7 +200,7 @@ static_assert(mmpld::particle_properties::per_particle_colour
 /*
  * trrojan::d3d12::sphere_benchmark_base::property_per_sphere_intensity
  */
-const trrojan::d3d12::sphere_benchmark_base::properties_type
+const trrojan::d3d12::sphere_benchmark_base::property_mask_type
 trrojan::d3d12::sphere_benchmark_base::property_per_sphere_intensity
     = SPHERE_INPUT_PP_INTENSITY | SPHERE_INPUT_PV_INTENSITY;
 static_assert(mmpld::particle_properties::per_particle_intensity
@@ -210,7 +211,7 @@ static_assert(mmpld::particle_properties::per_particle_intensity
 /*
  * trrojan::d3d12::sphere_benchmark_base::property_per_sphere_radius
  */
-const trrojan::d3d12::sphere_benchmark_base::properties_type
+const trrojan::d3d12::sphere_benchmark_base::property_mask_type
 trrojan::d3d12::sphere_benchmark_base::property_per_sphere_radius
     = SPHERE_INPUT_PV_RADIUS;
 static_assert(mmpld::particle_properties::per_particle_radius
@@ -221,7 +222,7 @@ static_assert(mmpld::particle_properties::per_particle_radius
 /*
  * trrojan::d3d12::sphere_benchmark_base::property_structured_resource
  */
-const trrojan::d3d12::sphere_benchmark_base::properties_type
+const trrojan::d3d12::sphere_benchmark_base::property_mask_type
 trrojan::d3d12::sphere_benchmark_base::property_structured_resource
     = SPHERE_TECHNIQUE_USE_SRV;
 
@@ -230,7 +231,8 @@ trrojan::d3d12::sphere_benchmark_base::property_structured_resource
  * trrojan::d3d12::sphere_benchmark_base::sphere_benchmark_base
  */
 trrojan::d3d12::sphere_benchmark_base::sphere_benchmark_base(
-        const std::string& name) : benchmark_base(name), _data_properties(0) {
+        const std::string& name)
+        : benchmark_base(name), _data_properties(properties_type::none) {
     // Declare the configuration data we need to have.
     this->_default_configs.add_factor(factor::from_manifestations(
         factor_adapt_tess_maximum, static_cast<unsigned int>(8)));
@@ -280,14 +282,14 @@ trrojan::d3d12::sphere_benchmark_base::sphere_benchmark_base(
 /*
  * trrojan::d3d12::sphere_benchmark_base::get_data_properties
  */
-trrojan::d3d12::sphere_benchmark_base::properties_type
+trrojan::d3d12::sphere_benchmark_base::property_mask_type
 trrojan::d3d12::sphere_benchmark_base::get_data_properties(
         const shader_id_type shader_code) {
     static const shader_id_type LET_TECHNIQUE_DECIDE
         = ~(SPHERE_INPUT_PV_INTENSITY | SPHERE_INPUT_PP_INTENSITY);
 
     auto retval = (this->_data != nullptr)
-        ? this->_data_properties
+        ? static_cast<property_mask_type>(this->_data_properties)
         : 0;
 
     if ((retval & SPHERE_INPUT_PV_INTENSITY) != 0) {
@@ -298,6 +300,31 @@ trrojan::d3d12::sphere_benchmark_base::get_data_properties(
     }
 
     return retval;
+}
+
+
+/*
+ * trrojan::d3d12::sphere_benchmark_base::load_data_properties
+ */
+void trrojan::d3d12::sphere_benchmark_base::load_data_properties(
+        const shader_id_type shader_code, const configuration& config) {
+    try {
+        auto desc = parse_random_sphere_desc(config, shader_code);
+        this->_data_properties = random_sphere_generator::get_properties(
+            desc.sphere_type);
+        this->_input_layout = random_sphere_generator::get_input_layout<
+            D3D12_INPUT_ELEMENT_DESC>(desc.sphere_type);
+
+    } catch (...) {
+        auto path = config.get<std::string>(factor_data_set);
+        mmpld::list_header list_header;
+
+        mmpld::file<HANDLE> file(path.c_str());
+        file.read_particles(list_header, nullptr, 0);
+
+        this->_input_layout = mmpld::get_input_layout<D3D12_INPUT_ELEMENT_DESC>(
+            list_header);
+    }
 }
 
 
@@ -335,7 +362,8 @@ ATL::CComPtr<ID3D12PipelineState>
 trrojan::d3d12::sphere_benchmark_base::get_pipeline_state(ID3D12Device *device,
         const shader_id_type shader_code) {
     assert(device != nullptr);
-    auto data_code = this->get_data_properties(shader_code);
+    auto data_code = static_cast<property_mask_type>(this->get_data_properties(
+        shader_code));
     const auto id = shader_code | data_code;
     const auto is_flt = ((id & SPHERE_INPUT_FLT_COLOUR) != 0);
     const auto is_geo = ((id & SPHERE_TECHNIQUE_USE_GEO) != 0);

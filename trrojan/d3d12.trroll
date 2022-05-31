@@ -1,0 +1,4 @@
+d3d12::empty {
+	boolean debug_view = true; false
+	float32vec4 clear_colour = 0.1 0.1 1.0 1.0
+}

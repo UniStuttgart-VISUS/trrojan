@@ -1,26 +1,27 @@
-d3d11::cs-volume-renderer {
-	string data_set = S:\Daten\Volumen\tuebingen\foot.dat
-	boolean debug_view = true
+#d3d11::cs-volume-renderer {
+#	string data_set = S:\Daten\Volumen\tuebingen\foot.dat
+#	string xfer_func = T:\Programmcode\trrojan\trrojan\trrojan_cham1.brudervn
+#	boolean debug_view = true
+#
+#	float32 step_size = 0.5; 1; 2
+#
+#	string manoeuvre = path_z
+#	uint32 manoeuvre_steps = 100
+#	uint32 iterations = 2
+#	uint32 manoeuvre_step = 0; 24; 49; 74; 99
+#}
 
-	float32 step_size = 0.5; 1; 2
-
-	string manoeuvre = path_z
-	uint32 manoeuvre_steps = 100
-	uint32 iterations = 2
-	uint32 manoeuvre_step = 0; 24; 49; 74; 99
-}
-
-d3d11::2pass-volume-renderer {
-	string data_set = S:\Daten\Volumen\tuebingen\foot.dat
-	boolean debug_view = true
-
-	float32 step_size = 0.5; 1; 2
-
-	string manoeuvre = path_z
-	uint32 manoeuvre_steps = 100
-	uint32 iterations = 2
-	uint32 manoeuvre_step = 0; 24; 49; 74; 99
-}
+#d3d11::2pass-volume-renderer {
+#	string data_set = S:\Daten\Volumen\tuebingen\foot.dat
+#	boolean debug_view = true
+#
+#	float32 step_size = 0.5; 1; 2
+#
+#	string manoeuvre = path_z
+#	uint32 manoeuvre_steps = 100
+#	uint32 iterations = 2
+#	uint32 manoeuvre_step = 0; 24; 49; 74; 99
+#}
 
 d3d11::sphere-renderer {
 	string data_set =  pos_rad_intensity : 2000000 : 0 : 10 10 10 : 0.01 0.1
