@@ -141,6 +141,26 @@ trrojan::d3d12::sphere_benchmark_base::get_shader_id(const configuration& config
 
 
 /*
+ * trrojan::d3d12::sphere_benchmark_base::parse_random_sphere_desc
+ */
+trrojan::random_sphere_generator::description
+trrojan::d3d12::sphere_benchmark_base::parse_random_sphere_desc(
+        const configuration& config, const shader_id_type shader_code) {
+    static const auto ERASE_PROPERTIES = property_structured_resource;
+
+    const auto data_set = config.get<std::string>(factor_data_set);
+
+    auto flags = static_cast<random_sphere_generator::create_flags>(
+        shader_code & ~ERASE_PROPERTIES);
+    if (config.get<bool>(factor_force_float_colour)) {
+        flags |= random_sphere_generator::create_flags::float_colour;
+    }
+
+    return random_sphere_generator::parse_description(data_set, flags);
+}
+
+
+/*
  * trrojan::d3d12::sphere_benchmark_base::set_shaders
  */
 void trrojan::d3d12::sphere_benchmark_base::set_shaders(
@@ -197,6 +217,7 @@ static_assert(mmpld::particle_properties::per_particle_radius
     == static_cast<mmpld::particle_properties>(SPHERE_INPUT_PV_RADIUS),
     "Constant value SPHERE_INPUT_PV_RADIUS must match MMLPD library.");
 
+
 /*
  * trrojan::d3d12::sphere_benchmark_base::property_structured_resource
  */
@@ -209,7 +230,7 @@ trrojan::d3d12::sphere_benchmark_base::property_structured_resource
  * trrojan::d3d12::sphere_benchmark_base::sphere_benchmark_base
  */
 trrojan::d3d12::sphere_benchmark_base::sphere_benchmark_base(
-        const std::string& name) : benchmark_base(name) {
+        const std::string& name) : benchmark_base(name), _data_properties(0) {
     // Declare the configuration data we need to have.
     this->_default_configs.add_factor(factor::from_manifestations(
         factor_adapt_tess_maximum, static_cast<unsigned int>(8)));
@@ -253,6 +274,197 @@ trrojan::d3d12::sphere_benchmark_base::sphere_benchmark_base(
         factor_vs_xfer_function, false));
 
     this->add_default_manoeuvre();
+}
+
+
+/*
+ * trrojan::d3d12::sphere_benchmark_base::get_data_properties
+ */
+trrojan::d3d12::sphere_benchmark_base::properties_type
+trrojan::d3d12::sphere_benchmark_base::get_data_properties(
+        const shader_id_type shader_code) {
+    static const shader_id_type LET_TECHNIQUE_DECIDE
+        = ~(SPHERE_INPUT_PV_INTENSITY | SPHERE_INPUT_PP_INTENSITY);
+
+    auto retval = (this->_data != nullptr)
+        ? this->_data_properties
+        : 0;
+
+    if ((retval & SPHERE_INPUT_PV_INTENSITY) != 0) {
+        // If we need a transfer function, let the shader code decide where to
+        // apply it.
+        retval &= LET_TECHNIQUE_DECIDE;
+        retval |= (shader_code & LET_TECHNIQUE_DECIDE);
+    }
+
+    return retval;
+}
+
+
+/*
+ * trrojan::d3d12::sphere_benchmark_base::make_random_spheres
+ */
+void trrojan::d3d12::sphere_benchmark_base::make_random_spheres(
+        ID3D12Device *device, const shader_id_type shader_code,
+        const configuration& config) {
+    assert(device != nullptr);
+    auto desc = parse_random_sphere_desc(config, shader_code);
+    auto size = random_sphere_generator::create(nullptr, 0, desc);
+    this->_data = create_buffer(device, size, 0);
+
+    {
+        void *data;
+        auto staging_buffer = create_upload_buffer(this->_data);
+
+        auto hr = staging_buffer->Map(0, nullptr, &data);
+        if (FAILED(hr)) {
+            throw ATL::CAtlException(hr);
+        }
+
+        random_sphere_generator::create(data, size, desc);
+
+        staging_buffer->Unmap(0, nullptr);
+    }
+}
+
+
+/*
+ * trrojan::d3d12::sphere_benchmark_base::get_pipeline_state
+ */
+ATL::CComPtr<ID3D12PipelineState>
+trrojan::d3d12::sphere_benchmark_base::get_pipeline_state(ID3D12Device *device,
+        const shader_id_type shader_code) {
+    assert(device != nullptr);
+    auto data_code = this->get_data_properties(shader_code);
+    const auto id = shader_code | data_code;
+    const auto is_flt = ((id & SPHERE_INPUT_FLT_COLOUR) != 0);
+    const auto is_geo = ((id & SPHERE_TECHNIQUE_USE_GEO) != 0);
+    const auto is_inst = ((id & SPHERE_TECHNIQUE_USE_INSTANCING) != 0);
+    const auto is_ps_tex = ((id & SPHERE_INPUT_PP_INTENSITY) != 0);
+    const auto is_ray = ((id & SPHERE_TECHNIQUE_USE_RAYCASTING) != 0);
+    const auto is_srv = ((id & SPHERE_TECHNIQUE_USE_SRV) != 0);
+    const auto is_tess = ((id & SPHERE_TECHNIQUE_USE_TESS) != 0);
+    const auto is_vs_tex = ((id & SPHERE_INPUT_PV_INTENSITY) != 0);
+
+    auto retval = this->_pipeline_cache.find(id);
+    auto is_create = (retval == this->_pipeline_cache.end());
+
+    if (!is_create) {
+        // If the device was switched, we need to recreate the pipeline state
+        // on the new device.
+        auto pipeline_device = get_device(retval->second);
+        is_create = (pipeline_device != device);
+    }
+
+    if (is_create) {
+        log::instance().write_line(log_level::verbose, "No cached pipeline "
+            "state was found for for {} with data features {} (ID {}) was "
+            "found. Creating a new one ...", shader_code, data_code, id);
+        graphics_pipeline_builder builder;
+
+        // Set the shaders from the big generated lookup table.
+        set_shaders(builder, id);
+#if false
+        rendering_technique::shader_resources vsRes;
+        rendering_technique::shader_resources hsRes;
+        rendering_technique::shader_resources dsRes;
+        rendering_technique::shader_resources gsRes;
+        rendering_technique::shader_resources psRes;
+        auto pt = D3D12_PRIMITIVE_TOPOLOGY_POINTLIST;
+        auto sid = id;
+
+        if (!is_srv) {
+            // The type of colour is only relevant for SRVs, VB-based methods do
+            // not declare this in their shader flags because the layout is
+            // handled via the input layout of the technique.
+            sid &= ~SPHERE_INPUT_FLT_COLOUR;
+        }
+
+        // TODO: input layout
+
+        auto it = this->shader_resources.find(sid);
+        if (it == this->shader_resources.end()) {
+            std::stringstream msg;
+            msg << "Shader sources for sphere rendering method 0x"
+                << std::hex << sid << " was not found." << std::ends;
+            throw std::runtime_error(msg.str());
+        }
+
+        if (is_technique(shader_code, SPHERE_TECHNIQUE_QUAD_INST)) {
+            assert(is_ray);
+            pt = D3D12_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP;
+            vsRes.constant_buffers.push_back(this->sphere_constants);
+            vsRes.constant_buffers.push_back(this->view_constants);
+
+            psRes.constant_buffers.push_back(this->sphere_constants);
+            psRes.constant_buffers.push_back(this->view_constants);
+
+            il = nullptr;   // Uses vertex-from-nothing technique.
+
+        if (is_tess) {
+            pt = D3D12_PRIMITIVE_TOPOLOGY_1_CONTROL_POINT_PATCHLIST;
+            vsRes.constant_buffers.push_back(this->sphere_constants);
+            vsRes.constant_buffers.push_back(this->view_constants);
+
+            hsRes.constant_buffers.push_back(nullptr);
+            hsRes.constant_buffers.push_back(this->view_constants);
+            hsRes.constant_buffers.push_back(this->tessellation_constants);
+
+            dsRes.constant_buffers.push_back(nullptr);
+            dsRes.constant_buffers.push_back(this->view_constants);
+
+            psRes.constant_buffers.push_back(this->sphere_constants);
+            psRes.constant_buffers.push_back(this->view_constants);
+        }
+
+        if (is_geo) {
+            assert(is_ray);
+            pt = d3d12_PRIMITIVE_TOPOLOGY_POINTLIST;
+            vsRes.constant_buffers.push_back(this->sphere_constants);
+            vsRes.constant_buffers.push_back(this->view_constants);
+
+            gsRes.constant_buffers.push_back(nullptr);
+            gsRes.constant_buffers.push_back(this->view_constants);
+            gsRes.constant_buffers.push_back(this->tessellation_constants);
+
+            psRes.constant_buffers.push_back(this->sphere_constants);
+            psRes.constant_buffers.push_back(this->view_constants);
+        }
+
+        if (is_ps_tex) {
+            psRes.sampler_states.push_back(this->linear_sampler);
+            rendering_technique::set_shader_resource_view(psRes,
+                this->colour_map, 0);
+
+        } else if (is_vs_tex) {
+            vsRes.sampler_states.push_back(this->linear_sampler);
+            rendering_technique::set_shader_resource_view(vsRes,
+                this->colour_map, 0);
+        }
+
+        this->_pipeline_cache[id] = builder.build(device);
+#endif
+
+#if 0
+        {
+            d3d12_RASTERIZER_DESC desc;
+            rendering_technique::rasteriser_state_type state;
+
+            ::ZeroMemory(&desc, sizeof(desc));
+            desc.FillMode = d3d12_FILL_SOLID;
+            desc.CullMode = d3d12_CULL_NONE;
+
+            auto hr = device->CreateRasterizerState(&desc, &state);
+            assert(SUCCEEDED(hr));
+
+            this->technique_cache[id].set_rasteriser_state(state);
+        }
+#endif
+    }
+
+    retval = this->_pipeline_cache.find(id);
+    assert(retval != this->_pipeline_cache.end());
+    return retval->second;
 }
 
 
@@ -774,30 +986,6 @@ bool trrojan::d3d12::sphere_benchmark_base::check_data_compatibility(
 }
 
 
-/*
- * trrojan::d3d12::sphere_benchmark_base::get_data_properties
- */
-trrojan::d3d12::sphere_benchmark_base::data_properties_type
-trrojan::d3d12::sphere_benchmark_base::get_data_properties(
-        const shader_id_type shaderCode) {
-    data_properties_type retval = (this->data != nullptr)
-        ? this->data->properties()
-        : 0;
-
-    if ((retval & SPHERE_INPUT_PV_INTENSITY) != 0) {
-        // If we need a transfer function, let the shader code decide where to
-        // apply it.
-        assert((retval & SPHERE_INPUT_PP_INTENSITY) != 0);
-        const shader_id_type LET_TECHNIQUE_DECIDE
-            = SPHERE_INPUT_PV_INTENSITY
-            | SPHERE_INPUT_PP_INTENSITY;
-        retval &= ~LET_TECHNIQUE_DECIDE;
-        retval |= (shaderCode & LET_TECHNIQUE_DECIDE);
-    }
-
-    return retval;
-}
-
 
 /*
  * trrojan::d3d12::sphere_benchmark_base::get_technique
@@ -997,23 +1185,5 @@ void trrojan::d3d12::sphere_benchmark_base::load_mmpld_frame(Id3d12Device *dev,
     log::instance().write_line(log_level::verbose, "Loading MMPLD frame {} ...",
         f);
     d->read_frame(dev, f, flags);
-}
-
-
-/*
- * trrojan::d3d12::sphere_benchmark_base::make_random_spheres
- */
-void trrojan::d3d12::sphere_benchmark_base::make_random_spheres(
-        Id3d12Device *dev, const shader_id_type shaderCode,
-        const configuration& config) {
-    auto conf = config.get<std::string>(factor_data_set);
-    auto flags = static_cast<random_sphere_data_set::create_flags>(shaderCode);
-    auto forceFloat = config.get<bool>(factor_force_float_colour);
-
-    if (forceFloat) {
-        flags |= random_sphere_data_set::property_float_colour;
-    }
-
-    this->data = random_sphere_data_set::create(dev, flags, conf);
 }
 #endif

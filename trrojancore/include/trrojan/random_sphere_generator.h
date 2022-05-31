@@ -12,6 +12,7 @@
 
 #include <mmpld.h>
 
+#include "trrojan/configuration.h"
 #include "trrojan/export.h"
 
 
@@ -182,5 +183,6 @@ namespace trrojan {
         /// <returns></returns>
         static description parse_description(const std::string& description,
             const create_flags flags = create_flags::none);
+
     };
 }

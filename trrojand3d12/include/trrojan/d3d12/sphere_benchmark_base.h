@@ -11,6 +11,7 @@
 #include <mmpld.h>
 
 #include "trrojan/camera.h"
+#include "trrojan/random_sphere_generator.h"
 #include "trrojan/timer.h"
 
 #include "trrojan/d3d12/benchmark_base.h"
@@ -39,7 +40,7 @@ namespace d3d12 {
         typedef std::uint32_t frame_type;
 
         /// <summary>
-        /// Typoe for inside tessellation factors.
+        /// Type for inside tessellation factors.
         /// </summary>
         typedef std::array<float, 2> inside_tess_factor_type;
 
@@ -119,6 +120,16 @@ namespace d3d12 {
         }
 
         /// <summary>
+        /// Parses the data set in the given <see cref="configuration" /> as
+        /// configuration of random spheres.
+        /// </summary>
+        /// <param name="config"></param>
+        /// <param name="shader_code"></param>
+        /// <returns></returns>
+        static random_sphere_generator::description parse_random_sphere_desc(
+            const configuration& config, const shader_id_type shader_code);
+
+        /// <summary>
         /// Sets the necessary shaders for the given
         /// <see cref="shader_id_type" /> in the given pipeline state builder.
         /// </summary>
@@ -137,6 +148,49 @@ namespace d3d12 {
         /// Initialise a new instance.
         /// </summary>
         sphere_benchmark_base(const std::string& name);
+
+        /// <summary>
+        /// Retrieves the properties of the currently loaded data set and erases
+        /// all flags which are not relevant for the given shader technique.
+        /// </summary>
+        properties_type get_data_properties(const shader_id_type shader_code);
+
+        /// <summary>
+        /// Gets the pipeline state for the given shading technique.
+        /// </summary>
+        /// <param name="shader_code"></param>
+        /// <returns></returns>
+        ATL::CComPtr<ID3D12PipelineState> get_pipeline_state(
+            ID3D12Device *device, const shader_id_type shader_code);
+
+        /// <summary>
+        /// Try processing the data set in <paramref name="config" /> as
+        /// configuration for random sphere generation and upload it to the
+        /// given device in case of success.
+        /// </summary>
+        /// <param name="device"></param>
+        /// <param name="shader_code"></param>
+        /// <param name="config"></param>
+        void make_random_spheres(ID3D12Device *device,
+            const shader_id_type shader_code, const configuration& config);
+
+        /// <summary>
+        /// The camera for computing the transformation matrices.
+        /// </summary>
+        trrojan::perspective_camera _camera;
+
+    private:
+
+        /// <summary>
+        /// A hash table for caching pipeline states.
+        /// </summary>
+        typedef std::unordered_map<shader_id_type,
+            ATL::CComPtr<ID3D12PipelineState>> pipline_state_map_type;
+
+        ATL::CComPtr<ID3D12Resource> _data;
+        properties_type _data_properties;
+        std::vector<D3D12_INPUT_LAYOUT_DESC> _input_layout;
+        pipline_state_map_type _pipeline_cache;
 
 #if 0
         /// <inheritdoc />
@@ -164,12 +218,6 @@ namespace d3d12 {
         /// </summary>
         bool check_data_compatibility(const shader_id_type shaderCode);
 
-        /// <summary>
-        /// Retrieves the properties of the currently loaded data set and erases
-        /// all flags which are not relevant for the given shader technique.
-        /// </summary>
-        data_properties_type get_data_properties(
-            const shader_id_type shaderCode);
 
         /// <summary>
         /// Gets or creates a rendering technique using the given rendering

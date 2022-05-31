@@ -124,11 +124,20 @@ namespace d3d12 {
         const UINT first_subresource = 0, const UINT cnt_subresources = 1);
 
     /// <summary>
-    /// Gets the device on which the given resource has been allocated.
+    /// Create an upload buffer of the specified size.
     /// </summary>
-    /// <param name="resource"></param>
+    /// <param name="device"></param>
+    /// <param name="size"></param>
     /// <returns></returns>
-    ATL::CComPtr<ID3D12Device> get_device(ID3D12Resource *resource);
+    ATL::CComPtr<ID3D12Resource> create_upload_buffer(ID3D12Device *device,
+        const UINT64 size);
+
+    /// <summary>
+    /// Gets the device the child belongs to.
+    /// </summary>
+    /// <param name="child"></param>
+    /// <returns></returns>
+    ATL::CComPtr<ID3D12Device> get_device(ID3D12DeviceChild *child);
 
     /// <summary>
     /// Gets a <see cref="D3D12_TEXTURE_COPY_LOCATION" /> for the given

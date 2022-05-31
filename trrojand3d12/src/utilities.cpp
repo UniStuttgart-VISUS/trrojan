@@ -904,14 +904,24 @@ ATL::CComPtr<ID3D12Resource> trrojan::d3d12::create_upload_buffer(
 
 
 /*
+ * trrojan::d3d12::create_upload_buffer
+ */
+ATL::CComPtr<ID3D12Resource> trrojan::d3d12::create_upload_buffer(
+        ID3D12Device *device, const UINT64 size) {
+    return create_buffer(device, size, 0, D3D12_RESOURCE_FLAG_NONE,
+        D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ);
+}
+
+
+/*
  * trrojan::d3d12::get_device
  */
 ATL::CComPtr<ID3D12Device> trrojan::d3d12::get_device(
-        ID3D12Resource *resource) {
-    check_not_null(resource);
+        ID3D12DeviceChild *child) {
+    check_not_null(child);
     ATL::CComPtr<ID3D12Device> retval;
 
-    auto hr = resource->GetDevice(::IID_ID3D12Device,
+    auto hr = child->GetDevice(::IID_ID3D12Device,
         reinterpret_cast<void **>(&retval));
     if (FAILED(hr)) {
         throw ATL::CAtlException(hr);
