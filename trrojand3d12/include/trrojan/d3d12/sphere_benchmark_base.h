@@ -67,7 +67,8 @@ namespace d3d12 {
         /// </summary>
         virtual ~sphere_benchmark_base(void) = default;
 
-        virtual void optimise_order(configuration_set& inOutConfs);
+        /// <inheritdoc />
+        virtual void optimise_order(configuration_set& inOutConfs) override;
 
         /// <inheritdoc />
         virtual std::vector<std::string> required_factors(void) const;
@@ -84,13 +85,6 @@ namespace d3d12 {
         /// An identifier for a single shader variant.
         /// </summary>
         typedef std::uint64_t shader_id_type;
-
-        /// <summary>
-        /// Resolve the actual path where a given CSO shaders is located.
-        /// </summary>
-        /// <param name="file_name"></param>
-        /// <returns></returns>
-        static std::string resolve_shader_path(const std::string& file_name);
 
         /// <summary>
         /// Gets the identifier for the given rendering method.
@@ -115,7 +109,9 @@ namespace d3d12 {
 
         /// <summary>
         /// Answer whether all bits of <paramref name="technique" /> are set
-        /// in <see cref="shaderCode" />.
+        /// in <see cref="shaderCode" />, ie whether the shader identified by
+        /// <paramref namae="shaderCode" /> can be used to render the given
+        /// <paramref name="technique" />.
         /// </summary>
         static inline bool is_technique(const shader_id_type shaderCode,
                 const shader_id_type technique) {

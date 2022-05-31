@@ -18,6 +18,7 @@
 #include "trrojan/d3d12/environment.h"
 #include "trrojan/d3d12/bench_render_target.h"
 #include "trrojan/d3d12/debug_render_target.h"
+#include "trrojan/d3d12/plugin.h"
 #include "trrojan/d3d12/utilities.h"
 
 
@@ -141,6 +142,19 @@ trrojan::result trrojan::d3d12::benchmark_base::run(const configuration& c) {
     }
 
     return retval;
+}
+
+
+/*
+ * trrojan::d3d12::benchmark_base::resolve_shader_path
+ */
+std::string trrojan::d3d12::benchmark_base::resolve_shader_path(
+        const std::string& file_name) {
+#if defined(TRROJAN_FOR_UWP)
+#error "TODO: retrieve UWP app directory."
+#else /* defined(TRROJAN_FOR_UWP) */
+    return plugin::get_directory() + directory_separator_char + file_name;
+#endif /* defined(TRROJAN_FOR_UWP) */
 }
 
 

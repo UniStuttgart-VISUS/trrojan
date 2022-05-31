@@ -80,19 +80,6 @@ std::vector<std::string> trrojan::d3d12::sphere_benchmark_base::required_factors
 
 
 /*
- * trrojan::d3d12::sphere_benchmark_base::resolve_shader_path
- */
-std::string trrojan::d3d12::sphere_benchmark_base::resolve_shader_path(
-        const std::string& file_name) {
-#if defined(TRROJAN_FOR_UWP)
-#error "TODO: retrieve UWP app directory."
-#else /* defined(TRROJAN_FOR_UWP) */
-    return plugin::get_directory() + directory_separator_char + file_name;
-#endif /* defined(TRROJAN_FOR_UWP) */
-}
-
-
-/*
  * trrojan::d3d12::sphere_benchmark_base::get_shader_id
  */
 trrojan::d3d12::sphere_benchmark_base::shader_id_type

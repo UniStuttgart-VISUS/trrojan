@@ -60,6 +60,14 @@ namespace d3d12 {
 
     protected:
 
+        /// <summary>
+        /// Resolve the actual path where a given CSO shader is located.
+        /// </summary>
+        /// <param name="file_name">The relative path of the shader file.
+        /// </param>
+        /// <returns>The absolute path of the compiled shader object.</returns>
+        static std::string resolve_shader_path(const std::string& file_name);
+
         benchmark_base(const std::string& name);
 
         inline void clear_target(ID3D12GraphicsCommandList *cmd_list) {
