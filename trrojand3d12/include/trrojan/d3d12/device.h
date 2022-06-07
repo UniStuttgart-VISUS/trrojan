@@ -32,19 +32,6 @@ namespace d3d12 {
         typedef std::shared_ptr<device> pointer;
 
         /// <summary>
-        /// Create a command allocator for the given device.
-        /// </summary>
-        /// <param name="device"></param>
-        /// <param name="type"></param>
-        /// <returns></returns>
-        /// <exception cref="std::invalid_argument">If
-        /// <paramref name="device" /> is <c>nullptr</c>.</exception>
-        /// <exception cref="ATL::CAtlException">If the object could not
-        /// be created.</exception>
-        static ATL::CComPtr<ID3D12CommandAllocator> create_command_allocator(
-            ID3D12Device *device, const D3D12_COMMAND_LIST_TYPE type);
-
-        /// <summary>
         /// Allocate a command queue for the given device.
         /// </summary>
         /// <param name="device"></param>
@@ -75,6 +62,12 @@ namespace d3d12 {
         virtual ~device(void);
 
         /// <summary>
+        /// Close the given command list and execute it immediately.
+        /// </summary>
+        void close_and_execute_command_list(
+            ID3D12GraphicsCommandList *cmd_list);
+
+        /// <summary>
         /// Answer the direct command queue of the device.
         /// </summary>
         /// <returns></returns>
@@ -83,61 +76,10 @@ namespace d3d12 {
         }
 
         /// <summary>
-        /// Gets the command allocator from which the device creates command
-        /// lists for computing.
-        /// </summary>
-        /// <returns>The command allocator for the device.</returns>
-        inline ATL::CComPtr<ID3D12CommandAllocator> compute_command_allocator(
-                void) {
-            return this->_compute_command_allocator;
-        }
-
-        /// <summary>
-        /// Gets the command allocator from which the device creates command
-        /// lists for copying.
-        /// </summary>
-        /// <returns>The command allocator for the device.</returns>
-        inline ATL::CComPtr<ID3D12CommandAllocator> copy_command_allocator(
-                void) {
-            return this->_copy_command_allocator;
-        }
-
-        /// <summary>
-        /// Allocate a command list of the given type on the device.
-        /// </summary>
-        /// <param name="type"></param>
-        /// <param name="inital_state"></param>
-        /// <returns></returns>
-        ATL::CComPtr<ID3D12CommandList> create_command_list(
-            const D3D12_COMMAND_LIST_TYPE type,
-            ID3D12PipelineState *initial_state = nullptr);
-
-        /// <summary>
-        /// Allocate a command list and try to cast it to a
-        /// <see cref="ID3D12GraphicsCommandList" />.
-        /// </summary>
-        /// <param name="type"></param>
-        /// <param name="initial_state"></param>
-        /// <returns></returns>
-        ATL::CComPtr<ID3D12GraphicsCommandList> create_graphics_command_list(
-            const D3D12_COMMAND_LIST_TYPE type = D3D12_COMMAND_LIST_TYPE_DIRECT,
-            ID3D12PipelineState *initial_state = nullptr);
-
-        /// <summary>
         /// Answer the underlying Direct3D device.
         /// </summary>
         inline ATL::CComPtr<ID3D12Device>& d3d_device(void) {
             return this->_d3d_device;
-        }
-
-        /// <summary>
-        /// Gets the command allocator from which the device creates command
-        /// lists for command buffers that the GPU can execute directly.
-        /// </summary>
-        /// <returns>The command allocator for the device.</returns>
-        inline ATL::CComPtr<ID3D12CommandAllocator> direct_command_allocator(
-            void) {
-            return this->_direct_command_allocator;
         }
 
         /// <summary>
@@ -190,10 +132,7 @@ namespace d3d12 {
     private:
 
         ATL::CComPtr<ID3D12CommandQueue> _command_queue;
-        ATL::CComPtr<ID3D12CommandAllocator> _compute_command_allocator;
-        ATL::CComPtr<ID3D12CommandAllocator> _copy_command_allocator;
         ATL::CComPtr<ID3D12Device> _d3d_device;
-        ATL::CComPtr<ID3D12CommandAllocator> _direct_command_allocator;
         ATL::CComPtr<IDXGIFactory4> _dxgi_factory;
         ATL::CComPtr<ID3D12Fence> _fence;
         std::atomic<UINT64> _next_fence;

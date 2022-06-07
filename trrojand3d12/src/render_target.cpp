@@ -15,6 +15,14 @@
 
 
 /*
+ * trrojan::d3d12::render_target_base::default_clear_colour
+ */
+const std::array<float, 4>
+trrojan::d3d12::render_target_base::default_clear_colour
+    = { 0.0f, 0.0f, 0.0f, 0.0f };
+
+
+/*
  * trrojan::d3d12::render_target_base::~render_target_base
  */
 trrojan::d3d12::render_target_base::~render_target_base(void) {
@@ -26,18 +34,18 @@ trrojan::d3d12::render_target_base::~render_target_base(void) {
  * trrojan::d3d12::render_target_base::clear
  */
 void trrojan::d3d12::render_target_base::clear(
-        const std::array<float, 4> &clear_colour,
-        ID3D12GraphicsCommandList *cmd_list) {
+        const std::array<float, 4>& clear_colour,
+        ID3D12GraphicsCommandList *cmd_list, const UINT frame) {
     assert(cmd_list != nullptr);
 
     {
-        auto handle = this->current_dsv_handle();
+        auto handle = this->dsv_handle(frame);
         cmd_list->ClearDepthStencilView(handle, D3D12_CLEAR_FLAG_DEPTH,
             this->_depth_clear, 0, 0, nullptr);
     }
 
     {
-        auto handle = this->current_rtv_handle();
+        auto handle = this->rtv_handle(frame);
         cmd_list->ClearRenderTargetView(handle, clear_colour.data(), 0,
             nullptr);
     }
@@ -48,9 +56,19 @@ void trrojan::d3d12::render_target_base::clear(
  * trrojan::d3d12::render_target_base::disable
  */
 void trrojan::d3d12::render_target_base::disable(
-        ID3D12GraphicsCommandList *cmdList) {
-    assert(cmdList != nullptr);
-    transition_subresource(cmdList, this->_buffers[this->_buffer_index], 0,
+        ID3D12GraphicsCommandList *cmd_list) {
+    this->disable(cmd_list, this->_buffer_index);
+}
+
+
+/*
+ * trrojan::d3d12::render_target_base::disable
+ */
+void trrojan::d3d12::render_target_base::disable(
+        ID3D12GraphicsCommandList *cmd_list, const UINT frame) {
+    assert(cmd_list != nullptr);
+    assert(frame < this->_buffers.size());
+    transition_subresource(cmd_list, this->_buffers[frame], 0,
         D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 }
 
@@ -59,17 +77,27 @@ void trrojan::d3d12::render_target_base::disable(
  * trrojan::d3d12::render_target_base::enable
  */
 void trrojan::d3d12::render_target_base::enable(
-        ID3D12GraphicsCommandList *cmdList) {
-    assert(cmdList != nullptr);
-    log::instance().write_line(log_level::debug, "Queueing render target "
-        "{:p} to be enabled in command list {:p} ...",
-        static_cast<void *>(this), static_cast<void *>(cmdList));
+        ID3D12GraphicsCommandList *cmd_list) {
+    this->enable(cmd_list, this->_buffer_index);
+}
 
-    log::instance().write_line(log_level::debug, "Set viewport from ({}, {}) "
-        "with size [{}, {}] in command list {:p}.", this->_viewport.TopLeftX,
-        this->_viewport.TopLeftY, this->_viewport.Width,
-        this->_viewport.Height, static_cast<void *>(cmdList));
-    cmdList->RSSetViewports(1, &this->_viewport);
+
+/*
+ * trrojan::d3d12::render_target_base::enable
+ */
+void trrojan::d3d12::render_target_base::enable(
+        ID3D12GraphicsCommandList *cmd_list, const UINT frame) {
+    assert(cmd_list != nullptr);
+    assert(frame < this->_buffers.size());
+    //log::instance().write_line(log_level::debug, "Queueing render target "
+    //    "{:p} to be enabled in command list {:p} ...",
+    //    static_cast<void *>(this), static_cast<void *>(cmd_list));
+
+    //log::instance().write_line(log_level::debug, "Set viewport from ({}, {}) "
+    //    "with size [{}, {}] in command list {:p}.", this->_viewport.TopLeftX,
+    //    this->_viewport.TopLeftY, this->_viewport.Width,
+    //    this->_viewport.Height, static_cast<void *>(cmd_list));
+    cmd_list->RSSetViewports(1, &this->_viewport);
 
     {
         D3D12_RECT rect;
@@ -78,24 +106,21 @@ void trrojan::d3d12::render_target_base::enable(
         rect.right += static_cast<LONG>(this->_viewport.Width);
         rect.bottom += static_cast<LONG>(this->_viewport.Height);
 
-        cmdList->RSSetScissorRects(1, &rect);
+        cmd_list->RSSetScissorRects(1, &rect);
     }
 
-    transition_subresource(cmdList, this->_buffers[this->_buffer_index], 0,
+    transition_subresource(cmd_list, this->_buffers[frame], 0,
         D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
     {
-        auto hDsv = this->current_dsv_handle();
-        auto hRtv = this->current_rtv_handle();
+        auto hDsv = this->dsv_handle(frame);
+        auto hRtv = this->rtv_handle(frame);
 
-        log::instance().write_line(log_level::debug, "Setting colour target "
-            "0x{:x} and depth target 0x{:x} in command list {:p}.",
-            hRtv.ptr, hDsv.ptr, static_cast<void *>(cmdList));
-        cmdList->OMSetRenderTargets(1, &hRtv, FALSE, &hDsv);
+        //log::instance().write_line(log_level::debug, "Setting colour target "
+        //    "0x{:x} and depth target 0x{:x} in command list {:p}.",
+        //    hRtv.ptr, hDsv.ptr, static_cast<void *>(cmd_list));
+        cmd_list->OMSetRenderTargets(1, &hRtv, FALSE, &hDsv);
     }
-
-    //this->_device_context->OMSetDepthStencilState(this->_dss.p, 0);
-    //this->_device_context->OMSetRenderTargets(1, &this->_rtv.p, this->_dsv.p);
 }
 
 
@@ -361,18 +386,6 @@ ATL::CComPtr<ID3D12Resource> trrojan::d3d12::render_target_base::current_buffer(
 
 
 /*
- * trrojan::d3d12::render_target_base::current_rtv_handle
- */
-D3D12_CPU_DESCRIPTOR_HANDLE
-trrojan::d3d12::render_target_base::current_rtv_handle(void) {
-    auto retval = this->_rtv_heap->GetCPUDescriptorHandleForHeapStart();
-    retval.ptr += static_cast<SIZE_T>(this->_buffer_index)
-        * this->_rtv_descriptor_size;
-    return retval;
-}
-
-
-/*
  * trrojan::d3d12::render_target_base::reset_buffers
  */
 void trrojan::d3d12::render_target_base::reset_buffers(void) {
@@ -387,6 +400,16 @@ void trrojan::d3d12::render_target_base::reset_buffers(void) {
     }
 }
 
+
+/*
+ * trrojan::d3d12::render_target_base::rtv_handle
+ */
+D3D12_CPU_DESCRIPTOR_HANDLE trrojan::d3d12::render_target_base::rtv_handle(
+        const UINT frame) {
+    auto retval = this->_rtv_heap->GetCPUDescriptorHandleForHeapStart();
+    retval.ptr += static_cast<SIZE_T>(frame) * this->_rtv_descriptor_size;
+    return retval;
+}
 
 /*
  * trrojan::d3d12::render_target_base::set_buffers

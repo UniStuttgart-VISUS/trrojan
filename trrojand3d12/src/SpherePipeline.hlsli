@@ -280,7 +280,6 @@ cbuffer SphereConstants CBUFFER(0) {
     float2 IntensityRange;
     float GlobalRadius;
     float _SpherePadding[1];
-
 };
 
 cbuffer ViewConstants CBUFFER(1) {

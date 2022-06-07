@@ -17,28 +17,6 @@
 
 
 /*
- * trrojan::d3d12::device::create_command_allocator
- */
-ATL::CComPtr<ID3D12CommandAllocator>
-trrojan::d3d12::device::create_command_allocator(ID3D12Device *device,
-        const D3D12_COMMAND_LIST_TYPE type) {
-    if (device == nullptr) {
-        throw std::invalid_argument("A valid device must be provided to create "
-            "a command allocator.");
-    }
-
-    ATL::CComPtr<ID3D12CommandAllocator> retval;
-    auto hr = device->CreateCommandAllocator(type, ::IID_ID3D12CommandAllocator,
-        reinterpret_cast<void **>(&retval));
-    if (FAILED(hr)) {
-        throw ATL::CAtlException(hr);
-    }
-
-    return retval;
-}
-
-
-/*
  * trrojan::d3d12::device::create_command_queue
  */
 ATL::CComPtr<ID3D12CommandQueue> trrojan::d3d12::device::create_command_queue(
@@ -69,20 +47,11 @@ ATL::CComPtr<ID3D12CommandQueue> trrojan::d3d12::device::create_command_queue(
 trrojan::d3d12::device::device(const ATL::CComPtr<ID3D12Device>& d3dDevice,
         const ATL::CComPtr<IDXGIFactory4>& dxgiFactory)
     : _command_queue(create_command_queue(d3dDevice)),
-        _compute_command_allocator(create_command_allocator(d3dDevice,
-            D3D12_COMMAND_LIST_TYPE_COMPUTE)),
-        _copy_command_allocator(create_command_allocator(d3dDevice,
-            D3D12_COMMAND_LIST_TYPE_COPY)),
         _d3d_device(d3dDevice),
-        _direct_command_allocator(create_command_allocator(d3dDevice,
-            D3D12_COMMAND_LIST_TYPE_DIRECT)),
         _dxgi_factory(dxgiFactory),
         _next_fence(0) {
     assert(this->_command_queue != nullptr);
-    assert(this->_compute_command_allocator != nullptr);
-    assert(this->_copy_command_allocator != nullptr);
     assert(this->_d3d_device != nullptr);
-    assert(this->_direct_command_allocator != nullptr);
     DXGI_ADAPTER_DESC desc;
 
     if (this->_dxgi_factory == nullptr) {
@@ -121,65 +90,12 @@ trrojan::d3d12::device::~device(void) { }
 
 
 /*
- * trrojan::d3d12::device::create_command_list
+ * trrojan::d3d12::device::close_and_execute_command_list
  */
-ATL::CComPtr<ID3D12CommandList> trrojan::d3d12::device::create_command_list(
-        const D3D12_COMMAND_LIST_TYPE type, ID3D12PipelineState *initial_state) {
-    assert(this->_compute_command_allocator != nullptr);
-    assert(this->_copy_command_allocator != nullptr);
-    assert(this->_d3d_device != nullptr);
-    assert(this->_direct_command_allocator != nullptr);
-    auto hr = S_OK;
-    ATL::CComPtr<ID3D12CommandList> retval;
-
-    switch (type) {
-        case D3D12_COMMAND_LIST_TYPE_COMPUTE:
-            hr = this->_d3d_device->CreateCommandList(0, type,
-                this->_compute_command_allocator, initial_state,
-                ::IID_ID3D12CommandList, reinterpret_cast<void **>(&retval));
-            break;
-
-        case D3D12_COMMAND_LIST_TYPE_COPY:
-            hr = this->_d3d_device->CreateCommandList(0, type,
-                this->_copy_command_allocator, initial_state,
-                ::IID_ID3D12CommandList, reinterpret_cast<void **>(&retval));
-            break;
-
-        case D3D12_COMMAND_LIST_TYPE_DIRECT:
-            hr = this->_d3d_device->CreateCommandList(0, type,
-                this->_direct_command_allocator, initial_state,
-                ::IID_ID3D12CommandList, reinterpret_cast<void **>(&retval));
-            break;
-
-        default:
-            throw std::invalid_argument("The specified type of command list is "
-                "not supported by this convenience method.");
-    }
-
-    if (FAILED(hr)) {
-        throw ATL::CAtlException(hr);
-    }
-
-    return retval;
-}
-
-
-/*
- * trrojan::d3d12::device::create_graphics_command_list
- */
-ATL::CComPtr<ID3D12GraphicsCommandList>
-trrojan::d3d12::device::create_graphics_command_list(
-        const D3D12_COMMAND_LIST_TYPE type,
-        ID3D12PipelineState *initial_state) {
-    auto cmd_list = this->create_command_list(type, initial_state);
-    ATL::CComPtr<ID3D12GraphicsCommandList> retval;
-    auto hr = cmd_list.QueryInterface(&retval);
-
-    if (FAILED(hr)) {
-        throw ATL::CAtlException(hr);
-    }
-
-    return retval;
+void trrojan::d3d12::device::close_and_execute_command_list(
+        ID3D12GraphicsCommandList *cmd_list) {
+    close_command_list(cmd_list);
+    this->execute_command_list(cmd_list);
 }
 
 

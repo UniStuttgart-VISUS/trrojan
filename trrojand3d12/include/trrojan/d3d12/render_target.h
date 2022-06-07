@@ -29,6 +29,11 @@ namespace d3d12 {
 
     public:
 
+        /// <summary>
+        /// Specifies the default clear colour for all render targets.
+        /// </summary>
+        static const std::array<float, 4> default_clear_colour;
+
         render_target_base(const render_target_base&) = delete;
 
         /// <summary>
@@ -59,8 +64,19 @@ namespace d3d12 {
         /// </remarks>
         /// <param name="clear_colour"></param>
         /// <param name="cmd_list"></param>
+        inline void clear(const std::array<float, 4>& clear_colour,
+                ID3D12GraphicsCommandList *cmd_list) {
+            this->clear(clear_colour, cmd_list, this->_buffer_index);
+        }
+
+        /// <summary>
+        /// Queues clearing the specified render (and depth) target.
+        /// </summary>
+        /// <param name="clear_colour"></param>
+        /// <param name="cmd_list"></param>
+        /// <param name="frame"></param>
         virtual void clear(const std::array<float, 4>& clear_colour,
-            ID3D12GraphicsCommandList *cmd_list);
+            ID3D12GraphicsCommandList *cmd_list, const UINT frame);
 
         /// <summary>
         /// Queues clearing the render (and depth) target to the default clear
@@ -72,9 +88,18 @@ namespace d3d12 {
         /// </remarks>
         /// <param name="cmd_list"></param>
         inline void clear(ID3D12GraphicsCommandList *cmd_list) {
-            static const std::array<float, 4> CLEAR_COLOUR
-                = { 0.0f, 0.0f, 0.0f, 0.0f };
-            this->clear(CLEAR_COLOUR, cmd_list);
+            this->clear(default_clear_colour, cmd_list, this->_buffer_index);
+        }
+
+        /// <summary>
+        /// Queues clearing the specified render (and depth) target to the
+        /// default clear colour.
+        /// </summary>
+        /// <param name="cmd_list"></param>
+        /// <param name="frame"></param>
+        inline void clear(ID3D12GraphicsCommandList *cmd_list,
+                const UINT frame) {
+            this->clear(default_clear_colour, cmd_list, frame);
         }
 
         /// <summary>
@@ -86,14 +111,19 @@ namespace d3d12 {
         }
 
         /// <summary>
-        /// Performs cleanup operations once a frame was completed.
+        /// Queue the currently active frame being transitioned to presentation
+        /// state into <paramref name="cmd_list" />.
         /// </summary>
-        /// <remarks>
-        /// The default implementation transitions the render target view to
-        /// present mode.
-        /// </remarks>
         /// <param name="cmdList"></param>
-        virtual void disable(ID3D12GraphicsCommandList *cmdList);
+        void disable(ID3D12GraphicsCommandList *cmd_list);
+
+        /// <summary>
+        /// Queue the given <paramref name="frame" /> being transitioned to
+        /// presentation state into <paramref name="cmd_list" />.
+        /// </summary>
+        /// <param name="cmd_list"></param>
+        /// <param name="frame"></param>
+        void disable(ID3D12GraphicsCommandList *cmd_list, const UINT frame);
 
         /// <summary>
         /// Queues the render target as active target in the given command list.
@@ -104,6 +134,18 @@ namespace d3d12 {
         /// </remarks>
         /// <param name="cmdList"></param>
         void enable(ID3D12GraphicsCommandList *cmdList);
+
+        /// <summary>
+        /// Queues the specified buffer/frame of the render target being enabled
+        /// to the given command list.
+        /// </summary>
+        /// <remarks>
+        /// <para>This method also sets the viewport and the scissor
+        /// rectangle.</para>
+        /// </remarks>
+        /// <param name="cmdList"></param>
+        /// <param name="frame"></param>
+        void enable(ID3D12GraphicsCommandList *cmdList, const UINT frame);
 
         /// <summary>
         /// Answer the number of buffers used by the render target.
@@ -224,7 +266,18 @@ namespace d3d12 {
         /// Answer the CPU handle of the RTV of the current frame.
         /// </summary>
         /// <returns></returns>
-        D3D12_CPU_DESCRIPTOR_HANDLE current_rtv_handle(void);
+        inline D3D12_CPU_DESCRIPTOR_HANDLE current_rtv_handle(void) {
+            return this->rtv_handle(this->_buffer_index);
+        }
+
+        /// <summary>
+        /// Answer the CPU handle of the DSV of the given frame.
+        /// </summary>
+        /// <param name="frame"></param>
+        /// <returns></returns>
+        inline D3D12_CPU_DESCRIPTOR_HANDLE dsv_handle(const UINT frame) {
+            return this->_dsv_heap->GetCPUDescriptorHandleForHeapStart();
+        }
 
         /// <summary>
         /// Wait for the GPU to finish all work and reset the buffers
@@ -234,6 +287,13 @@ namespace d3d12 {
         /// This method must be called before resizing swap chain buffers.
         /// </remarks>
         virtual void reset_buffers(void);
+
+        /// <summary>
+        /// Answer the CPU handle of the RTV of the specified frame.
+        /// </summary>
+        /// <param name="frame"></param>
+        /// <returns></returns>
+        D3D12_CPU_DESCRIPTOR_HANDLE rtv_handle(const UINT frame);
 
         /// <summary>
         /// Set <paramref name="buffers" /> as the buffers for the render target

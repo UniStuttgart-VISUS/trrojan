@@ -7,6 +7,7 @@
 #pragma once
 
 #include <cassert>
+#include <cinttypes>
 #include <functional>
 #include <memory>
 #include <sstream>
@@ -35,7 +36,13 @@ namespace d3d12 {
     //    const UINT width, const UINT height, const UINT elementSize);
 
     /// <summary>
-    /// Create a row-major buffer of the given size on the given device.
+    /// Close the given command list.
+    /// </summary>
+    void close_command_list(ID3D12GraphicsCommandList *cmd_list);
+
+    /// <summary>
+    /// Create a row-major committed buffer of the given size on the
+    /// given device.
     /// </summary>
     /// <param name="device"></param>
     /// <param name="size"></param>
@@ -50,6 +57,22 @@ namespace d3d12 {
         const D3D12_HEAP_TYPE heap_type = D3D12_HEAP_TYPE_DEFAULT,
         const D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_COPY_DEST);
 
+    /// <summary>
+    /// Create a row-major committed buffer of the given size satisfying the
+    /// alignment requirements of a constant buffer.
+    /// </summary>
+    ATL::CComPtr<ID3D12Resource> create_constant_buffer(ID3D12Device *device,
+        const UINT64 size,
+        const D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE,
+        const D3D12_HEAP_TYPE heap_type = D3D12_HEAP_TYPE_UPLOAD,
+        const D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_GENERIC_READ);
+
+    /// <summary>
+    /// Creates an event kernel object.
+    /// </summary>
+    /// <param name="manual_reset"></param>
+    /// <param name="initially_signalled"></param>
+    /// <returns></returns>
     handle<> create_event(const bool manual_reset,
         const bool initially_signalled);
 
@@ -128,9 +151,37 @@ namespace d3d12 {
     /// </summary>
     /// <param name="device"></param>
     /// <param name="size"></param>
+    /// <param name="alignment"></param>
     /// <returns></returns>
     ATL::CComPtr<ID3D12Resource> create_upload_buffer(ID3D12Device *device,
-        const UINT64 size);
+        const UINT64 size, const UINT64 alignment = 0);
+
+    /// <summary>
+    /// Create an upload buffer and fill it with the specified data.
+    /// </summary>
+    /// <param name="device"></param>
+    /// <param name="data"></param>
+    /// <param name="size"></param>
+    /// <param name="alignment"></param>
+    /// <returns></returns>
+    ATL::CComPtr<ID3D12Resource> create_upload_buffer(ID3D12Device *device,
+        const void *data, const UINT64 size, const UINT64 alignment = 0);
+
+    /// <summary>
+    /// Create a 1D upload buffer containing the Viridis colour map.
+    /// </summary>
+    /// <param name="device"></param>
+    /// <returns></returns>
+    ATL::CComPtr<ID3D12Resource> create_viridis_colour_map(
+        ID3D12Device *device);
+
+    /// <summary>
+    /// Create a 1D Viridis colour map.
+    /// </summary>
+    /// <param name="cmd_list"></param>
+    /// <returns></returns>
+    ATL::CComPtr<ID3D12Resource> create_viridis_colour_map(
+        ID3D12CommandList *cmd_list);
 
     /// <summary>
     /// Gets the device the child belongs to.
@@ -148,6 +199,86 @@ namespace d3d12 {
     /// <returns></returns>
     D3D12_TEXTURE_COPY_LOCATION get_copy_location(ID3D12Resource *resource,
         const UINT subresource = 0);
+
+    /// <summary>
+    /// Offsets the given pointer by the given number of bytes.
+    /// </summary>
+    /// <typeparam name="TPointer"></typeparam>
+    /// <param name="ptr"></param>
+    /// <param name="offset"></param>
+    /// <returns></returns>
+    template<class TPointer>
+    inline TPointer *offset_by(TPointer *ptr, const std::size_t offset) {
+        typedef std::conditional<std::is_const<TPointer>::value,
+            const std::uint8_t *, std::uint8_t *>::type arithmetic_type;
+        auto retval = reinterpret_cast<arithmetic_type>(ptr) + offset;
+        return reinterpret_cast<TPointer *>(retval);
+    }
+
+    /// <summary>
+    /// Offsets the given virtual address by the given number of bytes.
+    /// </summary>
+    /// <param name="address"></param>
+    /// <param name="offset"></param>
+    /// <returns></returns>
+    inline D3D12_GPU_VIRTUAL_ADDRESS offset_by(
+            const D3D12_GPU_VIRTUAL_ADDRESS address,
+            const std::size_t offset) {
+        return (address + offset);
+    }
+
+    /// <summary>
+    /// Offsets the given pointer by the size of
+    /// <typeparamref name="TOffset" />.
+    /// </summary>
+    /// <typeparam name="TOffset"></typeparam>
+    /// <typeparam name="TPointer"></typeparam>
+    /// <param name="ptr"></param>
+    /// <returns></returns>
+    template<class TOffset, class TPointer>
+    inline TPointer *offset_by(TPointer *ptr) {
+        return offset_by(ptr, sizeof(TOffset));
+    }
+
+    /// <summary>
+    /// Offsets the given pointer by a multiple of the size of
+    /// <typeparamref name="TOffset" />.
+    /// </summary>
+    /// <typeparam name="TOffset"></typeparam>
+    /// <typeparam name="TPointer"></typeparam>
+    /// <param name="ptr"></param>
+    /// <param name="n"></param>
+    /// <returns></returns>
+    template<class TOffset, class TPointer>
+    inline TPointer *offset_by_n(TPointer *ptr, const std::size_t n) {
+        return offset_by(ptr, n * sizeof(TOffset));
+    }
+
+    /// <summary>
+    /// Offsets the given virtual address by the size of
+    /// <typeparamref name="TOffset" />.
+    /// </summary>
+    /// <typeparam name="TOffset"></typeparam>
+    /// <param name="address"></param>
+    /// <returns></returns>
+    template<class TOffset>
+    inline D3D12_GPU_VIRTUAL_ADDRESS offset_by(
+            const D3D12_GPU_VIRTUAL_ADDRESS address) {
+        return offset_by(address, sizeof(TOffset));
+    }
+
+    /// <summary>
+    /// Offsets the given virtual address by a mupltiple of the size of
+    /// <typeparamref name="TOffset" />.
+    /// </summary>
+    /// <typeparam name="TOffset"></typeparam>
+    /// <param name="address"></param>
+    /// <returns></returns>
+    template<class TOffset>
+    inline D3D12_GPU_VIRTUAL_ADDRESS offset_by_n(
+            const D3D12_GPU_VIRTUAL_ADDRESS address, const std::size_t n) {
+        return offset_by(address, n * sizeof(TOffset));
+    }
 
     /// <summary>
     /// Initialises the given <see cref="D3D12_SHADER_BYTECODE" />.

@@ -7,10 +7,10 @@
 #include "trrojan/d3d12/sphere_benchmark_base.h"
 
 #include <algorithm>
-#include <cassert>
 #include <cinttypes>
 #include <memory>
 
+#include <glm/glm.hpp>
 #include <glm/ext.hpp>
 
 #include "trrojan/constants.h"
@@ -141,6 +141,56 @@ trrojan::d3d12::sphere_benchmark_base::get_shader_id(const configuration& config
 
 
 /*
+ * trrojan::d3d12::sphere_benchmark_base::get_tessellation_constants
+ */
+void trrojan::d3d12::sphere_benchmark_base::get_tessellation_constants(
+        TessellationConstants& out_constants, const configuration& config) {
+    {
+        auto f = config.get<edge_tess_factor_type>(factor_edge_tess_factor);
+        out_constants.EdgeTessFactor.x = f[0];
+        out_constants.EdgeTessFactor.y = f[1];
+        out_constants.EdgeTessFactor.z = f[2];
+        out_constants.EdgeTessFactor.w = f[3];
+    }
+
+    {
+        auto f = config.get<inside_tess_factor_type>(factor_inside_tess_factor);
+        out_constants.InsideTessFactor.x = f[0];
+        out_constants.InsideTessFactor.y = f[1];
+    }
+
+    out_constants.AdaptiveTessMin = config.get<float>(
+        factor_adapt_tess_minimum);
+    out_constants.AdaptiveTessMax = config.get<float>(
+        factor_adapt_tess_maximum);
+    out_constants.AdaptiveTessScale = config.get<float>(
+        factor_adapt_tess_scale);
+
+    out_constants.HemisphereTessScaling = config.get<float>(
+        factor_hemi_tess_scale);
+
+    out_constants.PolygonCorners = config.get<std::uint32_t>(
+        factor_poly_corners);
+}
+
+
+/*
+ * trrojan::d3d12::sphere_benchmark_base::is_non_float_colour
+ */
+bool trrojan::d3d12::sphere_benchmark_base::is_non_float_colour(
+        const mmpld::colour_type colour) {
+    switch (colour) {
+        case mmpld::colour_type::rgb8:
+        case mmpld::colour_type::rgba8:
+            return true;
+
+        default:
+            return false;
+    }
+}
+
+
+/*
  * trrojan::d3d12::sphere_benchmark_base::parse_random_sphere_desc
  */
 trrojan::random_sphere_generator::description
@@ -232,7 +282,13 @@ trrojan::d3d12::sphere_benchmark_base::property_structured_resource
  */
 trrojan::d3d12::sphere_benchmark_base::sphere_benchmark_base(
         const std::string& name)
-        : benchmark_base(name), _data_properties(properties_type::none) {
+    : benchmark_base(name), _bbox { glm::vec3(0.0f), glm::vec3(0.0f) },
+        _cnt_spheres(0),
+        _colour({ 0.0f, 0.0f, 0.0f, 0.0f }),
+        _data_properties(properties_type::none),
+        _intensity_range({ 0.0f, 0.0f }), _max_radius(0.0f),
+        _sphere_constants(nullptr), _tessellation_constants(nullptr),
+        _view_constants(nullptr) {
     // Declare the configuration data we need to have.
     this->_default_configs.add_factor(factor::from_manifestations(
         factor_adapt_tess_maximum, static_cast<unsigned int>(8)));
@@ -280,20 +336,149 @@ trrojan::d3d12::sphere_benchmark_base::sphere_benchmark_base(
 
 
 /*
+ * trrojan::d3d12::sphere_benchmark_base::create_colour_map_view
+ */
+void trrojan::d3d12::sphere_benchmark_base::create_colour_map_view(
+        ID3D12Device *device, const D3D12_CPU_DESCRIPTOR_HANDLE handle) {
+    assert(device != nullptr);
+    assert(this->_colour_map);
+    device->CreateShaderResourceView(this->_colour_map, nullptr, handle);
+}
+
+
+/*
+ * trrojan::d3d12::sphere_benchmark_base::create_constant_buffer_view
+ */
+void trrojan::d3d12::sphere_benchmark_base::create_constant_buffer_view(
+        ID3D12Device *device, const UINT buffer,
+        const D3D12_CPU_DESCRIPTOR_HANDLE sphere_constants,
+        const D3D12_CPU_DESCRIPTOR_HANDLE tessellation_constants,
+        const D3D12_CPU_DESCRIPTOR_HANDLE view_constants) {
+    assert(device != nullptr);
+    assert(this->_constant_buffer != nullptr);
+
+    auto address = this->_constant_buffer->GetGPUVirtualAddress();
+
+    {
+        D3D12_CONSTANT_BUFFER_VIEW_DESC desc;
+        desc.BufferLocation = address;
+        desc.SizeInBytes = sizeof(SphereConstants);
+        ::ZeroMemory(&desc, sizeof(desc));
+        device->CreateConstantBufferView(&desc, sphere_constants);
+    }
+
+    address = offset_by_n<SphereConstants>(address, this->pipeline_depth());
+
+    {
+        D3D12_CONSTANT_BUFFER_VIEW_DESC desc;
+        ::ZeroMemory(&desc, sizeof(desc));
+        desc.BufferLocation = address;
+        desc.SizeInBytes = sizeof(TessellationConstants);
+        device->CreateConstantBufferView(&desc, tessellation_constants);
+    }
+
+    address = offset_by_n<TessellationConstants>(address,
+        this->pipeline_depth());
+
+    {
+        D3D12_CONSTANT_BUFFER_VIEW_DESC desc;
+        ::ZeroMemory(&desc, sizeof(desc));
+        desc.BufferLocation = address;
+        desc.SizeInBytes = sizeof(ViewConstants);
+        device->CreateConstantBufferView(&desc, view_constants);
+    }
+}
+
+
+/*
+ * trrojan::d3d12::sphere_benchmark_base::fit_bounding_box
+ */
+void trrojan::d3d12::sphere_benchmark_base::fit_bounding_box(
+    const mmpld::list_header& header, const void *particles) {
+    typedef std::decay<decltype(*header.bounding_box)>::type bbox_type;
+    typedef std::numeric_limits<bbox_type> bbox_limits;
+
+    assert(particles != nullptr);
+    log::instance().write_line(log_level::verbose, "Recomputing bounding "
+        "box of MMPLD data from data actually contained in the active "
+        "particle list ...");
+
+    auto cur = static_cast<const std::uint8_t *>(particles);
+    const auto find_radius = (header.radius <= 0.0f);
+    const auto stride = mmpld::get_stride<std::size_t>(header);
+
+    // Initialise with extrema.
+    for (glm::length_t i = 0; i < this->_bbox[0].length(); ++i) {
+        this->_bbox[0][i] = (bbox_limits::max)();
+        this->_bbox[1][i] = (bbox_limits::lowest)();
+    }
+
+    // Search minimum and maximum as well as maximum radius as necessary.
+    this->_max_radius = find_radius
+        ? (std::numeric_limits<decltype(header.radius)>::lowest)()
+        : header.radius;
+    for (std::size_t i = 0; i < header.particles; ++i, cur += stride) {
+        const auto pos = reinterpret_cast<const float *>(cur);
+        for (glm::length_t c = 0; c < 3; ++c) {
+            if (pos[c] < this->_bbox[0][c]) {
+                this->_bbox[0][c] = pos[c];
+            }
+            if (pos[c] > this->_bbox[1][c]) {
+                this->_bbox[1][c] = pos[c];
+            }
+        }
+
+        if (find_radius) {
+            if (pos[4] > this->_max_radius) {
+                this->_max_radius = pos[4];
+            }
+        }
+    }
+
+    // Account for the radius.
+    for (glm::length_t i = 0; i < this->_bbox[0].length(); ++i) {
+        this->_bbox[0][i] -= this->_max_radius;
+        this->_bbox[1][i] += this->_max_radius;
+    }
+
+    log::instance().write_line(log_level::verbose, "Recomputed "
+        "single-frame bounding box of MMPLD data is ({}, {}, {}) - "
+        "({}, {}, {}) with maximum radius of {}.",
+        this->_bbox[0][0], this->_bbox[0][1], this->_bbox[0][2],
+        this->_bbox[1][0], this->_bbox[1][1], this->_bbox[1][2],
+        this->_max_radius);
+}
+
+
+/*
+ * trrojan::d3d12::sphere_benchmark_base::get_data_extents
+ */
+std::array<float, 3> trrojan::d3d12::sphere_benchmark_base::get_data_extents(
+        void) const {
+    std::array<float, 3> retval = {
+        std::abs(this->_bbox[1].x - this->_bbox[0].x),
+        std::abs(this->_bbox[1].y - this->_bbox[0].y),
+        std::abs(this->_bbox[1].z - this->_bbox[0].z)
+    };
+    return retval;
+}
+
+
+/*
  * trrojan::d3d12::sphere_benchmark_base::get_data_properties
  */
 trrojan::d3d12::sphere_benchmark_base::property_mask_type
 trrojan::d3d12::sphere_benchmark_base::get_data_properties(
         const shader_id_type shader_code) {
     static const shader_id_type LET_TECHNIQUE_DECIDE
-        = ~(SPHERE_INPUT_PV_INTENSITY | SPHERE_INPUT_PP_INTENSITY);
+        = (SPHERE_INPUT_PV_INTENSITY | SPHERE_INPUT_PP_INTENSITY);
 
     auto retval = static_cast<property_mask_type>(this->_data_properties);
 
     if ((retval & SPHERE_INPUT_PV_INTENSITY) != 0) {
         // If we need a transfer function, let the shader code decide where to
         // apply it.
-        retval &= LET_TECHNIQUE_DECIDE;
+        retval &= ~LET_TECHNIQUE_DECIDE;
         retval |= (shader_code & LET_TECHNIQUE_DECIDE);
     }
 
@@ -319,44 +504,33 @@ trrojan::d3d12::sphere_benchmark_base::get_pipeline_builder(
     const auto is_tess = ((id & SPHERE_TECHNIQUE_USE_TESS) != 0);
     const auto is_vs_tex = ((id & SPHERE_INPUT_PV_INTENSITY) != 0);
 
-    auto it = this->_builder_cache.find(id);
+    graphics_pipeline_builder retval;
 
-    if (it == this->_builder_cache.end()) {
-        log::instance().write_line(log_level::verbose, "No cached pipeline "
-            "builder was found for for {} with data features {} (ID {}) was "
-            "found. Creating a new one ...", shader_code, data_code, id);
-        auto& retval = this->_builder_cache[id];
+    // Set the shaders from the big generated lookup table.
+    set_shaders(retval, id);
 
-        // Set the shaders from the big generated lookup table.
-        set_shaders(retval, id);
+    // Set the input layout for techniques using VBs.
+    if (!is_srv) {
+        retval.set_input_layout(this->_input_layout);
+    }
 
-        // Set the input layout for techniques using VBs.
-        if (!is_srv) {
-            retval.set_input_layout(this->_input_layout);
-        }
+    retval.set_primitive_topology(D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT);
 
-        retval.set_primitive_topology(D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT);
-
-        if (is_technique(shader_code, SPHERE_TECHNIQUE_QUAD_INST)) {
-            if (is_tess) {
-                retval.set_primitive_topology(D3D12_PRIMITIVE_TOPOLOGY_TYPE_PATCH);
-            } else if (is_geo) {
-                retval.set_primitive_topology(D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT);
-            } else {
-                retval.set_primitive_topology(D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE);
-            }
-
-        } else {
+    if (is_technique(shader_code, SPHERE_TECHNIQUE_QUAD_INST)) {
+        if (is_tess) {
+            retval.set_primitive_topology(D3D12_PRIMITIVE_TOPOLOGY_TYPE_PATCH);
+        } else if (is_geo) {
             retval.set_primitive_topology(D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT);
+        } else {
+            retval.set_primitive_topology(D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE);
         }
-
-        return retval;
 
     } else {
-        return it->second;
+        retval.set_primitive_topology(D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT);
     }
-}
 
+    return retval;
+}
 
 
 /*
@@ -391,6 +565,56 @@ trrojan::d3d12::sphere_benchmark_base::get_pipeline_state(ID3D12Device *device,
 
 
 /*
+ * trrojan::d3d12::sphere_benchmark_base::get_sphere_constants
+ */
+void trrojan::d3d12::sphere_benchmark_base::get_sphere_constants(
+        SphereConstants& out_constants) const {
+    out_constants.GlobalColour.x = this->_colour[0];
+    out_constants.GlobalColour.y = this->_colour[1];
+    out_constants.GlobalColour.z = this->_colour[2];
+    out_constants.GlobalColour.w = this->_colour[3];
+
+    out_constants.GlobalRadius = this->_max_radius;
+
+    out_constants.IntensityRange.x = this->_intensity_range[0];
+    out_constants.IntensityRange.y = this->_intensity_range[1];
+}
+
+
+/*
+ * trrojan::d3d12::sphere_benchmark_base::get_view_constants
+ */
+void trrojan::d3d12::sphere_benchmark_base::get_view_constants(
+        ViewConstants& out_constants) const {
+    auto mat = DirectX::XMFLOAT4X4(glm::value_ptr(
+        this->_camera.get_projection_mx()));
+    auto projection = DirectX::XMLoadFloat4x4(&mat);
+    DirectX::XMStoreFloat4x4(out_constants.ProjMatrix,
+        DirectX::XMMatrixTranspose(projection));
+
+    mat = DirectX::XMFLOAT4X4(glm::value_ptr(
+        this->_camera.get_view_mx()));
+    auto view = DirectX::XMLoadFloat4x4(&mat);
+    DirectX::XMStoreFloat4x4(out_constants.ViewMatrix,
+        DirectX::XMMatrixTranspose(view));
+
+    auto viewDet = DirectX::XMMatrixDeterminant(view);
+    auto viewInv = DirectX::XMMatrixInverse(&viewDet, view);
+    DirectX::XMStoreFloat4x4(out_constants.ViewInvMatrix,
+        DirectX::XMMatrixTranspose(viewInv));
+
+    auto viewProj = view * projection;
+    DirectX::XMStoreFloat4x4(out_constants.ViewProjMatrix,
+        DirectX::XMMatrixTranspose(viewProj));
+
+    auto viewProjDet = DirectX::XMMatrixDeterminant(viewProj);
+    auto viewProjInv = DirectX::XMMatrixInverse(&viewProjDet, viewProj);
+    DirectX::XMStoreFloat4x4(out_constants.ViewProjInvMatrix,
+        DirectX::XMMatrixTranspose(viewProjInv));
+}
+
+
+/*
  * trrojan::d3d12::sphere_benchmark_base::load_data
  */
 ATL::CComPtr<ID3D12Resource> trrojan::d3d12::sphere_benchmark_base::load_data(
@@ -398,10 +622,7 @@ ATL::CComPtr<ID3D12Resource> trrojan::d3d12::sphere_benchmark_base::load_data(
         const configuration& config) {
     try {
         auto desc = parse_random_sphere_desc(config, shader_code);
-        this->_data_properties = random_sphere_generator::get_properties(
-            desc.sphere_type);
-        this->_input_layout = random_sphere_generator::get_input_layout<
-            D3D12_INPUT_ELEMENT_DESC>(desc.sphere_type);
+        this->set_properties(desc);
 
         void *data;
         const auto size = random_sphere_generator::create(nullptr, 0, desc);
@@ -413,7 +634,8 @@ ATL::CComPtr<ID3D12Resource> trrojan::d3d12::sphere_benchmark_base::load_data(
         }
 
         try {
-            random_sphere_generator::create(data, size, desc);
+            random_sphere_generator::create(data, size, this->_max_radius,
+                desc);
             retval->Unmap(0, nullptr);
             return retval;
 
@@ -428,19 +650,29 @@ ATL::CComPtr<ID3D12Resource> trrojan::d3d12::sphere_benchmark_base::load_data(
 
     } catch (...) {
         mmpld::list_header list_header;
+        const auto fit_bbox = config.get<bool>(factor_fit_bounding_box);
+        const auto force_float = config.get<bool>(factor_force_float_colour);
         const auto path = config.get<std::string>(factor_data_set);
         const auto frame = config.get<frame_type>(factor_frame);
 
         mmpld::file<HANDLE> file(path.c_str());
         file.open_frame(frame);
         file.read_particles(false, list_header, nullptr, 0);
-
-        this->_data_properties = mmpld::get_properties<properties_type>(
-            list_header);
-        this->_input_layout = mmpld::get_input_layout<D3D12_INPUT_ELEMENT_DESC>(
-            list_header);
+        this->set_properties(list_header);
 
         void *data;
+        const auto actual_colour = list_header.colour_type;
+        const auto requested_colour
+            = (force_float && is_non_float_colour(list_header))
+            ? mmpld::colour_type::rgba32
+            : actual_colour;
+
+        if (actual_colour != requested_colour) {
+            // Patch the colour if we need to convert such that the upload
+            // buffer has the correct size.
+            list_header.colour_type = requested_colour;
+        }
+
         const auto size = mmpld::get_size<UINT64>(list_header);
         auto retval = create_upload_buffer(device, size);
 
@@ -450,14 +682,41 @@ ATL::CComPtr<ID3D12Resource> trrojan::d3d12::sphere_benchmark_base::load_data(
         }
 
         try {
-            file.read_particles(list_header, data, list_header.particles);
+            if (actual_colour != requested_colour) {
+                // Read into temporary buffer and convert into mapped memory.
+                auto src_header = list_header;
+                src_header.colour_type = actual_colour;
+                std::vector<std::uint8_t> buffer(mmpld::get_size<std::size_t>(
+                    src_header));
+                file.read_particles(src_header, buffer.data(),
+                    src_header.particles);
+                mmpld::convert(buffer.data(), src_header, data, list_header);
+
+            } else {
+                // Read directly into the mapped buffer.
+                file.read_particles(list_header, data, list_header.particles);
+            }
+
+            if (fit_bbox) {
+                // User requested to fit bounding box to the actual data rather
+                // than relying on what is in the file. Therefore, check all the
+                // particles and recompute the bounding box from what we find
+                // there.
+                this->fit_bounding_box(list_header, data);
+            } else {
+                // Even if we do not recompute the bounding box, we might need
+                // to check all particles to find the maximum radius for data
+                // sets with varying radii.
+                this->set_max_radius(list_header, data);
+            }
+
             retval->Unmap(0, nullptr);
             return retval;
 
         } catch (...) {
             log::instance().write_line(log_level::error, "Failed to read "
                 "MMPLD particles from \"{}\". The headers could be read, i.e."
-                "the input file is probably corrupted.", path);
+                "the input file might be corrupted.", path);
             retval->Unmap(0, nullptr);
             throw;
         }
@@ -475,14 +734,12 @@ void trrojan::d3d12::sphere_benchmark_base::load_data_properties(
         log::instance().write_line(log_level::verbose, "Retrieving properties "
             "of random spheres \"{}\" ...",
             config.get<std::string>(factor_data_set));
-        this->_data_properties = random_sphere_generator::get_properties(
-            desc.sphere_type);
-        this->_input_layout = random_sphere_generator::get_input_layout<
-            D3D12_INPUT_ELEMENT_DESC>(desc.sphere_type);
+        this->set_properties(desc);
 
     } catch (...) {
-        auto path = config.get<std::string>(factor_data_set);
+        const auto force_float = config.get<bool>(factor_force_float_colour);
         const auto frame = config.get<frame_type>(factor_frame);
+        auto path = config.get<std::string>(factor_data_set);
         log::instance().write_line(log_level::verbose, "Retrieving properties "
             "of frame {0} in MMPLD data set \"{}\" ...", frame, path);
         mmpld::list_header list_header;
@@ -491,730 +748,227 @@ void trrojan::d3d12::sphere_benchmark_base::load_data_properties(
         file.open_frame(frame);
         file.read_particles(list_header, nullptr, 0);
 
-        this->_data_properties = mmpld::get_properties<properties_type>(
-            list_header);
-        this->_input_layout = mmpld::get_input_layout<D3D12_INPUT_ELEMENT_DESC>(
-            list_header);
+        if (force_float && is_non_float_colour(list_header)) {
+            list_header.colour_type = mmpld::colour_type::rgba32;
+        }
+
+        this->set_properties(list_header);
     }
 }
 
 
-
-#if 0
 /*
- * trrojan::d3d12::sphere_benchmark_base::on_run
+ * trrojan::d3d12::sphere_benchmark_base::on_device_switch
  */
-trrojan::result trrojan::d3d12::sphere_benchmark_base::on_run(d3d12::device& device,
-    const configuration& config, const std::vector<std::string>& changed) {
-    typedef rendering_technique::shader_stage shader_stage;
+void trrojan::d3d12::sphere_benchmark_base::on_device_switch(
+        ID3D12Device *device) {
+    assert(device != nullptr);
+    static constexpr auto CONSTANT_BUFFER_SIZE = sizeof(SphereConstants)
+        + sizeof(TessellationConstants) + sizeof(ViewConstants);
+    benchmark_base::on_device_switch(device);
 
-    std::array<float, 3> bboxSize;
-    trrojan::timer cpuTimer;
-    auto cntCpuIterations = static_cast<std::uint32_t>(0);
-    const auto cntGpuIterations= config.get<std::uint32_t>(
-        factor_gpu_counter_iterations);
-    auto ctx = device.d3d_context();
-    auto dev = device.d3d_device();
-    gpu_timer_type::value_type gpuFreq;
-    gpu_timer_type gpuTimer;
-    std::vector<gpu_timer_type::millis_type> gpuTimes;
-    auto isDisjoint = true;
-    const auto minWallTime = config.get<std::uint32_t>(factor_min_wall_time);
-    d3d12_QUERY_DATA_PIPELINE_STATISTICS pipeStats;
-    auto shaderCode = sphere_benchmark_base::get_shader_id(config);
-    SphereConstants sphereConstants;
-    TessellationConstants tessConstants;
-    ViewConstants viewConstants;
-    d3d12_VIEWPORT viewport;
+    // PSOs are device-specific, so clear all cached ones.
+    this->_pipeline_cache.clear();
 
-    // If the device has changed, invalidate all GPU resources and recreate the
-    // data-independent ones.
-    if (contains(changed, factor_device)) {
-        log::instance().write_line(log_level::verbose, "Preparing GPU "
-            "resources for device \"{}\" ...", device.name().c_str());
-        this->technique_cache.clear();
+    // Resources are device-specific, so delete and recreate them.
+    this->_colour_map = create_viridis_colour_map(device);
 
-        if (this->data != nullptr) {
-            this->data->release();
+    this->_constant_buffer = create_constant_buffer(device,
+        this->pipeline_depth() * CONSTANT_BUFFER_SIZE);
+
+    // Persistently map the upload buffer for constants.
+    {
+        void *p;
+        auto hr = this->_constant_buffer->Map(0, nullptr, &p);
+        if (FAILED(hr)) {
+            throw ATL::CAtlException(hr);
         }
 
-        // Constant buffers.
-        this->sphere_constants = create_buffer(dev, d3d12_USAGE_DEFAULT,
-            d3d12_BIND_CONSTANT_BUFFER, nullptr, sizeof(SphereConstants));
-        set_debug_object_name(this->sphere_constants.p, "sphere_constants");
-        this->tessellation_constants = create_buffer(dev, d3d12_USAGE_DEFAULT,
-            d3d12_BIND_CONSTANT_BUFFER, nullptr, sizeof(TessellationConstants));
-        set_debug_object_name(this->tessellation_constants.p,
-            "tessellation_constants");
-        this->view_constants = create_buffer(dev, d3d12_USAGE_DEFAULT,
-            d3d12_BIND_CONSTANT_BUFFER, nullptr, sizeof(ViewConstants));
-        set_debug_object_name(this->view_constants.p, "view_constants");
+        set_debug_object_name(this->_constant_buffer.p, "constant_buffer");
 
-        // Textures and SRVs.
-        this->colour_map = nullptr;
-        create_viridis_colour_map(dev, &this->colour_map);
+        this->_sphere_constants = static_cast<SphereConstants *>(p);
+        p = offset_by_n<SphereConstants>(p, this->pipeline_depth());
 
-        // Samplers.
-        this->linear_sampler = create_linear_sampler(dev);
+        this->_tessellation_constants= static_cast<TessellationConstants *>(p);
+        p = offset_by_n<TessellationConstants>(p, this->pipeline_depth());
 
-        // Queries.
-        this->done_query = create_event_query(dev);
-        this->stats_query = create_pipline_stats_query(dev);
+        this->_view_constants = static_cast<ViewConstants *>(p);
     }
+}
 
-    // Determine whether the data set header must be loaded. This needs to be
-    // done before any frame is loaded or the technique is selected.
-    if (contains_any(changed, factor_data_set)) {
-        this->data.reset();
 
-        try {
-            // Try to interpret the path as description of random spheres.
-            this->make_random_spheres(dev, shaderCode, config);
-            assert(this->check_data_compatibility(shaderCode));
-        } catch (std::exception& ex) {
-            // If parsing the path as random spheres failed, interpret it as
-            // path to an MMPLD file.
-            log::instance().write_line(log_level::warning, ex);
+/*
+ * trrojan::d3d12::sphere_benchmark_base::set_clipping_planes
+ */
+void trrojan::d3d12::sphere_benchmark_base::set_clipping_planes(void) {
+    const auto& camPos = this->_camera.get_look_from();
+    const auto& view = glm::normalize(this->_camera.get_look_to() - camPos);
 
-            auto path = config.get<std::string>(factor_data_set);
-            log::instance().write_line(log_level::verbose, "Loading MMPLD data "
-                "set \"{}\" ...", path.c_str());
-            this->data = mmpld_data_set::create(path);
-        }
-    }
-    /* At this point, the data header for processing the MMPLD is OK. */
+    auto far_plane = std::numeric_limits<float>::lowest();
+    auto near_plane = (std::numeric_limits<float>::max)();
 
-    // For MMPLD data, we need to consider that there are existing frame data
-    // which might be from the wrong frame or in the woring format. Therefore,
-    // check frame and data compatibility and re-read the frame as necessary.
-    // For random sphere data, we only need to consider that the existing data
-    // are not compatible with the rendering technique.
-    {
-        auto m = std::dynamic_pointer_cast<mmpld_data_set>(this->data);
-        if (m != nullptr) {
-            auto isFrameChanged = contains_any(changed, factor_frame,
-                factor_fit_bounding_box);
-            auto isFrameCompat = this->check_data_compatibility(shaderCode);
-
-            if (isFrameChanged || !isFrameCompat) {
-                this->load_mmpld_frame(dev, shaderCode, config);
-                assert(this->check_data_compatibility(shaderCode));
-            }
-        }
-
-        auto r = std::dynamic_pointer_cast<random_sphere_data_set>(this->data);
-        if (r != nullptr) {
-            auto isFrameCompat = this->check_data_compatibility(shaderCode);
-
-            if (!isFrameCompat) {
-                log::instance().write_line(log_level::debug, "Recreating "
-                    "random sphere data set due to incompatibility with "
-                    "current rendering technique.");
-                r->recreate(dev, shaderCode);
-                assert(this->check_data_compatibility(shaderCode));
-            }
-        }
-    }
-    /* At this point, we should have valid data for the selected technique. */
-    assert(this->check_data_compatibility(shaderCode));
-
-    // The 'shaderCode' might have some flags preventively set to request
-    // certain data properties. Remove the flags that cannot fulfilled by the
-    // data
-    if ((this->get_data_properties(shaderCode) & SPHERE_INPUT_PV_COLOUR) == 0) {
-        shaderCode &= ~SPHERE_INPUT_FLT_COLOUR;
-    }
-    {
-        static const auto INTENSITY_MASK = (SPHERE_INPUT_PV_INTENSITY
-            | SPHERE_INPUT_PP_INTENSITY);
-        if ((this->get_data_properties(shaderCode) & INTENSITY_MASK) == 0) {
-            shaderCode &= ~INTENSITY_MASK;
-        }
-    }
-
-    // Select or create the right rendering technique and apply the data set
-    // to the technique.
-    auto& technique = this->get_technique(dev, shaderCode);
-    this->data->apply(technique, rendering_technique::combine_shader_stages(
-        shader_stage::vertex), 0, 1);
-
-    // Retrieve the viewport for rasteriser and shaders.
-    {
-        auto vp = config.get<viewport_type>(factor_viewport);
-        viewport.TopLeftX = viewport.TopLeftY = 0.0f;
-        viewport.Width = static_cast<float>(vp[0]);
-        viewport.Height = static_cast<float>(vp[1]);
-        viewport.MinDepth = 0.0f;
-        viewport.MaxDepth = 1.0f;
-
-        viewConstants.Viewport.x = 0.0f;
-        viewConstants.Viewport.y = 0.0f;
-        viewConstants.Viewport.z = viewport.Width;
-        viewConstants.Viewport.w = viewport.Height;
-    }
-
-    // Initialise the GPU timer.
-    gpuTimer.initialise(dev);
-
-    // Prepare the result set.
-    auto retval = std::make_shared<basic_result>(std::move(config),
-        std::initializer_list<std::string> {
-            "particles",
-            "data_extents",
-            "ia_vertices",
-            "ia_primitives",
-            "vs_invokes",
-            "hs_invokes",
-            "ds_invokes",
-            "gs_invokes",
-            "gs_primitives",
-            "ps_invokes",
-            "gpu_time_min",
-            "gpu_time_med",
-            "gpu_time_max",
-            "wall_time_iterations",
-            "wall_time",
-            "wall_time_avg"
-    });
-
-    // Set data constants. Note that his must be done before computing the
-    // matrices because we will use sphereConstants.GlobalRadius there.
-    {
-        ::ZeroMemory(&sphereConstants, sizeof(SphereConstants));
-
-        auto m = std::dynamic_pointer_cast<mmpld_data_set>(this->data);
-        if (m != nullptr) {
-            auto& l = m->header();
-
-            sphereConstants.GlobalColour.x = l.colour[0];
-            sphereConstants.GlobalColour.y = l.colour[1];
-            sphereConstants.GlobalColour.z = l.colour[2];
-            sphereConstants.GlobalColour.w = l.colour[3];
-
-            sphereConstants.IntensityRange.x = l.min_intensity;
-            sphereConstants.IntensityRange.y = l.max_intensity;
-            sphereConstants.GlobalRadius = l.radius;
-
-        } else {
-            sphereConstants.GlobalColour.x = 0.5f;
-            sphereConstants.GlobalColour.y = 0.5f;
-            sphereConstants.GlobalColour.z = 0.5f;
-            sphereConstants.GlobalColour.w = 1.f;
-
-            sphereConstants.IntensityRange.x = 0.0f;
-            sphereConstants.IntensityRange.y = 1.0f;
-            sphereConstants.GlobalRadius = this->data->max_radius();
-            // Note: the maximum radius is the global radius for random
-            // spheres without per-sphere radius.
-        }
-    }
-
-    // Compute the matrices.
-    {
-        //auto projection = DirectX::XMMatrixPerspectiveFovRH(std::atan(1) * 4 / 3,
-        //    static_cast<float>(viewport.Width) / static_cast<float>(viewport.Height),
-        //    0.1f, 10.0f);
-
-        //auto eye = DirectX::XMFLOAT4(0, 0, 0.5f * (this->mmpld_header.bounding_box[5] - this->mmpld_header.bounding_box[2]), 0);
-        //auto lookAt = DirectX::XMFLOAT4(0, 0, 0, 0);
-        //auto up = DirectX::XMFLOAT4(0, 1, 0, 0);
-        //auto view = DirectX::XMMatrixLookAtRH(DirectX::XMLoadFloat4(&eye),
-        //    DirectX::XMLoadFloat4(&lookAt), DirectX::XMLoadFloat4(&up));
-        const auto aspect = static_cast<float>(viewport.Width)
-            / static_cast<float>(viewport.Height);
-        const auto fovyDeg = 60.0f;
-        point_type bbs, bbe;
-
-        // Retrieve the bounding box of the data.
-        this->data->bounding_box(bbs, bbe);
-        for (size_t i = 0; i < 3; ++i) {
-            bboxSize[i] = std::abs(bbe[i] - bbs[1]);
-        }
-
-        // Set basic view parameters.
-        this->cam.set_fovy(fovyDeg);
-        this->cam.set_aspect_ratio(aspect);
-
-        // Apply the current step of the manoeuvre.
-        sphere_benchmark_base::apply_manoeuvre(this->cam, config, bbs, bbe);
-
-        // Compute the clipping planes based on the current view.
-        const auto clipping = this->data->clipping_planes(cam,
-            sphereConstants.GlobalRadius);
-        this->cam.set_near_plane_dist(clipping.first);
-        this->cam.set_far_plane_dist(clipping.second);
-
-        // Retrieve the matrices.
-        auto mat = DirectX::XMFLOAT4X4(
-            glm::value_ptr(this->cam.get_projection_mx()));
-        auto projection = DirectX::XMLoadFloat4x4(&mat);
-        DirectX::XMStoreFloat4x4(viewConstants.ProjMatrix,
-            DirectX::XMMatrixTranspose(projection));
-
-        mat = DirectX::XMFLOAT4X4(glm::value_ptr(this->cam.get_view_mx()));
-        auto view = DirectX::XMLoadFloat4x4(&mat);
-        DirectX::XMStoreFloat4x4(viewConstants.ViewMatrix,
-            DirectX::XMMatrixTranspose(view));
-
-        auto viewDet = DirectX::XMMatrixDeterminant(view);
-        auto viewInv = DirectX::XMMatrixInverse(&viewDet, view);
-        DirectX::XMStoreFloat4x4(viewConstants.ViewInvMatrix,
-            DirectX::XMMatrixTranspose(viewInv));
-
-        auto viewProj = view * projection;
-        DirectX::XMStoreFloat4x4(viewConstants.ViewProjMatrix,
-            DirectX::XMMatrixTranspose(viewProj));
-
-        auto viewProjDet = DirectX::XMMatrixDeterminant(viewProj);
-        auto viewProjInv = DirectX::XMMatrixInverse(&viewProjDet, viewProj);
-        DirectX::XMStoreFloat4x4(viewConstants.ViewProjInvMatrix,
-            DirectX::XMMatrixTranspose(viewProjInv));
-    }
-
-    // Set tessellation constants.
-    {
-        auto f = config.get<edge_tess_factor_type>(factor_edge_tess_factor);
-        tessConstants.EdgeTessFactor.x = f[0];
-        tessConstants.EdgeTessFactor.y = f[1];
-        tessConstants.EdgeTessFactor.z = f[2];
-        tessConstants.EdgeTessFactor.w = f[3];
-    }
-
-    {
-        auto f = config.get<inside_tess_factor_type>(factor_inside_tess_factor);
-        tessConstants.InsideTessFactor.x = f[0];
-        tessConstants.InsideTessFactor.y = f[1];
-    }
-
-    tessConstants.AdaptiveTessMin = config.get<float>(
-        factor_adapt_tess_minimum);
-    tessConstants.AdaptiveTessMax = config.get<float>(
-        factor_adapt_tess_maximum);
-    tessConstants.AdaptiveTessScale = config.get<float>(
-        factor_adapt_tess_scale);
-
-    tessConstants.HemisphereTessScaling = config.get<float>(
-        factor_hemi_tess_scale);
-
-    tessConstants.PolygonCorners = config.get<std::uint32_t>(
-        factor_poly_corners);
-
-    // Update constant buffers.
-    ctx->UpdateSubresource(this->sphere_constants.p, 0, nullptr,
-        &sphereConstants, 0, 0);
-    ctx->UpdateSubresource(this->tessellation_constants.p, 0, nullptr,
-        &tessConstants, 0, 0);
-    ctx->UpdateSubresource(this->view_constants.p, 0, nullptr,
-        &viewConstants, 0, 0);
-
-    // Configure the rasteriser.
-    ctx->RSSetViewports(1, &viewport);
-    //context->RSSetState(this->rasteriserState.Get());
-
-    // Enable the technique.
-    technique.apply(ctx);
-
-    // Determine the number of primitives to emit.
-    auto cntPrimitives = this->data->size();
-    auto cntInstances = 0;
-    auto isInstanced = false;
-    if (is_technique(shaderCode, SPHERE_TECHNIQUE_QUAD_INST)) {
-        // Instancing of quads requires 4 vertices per particle.
-        cntInstances = cntPrimitives;
-        cntPrimitives = 4;
-        isInstanced = true;
-    }
-
-#if 0
-    {
-        auto soBuffer = create_buffer(dev, d3d12_USAGE_DEFAULT,
-            d3d12_BIND_STREAM_OUTPUT, nullptr, 4000 * sizeof(float) * 4, 0);
-        UINT soOffset[] = { 0 };
-        ctx->SOSetTargets(1, &soBuffer.p, soOffset);
-    }
-#endif
-
-    // Do prewarming and compute number of CPU iterations at the same time.
-    log::instance().write_line(log_level::debug, "Prewarming ...");
-    {
-       auto batchTime = 0.0;
-       auto cntPrewarms = (std::max)(1u,
-           config.get<std::uint32_t>(factor_min_prewarms));
-
-        do {
-            cntCpuIterations = 0;
-            assert(cntPrewarms >= 1);
-
-            cpuTimer.start();
-            for (; cntCpuIterations < cntPrewarms; ++cntCpuIterations) {
-                this->clear_target();
-                if (isInstanced) {
-                    ctx->DrawInstanced(cntPrimitives, cntInstances, 0, 0);
-                } else {
-                    ctx->Draw(cntPrimitives, 0);
+    for (auto x = 0; x < 2; ++x) {
+        for (auto y = 0; y < 2; ++y) {
+            for (auto z = 0; z < 2; ++z) {
+                auto pt = glm::vec3(this->_bbox[x][0], this->_bbox[y][1],
+                    this->_bbox[z][2]);
+                auto ray = pt - camPos;
+                auto dist = glm::dot(view, ray);
+                if (dist < near_plane) {
+                    near_plane = dist;
                 }
-                this->present_target();
-#if defined(CREATE_D2D_OVERLAY)
-                // Using the overlay will change the state such that we need to
-                // re-apply it after presenting.
-                technique.apply(ctx);
-#endif /* defined(CREATE_D2D_OVERLAY) */
-            }
-
-            ctx->End(this->done_query);
-            wait_for_event_query(ctx, this->done_query);
-            batchTime = cpuTimer.elapsed_millis();
-
-            if (batchTime < minWallTime) {
-                cntPrewarms = static_cast<std::uint32_t>(std::ceil(
-                    static_cast<double>(minWallTime * cntCpuIterations)
-                    / batchTime));
-                if (cntPrewarms < 1) {
-                    cntPrewarms = 1;
+                if (dist > far_plane) {
+                    far_plane = dist;
                 }
             }
-        } while (batchTime < minWallTime);
-    }
-
-    // Do the GPU counter measurements
-    gpuTimes.resize(cntGpuIterations);
-    for (std::uint32_t i = 0; i < cntGpuIterations;) {
-        log::instance().write_line(log_level::debug, "GPU counter measurement "
-            "#{}.", i);
-        gpuTimer.start_frame();
-        gpuTimer.start(0);
-        this->clear_target();
-        if (isInstanced) {
-            ctx->DrawInstanced(cntPrimitives, cntInstances, 0, 0);
-        } else {
-            ctx->Draw(cntPrimitives, 0);
-        }
-#if defined(CREATE_D2D_OVERLAY)
-        // Using the overlay will change the state such that we need to
-        // re-apply it after presenting.
-        technique.apply(ctx);
-#endif /* defined(CREATE_D2D_OVERLAY) */
-        gpuTimer.end(0);
-        gpuTimer.end_frame();
-
-        gpuTimer.evaluate_frame(isDisjoint, gpuFreq);
-        if (!isDisjoint) {
-            gpuTimes[i] = gpu_timer_type::to_milliseconds(
-                    gpuTimer.evaluate(0), gpuFreq);
-            ++i;    // Only proceed in case of success.
         }
     }
 
-    // Obtain pipeline statistics
-    log::instance().write_line(log_level::debug, "Collecting pipeline "
-        "statistics ...");
-    this->clear_target();
-    ctx->Begin(this->stats_query);
-    if (isInstanced) {
-        ctx->DrawInstanced(cntPrimitives, cntInstances, 0, 0);
-    } else {
-        ctx->Draw(cntPrimitives, 0);
+    near_plane -= this->_max_radius;
+    far_plane += this->_max_radius;
+
+    if (near_plane < 0.0f) {
+        // Plane could become negative in data set, which is illegal. A range of
+        // 10k seems to be something our shaders can still handle.
+        near_plane = far_plane / 10000.0f;
     }
-    ctx->End(this->stats_query);
-    this->present_target();
-#if defined(CREATE_D2D_OVERLAY)
-    // Using the overlay will change the state such that we need to
-    // re-apply it after presenting.
-    technique.apply(ctx);
-#endif /* defined(CREATE_D2D_OVERLAY) */
-    wait_for_stats_query(pipeStats, ctx, this->stats_query);
+    //near_plane = 0.01f;
+    //far_plane *= 1.1f;
 
-    // Do the wall clock measurement.
-    log::instance().write_line(log_level::debug, "Measuring wall clock "
-        "timings over {} iterations ...", cntCpuIterations);
-    cpuTimer.start();
-    for (std::uint32_t i = 0; i < cntCpuIterations; ++i) {
-        this->clear_target();
-        if (isInstanced) {
-            ctx->DrawInstanced(cntPrimitives, cntInstances, 0, 0);
-        } else {
-            ctx->Draw(cntPrimitives, 0);
-        }
-        this->present_target();
-#if defined(CREATE_D2D_OVERLAY)
-        // Using the overlay will change the state such that we need to
-        // re-apply it after presenting.
-        technique.apply(ctx);
-#endif /* defined(CREATE_D2D_OVERLAY) */
-    }
-    ctx->End(this->done_query);
-    wait_for_event_query(ctx, this->done_query);
-    auto cpuTime = cpuTimer.elapsed_millis();
-
-    // Compute derived statistics for GPU counters.
-    std::sort(gpuTimes.begin(), gpuTimes.end());
-    auto gpuMedian = gpuTimes[gpuTimes.size() / 2];
-    if (gpuTimes.size() % 2 == 0) {
-        gpuMedian += gpuTimes[gpuTimes.size() / 2 - 1];
-        gpuMedian *= 0.5;
-    }
-
-    // Output the results.
-    retval->add({
-        this->data->size(),
-        bboxSize,
-        pipeStats.IAVertices,
-        pipeStats.IAPrimitives,
-        pipeStats.VSInvocations,
-        pipeStats.HSInvocations,
-        pipeStats.DSInvocations,
-        pipeStats.GSInvocations,
-        pipeStats.GSPrimitives,
-        pipeStats.PSInvocations,
-        gpuTimes.front(),
-        gpuMedian,
-        gpuTimes.back(),
-        cntCpuIterations,
-        cpuTime,
-        static_cast<double>(cpuTime) / cntCpuIterations
-        });
-
-    return retval;
-}
-#endif
-
-#if 0
-
-/*
- * trrojan::d3d12::sphere_benchmark_base::check_data_compatibility
- */
-bool trrojan::d3d12::sphere_benchmark_base::check_data_compatibility(
-        const shader_id_type shaderCode) {
-    if ((this->data == nullptr) || (this->data->buffer() == nullptr)) {
-        log::instance().write_line(log_level::debug, "Data set is not "
-            "compatible with rendering technique because no data have been "
-            "loaded so far.");
-        return false;
-    }
-
-    auto dataCode = this->get_data_properties(shaderCode);
-
-    if ((shaderCode & SPHERE_TECHNIQUE_USE_SRV)
-            != (dataCode & SPHERE_TECHNIQUE_USE_SRV)) {
-        log::instance().write_line(log_level::debug, "Data set is not "
-            "compatible with rendering technique because the technique has the "
-            "shader resource view flag {} set in contrast to the data set.",
-            ((shaderCode & SPHERE_TECHNIQUE_USE_SRV) != 0) ? "" : "not ");
-        return false;
-    }
-
-    if (((shaderCode & SPHERE_INPUT_PV_COLOUR) != 0)
-            && ((shaderCode & SPHERE_INPUT_FLT_COLOUR)
-            != (dataCode & SPHERE_INPUT_FLT_COLOUR))) {
-        log::instance().write_line(log_level::debug, "Data set is not "
-            "compatible with rendering technique because the requested "
-            "floating point conversion of colours does not match.");
-        return false;
-    }
-
-    // No problem found at this point.
-    return true;
-}
-
-
-
-/*
- * trrojan::d3d12::sphere_benchmark_base::get_technique
- */
-trrojan::d3d12::rendering_technique&
-trrojan::d3d12::sphere_benchmark_base::get_technique(Id3d12Device *device,
-        shader_id_type shaderCode) {
-    auto dataCode = this->get_data_properties(shaderCode);
-    const auto id = shaderCode | dataCode;
-    auto isFlt = ((id & SPHERE_INPUT_FLT_COLOUR) != 0);
-    auto isGeo = ((id & SPHERE_TECHNIQUE_USE_GEO) != 0);
-    auto isInst = ((id & SPHERE_TECHNIQUE_USE_INSTANCING) != 0);
-    auto isPsTex = ((id & SPHERE_INPUT_PP_INTENSITY) != 0);
-    auto isRay = ((id & SPHERE_TECHNIQUE_USE_RAYCASTING) != 0);
-    auto isSrv = ((id & SPHERE_TECHNIQUE_USE_SRV) != 0);
-    auto isTess = ((id & SPHERE_TECHNIQUE_USE_TESS) != 0);
-    auto isVsTex = ((id & SPHERE_INPUT_PV_INTENSITY) != 0);
-
-    auto retval = this->technique_cache.find(id);
-    if (retval == this->technique_cache.end()) {
-        log::instance().write_line(log_level::verbose, "No cached sphere "
-            "rendering technique for {} with data features {} (ID {}) was "
-            "found. Creating a new one ...", shaderCode, dataCode, id);
-        rendering_technique::input_layout_type il = nullptr;
-        rendering_technique::vertex_shader_type vs = nullptr;
-        rendering_technique::hull_shader_type hs = nullptr;
-        rendering_technique::domain_shader_type ds = nullptr;
-        rendering_technique::geometry_shader_type gs = nullptr;
-        rendering_technique::pixel_shader_type ps = nullptr;
-        rendering_technique::shader_resources vsRes;
-        rendering_technique::shader_resources hsRes;
-        rendering_technique::shader_resources dsRes;
-        rendering_technique::shader_resources gsRes;
-        rendering_technique::shader_resources psRes;
-        auto pt = d3d12_PRIMITIVE_TOPOLOGY_POINTLIST;
-        auto sid = id;
-
-        if (!isSrv) {
-            // The type of colour is only relevant for SRVs, VB-based methods do
-            // not declare this in their shader flags because the layout is
-            // handled via the input layout of the technique.
-            sid &= ~SPHERE_INPUT_FLT_COLOUR;
-        }
-
-        auto it = this->shader_resources.find(sid);
-        if (it == this->shader_resources.end()) {
-            std::stringstream msg;
-            msg << "Shader sources for sphere rendering method 0x"
-                << std::hex << sid << " was not found." << std::ends;
-            throw std::runtime_error(msg.str());
-        }
-
-        if (it->second.vertex_shader != 0) {
-            auto src = d3d12::plugin::load_resource(
-                MAKEINTRESOURCE(it->second.vertex_shader), _T("SHADER"));
-            vs = create_vertex_shader(device, src);
-            il = create_input_layout(device, this->data->layout(), src);
-        }
-        if (it->second.hull_shader != 0) {
-            assert(isTess);
-            auto src = d3d12::plugin::load_resource(
-                MAKEINTRESOURCE(it->second.hull_shader), _T("SHADER"));
-            hs = create_hull_shader(device, src);
-        }
-        if (it->second.domain_shader != 0) {
-            assert(isTess);
-            auto src = d3d12::plugin::load_resource(
-                MAKEINTRESOURCE(it->second.domain_shader), _T("SHADER"));
-            ds = create_domain_shader(device, src);
-        }
-        if (it->second.geometry_shader != 0) {
-            assert(isGeo);
-            auto src = d3d12::plugin::load_resource(
-                MAKEINTRESOURCE(it->second.geometry_shader), _T("SHADER"));
-            gs = create_geometry_shader(device, src);
-        }
-        if (it->second.pixel_shader != 0) {
-            auto src = d3d12::plugin::load_resource(
-                MAKEINTRESOURCE(it->second.pixel_shader), _T("SHADER"));
-            ps = create_pixel_shader(device, src);
-        }
-
-
-        if (is_technique(shaderCode, SPHERE_TECHNIQUE_QUAD_INST)) {
-            assert(isRay);
-            pt = d3d12_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP;
-            vsRes.constant_buffers.push_back(this->sphere_constants);
-            vsRes.constant_buffers.push_back(this->view_constants);
-
-            psRes.constant_buffers.push_back(this->sphere_constants);
-            psRes.constant_buffers.push_back(this->view_constants);
-
-            il = nullptr;   // Uses vertex-from-nothing technique.
-
-#if 0
-            d3d12_SO_DECLARATION_ENTRY soDecl[] = {
-                { 0, "SV_POSITION", 0, 0, 4, 0 }  // Position
-            };
-            auto vsSrc = d3d12::plugin::load_resource(
-                MAKEINTRESOURCE(it->second.vertex_shader), _T("SHADER"));
-            gs = create_geometry_shader(device, vsSrc.data(), vsSrc.size(),
-                soDecl, sizeof(soDecl) / sizeof(*soDecl), nullptr, 0, 0);
-#endif
-
-#if 0
-            gs = create_geometry_shader(device, "C:\\Users\\mueller\\source\\repos\\TRRojan\\bin\\Debug\\PassThroughGeometryShader.cso");
-#endif
-        }
-
-        if (isTess) {
-            pt = d3d12_PRIMITIVE_TOPOLOGY_1_CONTROL_POINT_PATCHLIST;
-            vsRes.constant_buffers.push_back(this->sphere_constants);
-            vsRes.constant_buffers.push_back(this->view_constants);
-
-            hsRes.constant_buffers.push_back(nullptr);
-            hsRes.constant_buffers.push_back(this->view_constants);
-            hsRes.constant_buffers.push_back(this->tessellation_constants);
-
-            dsRes.constant_buffers.push_back(nullptr);
-            dsRes.constant_buffers.push_back(this->view_constants);
-
-            psRes.constant_buffers.push_back(this->sphere_constants);
-            psRes.constant_buffers.push_back(this->view_constants);
-        }
-
-        if (isGeo) {
-            assert(isRay);
-            pt = d3d12_PRIMITIVE_TOPOLOGY_POINTLIST;
-            vsRes.constant_buffers.push_back(this->sphere_constants);
-            vsRes.constant_buffers.push_back(this->view_constants);
-
-            gsRes.constant_buffers.push_back(nullptr);
-            gsRes.constant_buffers.push_back(this->view_constants);
-            gsRes.constant_buffers.push_back(this->tessellation_constants);
-
-            psRes.constant_buffers.push_back(this->sphere_constants);
-            psRes.constant_buffers.push_back(this->view_constants);
-        }
-
-        if (isPsTex) {
-            psRes.sampler_states.push_back(this->linear_sampler);
-            rendering_technique::set_shader_resource_view(psRes,
-                this->colour_map, 0);
-
-        } else if (isVsTex) {
-            vsRes.sampler_states.push_back(this->linear_sampler);
-            rendering_technique::set_shader_resource_view(vsRes,
-                this->colour_map, 0);
-        }
-
-        this->technique_cache[id] = rendering_technique(
-            std::to_string(id), il, pt, vs, std::move(vsRes),
-            hs, std::move(hsRes), ds, std::move(dsRes),
-            gs, std::move(gsRes), ps, std::move(psRes));
-
-#if 0
-        {
-            d3d12_RASTERIZER_DESC desc;
-            rendering_technique::rasteriser_state_type state;
-
-            ::ZeroMemory(&desc, sizeof(desc));
-            desc.FillMode = d3d12_FILL_SOLID;
-            desc.CullMode = d3d12_CULL_NONE;
-
-            auto hr = device->CreateRasterizerState(&desc, &state);
-            assert(SUCCEEDED(hr));
-
-            this->technique_cache[id].set_rasteriser_state(state);
-        }
-#endif
-    }
-
-    retval = this->technique_cache.find(id);
-    assert(retval != this->technique_cache.end());
-    return retval->second;
+    log::instance().write_line(log_level::debug, "Dynamic clipping planes are "
+        "located at %f and %f.", near_plane, far_plane);
+    this->_camera.set_near_plane_dist(near_plane);
+    this->_camera.set_far_plane_dist(far_plane);
 }
 
 
 /*
- * trrojan::d3d12::sphere_benchmark_base::load_mmpld_frame
+ * trrojan::d3d12::sphere_benchmark_base::set_max_radius
  */
-void trrojan::d3d12::sphere_benchmark_base::load_mmpld_frame(Id3d12Device *dev,
-        const shader_id_type shaderCode, const configuration& config) {
-    auto flags = shaderCode;
-    auto d = std::dynamic_pointer_cast<mmpld_data_set>(this->data);
-    auto f = config.get<frame_type>(factor_frame);
+void trrojan::d3d12::sphere_benchmark_base::set_max_radius(
+        const mmpld::list_header& header, const void *particles) {
+    this->_max_radius = header.radius;
 
-    if (d == nullptr) {
-        std::logic_error("A call to load_mmpld_frame is only valid while an "
-            "MMPLD data set is open.");
+    if (this->_max_radius <= 0.0f) {
+        // This list has per-particle radii, which we must check individually.
+        auto cur = static_cast<const std::uint8_t *>(particles);
+        const auto stride = mmpld::get_stride<std::size_t>(header);
+
+        this->_max_radius = std::numeric_limits<
+            decltype(header.radius)>::lowest();
+        for (std::size_t i = 0; i < header.particles; ++i, cur += stride) {
+            const auto pos = reinterpret_cast<const float *>(cur);
+            if (pos[4] > this->_max_radius) {
+                this->_max_radius = pos[4];
+            }
+        }
     }
 
-    if (config.get<bool>(factor_fit_bounding_box)) {
-        flags |= mmpld_data_set::load_flag_fit_bounding_box;
+    log::instance().write_line(log_level::verbose, "Maximum radius in MMPLD "
+        "particle list was computed as {}.", this->_max_radius);
+}
+
+
+/*
+ * trrojan::d3d12::sphere_benchmark_base::set_properties
+ */
+void trrojan::d3d12::sphere_benchmark_base::set_properties(
+        const random_sphere_generator::description& desc) {
+    for (glm::length_t i = 0; i < this->_bbox[0].length(); ++i) {
+        this->_bbox[0][i] = -0.5 * desc.domain_size[i];
+        this->_bbox[1][i] = 0.5 * desc.domain_size[i];
     }
 
-    log::instance().write_line(log_level::verbose, "Loading MMPLD frame {} ...",
-        f);
-    d->read_frame(dev, f, flags);
+    this->_cnt_spheres = static_cast<UINT>(desc.number);
+    this->_colour[0] = 0.5f;
+    this->_colour[1] = 0.5f;
+    this->_colour[2] = 0.5f;
+    this->_colour[3] = 1.0f;
+    this->_data_properties = random_sphere_generator::get_properties(
+        desc.sphere_type);
+    this->_input_layout = random_sphere_generator::get_input_layout<
+        D3D12_INPUT_ELEMENT_DESC>(desc.sphere_type);
+    this->_intensity_range[0] = 0.0f;
+    this->_intensity_range[1] = 1.0f;
+
+    // Without the actual data, we can only set the requested maximum size, not
+    // the actually realised maximum.
+    this->_max_radius = desc.sphere_size[1];
+}
+
+
+/*
+ * trrojan::d3d12::sphere_benchmark_base::set_properties
+ */
+void trrojan::d3d12::sphere_benchmark_base::set_properties(
+        const mmpld::list_header& header) {
+    for (glm::length_t i = 0; i < this->_bbox[0].length(); ++i) {
+        this->_bbox[0][i] = header.bounding_box[i];
+        this->_bbox[1][i] = header.bounding_box[i + 3];
+    }
+
+    this->_cnt_spheres = static_cast<UINT>(header.particles);
+    ::memcpy(this->_colour.data(), &header.colour, sizeof(header.colour));
+    this->_data_properties = mmpld::get_properties<properties_type>(header);
+    this->_input_layout = mmpld::get_input_layout<D3D12_INPUT_ELEMENT_DESC>(
+        header);
+    this->_intensity_range[0] = header.min_intensity;
+    this->_intensity_range[1] = header.max_intensity;
+
+    // The global radius from the list header might be wrong, but we cannot do
+    // any better than this without the actual data.
+    this->_max_radius = header.radius;
+}
+
+
+/*
+ * trrojan::d3d12::sphere_benchmark_base::update_constants
+ */
+void trrojan::d3d12::sphere_benchmark_base::update_constants(
+        const configuration& config, const UINT buffer) {
+    assert(buffer < this->pipeline_depth());
+    this->get_sphere_constants(this->_sphere_constants[buffer]);
+    this->get_tessellation_constants(this->_tessellation_constants[buffer], config);
+    this->get_view_constants(this->_view_constants[buffer]);
+}
+
+#if 0
+// If floating point colours are requested, but not available, add a
+// conversion step. This step copies the first part of the particle,
+// which is always the position. The following RGBA8 colour is converted
+// to float4. Afterwards, the buffers are swapped such that 'data' is
+// the converted buffer and the mmpld_list is updated to contain
+// float4 colours.
+auto forceFloat = ((options & property_float_colour) != 0);
+auto notFloat = mmpld_data_set::is_non_float_colour(this->_list);
+if (forceFloat && notFloat) {
+    auto c = mmpld_data_set::get_colour_offset(this->_layout.begin(),
+        this->_layout.end());
+    assert(c != this->_layout.end());
+    const auto srcOffset = c->AlignedByteOffset;
+    const auto srcStride = this->stride() * this->size();
+    assert(srcOffset < srcStride);
+
+    // Recreate the header with the new colour type.
+    this->_list.colour_type = mmpld_reader::colour_type::float_rgba;
+    this->_layout = mmpld_data_set::get_input_layout(this->_list);
+    cntData = this->stride() * this->size();
+
+    std::vector<char> conv(cntData);
+    for (size_t i = 0; i < this->_list.particles; ++i) {
+        auto src = data.data() + i * srcStride;
+        auto dst = conv.data() + i * this->stride();
+        auto col = *reinterpret_cast<std::uint32_t *>(src + srcOffset);
+
+        ::memcpy(dst, src, srcOffset);
+        dst += this->stride();
+
+        for (size_t c = 0; c < 4; ++i) {
+            *reinterpret_cast<float *>(dst) = (col & 0xff) / 255.0f;
+            col >>= 8;
+            dst += sizeof(float);
+        }
+    }
+    std::swap(data, conv);
 }
 #endif

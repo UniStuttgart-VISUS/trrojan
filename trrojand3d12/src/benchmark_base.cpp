@@ -62,9 +62,6 @@ trrojan::result trrojan::d3d12::benchmark_base::run(const configuration& c) {
             "passed to a Direct3D benchmark.");
     }
 
-    // Allocate a command list that is used to perform all transition tasks.
-    auto cmd_list = device->create_graphics_command_list();
-
     // Determine whether we are in debug viewing mode, which will block all
     // device-related factors.
     auto isDebugView = c.get<bool>(factor_debug_view);
@@ -77,24 +74,31 @@ trrojan::result trrojan::d3d12::benchmark_base::run(const configuration& c) {
     }
 
     if (isDebugView) {
-        if (contains(changed, factor_device)) {
+        auto is_device_change = contains(changed, factor_device);
+        if (is_device_change) {
             log::instance().write_line(log_level::verbose, "Forcing the "
-                "debug to be re-created as the device has changed.");
+                "debug render target to be re-created as the device has "
+                "changed.");
             this->_debug_target = nullptr;
         }
         
         if (this->_debug_target == nullptr) {
             log::instance().write_line(log_level::verbose, "Lazy creation of "
                 "d3d12 debug render target on {}.", device->name());
-            this->_debug_device = device;
             this->_debug_target = std::make_shared<debug_render_target>(device);
             changed.push_back(factor_viewport); // Force resize of target.
         }
 
         // Overwrite device and render target.
-        device = this->_debug_device;
         this->_render_target = this->_debug_target;
         //this->render_target->use_reversed_depth_buffer(true);
+
+        // Invoke device switch once the target has been changed.
+        if (is_device_change) {
+            log::instance().write_line(log_level::verbose, "Reallocating "
+                "graphics resources after switch to debug device ...");
+            this->on_device_switch(device->d3d_device());
+        }
 
     } else {
         // Check whether the device has been changed. This should always be done
@@ -105,6 +109,7 @@ trrojan::result trrojan::d3d12::benchmark_base::run(const configuration& c) {
                 "changed. Reallocating all graphics resources ...");
             this->_render_target = std::make_shared<bench_render_target>(device);
             //this->render_target->use_reversed_depth_buffer(true);
+            this->on_device_switch(device->d3d_device());
             // If the device has changed, force the viewport to be re-created:
             changed.push_back(factor_viewport);
         }
@@ -117,18 +122,6 @@ trrojan::result trrojan::d3d12::benchmark_base::run(const configuration& c) {
             "benchmarking render target to {} × {} px ...", vp[0], vp[1]);
         this->_render_target->resize(vp[0], vp[1]);
     }
-
-    // Perform all transition tasks to enable the correct render target. This
-    // is a fire-and-forget operation as we create a new command list every
-    // time.
-    this->_render_target->enable(cmd_list);
-    {
-        auto hr = cmd_list->Close();
-        if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
-        }
-    }
-    device->execute_command_list(cmd_list);
 
     // Run the bechmark.
     auto retval = this->on_run(*device, c, changed);
@@ -144,6 +137,64 @@ trrojan::result trrojan::d3d12::benchmark_base::run(const configuration& c) {
     return retval;
 }
 
+
+/*
+ * trrojan::d3d12::benchmark_base::create_command_allocators
+ */
+void trrojan::d3d12::benchmark_base::create_command_allocators(
+        command_allocator_list& dst, ID3D12Device *device,
+        const D3D12_COMMAND_LIST_TYPE type, const std::size_t cnt) {
+    assert(device != nullptr);
+    log::instance().write_line(log_level::debug, "Appending {0} command "
+        "allocator(s) of type {1} to {2} existing one(s).", cnt, type,
+        dst.size());
+
+    dst.reserve(dst.size() + cnt);
+    for (UINT i = 0; i < cnt; ++i) {
+        dst.push_back(nullptr);
+        auto hr = device->CreateCommandAllocator(type,
+            IID_ID3D12CommandAllocator,
+            reinterpret_cast<void **>(&dst.back()));
+        if (FAILED(hr)) {
+            throw ATL::CAtlException(hr);
+        }
+    }
+}
+
+
+/*
+ * trrojan::d3d12::benchmark_base::create_command_list
+ */
+ATL::CComPtr<ID3D12CommandList>
+trrojan::d3d12::benchmark_base::create_command_list(
+        const command_allocator_list& allocators,
+        const D3D12_COMMAND_LIST_TYPE type, const std::size_t frame,
+        ID3D12PipelineState *initial_state) {
+    if (frame >= allocators.size()) {
+        log::instance().write_line(log_level::error, "The given list of "
+            "command allocators only supports {0} frames, but frame {1} "
+            "was requested.", allocators.size(), frame);
+        throw ATL::CAtlException(E_INVALIDARG);
+    }
+    if (allocators[frame] == nullptr) {
+        log::instance().write_line(log_level::error, "The command allocator "
+            "at position {0} is invalid.", frame);
+        throw ATL::CAtlException(E_INVALIDARG);
+    }
+
+    ATL::CComPtr<ID3D12CommandList> retval;
+    {
+        auto device = get_device(allocators[frame]);
+        auto hr = device->CreateCommandList(0, type, allocators[frame],
+            initial_state, ::IID_ID3D12CommandList,
+            reinterpret_cast<void **>(&retval));
+        if (FAILED(hr)) {
+            throw ATL::CAtlException(hr);
+        }
+    }
+
+    return retval;
+}
 
 /*
  * trrojan::d3d12::benchmark_base::resolve_shader_path
@@ -173,6 +224,198 @@ trrojan::d3d12::benchmark_base::benchmark_base(const std::string& name)
         this->_default_configs.add_factor(factor::from_manifestations(
             factor_viewport, dftViewport));
     }
+}
+
+
+/*
+ * trrojan::d3d12::benchmark_base::create_command_bundle
+ */
+ATL::CComPtr<ID3D12GraphicsCommandList>
+trrojan::d3d12::benchmark_base::create_command_bundle(
+        const std::size_t allocator, ID3D12PipelineState *initial_state) {
+    auto bundle = this->create_command_list(D3D12_COMMAND_LIST_TYPE_BUNDLE,
+        allocator, initial_state);
+
+    ATL::CComPtr<ID3D12GraphicsCommandList> retval;
+    auto hr = bundle.QueryInterface(&retval);
+    if (FAILED(hr)) {
+        throw ATL::CAtlException(hr);
+    }
+
+    return retval;
+}
+
+
+/*
+ * trrojan::d3d12::benchmark_base::create_command_list
+ */
+ATL::CComPtr<ID3D12CommandList>
+trrojan::d3d12::benchmark_base::create_command_list(
+        const D3D12_COMMAND_LIST_TYPE type,
+        const std::size_t frame,
+        ID3D12PipelineState *initial_state) {
+    switch (type) {
+        case D3D12_COMMAND_LIST_TYPE_BUNDLE:
+            return create_command_list(this->_bundle_allocators,
+                type, frame, initial_state);
+
+        case D3D12_COMMAND_LIST_TYPE_COMPUTE:
+            return create_command_list(this->_compute_cmd_allocators,
+                type, frame, initial_state);
+
+        case D3D12_COMMAND_LIST_TYPE_COPY:
+            return create_command_list(this->_copy_cmd_allocators,
+                type, frame, initial_state);
+
+        case D3D12_COMMAND_LIST_TYPE_DIRECT:
+            return create_command_list(this->_direct_cmd_allocators,
+                type, frame, initial_state);
+
+        default:
+            log::instance().write_line(log_level::error, "Creating a command "
+                "list of type {0} is not supported.", type);
+            throw ATL::CAtlException(E_INVALIDARG);
+    }
+}
+
+
+/*
+ * trrojan::d3d12::benchmark_base::create_graphics_command_list
+ */
+ATL::CComPtr<ID3D12GraphicsCommandList>
+trrojan::d3d12::benchmark_base::create_graphics_command_list(
+        const D3D12_COMMAND_LIST_TYPE type, const std::size_t frame,
+        ID3D12PipelineState *initial_state) {
+    auto cmd_list = this->create_command_list(type, frame, initial_state);
+
+    ATL::CComPtr<ID3D12GraphicsCommandList> retval;
+    auto hr = cmd_list.QueryInterface(&retval);
+    if (FAILED(hr)) {
+        throw ATL::CAtlException(hr);
+    }
+
+    return retval;
+}
+
+
+/*
+ * trrojan::d3d12::benchmark_base::create_graphics_command_list
+ */
+ATL::CComPtr<ID3D12GraphicsCommandList>
+trrojan::d3d12::benchmark_base::create_graphics_command_list(
+        const std::size_t frame, ID3D12PipelineState *initial_state) {
+    return this->create_graphics_command_list(D3D12_COMMAND_LIST_TYPE_DIRECT,
+        frame, initial_state);
+}
+
+
+/*
+ * trrojan::d3d12::benchmark_base::create_graphics_command_list
+ */
+ATL::CComPtr<ID3D12GraphicsCommandList>
+trrojan::d3d12::benchmark_base::create_graphics_command_list(
+        ID3D12PipelineState *initial_state) {
+    assert(!this->_direct_cmd_allocators.empty());
+    return this->create_graphics_command_list(D3D12_COMMAND_LIST_TYPE_DIRECT,
+        this->buffer_index(), initial_state);
+}
+
+
+/*
+ * trrojan::d3d12::benchmark_base::create_descriptor_heap
+ */
+void trrojan::d3d12::benchmark_base::create_descriptor_heap(
+        ID3D12Device *device, const UINT cnt) {
+    assert(device != nullptr);
+    D3D12_DESCRIPTOR_HEAP_DESC desc;
+    ::ZeroMemory(&desc, sizeof(desc));
+    desc.NumDescriptors = cnt;
+    desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+    desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+
+    this->_descriptor_heaps.resize(this->pipeline_depth());
+    log::instance().write_line(log_level::verbose, "Allocating descriptor "
+        "heaps with {0} entries for {1} frames ...", cnt,
+        this->_descriptor_heaps.size());
+
+    for (auto& h : this->_descriptor_heaps) {
+        h = nullptr;
+        auto hr = device->CreateDescriptorHeap(&desc,
+            ::IID_ID3D12DescriptorHeap, reinterpret_cast<void **>(&h));
+        if (FAILED(hr)) {
+            throw ATL::CAtlException(hr);
+        }
+    }
+}
+
+
+/*
+ * trrojan::d3d12::benchmark_base::on_device_switch
+ */
+void trrojan::d3d12::benchmark_base::on_device_switch(ID3D12Device *device) {
+    assert(device != nullptr);
+
+    log::instance().write_line(log_level::verbose, "(Re-) Allocating {} "
+        "descriptor heap(s).", this->_descriptor_heaps.size());
+    for (auto& h : this->_descriptor_heaps) {
+        if (h != nullptr) {
+            auto desc = h->GetDesc();
+            h = nullptr;
+            auto hr = device->CreateDescriptorHeap(&desc,
+                ::IID_ID3D12DescriptorHeap, reinterpret_cast<void **>(&h));
+            if (FAILED(hr)) {
+                throw ATL::CAtlException(hr);
+            }
+        }
+    }
+
+    {
+        // Note: in contrast to the other kinds of allocators, we force that
+        // there is at least one direct allocator for each frame in the
+        // pipeline.
+        auto cnt = (std::max)(this->_direct_cmd_allocators.size(),
+            static_cast<std::size_t>(this->pipeline_depth()));
+        this->_direct_cmd_allocators.clear();
+        log::instance().write_line(log_level::verbose, "(Re-) Allocating {} "
+            "direct command allocator(s).", cnt);
+        create_command_allocators(this->_direct_cmd_allocators, device,
+            D3D12_COMMAND_LIST_TYPE_DIRECT, cnt);
+    }
+}
+
+
+/*
+ * trrojan::d3d12::benchmark_base::reset_command_list
+ */
+void trrojan::d3d12::benchmark_base::reset_command_list(
+        ID3D12GraphicsCommandList *cmd_list, const UINT frame,
+        ID3D12PipelineState *initial_state) const {
+    assert(cmd_list != nullptr);
+
+    {
+        auto hr = this->_direct_cmd_allocators[frame]->Reset();
+        if (FAILED(hr)) {
+            throw ATL::CAtlException(hr);
+        }
+    }
+
+    {
+        auto hr = cmd_list->Reset(this->_direct_cmd_allocators[frame],
+            initial_state);
+        if (FAILED(hr)) {
+            throw ATL::CAtlException(hr);
+        }
+    }
+}
+
+
+/*
+ * trrojan::d3d12::benchmark_base::reset_command_list
+ */
+void trrojan::d3d12::benchmark_base::reset_command_list(
+        ID3D12GraphicsCommandList *cmd_list,
+        ID3D12PipelineState *initial_state) const {
+    this->reset_command_list(cmd_list, this->buffer_index(), initial_state);
 }
 
 

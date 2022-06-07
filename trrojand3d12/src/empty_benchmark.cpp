@@ -12,6 +12,7 @@
 #include "trrojan/timer.h"
 
 #include "trrojan/d3d12/gpu_timer.h"
+#include "trrojan/d3d12/utilities.h"
 
 
 #define _EMPTY_BENCH_DEFINE_FACTOR(f)                                         \
@@ -44,11 +45,18 @@ trrojan::d3d12::empty_benchmark::~empty_benchmark(void) { }
 trrojan::result trrojan::d3d12::empty_benchmark::on_run(d3d12::device& device,
         const configuration& config, const std::vector<std::string>& changed) {
     auto clear_colour = config.get<std::array<float, 4>>(factor_clear_colour);
-    auto cmd_list = device.create_graphics_command_list(
-        D3D12_COMMAND_LIST_TYPE_DIRECT);
     timer cpu_timer;
     auto gpu_freq = gpu_timer::get_timestamp_frequency(device.command_queue());
     gpu_timer gpu_timer(device.d3d_device(), 2, 1);
+
+    // Transition to the active render target. Wait for the GPU to finish work
+    // and recycle the command list afterwards.
+    auto cmd_list = this->create_graphics_command_list();
+    this->enable_target(cmd_list);
+    close_command_list(cmd_list);
+    device.execute_command_list(cmd_list);
+    device.wait_for_gpu();
+    this->reset_command_list(cmd_list);
 
     // Prepare the result set.
     auto retval = std::make_shared<basic_result>(config,
@@ -77,12 +85,12 @@ trrojan::result trrojan::d3d12::empty_benchmark::on_run(d3d12::device& device,
     auto result_index = gpu_timer.end_frame(cmd_list);
 
     // Run the benchmark.
-    cmd_list->Close();
+    close_command_list(cmd_list);
     device.execute_command_list(cmd_list);
 
     // Present and prepare the next frame.
     this->present_target();
-    //device.wait_for_gpu();
+    device.wait_for_gpu();
 
     const auto cpu_time = cpu_timer.elapsed_millis();
 
