@@ -28,7 +28,8 @@ void trrojan::d3d12::stats_query::evaluate(TIterator oit,
         }
     }
 
-    auto results = reinterpret_cast<value_type *>(data);
+    auto results = reinterpret_cast<value_type *>(
+        static_cast<std::uint8_t *>(data) + range.Begin);
     for (size_type i = 0; i < this->_cnt_queries; ++i) {
         *oit++ = results[i];
     }

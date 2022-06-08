@@ -95,7 +95,8 @@ trrojan::d3d12::stats_query::value_type trrojan::d3d12::stats_query::evaluate(
         }
     }
 
-    auto results = reinterpret_cast<value_type *>(data);
+    auto results = reinterpret_cast<value_type *>(
+        static_cast<std::uint8_t *>(data) + range.Begin);
     auto retval = results[query];
 
     ::ZeroMemory(&range, sizeof(range));
