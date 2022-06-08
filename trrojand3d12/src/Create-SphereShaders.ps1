@@ -3,7 +3,8 @@ param([Parameter(Mandatory = $true, ValueFromPipeline = $true)] [string] $OutPat
     [string] $IncludeFile = "sphere_techniques.h",
     [string] $ResourceFile = "sphere_techniques.rc",
     [uint16] $ResourceStart = 256,
-    [string] $ResourceType = "SHADER")
+    [string] $ResourceType = "SHADER",
+    [string] $RootSignatureDefine = "SHADER_ROOT_SIGNATURE")
 
 begin {
     # Properties of the rendering techniques.
@@ -100,7 +101,7 @@ begin {
         }
 
         # Define a compatible root signature.
-        $lines += '#define SphereRootSignature\';
+        $lines += "#define $RootSignatureDefine\";
         $lines += "    `"RootFlags(ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT),`"\"
         if ($vsDescriptorTable.Length -gt 0) {
             $lines += "    `"DescriptorTable($($vsDescriptorTable -join ', '), visibility = SHADER_VISIBILITY_VERTEX),`"\"

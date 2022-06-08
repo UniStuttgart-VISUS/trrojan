@@ -57,7 +57,7 @@ StructuredBuffer<Particle> Particles : register(t1);
 /// </summary>
 /// <param name="input"></param>
 /// <returns></returns>
-[RootSignature(SphereRootSignature)]
+[RootSignature(SHADER_ROOT_SIGNATURE)]
 VsOutput Main(VsInput input) {
     VsOutput retval = (VsOutput) 0;
 

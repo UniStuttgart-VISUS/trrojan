@@ -131,7 +131,7 @@ HsConstants CalcConstants(InputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
 [partitioning(PARTITIONING_SCHEME)]
 [outputcontrolpoints(CNT_CONTROL_POINTS)]
 [outputtopology(OUTPUT_TOPOLOGY)]
-[RootSignature(SphereRootSignature)]
+[RootSignature(SHADER_ROOT_SIGNATURE)]
 VsOutput Main(InputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
         uint pointId : SV_OutputControlPointID,
         uint patchId : SV_PrimitiveID) {

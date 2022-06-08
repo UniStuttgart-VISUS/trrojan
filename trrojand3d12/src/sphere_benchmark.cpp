@@ -83,13 +83,10 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
         this->_data = this->load_data(device.d3d_device(), shader_code, config);
     }
 
-//    auto pipeline = this->get_pipeline_state(device.d3d_device(), shader_code);
-
-    //device.d3d_device()->CreateRootSignature()
-
     // Determine the number of primitives to emit and record the draw call
     // into a command bundle.
-    auto bundle = this->create_command_bundle(0/* TODO: PSO*/);
+    auto pipeline = this->get_pipeline_state(device.d3d_device(), shader_code);
+    auto bundle = this->create_command_bundle(0, pipeline);
 
     if (is_technique(shader_code, SPHERE_TECHNIQUE_QUAD_INST)) {
         // Instancing of quads requires 4 vertices per particle.
@@ -115,11 +112,6 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
         this->disable_target(cmd_lists[i], i);
         close_command_list(cmd_lists[i]);
     }
-
-
-//    auto pipeline = this->get_pipeline_state(device.d3d_device(), shader_code);
-
-    //cmd_list_rendering->DrawIndexedInstanced()
 
     // Do prewarming and compute number of CPU iterations at the same time.
     log::instance().write_line(log_level::debug, "Prewarming ...");

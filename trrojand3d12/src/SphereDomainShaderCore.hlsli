@@ -31,7 +31,7 @@
 /// <param name="input"></param>
 /// <returns></returns>
 [domain("quad")]
-[RootSignature(SphereRootSignature)]
+[RootSignature(SHADER_ROOT_SIGNATURE)]
 PsInput Main(OutputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
         HsConstants constants,
         float2 uv : SV_DomainLocation) {

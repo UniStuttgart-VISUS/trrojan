@@ -24,7 +24,7 @@
 /// Geometry shader creating a sprite from a single vertex.
 /// </summary>
 [maxvertexcount(CNT_MAX_VERTICES)]
-[RootSignature(SphereRootSignature)]
+[RootSignature(SHADER_ROOT_SIGNATURE)]
 void Main(point VsOutput input[1], inout TriangleStream<PsInput> triStream) {
     PsInput v = (PsInput) 0;
 

@@ -32,7 +32,7 @@ SamplerState LinearSampler : register(s0);
 /// Entry point of the pixel shader doing the raycasting of a sphere on the
 /// sprite.
 /// </summary>
-[RootSignature(SphereRootSignature)]
+[RootSignature(SHADER_ROOT_SIGNATURE)]
 PsOutput Main(PsInput input/*, bool isFront : SV_IsFrontFace*/) {
     PsOutput retval = (PsOutput) 0;
 

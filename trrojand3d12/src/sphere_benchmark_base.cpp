@@ -216,6 +216,7 @@ trrojan::d3d12::sphere_benchmark_base::parse_random_sphere_desc(
  */
 void trrojan::d3d12::sphere_benchmark_base::set_shaders(
         graphics_pipeline_builder& builder, const shader_id_type shader_id) {
+    builder.reset_shaders();
 #if defined(TRROJAN_FOR_UWP)
     _LOOKUP_SPHERE_SHADER_FILES(builder, shader_id,
         sphere_benchmark_base::resolve_shader_path);
@@ -514,8 +515,6 @@ trrojan::d3d12::sphere_benchmark_base::get_pipeline_builder(
         retval.set_input_layout(this->_input_layout);
     }
 
-    retval.set_primitive_topology(D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT);
-
     if (is_technique(shader_code, SPHERE_TECHNIQUE_QUAD_INST)) {
         if (is_tess) {
             retval.set_primitive_topology(D3D12_PRIMITIVE_TOPOLOGY_TYPE_PATCH);
@@ -528,6 +527,9 @@ trrojan::d3d12::sphere_benchmark_base::get_pipeline_builder(
     } else {
         retval.set_primitive_topology(D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT);
     }
+
+    retval.reset_rasteriser_state()
+        .reset_depth_stencil_state();
 
     return retval;
 }
