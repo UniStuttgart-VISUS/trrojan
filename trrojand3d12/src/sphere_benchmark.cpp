@@ -10,6 +10,7 @@
 #include "trrojan/timer.h"
 
 #include "trrojan/d3d12/gpu_timer.h"
+#include "trrojan/d3d12/stats_query.h"
 
 #include "sphere_techniques.h"
 
@@ -57,12 +58,18 @@ void trrojan::d3d12::sphere_benchmark::on_device_switch(ID3D12Device *device) {
  */
 trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
         const configuration& config, const std::vector<std::string>& changed) {
+    std::vector<gpu_timer::millis_type> bundle_times, gpu_times;
     std::uint32_t cpu_iterations = 1;
     timer cpu_timer;
+    const auto gpu_freq = gpu_timer::get_timestamp_frequency(
+        device.command_queue());
     const auto gpu_iterations = config.get<std::uint32_t>(
         factor_gpu_counter_iterations);
+    gpu_timer gpu_timer(device.d3d_device(), 2, this->pipeline_depth());
     const auto min_wall_time = config.get<std::uint32_t>(factor_min_wall_time);
+    stats_query::value_type pipeline_stats;
     auto shader_code = sphere_benchmark_base::get_shader_id(config);
+    stats_query stats_query(device.d3d_device(), 1, 1);
 
     // If the data or any factor influencing their representation on the GPU
     // have changed, clear them.
@@ -97,7 +104,7 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
         this->update_constants(config, i);
     }
 
-    // Record a command list for each frame.
+    // Record a command list for each frame for the GPU measurements.
     std::vector<ATL::CComPtr<ID3D12GraphicsCommandList>> cmd_lists(
         this->pipeline_depth());
     for (UINT i = 0; i < this->pipeline_depth(); ++i) {
@@ -137,7 +144,7 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
 
             if (batch_time < min_wall_time) {
                 prewarms = static_cast<std::uint32_t>(std::ceil(
-                    static_cast<double>(min_wall_time * cpu_iterations)
+                    (static_cast<double>(min_wall_time) * cpu_iterations)
                     / batch_time));
                 if (prewarms < 1) {
                     prewarms = 1;
@@ -146,104 +153,102 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
         } while (batch_time < min_wall_time);
     }
 
-#if 0
-    // Do the GPU counter measurements
-    gpuTimes.resize(cntGpuIterations);
-    for (std::uint32_t i = 0; i < cntGpuIterations;) {
-        log::instance().write_line(log_level::debug, "GPU counter measurement "
-            "#{}.", i);
-        gpuTimer.start_frame();
-        gpuTimer.start(0);
-        this->clear_target();
-        if (isInstanced) {
-            ctx->DrawInstanced(cntPrimitives, cntInstances, 0, 0);
-        } else {
-            ctx->Draw(cntPrimitives, 0);
-        }
-#if defined(CREATE_D2D_OVERLAY)
-        // Using the overlay will change the state such that we need to
-        // re-apply it after presenting.
-        technique.apply(ctx);
-#endif /* defined(CREATE_D2D_OVERLAY) */
-        gpuTimer.end(0);
-        gpuTimer.end_frame();
-
-        gpuTimer.evaluate_frame(isDisjoint, gpuFreq);
-        if (!isDisjoint) {
-            gpuTimes[i] = gpu_timer_type::to_milliseconds(
-                gpuTimer.evaluate(0), gpuFreq);
-            ++i;    // Only proceed in case of success.
-        }
-    }
-#endif
-
-#if 0
-    // Obtain pipeline statistics
-    log::instance().write_line(log_level::debug, "Collecting pipeline "
-        "statistics ...");
-    this->clear_target();
-    ctx->Begin(this->stats_query);
-    if (isInstanced) {
-        ctx->DrawInstanced(cntPrimitives, cntInstances, 0, 0);
-    } else {
-        ctx->Draw(cntPrimitives, 0);
-    }
-    ctx->End(this->stats_query);
-    this->present_target();
-#if defined(CREATE_D2D_OVERLAY)
-    // Using the overlay will change the state such that we need to
-    // re-apply it after presenting.
-    technique.apply(ctx);
-#endif /* defined(CREATE_D2D_OVERLAY) */
-    wait_for_stats_query(pipeStats, ctx, this->stats_query);
-#endif
-
-#if 1
-    // Do the wall clock measurement.
+    // Do the wall clock measurement using the prepared command lists.
     log::instance().write_line(log_level::debug, "Measuring wall clock "
         "timings over {} iterations ...", cpu_iterations);
     cpu_timer.start();
     for (std::uint32_t i = 0; i < cpu_iterations; ++i) {
         auto cmd_list = cmd_lists[this->buffer_index()];
-        this->reset_command_list(cmd_list);
-        this->enable_target(cmd_list);
-        this->clear_target(cmd_list);
-        //cmd_lists[i]->ExecuteBundle(bundle);
-        this->disable_target(cmd_list);
-        close_command_list(cmd_list);
         device.execute_command_list(cmd_list);
         this->present_target();
     }
     device.wait_for_gpu();
     const auto cpu_time = cpu_timer.elapsed_millis();
-#endif
 
-#if 0
-    // Compute derived statistics for GPU counters.
-    std::sort(gpuTimes.begin(), gpuTimes.end());
-    auto gpuMedian = gpuTimes[gpuTimes.size() / 2];
-    if (gpuTimes.size() % 2 == 0) {
-        gpuMedian += gpuTimes[gpuTimes.size() / 2 - 1];
-        gpuMedian *= 0.5;
+    // Do the GPU counter measurements using individual command lists.
+    bundle_times.resize(gpu_iterations);
+    gpu_times.resize(gpu_iterations);
+    for (std::uint32_t i = 0; i < gpu_iterations; ++i) {
+        log::instance().write_line(log_level::debug, "GPU counter measurement "
+            "#{}.", i);
+        auto cmd_list = cmd_lists[this->buffer_index()];
+        this->reset_command_list(cmd_list);
+
+        gpu_timer.start_frame();
+        gpu_timer.start(cmd_list, 0);
+        this->enable_target(cmd_list);
+        this->clear_target(cmd_list);
+
+        gpu_timer.start(cmd_list, 1);
+        //cmd_lists[i]->ExecuteBundle(bundle);
+        gpu_timer.end(cmd_list, 1);
+
+        this->disable_target(cmd_list);
+        gpu_timer.end(cmd_list, 0);
+        const auto timer_index = gpu_timer.end_frame(cmd_list);
+
+        device.close_and_execute_command_list(cmd_list);
+        this->present_target();
+
+        gpu_times[i] = gpu_timer::to_milliseconds(
+            gpu_timer.evaluate(timer_index, 0),
+            gpu_freq);
+        bundle_times[i] = gpu_timer::to_milliseconds(
+            gpu_timer.evaluate(timer_index, 1),
+            gpu_freq);
     }
-#endif
+
+    // Obtain pipeline statistics.
+    log::instance().write_line(log_level::debug, "Collecting pipeline "
+        "statistics ...");
+    {
+        auto cmd_list = cmd_lists[this->buffer_index()];
+        this->reset_command_list(cmd_list);
+
+        stats_query.begin_frame();
+
+        this->enable_target(cmd_list);
+        this->clear_target(cmd_list);
+
+        stats_query.begin(cmd_list, 0);
+        //cmd_lists[i]->ExecuteBundle(bundle);
+        stats_query.end(cmd_list, 0);
+
+        this->disable_target(cmd_list);
+        const auto stats_index = stats_query.end_frame(cmd_list);
+
+        device.close_and_execute_command_list(cmd_list);
+        this->present_target();
+
+        pipeline_stats = stats_query.evaluate(stats_index, 0);
+    }
+
+    // Compute derived statistics for GPU counters.
+    const auto bundle_median = calc_median(bundle_times);
+    const auto gpu_median = calc_median(gpu_times);
 
     // Prepare the result set.
     auto retval = std::make_shared<basic_result>(config,
         std::initializer_list<std::string> {
         "particles",
         "data_extents",
-        //"ia_vertices",
-        //"ia_primitives",
-        //"vs_invokes",
-        //"hs_invokes",
-        //"ds_invokes",
-        //"gs_invokes",
-        //"gs_primitives",
-        //"ps_invokes",
-        //"gpu_time_min",
-        //"gpu_time_med",
-        //"gpu_time_max",
+        "ia_vertices",
+        "ia_primitives",
+        "vs_invokes",
+        "gs_invokes",
+        "gs_primitives",
+        "c_invokes",
+        "c_primitives",
+        "ps_invokes",
+        "hs_invokes",
+        "ds_invokes",
+        "cs_invokes",
+        "bundle_time_min",
+        "bundle_time_med",
+        "bundle_time_max",
+        "gpu_time_min",
+        "gpu_time_med",
+        "gpu_time_max",
         "wall_time_iterations",
         "wall_time",
         "wall_time_avg"
@@ -253,17 +258,23 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
     retval->add({
         this->get_sphere_count(),
         this->get_data_extents(),
-        //pipeStats.IAVertices,
-        //pipeStats.IAPrimitives,
-        //pipeStats.VSInvocations,
-        //pipeStats.HSInvocations,
-        //pipeStats.DSInvocations,
-        //pipeStats.GSInvocations,
-        //pipeStats.GSPrimitives,
-        //pipeStats.PSInvocations,
-        //gpuTimes.front(),
-        //gpuMedian,
-        //gpuTimes.back(),
+        pipeline_stats.IAVertices,
+        pipeline_stats.IAPrimitives,
+        pipeline_stats.VSInvocations,
+        pipeline_stats.GSInvocations,
+        pipeline_stats.GSPrimitives,
+        pipeline_stats.CInvocations,
+        pipeline_stats.CPrimitives,
+        pipeline_stats.PSInvocations,
+        pipeline_stats.HSInvocations,
+        pipeline_stats.DSInvocations,
+        pipeline_stats.CSInvocations,
+        bundle_times.front(),
+        bundle_median,
+        bundle_times.back(),
+        gpu_times.front(),
+        gpu_median,
+        gpu_times.back(),
         cpu_iterations,
         cpu_time,
         static_cast<double>(cpu_time) / cpu_iterations

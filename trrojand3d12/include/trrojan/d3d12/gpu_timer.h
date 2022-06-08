@@ -378,6 +378,7 @@ namespace d3d12 {
         /// <returns></returns>
         inline size_type result_index(const size_type buffer,
                 const size_type query, const query_location location) const {
+            assert(static_cast<size_type>(location) < 2);
             return buffer * this->queries_per_buffer()
                 + 2 * query + static_cast<size_type>(location);
         }

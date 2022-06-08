@@ -8,6 +8,7 @@
 
 #include <array>
 
+#include "trrojan/log.h"
 #include "trrojan/result.h"
 #include "trrojan/timer.h"
 
@@ -19,6 +20,8 @@
 const char *trrojan::d3d12::empty_benchmark::factor_##f = #f
 
 _EMPTY_BENCH_DEFINE_FACTOR(clear_colour);
+_EMPTY_BENCH_DEFINE_FACTOR(cpu_counter_iterations);
+_EMPTY_BENCH_DEFINE_FACTOR(gpu_counter_iterations);
 
 #undef _EMPTY_BENCH_DEFINE_FACTOR
 
@@ -30,6 +33,10 @@ trrojan::d3d12::empty_benchmark::empty_benchmark(void) : benchmark_base("empty")
     // Declare the configuration data we need to have.
     this->_default_configs.add_factor(factor::from_manifestations(
         factor_clear_colour, std::array<float, 4> { 0.0f, 0.0f, 0.0f, 0.0f}));
+    this->_default_configs.add_factor(factor::from_manifestations(
+        factor_cpu_counter_iterations, static_cast<std::uint32_t>(8)));
+    this->_default_configs.add_factor(factor::from_manifestations(
+        factor_gpu_counter_iterations, static_cast<std::uint32_t>(8)));
 }
 
 
@@ -45,62 +52,93 @@ trrojan::d3d12::empty_benchmark::~empty_benchmark(void) { }
 trrojan::result trrojan::d3d12::empty_benchmark::on_run(d3d12::device& device,
         const configuration& config, const std::vector<std::string>& changed) {
     auto clear_colour = config.get<std::array<float, 4>>(factor_clear_colour);
+    const auto cpu_iterations = config.get<std::uint32_t>(
+        factor_cpu_counter_iterations);
     timer cpu_timer;
     auto gpu_freq = gpu_timer::get_timestamp_frequency(device.command_queue());
-    gpu_timer gpu_timer(device.d3d_device(), 2, 1);
+    const auto gpu_iterations = config.get<std::uint32_t>(
+        factor_gpu_counter_iterations);
+    gpu_timer gpu_timer(device.d3d_device(), 2, this->pipeline_depth());
+    std::vector<gpu_timer::millis_type> clear_times(gpu_iterations),
+        gpu_times(gpu_iterations);
 
-    // Transition to the active render target. Wait for the GPU to finish work
-    // and recycle the command list afterwards.
-    auto cmd_list = this->create_graphics_command_list();
-    this->enable_target(cmd_list);
-    close_command_list(cmd_list);
-    device.execute_command_list(cmd_list);
-    device.wait_for_gpu();
-    this->reset_command_list(cmd_list);
+    for (std::uint32_t i = 0; i < gpu_iterations; ++i) {
+        log::instance().write_line(log_level::debug, "GPU counter measurement "
+            "#{}.", i);
+        auto cmd_list = this->create_graphics_command_list();
+
+        gpu_timer.start_frame();
+        gpu_timer.start(cmd_list, 0);
+        this->enable_target(cmd_list);
+
+        gpu_timer.start(cmd_list, 1);
+        this->clear_target(clear_colour, cmd_list);
+        gpu_timer.end(cmd_list, 1);
+
+        this->disable_target(cmd_list);
+        gpu_timer.end(cmd_list, 0);
+
+        auto result_index = gpu_timer.end_frame(cmd_list);
+        device.close_and_execute_command_list(cmd_list);
+        this->present_target();
+
+        gpu_times[i] = gpu_timer::to_milliseconds(
+            gpu_timer.evaluate(result_index, 0),
+            gpu_freq);
+        clear_times[i] = gpu_timer::to_milliseconds(
+            gpu_timer.evaluate(result_index, 1),
+            gpu_freq);
+    }
+
+    // Record command lists for CPU measurement.
+    std::vector<ATL::CComPtr<ID3D12GraphicsCommandList>> cmd_lists(
+        this->pipeline_depth());
+    for (UINT i = 0; i < this->pipeline_depth(); ++i) {
+        cmd_lists[i] = this->create_graphics_command_list(i);
+        this->enable_target(cmd_lists[i], i);
+        this->clear_target(clear_colour, cmd_lists[i], i);
+        this->disable_target(cmd_lists[i], i);
+        close_command_list(cmd_lists[i]);
+    }
+
+    log::instance().write_line(log_level::debug, "Performing {0} CPU "
+        "measurement(s).", cpu_iterations);
+    cpu_timer.start();
+
+    for (std::uint32_t i = 0; i < cpu_iterations; ++i) {
+        device.execute_command_list(cmd_lists[this->buffer_index()]);
+        this->present_target();
+    }
+
+    const auto cpu_time = cpu_timer.elapsed_millis();
+    const auto clear_med = calc_median(clear_times);
+    const auto gpu_med = calc_median(gpu_times);
+
 
     // Prepare the result set.
     auto retval = std::make_shared<basic_result>(config,
         std::initializer_list<std::string> {
-            "clear_colour",
-            "clear_time",
-            "total_gpu_time",
-            "total_cpu_time",
+            "clear_time_min",
+            "clear_time_med",
+            "clear_time_max",
+            "gpu_time_min",
+            "gpu_time_med",
+            "gpu_time_max",
+            "cpu_time_total",
+            "cpu_time_mean",
         });
-
-    cpu_timer.start();
-
-    // Record the command list.
-    cpu_timer.start();
-    gpu_timer.start_frame();
-
-    gpu_timer.start(cmd_list, 0);
-
-    gpu_timer.start(cmd_list, 1);
-    this->clear_target(clear_colour, cmd_list);
-    gpu_timer.end(cmd_list, 1);
-
-    gpu_timer.end(cmd_list, 0);
-
-    this->disable_target(cmd_list);
-    auto result_index = gpu_timer.end_frame(cmd_list);
-
-    // Run the benchmark.
-    close_command_list(cmd_list);
-    device.execute_command_list(cmd_list);
-
-    // Present and prepare the next frame.
-    this->present_target();
-    device.wait_for_gpu();
-
-    const auto cpu_time = cpu_timer.elapsed_millis();
 
     // Collect the results.
     retval->add({
-        clear_colour,
-        gpu_timer::to_milliseconds(gpu_timer.evaluate(result_index, 1), gpu_freq),
-        gpu_timer::to_milliseconds(gpu_timer.evaluate(result_index, 0), gpu_freq),
-        cpu_time
-        });
+        clear_times.front(),
+        clear_med,
+        clear_times.back(),
+        gpu_times.front(),
+        gpu_med,
+        gpu_times.back(),
+        cpu_time,
+        static_cast<double>(cpu_time) / cpu_iterations
+    });
 
     return retval;
 }

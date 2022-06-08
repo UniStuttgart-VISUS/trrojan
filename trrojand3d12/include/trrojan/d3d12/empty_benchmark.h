@@ -20,6 +20,8 @@ namespace d3d12 {
     public:
 
         static const char *factor_clear_colour;
+        static const char *factor_cpu_counter_iterations;
+        static const char *factor_gpu_counter_iterations;
 
         empty_benchmark(void);
 

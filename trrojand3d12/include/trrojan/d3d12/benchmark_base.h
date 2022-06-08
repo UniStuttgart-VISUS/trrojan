@@ -64,6 +64,14 @@ namespace d3d12 {
             command_allocator_list;
 
         /// <summary>
+        /// In-place sorts <paramref name="times" /> and computes the median.
+        /// </summary>
+        /// <param name="times"></param>
+        /// <returns></returns>
+        gpu_timer::millis_type calc_median(
+            std::vector<gpu_timer::millis_type>& times);
+
+        /// <summary>
         /// Appends <paramref name="cnt" /> command allocators of the specified
         /// <paramref name="type" /> on the given <paramref name="device" /> to
         /// the given list.
@@ -146,6 +154,13 @@ namespace d3d12 {
             assert(this->_render_target != nullptr);
             assert(cmd_list != nullptr);
             this->_render_target->clear(clear_colour, cmd_list);
+        }
+
+        inline void clear_target(const std::array<float, 4>& clear_colour,
+                ID3D12GraphicsCommandList *cmd_list, const UINT frame) {
+            assert(this->_render_target != nullptr);
+            assert(cmd_list != nullptr);
+            this->_render_target->clear(clear_colour, cmd_list, frame);
         }
 
         /// <summary>

@@ -139,6 +139,27 @@ trrojan::result trrojan::d3d12::benchmark_base::run(const configuration& c) {
 
 
 /*
+ * trrojan::d3d12::benchmark_base::calc_median
+ */
+trrojan::d3d12::gpu_timer::millis_type
+trrojan::d3d12::benchmark_base::calc_median(
+        std::vector<gpu_timer::millis_type>& times) {
+    std::sort(times.begin(), times.end());
+
+    auto retval = times[times.size() / 2];
+
+    // If the number of elements is even, the median is defined as the mean of
+    // the two middle elements.
+    if (times.size() % 2 == 0) {
+        retval += times[times.size() / 2 - 1];
+        retval *= static_cast<gpu_timer::millis_type>(0.5);
+    }
+
+    return retval;
+}
+
+
+/*
  * trrojan::d3d12::benchmark_base::create_command_allocators
  */
 void trrojan::d3d12::benchmark_base::create_command_allocators(

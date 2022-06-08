@@ -84,6 +84,10 @@ trrojan::d3d12::gpu_timer::gpu_timer(ID3D12Device *device,
         const size_type queries, const size_type buffers,
         const D3D12_QUERY_HEAP_TYPE heap_type)
         : _device(device), _heap_type(heap_type) {
+    if (this->_device == nullptr) {
+        throw std::invalid_argument("The device cannot be null.");
+    }
+
     this->resize(queries, buffers);
     assert(this->_cnt_buffers = buffers);
     assert(this->_cnt_queries = queries);
@@ -155,14 +159,13 @@ void trrojan::d3d12::gpu_timer::end(ID3D12GraphicsCommandList *cmd_list,
 trrojan::d3d12::gpu_timer::size_type trrojan::d3d12::gpu_timer::end_frame(
         ID3D12GraphicsCommandList *cmd_list) {
     assert(cmd_list != nullptr);
-    const auto retval = this->result_index(0, query_location::start);
-    cmd_list->ResolveQueryData(this->_heap,
-        D3D12_QUERY_TYPE_TIMESTAMP,
-        retval,
-        this->queries_per_buffer(),
-        this->_result_buffer,
-        retval * sizeof(value_type));
-    return retval;
+    const auto first = std::min(query_location::start, query_location::end);
+    const auto index = this->result_index(0, first);
+    const auto queries = this->queries_per_buffer();
+    const auto offset = index * sizeof(value_type);
+    cmd_list->ResolveQueryData(this->_heap, D3D12_QUERY_TYPE_TIMESTAMP,
+        index, queries, this->_result_buffer, offset);
+    return this->_idx_active_buffer;
 }
 
 
