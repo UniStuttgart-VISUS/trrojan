@@ -80,6 +80,56 @@ std::vector<std::string> trrojan::d3d12::sphere_benchmark_base::required_factors
 
 
 /*
+ * trrojan::d3d12::sphere_benchmark_base::get_primitive_topology
+ */
+D3D12_PRIMITIVE_TOPOLOGY
+trrojan::d3d12::sphere_benchmark_base::get_primitive_topology(
+        const shader_id_type shader_code) {
+    const auto is_geo = ((shader_code & SPHERE_TECHNIQUE_USE_GEO) != 0);
+    const auto is_tess = ((shader_code & SPHERE_TECHNIQUE_USE_TESS) != 0);
+
+    if (is_geo) {
+        return D3D_PRIMITIVE_TOPOLOGY_POINTLIST;
+    }
+
+    if (is_tess) {
+        return D3D_PRIMITIVE_TOPOLOGY_1_CONTROL_POINT_PATCHLIST;
+    }
+
+    if (is_technique(shader_code, SPHERE_TECHNIQUE_QUAD_INST)) {
+        return D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP;
+    }
+
+    return D3D_PRIMITIVE_TOPOLOGY_POINTLIST;
+}
+
+
+/*
+ * trrojan::d3d12::sphere_benchmark_base::get_primitive_topology_type
+ */
+D3D12_PRIMITIVE_TOPOLOGY_TYPE
+trrojan::d3d12::sphere_benchmark_base::get_primitive_topology_type(
+        const shader_id_type shader_code) {
+    const auto is_geo = ((shader_code & SPHERE_TECHNIQUE_USE_GEO) != 0);
+    const auto is_tess = ((shader_code & SPHERE_TECHNIQUE_USE_TESS) != 0);
+
+    if (is_geo) {
+        return D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT;
+    }
+
+    if (is_tess) {
+        return D3D12_PRIMITIVE_TOPOLOGY_TYPE_PATCH;
+    }
+
+    if (is_technique(shader_code, SPHERE_TECHNIQUE_QUAD_INST)) {
+        return D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+    }
+
+    return D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT;
+}
+
+
+/*
  * trrojan::d3d12::sphere_benchmark_base::get_shader_id
  */
 trrojan::d3d12::sphere_benchmark_base::shader_id_type
@@ -515,21 +565,12 @@ trrojan::d3d12::sphere_benchmark_base::get_pipeline_builder(
         retval.set_input_layout(this->_input_layout);
     }
 
-    if (is_technique(shader_code, SPHERE_TECHNIQUE_QUAD_INST)) {
-        if (is_tess) {
-            retval.set_primitive_topology(D3D12_PRIMITIVE_TOPOLOGY_TYPE_PATCH);
-        } else if (is_geo) {
-            retval.set_primitive_topology(D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT);
-        } else {
-            retval.set_primitive_topology(D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE);
-        }
-
-    } else {
-        retval.set_primitive_topology(D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT);
-    }
-
     retval.reset_rasteriser_state()
-        .reset_depth_stencil_state();
+        .reset_depth_stencil_state()
+        .set_primitive_topology(get_primitive_topology_type(id))
+        .set_render_targets(DXGI_FORMAT_R8G8B8A8_UNORM)
+        .set_depth_stencil_target(DXGI_FORMAT_D32_FLOAT)
+        .set_sample_desc();
 
     return retval;
 }

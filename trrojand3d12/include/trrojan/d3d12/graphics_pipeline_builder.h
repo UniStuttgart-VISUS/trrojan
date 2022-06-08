@@ -70,6 +70,12 @@ namespace d3d12 {
             this->_desc.DepthStencilState = desc;
         }
 
+        inline graphics_pipeline_builder& set_depth_stencil_target(
+                const DXGI_FORMAT format) {
+            this->_desc.DSVFormat = format;
+            return *this;
+        }
+
         inline graphics_pipeline_builder& set_domain_shader(const BYTE *byte_code,
                 const std::size_t cnt_byte_code) {
             return this->set_domain_shader(std::vector<BYTE>(byte_code,
@@ -263,6 +269,12 @@ namespace d3d12 {
             return *this;
         }
 
+        template<class... T>
+        graphics_pipeline_builder& set_render_targets(const T... formats);
+
+        graphics_pipeline_builder& set_render_targets(
+            const std::vector<DXGI_FORMAT>& formats);
+
         /// <summary>
         /// Sets the specified root signature.
         /// </summary>
@@ -274,6 +286,19 @@ namespace d3d12 {
         /// <returns></returns>
         graphics_pipeline_builder& set_root_signature(
             ID3D12RootSignature *root_signature);
+
+        inline graphics_pipeline_builder& set_sample_desc(
+                const DXGI_SAMPLE_DESC& desc) {
+            this->_desc.SampleDesc = desc;
+            return *this;
+        }
+
+        inline graphics_pipeline_builder& set_sample_desc(
+                const UINT count = 1, const UINT quality = 0) {
+            this->_desc.SampleDesc.Count = count;
+            this->_desc.SampleDesc.Quality = quality;
+            return *this;
+        }
 
         inline graphics_pipeline_builder& set_vertex_shader(
                 const BYTE *byte_code,
@@ -343,3 +368,5 @@ namespace d3d12 {
 
 } /* end namespace d3d12 */
 } /* end namespace trrojan */
+
+#include "trrojan/d3d12/graphics_pipeline_builder.inl"

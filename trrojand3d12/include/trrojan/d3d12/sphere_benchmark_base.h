@@ -99,6 +99,22 @@ namespace d3d12 {
         typedef std::uint64_t shader_id_type;
 
         /// <summary>
+        /// Gets the expected primitive toplogy for the given shader code.
+        /// </summary>
+        /// <param name="shader_code"></param>
+        /// <returns></returns>
+        static D3D12_PRIMITIVE_TOPOLOGY get_primitive_topology(
+            const shader_id_type shader_code);
+
+        /// <summary>
+        /// Gets the expected primitive toplogy for the given shader code.
+        /// </summary>
+        /// <param name="shader_code"></param>
+        /// <returns></returns>
+        static D3D12_PRIMITIVE_TOPOLOGY_TYPE get_primitive_topology_type(
+            const shader_id_type shader_code);
+
+        /// <summary>
         /// Gets the identifier for the given rendering method.
         /// </summary>
         /// <param name=""></param>

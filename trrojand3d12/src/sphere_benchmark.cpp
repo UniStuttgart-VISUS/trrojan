@@ -88,6 +88,8 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
     auto pipeline = this->get_pipeline_state(device.d3d_device(), shader_code);
     auto bundle = this->create_command_bundle(0, pipeline);
 
+    //bundle->SetGraphicsRootSignature();
+    bundle->IASetPrimitiveTopology(get_primitive_topology(shader_code));
     if (is_technique(shader_code, SPHERE_TECHNIQUE_QUAD_INST)) {
         // Instancing of quads requires 4 vertices per particle.
         bundle->DrawInstanced(4, this->get_sphere_count(), 0, 0);
@@ -101,14 +103,14 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
         this->update_constants(config, i);
     }
 
-    // Record a command list for each frame for the GPU measurements.
+    // Record a command list for each frame for the CPU measurements.
     std::vector<ATL::CComPtr<ID3D12GraphicsCommandList>> cmd_lists(
         this->pipeline_depth());
     for (UINT i = 0; i < this->pipeline_depth(); ++i) {
         cmd_lists[i] = this->create_graphics_command_list(i);
         this->enable_target(cmd_lists[i], i);
         this->clear_target(cmd_lists[i], i);
-        //cmd_lists[i]->ExecuteBundle(bundle);
+        cmd_lists[i]->ExecuteBundle(bundle);
         this->disable_target(cmd_lists[i], i);
         close_command_list(cmd_lists[i]);
     }

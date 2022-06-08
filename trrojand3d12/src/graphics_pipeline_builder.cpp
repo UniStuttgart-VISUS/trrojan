@@ -117,6 +117,20 @@ trrojan::d3d12::graphics_pipeline_builder::reset_shaders(void) {
 
 
 /*
+ * trrojan::d3d12::graphics_pipeline_builder::set_render_targets
+ */
+trrojan::d3d12::graphics_pipeline_builder&
+trrojan::d3d12::graphics_pipeline_builder::set_render_targets(
+        const std::vector<DXGI_FORMAT>& formats) {
+    this->_desc.NumRenderTargets = static_cast<UINT>(std::min(
+        std::size(this->_desc.RTVFormats), formats.size()));
+    std::copy_n(formats.begin(), this->_desc.NumRenderTargets,
+        this->_desc.RTVFormats);
+    return *this;
+}
+
+
+/*
  * trrojan::d3d12::graphics_pipeline_builder::set_root_signature
  */
 trrojan::d3d12::graphics_pipeline_builder&
