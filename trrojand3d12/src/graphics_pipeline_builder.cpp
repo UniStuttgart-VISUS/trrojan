@@ -8,6 +8,57 @@
 
 
 /*
+ * trrojan::d3d12::graphics_pipeline_builder::root_signature_from_shader
+ */
+ATL::CComPtr<ID3D12RootSignature>
+trrojan::d3d12::graphics_pipeline_builder::root_signature_from_shader(
+        ID3D12Device *device, const std::vector<BYTE>& byte_code) {
+    if (device == nullptr) {
+        throw ATL::CAtlException(E_POINTER);
+    }
+
+    ATL::CComPtr<ID3D12RootSignature> retval;
+    auto hr = device->CreateRootSignature(0, byte_code.data(), byte_code.size(),
+        ::IID_ID3D12RootSignature, reinterpret_cast<void **>(&retval));
+    if (FAILED(hr)) {
+        throw ATL::CAtlException(hr);
+    }
+
+    return retval;
+}
+
+
+/*
+ * trrojan::d3d12::graphics_pipeline_builder::root_signature_from_shader
+ */
+ATL::CComPtr<ID3D12RootSignature>
+trrojan::d3d12::graphics_pipeline_builder::root_signature_from_shader(
+        ID3D12Device *device, const graphics_pipeline_builder& builder) {
+    try {
+        return root_signature_from_shader(device, builder._vs);
+    } catch (...) { /* Ignore and try again. */ }
+
+    try {
+        return root_signature_from_shader(device, builder._hs);
+    } catch (...) { /* Ignore and try again. */ }
+
+    try {
+        return root_signature_from_shader(device, builder._ds);
+    } catch (...) { /* Ignore and try again. */ }
+
+    try {
+        return root_signature_from_shader(device, builder._gs);
+    } catch (...) { /* Ignore and try again. */ }
+
+    try {
+        return root_signature_from_shader(device, builder._ps);
+    } catch (...) { /* Ignore and try again. */ }
+
+    return nullptr;
+}
+
+
+/*
  * trrojan::d3d12::graphics_pipeline_builder::graphics_pipeline_builder
  */
 trrojan::d3d12::graphics_pipeline_builder::graphics_pipeline_builder(void) {
@@ -21,16 +72,10 @@ trrojan::d3d12::graphics_pipeline_builder::graphics_pipeline_builder(void) {
 ATL::CComPtr<ID3D12PipelineState>
 trrojan::d3d12::graphics_pipeline_builder::build(ID3D12Device *device) {
     if (device == nullptr) {
-        throw std::invalid_argument("The device to build the pipeline state "
-            "for must be a valid pointer.");
+        throw ATL::CAtlException(E_POINTER);
     }
 
-
-    //ATL::CComPtr<ID3D12RootSignature> root_sig;
-    //auto xx = device->CreateRootSignature(0, this->_vs.data(), this->_vs.size(), IID_PPV_ARGS(&root_sig));
-
     ATL::CComPtr<ID3D12PipelineState> retval;
-
     auto hr = device->CreateGraphicsPipelineState(&this->_desc,
         IID_PPV_ARGS(&retval));
     if (FAILED(hr)) {

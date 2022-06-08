@@ -28,6 +28,25 @@ namespace d3d12 {
     public:
 
         /// <summary>
+        /// Extracts, if any embedded, the root signature from shader byte code.
+        /// </summary>
+        /// <param name="device"></param>
+        /// <param name="byte_code"></param>
+        /// <returns></returns>
+        static ATL::CComPtr<ID3D12RootSignature> root_signature_from_shader(
+            ID3D12Device *device, const std::vector<BYTE>& byte_code);
+
+        /// <summary>
+        /// Extracts the root signature from the first shader in the pipeline
+        /// that has one.
+        /// </summary>
+        /// <param name="device"></param>
+        /// <param name="builder"></param>
+        /// <returns></returns>
+        static ATL::CComPtr<ID3D12RootSignature> root_signature_from_shader(
+            ID3D12Device *device, const graphics_pipeline_builder& builder);
+
+        /// <summary>
         /// Initialises a new instance.
         /// </summary>
         graphics_pipeline_builder(void);

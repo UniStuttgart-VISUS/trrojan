@@ -362,7 +362,7 @@ trrojan::d3d12::sphere_benchmark_base::sphere_benchmark_base(
     this->_default_configs.add_factor(factor::from_manifestations(
         factor_hemi_tess_scale, 0.5f));
     this->_default_configs.add_factor(factor::from_manifestations(
-        factor_inside_tess_factor, { inside_tess_factor_type{ 4, 4 } }));
+        factor_inside_tess_factor, { inside_tess_factor_type { 4, 4 } }));
     {
         std::vector<std::string> manifestations;
         for (size_t i = 0; (::SPHERE_METHODS[i].name != nullptr); ++i) {
@@ -593,13 +593,45 @@ trrojan::d3d12::sphere_benchmark_base::get_pipeline_state(ID3D12Device *device,
     if (!is_create) {
         // If the device was switched, we need to recreate the pipeline state
         // on the new device.
-        auto pipeline_device = get_device(it->second);
-        is_create = (pipeline_device != device);
+        auto existing_device = get_device(it->second);
+        is_create = (existing_device != device);
     }
 
     if (is_create) {
         auto builder = this->get_pipeline_builder(shader_code);
         return this->_pipeline_cache[id] = builder.build(device);
+
+    } else {
+        return it->second;
+    }
+}
+
+
+/*
+ * trrojan::d3d12::sphere_benchmark_base::get_root_signature
+ */
+ATL::CComPtr<ID3D12RootSignature>
+trrojan::d3d12::sphere_benchmark_base::get_root_signature(ID3D12Device *device,
+        const shader_id_type shader_code) {
+    assert(device != nullptr);
+    auto data_code = static_cast<property_mask_type>(this->get_data_properties(
+        shader_code));
+    const auto id = shader_code | data_code;
+
+    auto it = this->_root_sig_cache.find(id);
+    auto is_create = (it == this->_root_sig_cache.end());
+
+    if (!is_create) {
+        // If the device was switched, we need to recreate the root signature
+        // on the new device.
+        auto existing_device = get_device(it->second);
+        is_create = (existing_device != device);
+    }
+
+    if (is_create) {
+        auto builder = this->get_pipeline_builder(shader_code);
+        return this->_root_sig_cache[id] = graphics_pipeline_builder
+            ::root_signature_from_shader(device, builder);
 
     } else {
         return it->second;
@@ -810,8 +842,9 @@ void trrojan::d3d12::sphere_benchmark_base::on_device_switch(
         + sizeof(TessellationConstants) + sizeof(ViewConstants);
     benchmark_base::on_device_switch(device);
 
-    // PSOs are device-specific, so clear all cached ones.
+    // PSOs and root sigs are device-specific, so clear all cached ones.
     this->_pipeline_cache.clear();
+    this->_root_sig_cache.clear();
 
     // Resources are device-specific, so delete and recreate them.
     this->_colour_map = create_viridis_colour_map(device);
@@ -974,44 +1007,3 @@ void trrojan::d3d12::sphere_benchmark_base::update_constants(
     this->get_tessellation_constants(this->_tessellation_constants[buffer], config);
     this->get_view_constants(this->_view_constants[buffer]);
 }
-
-#if 0
-// If floating point colours are requested, but not available, add a
-// conversion step. This step copies the first part of the particle,
-// which is always the position. The following RGBA8 colour is converted
-// to float4. Afterwards, the buffers are swapped such that 'data' is
-// the converted buffer and the mmpld_list is updated to contain
-// float4 colours.
-auto forceFloat = ((options & property_float_colour) != 0);
-auto notFloat = mmpld_data_set::is_non_float_colour(this->_list);
-if (forceFloat && notFloat) {
-    auto c = mmpld_data_set::get_colour_offset(this->_layout.begin(),
-        this->_layout.end());
-    assert(c != this->_layout.end());
-    const auto srcOffset = c->AlignedByteOffset;
-    const auto srcStride = this->stride() * this->size();
-    assert(srcOffset < srcStride);
-
-    // Recreate the header with the new colour type.
-    this->_list.colour_type = mmpld_reader::colour_type::float_rgba;
-    this->_layout = mmpld_data_set::get_input_layout(this->_list);
-    cntData = this->stride() * this->size();
-
-    std::vector<char> conv(cntData);
-    for (size_t i = 0; i < this->_list.particles; ++i) {
-        auto src = data.data() + i * srcStride;
-        auto dst = conv.data() + i * this->stride();
-        auto col = *reinterpret_cast<std::uint32_t *>(src + srcOffset);
-
-        ::memcpy(dst, src, srcOffset);
-        dst += this->stride();
-
-        for (size_t c = 0; c < 4; ++i) {
-            *reinterpret_cast<float *>(dst) = (col & 0xff) / 255.0f;
-            col >>= 8;
-            dst += sizeof(float);
-        }
-    }
-    std::swap(data, conv);
-}
-#endif

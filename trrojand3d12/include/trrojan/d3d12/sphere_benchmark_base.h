@@ -266,6 +266,15 @@ namespace d3d12 {
             ID3D12Device *device, const shader_id_type shader_code);
 
         /// <summary>
+        /// Get the root signature for the given shading technique.
+        /// </summary>
+        /// <param name="device"></param>
+        /// <param name="shader_code"></param>
+        /// <returns></returns>
+        ATL::CComPtr<ID3D12RootSignature> get_root_signature(
+            ID3D12Device *device, const shader_id_type shader_code);
+
+        /// <summary>
         /// Retreives the constant buffer data for the current data properties.
         /// </summary>
         /// <param name="out_constants"></param>
@@ -434,6 +443,8 @@ namespace d3d12 {
 
         typedef std::unordered_map<shader_id_type,
             ATL::CComPtr<ID3D12PipelineState>> pipline_state_map_type;
+        typedef std::unordered_map<shader_id_type,
+            ATL::CComPtr<ID3D12RootSignature>> root_signature_map_type;
 
         glm::vec3 _bbox[2];
         UINT _cnt_spheres;
@@ -445,6 +456,7 @@ namespace d3d12 {
         std::array<float, 2> _intensity_range;
         float _max_radius;
         pipline_state_map_type _pipeline_cache;
+        root_signature_map_type _root_sig_cache;
     };
 
 } /* end namespace d3d11 */
