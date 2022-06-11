@@ -44,8 +44,12 @@ struct App : implements<App, IFrameworkViewSource, IFrameworkView>
 
         //get AppData folder with write access
         winrt::Windows::Storage::StorageFolder localFolder{ winrt::Windows::Storage::ApplicationData::Current().LocalFolder() };//for local saving for future
+        //winrt::Windows::Storage::StorageFolder roamingFolder{ winrt::Windows::Storage::ApplicationData::Current().RoamingFolder() };
+
+        winrt::hstring path = localFolder.Path();
+
         //convert folder name from wchar to ascii
-        std::wstring folderNameW(localFolder.Path());
+        std::wstring folderNameW(path);
         std::string folderNameA(folderNameW.begin(), folderNameW.end());
 
         /* Configure the executive. */
@@ -64,6 +68,19 @@ struct App : implements<App, IFrameworkViewSource, IFrameworkView>
         auto trroll_path = trrojan::GetAppFolder().string() + "Assets/demo.trroll";
 
         exe.trroll(trroll_path, *output, cool_down);
+
+        // Copy from local folder to usb pen drive?
+        auto csv_output{ localFolder.GetFileAsync(L"test.csv").get()};
+        winrt::Windows::Storage::StorageFolder removableFolder{ winrt::Windows::Storage::KnownFolders::RemovableDevices() };
+        auto folders{ removableFolder.GetFoldersAsync().get()};
+        //Windows::Foundation::Collections::IVectorView<Windows::Storage::StorageFolder> itemsInFolder{
+        // };
+        auto folder_cnt = folders.Size();
+
+        if (folder_cnt > 0) {
+            auto folder = folders.GetAt(0);
+            auto copy_csv_output = csv_output.CopyAsync(folder);
+        }
 
         CoreDispatcher dispatcher = window.Dispatcher();
         dispatcher.ProcessEvents(CoreProcessEventsOption::ProcessOneAndAllPending);
