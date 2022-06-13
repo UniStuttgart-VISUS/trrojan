@@ -51,11 +51,33 @@ struct App : implements<App, IFrameworkViewSource, IFrameworkView>
         //convert folder name from wchar to ascii
         std::wstring folderNameW(path);
         std::string folderNameA(folderNameW.begin(), folderNameW.end());
+        folderNameA += "\\"; // need to append this for local folder
+
+        //get current time as timestamp for csv output
+        auto current_time = trrojan::to_string<char>(std::chrono::system_clock::now(), true);
+
+        //get current device type for csv output (mostly differentiate betwen Xbox Series S and Series X)
+        //(see https://github.com/microsoft/Xbox-ATG-Samples/tree/main/UWPSamples/System/SystemInfoUWP) 
+        std::string device = "UnkwnonDevice";
+        GAMING_DEVICE_MODEL_INFORMATION info = {};
+        GetGamingDeviceModelInformation(&info);
+        switch (info.deviceId)
+        {
+            #ifndef NTDDI_WIN10_NI
+            #pragma warning(disable : 4063)
+            #define GAMING_DEVICE_DEVICE_ID_XBOX_SERIES_S static_cast<GAMING_DEVICE_DEVICE_ID>(0x1D27FABB)
+            #define GAMING_DEVICE_DEVICE_ID_XBOX_SERIES_X static_cast<GAMING_DEVICE_DEVICE_ID>(0x2F7A3DFF)
+            #define GAMING_DEVICE_DEVICE_ID_XBOX_SERIES_X_DEVKIT static_cast<GAMING_DEVICE_DEVICE_ID>(0xDE8A5661)
+            #endif
+
+            case GAMING_DEVICE_DEVICE_ID_XBOX_SERIES_S: device = "XboxSeriesS"; break;
+            case GAMING_DEVICE_DEVICE_ID_XBOX_SERIES_X: device = "XboxSeriesX"; break;
+        }
 
         /* Configure the executive. */
         trrojan::cmd_line cmdLine;
         cmdLine.push_back("--output");
-        cmdLine.push_back(folderNameA +"\\test.csv");
+        cmdLine.push_back(folderNameA + device + "_" + current_time + ".csv");
         //cmdLine.push_back("--log");
         //cmdLine.push_back(folderNameA + "\\log.txt");
         auto output = trrojan::open_output(cmdLine);

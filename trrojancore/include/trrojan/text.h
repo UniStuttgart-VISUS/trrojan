@@ -129,7 +129,7 @@ namespace trrojan {
     /// Convert a time point into a string including milliseconds.
     /// </summary>
     template<class T, class C>
-    std::basic_string<T> to_string(const std::chrono::time_point<C>& tp) {
+    std::basic_string<T> to_string(const std::chrono::time_point<C>& tp, bool forFilepath = false) {
         // From https://codereview.stackexchange.com/questions/156695/converting-stdchronotime-point-to-from-stdstring
         using namespace std::chrono;
         typedef time_point<C> TimePoint;
@@ -150,8 +150,14 @@ namespace trrojan {
         }
 
         std::basic_ostringstream<T> stream;
-        stream << std::put_time(&tm, "%Y-%m-%dT%H:%M:%S.")
-            << std::setw(3) << std::setfill('0') << rem;
+        if (forFilepath) {
+            stream << std::put_time(&tm, "%Y-%m-%dT%H-%M-%S.")
+                << std::setw(3) << std::setfill('0') << rem;
+        }
+        else {
+            stream << std::put_time(&tm, "%Y-%m-%dT%H:%M:%S.")
+                << std::setw(3) << std::setfill('0') << rem;
+        }
 
         return stream.str();
     }
