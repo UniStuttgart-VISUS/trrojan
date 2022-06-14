@@ -92,7 +92,7 @@ struct App : implements<App, IFrameworkViewSource, IFrameworkView>
         exe.trroll(trroll_path, *output, cool_down);
 
         // Copy from local folder to usb pen drive?
-        auto csv_output{ localFolder.GetFileAsync(L"test.csv").get()};
+        auto csv_output{ localFolder.GetFileAsync(trrojan::from_utf8(device + "_" + current_time + ".csv")).get()};
         winrt::Windows::Storage::StorageFolder removableFolder{ winrt::Windows::Storage::KnownFolders::RemovableDevices() };
         auto folders{ removableFolder.GetFoldersAsync().get()};
         //Windows::Foundation::Collections::IVectorView<Windows::Storage::StorageFolder> itemsInFolder{
