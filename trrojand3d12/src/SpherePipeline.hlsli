@@ -291,7 +291,6 @@ cbuffer ViewConstants CBUFFER(1) {
     float4 Viewport;
 };
 
-
 cbuffer TessellationConstants CBUFFER(2) {
     /// <summary>
     /// Specifies the tessellation factors for the hull shader.

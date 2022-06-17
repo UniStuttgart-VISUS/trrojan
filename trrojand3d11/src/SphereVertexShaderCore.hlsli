@@ -87,7 +87,7 @@ VsOutput Main(VsInput input) {
 
 #if defined(PER_VERTEX_RADIUS)
     const float rad = Particles[particleID].SphereParams.w;
-#else /* defined(PER_VERTEX_RADIUS)*/
+#else /* defined(PER_VERTEX_RADIUS) */
     const float rad = GlobalRadius;
 #endif /* defined(PER_VERTEX_RADIUS)*/
 

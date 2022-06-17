@@ -205,8 +205,7 @@ ATL::CComPtr<ID3D12Resource> trrojan::d3d12::create_constant_buffer(
         const D3D12_RESOURCE_FLAGS flags, const D3D12_HEAP_TYPE heap_type,
         const D3D12_RESOURCE_STATES state) {
     assert(device != nullptr);
-    static constexpr std::size_t SIZE_ALINGNMENT = 64 * 1024;
-    return create_buffer(device, (size + SIZE_ALINGNMENT) & ~SIZE_ALINGNMENT,
+    return create_buffer(device, align_constant_buffer_size(size),
         0, flags, heap_type, state);
 }
 
@@ -304,44 +303,25 @@ ATL::CComPtr<ID3D12Resource> trrojan::d3d12::create_texture(
 /*
  * trrojan::d3d12::create_texture
  */
-ATL::CComPtr<ID3D12Resource> trrojan::d3d12::create_texture(
-        ID3D12Device *device, const UINT64 width, const DXGI_FORMAT format,
-        ID3D12GraphicsCommandList *cmd_list, const void *data,
-        const UINT row_pitch, const D3D12_RESOURCE_FLAGS flags) {
-    assert(device != nullptr);
-    assert(cmd_list != nullptr);
-
-    auto texture = create_texture(device, width, format, flags);
-    auto buffer = create_upload_buffer(texture);
-    update_subresource(cmd_list, texture, 0,
-        D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE, buffer, data, row_pitch);
-
-    return texture;
-}
-
-
-/*
- * trrojan::d3d12::create_texture
- */
-ATL::CComPtr<ID3D12Resource> trrojan::d3d12::create_texture(
-        ID3D12Device *device, const UINT64 width, const UINT height,
-        const DXGI_FORMAT format, const D3D12_RESOURCE_FLAGS flags) {
-    assert(device != nullptr);
-
-    D3D12_RESOURCE_DESC desc;
-    ::ZeroMemory(&desc, sizeof(desc));
-    desc.MipLevels = 1;
-    desc.Format = format;
-    desc.Width = width;
-    desc.Height = height;
-    desc.Flags = flags;
-    desc.DepthOrArraySize = 1;
-    desc.SampleDesc.Count = 1;
-    desc.SampleDesc.Quality = 0;
-    desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-
-    return create_resource(device, desc);
-}
+//ATL::CComPtr<ID3D12Resource> trrojan::d3d12::create_texture(
+//        ID3D12Device *device, const UINT64 width, const UINT height,
+//        const DXGI_FORMAT format, const D3D12_RESOURCE_FLAGS flags) {
+//    assert(device != nullptr);
+//
+//    D3D12_RESOURCE_DESC desc;
+//    ::ZeroMemory(&desc, sizeof(desc));
+//    desc.MipLevels = 1;
+//    desc.Format = format;
+//    desc.Width = width;
+//    desc.Height = height;
+//    desc.Flags = flags;
+//    desc.DepthOrArraySize = 1;
+//    desc.SampleDesc.Count = 1;
+//    desc.SampleDesc.Quality = 0;
+//    desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+//
+//    return create_resource(device, desc);
+//}
 
 
 /*
@@ -369,8 +349,11 @@ ATL::CComPtr<ID3D12Resource> trrojan::d3d12::create_upload_buffer(
  */
 ATL::CComPtr<ID3D12Resource> trrojan::d3d12::create_upload_buffer(
         ID3D12Device *device, const UINT64 size, const UINT64 alignment) {
-    return create_buffer(device, size, alignment, D3D12_RESOURCE_FLAG_NONE,
-        D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ);
+    static constexpr UINT64 ALIGNMENT = 255;
+    auto aligned_size = (size + ALIGNMENT) & ~ALIGNMENT;
+    return create_buffer(device, aligned_size, alignment,
+        D3D12_RESOURCE_FLAG_NONE, D3D12_HEAP_TYPE_UPLOAD,
+        D3D12_RESOURCE_STATE_GENERIC_READ);
 }
 
 
@@ -405,6 +388,7 @@ ATL::CComPtr<ID3D12Resource> trrojan::d3d12::create_upload_buffer(
  */
 ATL::CComPtr<ID3D12Resource> trrojan::d3d12::create_viridis_colour_map(
         ID3D12Device *device) {
+    assert(device != nullptr);
 #pragma warning(disable: 4244)
 #pragma warning(disable: 4838)
     static const BYTE data[] = {
@@ -668,12 +652,11 @@ ATL::CComPtr<ID3D12Resource> trrojan::d3d12::create_viridis_colour_map(
 #pragma warning(default: 4244)
 #pragma warning(default: 4838)
 
-    auto retval = create_upload_buffer(device, data, 4 * std::size(data));
+    const auto size = 4 * sizeof(BYTE) * std::size(data);
+    auto retval = create_upload_buffer(device, size);
     set_debug_object_name(retval.p, "viridis_colour_map_upload");
+    stage_data(retval, data, size);
     return retval;
-
-    //return create_texture(device, std::size(data), DXGI_FORMAT_R8G8B8A8_UNORM,
-    //    cmd_list, data, std::size(data));
 }
 
 
@@ -681,15 +664,32 @@ ATL::CComPtr<ID3D12Resource> trrojan::d3d12::create_viridis_colour_map(
  * trrojan::d3d12::create_viridis_colour_map
  */
 ATL::CComPtr<ID3D12Resource> trrojan::d3d12::create_viridis_colour_map(
-        ID3D12CommandList *cmd_list) {
-    auto device = get_device(cmd_list);
-    auto upload_buffer = create_viridis_colour_map(device);
+        device& device, ID3D12GraphicsCommandList *cmd_list,
+        const D3D12_RESOURCE_STATES state) {
+    assert(cmd_list != nullptr);
+    auto upload = create_viridis_colour_map(device.d3d_device());
+    const auto size = upload->GetDesc().Width / (4 * sizeof(BYTE));
+    auto retval = create_texture(device.d3d_device(), size,
+        DXGI_FORMAT_R8G8B8A8_UNORM);
+    set_debug_object_name(retval.p, "viridis_colour_map");
 
+    auto xxx = retval->GetDesc();
+    auto yyy = upload->GetDesc();
 
-    //upload_buffer->GetDesc().Width / 4
-//        create_texture(device, std::size(data), DXGI_FORMAT_R8G8B8A8_UNORM,
-  //          cmd_list, data, std::size(data));
-    throw "TODO";
+    auto src_loc = get_copy_location(upload);
+    // "reinterpret_cast" the source ...
+    assert(src_loc.PlacedFootprint.Footprint.Format == DXGI_FORMAT_UNKNOWN);
+    src_loc.PlacedFootprint.Footprint.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    src_loc.PlacedFootprint.Footprint.Width /= 4;
+    auto dst_loc = get_copy_location(retval);
+
+    cmd_list->CopyTextureRegion(&dst_loc, 0, 0, 0, &src_loc, nullptr);
+    transition_resource(cmd_list, retval, D3D12_RESOURCE_STATE_COPY_DEST,
+        state);
+    device.close_and_execute_command_list(cmd_list);
+    device.wait_for_gpu();
+
+    return retval;
 }
 
 
@@ -784,7 +784,8 @@ void trrojan::d3d12::stage_data(ID3D12Resource *resource,
     }
 
     BYTE *dst;
-    auto hr = resource->Map(0, nullptr, reinterpret_cast<void **>(&dst));
+    D3D12_RANGE nothing = { 0, 0 };
+    auto hr = resource->Map(0, &nothing, reinterpret_cast<void **>(&dst));
     if (FAILED(hr)) {
         throw ATL::CAtlException(hr);
     }
@@ -846,6 +847,17 @@ void trrojan::d3d12::stage_data(ID3D12Resource *resource, const void *data,
     }
 
     resource->Unmap(0, nullptr);
+}
+
+
+/*
+ * trrojan::d3d12::transition_resource
+ */
+void trrojan::d3d12::transition_resource(ID3D12GraphicsCommandList *cmd_list,
+        ID3D12Resource *resource, const D3D12_RESOURCE_STATES state_before,
+        const D3D12_RESOURCE_STATES state_after) {
+    transition_subresource(cmd_list, resource,
+        D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, state_before, state_after);
 }
 
 

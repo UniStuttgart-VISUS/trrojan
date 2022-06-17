@@ -50,11 +50,18 @@ d3d12::sphere-renderer {
 	#string manoeuvre = random
 
 	#string method = quad_inst; poly_tess; adapt_poly_tess; sphere_tess; adapt_sphere_tess; hemisphere_tess; adapt_hemisphere_tess; geo_quad; geo_poly; stpa
-	string method = quad_inst; poly_tess; adapt_poly_tess; geo_quad; stpa
-	#string method = quad_tess
-	#string method = quad_inst
-	#string method = geo_quad
+	#string method = quad_inst; poly_tess; adapt_poly_tess; geo_quad; stpa
 	#string method = hemisphere_tess; geo_quad; stpa
+	#string method = quad_inst
+	#string method = poly_tess
+	#string method = adapt_poly_tess
+	#string method = sphere_tess
+	#string method = adapt_sphere_tess
+	string method = hemisphere_tess
+	#string method = adapt_hemisphere_tess
+	#string method = geo_quad
+	#string method = geo_poly
+	#string method = stpa
 
 	string manoeuvre = path_z
 	uint32 manoeuvre_steps = 100

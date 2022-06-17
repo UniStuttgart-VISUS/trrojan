@@ -32,16 +32,13 @@ namespace d3d12 {
     protected:
 
         /// <inheritdoc />
-        void on_device_switch(ID3D12Device *device) override;
+        void on_device_switch(device& device) override;
 
         /// <inheritdoc />
         trrojan::result on_run(d3d12::device& device,
             const configuration& config,
             const std::vector<std::string>& changed) override;
 
-    private:
-
-        ATL::CComPtr<ID3D12Resource> _data;
     };
 
 } /* end namespace d3d11 */

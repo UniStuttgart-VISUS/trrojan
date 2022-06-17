@@ -6,6 +6,8 @@
 
 #include "trrojan/d3d12/graphics_pipeline_builder.h"
 
+#include "trrojan/log.h"
+
 
 /*
  * trrojan::d3d12::graphics_pipeline_builder::root_signature_from_shader
@@ -36,23 +38,39 @@ trrojan::d3d12::graphics_pipeline_builder::root_signature_from_shader(
         ID3D12Device *device, const graphics_pipeline_builder& builder) {
     try {
         return root_signature_from_shader(device, builder._vs);
-    } catch (...) { /* Ignore and try again. */ }
+    } catch (...) {
+        log::instance().write_line(log_level::warning, "Vertex shader has no "
+            "root signature embedded, trying next shader stage.");
+    }
 
     try {
         return root_signature_from_shader(device, builder._hs);
-    } catch (...) { /* Ignore and try again. */ }
+    } catch (...) { 
+        log::instance().write_line(log_level::warning, "Hull shader has no "
+            "root signature embedded, trying next shader stage.");
+    }
 
     try {
         return root_signature_from_shader(device, builder._ds);
-    } catch (...) { /* Ignore and try again. */ }
+    } catch (...) {
+        log::instance().write_line(log_level::warning, "Domain shader has no "
+            "root signature embedded, trying next shader stage.");
+    }
 
     try {
         return root_signature_from_shader(device, builder._gs);
-    } catch (...) { /* Ignore and try again. */ }
+    } catch (...) {
+        log::instance().write_line(log_level::warning, "Geometry shader has no "
+            "root signature embedded, trying next shader stage.");
+    }
 
     try {
         return root_signature_from_shader(device, builder._ps);
-    } catch (...) { /* Ignore and try again. */ }
+    } catch (...) {
+        log::instance().write_line(log_level::warning, "Pixel shader has no "
+            "root signature embedded, no root signature is available in the "
+            "current pipeline.");
+    }
 
     return nullptr;
 }

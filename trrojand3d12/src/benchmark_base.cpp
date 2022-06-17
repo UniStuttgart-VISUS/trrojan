@@ -97,7 +97,7 @@ trrojan::result trrojan::d3d12::benchmark_base::run(const configuration& c) {
         if (is_device_change) {
             log::instance().write_line(log_level::verbose, "Reallocating "
                 "graphics resources after switch to debug device ...");
-            this->on_device_switch(device->d3d_device());
+            this->on_device_switch(*device);
         }
 
     } else {
@@ -109,7 +109,7 @@ trrojan::result trrojan::d3d12::benchmark_base::run(const configuration& c) {
                 "changed. Reallocating all graphics resources ...");
             this->_render_target = std::make_shared<bench_render_target>(device);
             //this->render_target->use_reversed_depth_buffer(true);
-            this->on_device_switch(device->d3d_device());
+            this->on_device_switch(*device);
             // If the device has changed, force the viewport to be re-created:
             changed.push_back(factor_viewport);
         }
@@ -249,6 +249,28 @@ trrojan::d3d12::benchmark_base::benchmark_base(const std::string& name)
 
 
 /*
+ * trrojan::d3d12::benchmark_base::create_buffer_resource_view
+ */
+void trrojan::d3d12::benchmark_base::create_buffer_resource_view(
+        ID3D12Resource *resource, const UINT64 first_element, const UINT cnt,
+        const UINT stride, const D3D12_CPU_DESCRIPTOR_HANDLE descriptor) {
+    assert(resource != nullptr);
+    auto device = get_device(resource);
+
+    D3D12_SHADER_RESOURCE_VIEW_DESC desc;
+    ::ZeroMemory(&desc, sizeof(desc));
+    desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+    desc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
+
+    desc.Buffer.FirstElement = first_element;
+    desc.Buffer.NumElements = cnt;
+    desc.Buffer.StructureByteStride = stride;
+
+    device->CreateShaderResourceView(resource, &desc, descriptor);
+}
+
+
+/*
  * trrojan::d3d12::benchmark_base::create_command_bundle
  */
 ATL::CComPtr<ID3D12GraphicsCommandList>
@@ -343,9 +365,9 @@ trrojan::d3d12::benchmark_base::create_graphics_command_list(
 
 
 /*
- * trrojan::d3d12::benchmark_base::create_descriptor_heap
+ * trrojan::d3d12::benchmark_base::create_descriptor_heaps
  */
-void trrojan::d3d12::benchmark_base::create_descriptor_heap(
+void trrojan::d3d12::benchmark_base::create_descriptor_heaps(
         ID3D12Device *device, const UINT cnt) {
     assert(device != nullptr);
     D3D12_DESCRIPTOR_HEAP_DESC desc;
@@ -354,17 +376,55 @@ void trrojan::d3d12::benchmark_base::create_descriptor_heap(
     desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
     desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 
-    this->_descriptor_heaps.resize(this->pipeline_depth());
-    log::instance().write_line(log_level::verbose, "Allocating descriptor "
-        "heaps with {0} entries for {1} frames ...", cnt,
-        this->_descriptor_heaps.size());
+    this->_descriptor_heaps.clear();
+    this->_descriptor_heaps.reserve(this->pipeline_depth());
+    log::instance().write_line(log_level::debug, "Allocating generic "
+        "descriptor heap(s) with {0} entries for {1} frame(s) ...", cnt,
+        this->pipeline_depth());
 
-    for (auto& h : this->_descriptor_heaps) {
-        h = nullptr;
+    for (UINT f = 0; f < this->pipeline_depth(); ++f) {
+        ATL::CComPtr<ID3D12DescriptorHeap> heap;
+
         auto hr = device->CreateDescriptorHeap(&desc,
-            ::IID_ID3D12DescriptorHeap, reinterpret_cast<void **>(&h));
+            ::IID_ID3D12DescriptorHeap, reinterpret_cast<void **>(&heap));
         if (FAILED(hr)) {
             throw ATL::CAtlException(hr);
+        }
+
+        set_debug_object_name(heap, "CBV/SRV/UAV descriptor heap for frame #{}",
+            f);
+        this->_descriptor_heaps.push_back(std::move(heap));
+    }
+}
+
+
+/*
+ * trrojan::d3d12::benchmark_base::create_descriptor_heaps
+ */
+void trrojan::d3d12::benchmark_base::create_descriptor_heaps(
+        ID3D12Device *device,
+        const std::vector<D3D12_DESCRIPTOR_HEAP_DESC>& descs) {
+    this->_descriptor_heaps.clear();
+    this->_descriptor_heaps.reserve(this->pipeline_depth() * descs.size());
+
+    log::instance().write_line(log_level::verbose, "Allocating {0} descriptor "
+        "heap(s) for {1} frame(s) ...", descs.size(), this->pipeline_depth());
+
+    for (UINT b = 0; b < this->pipeline_depth(); ++b) {
+        for (auto& d : descs) {
+            ATL::CComPtr<ID3D12DescriptorHeap> heap;
+
+            auto hr = device->CreateDescriptorHeap(&d,
+                ::IID_ID3D12DescriptorHeap,
+                reinterpret_cast<void **>(&heap));
+            if (FAILED(hr)) {
+                throw ATL::CAtlException(hr);
+            }
+
+            set_debug_object_name(heap, "Type {:x} descriptor heap for frame "
+                "#{}", static_cast<std::underlying_type<
+                decltype(d.Type)>::type>(d.Type), b);
+            this->_descriptor_heaps.push_back(std::move(heap));
         }
     }
 }
@@ -373,8 +433,8 @@ void trrojan::d3d12::benchmark_base::create_descriptor_heap(
 /*
  * trrojan::d3d12::benchmark_base::on_device_switch
  */
-void trrojan::d3d12::benchmark_base::on_device_switch(ID3D12Device *device) {
-    assert(device != nullptr);
+void trrojan::d3d12::benchmark_base::on_device_switch(device& device) {
+    assert(device.d3d_device() != nullptr);
 
     log::instance().write_line(log_level::verbose, "(Re-) Allocating {} "
         "descriptor heap(s).", this->_descriptor_heaps.size());
@@ -382,7 +442,7 @@ void trrojan::d3d12::benchmark_base::on_device_switch(ID3D12Device *device) {
         if (h != nullptr) {
             auto desc = h->GetDesc();
             h = nullptr;
-            auto hr = device->CreateDescriptorHeap(&desc,
+            auto hr = device.d3d_device()->CreateDescriptorHeap(&desc,
                 ::IID_ID3D12DescriptorHeap, reinterpret_cast<void **>(&h));
             if (FAILED(hr)) {
                 throw ATL::CAtlException(hr);
@@ -399,8 +459,8 @@ void trrojan::d3d12::benchmark_base::on_device_switch(ID3D12Device *device) {
         this->_direct_cmd_allocators.clear();
         log::instance().write_line(log_level::verbose, "(Re-) Allocating {} "
             "direct command allocator(s).", cnt);
-        create_command_allocators(this->_direct_cmd_allocators, device,
-            D3D12_COMMAND_LIST_TYPE_DIRECT, cnt);
+        create_command_allocators(this->_direct_cmd_allocators,
+            device.d3d_device(), D3D12_COMMAND_LIST_TYPE_DIRECT, cnt);
     }
 }
 
@@ -450,10 +510,12 @@ void trrojan::d3d12::benchmark_base::save_target(const char *path) {
         if (path != nullptr) {
             p = path;
         } else {
-            p = to_string<char>(std::chrono::system_clock::now());
+            p = to_string<char>(std::chrono::system_clock::now(), true);
         }
 
         {
+            // If file name does not have a user-defined extension to select
+            // the format, use PNG as the default.
             auto ext = p.find_last_of(extension_separator_char);
             if (ext == std::string::npos) {
                 p += ".png";

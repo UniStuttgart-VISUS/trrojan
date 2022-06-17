@@ -262,6 +262,22 @@ trrojan::d3d12::sphere_benchmark_base::parse_random_sphere_desc(
 
 
 /*
+ * trrojan::d3d12::sphere_benchmark_base::set_descriptors
+ */
+void trrojan::d3d12::sphere_benchmark_base::set_descriptors(
+        ID3D12GraphicsCommandList *cmd_list,
+        const descriptor_table_type& descriptors) {
+    assert(cmd_list != nullptr);
+    cmd_list->SetDescriptorHeaps(1, &descriptors.first.p);
+
+    for (UINT i = 0; i < descriptors.second.size(); ++i) {
+        cmd_list->SetGraphicsRootDescriptorTable(i,
+            descriptors.second[i]);
+    }
+}
+
+
+/*
  * trrojan::d3d12::sphere_benchmark_base::set_shaders
  */
 void trrojan::d3d12::sphere_benchmark_base::set_shaders(
@@ -334,12 +350,12 @@ trrojan::d3d12::sphere_benchmark_base::property_structured_resource
 trrojan::d3d12::sphere_benchmark_base::sphere_benchmark_base(
         const std::string& name)
     : benchmark_base(name), _bbox { glm::vec3(0.0f), glm::vec3(0.0f) },
-        _cnt_spheres(0),
+        _cnt_spheres(0), _cnt_descriptor_tables(0),
         _colour({ 0.0f, 0.0f, 0.0f, 0.0f }),
         _data_properties(properties_type::none),
         _intensity_range({ 0.0f, 0.0f }), _max_radius(0.0f),
-        _sphere_constants(nullptr), _tessellation_constants(nullptr),
-        _view_constants(nullptr) {
+        _sphere_constants(nullptr), _stride(0),
+        _tessellation_constants(nullptr), _view_constants(nullptr) {
     // Declare the configuration data we need to have.
     this->_default_configs.add_factor(factor::from_manifestations(
         factor_adapt_tess_maximum, static_cast<unsigned int>(8)));
@@ -403,41 +419,63 @@ void trrojan::d3d12::sphere_benchmark_base::create_colour_map_view(
 void trrojan::d3d12::sphere_benchmark_base::create_constant_buffer_view(
         ID3D12Device *device, const UINT buffer,
         const D3D12_CPU_DESCRIPTOR_HANDLE sphere_constants,
-        const D3D12_CPU_DESCRIPTOR_HANDLE tessellation_constants,
-        const D3D12_CPU_DESCRIPTOR_HANDLE view_constants) {
+        const D3D12_CPU_DESCRIPTOR_HANDLE view_constants,
+        const D3D12_CPU_DESCRIPTOR_HANDLE tessellation_constants) {
     assert(device != nullptr);
-    assert(this->_constant_buffer != nullptr);
-
-    auto address = this->_constant_buffer->GetGPUVirtualAddress();
 
     {
         D3D12_CONSTANT_BUFFER_VIEW_DESC desc;
-        desc.BufferLocation = address;
-        desc.SizeInBytes = sizeof(SphereConstants);
         ::ZeroMemory(&desc, sizeof(desc));
+        desc.BufferLocation = this->get_sphere_constants(buffer);
+        desc.SizeInBytes = align_constant_buffer_size(sizeof(SphereConstants));
         device->CreateConstantBufferView(&desc, sphere_constants);
     }
 
-    address = offset_by_n<SphereConstants>(address, this->pipeline_depth());
-
     {
         D3D12_CONSTANT_BUFFER_VIEW_DESC desc;
         ::ZeroMemory(&desc, sizeof(desc));
-        desc.BufferLocation = address;
-        desc.SizeInBytes = sizeof(TessellationConstants);
+        desc.BufferLocation = this->get_tessellation_constants(buffer);
+        desc.SizeInBytes = align_constant_buffer_size(
+            sizeof(TessellationConstants));
         device->CreateConstantBufferView(&desc, tessellation_constants);
     }
 
-    address = offset_by_n<TessellationConstants>(address,
-        this->pipeline_depth());
-
     {
         D3D12_CONSTANT_BUFFER_VIEW_DESC desc;
         ::ZeroMemory(&desc, sizeof(desc));
-        desc.BufferLocation = address;
-        desc.SizeInBytes = sizeof(ViewConstants);
+        desc.BufferLocation = this->get_view_constants(buffer);
+        desc.SizeInBytes = align_constant_buffer_size(sizeof(ViewConstants));
         device->CreateConstantBufferView(&desc, view_constants);
     }
+}
+
+
+/*
+ * trrojan::d3d12::sphere_benchmark_base::create_descriptor_heaps
+ */
+void trrojan::d3d12::sphere_benchmark_base::create_descriptor_heaps(
+        ID3D12Device *device, const shader_id_type shader_code) {
+    const auto id = this->get_technique_properties(shader_code);
+
+    // Three constant buffers are always required.
+    this->_cnt_descriptor_tables = 3;
+
+    if (is_any_technique(id, SPHERE_INPUT_PV_INTENSITY
+            | SPHERE_TECHNIQUE_USE_INSTANCING)) {
+        // Note: we use a little hack that the instancing data are always in t1,
+        // even if there is no colour map bound to t0. This makes the allocation
+        // here a bit easier as it is always the same size ...
+        this->_cnt_descriptor_tables += 2;
+    }
+
+    if (is_any_technique(id, SPHERE_INPUT_PP_INTENSITY)) {
+        ++this->_cnt_descriptor_tables;
+    }
+
+    // Add one slot for the root descriptor table.
+    ++this->_cnt_descriptor_tables;
+
+    this->create_descriptor_heaps(device, this->_cnt_descriptor_tables);
 }
 
 
@@ -527,8 +565,8 @@ trrojan::d3d12::sphere_benchmark_base::get_data_properties(
     auto retval = static_cast<property_mask_type>(this->_data_properties);
 
     if ((retval & SPHERE_INPUT_PV_INTENSITY) != 0) {
-        // If we need a transfer function, let the shader code decide where to
-        // apply it.
+        // If we need a transfer function, which is identified by the per-vertex
+        // intensity flag, let the shader code decide where to apply it.
         retval &= ~LET_TECHNIQUE_DECIDE;
         retval |= (shader_code & LET_TECHNIQUE_DECIDE);
     }
@@ -543,9 +581,7 @@ trrojan::d3d12::sphere_benchmark_base::get_data_properties(
 trrojan::d3d12::graphics_pipeline_builder
 trrojan::d3d12::sphere_benchmark_base::get_pipeline_builder(
         const shader_id_type shader_code) {
-    auto data_code = static_cast<property_mask_type>(this->get_data_properties(
-        shader_code));
-    const auto id = shader_code | data_code;
+    const auto id = this->get_technique_properties(shader_code);
     const auto is_flt = ((id & SPHERE_INPUT_FLT_COLOUR) != 0);
     const auto is_geo = ((id & SPHERE_TECHNIQUE_USE_GEO) != 0);
     const auto is_inst = ((id & SPHERE_TECHNIQUE_USE_INSTANCING) != 0);
@@ -583,9 +619,7 @@ ATL::CComPtr<ID3D12PipelineState>
 trrojan::d3d12::sphere_benchmark_base::get_pipeline_state(ID3D12Device *device,
         const shader_id_type shader_code) {
     assert(device != nullptr);
-    auto data_code = static_cast<property_mask_type>(this->get_data_properties(
-        shader_code));
-    const auto id = shader_code | data_code;
+    const auto id = this->get_technique_properties(shader_code);
 
     auto it = this->_pipeline_cache.find(id);
     auto is_create = (it == this->_pipeline_cache.end());
@@ -598,8 +632,12 @@ trrojan::d3d12::sphere_benchmark_base::get_pipeline_state(ID3D12Device *device,
     }
 
     if (is_create) {
+        log::instance().write_line(log_level::debug, "Building pipeline state "
+            "{0:x} for shader code 0x{1:x} ...", id, shader_code);
         auto builder = this->get_pipeline_builder(shader_code);
-        return this->_pipeline_cache[id] = builder.build(device);
+        auto retval = this->_pipeline_cache[id] = builder.build(device);
+        set_debug_object_name(retval, "Pipeline state \"0x{:x}\"", shader_code);
+        return retval;
 
     } else {
         return it->second;
@@ -614,9 +652,7 @@ ATL::CComPtr<ID3D12RootSignature>
 trrojan::d3d12::sphere_benchmark_base::get_root_signature(ID3D12Device *device,
         const shader_id_type shader_code) {
     assert(device != nullptr);
-    auto data_code = static_cast<property_mask_type>(this->get_data_properties(
-        shader_code));
-    const auto id = shader_code | data_code;
+    const auto id = this->get_technique_properties(shader_code);
 
     auto it = this->_root_sig_cache.find(id);
     auto is_create = (it == this->_root_sig_cache.end());
@@ -630,8 +666,10 @@ trrojan::d3d12::sphere_benchmark_base::get_root_signature(ID3D12Device *device,
 
     if (is_create) {
         auto builder = this->get_pipeline_builder(shader_code);
-        return this->_root_sig_cache[id] = graphics_pipeline_builder
+        auto retval = this->_root_sig_cache[id] = graphics_pipeline_builder
             ::root_signature_from_shader(device, builder);
+        set_debug_object_name(retval, "Root signature \"0x{:x}\"", shader_code);
+        return retval;
 
     } else {
         return it->second;
@@ -653,6 +691,66 @@ void trrojan::d3d12::sphere_benchmark_base::get_sphere_constants(
 
     out_constants.IntensityRange.x = this->_intensity_range[0];
     out_constants.IntensityRange.y = this->_intensity_range[1];
+}
+
+
+/*
+ * trrojan::d3d12::sphere_benchmark_base::get_sphere_constants
+ */
+D3D12_GPU_VIRTUAL_ADDRESS
+trrojan::d3d12::sphere_benchmark_base::get_sphere_constants(
+        const UINT buffer) const {
+    assert(this->_constant_buffer != nullptr);
+    auto retval = this->_constant_buffer->GetGPUVirtualAddress();
+    retval = offset_by_n<SphereConstants,
+        D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT>(retval, buffer);
+    return retval;
+}
+
+
+/*
+ * trrojan::d3d12::sphere_benchmark_base::get_technique_properties
+ */
+trrojan::d3d12::sphere_benchmark_base::shader_id_type
+trrojan::d3d12::sphere_benchmark_base::get_technique_properties(
+        const shader_id_type shader_code) {
+    static const shader_id_type HAVE_INTENSITY
+        = (SPHERE_INPUT_PV_INTENSITY | SPHERE_INPUT_PP_INTENSITY);
+    auto data_code = this->get_data_properties(shader_code);
+
+    if ((data_code & HAVE_INTENSITY) != 0) {
+        return (shader_code | data_code);
+
+    } else {
+        // If we have no intensity in the data, we need to erase the flags from
+        // the shader code. We add this information preventively, because we do
+        // not know about the data in get_shader_id. However, in order to look
+        // up the shaders, we must make sure that unused flags are not present.
+        return ((shader_code & ~HAVE_INTENSITY) | data_code);
+    }
+}
+
+
+/*
+ * trrojan::d3d12::sphere_benchmark_base::get_tessellation_constants
+ */
+D3D12_GPU_VIRTUAL_ADDRESS
+trrojan::d3d12::sphere_benchmark_base::get_tessellation_constants(
+        const UINT buffer) const {
+    assert(this->_constant_buffer != nullptr);
+    const auto buffers = this->pipeline_depth();
+    auto retval = this->_constant_buffer->GetGPUVirtualAddress();
+
+    // Skip all sphere and view constants.
+    retval = offset_by_n<SphereConstants,
+        D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT>(retval, buffers);
+    retval = offset_by_n<ViewConstants,
+        D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT>(retval, buffers);
+
+    retval = offset_by_n<TessellationConstants,
+        D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT>(retval, buffer);
+
+    return retval;
 }
 
 
@@ -690,18 +788,45 @@ void trrojan::d3d12::sphere_benchmark_base::get_view_constants(
 
 
 /*
+ * trrojan::d3d12::sphere_benchmark_base::get_view_constants
+ */
+D3D12_GPU_VIRTUAL_ADDRESS
+trrojan::d3d12::sphere_benchmark_base::get_view_constants(
+        const UINT buffer) const {
+    assert(this->_constant_buffer != nullptr);
+    const auto buffers = this->pipeline_depth();
+    auto retval = this->_constant_buffer->GetGPUVirtualAddress();
+
+    // Skip all SphereConstants.
+    retval = offset_by_n<SphereConstants,
+        D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT>(retval, buffers);
+
+    retval = offset_by_n<ViewConstants,
+        D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT>(retval, buffer);
+
+    return retval;
+}
+
+
+/*
  * trrojan::d3d12::sphere_benchmark_base::load_data
  */
 ATL::CComPtr<ID3D12Resource> trrojan::d3d12::sphere_benchmark_base::load_data(
-        ID3D12Device *device, const shader_id_type shader_code,
-        const configuration& config) {
+        ID3D12GraphicsCommandList *cmd_list, const shader_id_type shader_code,
+        const configuration& config, const D3D12_RESOURCE_STATES state) {
+    assert(cmd_list != nullptr);
+    auto device = get_device(cmd_list);
+    ATL::CComPtr<ID3D12Resource> retval;
+    UINT64 size = 0;
+
     try {
         auto desc = parse_random_sphere_desc(config, shader_code);
         this->set_properties(desc);
 
         void *data;
-        const auto size = random_sphere_generator::create(nullptr, 0, desc);
-        auto retval = create_upload_buffer(device, size);
+        size = random_sphere_generator::create(nullptr, 0, desc);
+        this->_data = create_buffer(device, size);
+        retval = create_upload_buffer(this->_data);
 
         auto hr = retval->Map(0, nullptr, &data);
         if (FAILED(hr)) {
@@ -712,8 +837,6 @@ ATL::CComPtr<ID3D12Resource> trrojan::d3d12::sphere_benchmark_base::load_data(
             random_sphere_generator::create(data, size, this->_max_radius,
                 desc);
             retval->Unmap(0, nullptr);
-            return retval;
-
         } catch (...) {
             log::instance().write_line(log_level::error, "Failed to create "
                 "random sphere data for specification \"{}\". The "
@@ -748,8 +871,9 @@ ATL::CComPtr<ID3D12Resource> trrojan::d3d12::sphere_benchmark_base::load_data(
             list_header.colour_type = requested_colour;
         }
 
-        const auto size = mmpld::get_size<UINT64>(list_header);
-        auto retval = create_upload_buffer(device, size);
+        size = mmpld::get_size<UINT64>(list_header);
+        this->_data = create_buffer(device, size);
+        retval = create_upload_buffer(this->_data);
 
         auto hr = retval->Map(0, nullptr, &data);
         if (FAILED(hr)) {
@@ -786,8 +910,6 @@ ATL::CComPtr<ID3D12Resource> trrojan::d3d12::sphere_benchmark_base::load_data(
             }
 
             retval->Unmap(0, nullptr);
-            return retval;
-
         } catch (...) {
             log::instance().write_line(log_level::error, "Failed to read "
                 "MMPLD particles from \"{}\". The headers could be read, i.e."
@@ -796,6 +918,19 @@ ATL::CComPtr<ID3D12Resource> trrojan::d3d12::sphere_benchmark_base::load_data(
             throw;
         }
     }
+    // At this point, the data are in the upload buffer and the read-only buffer
+    // has been prepared as copy target.
+    assert(this->_data != nullptr);
+    assert(retval != nullptr);
+    assert(size > 0);
+    set_debug_object_name(this->_data, config.get<std::string>(
+        factor_data_set).c_str());
+
+    cmd_list->CopyBufferRegion(this->_data, 0, retval, 0, size);
+    transition_resource(cmd_list, this->_data, D3D12_RESOURCE_STATE_COPY_DEST,
+        state);
+
+    return retval;
 }
 
 
@@ -835,11 +970,12 @@ void trrojan::d3d12::sphere_benchmark_base::load_data_properties(
 /*
  * trrojan::d3d12::sphere_benchmark_base::on_device_switch
  */
-void trrojan::d3d12::sphere_benchmark_base::on_device_switch(
-        ID3D12Device *device) {
-    assert(device != nullptr);
-    static constexpr auto CONSTANT_BUFFER_SIZE = sizeof(SphereConstants)
-        + sizeof(TessellationConstants) + sizeof(ViewConstants);
+void trrojan::d3d12::sphere_benchmark_base::on_device_switch(device& device) {
+    assert(device.d3d_device() != nullptr);
+    static constexpr auto CONSTANT_BUFFER_SIZE
+        = align_constant_buffer_size(sizeof(SphereConstants))
+        + align_constant_buffer_size(sizeof(ViewConstants))
+        + align_constant_buffer_size(sizeof(TessellationConstants));
     benchmark_base::on_device_switch(device);
 
     // PSOs and root sigs are device-specific, so clear all cached ones.
@@ -847,9 +983,13 @@ void trrojan::d3d12::sphere_benchmark_base::on_device_switch(
     this->_root_sig_cache.clear();
 
     // Resources are device-specific, so delete and recreate them.
-    this->_colour_map = create_viridis_colour_map(device);
+    {
+        auto cmd_list = this->create_graphics_command_list();
+        this->_colour_map = create_viridis_colour_map(device, cmd_list);
+    }
 
-    this->_constant_buffer = create_constant_buffer(device,
+
+    this->_constant_buffer = create_constant_buffer(device.d3d_device(),
         this->pipeline_depth() * CONSTANT_BUFFER_SIZE);
 
     // Persistently map the upload buffer for constants.
@@ -863,12 +1003,20 @@ void trrojan::d3d12::sphere_benchmark_base::on_device_switch(
         set_debug_object_name(this->_constant_buffer.p, "constant_buffer");
 
         this->_sphere_constants = static_cast<SphereConstants *>(p);
-        p = offset_by_n<SphereConstants>(p, this->pipeline_depth());
-
-        this->_tessellation_constants= static_cast<TessellationConstants *>(p);
-        p = offset_by_n<TessellationConstants>(p, this->pipeline_depth());
+        p = offset_by_n<SphereConstants,
+            D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT>(
+            p, this->pipeline_depth());
 
         this->_view_constants = static_cast<ViewConstants *>(p);
+        p = offset_by_n<ViewConstants,
+            D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT>(
+                p, this->pipeline_depth());
+
+        this->_tessellation_constants= static_cast<TessellationConstants *>(p);
+        assert(static_cast<void *>(this->_sphere_constants)
+            < static_cast<void *>(this->_view_constants));
+        assert(static_cast<void *>(this->_view_constants)
+            < static_cast<void *>(this->_tessellation_constants));
     }
 }
 
@@ -915,6 +1063,95 @@ void trrojan::d3d12::sphere_benchmark_base::set_clipping_planes(void) {
         "located at %f and %f.", near_plane, far_plane);
     this->_camera.set_near_plane_dist(near_plane);
     this->_camera.set_far_plane_dist(far_plane);
+}
+
+
+/*
+ * trrojan::d3d12::sphere_benchmark_base::set_descriptors
+ */
+trrojan::d3d12::sphere_benchmark_base::descriptor_table_type
+trrojan::d3d12::sphere_benchmark_base::set_descriptors(
+        ID3D12Device *device, const shader_id_type shader_code,
+        const UINT frame) {
+    assert(device != nullptr);
+    auto heap = this->_descriptor_heaps[frame];
+    assert(heap->GetDesc().Type == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    auto cpu_handle = heap->GetCPUDescriptorHandleForHeapStart();
+    auto gpu_handle = heap->GetGPUDescriptorHandleForHeapStart();
+    const auto id = this->get_technique_properties(shader_code);
+    const auto increment = device->GetDescriptorHandleIncrementSize(
+        D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    std::vector<D3D12_GPU_DESCRIPTOR_HANDLE> tables;
+
+    // Create VS resource descriptors.
+    const auto pv_intensity = is_technique(id, SPHERE_INPUT_PV_INTENSITY);
+    const auto use_instancing = is_technique(id,
+        SPHERE_TECHNIQUE_USE_INSTANCING);
+    if (pv_intensity || use_instancing) {
+        tables.push_back(gpu_handle);
+
+        if (pv_intensity) {
+            log::instance().write_line(log_level::debug, "Rendering technique "
+                "uses per-vertex-colouring. Setting transfer function ...");
+            device->CreateShaderResourceView(this->_colour_map, nullptr,
+                cpu_handle);
+            cpu_handle.ptr += increment;
+            gpu_handle.ptr += increment;
+        }
+
+        if (use_instancing) {
+            log::instance().write_line(log_level::debug, "Rendering technique "
+                "uses instancing. Setting structured buffer view ...");
+            this->create_buffer_resource_view(this->_data, 0,
+                this->_cnt_spheres, this->_stride, cpu_handle);
+            cpu_handle.ptr += increment;
+            gpu_handle.ptr += increment;
+        }
+    }
+
+    // Create PS resource descriptors.
+    if (is_any_technique(id, SPHERE_INPUT_PP_INTENSITY)) {
+        log::instance().write_line(log_level::debug, "Rendering technique uses "
+            "per-pixel colouring. Setting transfer function as t0.");
+        tables.push_back(gpu_handle);
+
+        cpu_handle.ptr += increment;
+        gpu_handle.ptr += increment;
+    }
+
+    // Bind the constant buffers. There are always the same independent from the
+    // rendering technique used.
+    {
+        log::instance().write_line(log_level::debug, "Setting constant "
+            "buffers.");
+        tables.push_back(gpu_handle);
+
+        auto sphere_constants = cpu_handle;
+        cpu_handle.ptr += increment;
+        gpu_handle.ptr += increment;
+
+        auto view_constants = cpu_handle;
+        cpu_handle.ptr += increment;
+        gpu_handle.ptr += increment;
+
+        auto tess_constants = cpu_handle;
+        cpu_handle.ptr += increment;
+        gpu_handle.ptr += increment;
+        assert(sphere_constants.ptr < view_constants.ptr);
+        assert(view_constants.ptr < tess_constants.ptr);
+
+        this->create_constant_buffer_view(device, frame, sphere_constants,
+            view_constants, tess_constants);
+
+        //cmd_list->SetGraphicsRootConstantBufferView(0,
+        //    this->get_sphere_constants(frame));
+        //cmd_list->SetGraphicsRootConstantBufferView(1,
+        //    this->get_tessellation_constants(frame));
+        //cmd_list->SetGraphicsRootConstantBufferView(2,
+        //    this->get_view_constants(frame));
+    }
+
+    return std::make_pair(heap, tables);
 }
 
 
@@ -970,6 +1207,8 @@ void trrojan::d3d12::sphere_benchmark_base::set_properties(
     // Without the actual data, we can only set the requested maximum size, not
     // the actually realised maximum.
     this->_max_radius = desc.sphere_size[1];
+
+    this->_stride = random_sphere_generator::get_stride(desc.sphere_type);
 }
 
 
@@ -994,6 +1233,27 @@ void trrojan::d3d12::sphere_benchmark_base::set_properties(
     // The global radius from the list header might be wrong, but we cannot do
     // any better than this without the actual data.
     this->_max_radius = header.radius;
+
+    this->_stride = mmpld::get_stride<UINT>(header);
+}
+
+
+/*
+ * trrojan::d3d12::sphere_benchmark_base::set_vertex_buffer
+ */
+void trrojan::d3d12::sphere_benchmark_base::set_vertex_buffer(
+        ID3D12GraphicsCommandList *cmd_list, const shader_id_type shader_code) {
+    assert(cmd_list != nullptr);
+    const auto id = this->get_technique_properties(shader_code);
+
+    if (!is_technique(id, SPHERE_TECHNIQUE_USE_SRV)) {
+        D3D12_VERTEX_BUFFER_VIEW desc;
+        desc.BufferLocation = this->_data->GetGPUVirtualAddress();
+        desc.SizeInBytes = this->_data->GetDesc().Width;
+        desc.StrideInBytes = this->_stride;
+
+        cmd_list->IASetVertexBuffers(0, 1, &desc);
+    }
 }
 
 
@@ -1003,7 +1263,10 @@ void trrojan::d3d12::sphere_benchmark_base::set_properties(
 void trrojan::d3d12::sphere_benchmark_base::update_constants(
         const configuration& config, const UINT buffer) {
     assert(buffer < this->pipeline_depth());
-    this->get_sphere_constants(this->_sphere_constants[buffer]);
-    this->get_tessellation_constants(this->_tessellation_constants[buffer], config);
-    this->get_view_constants(this->_view_constants[buffer]);
+    this->get_sphere_constants(*index_constant_buffer(
+        this->_sphere_constants, buffer));
+    this->get_tessellation_constants(*index_constant_buffer(
+        this->_tessellation_constants, buffer), config);
+    this->get_view_constants(*index_constant_buffer(
+        this->_view_constants, buffer));
 }

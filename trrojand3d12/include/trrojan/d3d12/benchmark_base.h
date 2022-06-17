@@ -164,6 +164,18 @@ namespace d3d12 {
         }
 
         /// <summary>
+        /// Creates a shader resource view for a buffer.
+        /// </summary>
+        /// <param name="resource"></param>
+        /// <param name="first_element"></param>
+        /// <param name="cnt"></param>
+        /// <param name="stride"></param>
+        /// <param name="descriptor"></param>
+        void create_buffer_resource_view(ID3D12Resource *resource,
+            const UINT64 first_element, const UINT cnt, const UINT stride,
+            const D3D12_CPU_DESCRIPTOR_HANDLE descriptor);
+
+        /// <summary>
         /// Create a new command bundle using the specified allocator.
         /// </summary>
         /// <param name="allocator"></param>
@@ -217,7 +229,7 @@ namespace d3d12 {
             ID3D12PipelineState *initial_state = nullptr);
 
         /// <summary>
-        /// Allocate a generic descriptor heaps (one for each frame) into the
+        /// Allocate generic descriptor heaps (one for each frame) into the
         /// <see cref="_descriptor_heaps" /> member that can be used for constant
         /// buffers, shader resource views and all other kinds of resource
         /// views.
@@ -231,9 +243,27 @@ namespace d3d12 {
         /// <see cref="_descriptor_heaps" />, they will also be transferred to
         /// new devices in <see cref="on_device_switch" />.</para>
         /// </remarks>
+        /// <param name="device">The device to create the heap on.</param>
+        /// <param name="cnt">The number of descriptors in the heap.</param>
+        void create_descriptor_heaps(ID3D12Device *device, const UINT cnt);
+
+        /// <summary>
+        /// Allocate specific descriptor heaps (one of the specified type of
+        /// each frame) into the <see cref="_descriptor_heaps" /> member.
+        /// </summary>
+        /// <remarks>
+        /// <para>The heaps for each frame are stored contiguously, ie for
+        /// each description in <paramref name="descs" />, all heaps for
+        /// the first frame are stored in <see cref="_descriptor_heaps" />,
+        /// then all for the second frame, etc.</para>
+        /// <para>If <see cref="_descriptor_heaps" /> is set,
+        /// <see cref="on_device_switch" /> will automatically reallocate a
+        /// similar heaps on the new device.</para>
+        /// </remarks>
         /// <param name="device"></param>
-        /// <param name="cnt"></param>
-        void create_descriptor_heap(ID3D12Device *device, const UINT cnt);
+        /// <param name="descs"></param>
+        void create_descriptor_heaps(ID3D12Device *device,
+            const std::vector<D3D12_DESCRIPTOR_HEAP_DESC>& descs);
 
         inline void disable_target(ID3D12GraphicsCommandList *cmd_list) {
             assert(this->_render_target != nullptr);
@@ -291,7 +321,7 @@ namespace d3d12 {
         /// switches are handled.</para>
         /// </remarks>
         /// <param name="device"></param>
-        virtual void on_device_switch(ID3D12Device *device);
+        virtual void on_device_switch(device& device);
 
         /// <summary>
         /// Performs the actual test on behalf of the <see cref="run" /> method.

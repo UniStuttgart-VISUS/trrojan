@@ -25,25 +25,15 @@ trrojan::d3d12::sphere_benchmark::sphere_benchmark(void)
 /*
  * trrojan::d3d12::sphere_benchmark::on_device_switch
  */
-void trrojan::d3d12::sphere_benchmark::on_device_switch(ID3D12Device *device) {
-    assert(device != nullptr);
+void trrojan::d3d12::sphere_benchmark::on_device_switch(device& device) {
+    assert(device.d3d_device() != nullptr);
     sphere_benchmark_base::on_device_switch(device);
 
     // Make sure that we have one bundle allocator for the single bundle we are
     // recording to draw the spheres.
     this->_bundle_allocators.clear();
-    create_command_allocators(this->_bundle_allocators, device,
+    create_command_allocators(this->_bundle_allocators, device.d3d_device(),
         D3D12_COMMAND_LIST_TYPE_BUNDLE, 1);
-
-    // Make sure that we have a descriptor heap with entries for CBVs and all
-    // other SRVs.
-    if (this->_descriptor_heaps.empty()) {
-        this->create_descriptor_heap(device, 2);
-    }
-    assert(this->_descriptor_heaps.size() == this->pipeline_depth());
-    assert(std::all_of(this->_descriptor_heaps.begin(),
-        this->_descriptor_heaps.end(),
-        [](const ATL::CComPtr<ID3D12DescriptorHeap>&p) { return p != nullptr; }));
 
     // Invalidate the data.
     this->_data = nullptr;
@@ -77,17 +67,38 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
 
     // Load the data if necessary.
     if (this->_data == nullptr) {
-        this->_data = this->load_data(device.d3d_device(), shader_code, config);
+        log::instance().write_line(log_level::information, "Loading data set \""
+            "{}\" ...", config.get<std::string>(factor_data_set));
+        auto cmd_list = this->create_graphics_command_list();
+        auto upload = this->load_data(cmd_list, shader_code, config,
+            D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER
+            | D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+        device.close_and_execute_command_list(cmd_list);
+
+        log::instance().write_line(log_level::verbose, "Waiting for data "
+            "set to be loaded to the GPU ...");
+        device.wait_for_gpu();
     }
+
+    // Prepare the descriptor heaps required for the requested technique and
+    // data set. Note that create_descriptor_heap will access the data
+    // properties, so this must be done *after* loading the data.
+    this->create_descriptor_heaps(device.d3d_device(), shader_code);
 
     // Determine the number of primitives to emit and record the draw call
     // into a command bundle.
     auto pipeline = this->get_pipeline_state(device.d3d_device(), shader_code);
     auto root_sig = this->get_root_signature(device.d3d_device(), shader_code);
     auto bundle = this->create_command_bundle(0, pipeline);
+    // Note: we always use the first descriptor heap as nothing changes from
+    // frame to frame in one run of the benchmark.
+    auto desc_tables = this->set_descriptors(device.d3d_device(), shader_code,
+        0);
 
     bundle->SetGraphicsRootSignature(root_sig);
     bundle->IASetPrimitiveTopology(get_primitive_topology(shader_code));
+    this->set_vertex_buffer(bundle, shader_code);
+
     if (is_technique(shader_code, SPHERE_TECHNIQUE_QUAD_INST)) {
         // Instancing of quads requires 4 vertices per particle.
         bundle->DrawInstanced(4, this->get_sphere_count(), 0, 0);
@@ -97,20 +108,27 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
     close_command_list(bundle);
 
     // Update constant buffers.
-    for (UINT i = 0; i < this->pipeline_depth(); ++i) {
-        this->update_constants(config, i);
-    }
+    this->update_constants(config, 0);
 
     // Record a command list for each frame for the CPU measurements.
     std::vector<ATL::CComPtr<ID3D12GraphicsCommandList>> cmd_lists(
         this->pipeline_depth());
     for (UINT i = 0; i < this->pipeline_depth(); ++i) {
-        cmd_lists[i] = this->create_graphics_command_list(i);
-        this->enable_target(cmd_lists[i], i);
-        this->clear_target(cmd_lists[i], i);
-        cmd_lists[i]->ExecuteBundle(bundle);
-        this->disable_target(cmd_lists[i], i);
-        close_command_list(cmd_lists[i]);
+        auto cmd_list = cmd_lists[i] = this->create_graphics_command_list(i);
+        set_debug_object_name(cmd_list, "CPU command list #{}", i);
+
+        cmd_list->SetGraphicsRootSignature(root_sig);
+        set_descriptors(cmd_list, desc_tables);
+
+        cmd_list->IASetPrimitiveTopology(get_primitive_topology(shader_code));
+
+        this->enable_target(cmd_list, i);
+        this->clear_target(cmd_list, i);
+
+        cmd_list->ExecuteBundle(bundle);
+
+        this->disable_target(cmd_list, i);
+        close_command_list(cmd_list);
     }
 
     // Do prewarming and compute number of CPU iterations at the same time.
@@ -166,6 +184,9 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
         auto cmd_list = cmd_lists[this->buffer_index()];
         this->reset_command_list(cmd_list);
 
+        cmd_list->SetGraphicsRootSignature(root_sig);
+        set_descriptors(cmd_list, desc_tables);
+
         gpu_timer.start_frame();
         gpu_timer.start(cmd_list, 0);
         this->enable_target(cmd_list);
@@ -197,6 +218,9 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
         auto cmd_list = cmd_lists[this->buffer_index()];
         this->reset_command_list(cmd_list);
 
+        cmd_list->SetGraphicsRootSignature(root_sig);
+        set_descriptors(cmd_list, desc_tables);
+
         stats_query.begin_frame();
 
         this->enable_target(cmd_list);
@@ -214,6 +238,10 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
 
         pipeline_stats = stats_query.evaluate(stats_index, 0);
     }
+
+    // Wait for everything to complete before we allow any other benchmark to
+    // run.
+    device.wait_for_gpu();
 
     // Compute derived statistics for GPU counters.
     const auto bundle_median = calc_median(bundle_times);
@@ -271,8 +299,6 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
         cpu_time,
         static_cast<double>(cpu_time) / cpu_iterations
         });
-
-    // Store the result.
 
     return retval;
 }

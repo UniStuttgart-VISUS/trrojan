@@ -78,12 +78,12 @@ begin {
         }
         if ($features -band $SPHERE_INPUT_PV_INTENSITY) {
             $lines += '#define PER_VERTEX_INTENSITY (1)'
-            $vsDescriptorTable += 'SRV(t0)'
+            $vsDescriptorTable += "SRV(t$($vsDescriptorTable.Length))"
             $staticSamplers += "StaticSampler(s0, $linearSampler, visibility = SHADER_VISIBILITY_VERTEX)"
         }
         if ($features -band $SPHERE_INPUT_PP_INTENSITY) {
             $lines += '#define PER_PIXEL_INTENSITY (1)'
-            $psDescriptorTable += 'SRV(t0)'
+            $psDescriptorTable += "SRV(t$($psDescriptorTable.Length))"
             $staticSamplers += "StaticSampler(s0, $linearSampler, visibility = SHADER_VISIBILITY_PIXEL)"
         }
         if ($features -band $SPHERE_VARIANT_PV_RAY) {
@@ -94,7 +94,7 @@ begin {
         }
         if ($technique -band $SPHERE_TECHNIQUE_USE_INSTANCING) {
             $lines += '#define INSTANCING (1)'
-            $vsDescriptorTable += 'SRV(t1)'
+            $vsDescriptorTable += "SRV(t$($vsDescriptorTable.Length))"
         }
         if ($technique -band $SPHERE_VARIANT_CONSERVATIVE_DEPTH) {
             $lines += '#define CONSERVATIVE_DEPTH (1)'
