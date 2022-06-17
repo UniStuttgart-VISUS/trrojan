@@ -608,6 +608,7 @@ trrojan::d3d12::sphere_benchmark_base::get_pipeline_builder(
         .set_primitive_topology(get_primitive_topology_type(shader_code))
         .set_render_targets(DXGI_FORMAT_R8G8B8A8_UNORM)
         .set_depth_stencil_target(DXGI_FORMAT_D32_FLOAT)
+        .set_two_sided()
         .set_sample_desc();
 
     return retval;
@@ -976,6 +977,7 @@ void trrojan::d3d12::sphere_benchmark_base::on_device_switch(device& device) {
     // Resources are device-specific, so delete and recreate them.
     {
         auto cmd_list = this->create_graphics_command_list();
+        set_debug_object_name(cmd_list, "Viridis initialisation command list");
         this->_colour_map = create_viridis_colour_map(device, cmd_list);
     }
 

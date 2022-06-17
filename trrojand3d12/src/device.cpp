@@ -80,6 +80,10 @@ trrojan::d3d12::device::device(const ATL::CComPtr<ID3D12Device>& d3dDevice,
             throw ATL::CAtlException(hr);
         }
     }
+
+    set_debug_object_name(this->_command_queue, "Device command queue \"{0}\"",
+        this->name());
+    set_debug_object_name(this->_fence, "Device fence \"{0}\"", this->name());
 }
 
 

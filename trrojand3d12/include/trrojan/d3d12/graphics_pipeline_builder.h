@@ -319,6 +319,11 @@ namespace d3d12 {
             return *this;
         }
 
+        inline graphics_pipeline_builder& set_two_sided(void) {
+            this->_desc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
+            return *this;
+        }
+
         inline graphics_pipeline_builder& set_vertex_shader(
                 const BYTE *byte_code,
                 const std::size_t cnt_byte_code) {

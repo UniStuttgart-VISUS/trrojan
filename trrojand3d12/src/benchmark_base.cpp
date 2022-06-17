@@ -179,6 +179,8 @@ void trrojan::d3d12::benchmark_base::create_command_allocators(
         if (FAILED(hr)) {
             throw ATL::CAtlException(hr);
         }
+        set_debug_object_name(dst.back(), "benchmark_base command allocator "
+            "#{}", dst.size() - 1);
     }
 }
 

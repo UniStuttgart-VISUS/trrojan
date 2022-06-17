@@ -258,6 +258,8 @@ trrojan::d3d12::render_target_base::render_target_base(
             throw ATL::CAtlException(hr);
         }
 
+        set_debug_object_name(this->_fence, "render_target fence");
+
         // _fence_values always contains the value for the *next* fence.
         ++this->_fence_values[this->_buffer_index];
     }

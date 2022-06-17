@@ -6,6 +6,7 @@
 
 #include "trrojan/d3d12/gpu_timer.h"
 
+#include "trrojan/d3d12/utilities.h"
 
 // https://github.com/microsoft/DirectX-Graphics-Samples/blob/164b072185a5360c43c5f0b64e2f672b7f423f95/Samples/Desktop/D3D12HeterogeneousMultiadapter/src/D3D12HeterogeneousMultiadapter.cpp#L843
 
@@ -274,6 +275,7 @@ void trrojan::d3d12::gpu_timer::resize(const size_type queries,
         if (FAILED(hr)) {
             throw ATL::CAtlException(hr);
         }
+        set_debug_object_name(this->_result_buffer, "gpu_timer buffer");
     }
 
     {
@@ -282,6 +284,7 @@ void trrojan::d3d12::gpu_timer::resize(const size_type queries,
         if (FAILED(hr)) {
             throw ATL::CAtlException(hr);
         }
+        set_debug_object_name(this->_heap, "gpu_timer heap");
     }
 
     // Start at the begin, because all data have been invalidated.

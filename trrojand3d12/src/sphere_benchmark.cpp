@@ -90,13 +90,16 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
     auto pipeline = this->get_pipeline_state(device.d3d_device(), shader_code);
     auto root_sig = this->get_root_signature(device.d3d_device(), shader_code);
     auto bundle = this->create_command_bundle(0, pipeline);
+    set_debug_object_name(bundle, "Drawing bundle of sphere_benchmark");
     // Note: we always use the first descriptor heap as nothing changes from
     // frame to frame in one run of the benchmark.
     auto desc_tables = this->set_descriptors(device.d3d_device(), shader_code,
         0);
 
     bundle->SetGraphicsRootSignature(root_sig);
+    bundle->SetPipelineState(pipeline);
     bundle->IASetPrimitiveTopology(get_primitive_topology(shader_code));
+    set_descriptors(bundle, desc_tables);
     this->set_vertex_buffer(bundle, shader_code);
 
     if (is_technique(shader_code, SPHERE_TECHNIQUE_QUAD_INST)) {
@@ -122,14 +125,25 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
         set_debug_object_name(cmd_list, "CPU command list #{}", i);
 
         cmd_list->SetGraphicsRootSignature(root_sig);
-        set_descriptors(cmd_list, desc_tables);
-
+        cmd_list->SetPipelineState(pipeline);
         cmd_list->IASetPrimitiveTopology(get_primitive_topology(shader_code));
+        set_descriptors(cmd_list, desc_tables);
+        this->set_vertex_buffer(cmd_list, shader_code);
 
         this->enable_target(cmd_list, i);
         this->clear_target(cmd_list, i);
 
-        cmd_list->ExecuteBundle(bundle);
+        //cmd_list->ExecuteBundle(bundle);
+        if (is_technique(shader_code, SPHERE_TECHNIQUE_QUAD_INST)) {
+            // Instancing of quads requires 4 vertices per particle.
+            log::instance().write_line(log_level::debug, "Drawing {0} instances of "
+                "four vertices.", this->get_sphere_count());
+            cmd_list->DrawInstanced(4, this->get_sphere_count(), 0, 0);
+        } else {
+            log::instance().write_line(log_level::debug, "Drawing 1 instance of "
+                "{0} vertices.", this->get_sphere_count());
+            cmd_list->DrawInstanced(this->get_sphere_count(), 1, 0, 0);
+        }
 
         this->disable_target(cmd_list, i);
         close_command_list(cmd_list);
@@ -167,6 +181,7 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
         } while (batch_time < min_wall_time);
     }
 
+#if 0
     // Do the wall clock measurement using the prepared command lists.
     log::instance().write_line(log_level::debug, "Measuring wall clock "
         "timings over {} iterations ...", cpu_iterations);
@@ -303,6 +318,11 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
         cpu_time,
         static_cast<double>(cpu_time) / cpu_iterations
         });
+#else
+
+    auto retval = std::make_shared<basic_result>(config, std::initializer_list<std::string> { "horst"});
+    retval->add({ std::string("horst") });
+#endif
 
     return retval;
 }

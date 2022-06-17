@@ -4,6 +4,7 @@ param([Parameter(Mandatory = $true, ValueFromPipeline = $true)] [string] $OutPat
     [string] $ResourceFile = "sphere_techniques.rc",
     [uint16] $ResourceStart = 256,
     [string] $ResourceType = "SHADER",
+    [string] $ResourcePath = "d3d12",
     [string] $RootSignatureDefine = "SHADER_ROOT_SIGNATURE")
 
 begin {
@@ -269,37 +270,37 @@ process {
         $resLookup += "    case ($($id)):\"
         $fileLookup += "   case ($($id)):\"
         if ($vs) {
-            $resources += "$resID $ResourceType $vs.cso"
+            $resources += "$resID $ResourceType $(Join-Path $ResourcePath "$vs.cso")"
             $resLookup += "        builder.set_vertex_shader_from_resource(MAKEINTRESOURCE($resID), _T(`"$ResourceType`"));\"
-            $fileLookup += "        builder.set_vertex_shader_from_file(resolve_path(`"$vs.cso`"));\"
+            $fileLookup += "        builder.set_vertex_shader_from_file(resolve_path(`"$(Join-Path $ResourcePath "$vs.cso")`"));\"
             ++$resID
         }
 
         if ($hs) {
-            $resources += "$resID $ResourceType $hs.cso"
+            $resources += "$resID $ResourceType $(Join-Path $ResourcePath "$hs.cso")"
             $resLookup += "        builder.set_hull_shader_from_resource(MAKEINTRESOURCE($resID), _T(`"$ResourceType`"));\"
-            $fileLookup += "        builder.set_vertex_shader_from_file(resolve_path(`"$hs.cso`"));\"
+            $fileLookup += "        builder.set_vertex_shader_from_file(resolve_path(`"$(Join-Path $ResourcePath "$hs.cso")`"));\"
             ++$resID
         }
 
         if ($ds) {
-            $resources += "$resID $ResourceType $ds.cso"
+            $resources += "$resID $ResourceType $(Join-Path $ResourcePath "$ds.cso")"
             $resLookup += "        builder.set_domain_shader_from_resource(MAKEINTRESOURCE($resID), _T(`"$ResourceType`"));\"
-            $fileLookup += "        builder.set_vertex_shader_from_file(resolve_path(`"$ds.cso`"));\"
+            $fileLookup += "        builder.set_vertex_shader_from_file(resolve_path(`"$(Join-Path $ResourcePath "$ds.cso")`"));\"
             ++$resID
         }
 
         if ($gs) {
-            $resources += "$resID $ResourceType $gs.cso"
+            $resources += "$resID $ResourceType $(Join-Path $ResourcePath "$gs.cso")"
             $resLookup += "        builder.set_geometry_shader_from_resource(MAKEINTRESOURCE($resID), _T(`"$ResourceType`"));\"
-            $fileLookup += "        builder.set_vertex_shader_from_file(resolve_path(`"$gs.cso`"));\"
+            $fileLookup += "        builder.set_vertex_shader_from_file(resolve_path(`"$(Join-Path $ResourcePath "$gs.cso")`"));\"
             ++$resID
         }
 
         if ($ps) {
-            $resources += "$resID $ResourceType $ps.cso"
+            $resources += "$resID $ResourceType $(Join-Path $ResourcePath "$ps.cso")"
             $resLookup += "        builder.set_pixel_shader_from_resource(MAKEINTRESOURCE($resID), _T(`"$ResourceType`"));\"
-            $fileLookup += "        builder.set_vertex_shader_from_file(resolve_path(`"$ps.cso`"));\"
+            $fileLookup += "        builder.set_vertex_shader_from_file(resolve_path(`"$(Join-Path $ResourcePath "$ps.cso")`"));\"
             ++$resID
         }
 

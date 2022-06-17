@@ -3,6 +3,7 @@ param([Parameter(Mandatory = $true, ValueFromPipeline = $true)] [string] $OutPat
     [string] $IncludeFile = "sphere_techniques.h",
     [string] $ResourceFile = "sphere_techniques.rc",
     [uint16] $ResourceStart = 256,
+    [string] $ResourcePath = "d3d11",
     [string] $ResourceType = "SHADER")
 
 begin {
@@ -231,35 +232,35 @@ process {
         $ps = $shader.PixelShader
 
         if ($vs) {
-            $resources += "$resID $ResourceType $vs.cso"
+            $resources += "$resID $ResourceType $(Join-Path $ResourcePath "$vs.cso")"
             $vs = $resID++
         } else {
             $vs = 0
         }
 
         if ($hs) {
-            $resources += "$resID $ResourceType $hs.cso"
+            $resources += "$resID $ResourceType $(Join-Path $ResourcePath "$hs.cso")"
             $hs = $resID++
         } else {
             $hs = 0
         }
 
         if ($ds) {
-            $resources += "$resID $ResourceType $ds.cso"
+            $resources += "$resID $ResourceType $(Join-Path $ResourcePath "$ds.cso")"
             $ds = $resID++
         } else {
             $ds = 0
         }
 
         if ($gs) {
-            $resources += "$resID $ResourceType $gs.cso"
+            $resources += "$resID $ResourceType $(Join-Path $ResourcePath "$gs.cso")"
             $gs = $resID++
         } else {
             $gs = 0
         }
 
         if ($ps) {
-            $resources += "$resID $ResourceType $ps.cso"
+            $resources += "$resID $ResourceType $(Join-Path $ResourcePath "$ps.cso")"
             $ps = $resID++
         } else {
             $ps = 0

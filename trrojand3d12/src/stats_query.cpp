@@ -6,6 +6,8 @@
 
 #include "trrojan/d3d12/stats_query.h"
 
+#include "trrojan/d3d12/utilities.h"
+
 
 /*
  * trrojan::d3d12::stats_query::stats_query
@@ -158,6 +160,7 @@ void trrojan::d3d12::stats_query::resize(const size_type queries,
         if (FAILED(hr)) {
             throw ATL::CAtlException(hr);
         }
+        set_debug_object_name(this->_result_buffer, "stats_query buffer");
     }
 
     {
@@ -166,6 +169,7 @@ void trrojan::d3d12::stats_query::resize(const size_type queries,
         if (FAILED(hr)) {
             throw ATL::CAtlException(hr);
         }
+        set_debug_object_name(this->_heap, "stats_query heap");
     }
 
     // Start at the begin, because all data have been invalidated.

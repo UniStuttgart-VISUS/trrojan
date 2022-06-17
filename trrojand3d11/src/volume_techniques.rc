@@ -1,5 +1,5 @@
-// This file was auto-generated using .\Create-VolumeShaders.ps1 -OutPath . -ResourceStart 2000 on 05/26/2022 22:55:33
-2000 SHADER SinglePassVolumeComputeShader.cso
-2001 SHADER VolumePassComputeShader.cso
-2002 SHADER VolumeRayPassPixelShader.cso
-2003 SHADER VolumeRayPassVertexShader.cso
+// This file was auto-generated using .\Create-VolumeShaders.ps1 -OutPath . -ResourceStart 2000 on 06/17/2022 22:48:05
+2000 SHADER d3d11\SinglePassVolumeComputeShader.cso
+2001 SHADER d3d11\VolumePassComputeShader.cso
+2002 SHADER d3d11\VolumeRayPassPixelShader.cso
+2003 SHADER d3d11\VolumeRayPassVertexShader.cso

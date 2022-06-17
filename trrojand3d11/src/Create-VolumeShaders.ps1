@@ -3,6 +3,7 @@ param([Parameter(Mandatory = $true, ValueFromPipeline = $true)] [string] $OutPat
     [string] $IncludeFile = "volume_techniques.h",
     [string] $ResourceFile = "volume_techniques.rc",
     [uint16] $ResourceStart = 512,
+    [string] $ResourcePath = "d3d11",
     [string] $ResourceType = "SHADER")
 
 # The lines of the resource file to be generated.
@@ -19,7 +20,7 @@ Get-ChildItem -Filter "*Volume*Shader.hlsl" | ForEach-Object {
     $variable = ($_.BaseName -csplit "(?<!^)(?=[A-Z])" -join "_").ToUpperInvariant()
     $resource = $ResourceStart + $cnt
     $includes += "#define $variable ($resource)"
-    $resources += "$resource $ResourceType $($_.BaseName).cso"
+    $resources += "$resource $ResourceType $(Join-Path $ResourcePath "$($_.BaseName).cso")"
     ++$cnt
 }
 
