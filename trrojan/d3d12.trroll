@@ -4,7 +4,7 @@
 #}
 
 d3d12::sphere-renderer {
-	string data_set =  pos_rad_intensity : 2000000 : 0 : 10 10 10 : 0.01 0.1
+	string data_set =  pos_rad_rgba32 : 2000000 : 0 : 10 10 10 : 0.01 0.1
 	uint32 frame = 0
 	boolean debug_view = true
 	float32 global_radius = 0.07
@@ -52,12 +52,12 @@ d3d12::sphere-renderer {
 	#string method = quad_inst; poly_tess; adapt_poly_tess; sphere_tess; adapt_sphere_tess; hemisphere_tess; adapt_hemisphere_tess; geo_quad; geo_poly; stpa
 	#string method = quad_inst; poly_tess; adapt_poly_tess; geo_quad; stpa
 	#string method = hemisphere_tess; geo_quad; stpa
-	#string method = quad_inst
+	string method = quad_inst
 	#string method = poly_tess
 	#string method = adapt_poly_tess
 	#string method = sphere_tess
 	#string method = adapt_sphere_tess
-	string method = hemisphere_tess
+	#string method = hemisphere_tess
 	#string method = adapt_hemisphere_tess
 	#string method = geo_quad
 	#string method = geo_poly

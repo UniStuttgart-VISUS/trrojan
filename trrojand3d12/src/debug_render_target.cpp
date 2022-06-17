@@ -46,13 +46,9 @@ trrojan::d3d12::debug_render_target::~debug_render_target(void) {
  * trrojan::d3d12::debug_render_target::present
  */
 UINT trrojan::d3d12::debug_render_target::present(void) {
-    // Use base class to transition back buffer to present state.
-    render_target_base::present();
-
+    assert(this->_swap_chain != nullptr);
     // Swap the buffers.
-    if (this->_swap_chain != nullptr) {
-        this->_swap_chain->Present(0, 0);
-    }
+    this->_swap_chain->Present(0, 0);
 
     // Switch to the next buffer used by the swap chain.
     auto retval = this->_swap_chain->GetCurrentBackBufferIndex();

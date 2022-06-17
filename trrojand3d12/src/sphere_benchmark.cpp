@@ -101,8 +101,12 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
 
     if (is_technique(shader_code, SPHERE_TECHNIQUE_QUAD_INST)) {
         // Instancing of quads requires 4 vertices per particle.
+        log::instance().write_line(log_level::debug, "Drawing {0} instances of "
+            "four vertices.", this->get_sphere_count());
         bundle->DrawInstanced(4, this->get_sphere_count(), 0, 0);
     } else {
+        log::instance().write_line(log_level::debug, "Drawing 1 instance of "
+            "{0} vertices.", this->get_sphere_count());
         bundle->DrawInstanced(this->get_sphere_count(), 1, 0, 0);
     }
     close_command_list(bundle);

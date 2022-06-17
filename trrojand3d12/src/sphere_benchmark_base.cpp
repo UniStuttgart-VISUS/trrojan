@@ -566,8 +566,10 @@ trrojan::d3d12::sphere_benchmark_base::get_data_properties(
 
     if ((retval & SPHERE_INPUT_PV_INTENSITY) != 0) {
         // If we need a transfer function, which is identified by the per-vertex
-        // intensity flag, let the shader code decide where to apply it.
-        retval &= ~LET_TECHNIQUE_DECIDE;
+        // intensity flag, let the shader code decide which of the flags to use,
+        // per-vertex or per-pixel, by erasing the indicator for per-vertex
+        // intensity and copying the one from the shader.
+        retval &= ~SPHERE_INPUT_PV_INTENSITY;
         retval |= (shader_code & LET_TECHNIQUE_DECIDE);
     }
 
@@ -594,7 +596,7 @@ trrojan::d3d12::sphere_benchmark_base::get_pipeline_builder(
     graphics_pipeline_builder retval;
 
     // Set the shaders from the big generated lookup table.
-    set_shaders(retval, id);
+    set_shaders(retval, shader_code);
 
     // Set the input layout for techniques using VBs.
     if (!is_srv) {
@@ -603,7 +605,7 @@ trrojan::d3d12::sphere_benchmark_base::get_pipeline_builder(
 
     retval.reset_rasteriser_state()
         .reset_depth_stencil_state()
-        .set_primitive_topology(get_primitive_topology_type(id))
+        .set_primitive_topology(get_primitive_topology_type(shader_code))
         .set_render_targets(DXGI_FORMAT_R8G8B8A8_UNORM)
         .set_depth_stencil_target(DXGI_FORMAT_D32_FLOAT)
         .set_sample_desc();
@@ -619,9 +621,9 @@ ATL::CComPtr<ID3D12PipelineState>
 trrojan::d3d12::sphere_benchmark_base::get_pipeline_state(ID3D12Device *device,
         const shader_id_type shader_code) {
     assert(device != nullptr);
-    const auto id = this->get_technique_properties(shader_code);
+    //const auto id = this->get_technique_properties(shader_code);
 
-    auto it = this->_pipeline_cache.find(id);
+    auto it = this->_pipeline_cache.find(shader_code);
     auto is_create = (it == this->_pipeline_cache.end());
 
     if (!is_create) {
@@ -633,9 +635,9 @@ trrojan::d3d12::sphere_benchmark_base::get_pipeline_state(ID3D12Device *device,
 
     if (is_create) {
         log::instance().write_line(log_level::debug, "Building pipeline state "
-            "{0:x} for shader code 0x{1:x} ...", id, shader_code);
+            "for shader code 0x{:x} ...", shader_code);
         auto builder = this->get_pipeline_builder(shader_code);
-        auto retval = this->_pipeline_cache[id] = builder.build(device);
+        auto retval = this->_pipeline_cache[shader_code] = builder.build(device);
         set_debug_object_name(retval, "Pipeline state \"0x{:x}\"", shader_code);
         return retval;
 
@@ -652,9 +654,9 @@ ATL::CComPtr<ID3D12RootSignature>
 trrojan::d3d12::sphere_benchmark_base::get_root_signature(ID3D12Device *device,
         const shader_id_type shader_code) {
     assert(device != nullptr);
-    const auto id = this->get_technique_properties(shader_code);
+    //const auto id = this->get_technique_properties(shader_code);
 
-    auto it = this->_root_sig_cache.find(id);
+    auto it = this->_root_sig_cache.find(shader_code);
     auto is_create = (it == this->_root_sig_cache.end());
 
     if (!is_create) {
@@ -666,8 +668,9 @@ trrojan::d3d12::sphere_benchmark_base::get_root_signature(ID3D12Device *device,
 
     if (is_create) {
         auto builder = this->get_pipeline_builder(shader_code);
-        auto retval = this->_root_sig_cache[id] = graphics_pipeline_builder
-            ::root_signature_from_shader(device, builder);
+        auto retval = this->_root_sig_cache[shader_code]
+            = graphics_pipeline_builder::root_signature_from_shader(device,
+                builder);
         set_debug_object_name(retval, "Root signature \"0x{:x}\"", shader_code);
         return retval;
 
@@ -714,20 +717,8 @@ trrojan::d3d12::sphere_benchmark_base::get_sphere_constants(
 trrojan::d3d12::sphere_benchmark_base::shader_id_type
 trrojan::d3d12::sphere_benchmark_base::get_technique_properties(
         const shader_id_type shader_code) {
-    static const shader_id_type HAVE_INTENSITY
-        = (SPHERE_INPUT_PV_INTENSITY | SPHERE_INPUT_PP_INTENSITY);
     auto data_code = this->get_data_properties(shader_code);
-
-    if ((data_code & HAVE_INTENSITY) != 0) {
-        return (shader_code | data_code);
-
-    } else {
-        // If we have no intensity in the data, we need to erase the flags from
-        // the shader code. We add this information preventively, because we do
-        // not know about the data in get_shader_id. However, in order to look
-        // up the shaders, we must make sure that unused flags are not present.
-        return ((shader_code & ~HAVE_INTENSITY) | data_code);
-    }
+    return (shader_code | data_code);
 }
 
 
@@ -1084,8 +1075,9 @@ trrojan::d3d12::sphere_benchmark_base::set_descriptors(
     std::vector<D3D12_GPU_DESCRIPTOR_HANDLE> tables;
 
     // Create VS resource descriptors.
-    const auto pv_intensity = is_technique(id, SPHERE_INPUT_PV_INTENSITY);
-    const auto use_instancing = is_technique(id,
+    const auto pv_intensity = is_technique(shader_code,
+        SPHERE_INPUT_PV_INTENSITY);
+    const auto use_instancing = is_technique(shader_code,
         SPHERE_TECHNIQUE_USE_INSTANCING);
     if (pv_intensity || use_instancing) {
         tables.push_back(gpu_handle);
@@ -1110,7 +1102,7 @@ trrojan::d3d12::sphere_benchmark_base::set_descriptors(
     }
 
     // Create PS resource descriptors.
-    if (is_any_technique(id, SPHERE_INPUT_PP_INTENSITY)) {
+    if (is_any_technique(shader_code, SPHERE_INPUT_PP_INTENSITY)) {
         log::instance().write_line(log_level::debug, "Rendering technique uses "
             "per-pixel colouring. Setting transfer function as t0.");
         tables.push_back(gpu_handle);
@@ -1252,6 +1244,8 @@ void trrojan::d3d12::sphere_benchmark_base::set_vertex_buffer(
         desc.SizeInBytes = this->_data->GetDesc().Width;
         desc.StrideInBytes = this->_stride;
 
+        log::instance().write_line(log_level::debug, "Rendering technique uses "
+            "vertex buffer. Setting 0x{0:x} ...", desc.BufferLocation);
         cmd_list->IASetVertexBuffers(0, 1, &desc);
     }
 }
