@@ -36,7 +36,7 @@ SamplerState LinearSampler : register(s0);
 PsOutput Main(PsInput input/*, bool isFront : SV_IsFrontFace*/) {
     PsOutput retval = (PsOutput) 0;
 
-//#define BILLBOARD
+#define BILLBOARD
 #ifdef BILLBOARD
     //if (isFront) {
     //    retval.Colour = float4(1.0, 0.0, 0.0, 1.0);

@@ -385,6 +385,15 @@ namespace d3d12 {
         void save_target(const char *path = nullptr);
 
         /// <summary>
+        /// Gets the viewport of the active render target.
+        /// </summary>
+        /// <returns></returns>
+        inline const D3D12_VIEWPORT& viewport(void) const noexcept {
+            assert(this->_render_target != nullptr);
+            return this->_render_target->viewport();
+        }
+
+        /// <summary>
         /// Stores command allocators for bundles.
         /// </summary>
         command_allocator_list _bundle_allocators;

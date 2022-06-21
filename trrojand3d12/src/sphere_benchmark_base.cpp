@@ -776,6 +776,12 @@ void trrojan::d3d12::sphere_benchmark_base::get_view_constants(
     auto viewProjInv = DirectX::XMMatrixInverse(&viewProjDet, viewProj);
     DirectX::XMStoreFloat4x4(out_constants.ViewProjInvMatrix,
         DirectX::XMMatrixTranspose(viewProjInv));
+
+    const auto& viewport = this->viewport();
+    out_constants.Viewport.x = viewport.TopLeftX;
+    out_constants.Viewport.y = viewport.TopLeftY;
+    out_constants.Viewport.z = viewport.Width;
+    out_constants.Viewport.w = viewport.Height;
 }
 
 

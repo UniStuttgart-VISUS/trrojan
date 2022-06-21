@@ -652,7 +652,7 @@ ATL::CComPtr<ID3D12Resource> trrojan::d3d12::create_viridis_colour_map(
 #pragma warning(default: 4244)
 #pragma warning(default: 4838)
 
-    const auto size = 4 * sizeof(BYTE) * std::size(data);
+    const auto size = std::size(data);
     auto retval = create_upload_buffer(device, size);
     set_debug_object_name(retval.p, "viridis_colour_map_upload");
     stage_data(retval, data, size);
@@ -672,9 +672,6 @@ ATL::CComPtr<ID3D12Resource> trrojan::d3d12::create_viridis_colour_map(
     auto retval = create_texture(device.d3d_device(), size,
         DXGI_FORMAT_R8G8B8A8_UNORM);
     set_debug_object_name(retval.p, "viridis_colour_map");
-
-    auto xxx = retval->GetDesc();
-    auto yyy = upload->GetDesc();
 
     auto src_loc = get_copy_location(upload);
     // "reinterpret_cast" the source ...

@@ -202,6 +202,13 @@ namespace d3d12 {
         /// </summary>
         void use_reversed_depth_buffer(const bool isEnabled);
 
+        /// <summary>
+        /// Answer the viewport of the render target.
+        /// </summary>
+        inline const D3D12_VIEWPORT& viewport(void) const noexcept {
+            return this->_viewport;
+        }
+
         render_target_base& operator =(const render_target_base&) = delete;
 
     protected:
