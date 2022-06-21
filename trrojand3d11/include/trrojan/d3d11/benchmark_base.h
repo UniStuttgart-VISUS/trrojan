@@ -1,8 +1,8 @@
-/// <copyright file="benchmark_base.h" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Christoph Müller</author>
+// <copyright file="benchmark_base.h" company="Visualisierungsinstitut der Universität Stuttgart">
+// Copyright © 2016 - 2022 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Christoph Müller</author>
 
 #pragma once
 
@@ -19,6 +19,8 @@
 #include "trrojan/d3d11/device.h"
 #include "trrojan/d3d11/gpu_timer.h"
 #include "trrojan/d3d11/render_target.h"
+
+#include "power_overwhelming/collector.h"
 
 
 namespace trrojan {

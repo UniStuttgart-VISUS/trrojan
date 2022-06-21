@@ -81,6 +81,11 @@ if (${CMAKE_COMPILER_IS_GNUCXX})
     target_link_libraries(trrojancore dl)
 endif (${CMAKE_COMPILER_IS_GNUCXX})
 
+if (TRROJAN_WITH_POWER_OVERWHELMING)
+    target_link_libraries(trrojancore power_overwhelming)
+    add_custom_command(TARGET trrojancore POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy "${POWER_OVERWHELMING_DIR}/${CMAKE_VS_PLATFORM_NAME}/Release/power_overwhelming.dll" "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/$<CONFIG>")
+endif (TRROJAN_WITH_POWER_OVERWHELMING)
+
 if (TRROJAN_WITH_DSTORAGE)
     target_link_libraries(trrojancore dstorage)
     #install(FILES "${DSTORAGE_DIR}/bin/${CMAKE_VS_PLATFORM_NAME}/dstorage.dll" DESTINATION bin)
