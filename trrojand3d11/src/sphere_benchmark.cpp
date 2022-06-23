@@ -143,7 +143,9 @@ std::vector<std::string> trrojan::d3d11::sphere_benchmark::required_factors(
  * trrojan::d3d11::sphere_benchmark::on_run
  */
 trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
-    const configuration& config, const std::vector<std::string>& changed) {
+        const configuration& config,
+        power_collector::pointer& powerCollector,
+        const std::vector<std::string>& changed) {
     typedef rendering_technique::shader_stage shader_stage;
 
     std::array<float, 3> bboxSize;
@@ -295,7 +297,7 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
     gpuTimer.initialise(dev);
 
     // Prepare the result set.
-    auto retval = std::make_shared<basic_result>(std::move(config),
+    auto retval = std::make_shared<basic_result>(config,
         std::initializer_list<std::string> {
             "particles",
             "data_extents",
@@ -474,6 +476,10 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
 
     // Do prewarming and compute number of CPU iterations at the same time.
     log::instance().write_line(log_level::debug, "Prewarming ...");
+    if (powerCollector != nullptr) {
+        powerCollector->set_description(config, "prewarm");
+    }
+
     {
        auto batchTime = 0.0;
        auto cntPrewarms = (std::max)(1u,
@@ -515,6 +521,10 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
     }
 
     // Do the GPU counter measurements
+    if (powerCollector != nullptr) {
+        powerCollector->set_description(config, "counters");
+    }
+
     gpuTimes.resize(cntGpuIterations);
     for (std::uint32_t i = 0; i < cntGpuIterations;) {
         log::instance().write_line(log_level::debug, "GPU counter measurement "
@@ -546,6 +556,10 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
     // Obtain pipeline statistics
     log::instance().write_line(log_level::debug, "Collecting pipeline "
         "statistics ...");
+    if (powerCollector != nullptr) {
+        powerCollector->set_description(config, "stats");
+    }
+
     this->clear_target();
     ctx->Begin(this->stats_query);
     if (isInstanced) {
@@ -565,6 +579,10 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
     // Do the wall clock measurement.
     log::instance().write_line(log_level::debug, "Measuring wall clock "
         "timings over {} iterations ...", cntCpuIterations);
+    if (powerCollector != nullptr) {
+        powerCollector->set_description(config, "wall");
+    }
+
     cpuTimer.start();
     for (std::uint32_t i = 0; i < cntCpuIterations; ++i) {
         this->clear_target();
@@ -583,6 +601,10 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
     ctx->End(this->done_query);
     wait_for_event_query(ctx, this->done_query);
     auto cpuTime = cpuTimer.elapsed_millis();
+
+    if (powerCollector != nullptr) {
+        powerCollector->set_description(config, "transition");
+    }
 
     // Compute derived statistics for GPU counters.
     std::sort(gpuTimes.begin(), gpuTimes.end());

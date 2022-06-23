@@ -734,7 +734,7 @@ JsValueRef trrojan::scripting_host::on_trrojan_run(JsValueRef callee,
     auto b = scripting_host::get_ext_data<benchmark_base>(arguments[1]);
     auto c = scripting_host::get_ext_data<configuration_set>(arguments[2]);
 
-    that->executive->run(*b, *c, that->output, that->coolDown);
+    that->executive->run(*b, *c, that->output, that->coolDown, nullptr);
 
     return retval;
 }

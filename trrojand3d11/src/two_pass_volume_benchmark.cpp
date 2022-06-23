@@ -31,6 +31,7 @@ trrojan::d3d11::two_pass_volume_benchmark::two_pass_volume_benchmark(void)
  */
 trrojan::result trrojan::d3d11::two_pass_volume_benchmark::on_run(
         d3d11::device& device, const configuration& config,
+        power_collector::pointer& powerCollector,
         const std::vector<std::string>& changed) {
     volume_benchmark_base::on_run(device, config, changed);
 

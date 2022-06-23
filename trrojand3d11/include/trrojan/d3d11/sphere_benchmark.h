@@ -80,6 +80,7 @@ namespace d3d11 {
         /// <inheritdoc />
         virtual trrojan::result on_run(d3d11::device& device,
             const configuration& config,
+            power_collector::pointer& powerCollector,
             const std::vector<std::string>& changed);
 
     private:

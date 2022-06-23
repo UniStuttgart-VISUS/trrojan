@@ -7,14 +7,36 @@
 #if defined(TRROJAN_WITH_POWER_OVERWHELMING)
 #include "trrojan/power_collector.h"
 
+#include "power_overwhelming/csv_iomanip.h"
+
+#include "trrojan/configuration.h"
+#include "trrojan/csv_util.h"
 #include "trrojan/log.h"
 #include "trrojan/text.h"
 
 
 /*
+ * trrojan::power_collector::delimiter
+ */
+const char trrojan::power_collector::delimiter = ';';
+
+
+/*
+ * trrojan::power_collector::factor_name
+ */
+const char *trrojan::power_collector::factor_name = "powerlog";
+
+
+/*
  * trrojan::power_collector::power_collector
  */
-trrojan::power_collector::power_collector(void) : _is_running(false) { }
+trrojan::power_collector::power_collector(void)
+        : _description_changed(false), _is_running(false) {
+    this->setup_adl_sensors();
+    this->setup_hmc8015_sensors();
+    this->setup_nvml_sensors();
+    this->setup_tinkerforge_sensors();
+}
 
 
 /*
@@ -26,9 +48,54 @@ trrojan::power_collector::~power_collector(void) {
 
 
 /*
+ * trrojan::power_collector::set_description
+ */
+void trrojan::power_collector::set_description(std::string&& description) {
+    std::lock_guard<decltype(this->_lock)> l(this->_lock);
+    this->_description[0] = std::move(description);
+    this->_description_changed = true;
+}
+
+
+/*
+ * trrojan::power_collector::set_description
+ */
+void trrojan::power_collector::set_description(const configuration& config,
+        const std::string& phase) {
+    std::stringstream ss;
+
+    for (auto& f : config) {
+        print_csv_value(ss, f, true) << delimiter;
+    }
+
+    ss << "\"" << phase << "\"";
+
+    this->set_description(ss.str());
+}
+
+
+/*
+ * trrojan::power_collector::set_header
+ */
+void trrojan::power_collector::set_header(const configuration& config,
+        const std::string& phase) {
+    std::stringstream ss;
+
+    for (auto& f : config) {
+        print_csv_header(ss, f, true) << delimiter;
+    }
+
+    ss << "\"" << phase << "\"";
+
+    this->_header = ss.str();
+}
+
+
+/*
  * trrojan::power_collector::start
  */
-void trrojan::power_collector::start(const interval_type sampling_interval) {
+void trrojan::power_collector::start(const std::string& file,
+        const interval_type sampling_interval) {
     using namespace visus::power_overwhelming;
     const auto si = std::chrono::duration_cast<std::chrono::microseconds>(
         sampling_interval).count();
@@ -39,25 +106,49 @@ void trrojan::power_collector::start(const interval_type sampling_interval) {
             "already running and cannot be restarted.");
     }
 
+    // Prepare the output file.
+    this->_file = file;
+    this->_stream = std::ofstream(this->_file, std::ios::trunc);
+    if (!this->_stream.is_open()) {
+        throw std::invalid_argument("Failed to open output stream.");
+    }
+
+    this->_stream << visus::power_overwhelming::setcsvdelimiter(delimiter);
+    this->_stream << visus::power_overwhelming::csvquote;
+
+
     // Start the ADL sensor, but do not register it in the PO sampler, because
     // we need to sample NVIDIA manually anyway and can share the thread.
     for (auto& s : this->_adl_sensors) {
         s.start(si);
+        log::instance().write_line(log_level::information, "Power sensor "
+            "\"{0}\" started.", convert_string<char>(s.name()));
     }
 
     // HMC sensors log to USB and must just be started.
     for (auto& s : this->_hmc8015_sensors) {
         start_hmc8015_sensor(s);
+        log::instance().write_line(log_level::information, "Power sensor "
+            "\"{0}\" started.", convert_string<char>(s.name()));
     }
 
     // NVIDIA does not need to be started, because we sample it manually.
+    for (auto& s : this->_nvml_sensors) {
+        log::instance().write_line(log_level::information, "Power sensor "
+            "\"{0}\" started.", convert_string<char>(s.name()));
+    }
 
     // Tinkerforge is the only one that is really asynchronous, so we need to
     // register a callback here.
     for (auto& s : this->_tinkerforge_sensors) {
         s.sample(on_measurement, tinkerforge_sensor_source::power, si, this);
+        log::instance().write_line(log_level::information, "Power sensor "
+            "\"{0}\" started.", convert_string<char>(s.name()));
     }
 
+    log::instance().write_line(log_level::information, "Logging power usage to "
+        "\"{0}\" at an {1} ms interval.", this->_file,
+        sampling_interval.count());
     this->_sampler = std::thread(&power_collector::sample, this,
         sampling_interval);
 }
@@ -89,6 +180,8 @@ void trrojan::power_collector::stop(void) {
     for (auto& s : this->_hmc8015_sensors) {
         try {
             s.log(false);
+            s.display("Do not forget to retrieve your measurements from the "
+                "USB port!");
         } catch (std::exception& ex) {
             log::instance().write_line(ex);
         }
@@ -107,6 +200,10 @@ void trrojan::power_collector::stop(void) {
     if (this->_sampler.joinable()) {
         this->_sampler.join();
     }
+
+    // Log all remaining data.
+    this->flush_buffer();
+    this->_stream.close();
 }
 
 
@@ -117,6 +214,8 @@ void trrojan::power_collector::on_measurement(
         const visus::power_overwhelming::measurement& m,
         void *context) {
     auto that = static_cast<power_collector *>(context);
+    std::lock_guard<decltype(that->_lock)> l(that->_lock);
+    that->_buffer.push_back(m);
 }
 
 
@@ -138,18 +237,67 @@ void trrojan::power_collector::start_hmc8015_sensor(
 
 
 /*
+ * trrojan::power_collector::flush_buffer
+ */
+void trrojan::power_collector::flush_buffer(void) {
+    // We assume that the caller already holds the lock.
+    for (auto &m : this->_buffer) {
+        this->_stream
+            << m << delimiter
+            << this->_description[1]
+            << std::endl;
+    }
+
+    this->_buffer.clear();
+    this->_stream.flush();
+}
+
+
+/*
  * trrojan::power_collector::sample
  */
 void trrojan::power_collector::sample(const interval_type sampling_interval) {
     static constexpr auto timestamp_resolution
         = visus::power_overwhelming::timestamp_resolution::milliseconds;
+    while (this->_is_running.load()) {
+        auto now = std::chrono::high_resolution_clock::now();
 
-    for (auto& s : this->_adl_sensors) {
-        s.sample(timestamp_resolution);
-    }
+        {
+            std::lock_guard<decltype(this->_lock)> l(this->_lock);
 
-    for (auto& s : this->_nvml_sensors) {
-        s.sample(timestamp_resolution);
+            // Sample ADL: The sensor asynchronously provisions the samples in a
+            // buffer, but we still need to copy them.
+            for (auto& s : this->_adl_sensors) {
+                this->_buffer.push_back(s.sample(timestamp_resolution));
+            }
+
+            // Sample NVML: NVIDIA is synchronous, so we need to get the stuff
+            // manually.
+            for (auto& s : this->_nvml_sensors) {
+                this->_buffer.push_back(s.sample(timestamp_resolution));
+            }
+
+            // If the description changed, commit all the measurements with the
+            // active description.
+            if (this->_description_changed && !this->_buffer.empty()) {
+                if (this->_stream.tellp() == 0) {
+                    // If this is the first line, print the CSV header.
+                    this->_stream << visus::power_overwhelming::csvheader
+                        << this->_buffer.front() << delimiter
+                        << this->_header
+                        << std::endl
+                        << visus::power_overwhelming::csvdata;
+                }
+
+                this->flush_buffer();
+
+                this->_description[1] = this->_description[0];
+                this->_description_changed = false;
+            }
+        }
+        // Note: we must not hold '_lock' while sleeping!
+
+        std::this_thread::sleep_until(now + sampling_interval);
     }
 }
 
@@ -226,8 +374,7 @@ void trrojan::power_collector::setup_nvml_sensors(void) {
  * trrojan::power_collector::setup_tinkerforge_sensors
  */
 void trrojan::power_collector::setup_tinkerforge_sensors(void) {
-    using visus::power_overwhelming::tinkerforge_sensor;
-    using visus::power_overwhelming::tinkerforge_sensor_definiton;
+    using namespace visus::power_overwhelming;
 
     try {
         std::vector<tinkerforge_sensor_definiton> descs;
@@ -244,6 +391,10 @@ void trrojan::power_collector::setup_tinkerforge_sensors(void) {
         this->_tinkerforge_sensors.reserve(cnt);
         for (auto& d : descs) {
             this->_tinkerforge_sensors.emplace_back(d);
+            this->_tinkerforge_sensors.back().configure(
+                sample_averaging::average_of_4,
+                conversion_time::microseconds_588,
+                conversion_time::microseconds_588);
         }
 
     } catch (std::exception& ex) {

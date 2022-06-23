@@ -80,6 +80,7 @@ namespace d3d11 {
         /// <returns>The test results.</returns>
         virtual trrojan::result on_run(d3d11::device& device,
             const configuration& config,
+            power_collector::pointer& powerCollector,
             const std::vector<std::string>& changed) = 0;
 
         inline void present_target(void) {
