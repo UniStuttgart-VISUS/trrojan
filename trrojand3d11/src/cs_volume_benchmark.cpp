@@ -276,6 +276,11 @@ trrojan::result trrojan::d3d11::cs_volume_benchmark::on_run(
     // Do the wall clock measurement.
     log::instance().write_line(log_level::debug, "Measuring wall clock "
         "timings over {} iterations ...", cntCpuIterations);
+    if (powerCollector != nullptr) {
+        // If we have a power sensor, we want to record data now.
+        powerCollector->set_description(config, "wall");
+    }
+
     cpuTimer.start();
     for (std::uint32_t i = 0; i < cntCpuIterations; ++i) {
         ctx->Dispatch(groupX, groupY, 1u);
