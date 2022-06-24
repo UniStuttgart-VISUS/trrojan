@@ -233,13 +233,32 @@ void trrojan::power_collector::on_measurement(
  */
 void trrojan::power_collector::start_hmc8015_sensor(
         visus::power_overwhelming::hmc8015_sensor& sensor) {
-    std::string file_name = "trrojan";
-    file_name += to_string<char>(std::chrono::system_clock::now(), true);
-    file_name += ".csv";
-    log::instance().write_line(log_level::verbose, "HMC8015 is logging to "
-        "\"{0}\".", file_name);
+    // Unfortunately, the HMC8015 only supports 8.3 file names, so we try
+    // to build a unique one ...
+    std::string file_name;
+    {
+        std::stringstream file_name_builder;
+
+        auto timestamp = std::chrono::high_resolution_clock::now()
+            .time_since_epoch().count();
+        timestamp = timestamp & UINT_MAX ^ (timestamp >> 32);
+        file_name_builder << std::hex
+            << static_cast<std::uint32_t>(timestamp)
+            << ".csv";
+        file_name = file_name_builder.str();
+    }
 
     sensor.log_file(file_name.c_str(), false, true);
+
+    {
+        std::vector<char> actual_name;
+        actual_name.resize(sensor.log_file(nullptr, actual_name.size()));
+        sensor.log_file(actual_name.data(), actual_name.size());
+
+        log::instance().write_line(log_level::verbose, "HMC8015 is logging to "
+            "\"{0}\" (\"{1}\").", file_name, actual_name.data());
+    }
+
     sensor.log(true);
     assert(sensor.is_log());
 }
