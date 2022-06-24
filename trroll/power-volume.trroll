@@ -1,0 +1,14 @@
+d3d11::cs-volume-renderer {
+	string data_set = S:\Daten\Volumen\kauker\tiere\malachite-kingfisher.u8.dat
+	string xfer_func = T:\Programmcode\trrojan\trroll\trrojan_cham1.brudervn
+	boolean debug_view = true
+
+	float32 step_size = 2; 1; 0.5
+
+	uint32 min_wall_time = 100
+	uint32 iterations = 10 
+
+	string manoeuvre = path_z; orbit_y; random
+	uint32 manoeuvre_steps = 100
+	uint32 manoeuvre_step = 0; 9; 19; 29; 39; 49; 59; 69; 79; 89; 99
+}

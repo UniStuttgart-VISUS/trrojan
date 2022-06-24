@@ -336,7 +336,7 @@ void trrojan::power_collector::setup_hmc8015_sensors(void) {
             this->_hmc8015_sensors.size());
 
         for (auto& s : this->_hmc8015_sensors) {
-            s.display("They way you're meant to be trrolled!");
+            s.display("TRRojan. The way you're meant to be trrolled!");
             s.synchronise_clock();
             s.log_file("trrojan.csv", true, true);
 
