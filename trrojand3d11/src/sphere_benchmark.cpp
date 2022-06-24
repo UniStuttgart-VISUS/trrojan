@@ -476,10 +476,6 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
 
     // Do prewarming and compute number of CPU iterations at the same time.
     log::instance().write_line(log_level::debug, "Prewarming ...");
-    if (powerCollector != nullptr) {
-        powerCollector->set_description(config, "prewarm");
-    }
-
     {
        auto batchTime = 0.0;
        auto cntPrewarms = (std::max)(1u,
@@ -521,10 +517,6 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
     }
 
     // Do the GPU counter measurements
-    if (powerCollector != nullptr) {
-        powerCollector->set_description(config, "counters");
-    }
-
     gpuTimes.resize(cntGpuIterations);
     for (std::uint32_t i = 0; i < cntGpuIterations;) {
         log::instance().write_line(log_level::debug, "GPU counter measurement "
@@ -556,10 +548,6 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
     // Obtain pipeline statistics
     log::instance().write_line(log_level::debug, "Collecting pipeline "
         "statistics ...");
-    if (powerCollector != nullptr) {
-        powerCollector->set_description(config, "stats");
-    }
-
     this->clear_target();
     ctx->Begin(this->stats_query);
     if (isInstanced) {
@@ -580,6 +568,7 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
     log::instance().write_line(log_level::debug, "Measuring wall clock "
         "timings over {} iterations ...", cntCpuIterations);
     if (powerCollector != nullptr) {
+        // If we have a power sensor, we want to record data now.
         powerCollector->set_description(config, "wall");
     }
 
@@ -603,7 +592,9 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
     auto cpuTime = cpuTimer.elapsed_millis();
 
     if (powerCollector != nullptr) {
-        powerCollector->set_description(config, "transition");
+        // Commit power samples and prevent collection until next wall-clock
+        // measurement cycle.
+        powerCollector->set_description("");
     }
 
     // Compute derived statistics for GPU counters.

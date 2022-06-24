@@ -31,7 +31,7 @@ const char *trrojan::power_collector::factor_name = "powerlog";
  * trrojan::power_collector::power_collector
  */
 trrojan::power_collector::power_collector(void)
-        : _description_changed(false), _is_running(false) {
+        : _is_collecting(false), _is_running(false) {
     this->setup_adl_sensors();
     this->setup_hmc8015_sensors();
     this->setup_nvml_sensors();
@@ -51,9 +51,16 @@ trrojan::power_collector::~power_collector(void) {
  * trrojan::power_collector::set_description
  */
 void trrojan::power_collector::set_description(std::string&& description) {
+    // Start/stop/continue logging based on whether we have a valid description.
+    this->_is_collecting.store(!description.empty(),
+        std::memory_order::memory_order_release);
+
     std::lock_guard<decltype(this->_lock)> l(this->_lock);
-    this->_description[0] = std::move(description);
-    this->_description_changed = true;
+    // Once the data are locked, flush all data with the old description.
+    this->flush_buffer();
+
+    // Store the new description for the next call.
+    this->_description = std::move(description);
 }
 
 
@@ -64,7 +71,7 @@ void trrojan::power_collector::set_description(const configuration& config,
         const std::string& phase) {
     std::stringstream ss;
 
-    for (auto& f : config) {
+    for (auto &f : config) {
         print_csv_value(ss, f, true) << delimiter;
     }
 
@@ -214,8 +221,10 @@ void trrojan::power_collector::on_measurement(
         const visus::power_overwhelming::measurement& m,
         void *context) {
     auto that = static_cast<power_collector *>(context);
-    std::lock_guard<decltype(that->_lock)> l(that->_lock);
-    that->_buffer.push_back(m);
+    if (that->_is_collecting.load(std::memory_order::memory_order_acquire)) {
+        std::lock_guard<decltype(that->_lock)> l(that->_lock);
+        that->_buffer.push_back(m);
+    }
 }
 
 
@@ -241,10 +250,19 @@ void trrojan::power_collector::start_hmc8015_sensor(
  */
 void trrojan::power_collector::flush_buffer(void) {
     // We assume that the caller already holds the lock.
-    for (auto &m : this->_buffer) {
+    if ((this->_stream.tellp() == 0) && !this->_buffer.empty()) {
+        // If this is the first line, print the CSV header.
+        this->_stream << visus::power_overwhelming::csvheader
+            << this->_buffer.front() << delimiter
+            << this->_header
+            << std::endl
+            << visus::power_overwhelming::csvdata;
+    }
+
+    for (auto& m : this->_buffer) {
         this->_stream
             << m << delimiter
-            << this->_description[1]
+            << this->_description
             << std::endl;
     }
 
@@ -262,37 +280,23 @@ void trrojan::power_collector::sample(const interval_type sampling_interval) {
     while (this->_is_running.load()) {
         auto now = std::chrono::high_resolution_clock::now();
 
-        {
+        if (this->_is_collecting.load(std::memory_order::memory_order_acquire)) {
+            // We sample the sensors only if we have a valid description such
+            // that we know the situation for which we sample.
             std::lock_guard<decltype(this->_lock)> l(this->_lock);
 
-            // Sample ADL: The sensor asynchronously provisions the samples in a
-            // buffer, but we still need to copy them.
-            for (auto& s : this->_adl_sensors) {
-                this->_buffer.push_back(s.sample(timestamp_resolution));
-            }
-
-            // Sample NVML: NVIDIA is synchronous, so we need to get the stuff
-            // manually.
-            for (auto& s : this->_nvml_sensors) {
-                this->_buffer.push_back(s.sample(timestamp_resolution));
-            }
-
-            // If the description changed, commit all the measurements with the
-            // active description.
-            if (this->_description_changed && !this->_buffer.empty()) {
-                if (this->_stream.tellp() == 0) {
-                    // If this is the first line, print the CSV header.
-                    this->_stream << visus::power_overwhelming::csvheader
-                        << this->_buffer.front() << delimiter
-                        << this->_header
-                        << std::endl
-                        << visus::power_overwhelming::csvdata;
+             {
+                // Sample ADL: The sensor asynchronously provisions the samples in a
+                // buffer, but we still need to copy them.
+                for (auto &s : this->_adl_sensors) {
+                    this->_buffer.push_back(s.sample(timestamp_resolution));
                 }
 
-                this->flush_buffer();
-
-                this->_description[1] = this->_description[0];
-                this->_description_changed = false;
+                // Sample NVML: NVIDIA is synchronous, so we need to get the stuff
+                // manually.
+                for (auto &s : this->_nvml_sensors) {
+                    this->_buffer.push_back(s.sample(timestamp_resolution));
+                }
             }
         }
         // Note: we must not hold '_lock' while sleeping!

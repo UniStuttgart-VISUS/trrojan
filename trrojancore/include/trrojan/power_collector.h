@@ -74,6 +74,13 @@ namespace trrojan {
         /// <summary>
         /// Updates the description of what is currently measured.
         /// </summary>
+        /// <remarks>
+        /// <para>Setting a new description flushes all data that have been
+        /// collected for the previous description to disk.</para>
+        /// <para>Setting an empty descriptions will disable the collection
+        /// of data until a new non-empty string is set. The sensors will
+        /// still run, but all samples will be discarded.</para>
+        /// </remarks>
         /// <param name="description"></param>
         void set_description(std::string&& description);
 
@@ -81,6 +88,10 @@ namespace trrojan {
         /// Updates the description of what is currently measured to the
         /// given configuration.
         /// </summary>
+        /// <remarks>
+        /// <para>Setting a new description flushes all data that have been
+        /// collected for the previous description to disk.</para>
+        /// </remarks>
         /// <param name="config"></param>
         /// <param name="phase"></param>
         void set_description(const configuration& config,
@@ -128,11 +139,11 @@ namespace trrojan {
 
         std::vector<visus::power_overwhelming::adl_sensor> _adl_sensors;
         std::vector<visus::power_overwhelming::measurement> _buffer;
-        std::array<std::string, 2> _description;
-        bool _description_changed;
+        std::string _description;
         std::string _file;
         std::string _header;
         std::vector<visus::power_overwhelming::hmc8015_sensor> _hmc8015_sensors;
+        std::atomic<bool> _is_collecting;
         std::atomic<bool> _is_running;
         std::mutex _lock;
         std::vector<visus::power_overwhelming::nvml_sensor> _nvml_sensors;

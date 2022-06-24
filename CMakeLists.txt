@@ -100,7 +100,7 @@ if (TRROJAN_WITH_POWER_OVERWHELMING)
     add_definitions(-DTRROJAN_WITH_POWER_OVERWHELMING)
     set(POWER_OVERWHELMING_DIR "${CMAKE_CURRENT_SOURCE_DIR}/power-overwhelming")
     include_directories("${POWER_OVERWHELMING_DIR}/power_overwhelming/include")
-    link_directories("${POWER_OVERWHELMING_DIR}/${CMAKE_VS_PLATFORM_NAME}")
+    link_directories("${POWER_OVERWHELMING_DIR}/${CMAKE_VS_PLATFORM_NAME}/Release")
 endif (TRROJAN_WITH_POWER_OVERWHELMING)
 
 
