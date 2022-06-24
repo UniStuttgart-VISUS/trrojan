@@ -406,3 +406,16 @@ trrojan::result trrojan::d3d11::volume_benchmark_base::on_run(
 
     return trrojan::result();
 }
+
+
+/*
+ * trrojan::d3d11::volume_benchmark_base::optimise_order
+ */
+void trrojan::d3d11::volume_benchmark_base::optimise_order(
+        configuration_set& inOutConfs) {
+    inOutConfs.optimise_order({
+        factor_data_set,
+        factor_xfer_func,
+        factor_device
+    });
+}
