@@ -93,7 +93,7 @@ void trrojan::d3d11::render_target_base::save(const std::string& path) {
 
         try {
             trrojan::wic_save(trrojan::get_wic_factory(), map.pData, desc.Width,
-                desc.Height, map.RowPitch, GUID_WICPixelFormat32bppBGRA, path,
+                desc.Height, map.RowPitch, GUID_WICPixelFormat32bppRGBA, path,
                 GUID_NULL);
             this->_device_context->Unmap(this->_staging_texture, 0);
         } catch (...) {
