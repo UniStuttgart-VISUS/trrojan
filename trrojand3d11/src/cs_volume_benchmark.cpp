@@ -50,6 +50,7 @@ trrojan::result trrojan::d3d11::cs_volume_benchmark::on_run(
     std::vector<gpu_timer_type::millis_type> gpuTimes;
     auto isDisjoint = true;
     const auto minWallTime = config.get<std::uint32_t>(factor_min_wall_time);
+    std::string powerUid;
     RaycastingConstants raycastingConstants;
     ViewConstants viewConstants;
     const auto viewport = config.get<viewport_type>(factor_viewport);
@@ -202,6 +203,8 @@ trrojan::result trrojan::d3d11::cs_volume_benchmark::on_run(
     // Prepare the result set.
     auto retval = std::make_shared<basic_result>(std::move(config),
         std::initializer_list<std::string> {
+            "benchmark",
+            "power_uid",
             "data_extents",
             "gpu_time_min",
             "gpu_time_med",
@@ -235,7 +238,7 @@ trrojan::result trrojan::d3d11::cs_volume_benchmark::on_run(
             cpuTimer.start();
             for (; cntCpuIterations < cntPrewarms; ++cntCpuIterations) {
                 ctx->Dispatch(groupX, groupY, 1u);
-                this->present_target();
+                this->present_target(config);
             }
 
             ctx->End(this->done_query);
@@ -261,7 +264,7 @@ trrojan::result trrojan::d3d11::cs_volume_benchmark::on_run(
         gpuTimer.start_frame();
         gpuTimer.start(0);
         ctx->Dispatch(groupX, groupY, 1u);
-        this->present_target();
+        this->present_target(0);
         gpuTimer.end(0);
         gpuTimer.end_frame();
 
@@ -278,13 +281,13 @@ trrojan::result trrojan::d3d11::cs_volume_benchmark::on_run(
         "timings over {} iterations ...", cntCpuIterations);
     if (powerCollector != nullptr) {
         // If we have a power sensor, we want to record data now.
-        powerCollector->set_description(config, "wall");
+        powerUid = powerCollector->set_next_unique_description();
     }
 
     cpuTimer.start();
     for (std::uint32_t i = 0; i < cntCpuIterations; ++i) {
         ctx->Dispatch(groupX, groupY, 1u);
-        this->present_target();
+        this->present_target(config);
     }
     ctx->End(this->done_query);
     wait_for_event_query(ctx, this->done_query);
@@ -300,6 +303,8 @@ trrojan::result trrojan::d3d11::cs_volume_benchmark::on_run(
 
     // Output the results.
     retval->add({
+        this->name(),
+        powerUid,
         volSize,
         gpuTimes.front(),
         gpuMedian,

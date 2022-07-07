@@ -26,6 +26,7 @@ const std::string trrojan::d3d11::benchmark_base::factor_##f(#f)
 
 _D3D_BENCH_DEFINE_FACTOR(debug_view);
 _D3D_BENCH_DEFINE_FACTOR(save_view);
+_D3D_BENCH_DEFINE_FACTOR(sync_interval);
 
 #undef _D3D_BENCH_DEFINE_FACTOR
 
@@ -62,7 +63,7 @@ trrojan::result trrojan::d3d11::benchmark_base::run(const configuration& c) {
             powerCollector = it->value().as<power_collector::pointer>();
         }
         if (powerCollector != nullptr) {
-            powerCollector->set_header(c);
+            powerCollector->set_header();
         }
     }
 

@@ -124,6 +124,8 @@ trrojan::output_base& trrojan::csv_output::operator <<(
         this->file << nl;
     }
 
+    this->file.flush();
+
     return *this;
 }
 

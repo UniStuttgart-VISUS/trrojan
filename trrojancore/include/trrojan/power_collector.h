@@ -72,6 +72,12 @@ namespace trrojan {
         }
 
         /// <summary>
+        /// Create and return the next unique benchmark identifier.
+        /// </summary>
+        /// <returns>The next identifier.</returns>
+        std::string next_unique_identifier(void);
+
+        /// <summary>
         /// Updates the description of what is currently measured.
         /// </summary>
         /// <remarks>
@@ -82,7 +88,7 @@ namespace trrojan {
         /// still run, but all samples will be discarded.</para>
         /// </remarks>
         /// <param name="description"></param>
-        void set_description(std::string&& description);
+        void set_description(const std::string& description);
 
         /// <summary>
         /// Updates the description of what is currently measured to the
@@ -100,10 +106,30 @@ namespace trrojan {
         /// <summary>
         /// Sets the header text to be written in the first line of the file.
         /// </summary>
-        /// <param name="config"></param>
-        /// <param name="phase"></param>
+        /// <param name="config">The configuration to be included in each line-
+        /// </param>
+        /// <param name="phase">The name of the phase column, which defaults to
+        /// &quot;phase&quot;.</param>
         void set_header(const configuration& config,
             const std::string &phase = "phase");
+
+        /// <summary>
+        /// Sets the header text to be written in the first line of the file.
+        /// </summary>
+        /// <param name="uid">The name of the column of the unique power ID,
+        /// which defaults to &quot;power_uid&quot;.</param>
+        void set_header(const std::string& uid = "power_uid");
+
+        /// <summary>
+        /// Generate a new unique identifier and set it as the description for
+        /// the current measurement.
+        /// </summary>
+        /// <returns></returns>
+        inline std::string set_next_unique_description(void) {
+            auto retval = this->next_unique_identifier();
+            this->set_description(retval);
+            return retval;
+        }
 
         /// <summary>
         /// Start all sensors with the specified sampling interval.
@@ -150,6 +176,7 @@ namespace trrojan {
         std::thread _sampler;
         std::ofstream _stream;
         std::vector<visus::power_overwhelming::tinkerforge_sensor> _tinkerforge_sensors;
+        std::atomic<std::uint64_t> _unique_identifier;
 
     };
 

@@ -44,7 +44,7 @@ trrojan::d3d11::debug_render_target::~debug_render_target(void) {
 /*
  * trrojan::d3d11::debug_render_target::present
  */
-void trrojan::d3d11::debug_render_target::present(void) {
+void trrojan::d3d11::debug_render_target::present(const UINT sync_interval) {
     if (this->_uav != nullptr) {
         assert(this->swapChain != nullptr);
         ATL::CComPtr<ID3D11Texture2D> dst;
@@ -82,7 +82,7 @@ void trrojan::d3d11::debug_render_target::present(void) {
 #endif /* defined(CREATE_D2D_OVERLAY) */
 
     if (this->swapChain != nullptr) {
-        this->swapChain->Present(0, 0);
+        this->swapChain->Present(sync_interval, 0);
         // Present might clear OM target depending on settings, so re-enable
         // immediately.
         this->enable();

@@ -31,7 +31,7 @@ const char *trrojan::power_collector::factor_name = "powerlog";
  * trrojan::power_collector::power_collector
  */
 trrojan::power_collector::power_collector(void)
-        : _is_collecting(false), _is_running(false) {
+        : _is_collecting(false), _is_running(false), _unique_identifier(0) {
     this->setup_adl_sensors();
     this->setup_hmc8015_sensors();
     this->setup_nvml_sensors();
@@ -48,19 +48,28 @@ trrojan::power_collector::~power_collector(void) {
 
 
 /*
+ * trrojan::power_collector::next_unique_identifier
+ */
+std::string trrojan::power_collector::next_unique_identifier(void) {
+    return std::to_string(++this->_unique_identifier);
+}
+
+
+/*
  * trrojan::power_collector::set_description
  */
-void trrojan::power_collector::set_description(std::string&& description) {
+void trrojan::power_collector::set_description(const std::string& description) {
+    std::lock_guard<decltype(this->_lock)> l(this->_lock);
+
     // Start/stop/continue logging based on whether we have a valid description.
     this->_is_collecting.store(!description.empty(),
         std::memory_order::memory_order_release);
 
-    std::lock_guard<decltype(this->_lock)> l(this->_lock);
-    // Once the data are locked, flush all data with the old description.
+    // Flush all data with the old description.
     this->flush_buffer();
 
     // Store the new description for the next call.
-    this->_description = std::move(description);
+    this->_description = description;
 }
 
 
@@ -95,6 +104,14 @@ void trrojan::power_collector::set_header(const configuration& config,
     ss << "\"" << phase << "\"";
 
     this->_header = ss.str();
+}
+
+
+/*
+ * trrojan::power_collector::set_header
+ */
+void trrojan::power_collector::set_header(const std::string& uid) {
+    this->_header = std::string("\"") + uid + '"';
 }
 
 
@@ -147,6 +164,9 @@ void trrojan::power_collector::start(const std::string& file,
 
     // Tinkerforge is the only one that is really asynchronous, so we need to
     // register a callback here.
+    for (auto& s : this->_tinkerforge_sensors) {
+        s.reset();
+    }
     for (auto& s : this->_tinkerforge_sensors) {
         s.sample(on_measurement, tinkerforge_sensor_source::power, si, this);
         log::instance().write_line(log_level::information, "Power sensor "

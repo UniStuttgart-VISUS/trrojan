@@ -53,6 +53,11 @@ namespace d3d11 {
         /// </summary>
         static const std::string factor_save_view;
 
+        /// <summary>
+        /// Integral factor to disable vsync or synchronise on the Nth vblank.
+        /// </summary>
+        static const std::string factor_sync_interval;
+
         virtual ~benchmark_base(void);
 
         virtual bool can_run(trrojan::environment env,
@@ -83,9 +88,23 @@ namespace d3d11 {
             power_collector::pointer& powerCollector,
             const std::vector<std::string>& changed) = 0;
 
-        inline void present_target(void) {
+        /// <summary>
+        /// Present the target on the given synchronisation interval.
+        /// </summary>
+        /// <param name="sync_interval"></param>
+        inline void present_target(const UINT sync_interval) {
             assert(this->render_target != nullptr);
-            this->render_target->present();
+            this->render_target->present(sync_interval);
+        }
+
+        /// <summary>
+        /// Present the target on the synchronisation interval specified in the
+        /// given configuration.
+        /// </summary>
+        /// <param name="config"></param>
+        inline void present_target(const configuration& config) {
+            this->present_target(config.get<unsigned int>(
+                factor_sync_interval));
         }
 
         void save_target(const char *path = nullptr);
