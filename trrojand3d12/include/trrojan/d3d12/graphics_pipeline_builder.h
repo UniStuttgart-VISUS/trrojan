@@ -8,8 +8,7 @@
 
 #include "trrojan/io.h"
 
-#include "trrojan/d3d12/plugin.h"
-#include "trrojan/d3d12/utilities.h"
+#include "trrojan/d3d12/graphics_pipeline_build.h"
 
 
 namespace trrojan {
@@ -57,27 +56,18 @@ namespace d3d12 {
         /// </summary>
         /// <param name="device"></param>
         /// <returns></returns>
-        ATL::CComPtr<ID3D12PipelineState> build(ID3D12Device *device);
+        inline ATL::CComPtr<ID3D12PipelineState> build(ID3D12Device2 *device) {
+            assert(this->_build != nullptr);
+            return this->_build->build(device);
+        }
 
         /// <summary>
-        /// Applies the default depth/stencil state as described on
-        /// https://docs.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_depth_stencil_desc.
+        /// Build a <see cref="ID3D12PipelineState" /> from the current state of
+        /// the descriptor.
         /// </summary>
-        /// <param name=""></param>
+        /// <param name="device"></param>
         /// <returns></returns>
-        graphics_pipeline_builder& reset_depth_stencil_state(void);
-
-        /// <summary>
-        /// Applies the default rasteriser state as described on
-        /// https://docs.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_rasterizer_desc.
-        /// </summary>
-        /// <param name=""></param>
-        graphics_pipeline_builder& reset_rasteriser_state(void);
-
-        /// <summary>
-        /// Erases all shaders.
-        /// </summary>
-        graphics_pipeline_builder& reset_shaders(void);
+        ATL::CComPtr<ID3D12PipelineState> build(ID3D12Device *device);
 
         /// <summary>
         /// Apply the specified depth stencil state.
@@ -86,12 +76,13 @@ namespace d3d12 {
         /// <returns></returns>
         inline graphics_pipeline_builder& set_depth_stencil_state(
                 const D3D12_DEPTH_STENCIL_DESC& desc) {
-            this->_desc.DepthStencilState = desc;
+            this->_build->depth_stencil_desc(this->_build) = desc;
+            return *this;
         }
 
-        inline graphics_pipeline_builder& set_depth_stencil_target(
+        inline graphics_pipeline_builder& set_depth_stencil_format(
                 const DXGI_FORMAT format) {
-            this->_desc.DSVFormat = format;
+            this->_build->depth_stencil_format(this->_build) = format;
             return *this;
         }
 
@@ -111,7 +102,8 @@ namespace d3d12 {
         inline graphics_pipeline_builder& set_domain_shader(
                 std::vector<std::uint8_t>&& byte_code) {
             this->_ds = std::move(byte_code);
-            set_shader(this->_desc.DS, this->_ds.data(), this->_ds.size());
+            set_shader(this->_build->domain_shader(this->_build),
+                this->_ds.data(), this->_ds.size());
             return *this;
         }
 
@@ -144,7 +136,8 @@ namespace d3d12 {
         inline graphics_pipeline_builder& set_geometry_shader(
                 std::vector<std::uint8_t>&& byte_code) {
             this->_gs = std::move(byte_code);
-            set_shader(this->_desc.GS, this->_gs.data(), this->_gs.size());
+            set_shader(this->_build->geometry_shader(this->_build),
+                this->_gs.data(), this->_gs.size());
             return *this;
         }
 
@@ -181,7 +174,8 @@ namespace d3d12 {
         inline graphics_pipeline_builder& set_hull_shader(
                 std::vector<std::uint8_t>&& byte_code) {
             this->_hs = std::move(byte_code);
-            set_shader(this->_desc.HS, this->_hs.data(), this->_hs.size());
+            set_shader(this->_build->hull_shader(this->_build),
+                this->_hs.data(), this->_hs.size());
             return *this;
         }
 
@@ -218,9 +212,9 @@ namespace d3d12 {
         inline graphics_pipeline_builder& set_input_layout(
                 std::vector<D3D12_INPUT_ELEMENT_DESC>&& elements) {
             this->_il = std::move(elements);
-            this->_desc.InputLayout.pInputElementDescs = this->_il.data();
-            this->_desc.InputLayout.NumElements = static_cast<UINT>(
-                this->_il.size());
+            auto& desc = this->_build->input_layout_desc(this->_build);
+            desc.pInputElementDescs = this->_il.data();
+            desc.NumElements = static_cast<UINT>(this->_il.size());
             return *this;
         }
 
@@ -254,7 +248,8 @@ namespace d3d12 {
         inline graphics_pipeline_builder& set_pixel_shader(
                 std::vector<std::uint8_t>&& byte_code) {
             this->_ps = std::move(byte_code);
-            set_shader(this->_desc.PS, this->_ps.data(), this->_ps.size());
+            set_shader(this->_build->pixel_shader(this->_build),
+                this->_ps.data(), this->_ps.size());
             return *this;
         }
 
@@ -284,7 +279,7 @@ namespace d3d12 {
 
         inline graphics_pipeline_builder& set_primitive_topology(
                 const D3D12_PRIMITIVE_TOPOLOGY_TYPE topology) {
-            this->_desc.PrimitiveTopologyType = topology;
+            this->_build->primitive_topology(this->_build) = topology;
             return *this;
         }
 
@@ -308,19 +303,15 @@ namespace d3d12 {
 
         inline graphics_pipeline_builder& set_sample_desc(
                 const DXGI_SAMPLE_DESC& desc) {
-            this->_desc.SampleDesc = desc;
+            this->_build->sample_desc(this->_build) = desc;
             return *this;
         }
 
         inline graphics_pipeline_builder& set_sample_desc(
                 const UINT count = 1, const UINT quality = 0) {
-            this->_desc.SampleDesc.Count = count;
-            this->_desc.SampleDesc.Quality = quality;
-            return *this;
-        }
-
-        inline graphics_pipeline_builder& set_two_sided(void) {
-            this->_desc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
+            auto& desc = this->_build->sample_desc(this->_build);
+            desc.Count = count;
+            desc.Quality = quality;
             return *this;
         }
 
@@ -341,7 +332,8 @@ namespace d3d12 {
         inline graphics_pipeline_builder& set_vertex_shader(
                 std::vector<std::uint8_t>&& byte_code) {
             this->_vs = std::move(byte_code);
-            set_shader(this->_desc.VS, this->_vs.data(), this->_vs.size());
+            set_shader(this->_build->vertex_shader(this->_build),
+                this->_vs.data(), this->_vs.size());
             return *this;
         }
 
@@ -362,26 +354,10 @@ namespace d3d12 {
             return this->set_vertex_shader_from_file(path.data());
         }
 
-        /// <summary>
-        /// Converts the builder into the underlying descriptor object.
-        /// </summary>
-        /// <returns>The pipeline state descriptor being modified by the
-        /// builder.</returns>
-        inline operator const D3D12_GRAPHICS_PIPELINE_STATE_DESC&(void) const {
-            return this->_desc;
-        }
-
-        /// <summary>
-        /// Provides access to the underlying descriptor object.
-        /// </summary>
-        inline operator D3D12_GRAPHICS_PIPELINE_STATE_DESC& (void) {
-            return this->_desc;
-        }
-
     private:
 
+        detail::graphics_pipeline_build::pointer_type _build;
         std::vector<BYTE> _ds;
-        D3D12_GRAPHICS_PIPELINE_STATE_DESC _desc;
         std::vector<BYTE> _gs;
         std::vector<BYTE> _hs;
         std::vector<D3D12_INPUT_ELEMENT_DESC> _il;
