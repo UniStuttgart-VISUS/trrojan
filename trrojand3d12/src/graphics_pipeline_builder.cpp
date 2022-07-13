@@ -79,7 +79,8 @@ trrojan::d3d12::graphics_pipeline_builder::root_signature_from_shader(
 /*
  * trrojan::d3d12::graphics_pipeline_builder::graphics_pipeline_builder
  */
-trrojan::d3d12::graphics_pipeline_builder::graphics_pipeline_builder(void) { }
+trrojan::d3d12::graphics_pipeline_builder::graphics_pipeline_builder(void)
+    : _stream(aligned_allocator<BYTE>(sizeof(void *))) { }
 
 
 /*
@@ -94,6 +95,16 @@ trrojan::d3d12::graphics_pipeline_builder::build(ID3D12Device2 *device) {
     D3D12_PIPELINE_STATE_STREAM_DESC desc;
     desc.SizeInBytes = this->_stream.size();
     desc.pPipelineStateSubobjectStream = this->_stream.data();
+
+#if (defined(DEBUG) || defined(_DEBUG))
+    {
+        CD3DX12_PIPELINE_STATE_STREAM_PARSE_HELPER helper;
+        auto hr = D3DX12ParsePipelineStream(desc, &helper);
+        if (FAILED(hr)) {
+            throw ATL::CAtlException(hr);
+        }
+    }
+#endif /* (defined(DEBUG) || defined(_DEBUG)) */
 
     ATL::CComPtr<ID3D12PipelineState> retval;
     auto hr = device->CreatePipelineState(&desc, IID_PPV_ARGS(&retval));

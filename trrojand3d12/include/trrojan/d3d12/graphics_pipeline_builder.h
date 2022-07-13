@@ -297,6 +297,7 @@ namespace d3d12 {
                 const D3D12_PRIMITIVE_TOPOLOGY_TYPE topology) {
             auto& so = this->get_value<
                 CD3DX12_PIPELINE_STATE_STREAM_PRIMITIVE_TOPOLOGY>();
+            so = topology;
             return *this;
         }
 
@@ -376,7 +377,7 @@ namespace d3d12 {
 
     private:
 
-        typedef aligned_allocator<BYTE, sizeof(void *)> alloc_type;
+        typedef aligned_allocator<BYTE> alloc_type;
 
         typedef contiguous_enum_dispatch_list<
             D3D12_PIPELINE_STATE_SUBOBJECT_TYPE,
@@ -421,7 +422,7 @@ namespace d3d12 {
         std::vector<D3D12_INPUT_ELEMENT_DESC> _il;
         std::vector<BYTE> _ps;
         ATL::CComPtr<ID3D12RootSignature> _root_sig;
-        std::vector<BYTE> _stream;
+        std::vector<BYTE, alloc_type> _stream;
         std::vector<BYTE> _vs;
 
     };

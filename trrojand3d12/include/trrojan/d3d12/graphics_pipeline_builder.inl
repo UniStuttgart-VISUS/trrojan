@@ -52,7 +52,7 @@ TSubobj& trrojan::d3d12::graphics_pipeline_builder::get_subobject(void) {
     this->foreach_subobject([&retval, this](
             const D3D12_PIPELINE_STATE_SUBOBJECT_TYPE t,
             const std::size_t o,
-            const std::size_t s) -> bool {
+            const std::size_t s) {
         if (t == typename subobject_type<TSubobj>::value) {
             retval = this->_stream.data() + o;
             return false;
@@ -66,7 +66,7 @@ TSubobj& trrojan::d3d12::graphics_pipeline_builder::get_subobject(void) {
         auto o = this->_stream.size();
         auto s = get_subobject_size(subobj_disp_list{},
             typename subobject_type<TSubobj>::value);
-        this->_stream.resize(this->_stream.size() + s);
+        this->_stream.resize(o + s);
         retval = this->_stream.data() + o;
         new (retval) TSubobj();
     }

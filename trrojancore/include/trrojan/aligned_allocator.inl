@@ -8,15 +8,15 @@
 /*
  * trrojan::aligned_allocator<TType, Alignment>::allocate
  */
-template<class TType, std::size_t Alignment>
-typename trrojan::aligned_allocator<TType, Alignment>::pointer
-trrojan::aligned_allocator<TType, Alignment>::allocate(const size_type n) {
+template<class TType>
+typename trrojan::aligned_allocator<TType>::value_type *
+trrojan::aligned_allocator<TType>::allocate(const size_type n) {
     assert(n <= (std::numeric_limits<size_type>::max)() / sizeof(value_type));
 
 #if defined(_MSC_VER)
-    auto retval = ::_aligned_alloc(Alignment, n * sizeof(value_type));
+    auto retval = ::_aligned_malloc(n * sizeof(value_type), this->_alignment);
 #else /* defined(_MSC_VER) */
-    auto retval = ::aligned_alloc(Alignment, n * sizeof(value_type));
+    auto retval = ::aligned_alloc(this->_alignment, n * sizeof(value_type));
 #endif /* defined(_MSC_VER) */
 
     if (retval == nullptr) {
@@ -28,10 +28,10 @@ trrojan::aligned_allocator<TType, Alignment>::allocate(const size_type n) {
 
 
 /*
- * trrojan::aligned_allocator<TType, Alignment>::deallocate
+ * trrojan::aligned_allocator<TType>::deallocate
  */
-template<class TType, std::size_t Alignment>
-void trrojan::aligned_allocator<TType, Alignment>::deallocate(pointer p,
+template<class TType>
+void trrojan::aligned_allocator<TType>::deallocate(value_type *p,
         const size_type n) noexcept {
     if (p != nullptr) {
 #if defined(_MSC_VER)
@@ -40,4 +40,16 @@ void trrojan::aligned_allocator<TType, Alignment>::deallocate(pointer p,
         std::free(p);
 #endif /* defined(_MSC_VER) */
     }
+}
+
+
+/*
+ * trrojan::aligned_allocator<TType>::operator =
+ */
+template<class TType>
+template<class T>
+trrojan::aligned_allocator<TType>&
+trrojan::aligned_allocator<TType>::operator =(const aligned_allocator<T>& rhs) {
+    this->_alignment = rhs._alignment;
+    return *this;
 }
