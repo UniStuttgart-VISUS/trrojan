@@ -79,8 +79,30 @@ trrojan::d3d12::graphics_pipeline_builder::root_signature_from_shader(
 /*
  * trrojan::d3d12::graphics_pipeline_builder::graphics_pipeline_builder
  */
-trrojan::d3d12::graphics_pipeline_builder::graphics_pipeline_builder(void)
-    : _build(new detail::tgraphics_pipeline_build<>()) { }
+trrojan::d3d12::graphics_pipeline_builder::graphics_pipeline_builder(void) { }
+
+
+/*
+ * trrojan::d3d12::graphics_pipeline_builder::build
+ */
+ATL::CComPtr<ID3D12PipelineState>
+trrojan::d3d12::graphics_pipeline_builder::build(ID3D12Device2 *device) {
+    if (device == nullptr) {
+        throw ATL::CAtlException(E_POINTER);
+    }
+
+    D3D12_PIPELINE_STATE_STREAM_DESC desc;
+    desc.SizeInBytes = this->_stream.size();
+    desc.pPipelineStateSubobjectStream = this->_stream.data();
+
+    ATL::CComPtr<ID3D12PipelineState> retval;
+    auto hr = device->CreatePipelineState(&desc, IID_PPV_ARGS(&retval));
+    if (FAILED(hr)) {
+        throw ATL::CAtlException(hr);
+    }
+
+    return retval;
+}
 
 
 /*
@@ -104,16 +126,56 @@ trrojan::d3d12::graphics_pipeline_builder::build(ID3D12Device *device) {
 
 
 /*
+ * trrojan::d3d12::graphics_pipeline_builder::reset_shaders
+ */
+void trrojan::d3d12::graphics_pipeline_builder::reset_shaders(void) {
+    static constexpr D3D12_PIPELINE_STATE_SUBOBJECT_TYPE shaders[] = {
+        D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_VS,
+        D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_PS,
+        D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_DS,
+        D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_HS,
+        D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_GS,
+        D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_CS,
+        D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_AS,
+        D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_MS
+    };
+
+    for (auto& s : shaders) {
+        std::size_t offset = 0;
+        std::size_t size = 0;
+
+        this->foreach_subobject([s, &offset, &size](
+                const D3D12_PIPELINE_STATE_SUBOBJECT_TYPE t,
+                const std::size_t o,
+                const std::size_t s) {
+            if (s == t) {
+                offset = o;
+                size = s;
+                return false;
+            }
+
+            return true;
+        });
+
+        if (size > 0) {
+            this->_stream.erase(this->_stream.begin() + offset,
+                this->_stream.begin() + offset + size);
+        }
+    }
+}
+
+
+/*
  * trrojan::d3d12::graphics_pipeline_builder::set_render_targets
  */
 trrojan::d3d12::graphics_pipeline_builder&
 trrojan::d3d12::graphics_pipeline_builder::set_render_targets(
         const std::vector<DXGI_FORMAT>& formats) {
-    auto& fmts = this->_build->render_target_formats(this->_build);
-    fmts.NumRenderTargets = static_cast<UINT>(std::min(
-        std::size(fmts.RTFormats), formats.size()));
-    std::copy_n(formats.begin(), fmts.NumRenderTargets,
-        fmts.RTFormats);
+    auto& so = this->get_value<
+        CD3DX12_PIPELINE_STATE_STREAM_RENDER_TARGET_FORMATS>();
+    so.NumRenderTargets = static_cast<UINT>(std::min(
+        std::size(so.RTFormats), formats.size()));
+    std::copy_n(formats.begin(), so.NumRenderTargets, so.RTFormats);
     return *this;
 }
 
@@ -124,11 +186,13 @@ trrojan::d3d12::graphics_pipeline_builder::set_render_targets(
 trrojan::d3d12::graphics_pipeline_builder&
 trrojan::d3d12::graphics_pipeline_builder::set_root_signature(
         ID3D12RootSignature *root_signature) {
+    auto& so = this->get_value<
+        CD3DX12_PIPELINE_STATE_STREAM_ROOT_SIGNATURE>();
     // Implementation note: is is much easier for us to keep a smart pointer
     // reference in the form of '_root_sig' instead of manually managing the
     // reference count of the pointer in '_desc', which would require custom
     // copy ctors and assignment operators.
     this->_root_sig = root_signature;
-    this->_build->root_signature(this->_build) = this->_root_sig;
+    so = this->_root_sig;
     return *this;
 }

@@ -603,8 +603,7 @@ trrojan::d3d12::sphere_benchmark_base::get_pipeline_builder(
         retval.set_input_layout(this->_input_layout);
     }
 
-    retval.reset_rasteriser_state()
-        .set_depth_stencil_format(DXGI_FORMAT_D32_FLOAT)
+    retval.set_depth_stencil_format(DXGI_FORMAT_D32_FLOAT)
         .set_primitive_topology(get_primitive_topology_type(shader_code))
         .set_render_targets(DXGI_FORMAT_R8G8B8A8_UNORM)
         .set_sample_desc();

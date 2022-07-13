@@ -21,12 +21,55 @@
 #include "trrojan/log.h"
 
 #include "trrojan/d3d12/export.h"
+#include "trrojan/d3d12/d3dx12.h"
 #include "trrojan/d3d12/device.h"
 #include "trrojan/d3d12/handle.h"
 
 
 namespace trrojan {
 namespace d3d12 {
+
+    /// <summary>
+    /// Resolve the inner type of a
+    /// <see cref="CD3DX12_PIPELINE_STATE_STREAM_SUBOBJECT" />.
+    /// </summary>
+    /// <typeparam name="TType"></typeparam>
+    template<class TType> struct subobject_inner_type { };
+
+    /// <summary>
+    /// Specialisation for actual
+    /// <see cref="CD3DX12_PIPELINE_STATE_STREAM_SUBOBJECT" />s.
+    /// </summary>
+    /// <typeparam name="TType"></typeparam>
+    /// <typeparam name="Type"></typeparam>
+    /// <typeparam name="TDefault"></typeparam>
+    template<class TType, D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type,
+        class TDefault>
+    struct subobject_inner_type<CD3DX12_PIPELINE_STATE_STREAM_SUBOBJECT<
+            TType, Type, TDefault>> {
+        typedef TType type;
+    };
+
+    /// <summary>
+    /// Resolve the type of a
+    /// <see cref="CD3DX12_PIPELINE_STATE_STREAM_SUBOBJECT" />.
+    /// </summary>
+    /// <typeparam name="TType"></typeparam>
+    template<class TType> struct subobject_type { };
+
+    /// <summary>
+    /// Specialisation for actual
+    /// <see cref="CD3DX12_PIPELINE_STATE_STREAM_SUBOBJECT" />s.
+    /// </summary>
+    /// <typeparam name="TType"></typeparam>
+    /// <typeparam name="Type"></typeparam>
+    /// <typeparam name="TDefault"></typeparam>
+    template<class TType, D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type,
+            class TDefault>
+    struct subobject_type<CD3DX12_PIPELINE_STATE_STREAM_SUBOBJECT<
+            TType, Type, TDefault>> {
+        static constexpr D3D12_PIPELINE_STATE_SUBOBJECT_TYPE value = Type;
+    };
 
     //std::vector<D3D12_INPUT_ELEMENT_DESC> create_cube(ID3D12Device *device,
     //    ID3D12Buffer **outVertices, ID3D12Buffer **outIndices,

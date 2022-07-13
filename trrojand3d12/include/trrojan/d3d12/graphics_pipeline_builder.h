@@ -6,9 +6,17 @@
 
 #pragma once
 
+#include <functional>
+#include <type_traits>
+#include <utility>
+
+#include "trrojan/aligned_allocator.h"
+#include "trrojan/enum_dispatch_list.h"
 #include "trrojan/io.h"
 
-#include "trrojan/d3d12/graphics_pipeline_build.h"
+#include "trrojan/d3d12/pipeline_state_subobject_type_traits.h"
+#include "trrojan/d3d12/plugin.h"
+#include "trrojan/d3d12/utilities.h"
 
 
 namespace trrojan {
@@ -56,10 +64,7 @@ namespace d3d12 {
         /// </summary>
         /// <param name="device"></param>
         /// <returns></returns>
-        inline ATL::CComPtr<ID3D12PipelineState> build(ID3D12Device2 *device) {
-            assert(this->_build != nullptr);
-            return this->_build->build(device);
-        }
+        ATL::CComPtr<ID3D12PipelineState> build(ID3D12Device2 *device);
 
         /// <summary>
         /// Build a <see cref="ID3D12PipelineState" /> from the current state of
@@ -70,19 +75,29 @@ namespace d3d12 {
         ATL::CComPtr<ID3D12PipelineState> build(ID3D12Device *device);
 
         /// <summary>
+        /// Removes all shader subobjects from the builder.
+        /// </summary>
+        void reset_shaders(void);
+
+        /// <summary>
         /// Apply the specified depth stencil state.
         /// </summary>
         /// <param name="desc"></param>
         /// <returns></returns>
         inline graphics_pipeline_builder& set_depth_stencil_state(
                 const D3D12_DEPTH_STENCIL_DESC& desc) {
-            this->_build->depth_stencil_desc(this->_build) = desc;
+            auto& so = this->get_value<
+                CD3DX12_PIPELINE_STATE_STREAM_DEPTH_STENCIL>();
+            // For some weird reason, this must be explicit ...
+            so = CD3DX12_DEPTH_STENCIL_DESC(desc);
             return *this;
         }
 
         inline graphics_pipeline_builder& set_depth_stencil_format(
                 const DXGI_FORMAT format) {
-            this->_build->depth_stencil_format(this->_build) = format;
+            auto& so = this->get_value<
+                CD3DX12_PIPELINE_STATE_STREAM_DEPTH_STENCIL_FORMAT>();
+            so = format;
             return *this;
         }
 
@@ -101,9 +116,9 @@ namespace d3d12 {
 
         inline graphics_pipeline_builder& set_domain_shader(
                 std::vector<std::uint8_t>&& byte_code) {
+            auto& so = this->get_value<CD3DX12_PIPELINE_STATE_STREAM_DS>();
             this->_ds = std::move(byte_code);
-            set_shader(this->_build->domain_shader(this->_build),
-                this->_ds.data(), this->_ds.size());
+            set_shader(so, this->_ds.data(), this->_ds.size());
             return *this;
         }
 
@@ -135,9 +150,9 @@ namespace d3d12 {
 
         inline graphics_pipeline_builder& set_geometry_shader(
                 std::vector<std::uint8_t>&& byte_code) {
+            auto& so = this->get_value<CD3DX12_PIPELINE_STATE_STREAM_GS>();
             this->_gs = std::move(byte_code);
-            set_shader(this->_build->geometry_shader(this->_build),
-                this->_gs.data(), this->_gs.size());
+            set_shader(so, this->_gs.data(), this->_gs.size());
             return *this;
         }
 
@@ -173,9 +188,9 @@ namespace d3d12 {
 
         inline graphics_pipeline_builder& set_hull_shader(
                 std::vector<std::uint8_t>&& byte_code) {
+            auto& so = this->get_value<CD3DX12_PIPELINE_STATE_STREAM_HS>();
             this->_hs = std::move(byte_code);
-            set_shader(this->_build->hull_shader(this->_build),
-                this->_hs.data(), this->_hs.size());
+            set_shader(so, this->_hs.data(), this->_hs.size());
             return *this;
         }
 
@@ -211,10 +226,11 @@ namespace d3d12 {
 
         inline graphics_pipeline_builder& set_input_layout(
                 std::vector<D3D12_INPUT_ELEMENT_DESC>&& elements) {
+            auto& so = this->get_value<
+                CD3DX12_PIPELINE_STATE_STREAM_INPUT_LAYOUT>();
             this->_il = std::move(elements);
-            auto& desc = this->_build->input_layout_desc(this->_build);
-            desc.pInputElementDescs = this->_il.data();
-            desc.NumElements = static_cast<UINT>(this->_il.size());
+            so.pInputElementDescs = this->_il.data();
+            so.NumElements = static_cast<UINT>(this->_il.size());
             return *this;
         }
 
@@ -247,9 +263,9 @@ namespace d3d12 {
 
         inline graphics_pipeline_builder& set_pixel_shader(
                 std::vector<std::uint8_t>&& byte_code) {
+            auto& so = this->get_value<CD3DX12_PIPELINE_STATE_STREAM_PS>();
             this->_ps = std::move(byte_code);
-            set_shader(this->_build->pixel_shader(this->_build),
-                this->_ps.data(), this->_ps.size());
+            set_shader(so, this->_ps.data(), this->_ps.size());
             return *this;
         }
 
@@ -279,7 +295,8 @@ namespace d3d12 {
 
         inline graphics_pipeline_builder& set_primitive_topology(
                 const D3D12_PRIMITIVE_TOPOLOGY_TYPE topology) {
-            this->_build->primitive_topology(this->_build) = topology;
+            auto& so = this->get_value<
+                CD3DX12_PIPELINE_STATE_STREAM_PRIMITIVE_TOPOLOGY>();
             return *this;
         }
 
@@ -303,15 +320,18 @@ namespace d3d12 {
 
         inline graphics_pipeline_builder& set_sample_desc(
                 const DXGI_SAMPLE_DESC& desc) {
-            this->_build->sample_desc(this->_build) = desc;
+            auto& so = this->get_value<
+                CD3DX12_PIPELINE_STATE_STREAM_SAMPLE_DESC>();
+            so = desc;
             return *this;
         }
 
         inline graphics_pipeline_builder& set_sample_desc(
                 const UINT count = 1, const UINT quality = 0) {
-            auto& desc = this->_build->sample_desc(this->_build);
-            desc.Count = count;
-            desc.Quality = quality;
+            auto& so = this->get_value<
+                CD3DX12_PIPELINE_STATE_STREAM_SAMPLE_DESC>();
+            so.Count = count;
+            so.Quality = quality;
             return *this;
         }
 
@@ -331,9 +351,9 @@ namespace d3d12 {
 
         inline graphics_pipeline_builder& set_vertex_shader(
                 std::vector<std::uint8_t>&& byte_code) {
+            auto& so = this->get_value<CD3DX12_PIPELINE_STATE_STREAM_VS>();
             this->_vs = std::move(byte_code);
-            set_shader(this->_build->vertex_shader(this->_build),
-                this->_vs.data(), this->_vs.size());
+            set_shader(so, this->_vs.data(), this->_vs.size());
             return *this;
         }
 
@@ -356,14 +376,54 @@ namespace d3d12 {
 
     private:
 
-        detail::graphics_pipeline_build::pointer_type _build;
+        typedef aligned_allocator<BYTE, sizeof(void *)> alloc_type;
+
+        typedef contiguous_enum_dispatch_list<
+            D3D12_PIPELINE_STATE_SUBOBJECT_TYPE,
+            D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_VIEW_INSTANCING> subobj_disp_list;
+
+        template<D3D12_PIPELINE_STATE_SUBOBJECT_TYPE... Types>
+        using subobj_type_list = enum_dispatch_list<
+            D3D12_PIPELINE_STATE_SUBOBJECT_TYPE, Types...>;
+
+        template<D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type,
+                D3D12_PIPELINE_STATE_SUBOBJECT_TYPE... Types>
+        inline static constexpr std::size_t get_subobject_size(
+                subobj_type_list<Type, Types...>,
+                const D3D12_PIPELINE_STATE_SUBOBJECT_TYPE value) {
+            if (value == Type) {
+                return sizeof(pipeline_state_subobject_type_traits<Type>::type);
+            } else {
+                return get_subobject_size(subobj_type_list<Types...> { }, value);
+            }
+        }
+
+        inline static std::size_t get_subobject_size(subobj_type_list<>,
+                const D3D12_PIPELINE_STATE_SUBOBJECT_TYPE value) {
+            throw std::invalid_argument("An unexpected pipeline state "
+                "subobject was encountered.");
+        }
+
+        template<class TCallback>
+        std::size_t foreach_subobject(const TCallback& callback);
+
+        template<class TSubobj> TSubobj& get_subobject(void);
+
+        template<class TSubobj>
+        inline typename subobject_inner_type<TSubobj>::type& get_value(void) {
+            typedef typename subobject_inner_type<TSubobj>::type type;
+            return static_cast<type&>(this->get_subobject<TSubobj>());
+        }
+
         std::vector<BYTE> _ds;
         std::vector<BYTE> _gs;
         std::vector<BYTE> _hs;
         std::vector<D3D12_INPUT_ELEMENT_DESC> _il;
         std::vector<BYTE> _ps;
         ATL::CComPtr<ID3D12RootSignature> _root_sig;
+        std::vector<BYTE> _stream;
         std::vector<BYTE> _vs;
+
     };
 
 } /* end namespace d3d12 */
