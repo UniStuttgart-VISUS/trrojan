@@ -18,6 +18,13 @@
 #include <system_error>
 #include <thread>
 
+#ifdef _UWP
+#include <winrt/windows.security.exchangeactivesyncprovisioning.h>
+#include <winrt/windows.system.profile.h>
+#include <winrt/windows.foundation.h>
+#include <winrt/windows.foundation.collections.h>
+#include <winrt/windows.system.h>
+#endif
 #ifdef _WIN32
 #include <Windows.h>
 #include <lmcons.h>
@@ -127,10 +134,11 @@ trrojan::variant trrojan::system_factors::bios(void) const {
 * trrojan::system_factors::computer_name
 */
 trrojan::variant trrojan::system_factors::computer_name(void) const {
-#ifdef _WIN32
 #ifdef _UWP
-    return std::string("uwp-computer");
-#else
+    winrt::Windows::Security::ExchangeActiveSyncProvisioning::EasClientDeviceInformation easinfo;
+    return winrt::to_string(easinfo.FriendlyName());
+#elif defined (_WIN32)
+
     std::vector<char> buffer;
     buffer.resize(UNLEN + 1);
     auto oldBufSize = static_cast<DWORD>(buffer.size());
@@ -149,7 +157,6 @@ trrojan::variant trrojan::system_factors::computer_name(void) const {
     }
 
     return std::string(buffer.data());
-#endif
 #else /* _WIN32 */
     utsname names;
 
@@ -160,7 +167,7 @@ trrojan::variant trrojan::system_factors::computer_name(void) const {
 
     return std::string(names.nodename);
 
-#endif /* _WIN32 */
+#endif /* _UWP _WIN32 */
 }
 
 
@@ -168,7 +175,21 @@ trrojan::variant trrojan::system_factors::computer_name(void) const {
  * trrojan::system_factors::cpu
  */
 trrojan::variant trrojan::system_factors::cpu(void) const {
-#ifndef _UWP
+#ifdef  _UWP
+    SYSTEM_INFO info = {};
+    GetNativeSystemInfo(&info);
+
+    std::string arch = "UNKNOWN";
+    switch (info.wProcessorArchitecture)
+    {
+    case PROCESSOR_ARCHITECTURE_AMD64:  arch = "AMD64"; break;
+    case PROCESSOR_ARCHITECTURE_ARM:    arch = "ARM"; break;
+    case PROCESSOR_ARCHITECTURE_ARM64:  arch = "ARM64"; break;
+    case PROCESSOR_ARCHITECTURE_INTEL:  arch = "INTEL"; break;
+    }
+
+    return arch;
+#else
     typedef sysinfo::smbios_information::processor_information_type entry_type;
     std::vector<const entry_type *> entries;
     smbios.entries_by_type<entry_type>(std::back_inserter(entries));
@@ -241,10 +262,6 @@ trrojan::variant trrojan::system_factors::cpu(void) const {
 
         return variant(value.str());
     }
-#else
-    log::instance().write(log_level::warning, "No information about the "
-        "installed CPUs could be retrieved from SMBIOS.");
-    return variant();
 #endif
 
     //{
@@ -366,12 +383,11 @@ trrojan::variant trrojan::system_factors::mainboard(void) const {
  * trrojan::system_factors::os
  */
 trrojan::variant trrojan::system_factors::os(void) const {
-#ifndef _UWP
-    return std::string(this->osinfo.name());
+#ifdef _UWP
+    auto versionInfo = winrt::Windows::System::Profile::AnalyticsInfo::VersionInfo();
+    return winrt::to_string(versionInfo.DeviceFamily());
 #else
-    log::instance().write(log_level::warning, "No information about the "
-        "os could be retrieved from SMBIOS.");
-    return variant();
+    return std::string(this->osinfo.name());
 #endif
 }
 
@@ -380,12 +396,19 @@ trrojan::variant trrojan::system_factors::os(void) const {
  * trrojan::system_factors::os_version
  */
 trrojan::variant trrojan::system_factors::os_version(void) const {
-#ifndef _UWP
-    return std::string(this->osinfo.version());
+#ifdef _UWP
+    auto versionInfo = winrt::Windows::System::Profile::AnalyticsInfo::VersionInfo();
+
+    // From SystemInfo UWP example:
+    // For real-world use just log it as an opaque string, and do the decode in the reader instead
+    LARGE_INTEGER li;
+    li.QuadPart = _wtoi64(versionInfo.DeviceFamilyVersion().c_str());
+    wchar_t buff[128] = {};
+    swprintf_s(buff, L"%u.%u.%u.%u", HIWORD(li.HighPart), LOWORD(li.HighPart), HIWORD(li.LowPart), LOWORD(li.LowPart));
+
+    return winrt::to_string(buff);
 #else
-    log::instance().write(log_level::warning, "No information about the "
-        "os version could be retrieved from SMBIOS.");
-    return variant();
+    return std::string(this->osinfo.version());
 #endif
 }
 
@@ -439,7 +462,11 @@ trrojan::variant trrojan::system_factors::process_elevated(void) const {
  * trrojan::system_factors::ram
  */
 trrojan::variant trrojan::system_factors::ram(void) const {
-#ifndef _UWP
+#ifdef _UWP
+    log::instance().write(log_level::warning, "No information about the "
+        "ram version could be retrieved from SMBIOS.");
+    return variant();
+#else
     typedef sysinfo::smbios_information::memory_device_type entry_type;
     std::vector<const entry_type *> entries;
     smbios.entries_by_type<entry_type>(std::back_inserter(entries));
@@ -468,10 +495,6 @@ trrojan::variant trrojan::system_factors::ram(void) const {
 
         return variant(value.str());
     }
-#else
-    log::instance().write(log_level::warning, "No information about the "
-        "ram version could be retrieved from SMBIOS.");
-    return variant();
 #endif
     //for (auto h : entries) {
     //    if (e->size != 0) {
@@ -496,7 +519,10 @@ trrojan::variant trrojan::system_factors::ram(void) const {
  * trrojan::system_factors::system_desc
  */
 trrojan::variant trrojan::system_factors::system_desc(void) const {
-#ifndef _UWP
+#ifdef _UWP
+    winrt::Windows::Security::ExchangeActiveSyncProvisioning::EasClientDeviceInformation easinfo;
+    return winrt::to_string(easinfo.SystemProductName());
+#else
     typedef sysinfo::smbios_information::system_information_type entry_type;
     std::vector<const entry_type *> entries;
     smbios.entries_by_type<entry_type>(std::back_inserter(entries));
@@ -514,10 +540,6 @@ trrojan::variant trrojan::system_factors::system_desc(void) const {
             << e->get_version() << ")";
         return variant(value.str());
     }
-#else
-    log::instance().write(log_level::warning, "No information about the "
-        "system version could be retrieved from SMBIOS.");
-    return variant();
 #endif
 }
 
@@ -536,7 +558,13 @@ trrojan::variant trrojan::system_factors::timestamp(void) const {
 trrojan::variant trrojan::system_factors::user_name(void) const {
 #ifdef _WIN32
 #ifdef _UWP
-    return std::string("uwp-user");
+    // Fairly hacky solution. Needs App permission set in OS to work
+    winrt::Windows::Foundation::Collections::IVectorView<winrt::Windows::System::User> users 
+        = winrt::Windows::System::User::FindAllAsync(winrt::Windows::System::UserType::LocalUser, winrt::Windows::System::UserAuthenticationStatus::LocallyAuthenticated).get();
+    winrt::Windows::System::User currentUser = users.GetAt(0);
+    winrt::Windows::Foundation::IInspectable nameObj = currentUser.GetPropertyAsync(winrt::Windows::System::KnownUserProperties::DisplayName()).get();
+    winrt::hstring myname = winrt::unbox_value<winrt::hstring>(nameObj);
+    return winrt::to_string(myname);
 #else
     std::vector<char> buffer;
     buffer.resize(UNLEN + 1);
