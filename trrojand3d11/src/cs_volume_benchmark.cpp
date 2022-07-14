@@ -293,6 +293,12 @@ trrojan::result trrojan::d3d11::cs_volume_benchmark::on_run(
     wait_for_event_query(ctx, this->done_query);
     auto cpuTime = cpuTimer.elapsed_millis();
 
+    if (powerCollector != nullptr) {
+        // Commit power samples and prevent collection until next wall-clock
+        // measurement cycle.
+        powerCollector->set_description("");
+    }
+
     // Compute derived statistics for GPU counters.
     std::sort(gpuTimes.begin(), gpuTimes.end());
     auto gpuMedian = gpuTimes[gpuTimes.size() / 2];
