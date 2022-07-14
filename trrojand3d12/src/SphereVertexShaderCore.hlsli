@@ -168,9 +168,9 @@ VsOutput Main(VsInput input) {
     // Pass on world-space parameters for raycasting.
     retval.SphereParams = float4(pos, rad);
 
-#if defined(PER_VERTEY_RAY)
-    retval.Ray = normalize(pos - retval.CameraPosition.xyz);
-#endif /* defined(PER_VERTEY_RAY) */
+#if defined(PER_VERTEX_RAY)
+    retval.Ray = pos.xyz - retval.CameraPosition.xyz;
+#endif /* defined(PER_VERTEX_RAY) */
 
 #else /* defined(SPHERE_INST) */
     /* Pass through data to geometry or hull shader. */

@@ -80,6 +80,17 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
         device.wait_for_gpu();
     }
 
+    // Now that we have the data, update the shader code to match it.
+    shader_code = sphere_benchmark_base::get_shader_id(shader_code,
+        this->get_data_properties(shader_code));
+
+    // As we have the data, we can also configure the camera now.
+    this->_camera.set_fovy(60.0f);
+    this->set_aspect_from_viewport(this->_camera);
+    this->set_clipping_planes();
+    sphere_benchmark::apply_manoeuvre(this->_camera, config,
+        this->get_bbox_start(), this->get_bbox_end());
+
     // Prepare the descriptor heaps required for the requested technique and
     // data set. Note that create_descriptor_heap will access the data
     // properties, so this must be done *after* loading the data.

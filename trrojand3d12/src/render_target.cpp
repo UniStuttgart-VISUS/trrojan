@@ -301,7 +301,7 @@ void trrojan::d3d12::render_target_base::create_dsv_heap(void) {
         D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 1);
     log::instance().write_line(log_level::debug, "Render target {:p} allocated "
         "DSV descriptor heap {:p}.", static_cast<void *>(this),
-        static_cast<void *>(this->_rtv_heap.p));
+        static_cast<void *>(this->_dsv_heap.p));
 }
 
 
@@ -494,6 +494,8 @@ void trrojan::d3d12::render_target_base::set_buffers(
         if (FAILED(hr)) {
             throw ATL::CAtlException(hr);
         }
+
+        set_debug_object_name(this->_depth_buffer, "depth_buffer");
     }
 
     {

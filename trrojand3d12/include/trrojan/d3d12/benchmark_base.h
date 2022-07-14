@@ -385,6 +385,12 @@ namespace d3d12 {
         void save_target(const char *path = nullptr);
 
         /// <summary>
+        /// Applies the aspect ratio of the current viewport to the camera.
+        /// </summary>
+        /// <param name="camera"></param>
+        void set_aspect_from_viewport(camera& camera);
+
+        /// <summary>
         /// Gets the viewport of the active render target.
         /// </summary>
         /// <returns></returns>

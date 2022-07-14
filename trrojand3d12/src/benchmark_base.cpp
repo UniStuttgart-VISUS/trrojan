@@ -528,6 +528,15 @@ void trrojan::d3d12::benchmark_base::save_target(const char *path) {
     }
 }
 
+/*
+ * trrojan::d3d12::benchmark_base::set_aspect_from_viewport
+ */
+void trrojan::d3d12::benchmark_base::set_aspect_from_viewport(
+        camera& camera) {
+    const auto aspect = this->viewport().Width / this->viewport().Height;
+    camera.set_aspect_ratio(aspect);
+}
+
 
 #if TODO
 /*

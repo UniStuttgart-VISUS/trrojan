@@ -72,9 +72,9 @@ PsOutput Main(PsInput input/*, bool isFront : SV_IsFrontFace*/) {
     float rad = input.SphereParams.w;
     float squarRad = rad * rad;
 
-#if defined(PER_VERTEY_RAY)
+#if defined(PER_VERTEX_RAY)
     ray = input.Ray;
-#else /* defined(PER_VERTEY_RAY) */
+#else /* defined(PER_VERTEX_RAY) */
     // transform fragment coordinates from window coordinates to view coordinates.
     input.Position.y = Viewport.w - input.Position.y;
     coord = input.Position
@@ -88,7 +88,7 @@ PsOutput Main(PsInput input/*, bool isFront : SV_IsFrontFace*/) {
 
                      // calc the viewing ray
     ray = coord.xyz - camPos.xyz;
-#endif /* defined(PER_VERTEY_RAY) */
+#endif /* defined(PER_VERTEX_RAY) */
     ray = normalize(ray);
 
     // calculate the geometry-ray-intersection

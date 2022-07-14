@@ -171,7 +171,9 @@ trrojan::d3d12::sphere_benchmark_base::get_shader_id(const configuration& config
 
     if ((retval & SPHERE_TECHNIQUE_USE_SRV) != 0) {
         // If the shader is using a shader resource view for the data, the
-        // floating point conversion flag is relevant.
+        // floating point conversion flag is relevant. Note that this flag
+        // set speculatively and might need to be removed if the data does
+        // not contain per-sphere colours.
         if (isFloat) {
             retval |= SPHERE_INPUT_FLT_COLOUR;
         }
@@ -187,6 +189,63 @@ trrojan::d3d12::sphere_benchmark_base::get_shader_id(const configuration& config
     }
 
     return retval;
+}
+
+
+/*
+ * trrojan::d3d12::sphere_benchmark_base::get_shader_id
+ */
+trrojan::d3d12::sphere_benchmark_base::shader_id_type
+trrojan::d3d12::sphere_benchmark_base::get_shader_id(shader_id_type shader_code,
+        property_mask_type data_code) {
+    // If there are no per-sphere colours, erase the float flag if it has been
+    // requested by the configuration.
+    if ((data_code & SPHERE_INPUT_PV_COLOUR) == 0) {
+        shader_code &= ~SPHERE_INPUT_FLT_COLOUR;
+        data_code &= ~SPHERE_INPUT_FLT_COLOUR;
+    }
+
+    // We create only shader code for floating-point conversion if the shader
+    // uses an SRV. In all other cases, the floating-point colour flag must be
+    // erased.
+    if ((shader_code & SPHERE_TECHNIQUE_USE_SRV) == 0) {
+        shader_code &= ~SPHERE_INPUT_FLT_COLOUR;
+        data_code &= ~SPHERE_INPUT_FLT_COLOUR;
+    }
+
+    // If the data does not a per-sphere intensity, erase the texture lookup for
+    // vertex and pixel shader. If the data does contain per-sphere intensity
+    // data, erase it from there such that the shader code determines where the
+    // intensity is converted into colour.
+    if ((data_code & property_per_sphere_intensity) == 0) {
+        shader_code &= ~static_cast<shader_id_type>(property_per_sphere_intensity);
+    } else {
+        data_code &= ~property_per_sphere_intensity;
+    }
+
+    // Finally, merge any data-dependent flags, eg floating-point colours from
+    // the data code.
+    shader_code |= data_code;
+
+#if (defined(DEBUG) || defined(_DEBUG))
+    const auto is_col = ((shader_code & SPHERE_INPUT_PV_COLOUR) != 0);
+    const auto is_flt = ((shader_code & SPHERE_INPUT_FLT_COLOUR) != 0);
+    const auto is_geo = ((shader_code & SPHERE_TECHNIQUE_USE_GEO) != 0);
+    const auto is_inst = ((shader_code & SPHERE_TECHNIQUE_USE_INSTANCING) != 0);
+    const auto is_ps_tex = ((shader_code & SPHERE_INPUT_PP_INTENSITY) != 0);
+    const auto is_ray = ((shader_code & SPHERE_TECHNIQUE_USE_RAYCASTING) != 0);
+    const auto is_srv = ((shader_code & SPHERE_TECHNIQUE_USE_SRV) != 0);
+    const auto is_tess = ((shader_code & SPHERE_TECHNIQUE_USE_TESS) != 0);
+    const auto is_vs_tex = ((shader_code & SPHERE_INPUT_PV_INTENSITY) != 0);
+
+    log::instance().write_line(log_level::debug, "Shader code 0x{:x}: "
+        "colour = {}, float colour = {}, geometry = {}, instancing = {}, "
+        "psxfer = {}, raycasting = {}, srv = {}, tessellation = {}, "
+        "vsxfer = {}.", shader_code, is_col, is_flt, is_geo, is_inst,
+        is_ps_tex, is_ray, is_srv, is_tess, is_vs_tex);
+#endif /* (defined(DEBUG) || defined(_DEBUG)) */
+
+    return shader_code;
 }
 
 
@@ -282,6 +341,7 @@ void trrojan::d3d12::sphere_benchmark_base::set_descriptors(
  */
 void trrojan::d3d12::sphere_benchmark_base::set_shaders(
         graphics_pipeline_builder& builder, const shader_id_type shader_id) {
+    //const auto is_col = ((shader_id & SPHERE_INPUT_PV_COLOUR) != 0);
     builder.reset_shaders();
 #if defined(TRROJAN_FOR_UWP)
     _LOOKUP_SPHERE_SHADER_FILES(builder, shader_id,
@@ -455,12 +515,10 @@ void trrojan::d3d12::sphere_benchmark_base::create_constant_buffer_view(
  */
 void trrojan::d3d12::sphere_benchmark_base::create_descriptor_heaps(
         ID3D12Device *device, const shader_id_type shader_code) {
-    const auto id = this->get_technique_properties(shader_code);
-
     // Three constant buffers are always required.
     this->_cnt_descriptor_tables = 3;
 
-    if (is_any_technique(id, SPHERE_INPUT_PV_INTENSITY
+    if (is_any_technique(shader_code, SPHERE_INPUT_PV_INTENSITY
             | SPHERE_TECHNIQUE_USE_INSTANCING)) {
         // Note: we use a little hack that the instancing data are always in t1,
         // even if there is no colour map bound to t0. This makes the allocation
@@ -468,7 +526,7 @@ void trrojan::d3d12::sphere_benchmark_base::create_descriptor_heaps(
         this->_cnt_descriptor_tables += 2;
     }
 
-    if (is_any_technique(id, SPHERE_INPUT_PP_INTENSITY)) {
+    if (is_any_technique(shader_code, SPHERE_INPUT_PP_INTENSITY)) {
         ++this->_cnt_descriptor_tables;
     }
 
@@ -583,15 +641,14 @@ trrojan::d3d12::sphere_benchmark_base::get_data_properties(
 trrojan::d3d12::graphics_pipeline_builder
 trrojan::d3d12::sphere_benchmark_base::get_pipeline_builder(
         const shader_id_type shader_code) {
-    const auto id = this->get_technique_properties(shader_code);
-    const auto is_flt = ((id & SPHERE_INPUT_FLT_COLOUR) != 0);
-    const auto is_geo = ((id & SPHERE_TECHNIQUE_USE_GEO) != 0);
-    const auto is_inst = ((id & SPHERE_TECHNIQUE_USE_INSTANCING) != 0);
-    const auto is_ps_tex = ((id & SPHERE_INPUT_PP_INTENSITY) != 0);
-    const auto is_ray = ((id & SPHERE_TECHNIQUE_USE_RAYCASTING) != 0);
-    const auto is_srv = ((id & SPHERE_TECHNIQUE_USE_SRV) != 0);
-    const auto is_tess = ((id & SPHERE_TECHNIQUE_USE_TESS) != 0);
-    const auto is_vs_tex = ((id & SPHERE_INPUT_PV_INTENSITY) != 0);
+    const auto is_flt = ((shader_code & SPHERE_INPUT_FLT_COLOUR) != 0);
+    const auto is_geo = ((shader_code & SPHERE_TECHNIQUE_USE_GEO) != 0);
+    const auto is_inst = ((shader_code & SPHERE_TECHNIQUE_USE_INSTANCING) != 0);
+    const auto is_ps_tex = ((shader_code & SPHERE_INPUT_PP_INTENSITY) != 0);
+    const auto is_ray = ((shader_code & SPHERE_TECHNIQUE_USE_RAYCASTING) != 0);
+    const auto is_srv = ((shader_code & SPHERE_TECHNIQUE_USE_SRV) != 0);
+    const auto is_tess = ((shader_code & SPHERE_TECHNIQUE_USE_TESS) != 0);
+    const auto is_vs_tex = ((shader_code & SPHERE_INPUT_PV_INTENSITY) != 0);
 
     graphics_pipeline_builder retval;
 
@@ -620,8 +677,6 @@ ATL::CComPtr<ID3D12PipelineState>
 trrojan::d3d12::sphere_benchmark_base::get_pipeline_state(ID3D12Device *device,
         const shader_id_type shader_code) {
     assert(device != nullptr);
-    //const auto id = this->get_technique_properties(shader_code);
-
     auto it = this->_pipeline_cache.find(shader_code);
     auto is_create = (it == this->_pipeline_cache.end());
 
@@ -653,8 +708,6 @@ ATL::CComPtr<ID3D12RootSignature>
 trrojan::d3d12::sphere_benchmark_base::get_root_signature(ID3D12Device *device,
         const shader_id_type shader_code) {
     assert(device != nullptr);
-    //const auto id = this->get_technique_properties(shader_code);
-
     auto it = this->_root_sig_cache.find(shader_code);
     auto is_create = (it == this->_root_sig_cache.end());
 
@@ -707,17 +760,6 @@ trrojan::d3d12::sphere_benchmark_base::get_sphere_constants(
     retval = offset_by_n<SphereConstants,
         D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT>(retval, buffer);
     return retval;
-}
-
-
-/*
- * trrojan::d3d12::sphere_benchmark_base::get_technique_properties
- */
-trrojan::d3d12::sphere_benchmark_base::shader_id_type
-trrojan::d3d12::sphere_benchmark_base::get_technique_properties(
-        const shader_id_type shader_code) {
-    auto data_code = this->get_data_properties(shader_code);
-    return (shader_code | data_code);
 }
 
 
@@ -1075,7 +1117,6 @@ trrojan::d3d12::sphere_benchmark_base::set_descriptors(
     assert(heap->GetDesc().Type == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
     auto cpu_handle = heap->GetCPUDescriptorHandleForHeapStart();
     auto gpu_handle = heap->GetGPUDescriptorHandleForHeapStart();
-    const auto id = this->get_technique_properties(shader_code);
     const auto increment = device->GetDescriptorHandleIncrementSize(
         D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
     std::vector<D3D12_GPU_DESCRIPTOR_HANDLE> tables;
@@ -1242,9 +1283,7 @@ void trrojan::d3d12::sphere_benchmark_base::set_properties(
 void trrojan::d3d12::sphere_benchmark_base::set_vertex_buffer(
         ID3D12GraphicsCommandList *cmd_list, const shader_id_type shader_code) {
     assert(cmd_list != nullptr);
-    const auto id = this->get_technique_properties(shader_code);
-
-    if (!is_technique(id, SPHERE_TECHNIQUE_USE_SRV)) {
+    if (!is_technique(shader_code, SPHERE_TECHNIQUE_USE_SRV)) {
         D3D12_VERTEX_BUFFER_VIEW desc;
         desc.BufferLocation = this->_data->GetGPUVirtualAddress();
         desc.SizeInBytes = this->_data->GetDesc().Width;

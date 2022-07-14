@@ -182,7 +182,7 @@ namespace d3d11 {
         /// Gets the Direct2D factory used to create the overlay.
         /// </summary>
         /// <returns></returns>
-        inline ATL::CComPtr<ID2D1Factory> get_d2d_factory(void) const {
+        inline ATL::CComPtr<ID2D1Factory3> get_d2d_factory(void) const {
             return this->_d2d_factory;
         }
 

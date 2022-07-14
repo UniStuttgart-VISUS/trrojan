@@ -124,7 +124,13 @@ namespace d3d12 {
         /// <summary>
         /// Gets the identifier for the given rendering method.
         /// </summary>
-        /// <param name=""></param>
+        /// <remarks>
+        /// This method only retrieves the base code of the technique with the
+        /// specified name. The code returned does not contain any flags
+        /// modifying the behaviour, which can be specified in the
+        /// configuration, nor does it contain any data-dependent features.
+        /// </remarks>
+        /// <param name="method"></param>
         /// <returns>The ID of the requested shader, or 0 if no such shader was
         /// found.</returns>
         static shader_id_type get_shader_id(const std::string& method);
@@ -136,11 +142,23 @@ namespace d3d12 {
         /// <remarks>
         /// The method only retrieves the method code and method-dependent
         /// features, but not any data-dependent features. These must be added
-        /// later.
+        /// later. Note that some flags in the returned code are set
+        /// speculatively and might need to be erased if they are not relevant
+        /// for the data being visualised.
         /// </remarks>
-        /// <param name=""></param>
+        /// <param name="config"></param>
         /// <returns></returns>
         static shader_id_type get_shader_id(const configuration& config);
+
+        /// <summary>
+        /// Computes the final shader code from what has been requested by the
+        /// configuration and the data that have been loaded.
+        /// </summary>
+        /// <param name="shader_code"></param>
+        /// <param name="data_code"></param>
+        /// <returns></returns>
+        static shader_id_type get_shader_id(shader_id_type shader_code,
+            property_mask_type data_code);
 
         /// <summary>
         /// Populates the tessellation constants from the given configuration.
@@ -272,6 +290,24 @@ namespace d3d12 {
             const void *particles);
 
         /// <summary>
+        /// Gets the end point of the bounding box.
+        /// </summary>
+        /// <param name=""></param>
+        /// <returns></returns>
+        inline const glm::vec3& get_bbox_end(void) const noexcept {
+            return this->_bbox[1];
+        }
+
+        /// <summary>
+        /// Gets the start point of the bounding box.
+        /// </summary>
+        /// <param name=""></param>
+        /// <returns></returns>
+        inline const glm::vec3& get_bbox_start(void) const noexcept {
+            return this->_bbox[0];
+        }
+
+        /// <summary>
         /// Answer the size of the bounding box of the currently loaded data
         /// set.
         /// </summary>
@@ -331,21 +367,6 @@ namespace d3d12 {
         inline UINT get_sphere_count(void) const noexcept {
             return this->_cnt_spheres;
         }
-
-        /// <summary>
-        /// Merges the shader core and the data properties into an identifier of
-        /// the rendering technique to be used.
-        /// </summary>
-        /// <remarks>
-        /// Use this ID instead of <paramref name="shader_code" /> wherever what
-        /// to do might depend on what is in the data rather than solely on the
-        /// rendering technique. This is typically the case whenever resources
-        /// like textures for transfer functions etc. are involved.
-        /// </remarks>
-        /// <param name="shader_code"></param>
-        /// <returns></returns>
-        shader_id_type get_technique_properties(
-            const shader_id_type shader_code);
 
         /// <summary>
         /// Gets the GPU-virtual address for the tessellation constants of the

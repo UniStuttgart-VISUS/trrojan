@@ -160,30 +160,30 @@ void Main(point VsOutput input[1], inout TriangleStream<PsInput> triStream) {
 
         //bottom left
         v.Position = float4(mins.x, mins.y, projPos.z, 1.0f);
-#if defined(PER_VERTEY_RAY)
+#if defined(PER_VERTEX_RAY)
         v.Ray = normalize(v.Position.xyz - v.CameraPosition.xyz);
-#endif /* defined(PER_VERTEY_RAY) */
+#endif /* defined(PER_VERTEX_RAY) */
         triStream.Append(v);
 
         //top left
         v.Position = float4(mins.x, maxs.y, projPos.z, 1.0f);
-#if defined(PER_VERTEY_RAY)
+#if defined(PER_VERTEX_RAY)
         v.Ray = normalize(v.Position.xyz - v.CameraPosition.xyz);
-#endif /* defined(PER_VERTEY_RAY) */
+#endif /* defined(PER_VERTEX_RAY) */
         triStream.Append(v);
 
         //bottom right
         v.Position = float4(maxs.x, mins.y, projPos.z, 1.0f);
-#if defined(PER_VERTEY_RAY)
+#if defined(PER_VERTEX_RAY)
         v.Ray = normalize(v.Position.xyz - v.CameraPosition.xyz);
-#endif /* defined(PER_VERTEY_RAY) */
+#endif /* defined(PER_VERTEX_RAY) */
         triStream.Append(v);
 
         //top right
         v.Position = float4(maxs.x, maxs.y, projPos.z, 1.0f);
-#if defined(PER_VERTEY_RAY)
+#if defined(PER_VERTEX_RAY)
         v.Ray = normalize(v.Position.xyz - v.CameraPosition.xyz);
-#endif /* defined(PER_VERTEY_RAY) */
+#endif /* defined(PER_VERTEX_RAY) */
         triStream.Append(v);
 
         triStream.RestartStrip();
@@ -212,9 +212,9 @@ void Main(point VsOutput input[1], inout TriangleStream<PsInput> triStream) {
         v.Position.xyz -= rad * matOrient._31_32_33;
 
         // Compute ray in object space.
-#if defined(PER_VERTEY_RAY)
+#if defined(PER_VERTEX_RAY)
         v.Ray = normalize(v.Position.xyz - v.CameraPosition.xyz);
-#endif /* defined(PER_VERTEY_RAY) */
+#endif /* defined(PER_VERTEX_RAY) */
 
         // Do the camera transform.
         v.Position = mul(v.Position, mvp);
