@@ -80,6 +80,24 @@ namespace d3d12 {
         void reset_shaders(void);
 
         /// <summary>
+        /// Convenience method for enabling depth buffer.
+        /// </summary>
+        /// <param name="enabled"></param>
+        /// <param name="func"></param>
+        /// <param name="mask"></param>
+        /// <returns></returns>
+        inline graphics_pipeline_builder& set_depth_state(const bool enabled,
+                const D3D12_COMPARISON_FUNC func = D3D12_COMPARISON_FUNC_LESS,
+                const D3D12_DEPTH_WRITE_MASK mask = D3D12_DEPTH_WRITE_MASK_ALL) {
+            auto& so = this->get_value<
+                CD3DX12_PIPELINE_STATE_STREAM_DEPTH_STENCIL>();
+            so.DepthEnable = enabled ? TRUE : FALSE;
+            so.DepthFunc = func;
+            so.DepthWriteMask = mask;
+            return *this;
+        }
+
+        /// <summary>
         /// Apply the specified depth stencil state.
         /// </summary>
         /// <param name="desc"></param>
