@@ -9,13 +9,16 @@
 #include <algorithm>
 #include <cassert>
 #include <cinttypes>
+#include <iomanip>
 #include <memory>
+#include <sstream>
 
 #include <glm/ext.hpp>
 
 #include "trrojan/constants.h"
 #include "trrojan/factor_enum.h"
 #include "trrojan/factor_range.h"
+#include "trrojan/io.h"
 #include "trrojan/log.h"
 #include "trrojan/mmpld_reader.h"
 #include "trrojan/result.h"
@@ -597,6 +600,17 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
 
 
 /*
+ * trrojan::d3d11::sphere_benchmark::get_shader_file_id
+ */
+std::string trrojan::d3d11::sphere_benchmark::get_shader_file_id(
+        const shader_id_type id) {
+    std::stringstream ss;
+    ss << std::setfill('0') << std::setw(16) << std::hex << id;
+    return ss.str();
+}
+
+
+/*
  * trrojan::d3d11::sphere_benchmark::get_shader_id
  */
 trrojan::d3d11::sphere_benchmark::shader_id_type
@@ -762,6 +776,46 @@ trrojan::d3d11::sphere_benchmark::get_technique(ID3D11Device *device,
             sid &= ~SPHERE_INPUT_FLT_COLOUR;
         }
 
+#if defined(TRROJAN_FOR_UWP)
+        // TODO: this is only prepared, probably not working (read_binary_file) out of the box.
+        const auto base_path = plugin::get_directory()
+            + directory_separator_char;
+        const auto fid_ext = get_shader_file_id(sid) + ".cso";
+
+        {
+            auto path = base_path + "SphereVertexShader" + fid_ext;
+            auto src = read_binary_file(path);
+            vs = create_vertex_shader(device, src);
+            il = create_input_layout(device, this->data->layout(), src);
+        }
+
+        if (isTess) {
+            {
+                auto path = base_path + "SphereHullShader" + fid_ext;
+                auto src = read_binary_file(path);
+                hs = create_hull_shader(device, src);
+            }
+
+            {
+                auto path = base_path + "SphereDomainShader" + fid_ext;
+                auto src = read_binary_file(path);
+                ds = create_domain_shader(device, src);
+            }
+        }
+
+        if (isGeo) {
+            auto path = base_path + "SphereGeometryShader" + fid_ext;
+            auto src = read_binary_file(path);
+            gs = create_geometry_shader(device, src);
+        }
+
+        {
+            auto path = base_path + "SpherePixelShader" + fid_ext;
+            auto src = read_binary_file(path);
+            ps = create_pixel_shader(device, src);
+        }
+
+#else /* defined(TRROJAN_FOR_UWP) */
         auto it = this->shader_resources.find(sid);
         if (it == this->shader_resources.end()) {
             std::stringstream msg;
@@ -799,6 +853,7 @@ trrojan::d3d11::sphere_benchmark::get_technique(ID3D11Device *device,
                 MAKEINTRESOURCE(it->second.pixel_shader), _T("SHADER"));
             ps = create_pixel_shader(device, src);
         }
+#endif /* defined(TRROJAN_FOR_UWP) */
 
 
         if (is_technique(shaderCode, SPHERE_TECHNIQUE_QUAD_INST)) {
