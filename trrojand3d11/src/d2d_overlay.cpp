@@ -7,11 +7,9 @@
 #include "trrojan/d3d11/d2d_overlay.h"
 
 #include <algorithm>
-#include <vector>
 
 #include "trrojan/d3d11/plugin.h"
 #include "trrojan/d3d11/utilities.h"
-
 
 
 /*
@@ -78,31 +76,28 @@ ATL::CComPtr<IDWriteFont> trrojan::d3d11::d2d_overlay::get_font(
 /*
  * trrojan::d3d11::d2d_overlay::d2d_overlay
  */
-trrojan::d3d11::d2d_overlay::d2d_overlay(ID3D11Texture2D *texture)
-        : _d3d_device(get_device(texture)), _texture(texture) {
+trrojan::d3d11::d2d_overlay::d2d_overlay(ID3D11Device *device,
+        IDXGISwapChain *swap_chain)
+        : _d3d_device(device), _swap_chain(swap_chain) {
     assert(this->_d3d_device != nullptr);
-    assert(this->_texture != nullptr);
-    set_debug_object_name(this->_texture.p, "D2D overlay buffer (externally "
-        "provided)");
+    assert(this->_swap_chain != nullptr);
     this->create_target_independent_resources();
-    this->create_target_dependent_resources();
     this->on_resized();
 }
 
 
 /*
- * trrojan::d3d11::d2d_overlay::d2d_overlay
+ * trrojan::d3d11::d2d_overlay::begin_draw
  */
-trrojan::d3d11::d2d_overlay::d2d_overlay(ID3D11Device *device,
-        IDXGISwapChain *swap_chain)
-    : _d3d_device(device),
-        _texture(create_compatible_surface(device, swap_chain)) {
-    assert(this->_d3d_device != nullptr);
-    assert(this->_texture != nullptr);
-    set_debug_object_name(this->_texture.p, "D2D overlay buffer");
-    this->create_target_independent_resources();
-    this->create_target_dependent_resources();
-    this->on_resized();
+void trrojan::d3d11::d2d_overlay::begin_draw(void) {
+    assert(this->_d2d_context != nullptr);
+    assert(this->_drawing_state_block != nullptr);
+    if (this->_d2d_context == nullptr) {
+        throw ATL::CAtlException(E_NOT_VALID_STATE);
+    }
+
+    this->_d2d_context->SaveDrawingState(this->_drawing_state_block);
+    this->_d2d_context->BeginDraw();
 }
 
 
@@ -111,12 +106,12 @@ trrojan::d3d11::d2d_overlay::d2d_overlay(ID3D11Device *device,
  */
 ATL::CComPtr<ID2D1Brush> trrojan::d3d11::d2d_overlay::create_brush(
         const D2D1::ColorF& colour) {
-    if (this->_d2d_target == nullptr) {
+    if (this->_d2d_context == nullptr) {
         throw ATL::CAtlException(E_NOT_VALID_STATE);
     }
 
     ATL::CComPtr<ID2D1Brush> retval;
-    auto hr = this->_d2d_target->CreateSolidColorBrush(colour,
+    auto hr = this->_d2d_context->CreateSolidColorBrush(colour,
         reinterpret_cast<ID2D1SolidColorBrush **>(&retval));
     if (FAILED(hr)) {
         throw ATL::CAtlException(hr);
@@ -172,48 +167,6 @@ ATL::CComPtr<IDWriteTextFormat> trrojan::d3d11::d2d_overlay::create_text_format(
     return retval;
 }
 
-/*
- * trrojan::d3d11::d2d_overlay::draw
- */
-void trrojan::d3d11::d2d_overlay::draw(void) {
-    assert(this->_d3d_device != nullptr);
-    ATL::CComPtr<ID3D11DeviceContext> ctx;
-    this->_d3d_device->GetImmediateContext(&ctx);
-
-    // Configure input.
-    ctx->IASetInputLayout(this->_input_layout);
-    ctx->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-    {
-        ID3D11Buffer *vbs[] = { nullptr };
-        UINT strides[] = { 0 };
-        UINT offsets[] = { 0 };
-        ctx->IASetVertexBuffers(0, 1, vbs, strides, offsets);
-    }
-
-    // Configure shaders.
-    ctx->VSSetShader(this->_vs, nullptr, 0);
-    ctx->DSSetShader(nullptr, nullptr, 0);
-    ctx->HSSetShader(nullptr, nullptr, 0);
-    ctx->GSSetShader(nullptr, nullptr, 0);
-    ctx->PSSetShader(this->_ps, nullptr, 0);
-    ctx->CSSetShader(nullptr, nullptr, 0);
-
-    // Configure shader resources.
-    ctx->PSSetShaderResources(0, 1, &this->_srv.p);
-    ctx->PSSetSamplers(0, 1, &this->_sampler.p);
-
-    // Configure rasteriser.
-    ctx->RSSetState(this->_rasteriser_state);
-
-    // Configure how output merger.
-    ctx->OMSetDepthStencilState(this->_depth_stencil_state.p, 0);
-    ctx->OMSetBlendState(this->_blend_state, nullptr, 0xffffffff);
-
-    // Draw two triangles from nothing.
-    ctx->Draw(4, 0);
-}
-
 
 /*
  * trrojan::d3d11::d2d_overlay::draw_text
@@ -221,6 +174,7 @@ void trrojan::d3d11::d2d_overlay::draw(void) {
 void trrojan::d3d11::d2d_overlay::draw_text(const wchar_t *text,
         IDWriteTextFormat *format, ID2D1Brush *brush,
         const D2D1_RECT_F *layout_rect) {
+    assert(this->_d2d_context != nullptr);
     assert(this->_d2d_target != nullptr);
     auto len = (text != nullptr) ? ::wcslen(text) : 0;
     D2D1_RECT_F rect;
@@ -234,66 +188,40 @@ void trrojan::d3d11::d2d_overlay::draw_text(const wchar_t *text,
         rect = D2D1::RectF(0.0f, 0.0f, size.width, size.height);
     }
 
-    //if (acquireMutexAndinitateDraw) {
-    //    THE_DIRECTX_TRACE_INFO("Acquiring keyed mutex in "
-    //        "dwrite_interop_surface::draw_text...\n");
-    //    hr = this->acquire_direct2d_sync();
-    //    if (FAILED(hr)) {
-    //        THE_DIRECTX_TRACE_AND_THROW(hr, "Acquiring keyed mutex for "
-    //            "Direct2D failed with error code %d.", hr);
-    //    }
-
-    //    renderTarget->BeginDraw();
-    //} /* end if (acquireMutexAndinitateDraw) */
-
-    this->_d2d_target->DrawText(text, static_cast<UINT32>(len), format, rect,
+    this->_d2d_context->DrawText(text, static_cast<UINT32>(len), format, rect,
         brush);
 }
 
 
 /*
- * trrojan::d3d11::d2d_overlay::resize
+ * trrojan::d3d11::d2d_overlay::end_draw
  */
-void trrojan::d3d11::d2d_overlay::resize(const UINT width, const UINT height) {
-    // Preserve the texture description.
-    assert(this->_texture != nullptr);
-    D3D11_TEXTURE2D_DESC desc;
-    this->_texture->GetDesc(&desc);
+void trrojan::d3d11::d2d_overlay::end_draw(void) {
+    assert(this->_d2d_context != nullptr);
 
-    // Release everything that is device dependent. This is necessary, because
-    // for D3D-backed render targets, the D2D target cannot be resized, but must
-    // be recreated. If the target is recreated, all resources need to be
-    // recreated as well.
-    this->on_resize();
-    this->release_target_dependent_resources();
-
-    // Resize the texture.
-    desc.Width = width;
-    desc.Height = height;
-
-    this->_texture = nullptr;
-    auto hr = this->_d3d_device->CreateTexture2D(&desc, nullptr,
-        &this->_texture);
-    if (FAILED(hr)) {
+    auto hr = _d2d_context->EndDraw();
+    if (FAILED(hr) && (hr != D2DERR_RECREATE_TARGET)) {
         throw ATL::CAtlException(hr);
     }
 
-    // Reallocate resources, own and the ones of subclasses.
-    this->create_target_dependent_resources();
-    this->on_resized();
+    this->_d2d_context->RestoreDrawingState(this->_drawing_state_block);
 }
 
 
 /*
  * trrojan::d3d11::d2d_overlay::on_resize
  */
-void trrojan::d3d11::d2d_overlay::on_resize(void) { }
+void trrojan::d3d11::d2d_overlay::on_resize(void) {
+    this->release_target_dependent_resources();
+}
 
 
 /*
  * trrojan::d3d11::d2d_overlay::on_resized
  */
-void trrojan::d3d11::d2d_overlay::on_resized(void) { }
+void trrojan::d3d11::d2d_overlay::on_resized(void) {
+    this->create_target_dependent_resources();
+}
 
 
 /*
@@ -301,22 +229,30 @@ void trrojan::d3d11::d2d_overlay::on_resized(void) { }
  */
 void trrojan::d3d11::d2d_overlay::create_target_dependent_resources(
         IDXGISurface *surface) {
+    assert(this->_d2d_context != nullptr);
     assert(surface != nullptr);
-    assert(this->_d2d_factory != nullptr);
-    assert(this->_d2d_target == nullptr);
-
-    auto pixel_format = D2D1::PixelFormat(DXGI_FORMAT_UNKNOWN,
-        D2D1_ALPHA_MODE_PREMULTIPLIED);
-    auto rt_props  = D2D1::RenderTargetProperties(
-        D2D1_RENDER_TARGET_TYPE_DEFAULT, pixel_format);
 
     {
-        auto hr = this->_d2d_factory->CreateDxgiSurfaceRenderTarget(surface,
-            &rt_props, &this->_d2d_target);
+        auto pixel_format = D2D1::PixelFormat(DXGI_FORMAT_UNKNOWN,
+            D2D1_ALPHA_MODE_PREMULTIPLIED);
+        auto bmp_props = D2D1::BitmapProperties1(
+            D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
+            pixel_format);
+
+        // We force the target to be nullpt here, because during initial resize
+        // of the window, the swap chain resize process is not involved.
+        this->_d2d_target = nullptr;
+        auto hr = this->_d2d_context->CreateBitmapFromDxgiSurface(
+            surface, &bmp_props, &this->_d2d_target);
         if (FAILED(hr)) {
             throw ATL::CAtlException(hr);
         }
+
+        this->_d2d_context->SetTarget(this->_d2d_target);
     }
+
+    this->_d2d_context->SetTextAntialiasMode(
+        D2D1_TEXT_ANTIALIAS_MODE_GRAYSCALE);
 }
 
 
@@ -324,16 +260,12 @@ void trrojan::d3d11::d2d_overlay::create_target_dependent_resources(
  * trrojan::d3d11::d2d_overlay::create_target_dependent_resources
  */
 void trrojan::d3d11::d2d_overlay::create_target_dependent_resources(void) {
+    assert(this->_d2d_context != nullptr);
+    assert(this->_d2d_device != nullptr);
+    assert(this->_d2d_factory != nullptr);
     assert(this->_d3d_device != nullptr);
-    assert(this->_srv == nullptr);
-    assert(this->_texture != nullptr);
-    this->create_target_dependent_resources(get_surface(this->_texture));
-
-    auto hr = this->_d3d_device->CreateShaderResourceView(this->_texture,
-        nullptr, &this->_srv);
-    if (FAILED(hr)) {
-        throw ATL::CAtlException(hr);
-    }
+    auto back_buffer = get_back_buffer(this->_swap_chain);
+    this->create_target_dependent_resources(get_surface(back_buffer));
 }
 
 
@@ -341,15 +273,40 @@ void trrojan::d3d11::d2d_overlay::create_target_dependent_resources(void) {
  * trrojan::d3d11::d2d_overlay::create_target_independent_resources
  */
 void trrojan::d3d11::d2d_overlay::create_target_independent_resources(void) {
-    assert(this->_blend_state == nullptr);
+    assert(this->_d2d_context == nullptr);
+    assert(this->_d2d_device == nullptr);
     assert(this->_d2d_factory == nullptr);
     assert(this->_depth_stencil_state == nullptr);
     assert(this->_dwrite_factory == nullptr);
-    assert(this->_rasteriser_state == nullptr);
 
     {
         auto hr = ::D2D1CreateFactory(D2D1_FACTORY_TYPE_MULTI_THREADED,
-            &this->_d2d_factory);
+            ::IID_ID2D1Factory3,
+            reinterpret_cast<void **>(&this->_d2d_factory));
+        if (FAILED(hr)) {
+            throw ATL::CAtlException(hr);
+        }
+    }
+
+    {
+        auto hr = this->_d2d_factory->CreateDevice(
+            get_device(this->_d3d_device), &this->_d2d_device);
+        if (FAILED(hr)) {
+            throw ATL::CAtlException(hr);
+        }
+    }
+
+    {
+        auto hr = this->_d2d_device->CreateDeviceContext(
+            D2D1_DEVICE_CONTEXT_OPTIONS_NONE, &this->_d2d_context);
+        if (FAILED(hr)) {
+            throw ATL::CAtlException(hr);
+        }
+    }
+
+    {
+        auto hr = this->_d2d_factory->CreateDrawingStateBlock(
+            &this->_drawing_state_block);
         if (FAILED(hr)) {
             throw ATL::CAtlException(hr);
         }
@@ -363,75 +320,6 @@ void trrojan::d3d11::d2d_overlay::create_target_independent_resources(void) {
             throw ATL::CAtlException(hr);
         }
     }
-
-    assert(this->_d3d_device != nullptr);
-    {
-        auto src = d3d11::plugin::load_resource(MAKEINTRESOURCE(100),
-            _T("SHADER"));
-        this->_vs = create_vertex_shader(this->_d3d_device, src);
-        set_debug_object_name(this->_vs.p, "D2D overlay vertex shader");
-        this->_input_layout = nullptr;
-    }
-
-    {
-        auto src = d3d11::plugin::load_resource(MAKEINTRESOURCE(101),
-            _T("SHADER"));
-        this->_ps = create_pixel_shader(this->_d3d_device, src);
-        set_debug_object_name(this->_ps.p, "D2D overlay pixel shader");
-    }
-
-    {
-        D3D11_BLEND_DESC desc;
-        ::ZeroMemory(&desc, sizeof(desc));
-        desc.RenderTarget[0].BlendEnable = TRUE;
-        desc.RenderTarget[0].SrcBlend = D3D11_BLEND_ONE;
-        desc.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
-        desc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
-        desc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
-        desc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_INV_SRC_ALPHA;
-        desc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
-        desc.RenderTarget[0].RenderTargetWriteMask
-            = D3D11_COLOR_WRITE_ENABLE_ALL;
-
-        auto hr = this->_d3d_device->CreateBlendState(&desc,
-            &this->_blend_state);
-        if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
-        }
-        set_debug_object_name(this->_blend_state.p, "D2D overlay blend state");
-    }
-
-    {
-        D3D11_RASTERIZER_DESC desc;
-        ::ZeroMemory(&desc, sizeof(desc));
-
-        // Default state works for now.
-        //auto hr = this->_d3d_device->CreateRasterizerState(&desc,
-        //    &this->_rasteriser_state);
-        //if (FAILED(hr)) {
-        //    throw ATL::CAtlException(hr);
-        //}
-    }
-
-    {
-        D3D11_DEPTH_STENCIL_DESC desc;
-        ::ZeroMemory(&desc, sizeof(desc));
-
-        desc.DepthEnable = FALSE;
-        desc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
-        desc.DepthFunc = D3D11_COMPARISON_GREATER;
-        desc.StencilEnable = FALSE;
-
-        auto hr = this->_d3d_device->CreateDepthStencilState(&desc,
-            &this->_depth_stencil_state);
-        if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
-        }
-        set_debug_object_name(this->_depth_stencil_state.p, "D2D overlay "
-            "depth/stencil state");
-    }
-
-    this->_sampler = create_linear_sampler(this->_d3d_device);
 }
 
 
@@ -439,6 +327,6 @@ void trrojan::d3d11::d2d_overlay::create_target_independent_resources(void) {
  * trrojan::d3d11::d2d_overlay::release_target_dependent_resources
  */
 void trrojan::d3d11::d2d_overlay::release_target_dependent_resources(void) {
+    this->_d2d_context->SetTarget(nullptr);
     this->_d2d_target = nullptr;
-    this->_srv = nullptr;
 }

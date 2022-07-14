@@ -11,7 +11,7 @@
 
 #include <Windows.h>
 #include <atlbase.h>
-#include <d2d1.h>
+#include <d2d1_3.h>
 #include <d3d11.h>
 #include <dwrite.h>
 
@@ -24,8 +24,8 @@ namespace trrojan {
 namespace d3d11 {
 
     /// <summary>
-    /// A D2D render target based on a D3D11 texture that can be used to
-    /// produce a 2D overlay.
+    /// A D2D render target that can be used to produce a 2D overlay on a
+    /// DXGI swap chain.
     /// </summary>
     /// <remarks>
     /// <para>There are two ways of using this class: The first one is
@@ -54,13 +54,6 @@ namespace d3d11 {
         static ATL::CComPtr<IDWriteFont> get_font(IDWriteTextFormat *format);
 
         /// <summary>
-        /// Initialises a new isntance using the specified texture as render
-        /// target.
-        /// </summary>
-        /// <param name="texture"></param>
-        d2d_overlay(ID3D11Texture2D *texture);
-
-        /// <summary>
         /// Initialises an overlay for the given swap chain.
         /// </summary>
         /// <param name="device"></param>
@@ -74,18 +67,15 @@ namespace d3d11 {
         /// <summary>
         /// Begin drawing 2D content.
         /// </summary>
-        inline void begin_draw(void) {
-            assert(this->_d2d_target != nullptr);
-            this->_d2d_target->BeginDraw();
-        }
+        void begin_draw(void);
 
         /// <summary>
         /// Clears the 2D content.
         /// </summary>
         /// <param name=""></param>
         inline void clear(void) {
-            assert(this->_d2d_target != nullptr);
-            this->_d2d_target->Clear(D2D1::ColorF(0.0f, 0.0f, 0.0f, 0.0f));
+            assert(this->_d2d_context != nullptr);
+            this->_d2d_context->Clear(D2D1::ColorF(0.0f, 0.0f, 0.0f, 0.0f));
         }
 
         /// <summary>
@@ -111,11 +101,6 @@ namespace d3d11 {
             const DWRITE_FONT_STYLE font_style = DWRITE_FONT_STYLE_NORMAL,
             const DWRITE_FONT_STRETCH font_stretch = DWRITE_FONT_STRETCH_NORMAL,
             const wchar_t *locale_name = nullptr);
-
-        /// <summary>
-        /// Draws the overlay on the currently active render target.
-        /// </summary>
-        void draw(void);
 
         /// <summary>
         /// Draws text on the overlay.
@@ -191,10 +176,7 @@ namespace d3d11 {
         /// <summary>
         /// End drawing 2D content.
         /// </summary>
-        inline void end_draw(void) {
-            assert(this->_d2d_target != nullptr);
-            this->_d2d_target->EndDraw();
-        }
+        void end_draw(void);
 
         /// <summary>
         /// Gets the Direct2D factory used to create the overlay.
@@ -213,46 +195,42 @@ namespace d3d11 {
         }
 
         /// <summary>
-        /// Resize the render target to the specified dimensions.
+        /// Releases all resources depending on the render target/swap chain
+        /// before the swap chain is resized.
         /// </summary>
-        /// <param name="width"></param>
-        /// <param name="height"></param>
-        void resize(const UINT width, const UINT height);
+        /// <remarks>
+        /// Subclasses must release all resources depending on the render target
+        /// in this method. Subclasses must make sure to call the parent
+        /// implementation.
+        /// </remarks>
+        virtual void on_resize(void);
+
+        /// <summary>
+        /// (Re-) Creates rendering resources after the swap chain was resized.
+        /// </summary>
+        /// <remarks>
+        /// Subclasses must (re-) create all resources depending on the render
+        ///  target in this method. Subclasses must make sure to call the parent
+        /// implementation.
+        /// </remarks>
+        virtual void on_resized(void);
 
         /// <summary>
         /// Sets the 2D transformation to be the identity matrix.
         /// </summary>
         void set_identity_transform(void) {
             assert(this->_d2d_target != nullptr);
-            this->_d2d_target->SetTransform(D2D1::IdentityMatrix());
+            this->_d2d_context->SetTransform(D2D1::IdentityMatrix());
         }
 
         d2d_overlay& operator =(const d2d_overlay& rhs) = delete;
 
         /// <summary>
-        /// Gets the render target of the overlay.
+        /// Gets the Direct2D context.
         /// </summary>
-        inline operator ATL::CComPtr<ID2D1RenderTarget>(void) {
-            return this->_d2d_target;
+        inline operator ATL::CComPtr<ID2D1DeviceContext2>(void) {
+            return this->_d2d_context;
         }
-
-    protected:
-
-        /// <summary>
-        /// Subclasses must release all resources obtained from the render
-        /// target in this method, which is called before the render target
-        /// is recreated for resizing.
-        /// </summary>
-        virtual void on_resize(void);
-
-        /// <summary>
-        /// Subclasses can allocate resources obtained from the render target.
-        /// </summary>
-        /// <remarks>
-        /// This method will be called on creation of and after resizing the
-        /// render target.
-        /// </remarks>
-        virtual void on_resized(void);
 
     private:
 
@@ -264,19 +242,15 @@ namespace d3d11 {
 
         void release_target_dependent_resources(void);
 
-        ATL::CComPtr<ID3D11BlendState> _blend_state;
-        ATL::CComPtr<ID2D1Factory> _d2d_factory;
-        ATL::CComPtr<ID2D1RenderTarget> _d2d_target;
+        ATL::CComPtr<ID2D1DeviceContext2> _d2d_context;
+        ATL::CComPtr<ID2D1Device2> _d2d_device;
+        ATL::CComPtr<ID2D1Factory3> _d2d_factory;
+        ATL::CComPtr<ID2D1Bitmap1> _d2d_target;
         ATL::CComPtr<ID3D11Device> _d3d_device;
         ATL::CComPtr<ID3D11DepthStencilState> _depth_stencil_state;
+        ATL::CComPtr<ID2D1DrawingStateBlock1> _drawing_state_block;
         ATL::CComPtr<IDWriteFactory> _dwrite_factory;
-        ATL::CComPtr<ID3D11InputLayout> _input_layout;
-        ATL::CComPtr<ID3D11SamplerState> _sampler;
-        ATL::CComPtr<ID3D11PixelShader> _ps;
-        ATL::CComPtr<ID3D11RasterizerState> _rasteriser_state;
-        ATL::CComPtr<ID3D11ShaderResourceView> _srv;
-        ATL::CComPtr<ID3D11Texture2D> _texture;
-        ATL::CComPtr<ID3D11VertexShader> _vs;
+        ATL::CComPtr<IDXGISwapChain> _swap_chain;
     };
 }
 }
