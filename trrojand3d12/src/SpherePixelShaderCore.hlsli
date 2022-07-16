@@ -43,7 +43,15 @@ PsOutput Main(PsInput input/*, bool isFront : SV_IsFrontFace*/) {
     //} else {
     //    retval.Colour = float4(0.0, 6.0, 0.0, 1.0);
     //}
-    retval.Colour = float4(1.0, 1.0f, 0.0f, 1.0f);
+    //retval.Colour = float4(1.0, 1.0f, 0.0f, 1.0f);
+
+#if defined(PER_PIXEL_INTENSITY)
+    retval.Colour = TransferFunction.SampleLevel(LinearSampler,
+        TexCoordsFromIntensity(input.Intensity, IntensityRange), 0);
+#else /* defined(PER_PIXEL_INTENSITY) */
+    retval.Colour = input.Colour;
+#endif /* defined(PER_PIXEL_INTENSITY) */
+
     return retval;
 #endif
 

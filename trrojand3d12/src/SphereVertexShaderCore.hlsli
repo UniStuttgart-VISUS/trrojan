@@ -151,6 +151,13 @@ VsOutput Main(VsInput input) {
     ReconstructCamera(retval.CameraPosition, retval.CameraDirection,
         retval.CameraUp, retval.CameraRight, invVm);
 
+    // Account for contact point of rays being potentially before the
+    // centre of the sphere.
+    float3 v = pos - retval.CameraPosition.xyz;
+    float lv = length(v);
+    float dv = (rad * rad) / lv;
+    retval.Position.xyz -= dv * (v / lv);
+
     // Orient the sprite towards the camera.
     float4x4 matOrient = OrientToCamera(pos, invVm);
     retval.Position = mul(retval.Position, matOrient);

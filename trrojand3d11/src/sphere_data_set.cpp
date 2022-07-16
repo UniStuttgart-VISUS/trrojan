@@ -158,7 +158,8 @@ std::pair<float, float> trrojan::d3d11::sphere_data_set_base::clipping_planes(
     nearPlane -= radius;
     farPlane += radius;
 
-    if (nearPlane < 0.0f) {
+    // TODO: Near does not work as above.
+    if (true || nearPlane < 0.0f) {
         // Plane could become negative in data set, which is illegal. A range of
         // 10k seems to be something our shaders can still handle.
         nearPlane = farPlane / 10000.0f;

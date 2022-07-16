@@ -1065,7 +1065,8 @@ void trrojan::d3d12::sphere_benchmark_base::on_device_switch(device& device) {
  */
 void trrojan::d3d12::sphere_benchmark_base::set_clipping_planes(void) {
     const auto& camPos = this->_camera.get_look_from();
-    const auto& view = glm::normalize(this->_camera.get_look_to() - camPos);
+    const auto& lookAt = this->_camera.get_look_to();
+    const auto& view = glm::normalize(lookAt - camPos);
 
     auto far_plane = std::numeric_limits<float>::lowest();
     auto near_plane = (std::numeric_limits<float>::max)();
@@ -1090,7 +1091,8 @@ void trrojan::d3d12::sphere_benchmark_base::set_clipping_planes(void) {
     near_plane -= this->_max_radius;
     far_plane += this->_max_radius;
 
-    if (near_plane < 0.0f) {
+    // TODO: Near does not work as above.
+    if (true||near_plane < 0.0f) {
         // Plane could become negative in data set, which is illegal. A range of
         // 10k seems to be something our shaders can still handle.
         near_plane = far_plane / 10000.0f;
@@ -1099,7 +1101,7 @@ void trrojan::d3d12::sphere_benchmark_base::set_clipping_planes(void) {
     //far_plane *= 1.1f;
 
     log::instance().write_line(log_level::debug, "Dynamic clipping planes are "
-        "located at %f and %f.", near_plane, far_plane);
+        "located at {} and {}.", near_plane, far_plane);
     this->_camera.set_near_plane_dist(near_plane);
     this->_camera.set_far_plane_dist(far_plane);
 }
@@ -1153,6 +1155,9 @@ trrojan::d3d12::sphere_benchmark_base::set_descriptors(
         log::instance().write_line(log_level::debug, "Rendering technique uses "
             "per-pixel colouring. Setting transfer function as t0.");
         tables.push_back(gpu_handle);
+
+        device->CreateShaderResourceView(this->_colour_map, nullptr,
+            cpu_handle);
 
         cpu_handle.ptr += increment;
         gpu_handle.ptr += increment;
