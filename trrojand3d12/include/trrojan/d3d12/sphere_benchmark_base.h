@@ -248,6 +248,19 @@ namespace d3d12 {
         sphere_benchmark_base(const std::string& name);
 
         /// <summary>
+        /// Updates the field of view and the aspect ratio of the current view port
+        /// and then computes the clipping planes for the current data set
+        /// properties and applies them to <see cref="_camera" />.
+        /// </summary>
+        /// <param name="config">The configuration from which the manoeuvre is
+        /// retrieved from.</param>
+        /// <param name="fovy">The field of view on the y-axis in degrees, which
+        /// will be applied on the camera. This parameter defaults to 60
+        /// degrees.</param>
+        void configure_camera(const configuration& config,
+            const float fovy = 60.0f);
+
+        /// <summary>
         /// Create a shader resource view for the colour map.
         /// </summary>
         /// <param name="device"></param>
@@ -441,12 +454,6 @@ namespace d3d12 {
         /// </summary>
         /// <param name="device"></param>
         virtual void on_device_switch(device& device) override;
-
-        /// <summary>
-        /// Computes the clipping planes for the current data set properties and
-        /// applies them to <see cref="_camera" />.
-        /// </summary>
-        void set_clipping_planes(void);
 
         /// <summary>
         /// Applies the descriptors for the current data set and camera

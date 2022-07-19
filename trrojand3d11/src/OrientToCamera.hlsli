@@ -1,8 +1,8 @@
-/// <copyright file="OrientToCamera.hlsli" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Christoph Müller</author>
+// <copyright file="OrientToCamera.hlsli" company="Visualisierungsinstitut der UniversitÃ¤t Stuttgart">
+// Copyright Â© 2016 - 2022 Visualisierungsinstitut der UniversitÃ¤t Stuttgart. Alle Rechte vorbehalten.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Christoph MÃ¼ller</author>
 
 
 /// <summary>
@@ -15,29 +15,20 @@
 /// <returns>A matrix orienting the sprite towards the camera.</returns>
 float4x4 OrientToCamera(const in float3 objPos,
         const in float4x4 viewInvMatrix) {
-    float3 camPos = viewInvMatrix._41_42_43;
-    float3 camDir = viewInvMatrix._21_22_23;
+    float3 camPos = viewInvMatrix._14_24_34;
+    float3 camUp = viewInvMatrix._12_22_32;
 
     float3 v = normalize(objPos - camPos);
-    float3 u = normalize(camDir);
+    float3 u = normalize(camUp);
     float3 r = normalize(cross(v, u));
     u = normalize(cross(r, v));
 
-    float4x4 retval = float4x4(
-        float4(r, 0.0f),
-        float4(u, 0.0f),
-        float4(v, 0.0f),
-        float4(0.0f.xxx, 1.0f));
-
-#if 0
     // http://richiesams.blogspot.de/2014/05/hlsl-turning-float4s-into-float4x4.html
-    // Hemisphere-hack:
-    float4x4 matOrient = float4x4(
-        float4(r, 0.0f),
-        -float4(v, 0.0f),
-        float4(u, 0.0f),
-        float4(0.0f.xxx, 1.0f));
-#endif
+    float4x4 retval = float4x4(
+        r.x, u.x, v.x, 0.0f,
+        r.y, u.y, v.y, 0.0f,
+        r.z, u.z, v.z, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f);
 
     return retval;
 }

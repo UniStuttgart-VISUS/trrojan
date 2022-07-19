@@ -119,6 +119,15 @@ public:
     void set_far_plane_dist(float distance);
     float get_far_plane_dist() const;
 
+    /// <summary>
+    /// Compute the projection matrix with a NDC z-range of [0, 1].
+    /// </summary>
+    /// <remarks>
+    /// This is the kind of matrix you want to use for the standard D3D graphics
+    /// pipeline.
+    /// </remarks>
+    virtual glm::mat4 calc_projection_mxz0(void) const = 0;
+
     const mat4& get_view_mx() const;
     const mat4& get_projection_mx() const;
     const mat4& get_inverse_view_mx() const;
@@ -210,6 +219,9 @@ public:
     virtual float get_aspect_ratio() const override;
     virtual void set_aspect_ratio(float val) override;
 
+    /// <inheritdoc />
+    glm::mat4 calc_projection_mxz0(void) const override;
+
     void set_from_maneuver(const std::string &name, const glm::vec3 bbox_min,
                            const glm::vec3 bbox_max, const int iteration, const int samples);
 protected:
@@ -242,7 +254,10 @@ public:
     virtual float get_aspect_ratio() const override;
     virtual void set_aspect_ratio(float val) override;
 
-    void set_from_maneuver(const std::string &name, const glm::vec3 bbox_min,
+    /// <inheritdoc />
+    glm::mat4 calc_projection_mxz0(void) const override;
+
+    void set_from_maneuver(const std::string& name, const glm::vec3 bbox_min,
                            const glm::vec3 bbox_max, const int iteration, const int samples);
 protected:
     virtual mat4 calc_projection_mx() const override;
@@ -322,6 +337,7 @@ inline void perspective_camera::set_aspect_ratio(float val) {
     _aspect_ratio = val;
     invalidate_projection_mx();
 }
+
 
 inline mat4 perspective_camera::calc_projection_mx() const
 {

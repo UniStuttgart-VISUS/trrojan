@@ -386,30 +386,25 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
         this->cam.set_far_plane_dist(clipping.second);
 
         // Retrieve the matrices.
-        auto mat = DirectX::XMFLOAT4X4(
-            glm::value_ptr(this->cam.get_projection_mx()));
-        auto projection = DirectX::XMLoadFloat4x4(&mat);
-        DirectX::XMStoreFloat4x4(viewConstants.ProjMatrix,
-            DirectX::XMMatrixTranspose(projection));
+        auto projection = this->cam.calc_projection_mxz0();
+        viewConstants.ProjMatrix[0] = DirectX::XMFLOAT4X4(
+            glm::value_ptr(projection));
 
-        mat = DirectX::XMFLOAT4X4(glm::value_ptr(this->cam.get_view_mx()));
-        auto view = DirectX::XMLoadFloat4x4(&mat);
-        DirectX::XMStoreFloat4x4(viewConstants.ViewMatrix,
-            DirectX::XMMatrixTranspose(view));
+        auto &view = this->cam.get_view_mx();
+        viewConstants.ViewMatrix[0] = DirectX::XMFLOAT4X4(
+            glm::value_ptr(view));
 
-        auto viewDet = DirectX::XMMatrixDeterminant(view);
-        auto viewInv = DirectX::XMMatrixInverse(&viewDet, view);
-        DirectX::XMStoreFloat4x4(viewConstants.ViewInvMatrix,
-            DirectX::XMMatrixTranspose(viewInv));
+        auto viewInv = glm::inverse(view);
+        viewConstants.ViewInvMatrix[0] = DirectX::XMFLOAT4X4(
+            glm::value_ptr(viewInv));
 
-        auto viewProj = view * projection;
-        DirectX::XMStoreFloat4x4(viewConstants.ViewProjMatrix,
-            DirectX::XMMatrixTranspose(viewProj));
+        auto viewProj = projection * view;
+        viewConstants.ViewProjMatrix[0] = DirectX::XMFLOAT4X4(
+            glm::value_ptr(viewProj));
 
-        auto viewProjDet = DirectX::XMMatrixDeterminant(viewProj);
-        auto viewProjInv = DirectX::XMMatrixInverse(&viewProjDet, viewProj);
-        DirectX::XMStoreFloat4x4(viewConstants.ViewProjInvMatrix,
-            DirectX::XMMatrixTranspose(viewProjInv));
+        auto viewProjInv = glm::inverse(viewProj);
+        viewConstants.ViewProjInvMatrix[0] = DirectX::XMFLOAT4X4(
+            glm::value_ptr(viewProjInv));
     }
 
     // Set tessellation constants.

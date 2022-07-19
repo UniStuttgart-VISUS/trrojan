@@ -134,12 +134,12 @@ VsOutput Main(VsInput input) {
     retval.Position = float4(input.Position, 1.0f);
     retval.Position.xyz *= rad;
     retval.Position.xyz += pos.xyz;
-    retval.Position = mul(retval.Position, mvp);
+    retval.Position = mul(mvp, retval.Position);
 
     // Retrieve data for later shading.
     retval.WorldPosition = input.Position.xyz;
     retval.WorldNormal = input.Normal;
-    retval.ViewDirection = normalize(invVm._31_32_33);
+    retval.ViewDirection = normalize(invVm._13_23_33);
 
 #elif defined(INSTANCING)
     /*
@@ -151,33 +151,33 @@ VsOutput Main(VsInput input) {
     ReconstructCamera(retval.CameraPosition, retval.CameraDirection,
         retval.CameraUp, retval.CameraRight, invVm);
 
-    // Account for contact point of rays being potentially before the
-    // centre of the sphere.
-    float3 v = pos - retval.CameraPosition.xyz;
-    float lv = length(v);
-    float dv = (rad * rad) / lv;
-    retval.Position.xyz -= dv * (v / lv);
+    //// Account for contact point of rays being potentially before the
+    //// centre of the sphere.
+    //float3 v = pos - retval.CameraPosition.xyz;
+    //float lv = length(v);
+    //float dv = (rad * rad) / lv;
+    //retval.Position.xyz -= dv * (v / lv);
 
     // Orient the sprite towards the camera.
     float4x4 matOrient = OrientToCamera(pos, invVm);
-    retval.Position = mul(retval.Position, matOrient);
+    retval.Position = mul(matOrient, retval.Position);
 
     // Move sprite to world position.
     retval.Position.xyz += pos;
-    retval.Position.xyz -= rad * matOrient._31_32_33;
+    retval.Position.xyz -= matOrient._13_23_33 * rad;
+
+#if defined(PER_VERTEX_RAY)
+    retval.Ray = retval.Position.xyz - retval.CameraPosition.xyz;
+#endif /* defined(PER_VERTEX_RAY) */
 
     // Do the camera transform.
-    retval.Position = mul(retval.Position, mvp);
+    retval.Position = mul(mvp, retval.Position);
 
     // Transform camera to glyph space.
     retval.CameraPosition.xyz -= pos;
 
     // Pass on world-space parameters for raycasting.
     retval.SphereParams = float4(pos, rad);
-
-#if defined(PER_VERTEX_RAY)
-    retval.Ray = pos.xyz - retval.CameraPosition.xyz;
-#endif /* defined(PER_VERTEX_RAY) */
 
 #else /* defined(SPHERE_INST) */
     /* Pass through data to geometry or hull shader. */

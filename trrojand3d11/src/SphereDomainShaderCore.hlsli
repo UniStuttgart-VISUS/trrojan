@@ -1,8 +1,8 @@
-/// <copyright file="SphereDomainShaderCore.hlsli" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Christoph Müller</author>
+// <copyright file="SphereDomainShaderCore.hlsli" company="Visualisierungsinstitut der UniversitÃ¤t Stuttgart">
+// Copyright Â© 2016 - 2022 Visualisierungsinstitut der UniversitÃ¤t Stuttgart. Alle Rechte vorbehalten.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Christoph MÃ¼ller</author>
 
 #include "LocalLighting.hlsli"
 #include "OrientToCamera.hlsli"
@@ -58,28 +58,30 @@ PsInput Main(OutputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
     /* Move vertices to locations on sprite. */
 
     // Reconstruct the camera system for the pixel shader.
-    ReconstructCamera(retval.CameraPosition, retval.CameraDirection,
+    float4 camPos;
+    ReconstructCamera(camPos, retval.CameraDirection,
         retval.CameraUp, retval.CameraRight, vmInv);
 
     // Pass through sphere parameters.
     retval.SphereParams = patch[0].SphereParams;
 
 #if defined(QUAD_TESS)
+    // Create a quad sprite.
     float4 coords = float4(uv.xy, 0.0f, 1.0f);
     coords.xy -= 0.5f.xx;
     coords.xy *= 2.0f * rad;
 
 #else /* defined(QUAD_TESS) */
-    // If we use the radius of the sphere as size of the triangle fan, its hull
-    // are the secants of the final sphere, but we need to have the tangent.
-    // Adjust the value such that the radius is equal to the altitude (apothem)
-    // of the triangle.
+    // Create a polygon sprite. If we use the radius of the sphere as size of
+    // the triangle fan here, its hull are the secants of the final sphere, but
+    // we need to have the tangent. Adjust the value such that the radius is
+    // equal to the altitude (apothem) of the triangle.
     float alpha = TWO_PI / (2.0f * constants.EdgeTessFactor[0]);
     rad /= cos(alpha);
     //rad /= 0.9999398715340;
 
     // Compute polar coordinates for the fan around the sphere.
-    float phi = TWO_PI * uv.x;
+    float phi = TWO_PI * uv.y;
     float sinPhi, cosPhi;
     sincos(phi, sinPhi, cosPhi);
     float4 coords = float4(rad * cosPhi, rad * sinPhi, 0.0f, 1.0f);
@@ -88,20 +90,20 @@ PsInput Main(OutputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
 
     // Orient the sprite towards the camera.
     float4x4 matOrient = OrientToCamera(pos, vmInv);
-    coords = mul(coords, matOrient);
+    coords = mul(matOrient, coords);
 
     // Move sprite to world position.
     coords.xyz += pos;
-    coords.xyz -= rad * matOrient._31_32_33;
+    coords.xyz -= rad * matOrient._13_23_33;
 
     // Perform projection.
-    retval.Position = mul(coords, mvp);
+    retval.Position = mul(mvp, coords);
 
     // Transform camera to glyph space.
-    retval.CameraPosition.xyz -= pos.xyz;
+    retval.CameraPosition.xyz = camPos.xyz - pos.xyz;
 
 #if defined(PER_VERTEX_RAY)
-    retval.Ray = normalize(coords.xyz - retval.CameraPosition.xyz);
+    retval.Ray = coords.xyz - camPos.xyz;
 #endif /* defined(PER_VERTEX_RAY) */
 
 #else
@@ -130,21 +132,18 @@ PsInput Main(OutputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
         1.0f);
 
 #if (defined(HEMISPHERE_TESS) || defined(ADAPT_HEMISPHERE_TESS))
-    // Orient the hemisphere towards the camera.
-    float3 v = normalize(pos - camPos.xyz);
-    float3 u = normalize(vmInv._21_22_23);
+    // Orient the hemisphere towards the camera. This is NOT the same as in
+    // OrientToCamera, because the hemisphere is initially in the xz plane!
+    float3 v = normalize(camPos.xyz - pos);
+    float3 u = -normalize(vmInv._12_22_32);
     float3 r = normalize(cross(v, u));
     u = normalize(cross(r, v));
     float4x4 matOrient = float4x4(
-        float4(r, 0.0f),
-        -float4(v, 0.0f),
-        -float4(u, 0.0f),
-        float4(0.0f.xxx, 1.0f));
-    //float4x4 matOrient = OrientToCamera(pos, invVm);
-    //float4 v = matOrient._31_32_33_34;
-    //matOrient._31_32_33_34 = matOrient._21_22_23_24;
-    //matOrient._21_22_23_24 = -v;
-    coords = mul(coords, matOrient);
+        r.x, v.x, u.x, 0.0f,
+        r.y, v.y, u.y, 0.0f,
+        r.z, v.z, u.z, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f);
+    coords = mul(matOrient, coords);
 #endif /* (defined(HEMISPHERE_TESS) || defined(ADAPT_HEMISPHERE_TESS)) */
 
     // Sphere coordinates and normal are the same.
@@ -152,11 +151,11 @@ PsInput Main(OutputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
 
     // Move the sphere to the right location.
     coords.xyz += pos;
-    coords = mul(coords, vm);
+    coords = mul(vm, coords);
     //retval.WorldPosition = coords.xyz;
 
     // Project the vertices.
-    retval.Position = mul(coords, pm);
+    retval.Position = mul(pm, coords);
 #endif /* defined(RAYCASTING) */
 
     // Pass through intensity or colour.
