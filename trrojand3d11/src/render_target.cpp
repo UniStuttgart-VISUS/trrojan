@@ -211,7 +211,9 @@ void trrojan::d3d11::render_target_base::set_back_buffer(
     viewport.TopLeftY = 0.0f;
     viewport.Width = static_cast<float>(texDesc.Width);
     viewport.Height = static_cast<float>(texDesc.Height);
-    viewport.MinDepth = 0.0f;
+    // Note: from a numerical precision stand point, it is unreasonable to have
+    // the NDC start on -1, but this is what the camera uses.
+    viewport.MinDepth = -1.0f;
     viewport.MaxDepth = 1.0f;
 
     this->_device_context->RSSetViewports(1, &viewport);

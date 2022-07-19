@@ -24,8 +24,10 @@ set(ShaderFiles ${VertexShaderFiles} ${DomainShaderFiles} ${HullShaderFiles} ${G
 
 # Configure fxc
 set_property(SOURCE ${ShaderFiles} PROPERTY VS_SHADER_ENTRYPOINT Main)
-set_property(SOURCE ${ShaderFiles} PROPERTY VS_SHADER_MODEL 5.1)
-set_property(SOURCE ${ShaderFiles} PROPERTY VS_SHADER_FLAGS /Zi)
+set_property(SOURCE ${ShaderFiles} PROPERTY VS_SHADER_MODEL 6.0)
+#set_property(SOURCE ${ShaderFiles} PROPERTY VS_SHADER_FLAGS /Zi)
+set_property(SOURCE ${ShaderFiles} PROPERTY VS_SHADER_ENABLE_DEBUG On)
+set_property(SOURCE ${ShaderFiles} PROPERTY VS_SHADER_FLAGS /Qembed_debug)
 set_property(SOURCE ${ShaderFiles} PROPERTY VS_SHADER_OBJECT_FILE_NAME "$(OutDir)d3d12\\%(Filename).cso")
 
 # Configure shader types

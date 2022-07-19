@@ -71,10 +71,10 @@ HsConstants CalcConstants(InputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
     float4x4 mvp = ViewProjMatrix[eye];
 
     float4 pos = float4(patch[0].SphereParams.xyz, 1.0f);
-    pos = mul(pos, mvp);
+    pos = mul(mvp, pos);
 
     float4 rad = float4(patch[0].SphereParams.w, 0.f, 0.f, 1.f);
-    rad = mul(rad, vm);
+    rad = mul(vm, rad);
 
     float tessFactor = clamp(
         length(rad) / pos.w * pm._11 * AdaptiveTessScale,
@@ -96,10 +96,10 @@ HsConstants CalcConstants(InputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
     float4x4 mvp = ViewProjMatrix[eye];
 
     float4 pos = float4(patch[0].SphereParams.xyz, 1.0f);
-    pos = mul(pos, mvp);
+    pos = mul(mvp, pos);
 
     float4 rad = float4(patch[0].SphereParams.w, 0.f, 0.f, 1.f);
-    rad = mul(rad, vm);
+    rad = mul(vm, rad);
 
     // using w-value that is equal to the z-component prior to the projection
     float tessFactor = clamp(

@@ -85,11 +85,7 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
         this->get_data_properties(shader_code));
 
     // As we have the data, we can also configure the camera now.
-    this->_camera.set_fovy(60.0f);
-    this->set_aspect_from_viewport(this->_camera);
-    sphere_benchmark::apply_manoeuvre(this->_camera, config,
-        this->get_bbox_start(), this->get_bbox_end());
-    this->set_clipping_planes();
+    this->configure_camera(config);
 
     // Prepare the descriptor heaps required for the requested technique and
     // data set. Note that create_descriptor_heap will access the data

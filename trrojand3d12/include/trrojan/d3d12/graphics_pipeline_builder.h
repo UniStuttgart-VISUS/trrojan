@@ -364,6 +364,16 @@ namespace d3d12 {
             return *this;
         }
 
+        inline graphics_pipeline_builder& set_two_sided(
+                const bool two_sided = true) {
+            auto& so = this->get_value<
+                CD3DX12_PIPELINE_STATE_STREAM_RASTERIZER>();
+            so.CullMode = two_sided
+                ? D3D12_CULL_MODE_NONE
+                : D3D12_CULL_MODE_BACK;
+            return *this;
+        }
+
         inline graphics_pipeline_builder& set_vertex_shader(
                 const BYTE *byte_code,
                 const std::size_t cnt_byte_code) {

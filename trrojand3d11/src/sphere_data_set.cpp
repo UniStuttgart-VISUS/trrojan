@@ -8,6 +8,7 @@
 
 #include <mmpld.h>
 
+#include "trrojan/clipping.h"
 #include "trrojan/log.h"
 
 #include "sphere_techniques.h"
@@ -131,11 +132,19 @@ trrojan::d3d11::sphere_data_set_base::centre(void) const {
  */
 std::pair<float, float> trrojan::d3d11::sphere_data_set_base::clipping_planes(
         const camera& cam, const float globalRadius) const {
-    const auto& camPos = cam.get_look_from();
+    //point_type bbox[2];
+    //const auto radius = ((this->_properties & property_per_sphere_radius) != 0)
+    //    ? this->max_radius()
+    //    : globalRadius;
+
+    //this->bounding_box(bbox[0], bbox[1]);
+    //return trrojan::calc_clipping_planes(cam, bbox, radius);
+
+    const auto &camPos = cam.get_look_from();
     const auto radius = ((this->_properties & property_per_sphere_radius) != 0)
         ? this->max_radius()
         : globalRadius;
-    const auto& view = glm::normalize(cam.get_look_to() - camPos);
+    const auto &view = glm::normalize(cam.get_look_to() - camPos);
 
     point_type bbox[2];
     auto farPlane = std::numeric_limits<float>::lowest();

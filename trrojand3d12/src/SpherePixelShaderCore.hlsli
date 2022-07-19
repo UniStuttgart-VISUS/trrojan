@@ -43,7 +43,7 @@ PsOutput Main(PsInput input/*, bool isFront : SV_IsFrontFace*/) {
     //} else {
     //    retval.Colour = float4(0.0, 6.0, 0.0, 1.0);
     //}
-    //retval.Colour = float4(1.0, 1.0f, 0.0f, 1.0f);
+    retval.Colour = float4(1.0, 1.0f, 0.0f, 1.0f);
 
 #if defined(PER_PIXEL_INTENSITY)
     retval.Colour = TransferFunction.SampleLevel(LinearSampler,
@@ -84,24 +84,30 @@ PsOutput Main(PsInput input/*, bool isFront : SV_IsFrontFace*/) {
 #if defined(PER_VERTEX_RAY)
     ray = input.Ray;
 #else /* defined(PER_VERTEX_RAY) */
-    // transform fragment coordinates from window coordinates to view coordinates.
+    // Transform fragment coordinates from window coordinates to view
+    // coordinates.
     input.Position.y = Viewport.w - input.Position.y;
     coord = input.Position
         * float4(2.0 / Viewport.z, 2.0 / Viewport.w, 1.0, 0.0)
         + float4(-1.0, -1.0, 0.0, 1.0);
 
-    // transform fragment coordinates from view coordinates to object coordinates.
-    coord = mul(coord, ViewProjInvMatrix[eye]);
+    // Transform fragment coordinates from view coordinates to object
+    // coordinates...
+    coord = mul(ViewProjInvMatrix[eye], coord);
     coord /= coord.w;
-    coord -= objPos; // ... and to glyph space
+    // ... and to glyph space.
+    coord -= objPos;
 
-                     // calc the viewing ray
+    // Compute the viewing ray.
     ray = coord.xyz - camPos.xyz;
 #endif /* defined(PER_VERTEX_RAY) */
     ray = normalize(ray);
 
-    //retval.Colour = float4(ray, 1.0f);
-    //return retval;
+//#define DEBUG_RAY
+#if defined(DEBUG_RAY)
+    retval.Colour = float4(ray, 1.0f);
+    return retval;
+#endif /* defined(DEBUG_RAY) */
 
     // calculate the geometry-ray-intersection
     float d1 = -dot(camPos.xyz, ray);                       // projected length of the cam-SphereParams-vector onto the ray
@@ -110,11 +116,12 @@ PsOutput Main(PsInput input/*, bool isFront : SV_IsFrontFace*/) {
     lambda = d1 - sqrt(radicand);                           // lambda
 
     if ((radicand < 0.0f) || (lambda < 0.0f)) {
+//#define FILL_BILLBOARD
+#if defined(FILL_BILLBOARD)
+        retval.Colour = 0.8.xxxx;
+#else /* defined(FILL_BILLBOARD) */
         discard;
-        //retval.Colour = 0.8.xxxx;
-        retval.Colour = float4(1.0f, 0.0f, 0.0f, 1.0f);
-        //retval.Depth = input.Position.z;
-        return retval;
+#endif /* defined(FILL_BILLBOARD) */
 
     } else {
         // chose color for lighting
@@ -142,14 +149,11 @@ PsOutput Main(PsInput input/*, bool isFront : SV_IsFrontFace*/) {
     // calculate depth
 #define DEPTH
 #ifdef DEPTH
+    // https://docs.microsoft.com/en-us/windows/win32/direct3dhlsl/dx-graphics-hlsl-per-component-math#matrix-ordering
     float4 intPos = float4(sphereintersection + objPos.xyz, 1.0);
     float dz = dot(ViewProjMatrix[eye]._13_23_33_43, intPos);
-    float dw = dot(ViewProjMatrix[eye]._14_24_34_44, intPos);
-    //retval.Depth = ((dz / dw) + 1.0) * 0.5;
-    //retval.Colour.gb = 0.0f.xx;
-    //retval.Colour.r = retval.Depth;
-    //retval.Depth = 1.0f - (dz / dw);
-    retval.Depth = (dz / dw);
+    //float dw = dot(ViewProjMatrix[eye]._14_24_34_44, intPos);
+    retval.Depth = dz;
 #else
     retval.Depth = input.Position.z;
 #endif // DEPTH

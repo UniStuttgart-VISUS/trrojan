@@ -40,6 +40,7 @@ void Main(point VsOutput input[1], inout TriangleStream<PsInput> triStream) {
 #else /* HOLOMOL */
     const uint eye = 0;
 #endif /* HOLOMOL */
+    float4 camPos;
     float4x4 invVm = ViewInvMatrix[eye];
     float4x4 mvp = ViewProjMatrix[eye];
     float rad = input[0].SphereParams.w;
@@ -62,11 +63,11 @@ void Main(point VsOutput input[1], inout TriangleStream<PsInput> triStream) {
 #endif /* defined(HOLOMOL) */
 
     // Reconstruct camera system.
-    ReconstructCamera(v.CameraPosition, v.CameraDirection, v.CameraUp,
+    ReconstructCamera(camPos, v.CameraDirection, v.CameraUp,
         v.CameraRight, invVm);
 
     // Transform camera to glyph space and undo stereo transform.
-    v.CameraPosition.xyz -= objPos.xyz;
+    v.CameraPosition.xyz = camPos.xyz - objPos.xyz;
     //have separate matrices on hololens to replace the following:
     //v.CameraPosition.xyz += v.CameraRight * v.EyeSeparation;
 
@@ -81,19 +82,19 @@ void Main(point VsOutput input[1], inout TriangleStream<PsInput> triStream) {
 //#define DUEBEL 1.2f
 #if defined(DUEBEL)
     //bottom left
-    v.Position = mul(objPos - v.CameraUp * DUEBEL * rad - v.CameraRight * DUEBEL * rad, mvp);
+    v.Position = mul(mvp, objPos - v.CameraUp * DUEBEL * rad - v.CameraRight * DUEBEL * rad);
     triStream.Append(v);
 
     //bottom right
-    v.Position = mul(objPos - v.CameraUp * DUEBEL * rad + v.CameraRight * DUEBEL * rad, mvp);
+    v.Position = mul(mvp, objPos - v.CameraUp * DUEBEL * rad + v.CameraRight * DUEBEL * rad);
     triStream.Append(v);
 
     //top left
-    v.Position = mul(objPos + v.CameraUp * DUEBEL * rad - v.CameraRight * DUEBEL * rad, mvp);
+    v.Position = mul(mvp, objPos + v.CameraUp * DUEBEL * rad - v.CameraRight * DUEBEL * rad);
     triStream.Append(v);
 
     //top right
-    v.Position = mul(objPos + v.CameraUp * DUEBEL * rad + v.CameraRight * DUEBEL * rad, mvp);
+    v.Position = mul(mvp, objPos + v.CameraUp * DUEBEL * rad + v.CameraRight * DUEBEL * rad);
     triStream.Append(v);
 
     triStream.RestartStrip();
@@ -131,28 +132,28 @@ void Main(point VsOutput input[1], inout TriangleStream<PsInput> triStream) {
         cpm2 *= h.y;
 
         testPos = objPos.xyz + cpj1 + cpm1;
-        projPos = mul(float4(testPos, 1.0), mvp);
+        projPos = mul(mvp, float4(testPos, 1.0));
         ///projPos = mul(mvp, float4(testPos, 1.0));
         projPos /= projPos.w;
         mins = projPos.xy;
         maxs = projPos.xy;
 
         testPos -= 2.0 * cpm1;
-        projPos = mul(float4(testPos, 1.0), mvp);
+        projPos = mul(mvp, float4(testPos, 1.0));
         ///projPos = mul(mvp, float4(testPos, 1.0));
         projPos /= projPos.w;
         mins = min(mins, projPos.xy);
         maxs = max(maxs, projPos.xy);
 
         testPos = objPos.xyz + cpj2 + cpm2;
-        projPos = mul(float4(testPos, 1.0), mvp);
+        projPos = mul(mvp, float4(testPos, 1.0));
         ///projPos = mul(mvp, float4(testPos, 1.0));
         projPos /= projPos.w;
         mins = min(mins, projPos.xy);
         maxs = max(maxs, projPos.xy);
 
         testPos -= 2.0 * cpm2;
-        projPos = mul(float4(testPos, 1.0), mvp);
+        projPos = mul(mvp, float4(testPos, 1.0));
         ///projPos = mul(mvp, float4(testPos, 1.0));
         projPos /= projPos.w;
         mins = min(mins, projPos.xy);
@@ -161,28 +162,28 @@ void Main(point VsOutput input[1], inout TriangleStream<PsInput> triStream) {
         //bottom left
         v.Position = float4(mins.x, mins.y, projPos.z, 1.0f);
 #if defined(PER_VERTEX_RAY)
-        v.Ray = normalize(v.Position.xyz - v.CameraPosition.xyz);
+        // This does not work for STPA.
 #endif /* defined(PER_VERTEX_RAY) */
         triStream.Append(v);
 
         //top left
         v.Position = float4(mins.x, maxs.y, projPos.z, 1.0f);
 #if defined(PER_VERTEX_RAY)
-        v.Ray = normalize(v.Position.xyz - v.CameraPosition.xyz);
+        // This does not work for STPA.
 #endif /* defined(PER_VERTEX_RAY) */
         triStream.Append(v);
 
         //bottom right
         v.Position = float4(maxs.x, mins.y, projPos.z, 1.0f);
 #if defined(PER_VERTEX_RAY)
-        v.Ray = normalize(v.Position.xyz - v.CameraPosition.xyz);
+        // This does not work for STPA.
 #endif /* defined(PER_VERTEX_RAY) */
         triStream.Append(v);
 
         //top right
         v.Position = float4(maxs.x, maxs.y, projPos.z, 1.0f);
 #if defined(PER_VERTEX_RAY)
-        v.Ray = normalize(v.Position.xyz - v.CameraPosition.xyz);
+        // This does not work for STPA.
 #endif /* defined(PER_VERTEX_RAY) */
         triStream.Append(v);
 
@@ -205,19 +206,19 @@ void Main(point VsOutput input[1], inout TriangleStream<PsInput> triStream) {
         v.Position.xyz *= rad;
 
         // Orient the sprite towards the camera.
-        v.Position = mul(v.Position, matOrient);
+        v.Position = mul(matOrient, v.Position);
 
         // Move sprite to world position.
         v.Position.xyz += objPos.xyz;
-        v.Position.xyz -= rad * matOrient._31_32_33;
+        v.Position.xyz -= rad * matOrient._13_23_33;
 
         // Compute ray in object space.
 #if defined(PER_VERTEX_RAY)
-        v.Ray = normalize(v.Position.xyz - v.CameraPosition.xyz);
+        v.Ray = v.Position.xyz - camPos.xyz;
 #endif /* defined(PER_VERTEX_RAY) */
 
         // Do the camera transform.
-        v.Position = mul(v.Position, mvp);
+        v.Position = mul(mvp, v.Position);
 
         triStream.Append(v);
     }
@@ -241,14 +242,14 @@ void Main(point VsOutput input[1], inout TriangleStream<PsInput> triStream) {
     v.Position = float4(rad * cosPhi, rad * sinPhi, 0.0f, 1.0f);
 
     // Orient the sprite towards the camera.
-    v.Position = mul(v.Position, matOrient);
+    v.Position = mul(matOrient, v.Position);
 
     // Move sprite to world position.
     v.Position.xyz += objPos.xyz;
-    v.Position.xyz -= rad * matOrient._31_32_33;
+    v.Position.xyz -= rad * matOrient._13_23_33;
 
     // Do the camera transform.
-    v.Position = mul(v.Position, mvp);
+    v.Position = mul(mvp, v.Position);
 
     triStream.Append(v);
 
@@ -257,25 +258,26 @@ void Main(point VsOutput input[1], inout TriangleStream<PsInput> triStream) {
     uint j = cnt - 1;
     bool k = false;
 
-    while (i < j) {
+    while (i <= j) {
         if (k) {
-            phi = i++ / cnt;
+            phi = (float) i++ / (float) cnt;
         } else {
-            phi = TWO_PI - (j-- / cnt);
+            phi = ((float) j-- / (float) cnt);
         }
 
+        phi *= TWO_PI;
         sincos(phi, sinPhi, cosPhi);
         v.Position = float4(rad * cosPhi, rad * sinPhi, 0.0f, 1.0f);
 
         // Orient the sprite towards the camera.
-        v.Position = mul(v.Position, matOrient);
+        v.Position = mul(matOrient, v.Position);
 
         // Move sprite to world position.
         v.Position.xyz += objPos.xyz;
-        v.Position.xyz -= rad * matOrient._31_32_33;
+        v.Position.xyz -= rad * matOrient._13_23_33;
 
         // Do the camera transform.
-        v.Position = mul(v.Position, mvp);
+        v.Position = mul(mvp, v.Position);
 
         triStream.Append(v);
 

@@ -1,8 +1,8 @@
-/// <copyright file="SphereHullShaderCore.hlsli" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Christoph Müller</author>
+// <copyright file="SphereHullShaderCore.hlsli" company="Visualisierungsinstitut der UniversitÃ¤t Stuttgart">
+// Copyright Â© 2016 - 2022 Visualisierungsinstitut der UniversitÃ¤t Stuttgart. Alle Rechte vorbehalten.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Christoph MÃ¼ller</author>
 
 #include "SpherePipeline.hlsli"
 
@@ -71,10 +71,10 @@ HsConstants CalcConstants(InputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
     float4x4 mvp = ViewProjMatrix[eye];
 
     float4 pos = float4(patch[0].SphereParams.xyz, 1.0f);
-    pos = mul(pos, mvp);
+    pos = mul(mvp, pos);
 
     float4 rad = float4(patch[0].SphereParams.w, 0.f, 0.f, 1.f);
-    rad = mul(rad, vm);
+    rad = mul(vm, rad);
 
     float tessFactor = clamp(
         length(rad) / pos.w * pm._11 * AdaptiveTessScale,
@@ -96,10 +96,10 @@ HsConstants CalcConstants(InputPatch<VsOutput, CNT_CONTROL_POINTS> patch,
     float4x4 mvp = ViewProjMatrix[eye];
 
     float4 pos = float4(patch[0].SphereParams.xyz, 1.0f);
-    pos = mul(pos, mvp);
+    pos = mul(mvp, pos);
 
     float4 rad = float4(patch[0].SphereParams.w, 0.f, 0.f, 1.f);
-    rad = mul(rad, vm);
+    rad = mul(vm, rad);
 
     // using w-value that is equal to the z-component prior to the projection
     float tessFactor = clamp(

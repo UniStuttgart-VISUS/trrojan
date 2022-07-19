@@ -286,11 +286,18 @@ void trrojan::camera::set_from_maneuver(const std::string &name, const glm::vec3
 trrojan::perspective_camera::perspective_camera(vec3 look_from, vec3 look_to, vec3 look_up,
                                                 float near_plane, float far_plane,
                                                 float field_of_view, float aspect_ratio)
-    : camera(look_from, look_to, look_up, near_plane, far_plane)
-    , _fovy(field_of_view)
-    , _aspect_ratio(aspect_ratio)
-{
+    : camera(look_from, look_to, look_up, near_plane, far_plane),
+    _fovy(field_of_view), _aspect_ratio(aspect_ratio) { }
+
+
+/*
+ * trrojan::perspective_camera::calc_projection_mxz0
+ */
+glm::mat4 trrojan::perspective_camera::calc_projection_mxz0(void) const {
+    return glm::perspectiveRH_ZO(glm::radians(this->_fovy), this->_aspect_ratio,
+        this->_near_plane_dist, this->_far_plane_dist);
 }
+
 
 void trrojan::perspective_camera::set_from_maneuver(const std::string &name, const glm::vec3 bbox_min,
                                                     const glm::vec3 bbox_max, const int iteration,
@@ -323,6 +330,16 @@ void trrojan::orthographic_camera::set_aspect_ratio(float val)
     _frustum.w = +height / 2.0f;
     invalidate_projection_mx();
 }
+
+
+/*
+ * trrojan::orthographic_camera::calc_projection_mxz0
+ */
+glm::mat4 trrojan::orthographic_camera::calc_projection_mxz0(void) const {
+    return glm::orthoZO(this->_frustum.x, this->_frustum.y, this->_frustum.z,
+        this->_frustum.w, this->_near_plane_dist, this->_far_plane_dist);
+}
+
 
 void trrojan::orthographic_camera::set_from_maneuver(const std::string &name,
                                                      const glm::vec3 bbox_min,

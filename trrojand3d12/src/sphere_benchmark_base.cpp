@@ -13,6 +13,7 @@
 #include <glm/glm.hpp>
 #include <glm/ext.hpp>
 
+#include "trrojan/clipping.h"
 #include "trrojan/constants.h"
 #include "trrojan/factor_enum.h"
 #include "trrojan/factor_range.h"
@@ -22,9 +23,8 @@
 #include "trrojan/system_factors.h"
 #include "trrojan/timer.h"
 
-//#include "trrojan/d3d12/mmpld_data_set.h"
 #include "trrojan/d3d12/plugin.h"
-//#include "trrojan/d3d12/random_sphere_data_set.h"
+#include "trrojan/d3d12/sphere_benchmark.h"
 #include "trrojan/d3d12/utilities.h"
 
 #include "sphere_techniques.h"
@@ -463,6 +463,18 @@ trrojan::d3d12::sphere_benchmark_base::sphere_benchmark_base(
 
 
 /*
+ * trrojan::d3d12::sphere_benchmark_base::set_clipping_planes
+ */
+void trrojan::d3d12::sphere_benchmark_base::configure_camera(
+        const configuration& config, const float fovy) {
+    this->set_aspect_from_viewport(this->_camera);
+    this->_camera.set_fovy(fovy);
+    sphere_benchmark::apply_manoeuvre(this->_camera, config,
+        this->get_bbox_start(), this->get_bbox_end());
+    trrojan::set_clipping_planes(this->_camera, this->_bbox, this->_max_radius);
+}
+
+/*
  * trrojan::d3d12::sphere_benchmark_base::create_colour_map_view
  */
 void trrojan::d3d12::sphere_benchmark_base::create_colour_map_view(
@@ -662,6 +674,7 @@ trrojan::d3d12::sphere_benchmark_base::get_pipeline_builder(
 
     retval.set_depth_stencil_format(DXGI_FORMAT_D32_FLOAT)
         .set_depth_state(true)
+//.set_two_sided(true)// TODO
         .set_primitive_topology(get_primitive_topology_type(shader_code))
         .set_render_targets(DXGI_FORMAT_R8G8B8A8_UNORM)
         .set_sample_desc();
@@ -791,31 +804,25 @@ trrojan::d3d12::sphere_benchmark_base::get_tessellation_constants(
  */
 void trrojan::d3d12::sphere_benchmark_base::get_view_constants(
         ViewConstants& out_constants) const {
-    auto mat = DirectX::XMFLOAT4X4(glm::value_ptr(
-        this->_camera.get_projection_mx()));
-    auto projection = DirectX::XMLoadFloat4x4(&mat);
-    DirectX::XMStoreFloat4x4(out_constants.ProjMatrix,
-        DirectX::XMMatrixTranspose(projection));
+    auto projection = this->_camera.calc_projection_mxz0();
+    out_constants.ProjMatrix[0] = DirectX::XMFLOAT4X4(
+        glm::value_ptr(projection));
 
-    mat = DirectX::XMFLOAT4X4(glm::value_ptr(
-        this->_camera.get_view_mx()));
-    auto view = DirectX::XMLoadFloat4x4(&mat);
-    DirectX::XMStoreFloat4x4(out_constants.ViewMatrix,
-        DirectX::XMMatrixTranspose(view));
+    auto& view = this->_camera.get_view_mx();
+    out_constants.ViewMatrix[0] = DirectX::XMFLOAT4X4(
+        glm::value_ptr(view));
 
-    auto viewDet = DirectX::XMMatrixDeterminant(view);
-    auto viewInv = DirectX::XMMatrixInverse(&viewDet, view);
-    DirectX::XMStoreFloat4x4(out_constants.ViewInvMatrix,
-        DirectX::XMMatrixTranspose(viewInv));
+    auto viewInv = glm::inverse(view);
+    out_constants.ViewInvMatrix[0] = DirectX::XMFLOAT4X4(
+        glm::value_ptr(viewInv));
 
-    auto viewProj = view * projection;
-    DirectX::XMStoreFloat4x4(out_constants.ViewProjMatrix,
-        DirectX::XMMatrixTranspose(viewProj));
+    auto viewProj = projection * view;
+    out_constants.ViewProjMatrix[0] = DirectX::XMFLOAT4X4(
+        glm::value_ptr(viewProj));
 
-    auto viewProjDet = DirectX::XMMatrixDeterminant(viewProj);
-    auto viewProjInv = DirectX::XMMatrixInverse(&viewProjDet, viewProj);
-    DirectX::XMStoreFloat4x4(out_constants.ViewProjInvMatrix,
-        DirectX::XMMatrixTranspose(viewProjInv));
+    auto viewProjInv = glm::inverse(viewProj);
+    out_constants.ViewProjInvMatrix[0] = DirectX::XMFLOAT4X4(
+        glm::value_ptr(viewProjInv));
 
     const auto& viewport = this->viewport();
     out_constants.Viewport.x = viewport.TopLeftX;
@@ -1057,53 +1064,6 @@ void trrojan::d3d12::sphere_benchmark_base::on_device_switch(device& device) {
         assert(static_cast<void *>(this->_view_constants)
             < static_cast<void *>(this->_tessellation_constants));
     }
-}
-
-
-/*
- * trrojan::d3d12::sphere_benchmark_base::set_clipping_planes
- */
-void trrojan::d3d12::sphere_benchmark_base::set_clipping_planes(void) {
-    const auto& camPos = this->_camera.get_look_from();
-    const auto& lookAt = this->_camera.get_look_to();
-    const auto& view = glm::normalize(lookAt - camPos);
-
-    auto far_plane = std::numeric_limits<float>::lowest();
-    auto near_plane = (std::numeric_limits<float>::max)();
-
-    for (auto x = 0; x < 2; ++x) {
-        for (auto y = 0; y < 2; ++y) {
-            for (auto z = 0; z < 2; ++z) {
-                auto pt = glm::vec3(this->_bbox[x][0], this->_bbox[y][1],
-                    this->_bbox[z][2]);
-                auto ray = pt - camPos;
-                auto dist = glm::dot(view, ray);
-                if (dist < near_plane) {
-                    near_plane = dist;
-                }
-                if (dist > far_plane) {
-                    far_plane = dist;
-                }
-            }
-        }
-    }
-
-    near_plane -= this->_max_radius;
-    far_plane += this->_max_radius;
-
-    // TODO: Near does not work as above.
-    if (true||near_plane < 0.0f) {
-        // Plane could become negative in data set, which is illegal. A range of
-        // 10k seems to be something our shaders can still handle.
-        near_plane = far_plane / 10000.0f;
-    }
-    //near_plane = 0.01f;
-    //far_plane *= 1.1f;
-
-    log::instance().write_line(log_level::debug, "Dynamic clipping planes are "
-        "located at {} and {}.", near_plane, far_plane);
-    this->_camera.set_near_plane_dist(near_plane);
-    this->_camera.set_far_plane_dist(far_plane);
 }
 
 
