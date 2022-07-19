@@ -156,6 +156,7 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
         close_command_list(cmd_list);
     }
 
+#if 1
     // Do prewarming and compute number of CPU iterations at the same time.
     log::instance().write_line(log_level::debug, "Prewarming ...");
     {
@@ -187,8 +188,9 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
             }
         } while (batch_time < min_wall_time);
     }
+#endif
 
-#if 0
+#if 1
     // Do the wall clock measurement using the prepared command lists.
     log::instance().write_line(log_level::debug, "Measuring wall clock "
         "timings over {} iterations ...", cpu_iterations);
@@ -200,7 +202,9 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
     }
     device.wait_for_gpu();
     const auto cpu_time = cpu_timer.elapsed_millis();
+#endif
 
+#if 1
     // Do the GPU counter measurements using individual command lists.
     bundle_times.resize(gpu_iterations);
     gpu_times.resize(gpu_iterations);
@@ -236,6 +240,7 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
             gpu_timer.evaluate(timer_index, 1),
             gpu_freq);
     }
+#endif
 
     // Obtain pipeline statistics.
     log::instance().write_line(log_level::debug, "Collecting pipeline "
@@ -262,16 +267,17 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
         device.close_and_execute_command_list(cmd_list);
         this->present_target();
 
+        // Wait until the results are here.
+        device.wait_for_gpu();
+
         pipeline_stats = stats_query.evaluate(stats_index, 0);
     }
 
-    // Wait for everything to complete before we allow any other benchmark to
-    // run.
-    device.wait_for_gpu();
-
+#if 1
     // Compute derived statistics for GPU counters.
     const auto bundle_median = calc_median(bundle_times);
     const auto gpu_median = calc_median(gpu_times);
+#endif
 
     // Prepare the result set.
     auto retval = std::make_shared<basic_result>(config,
@@ -325,11 +331,6 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
         cpu_time,
         static_cast<double>(cpu_time) / cpu_iterations
         });
-#else
-
-    auto retval = std::make_shared<basic_result>(config, std::initializer_list<std::string> { "horst"});
-    retval->add({ std::string("horst") });
-#endif
 
     return retval;
 }

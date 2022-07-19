@@ -476,7 +476,8 @@ void trrojan::d3d12::render_target_base::set_buffers(
 
         auto desc = buffers.front()->GetDesc();
         desc.Format = DXGI_FORMAT_D32_FLOAT;
-        desc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+        desc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL
+            | D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
 
         D3D12_HEAP_PROPERTIES props;
         ::ZeroMemory(&props, sizeof(props));
