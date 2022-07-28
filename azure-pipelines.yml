@@ -15,6 +15,14 @@ schedules:
     - master
   always: true
 
+variables:
+  cmakeDefines: >-
+     -DCMAKE_INSTALL_PREFIX=$(Build.ArtifactStagingDirectory)\$(platform)\$(configuration)
+     -DBUILD_TESTING=OFF
+     -DSPDLOG_BUILD_EXAMPLES=OFF
+     -DTRROJAN_DEBUG_OVERLAY=OFF
+     -DTRROJAN_WITH_DSTORAGE=OFF
+
 jobs:
 - job: Windows
   strategy:
@@ -55,7 +63,7 @@ jobs:
   - task: CMake@1
     inputs:
       workingDirectory: $(Build.SourcesDirectory)
-      cmakeArgs: '.. -G"$(generator)" -A"$(platform)" -S"$(Build.SourcesDirectory)" -B"$(Build.SourcesDirectory)\$(platform)\$(configuration)" "-DCMAKE_INSTALL_PREFIX=$(Build.ArtifactStagingDirectory)\$(platform)\$(configuration)" -DTRROJAN_WITH_DSTORAGE=OFF'
+      cmakeArgs: '.. -G"$(generator)" -A"$(platform)" -S"$(Build.SourcesDirectory)" -B"$(Build.SourcesDirectory)\$(platform)\$(configuration)" $(cmakeDefines)'
   - task: MSBuild@1
     inputs:
         solution: '$(Build.SourcesDirectory)\$(platform)\$(configuration)\ALL_BUILD.vcxproj'
