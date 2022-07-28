@@ -1,0 +1,53 @@
+#
+# azure-pipelines.yml
+#
+# Copyright © 2022 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+#
+
+trigger:
+- master
+
+schedules:
+- cron: '0 12 * * 0'
+  displayName: Weekly Sunday build
+  branches:
+    include:
+    - master
+  always: true
+
+jobs:
+- job: Windows
+  strategy:
+    matrix:
+      'Win32 Debug':
+        platform: Win32
+        configuration: Debug
+        generator: 'Visual Studio 16 2019'
+      'Win32 Release':
+        platform: Win32
+        configuration: Release
+        generator: 'Visual Studio 16 2019'
+      'Win64 Debug':
+        platform: x64
+        configuration: Debug
+        generator: 'Visual Studio 16 2019'
+      'Win64 Release':
+        platform: x64
+        configuration: Release
+        generator: 'Visual Studio 16 2019'
+  pool:
+    name: 'hardware'
+    demands:
+    - cmake
+    - VisualStudio_16.0
+
+  steps:
+  - task: CMake@1
+    inputs:
+      workingDirectory: $(Build.SourcesDirectory)
+      cmakeArgs: '.. -G"$(generator)" -A"$(platform)" -B"$(Build.ArtifactStagingDirectory)/$(platform)/$(configuration)" "-DCMAKE_INSTALL_PREFIX=$(Build.ArtifactStagingDirectory)/$(BuildConfiguration)"'
+  - task: MSBuild@1
+    inputs:
+        solution: '$(Build.ArtifactStagingDirectory)/$(platform)/$(configuration)/ALL_BUILD.vcxproj'
+        maximumCpuCount: true
+        platform: $(platform)
