@@ -1,7 +1,7 @@
 #
 # azure-pipelines.yml
 #
-# Copyright © 2022 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+# Copyright Â© 2022 Visualisierungsinstitut der UniversitÃ¤t Stuttgart. Alle Rechte vorbehalten.
 #
 
 trigger:
@@ -45,7 +45,7 @@ jobs:
   - task: CMake@1
     inputs:
       workingDirectory: $(Build.SourcesDirectory)
-      cmakeArgs: '.. -G"$(generator)" -A"$(platform)" -B"$(Build.ArtifactStagingDirectory)/$(platform)/$(configuration)" "-DCMAKE_INSTALL_PREFIX=$(Build.ArtifactStagingDirectory)/$(BuildConfiguration)"'
+      cmakeArgs: '.. -G"$(generator)" -A"$(platform)" -B"$(Build.ArtifactStagingDirectory)/$(platform)/$(configuration)" "-DCMAKE_INSTALL_PREFIX=$(Build.ArtifactStagingDirectory)/$(platform)/$(configuration)"'
   - task: MSBuild@1
     inputs:
         solution: '$(Build.ArtifactStagingDirectory)/$(platform)/$(configuration)/ALL_BUILD.vcxproj'
