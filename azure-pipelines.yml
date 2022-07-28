@@ -45,10 +45,10 @@ jobs:
   - task: CMake@1
     inputs:
       workingDirectory: $(Build.SourcesDirectory)
-      cmakeArgs: '.. -G"$(generator)" -A"$(platform)" -B"$(Build.ArtifactStagingDirectory)\$(platform)\$(configuration)" "-DCMAKE_INSTALL_PREFIX=$(Build.ArtifactStagingDirectory)\$(platform)\$(configuration)"'
+      cmakeArgs: '.. -G"$(generator)" -A"$(platform)" -B"$(Build.SourcesDirectory)\$(platform)\$(configuration)" "-DCMAKE_INSTALL_PREFIX=$(Build.ArtifactStagingDirectory)\$(platform)\$(configuration)"'
   - task: MSBuild@1
     inputs:
-        solution: '$(Build.ArtifactStagingDirectory)\$(platform)\$(configuration)\ALL_BUILD.vcxproj'
+        solution: '$(Build.SourcesDirectory)\$(platform)\$(configuration)\ALL_BUILD.vcxproj'
         maximumCpuCount: true
         configuration: $(configuration)
         platform: $(platform)
