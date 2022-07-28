@@ -225,6 +225,26 @@ trrojan::d3d12::handle<> trrojan::d3d12::create_event(const bool manual_reset,
 
 
 /*
+ * trrojan::d3d12::create_fence
+ */
+ATL::CComPtr<ID3D12Fence> trrojan::d3d12::create_fence(ID3D12Device *device,
+        const UINT64 initial_value) {
+    if (device == nullptr) {
+        throw ATL::CAtlException(E_POINTER);
+    }
+
+    ATL::CComPtr<ID3D12Fence> retval;
+    auto hr = device->CreateFence(initial_value, D3D12_FENCE_FLAG_NONE,
+        ::IID_ID3D12Fence, reinterpret_cast<void **>(&retval));
+    if (FAILED(hr)) {
+        throw ATL::CAtlException(hr);
+    }
+
+    return retval;
+}
+
+
+/*
  * trrojan::d3d12::create_render_target
  */
 ATL::CComPtr<ID3D12Resource> trrojan::d3d12::create_render_target(

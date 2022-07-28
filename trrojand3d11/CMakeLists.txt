@@ -27,7 +27,7 @@ set(ShaderFiles ${VertexShaderFiles} ${DomainShaderFiles} ${HullShaderFiles} ${G
 set_property(SOURCE ${ShaderFiles} PROPERTY VS_SHADER_ENTRYPOINT Main)
 set_property(SOURCE ${ShaderFiles} PROPERTY VS_SHADER_MODEL 5.0)
 set_property(SOURCE ${ShaderFiles} PROPERTY VS_SHADER_FLAGS /Zi)
-set_property(SOURCE ${ShaderFiles} PROPERTY VS_SHADER_OBJECT_FILE_NAME "$(OutDir)d3d11\\%(Filename).cso")
+set_property(SOURCE ${ShaderFiles} PROPERTY VS_SHADER_OBJECT_FILE_NAME "${CMAKE_BINARY_DIR}\\d3d11\\%(Filename).cso")
 
 # Configure shader types
 set_property(SOURCE ${VertexShaderFiles} PROPERTY VS_SHADER_TYPE Vertex)
@@ -47,7 +47,7 @@ include_directories("${TrrojanSysInfoIncludeDir}")
 
 # Create CSOs for packing them into the resource files.
 #add_dependencies(${ResourceFiles} ${ShaderFiles})
-include_directories("${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${CMAKE_CFG_INTDIR}")
+include_directories("${CMAKE_BINARY_DIR}")
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTRROJAND3D11_EXPORTS")
 

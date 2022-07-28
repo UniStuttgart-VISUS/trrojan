@@ -382,6 +382,14 @@ namespace d3d12 {
         }
 
         /// <summary>
+        /// Gets the stride of the currently loaded data in bytes.
+        /// </summary>
+        /// <returns>The stride of the data loaded.</returns>
+        inline UINT get_stride(void) const noexcept {
+            return this->_stride;
+        }
+
+        /// <summary>
         /// Gets the GPU-virtual address for the tessellation constants of the
         /// given frame/buffer.
         /// </summary>

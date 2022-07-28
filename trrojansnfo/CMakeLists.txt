@@ -27,4 +27,3 @@ endif (WIN32)
 
 # Group resource scripts into a new filter.
 source_group("Resource Files" FILES ${ResourceFiles})
-

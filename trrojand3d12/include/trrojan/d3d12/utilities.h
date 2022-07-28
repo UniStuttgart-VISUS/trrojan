@@ -134,6 +134,15 @@ namespace d3d12 {
         const bool initially_signalled);
 
     /// <summary>
+    /// Create a fence on the given device.
+    /// </summary>
+    /// <param name="device"></param>
+    /// <param name="initial_value"></param>
+    /// <returns></returns>
+    ATL::CComPtr<ID3D12Fence> create_fence(ID3D12Device *device,
+        const UINT64 initial_value = 0);
+
+    /// <summary>
     /// Creates a 2D texture which is initially in the present state.
     /// </summary>
     /// <param name="device"></param>
