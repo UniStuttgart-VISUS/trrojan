@@ -45,7 +45,7 @@ jobs:
   - task: CMake@1
     inputs:
       workingDirectory: $(Build.SourcesDirectory)
-      cmakeArgs: '.. -G"$(generator)" -A"$(platform)" -B"$(Build.SourcesDirectory)\$(platform)\$(configuration)" "-DCMAKE_INSTALL_PREFIX=$(Build.ArtifactStagingDirectory)\$(platform)\$(configuration)"'
+      cmakeArgs: '.. -G"$(generator)" -A"$(platform)" -S"$(Build.SourcesDirectory)" -B"$(Build.SourcesDirectory)\$(platform)\$(configuration)" "-DCMAKE_INSTALL_PREFIX=$(Build.ArtifactStagingDirectory)\$(platform)\$(configuration)"'
   - task: MSBuild@1
     inputs:
         solution: '$(Build.SourcesDirectory)\$(platform)\$(configuration)\ALL_BUILD.vcxproj'
