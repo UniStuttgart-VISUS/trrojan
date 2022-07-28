@@ -50,16 +50,6 @@ jobs:
     - VisualStudio_16.0
 
   steps:
-  - script: git submodule update --init glm
-    displayName: Checkout glm submodule
-  - script: git submodule update --init spdlog
-    displayName: Checkout spdlog submodule
-  - script: git submodule update --init datraw
-    displayName: Checkout datraw submodule
-  - script: git submodule update --init chakra
-    displayName: Checkout chakra submodule
-  - script: git submodule update --init mmpld
-    displayName: Checkout mmpld submodule
   - task: CMake@1
     inputs:
       workingDirectory: $(Build.SourcesDirectory)
