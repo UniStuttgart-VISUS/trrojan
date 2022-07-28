@@ -258,8 +258,8 @@ namespace d3d12 {
     /// <c>D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE</c>.</param>
     /// <returns></returns>
     ATL::CComPtr<ID3D12Resource> create_viridis_colour_map(device& device,
-        ID3D12GraphicsCommandList *cmd_list, const D3D12_RESOURCE_STATES state
-        = D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+        ID3D12GraphicsCommandList *cmd_list,
+        const D3D12_RESOURCE_STATES state = (0x40 | 0x80));
 
     /// <summary>
     /// Gets the device the child belongs to.
