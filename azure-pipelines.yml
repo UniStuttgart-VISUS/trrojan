@@ -22,6 +22,8 @@ variables:
      -DSPDLOG_BUILD_EXAMPLES=OFF
      -DTRROJAN_DEBUG_OVERLAY=OFF
      -DTRROJAN_WITH_DSTORAGE=OFF
+  cmakeWindowsGenerator: 'Visual Studio 16 2019'
+  cmakeUnixGenerator: 'Unix Makefiles'
 
 jobs:
 - job: Windows
@@ -30,19 +32,19 @@ jobs:
       'Win32 Debug':
         platform: Win32
         configuration: Debug
-        generator: 'Visual Studio 16 2019'
+        generator: $(cmakeWindowsGenerator)
       'Win32 Release':
         platform: Win32
         configuration: Release
-        generator: 'Visual Studio 16 2019'
+        generator: $(cmakeWindowsGenerator)
       'Win64 Debug':
         platform: x64
         configuration: Debug
-        generator: 'Visual Studio 16 2019'
+        generator: $(cmakeWindowsGenerator)
       'Win64 Release':
         platform: x64
         configuration: Release
-        generator: 'Visual Studio 16 2019'
+        generator: $(cmakeWindowsGenerator)
   pool:
     name: 'hardware'
     demands:
@@ -69,22 +71,22 @@ jobs:
         configuration: Debug
         ccompiler: gcc
         cxxcompiler: g++
-        generator: 'Unix Makefile'
+        generator: $(cmakeUnixGenerator)
       'CentOS 8 GCC Release':
         configuration: Release
         ccompiler: gcc
         cxxcompiler: g++
-        generator: 'Unix Makefile'
+        generator: $(cmakeUnixGenerator)
       'CentOS 8 Clang Debug':
         configuration: Debug
         ccompiler: clang
         cxxcompiler: clang
-        generator: 'Unix Makefile'
+        generator: $(cmakeUnixGenerator)
       'CentOS 8 Clang Release':
         configuration: Release
         ccompiler: clang
         cxxcompiler: clang
-        generator: 'Unix Makefile'
+        generator: $(cmakeUnixGenerator)
   pool:
     name: 'hardware'
     demands:
