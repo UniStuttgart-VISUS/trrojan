@@ -142,20 +142,22 @@ namespace trrojan {
         std::size_t rem = millis.count() % 1000;
 
 #if defined(_MSC_VER)
-        std::tm tm;
-        if (localtime_s(&tm, &tt) != 0) {
+        std::tm ltm;
+        auto tm = &ltm;
+        if (localtime_s(&ltm, &tt) != 0) {
 #else
-        if (std::localtime(&tt) == nullptr) {
+        auto tm = std::localtime(&tt);
+        if (tm == nullptr) {
 #endif
             throw std::system_error(errno, std::system_category());
         }
 
         std::basic_ostringstream<T> stream;
         if (no_seps) {
-            stream << std::put_time(&tm, "%Y%m%d%H%M%S")
+            stream << std::put_time(tm, "%Y%m%d%H%M%S")
                 << std::setw(3) << std::setfill('0') << rem;
         } else {
-            stream << std::put_time(&tm, "%Y-%m-%dT%H:%M:%S.")
+            stream << std::put_time(tm, "%Y-%m-%dT%H:%M:%S.")
                 << std::setw(3) << std::setfill('0') << rem;
         }
 
