@@ -62,7 +62,7 @@ jobs:
         platform: $(platform)
 
 
-- job: CentOS 8
+- job: CentOS8
   strategy:
     matrix:
       'CentOS 8 GCC Debug':
