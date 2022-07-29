@@ -1,8 +1,8 @@
-/// <copyright file="variant.h" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Christoph Müller</author>
+// <copyright file="variant.h" company="Visualisierungsinstitut der Universität Stuttgart">
+// Copyright © 2016 - 2022 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Christoph Müller</author>
 
 #pragma once
 
@@ -577,7 +577,7 @@ namespace detail {
         /// <param name="rhs">The right hand side operand.</param>
         /// <returns><c>*this</c></returns>
         template<variant_type T> inline variant& operator =(
-                const typename variant_type_traits<T>::type& rhs) const {
+                const typename variant_type_traits<T>::type& rhs) {
             this->set(rhs);
             return *this;
         }
