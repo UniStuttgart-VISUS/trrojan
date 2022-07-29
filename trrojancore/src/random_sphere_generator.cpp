@@ -20,7 +20,7 @@ std::size_t trrojan::random_sphere_generator::create(void *dst,
         const description &description) {
     //static const create_flags VALID_INPUT_FLAGS // Flags directly copied from user input.
         //= sphere_data_set_base::property_structured_resource;
-    const auto stride = get_stride(description.sphere_type);
+    const auto stride = get_stride(description.type);
     const auto retval = description.number * stride;
 
     if (dst == nullptr) {
@@ -49,7 +49,7 @@ std::size_t trrojan::random_sphere_generator::create(void *dst,
     log::instance().write_line(log_level::verbose, "Creating {} random "
         "sphere(s) of type {} on a domain of [{}, {}, {}] with a uniformly "
         "distributed size in [{}, {}]. The random seed is {}.",
-        description.number, static_cast<std::uint32_t>(description.sphere_type),
+        description.number, static_cast<std::uint32_t>(description.type),
         description.domain_size[0], description.domain_size[1],
         description.domain_size[2], description.sphere_size[0],
         description.sphere_size[1], description.seed);
@@ -70,7 +70,7 @@ std::size_t trrojan::random_sphere_generator::create(void *dst,
         cur->x = cur->y = cur->z = g * domainSize[0] - 0.5f * domainSize[0];
 #endif
 
-        switch (description.sphere_type) {
+        switch (description.type) {
             case sphere_type::pos_rad_intensity:
             case sphere_type::pos_rad_rgba32:
             case sphere_type::pos_rad_rgba8:
@@ -85,7 +85,7 @@ std::size_t trrojan::random_sphere_generator::create(void *dst,
                 out_max_radius = avg_sphere_size;
         }
 
-        switch (description.sphere_type) {
+        switch (description.type) {
             case sphere_type::pos_intensity:
             case sphere_type::pos_rad_intensity:
                 *reinterpret_cast<float *>(cur) = g;
@@ -279,25 +279,25 @@ trrojan::random_sphere_generator::parse_description(
     auto token = tolower(trim(std::string(tok_begin, tok_end)));
     for (auto& t : SPHERE_TYPES) {
         if (token == t.name) {
-            retval.sphere_type = t.type;
+            retval.type = t.type;
             break;
         }
     }
 
-    if (retval.sphere_type == sphere_type::unspecified) {
+    if (retval.type == sphere_type::unspecified) {
         throw std::runtime_error("The type of random spheres to generate is "
             "invalid.");
     }
 
     if ((flags & create_flags::float_colour) != create_flags::none) {
         // Force 8-bit colours to float on request.
-        switch (retval.sphere_type) {
+        switch (retval.type) {
             case sphere_type::pos_rgba8:
-                retval.sphere_type = sphere_type::pos_rgba32;
+                retval.type = sphere_type::pos_rgba32;
                 break;
 
             case sphere_type::pos_rad_rgba8:
-                retval.sphere_type = sphere_type::pos_rad_rgba32;
+                retval.type = sphere_type::pos_rad_rgba32;
                 break;
         }
     }

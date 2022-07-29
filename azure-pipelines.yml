@@ -101,4 +101,4 @@ jobs:
       cmakeArgs: '.. -G"$(generator)" -S"$(Build.SourcesDirectory)" -B"$(Build.SourcesDirectory)/_build/$(configuration)" -DCMAKE_BUILD_TYPE=$(configuration) $(cmakeDefines)'
   - task: CMake@1
     inputs:
-      cmakeArgs: '--build $(Build.SourcesDirectory)/_build/$(configuration)'
+      cmakeArgs: '--build $(Build.SourcesDirectory)/_build/$(configuration) --parallel $(NUMBER_OF_PROCESSORS)'

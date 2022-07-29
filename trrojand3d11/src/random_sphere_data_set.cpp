@@ -55,7 +55,7 @@ trrojan::d3d11::sphere_data_set
 trrojan::d3d11::random_sphere_data_set::create(ID3D11Device *device,
         const create_flags flags, const std::string& configuration) {
     auto desc = random_sphere_generator::parse_description(configuration);
-    return random_sphere_data_set::create(device, flags, desc.sphere_type,
+    return random_sphere_data_set::create(device, flags, desc.type,
         desc.number, desc.domain_size, desc.sphere_size, desc.seed);
 }
 
@@ -151,7 +151,7 @@ void trrojan::d3d11::random_sphere_data_set::recreate(ID3D11Device *device,
     particleDesc.number = this->size();
     particleDesc.seed = this->_seed;
     particleDesc.sphere_size = this->_sphere_size;
-    particleDesc.sphere_type = this->_type;
+    particleDesc.type = this->_type;
 
     auto particles = random_sphere_generator::create(this->_max_radius,
         particleDesc);
@@ -162,7 +162,7 @@ void trrojan::d3d11::random_sphere_data_set::recreate(ID3D11Device *device,
     bufferDesc.CPUAccessFlags = 0;
     if ((flags & property_structured_resource) != 0) {
         bufferDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-        bufferDesc.StructureByteStride = get_stride(particleDesc.sphere_type);
+        bufferDesc.StructureByteStride = get_stride(particleDesc.type);
         bufferDesc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
     } else {
         bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
