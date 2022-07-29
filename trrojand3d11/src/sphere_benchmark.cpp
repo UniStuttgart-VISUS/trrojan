@@ -352,15 +352,6 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
 
     // Compute the matrices.
     {
-        //auto projection = DirectX::XMMatrixPerspectiveFovRH(std::atan(1) * 4 / 3,
-        //    static_cast<float>(viewport.Width) / static_cast<float>(viewport.Height),
-        //    0.1f, 10.0f);
-
-        //auto eye = DirectX::XMFLOAT4(0, 0, 0.5f * (this->mmpld_header.bounding_box[5] - this->mmpld_header.bounding_box[2]), 0);
-        //auto lookAt = DirectX::XMFLOAT4(0, 0, 0, 0);
-        //auto up = DirectX::XMFLOAT4(0, 1, 0, 0);
-        //auto view = DirectX::XMMatrixLookAtRH(DirectX::XMLoadFloat4(&eye),
-        //    DirectX::XMLoadFloat4(&lookAt), DirectX::XMLoadFloat4(&up));
         const auto aspect = static_cast<float>(viewport.Width)
             / static_cast<float>(viewport.Height);
         const auto fovyDeg = 60.0f;
