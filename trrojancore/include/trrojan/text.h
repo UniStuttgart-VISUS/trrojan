@@ -133,7 +133,6 @@ namespace trrojan {
             const bool no_seps = false) {
         // From https://codereview.stackexchange.com/questions/156695/converting-stdchronotime-point-to-from-stdstring
         using namespace std::chrono;
-        typedef time_point<C> TimePoint;
 
         auto millis = duration_cast<milliseconds>(tp.time_since_epoch());
         auto secs = duration_cast<seconds>(millis);
@@ -191,7 +190,7 @@ namespace trrojan {
         // http://stackoverflow.com/questions/216823/whats-the-best-way-to-trim-stdstring
         auto end = str.cend();
         auto begin = std::find_if(str.cbegin(), end,
-            std::not1(std::ptr_fun<int, int>(std::isspace)));
+            [](const T c) { return !std::isspace(c); });
         return std::basic_string<T>(begin, str.cend());
     }
 
@@ -205,7 +204,7 @@ namespace trrojan {
             const std::basic_string<T>& str) {
         // http://stackoverflow.com/questions/216823/whats-the-best-way-to-trim-stdstring
         auto end = std::find_if(str.crbegin(), str.crend(),
-            std::not1(std::ptr_fun<int, int>(std::isspace)));
+            [](const T c) { return !std::isspace(c); });
         return std::basic_string<T>(str.cbegin(), end.base());
     }
 
