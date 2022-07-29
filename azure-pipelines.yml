@@ -53,10 +53,52 @@ jobs:
   - task: CMake@1
     inputs:
       workingDirectory: $(Build.SourcesDirectory)
-      cmakeArgs: '.. -G"$(generator)" -A"$(platform)" -S"$(Build.SourcesDirectory)" -B"$(Build.SourcesDirectory)\$(platform)\$(configuration)" $(cmakeDefines)'
+      cmakeArgs: '.. -G"$(generator)" -A"$(platform)" -S"$(Build.SourcesDirectory)" -B"$(Build.SourcesDirectory)\_build\$(platform)" $(cmakeDefines)'
   - task: MSBuild@1
     inputs:
-        solution: '$(Build.SourcesDirectory)\$(platform)\$(configuration)\ALL_BUILD.vcxproj'
+        solution: '$(Build.SourcesDirectory)\_build\$(platform)\ALL_BUILD.vcxproj'
         maximumCpuCount: true
         configuration: $(configuration)
         platform: $(platform)
+
+
+- job: CentOS 8
+  strategy:
+    matrix:
+      'CentOS 8 GCC Debug':
+        configuration: Debug
+        ccompiler: gcc
+        cxxcompiler: g++
+        generator: 'Unix Makefile'
+      'CentOS 8 GCC Release':
+        configuration: Release
+        ccompiler: gcc
+        cxxcompiler: g++
+        generator: 'Unix Makefile'
+      'CentOS 8 Clang Debug':
+        configuration: Debug
+        ccompiler: clang
+        cxxcompiler: clang
+        generator: 'Unix Makefile'
+      'CentOS 8 Clang Release':
+        configuration: Release
+        ccompiler: clang
+        cxxcompiler: clang
+        generator: 'Unix Makefile'
+  pool:
+    name: 'hardware'
+    demands:
+    - cmake
+    - VisualStudio_16.0
+    - linuxdistribution -equals centos
+    - lnuxrelease -equals 8
+
+  steps:
+  - task: CMake@1
+    inputs:
+      workingDirectory: $(Build.SourcesDirectory)
+      cmakeArgs: '.. -G"$(generator)" -A"$(platform)" -S"$(Build.SourcesDirectory)" -B"$(Build.SourcesDirectory)/_build" $(cmakeDefines)'
+  - task: CMake@1
+    inputs:
+      workingDirectory: $(Build.SourcesDirectory)/_build
+      cmakeArgs: '--build . -DCMAKE_BUILD_TYPE=$(configuration)'
