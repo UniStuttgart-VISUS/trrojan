@@ -27,18 +27,6 @@ trrojan::trroll_parser::parse(const std::string& path) {
     const auto content = trrojan::read_text_file(path);
     const auto trroll = trrojan::trim(content);
 
-//    const auto trroll = trrojan::trim(std::string("\
-//opencl::volume_raycast{\n\
-//    uint32 viewport_width = 800; 1024\n\
-//    uint32 viewport_height = 512; 600; 1024\n\
-//    boolean use_ERT = true; false\n\
-//    boolean use_tff = false\n\
-//}\
-//stream::stream_benchmark{\n\
-//    string task_type = add; triad\n\
-//}\n\
-//stream::stream_benchmark{}"));
-
     auto cur = trroll.cbegin();
     const auto end = trroll.cend();
     while (cur != end) {
