@@ -28,7 +28,7 @@ set_property(SOURCE ${ShaderFiles} PROPERTY VS_SHADER_MODEL 6.0)
 #set_property(SOURCE ${ShaderFiles} PROPERTY VS_SHADER_FLAGS /Zi)
 set_property(SOURCE ${ShaderFiles} PROPERTY VS_SHADER_ENABLE_DEBUG On)
 set_property(SOURCE ${ShaderFiles} PROPERTY VS_SHADER_FLAGS /Qembed_debug)
-set_property(SOURCE ${ShaderFiles} PROPERTY VS_SHADER_OBJECT_FILE_NAME "$(OutDir)d3d12\\%(Filename).cso")
+set_property(SOURCE ${ShaderFiles} PROPERTY VS_SHADER_OBJECT_FILE_NAME "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${CMAKE_CFG_INTDIR}/d3d12/%(Filename).cso")
 
 # Configure shader types
 set_property(SOURCE ${VertexShaderFiles} PROPERTY VS_SHADER_TYPE Vertex)
