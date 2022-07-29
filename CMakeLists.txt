@@ -25,23 +25,29 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Checkout git submodules.
 find_package(Git QUIET)
-if(GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
+if (GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
     message(STATUS "Updating Git submodules ...")
     execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} RESULT_VARIABLE GIT_SUBMOD_RESULT)
-    if(NOT GIT_SUBMOD_RESULT EQUAL "0")
+    if (NOT GIT_SUBMOD_RESULT EQUAL "0")
         message(FATAL_ERROR "Updating Uit submodules failed with error code ${GIT_SUBMOD_RESULT}, please checkout submodules manually.")
-    endif()
-endif()
+    endif ()
+endif ()
 
 
 # Configure optional features.
 option(TRROJAN_WITH_CHAKRA "Enable JavaScript support." OFF)
 if (WIN32)
     option(TRROJAN_WITH_DSTORAGE "Enable support for DirectStorage in Direct3D 12 plugin." ON)
-else (WIN32)
+else ()
     set(TRROJAN_WITH_DSTORAGE OFF)
-endif (WIN32)
+endif ()
 option(TRROJAN_DEBUG_OVERLAY "Enable overlay in debug view." OFF)
+
+# Set the directory where we expect Chakra Core.
+set(CHAKRA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/chakra" CACHE STRING "Directory holding the source of Chakra Core.")
+
+# Set the directory where we expect DirectStorage.
+set(DSTORAGE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Microsoft.Direct3D.DirectStorage.1.0.0" CACHE STRING "Directory holding the DirectStorage APIs.")
 
 
 # Configure the compiler.
@@ -49,41 +55,34 @@ if (WIN32)
     add_compile_options(/wd4251)	# We cannot fix that - TRRojan just needs to be compiled in a single step.
 endif (WIN32)
 
+if (${MSVC})
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNOMINMAX -EHsc")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DDEBUG -D_DEBUG")
+endif ()
+
 if (${CMAKE_COMPILER_IS_GNUCXX})
     add_definitions(-DUNIX)
     set(CMAKE_POSITION_INDEPENDENT_CODE ON)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -DDEBUG -D_DEBUG -ggdb")
-endif (${CMAKE_COMPILER_IS_GNUCXX})
-
-if (${MSVC})
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNOMINMAX -EHsc")
-	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DDEBUG -D_DEBUG")
-endif (${MSVC})
+endif ()
 
 if (NOT WIN32 OR ${PNG_FOUND})
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTRROJAN_WITH_CIMG -Dcimg_display=0")
-endif (NOT WIN32 OR ${PNG_FOUND})
+endif ()
 
-if (OPENMP_FOUND)
+if (${OPENMP_FOUND})
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 endif()
 
-if (TRROJAN_WITH_DSTORAGE)
+if (${TRROJAN_WITH_DSTORAGE})
     # Include our downloaded version of DirectStorage, because VS_PACKAGE_REFERENCES
     # is not working for CMAKE C++ projects.
     include_directories("${DSTORAGE_DIR}/Include/DirectStorage")
     add_definitions(-DTRROJAN_WITH_DSTORAGE)
     link_directories("${DSTORAGE_DIR}/bin/${CMAKE_VS_PLATFORM_NAME}")
-endif (TRROJAN_WITH_DSTORAGE)
-
-
-# Set the directory where we expect Chakra Core.
-set(CHAKRA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/chakra" CACHE STRING "Directory holding the source of Chakra Core.")
-
-# Set the directory where we expect DirectStorage.
-set(DSTORAGE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Microsoft.Direct3D.DirectStorage.1.0.0" CACHE STRING "Directory holding the DirectStorage APIs.")
+endif ()
 
 # Build glm
 #set(GLM_STATIC_LIBRARY_ENABLE "YES")
@@ -94,7 +93,6 @@ set(DSTORAGE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Microsoft.Direct3D.DirectStorage.1
 set(SPDLOG_BUILD_TESTING "NO" FORCE)
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DSPDLOG_FMT_PRINTF")
 add_subdirectory(spdlog)
-
 
 # Include headers for all of TRRojan.
 include_directories("glm")
@@ -114,12 +112,12 @@ add_subdirectory(trrojancl)
 # Build the RAM stream plugin
 add_subdirectory(trrojanstream)
 
-# Build the D3D plugin
+# Build the D3D plugins.
 if (WIN32)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMMPLD_WITH_DIRECT3D")
     add_subdirectory(trrojand3d11)
     add_subdirectory(trrojand3d12)
-endif (WIN32)
+endif ()
 
 # Build the executable
 add_subdirectory(trrojan)
