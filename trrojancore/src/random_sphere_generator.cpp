@@ -226,7 +226,7 @@ std::size_t trrojan::random_sphere_generator::get_stride(
 
         case sphere_type::pos_rgba8:
         case sphere_type::pos_rad_rgba8:
-            retval += 4 * sizeof(byte);
+            retval += 4 * sizeof(std::uint8_t);
             break;
 
         case sphere_type::pos_rgba32:
