@@ -98,7 +98,7 @@ jobs:
   - task: CMake@1
     inputs:
       workingDirectory: $(Build.SourcesDirectory)
-      cmakeArgs: '.. -G"$(generator)" -A"$(platform)" -S"$(Build.SourcesDirectory)" -B"$(Build.SourcesDirectory)/_build" $(cmakeDefines)'
+      cmakeArgs: '.. -G"$(generator)" -S"$(Build.SourcesDirectory)" -B"$(Build.SourcesDirectory)/_build" $(cmakeDefines)'
   - task: CMake@1
     inputs:
       workingDirectory: $(Build.SourcesDirectory)/_build
