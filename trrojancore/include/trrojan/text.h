@@ -145,7 +145,8 @@ namespace trrojan {
         std::tm tm;
         if (localtime_s(&tm, &tt) != 0) {
 #else
-        if (std::localtime(&tt) == nullptr) {
+        auto tm = std::localtime(&tt);
+        if (tm == nullptr) {
 #endif
             throw std::system_error(errno, std::system_category());
         }
