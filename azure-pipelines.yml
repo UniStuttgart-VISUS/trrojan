@@ -67,22 +67,22 @@ jobs:
 - job: CentOS8
   strategy:
     matrix:
-      'CentOS 8 GCC Debug':
+      'GCC Debug':
         configuration: Debug
         ccompiler: gcc
         cxxcompiler: g++
         generator: $(cmakeUnixGenerator)
-      'CentOS 8 GCC Release':
+      'GCC Release':
         configuration: Release
         ccompiler: gcc
         cxxcompiler: g++
         generator: $(cmakeUnixGenerator)
-      'CentOS 8 Clang Debug':
+      'Clang Debug':
         configuration: Debug
         ccompiler: clang
         cxxcompiler: clang
         generator: $(cmakeUnixGenerator)
-      'CentOS 8 Clang Release':
+      'Clang Release':
         configuration: Release
         ccompiler: clang
         cxxcompiler: clang
