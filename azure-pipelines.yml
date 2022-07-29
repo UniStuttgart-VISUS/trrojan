@@ -89,9 +89,8 @@ jobs:
     name: 'hardware'
     demands:
     - cmake
-    - VisualStudio_16.0
     - linuxdistribution -equals centos
-    - lnuxrelease -equals 8
+    - linuxrelease -equals 8
 
   steps:
   - task: CMake@1
