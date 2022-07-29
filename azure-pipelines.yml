@@ -98,8 +98,8 @@ jobs:
   - task: CMake@1
     inputs:
       workingDirectory: $(Build.SourcesDirectory)
-      cmakeArgs: '.. -G"$(generator)" -S"$(Build.SourcesDirectory)" -B"$(Build.SourcesDirectory)/_build" $(cmakeDefines)'
+      cmakeArgs: '.. -G"$(generator)" -S"$(Build.SourcesDirectory)" -B"$(Build.SourcesDirectory)/_build" -DCMAKE_BUILD_TYPE=$(configuration) $(cmakeDefines)'
   - task: CMake@1
     inputs:
       workingDirectory: $(Build.SourcesDirectory)/_build
-      cmakeArgs: '--build . -DCMAKE_BUILD_TYPE=$(configuration)'
+      cmakeArgs: '--build $(Build.SourcesDirectory)/_build'
