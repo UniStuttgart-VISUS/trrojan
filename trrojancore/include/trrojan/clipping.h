@@ -69,13 +69,14 @@ namespace trrojan {
     /// data set extents.
     /// </summary>
     /// <typeparam name="TBbox"></typeparam>
+    /// <typeparam name="TCamera">Vaaaalentiiiiiiinn!!!</typeparam>
     /// <param name="camera"></param>
     /// <param name="fovy"></param>
     /// <param name="bbox"></param>
     /// <param name="offset"></param>
     /// <returns></returns>
-    template<class TBbox>
-    inline camera& set_fovy_and_clipping_planes(camera& camera, float fovy,
+    template<class TBbox, class TCamera>
+    inline TCamera& set_fovy_and_clipping_planes(TCamera& camera, float fovy,
             const TBbox& bbox, const float offset = 0.0f) {
         camera.set_fovy(fovy);
         return set_clipping_planes(camera, bbox, offset);
