@@ -462,7 +462,7 @@ void trrojan::d3d12::streaming_sphere_benchmark_base::event_callback(
         // Tell the actual implementation to provide the data.
         that->on_batch_required(next_batch, that->_batch_size, chunk);
 
-        fence->SetEventOnCompletion(next_batch, evt);
+        //fence->SetEventOnCompletion(next_batch, evt);
 
 
         //fence->GetCompletedValue()

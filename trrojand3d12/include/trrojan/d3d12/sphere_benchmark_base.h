@@ -416,6 +416,7 @@ namespace d3d12 {
         /// Load the data set into an immutable buffer and transition this
         /// buffer for use as shader resource.
         /// </summary>
+        /// <remarks>
         /// <para>The buffer returned is an immutable buffer in
         /// <paramref name="state" /> after <paramref name="cmd_list" /> was
         /// executed. Callers need to run the command list before using the data
@@ -426,10 +427,11 @@ namespace d3d12 {
         /// <para>If <see cref="factor_fit_bounding_box" /> and an MMPLD file is
         /// loaded, this method will recompute the bounding box when loading it.
         /// </para>
+        /// </remarks>
         /// <param name="cmd_list"></param>
         /// <param name="shader_code"></param>
         /// <param name="config"></param>
-        /// <returns>A pointer the upload buffers. Callers need to keep this
+        /// <returns>A pointer the upload buffer. Callers need to keep this
         /// buffer alive until they have executed <paramref name="cmd_list" />.
         /// </returns>
         ATL::CComPtr<ID3D12Resource> load_data(
@@ -437,6 +439,18 @@ namespace d3d12 {
             const shader_id_type shader_code,
             const configuration& config,
             const D3D12_RESOURCE_STATES state);
+
+        /// <summary>
+        /// Load the data set into the memory provided by
+        /// <paramref name="allocator" />.
+        /// </summary>
+        /// <param name="allocator"></param>
+        /// <param name="shader_code"></param>
+        /// <param name="config"></param>
+        /// <returns>The size, in bytes, of the data buffer. This is the same
+        /// value that is also passed to <paramref name="allocator" />.</returns>
+        UINT64 load_data(std::function<void *(const UINT64)> allocator,
+            const shader_id_type shader_code, const configuration& config);
 
         /// <summary>
         /// Load the data set properties and input layout for the given

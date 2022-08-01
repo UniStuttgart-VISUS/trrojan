@@ -862,48 +862,88 @@ ATL::CComPtr<ID3D12Resource> trrojan::d3d12::sphere_benchmark_base::load_data(
     assert(cmd_list != nullptr);
     auto device = get_device(cmd_list);
     ATL::CComPtr<ID3D12Resource> retval;
-    UINT64 size = 0;
 
-    try {
-        auto desc = parse_random_sphere_desc(config, shader_code);
-        this->set_properties(desc);
-
-        void *data;
-        size = random_sphere_generator::create(nullptr, 0, desc);
+    auto size = this->load_data([this, &device, &retval](const UINT64 size) {
         this->_data = create_buffer(device, size);
         retval = create_upload_buffer(this->_data);
 
+        void *data;
         auto hr = retval->Map(0, nullptr, &data);
         if (FAILED(hr)) {
+            // Note that we do not catch this outside, because if this throws,
+            // load_data will exit with an exception and 'retval' will be
+            // destroyed and thus unmapped implicitly.
             throw ATL::CAtlException(hr);
         }
 
+        return data;
+    }, shader_code, config);
+    // At this point, the data are in the upload buffer and the read-only buffer
+    // has been prepared as copy target.
+
+    assert(retval != nullptr);
+    retval->Unmap(0, nullptr);
+
+    assert(this->_data != nullptr);
+    set_debug_object_name(this->_data, config.get<std::string>(
+        factor_data_set).c_str());
+
+    cmd_list->CopyBufferRegion(this->_data, 0, retval, 0, size);
+    transition_resource(cmd_list, this->_data, D3D12_RESOURCE_STATE_COPY_DEST,
+        state);
+
+    return retval;
+}
+
+
+/*
+ * trrojan::d3d12::sphere_benchmark_base::load_data
+ */
+UINT64 trrojan::d3d12::sphere_benchmark_base::load_data(
+        std::function<void *(const UINT64)> allocator,
+        const shader_id_type shader_code, const configuration& config) {
+    UINT64 retval;
+
+    try {
+        // First, try to parse the data set as specification of random spheres.
+        // This will throw if the string is not a valid specification, in which
+        // case we will try to open it from the file system.
+        auto desc = parse_random_sphere_desc(config, shader_code);
+        this->set_properties(desc);
+
+        log::instance().write_line(log_level::information, "Create random "
+            "sphere data set \"{}\".",
+            config.get<std::string>(factor_data_set));
+        retval = random_sphere_generator::create(nullptr, 0, desc);
+        auto data = allocator(retval);
+
         try {
-            random_sphere_generator::create(data, size, this->_max_radius,
+            random_sphere_generator::create(data, retval, this->_max_radius,
                 desc);
-            retval->Unmap(0, nullptr);
         } catch (...) {
             log::instance().write_line(log_level::error, "Failed to create "
                 "random sphere data for specification \"{}\". The "
                 "specification was correct, but the generation threw an "
                 "exception.", config.get<std::string>(factor_data_set));
-            retval->Unmap(0, nullptr);
             throw;
         }
 
     } catch (...) {
+        // If it is not a random sphere specification, interpret it as the path
+        // to an MMPLD file.
         mmpld::list_header list_header;
         const auto fit_bbox = config.get<bool>(factor_fit_bounding_box);
         const auto force_float = config.get<bool>(factor_force_float_colour);
         const auto path = config.get<std::string>(factor_data_set);
         const auto frame = config.get<frame_type>(factor_frame);
 
+        log::instance().write_line(log_level::information, "Load MMPLD data "
+            "set \"{}\".", config.get<std::string>(factor_data_set));
         mmpld::file<HANDLE> file(path.c_str());
         file.open_frame(frame);
         file.read_particles(false, list_header, nullptr, 0);
         this->set_properties(list_header);
 
-        void *data;
         const auto actual_colour = list_header.colour_type;
         const auto requested_colour
             = (force_float && is_non_float_colour(list_header))
@@ -916,14 +956,8 @@ ATL::CComPtr<ID3D12Resource> trrojan::d3d12::sphere_benchmark_base::load_data(
             list_header.colour_type = requested_colour;
         }
 
-        size = mmpld::get_size<UINT64>(list_header);
-        this->_data = create_buffer(device, size);
-        retval = create_upload_buffer(this->_data);
-
-        auto hr = retval->Map(0, nullptr, &data);
-        if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
-        }
+        retval = mmpld::get_size<UINT64>(list_header);
+        auto data = allocator(retval);
 
         try {
             if (actual_colour != requested_colour) {
@@ -953,27 +987,13 @@ ATL::CComPtr<ID3D12Resource> trrojan::d3d12::sphere_benchmark_base::load_data(
                 // sets with varying radii.
                 this->set_max_radius(list_header, data);
             }
-
-            retval->Unmap(0, nullptr);
         } catch (...) {
             log::instance().write_line(log_level::error, "Failed to read "
                 "MMPLD particles from \"{}\". The headers could be read, i.e."
                 "the input file might be corrupted.", path);
-            retval->Unmap(0, nullptr);
             throw;
         }
     }
-    // At this point, the data are in the upload buffer and the read-only buffer
-    // has been prepared as copy target.
-    assert(this->_data != nullptr);
-    assert(retval != nullptr);
-    assert(size > 0);
-    set_debug_object_name(this->_data, config.get<std::string>(
-        factor_data_set).c_str());
-
-    cmd_list->CopyBufferRegion(this->_data, 0, retval, 0, size);
-    transition_resource(cmd_list, this->_data, D3D12_RESOURCE_STATE_COPY_DEST,
-        state);
 
     return retval;
 }
