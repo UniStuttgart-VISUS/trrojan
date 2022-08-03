@@ -28,6 +28,10 @@ namespace d3d12 {
     protected:
 
         /// <inheritdoc />
+        UINT count_descriptor_tables(const shader_id_type shader_code,
+            const bool include_root) const override;
+
+        /// <inheritdoc />
         std::size_t on_batch_required(const std::size_t next_batch,
             const std::size_t batch_size, void *stream_chunk) override;
 

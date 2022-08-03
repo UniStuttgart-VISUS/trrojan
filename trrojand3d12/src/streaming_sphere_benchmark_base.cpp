@@ -45,7 +45,7 @@ void *trrojan::d3d12::streaming_sphere_benchmark_base::get_stream_chunk(
         const size_t batch_index, const size_t frame_index) {
     assert(batch_index < this->_batch_count);
     assert(frame_index < this->pipeline_depth());
-    const auto stride = static_cast<std::size_t>(this->get_stride());
+    const auto stride = static_cast<std::size_t>(this->_data.stride());
     const auto batch_len = this->_batch_size * stride;
     const auto frame_len = this->_batch_count * batch_len;
 
@@ -54,43 +54,6 @@ void *trrojan::d3d12::streaming_sphere_benchmark_base::get_stream_chunk(
     retval += batch_index * batch_len;
 
     return retval;
-}
-
-
-/*
- * trrojan::d3d12::streaming_sphere_benchmark_base::on_batch_changed
- */
-void trrojan::d3d12::streaming_sphere_benchmark_base::on_batch_changed(
-        device& device, const std::size_t count, const std::size_t size) {
-    this->_batch_count = count;
-    this->_batch_size = size;
-
-    const auto heap_size = this->_batch_count * this->_batch_size
-        * this->get_stride() * this->pipeline_depth();
-    assert(heap_size > 0);
-
-    trrojan::log::instance().write_line(log_level::debug, "Allocating {0} "
-        "bytes of streaming buffer for {1} batch(es) of {2} particle(s) of "
-        "size {3} in {4} frame(s) on device 0x{5:p} ...", heap_size,
-        this->_batch_count, this->_batch_size, this->get_stride(),
-        this->pipeline_depth(), static_cast<void *>(device.d3d_device().p));
-    this->_data = create_upload_buffer(device.d3d_device(), heap_size);
-
-    trrojan::log::instance().write_line(log_level::debug,
-        "Mapping data streaming buffer ...");
-    auto hr = this->_data->Map(0, nullptr, &this->_stream);
-    if (FAILED(hr)) {
-        throw ATL::CAtlException(hr);
-    }
-    trrojan::log::instance().write_line(log_level::debug, "Streaming buffer "
-        "mapped to 0x{:p}.", this->_stream);
-
-    // Allocate fences and events to synchronise on the completion of batches.
-    if (this->_events.size() != count) {
-        this->_events.resize(count);
-        std::generate(this->_events.begin(), this->_events.end(),
-            [](void) { return create_event(false, false); });
-    }
 }
 
 
@@ -121,6 +84,7 @@ void trrojan::d3d12::streaming_sphere_benchmark_base::on_device_switch(
 trrojan::result trrojan::d3d12::streaming_sphere_benchmark_base::on_run(
         d3d12::device& device, const configuration& config,
         const std::vector<std::string>& changed) {
+#if 0
     const auto batch_count = config.get<unsigned int>(factor_batch_count);
     const auto batch_size = config.get<unsigned int>(factor_batch_size);
     const auto gpu_freq = gpu_timer::get_timestamp_frequency(
@@ -177,7 +141,6 @@ trrojan::result trrojan::d3d12::streaming_sphere_benchmark_base::on_run(
     // of data and technique.
     auto pipeline = this->get_pipeline_state(device.d3d_device(), shader_code);
     auto root_sig = this->get_root_signature(device.d3d_device(), shader_code);
-
 
     //auto cmd_list = this->create_graphics_command_list();
     //auto upload = this->load_data(cmd_list, shader_code, config,
@@ -251,8 +214,9 @@ trrojan::result trrojan::d3d12::streaming_sphere_benchmark_base::on_run(
         this->disable_target(cmd_list, i);
         close_command_list(cmd_list);
     }
+#endif
 
-#if 1
+#if 0
     // Do prewarming and compute number of CPU iterations at the same time.
     log::instance().write_line(log_level::debug, "Prewarming ...");
     {
@@ -463,6 +427,8 @@ void trrojan::d3d12::streaming_sphere_benchmark_base::event_callback(
         that->on_batch_required(next_batch, that->_batch_size, chunk);
 
         //fence->SetEventOnCompletion(next_batch, evt);
+
+
 
 
         //fence->GetCompletedValue()

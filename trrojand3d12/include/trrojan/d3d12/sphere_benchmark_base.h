@@ -9,19 +9,13 @@
 #include <cassert>
 #include <unordered_map>
 
-#include <mmpld.h>
-
 #include "trrojan/camera.h"
-#include "trrojan/random_sphere_generator.h"
 
 #include "trrojan/d3d12/benchmark_base.h"
 #include "trrojan/d3d12/graphics_pipeline_builder.h"
+#include "trrojan/d3d12/sphere_data.h"
+#include "trrojan/d3d12/sphere_rendering_configuration.h"
 
-
-/* Forward declarations. */
-struct SphereConstants;
-struct TessellationConstants;
-struct ViewConstants;
 
 
 namespace trrojan {
@@ -34,40 +28,6 @@ namespace d3d12 {
     class TRROJAND3D12_API sphere_benchmark_base : public benchmark_base {
 
     public:
-
-        /// <summary>
-        /// Type for edge tessellation factors.
-        /// </summary>
-        typedef std::array<float, 4> edge_tess_factor_type;
-
-        /// <summary>
-        /// Type identifying a frame index.
-        /// <s/ummary>
-        typedef std::uint32_t frame_type;
-
-        /// <summary>
-        /// Type for inside tessellation factors.
-        /// </summary>
-        typedef std::array<float, 2> inside_tess_factor_type;
-
-        static const char *factor_adapt_tess_maximum;
-        static const char *factor_adapt_tess_minimum;
-        static const char *factor_adapt_tess_scale;
-        static const char *factor_conservative_depth;
-        static const char *factor_data_set;
-        static const char *factor_edge_tess_factor;
-        static const char *factor_fit_bounding_box;
-        static const char *factor_force_float_colour;
-        static const char *factor_frame;
-        static const char *factor_gpu_counter_iterations;
-        static const char *factor_hemi_tess_scale;
-        static const char *factor_inside_tess_factor;
-        static const char *factor_method;
-        static const char *factor_min_prewarms;
-        static const char *factor_min_wall_time;
-        static const char *factor_poly_corners;
-        static const char *factor_vs_raygen;
-        static const char *factor_vs_xfer_function;
 
         /// <summary>
         /// Finalise the instance,
@@ -122,79 +82,12 @@ namespace d3d12 {
             const shader_id_type shader_code);
 
         /// <summary>
-        /// Gets the identifier for the given rendering method.
-        /// </summary>
-        /// <remarks>
-        /// This method only retrieves the base code of the technique with the
-        /// specified name. The code returned does not contain any flags
-        /// modifying the behaviour, which can be specified in the
-        /// configuration, nor does it contain any data-dependent features.
-        /// </remarks>
-        /// <param name="method"></param>
-        /// <returns>The ID of the requested shader, or 0 if no such shader was
-        /// found.</returns>
-        static shader_id_type get_shader_id(const std::string& method);
-
-        /// <summary>
-        /// Gets the identifier for the rendering method specified in the given
-        /// configuration.
-        /// </summary>
-        /// <remarks>
-        /// The method only retrieves the method code and method-dependent
-        /// features, but not any data-dependent features. These must be added
-        /// later. Note that some flags in the returned code are set
-        /// speculatively and might need to be erased if they are not relevant
-        /// for the data being visualised.
-        /// </remarks>
-        /// <param name="config"></param>
-        /// <returns></returns>
-        static shader_id_type get_shader_id(const configuration& config);
-
-        /// <summary>
-        /// Computes the final shader code from what has been requested by the
-        /// configuration and the data that have been loaded.
-        /// </summary>
-        /// <param name="shader_code"></param>
-        /// <param name="data_code"></param>
-        /// <returns></returns>
-        static shader_id_type get_shader_id(shader_id_type shader_code,
-            property_mask_type data_code);
-
-        /// <summary>
-        /// Populates the tessellation constants from the given configuration.
-        /// </summary>
-        /// <param name="out_constants"></param>
-        /// <param name="config"></param>
-        static void get_tessellation_constants(
-            TessellationConstants& out_constants,
-            const configuration& config);
-
-        /// <summary>
         /// Answer whether any bit of <paramref name="technique" /> is set
         /// in <see cref="shader_code" />.
         /// </summary>
         static inline bool is_any_technique(const shader_id_type shader_code,
                 const shader_id_type technique) {
             return ((shader_code & technique) != 0);
-        }
-
-        /// <summary>
-        /// Answer whether the given type of particle colour is a non-floating
-        /// point per-sphere colour type.
-        /// </summary>
-        /// <param name="colour"></param>
-        /// <returns></returns>
-        static bool is_non_float_colour(const mmpld::colour_type colour);
-
-        /// <summary>
-        /// Answer whether the given MMPLD particles list uses a non-floating
-        /// point per-sphere colour type.
-        /// </summary>
-        /// <param name="header"></param>
-        /// <returns></returns>
-        inline static bool is_non_float_colour(
-                const mmpld::list_header& header) {
-            return is_non_float_colour(header.colour_type);
         }
 
         /// <summary>
@@ -207,16 +100,6 @@ namespace d3d12 {
                 const shader_id_type technique) {
             return ((shaderCode & technique) == technique);
         }
-
-        /// <summary>
-        /// Parses the data set in the given <see cref="configuration" /> as
-        /// configuration of random spheres.
-        /// </summary>
-        /// <param name="config"></param>
-        /// <param name="shader_code"></param>
-        /// <returns></returns>
-        static random_sphere_generator::description parse_random_sphere_desc(
-            const configuration& config, const shader_id_type shader_code);
 
         /// <summary>
         /// Apply the given descriptor table as root descriptors in the given
@@ -236,21 +119,15 @@ namespace d3d12 {
         static void set_shaders(graphics_pipeline_builder& builder,
             const shader_id_type shader_id);
 
-        static const property_mask_type property_float_colour;
-        static const property_mask_type property_per_sphere_colour;
-        static const property_mask_type property_per_sphere_intensity;
-        static const property_mask_type property_per_sphere_radius;
-        static const property_mask_type property_structured_resource;
-
         /// <summary>
         /// Initialise a new instance.
         /// </summary>
         sphere_benchmark_base(const std::string& name);
 
         /// <summary>
-        /// Updates the field of view and the aspect ratio of the current view port
-        /// and then computes the clipping planes for the current data set
-        /// properties and applies them to <see cref="_camera" />.
+        /// Updates the field of view and the aspect ratio of the current
+        /// viewport and then computes the clipping planes for the current data
+        /// set properties and applies them to <see cref="_camera" />.
         /// </summary>
         /// <param name="config">The configuration from which the manoeuvre is
         /// retrieved from.</param>
@@ -259,6 +136,16 @@ namespace d3d12 {
         /// degrees.</param>
         void configure_camera(const configuration& config,
             const float fovy = 60.0f);
+
+        /// <summary>
+        /// Determine how many descriptor tables are required for the given
+        /// rendering technique.
+        /// </summary>
+        /// <param name="shader_code"></param>
+        /// <param name="include_root"></param>
+        /// <returns></returns>
+        virtual UINT count_descriptor_tables(const shader_id_type shader_code,
+            const bool include_root) const;
 
         /// <summary>
         /// Create a shader resource view for the colour map.
@@ -286,52 +173,19 @@ namespace d3d12 {
 
         /// <summary>
         /// Change the descriptor heaps of the benchmark to match the needs of
-        /// the specified rendering technique.
+        /// the specified rendering technique as computed by
+        /// <see cref="count_descriptor_tables" />.
         /// </summary>
+        /// <para>Descriptor heaps are allocated for all frames of the pipeline.
+        /// </para>
+        /// <para>Derived classes that want to influence this method should
+        /// override <see cref="count_descriptor_tables" />.</para>
+        /// </remarks>
+        /// <remarks>
         /// <param name="device"></param>
         /// <param name="shader_code"></param>
-        void create_descriptor_heaps(ID3D12Device *device,
+        virtual void create_descriptor_heaps(ID3D12Device *device,
             const shader_id_type shader_code);
-
-        /// <summary>
-        /// Fits the stored bounding box to the actual data in the given MMPLD
-        /// particle list.
-        /// </summary>
-        /// <param name="header"></param>
-        /// <param name="particles"></param>
-        void fit_bounding_box(const mmpld::list_header& header,
-            const void *particles);
-
-        /// <summary>
-        /// Gets the end point of the bounding box.
-        /// </summary>
-        /// <param name=""></param>
-        /// <returns></returns>
-        inline const glm::vec3& get_bbox_end(void) const noexcept {
-            return this->_bbox[1];
-        }
-
-        /// <summary>
-        /// Gets the start point of the bounding box.
-        /// </summary>
-        /// <param name=""></param>
-        /// <returns></returns>
-        inline const glm::vec3& get_bbox_start(void) const noexcept {
-            return this->_bbox[0];
-        }
-
-        /// <summary>
-        /// Answer the size of the bounding box of the currently loaded data
-        /// set.
-        /// </summary>
-        /// <returns></returns>
-        std::array<float, 3> get_data_extents(void) const;
-
-        /// <summary>
-        /// Retrieves the properties of the currently loaded data set and erases
-        /// all flags which are not relevant for the given shader technique.
-        /// </summary>
-        property_mask_type get_data_properties(const shader_id_type shader_code);
 
         /// <summary>
         /// Gets a <see cref="graphics_pipeline_builder" /> preconfigured for
@@ -360,34 +214,12 @@ namespace d3d12 {
             ID3D12Device *device, const shader_id_type shader_code);
 
         /// <summary>
-        /// Retreives the constant buffer data for the current data properties.
-        /// </summary>
-        /// <param name="out_constants"></param>
-        void get_sphere_constants(SphereConstants& out_constants) const;
-
-        /// <summary>
         /// Gets the GPU-virtual address for the sphere constants of the given
         /// frame/buffer.
         /// </summary>
         /// <param name="buffer"></param>
         /// <returns></returns>
         D3D12_GPU_VIRTUAL_ADDRESS get_sphere_constants(const UINT buffer) const;
-
-        /// <summary>
-        /// Gets the number of spheres currently loaded to the data buffer.
-        /// </summary>
-        /// <returns></returns>
-        inline UINT get_sphere_count(void) const noexcept {
-            return this->_cnt_spheres;
-        }
-
-        /// <summary>
-        /// Gets the stride of the currently loaded data in bytes.
-        /// </summary>
-        /// <returns>The stride of the data loaded.</returns>
-        inline UINT get_stride(void) const noexcept {
-            return this->_stride;
-        }
 
         /// <summary>
         /// Gets the GPU-virtual address for the tessellation constants of the
@@ -413,74 +245,24 @@ namespace d3d12 {
         D3D12_GPU_VIRTUAL_ADDRESS get_view_constants(const UINT buffer) const;
 
         /// <summary>
-        /// Load the data set into an immutable buffer and transition this
-        /// buffer for use as shader resource.
-        /// </summary>
-        /// <remarks>
-        /// <para>The buffer returned is an immutable buffer in
-        /// <paramref name="state" /> after <paramref name="cmd_list" /> was
-        /// executed. Callers need to run the command list before using the data
-        /// set. The benchmark class will keep any copy of this buffer for
-        /// creating the appropriate shader resource views or input assembler
-        /// bindings.
-        /// </para>
-        /// <para>If <see cref="factor_fit_bounding_box" /> and an MMPLD file is
-        /// loaded, this method will recompute the bounding box when loading it.
-        /// </para>
-        /// </remarks>
-        /// <param name="cmd_list"></param>
-        /// <param name="shader_code"></param>
-        /// <param name="config"></param>
-        /// <returns>A pointer the upload buffer. Callers need to keep this
-        /// buffer alive until they have executed <paramref name="cmd_list" />.
-        /// </returns>
-        ATL::CComPtr<ID3D12Resource> load_data(
-            ID3D12GraphicsCommandList *cmd_list,
-            const shader_id_type shader_code,
-            const configuration& config,
-            const D3D12_RESOURCE_STATES state);
-
-        /// <summary>
-        /// Load the data set into the memory provided by
-        /// <paramref name="allocator" />.
-        /// </summary>
-        /// <param name="allocator"></param>
-        /// <param name="shader_code"></param>
-        /// <param name="config"></param>
-        /// <returns>The size, in bytes, of the data buffer. This is the same
-        /// value that is also passed to <paramref name="allocator" />.</returns>
-        UINT64 load_data(std::function<void *(const UINT64)> allocator,
-            const shader_id_type shader_code, const configuration& config);
-
-        /// <summary>
-        /// Load the data set properties and input layout for the given
-        /// configuration, but not the data itself.
-        /// </summary>
-        /// <remarks>
-        /// <para>The <see cref="factor_fit_bounding_box" /> will not be
-        /// honoured by this method, because the data need to be loaded to fit
-        /// the bounding box. In turn, this method will set the bounding box
-        /// from the list header in the file in any case.</para>
-        /// <para>If loading an MMPLD file, the maximum radius retrieved is
-        /// only correct for data sets with global radius. In any other case,
-        /// the radius can only be retrieved by actually loading the data.
-        /// </para>
-        /// </remarks>
-        /// <param name="shader_code"></param>
-        /// <param name="config"></param>
-        void load_data_properties(const shader_id_type shader_code,
-            const configuration& config);
-
-        /// <summary>
         /// (Re-) Create graphics resource when switching the device.
         /// </summary>
         /// <param name="device"></param>
         virtual void on_device_switch(device& device) override;
 
         /// <summary>
-        /// Applies the descriptors for the current data set and camera
-        /// properties in the given command list.
+        /// Creates a host-memory description holding all descriptors that need
+        /// to be set for the given shader.
         /// </summary>
+        /// <remarks>
+        /// <para>This method will check all potential shader resource views
+        /// that are available for sphere renderers and add them to the returned
+        /// descriptor table if necessary. The return value holds only the
+        /// descriptors that are expected by the shaders described by
+        /// <paramref name="shader_code" />.</para>
+        /// <para>The descriptors created are not applied on the device, but
+        /// must be passed to a command list before issuing draw calls.</para>
+        /// </remarks>
         /// <param name="device"></param>
         /// <param name="shader_code"></param>
         /// <param name="frame"></param>
@@ -490,9 +272,16 @@ namespace d3d12 {
             const shader_id_type shader_code, const UINT frame);
 
         /// <summary>
-        /// Applies the descriptors for the current data set and camera
-        /// properties using the buffers for the current frame.
+        /// Creates the host-memory description of the descriptors required for
+        /// the given shader using the descriptor table of the current frame.
         /// </summary>
+        /// <remarks>
+        /// <para>As descriptor tables are allocated on a descriptor heap and
+        /// there are separate descriptor heaps for each frame in the pipeline,
+        /// the descriptors must be set for every frame individually. This
+        /// overload does this for the currently active frame rather than for
+        /// a user-specified one.</para>
+        /// </remarks>
         /// <param name="device"></param>
         /// <param name="shader_code"></param>
         inline descriptor_table_type set_descriptors(ID3D12Device *device,
@@ -501,33 +290,7 @@ namespace d3d12 {
                 this->buffer_index());
         }
 
-        /// <summary>
-        /// Determines the actual maximum radius of any sphere in the given
-        /// MMPLD particle list and persists it.
-        /// </summary>
-        /// <remarks>
-        /// This method will check the whole particle list in case the header
-        /// indicates varying radii. Otherwise, the data from the header is
-        /// used.
-        /// </remarks>
-        /// <param name="header"></param>
-        /// <param name="particles"></param>
-        void set_max_radius(const mmpld::list_header& header,
-            const void *particles);
-
-        /// <summary>
-        /// Persists the data properties of the given random-sphere data set.
-        /// </summary>
-        /// <param name="desc"></param>
-        void set_properties(const random_sphere_generator::description& desc);
-
-        /// <summary>
-        /// Persists the data properties of the given MMPLD particle list.
-        /// </summary>
-        /// <param name="header"></param>
-        void set_properties(const mmpld::list_header& header);
-
-        /// <summary>
+          /// <summary>
         /// Sets the vertex buffer holding the data in the given command list if
         /// the given <paramref name="shader_code "/> demands a vertex buffer.
         /// </summary>
@@ -545,7 +308,8 @@ namespace d3d12 {
         /// <param name="buffer">The index of the currently active buffer, which
         /// determines where in the constant buffer the update is performed.
         /// </param>
-        void update_constants(const configuration& config, const UINT buffer);
+        void update_constants(const sphere_rendering_configuration& config,
+            const UINT buffer);
 
         /// <summary>
         /// The camera used to compute the view and projection transforms.
@@ -553,9 +317,9 @@ namespace d3d12 {
         trrojan::perspective_camera _camera;
 
         /// <summary>
-        /// Holds a pointer to the buffer filled by <see cref="load_data" />.
+        /// Manages the data set and its properties.
         /// </summary>
-        ATL::CComPtr<ID3D12Resource> _data;
+        sphere_data _data;
 
         /// <summary>
         /// Persistently mapped location of the global sphere description
@@ -615,19 +379,11 @@ namespace d3d12 {
         typedef std::unordered_map<shader_id_type,
             ATL::CComPtr<ID3D12RootSignature>> root_signature_map_type;
 
-        glm::vec3 _bbox[2];
         UINT _cnt_descriptor_tables;
-        UINT _cnt_spheres;
-        std::array<float, 4> _colour;
         ATL::CComPtr<ID3D12Resource> _colour_map;
         ATL::CComPtr<ID3D12Resource> _constant_buffer;
-        properties_type _data_properties;
-        std::vector<D3D12_INPUT_ELEMENT_DESC> _input_layout;
-        std::array<float, 2> _intensity_range;
-        float _max_radius;
         pipline_state_map_type _pipeline_cache;
         root_signature_map_type _root_sig_cache;
-        UINT _stride;
     };
 
 } /* end namespace d3d11 */

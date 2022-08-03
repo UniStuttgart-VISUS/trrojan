@@ -15,6 +15,27 @@ trrojan::d3d12::ram_streaming_sphere_benchmark::ram_streaming_sphere_benchmark(
 
 
 /*
+ * trrojan::d3d12::ram_streaming_sphere_benchmark::count_descriptor_tables
+ */
+UINT trrojan::d3d12::ram_streaming_sphere_benchmark::count_descriptor_tables(
+        const shader_id_type shader_code, const bool include_root) const {
+    // Let the base class compute how many descriptors we need for emitting one
+    // draw call.
+    auto retval = streaming_sphere_benchmark_base::count_descriptor_tables(
+        shader_code, false);
+
+    // All of the above is required for each batch that can run in parallel.
+    retval *= this->batch_count();
+
+    if (include_root) {
+        ++retval;
+    }
+
+    return retval;
+}
+
+
+/*
  * trrojan::d3d12::ram_streaming_sphere_benchmark::on_batch_required
  */
 std::size_t trrojan::d3d12::ram_streaming_sphere_benchmark::on_batch_required(

@@ -10,6 +10,7 @@
 
 #include "trrojan/d3d12/empty_benchmark.h"
 #include "trrojan/d3d12/environment.h"
+#include "trrojan/d3d12/ram_streaming_sphere_benchmark.h"
 #include "trrojan/d3d12/sphere_benchmark.h"
 
 
@@ -125,7 +126,8 @@ trrojan::d3d12::plugin::~plugin(void) { }
 size_t trrojan::d3d12::plugin::create_benchmarks(benchmark_list& dst) const {
     dst.emplace_back(std::make_shared<empty_benchmark>());
     dst.emplace_back(std::make_shared<sphere_benchmark>());
-    return 2;
+    dst.emplace_back(std::make_shared<ram_streaming_sphere_benchmark>());
+    return 3;
 }
 
 

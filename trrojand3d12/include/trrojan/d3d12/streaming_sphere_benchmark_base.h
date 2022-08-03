@@ -53,6 +53,21 @@ namespace d3d12 {
         streaming_sphere_benchmark_base(const std::string& name);
 
         /// <summary>
+        /// Answer the number of batches that run in parallel in the current
+        /// configuration.
+        /// </summary>
+        /// <remarks>
+        /// This method must only be called from <see cref="on_run" /> once the
+        /// current configuration has been evaluated. It is intended for derived
+        /// classes to perform computations depending on the batching while
+        /// preparing the command lists for rendering.
+        /// </remarks>
+        /// <returns></returns>
+        inline std::size_t batch_count(void) const {
+            return this->_batch_count;
+        }
+
+        /// <summary>
         /// Gets the pointer to the <paramref name="batch_index" />th batch
         /// of the <paramref name="frame_index" />th frame in the streaming
         /// buffer.
@@ -112,6 +127,21 @@ namespace d3d12 {
         trrojan::result on_run(d3d12::device& device,
             const configuration& config,
             const std::vector<std::string>& changed) override;
+
+        /// <summary>
+        /// Answer the total number of batches that need to be rendered for
+        /// streaming a whole frame given the current configuration.
+        /// </summary>
+        /// <remarks>
+        /// This method must only be called from <see cref="on_run" /> once the
+        /// current configuration has been evaluated. It is intended for derived
+        /// classes to perform computations depending on the batching while
+        /// preparing the command lists for rendering.
+        /// </remarks>
+        /// <returns></returns>
+        inline std::size_t total_batches(void) const {
+            return this->_total_batches;
+        }
 
     private:
 
