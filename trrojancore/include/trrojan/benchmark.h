@@ -1,9 +1,9 @@
-/// <copyright file="benchmark.h" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Valentin Bruder</author>
-/// <author>Christoph Müller</author>
+// <copyright file="benchmark.h" company="Visualisierungsinstitut der Universität Stuttgart">
+// Copyright © 2016 - 2022 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Valentin Bruder</author>
+// <author>Christoph Müller</author>
 
 #pragma once
 
@@ -14,6 +14,7 @@
 #include <vector>
 
 #include "trrojan/configuration_set.h"
+#include "trrojan/contains.h"
 #include "trrojan/cool_down.h"
 #include "trrojan/device.h"
 #include "trrojan/environment.h"
@@ -170,27 +171,6 @@ namespace trrojan {
         // TODO: define the interface.
 
     protected:
-
-        /// <summary>
-        /// Answer whether the array <paramref name="haystack" /> contains
-        /// <paramref name="needle" />.
-        /// </summary>
-        /// <param name="haystack"></param>
-        /// <param name="needle"></param>
-        /// <returns></returns>
-        static bool contains(const std::vector<std::string>& haystack,
-            const std::string& needle);
-
-        /// <summary>
-        /// Answer whether the array <paramref name="haystack" /> contains any
-        /// of <paramref name="needles" />.
-        /// </summary>
-        /// <param name="haystack"></param>
-        /// <param name="needles"></param>
-        /// <returns></returns>
-        template<class... T>
-        static bool contains_any(const std::vector<std::string>& haystack,
-            T&&... needles);
 
         /// <summary>
         /// Merges all system factors into <paramref name="c" />.

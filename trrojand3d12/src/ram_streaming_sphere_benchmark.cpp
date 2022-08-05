@@ -6,12 +6,14 @@
 
 #include "trrojan/d3d12/ram_streaming_sphere_benchmark.h"
 
+#include "trrojan/d3d12/measurement_context.h"
+
 
 /*
  * ...::ram_streaming_sphere_benchmark::ram_streaming_sphere_benchmark
  */
 trrojan::d3d12::ram_streaming_sphere_benchmark::ram_streaming_sphere_benchmark(
-    void) : streaming_sphere_benchmark_base("ram-stream-sphere-renderer") { }
+    void) : sphere_benchmark_base("ram-stream-sphere-renderer") { }
 
 
 /*
@@ -21,11 +23,11 @@ UINT trrojan::d3d12::ram_streaming_sphere_benchmark::count_descriptor_tables(
         const shader_id_type shader_code, const bool include_root) const {
     // Let the base class compute how many descriptors we need for emitting one
     // draw call.
-    auto retval = streaming_sphere_benchmark_base::count_descriptor_tables(
-        shader_code, false);
+    auto retval = sphere_benchmark_base::count_descriptor_tables(shader_code,
+        false);
 
     // All of the above is required for each batch that can run in parallel.
-    retval *= this->batch_count();
+    retval *= this->_stream.batch_count();
 
     if (include_root) {
         ++retval;
@@ -36,39 +38,62 @@ UINT trrojan::d3d12::ram_streaming_sphere_benchmark::count_descriptor_tables(
 
 
 /*
- * trrojan::d3d12::ram_streaming_sphere_benchmark::on_batch_required
+ * trrojan::d3d12::ram_streaming_sphere_benchmark::on_run
  */
-std::size_t trrojan::d3d12::ram_streaming_sphere_benchmark::on_batch_required(
-        const std::size_t next_batch, const std::size_t batch_size,
-        void *stream_chunk) {
-    auto retval = batch_size * this->get_stride();
-    auto offset = next_batch * retval;
+trrojan::result trrojan::d3d12::ram_streaming_sphere_benchmark::on_run(
+        d3d12::device& device, const configuration& config,
+        const std::vector<std::string>& changed) {
+    sphere_rendering_configuration cfg(config);
+    measurement_context mctx(device, 1, this->pipeline_depth());
+    auto shader_code = cfg.shader_id();
 
-    assert(offset < this->_buffer.size());
-    if (offset + retval > this->_buffer.size()) {
-        retval = this->_buffer.size() - offset;
+    // Clear data that cannot be used any more.
+    this->clear_stale_data(changed);
+
+    // Load the data if necessary.
+    if (!this->_data) {
+        log::instance().write_line(log_level::information, "Loading data set \""
+            "{}\" into memory ...", cfg.data_set());
+        this->_data.load([this](const UINT64 size) {
+            this->_buffer.resize(size);
+            return this->_buffer.data();
+        }, shader_code, cfg);
+
+        log::instance().write_line(log_level::debug, "Reshaping GPU "
+            "stream ...");
+        this->_stream.reshape(this->_data);
     }
 
-    ::memcpy(stream_chunk, this->_buffer.data() + offset, retval);
+    // Now that we have the data, update the shader code to match it.
+    shader_code = this->_data.adjust_shader_code(shader_code);
 
-    assert(retval % this->get_stride() == 0);
-    retval /= this->get_stride();
+    // As we have the data, we can also configure the camera now.
+    this->configure_camera(config);
 
-    return retval;
-}
+    if (this->_stream.rebuild_required(changed)) {
+        log::instance().write_line(log_level::information, "Building GPU "
+            "stream ...");
+        this->_stream.rebuild(device.d3d_device(), config,
+            this->pipeline_depth());
+    }
+
+    log::instance().write_line(log_level::debug, "Prewarming ...");
+    {
+        auto prewarms = (std::max)(1u, cfg.min_prewarms());
+
+        do {
+            mctx.cpu_timer.start();
+            for (mctx.cpu_iterations = 0; mctx.cpu_iterations < prewarms;
+                    ++mctx.cpu_iterations) {
+                //auto cmd_list = cmd_lists[this->buffer_index()];
+                //device.execute_command_list(cmd_list);
+                //this->present_target();
+            }
+            device.wait_for_gpu();
+            prewarms = mctx.check_cpu_iterations(cfg.min_wall_time());
+        } while (prewarms > 0);
+    }
 
 
-/*
- * trrojan::d3d12::ram_streaming_sphere_benchmark::on_data_changed
- */
-void trrojan::d3d12::ram_streaming_sphere_benchmark::on_data_changed(
-        d3d12::device& device, const shader_id_type shader_code,
-        const configuration& config) {
-    trrojan::log::instance().write_line(log_level::information, "Loading "
-        "\"{}\" for streaming from main memory ...",
-        config.get<std::string>(factor_data_set));
-    this->load_data([this](const UINT64 size) {
-        this->_buffer.resize(size);
-        return this->_buffer.data();
-    }, shader_code, config);
+    return trrojan::result();
 }

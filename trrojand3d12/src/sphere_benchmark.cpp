@@ -34,9 +34,6 @@ void trrojan::d3d12::sphere_benchmark::on_device_switch(device& device) {
     this->_bundle_allocators.clear();
     create_command_allocators(this->_bundle_allocators, device.d3d_device(),
         D3D12_COMMAND_LIST_TYPE_BUNDLE, 1);
-
-    // Invalidate the data.
-    this->_data.clear();
 }
 
 
@@ -58,13 +55,7 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
 
     // If the data or any factor influencing their representation on the GPU
     // have changed, clear them.
-    if (contains_any(changed,
-            sphere_rendering_configuration::factor_data_set,
-            sphere_rendering_configuration::factor_frame,
-            sphere_rendering_configuration::factor_force_float_colour,
-            sphere_rendering_configuration::factor_fit_bounding_box)) {
-        this->_data.clear();
-    }
+    this->clear_stale_data(changed);
 
     // Load the data if necessary.
     if (!this->_data) {

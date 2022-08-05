@@ -42,12 +42,18 @@ namespace d3d12 {
         /// </summary>
         sphere_streaming_context(void);
 
-        sphere_streaming_context(const configuration& config);
+        sphere_streaming_context(const sphere_streaming_context&) = delete;
 
         /// <summary>
-        /// Move <paramref name="rhs" /> into a new instance.
+        /// Gets the offset and length (in bytes) of the
+        /// <paramref name="batch" />th batch of the
+        /// <paramref name="frame" />th frame.
         /// </summary>
-        sphere_streaming_context(sphere_streaming_context&& rhs);
+        /// <param name="batch"></param>
+        /// <param name="frame"></param>
+        /// <returns></returns>
+        std::pair<std::size_t, std::size_t> batch(const std::size_t batch,
+            const std::size_t frame);
 
         /// <summary>
         /// Answer the number of batches that run in parallel in the current
@@ -65,6 +71,69 @@ namespace d3d12 {
         }
 
         /// <summary>
+        /// Answer the pointer to the mapped data buffer.
+        /// </summary>
+        inline void *data(void) noexcept {
+            return this->_data;
+        }
+
+        /// <summary>
+        /// Gets the start of the /// <paramref name="batch" />th batch of the
+        /// <paramref name="frame" />th frame.
+        /// </summary>
+        /// <param name="batch"></param>
+        /// <param name="frame"></param>
+        /// <returns></returns>
+        inline void *data(const std::size_t batch, const std::size_t frame) {
+            return static_cast<std::uint8_t *>(this->_data)
+                + this->batch(batch, frame).first;
+        }
+
+        /// <summary>
+        /// Answer the size in bytes of all batches of a single frame.
+        /// </summary>
+        std::size_t frame_size(void) const;
+
+        /// <summary>
+        /// Answer whether changing any of the given factors requires a rebuild
+        /// of the context's resources.
+        /// </summary>
+        bool rebuild_required(const std::vector<std::string>& changed) const;
+
+        /// <summary>
+        /// Rebuilds the streaming buffer on the given device.
+        /// </summary>
+        /// <param name="device"></param>
+        /// <param name="config"></param>
+        /// <param name="pipeline_depth"></param>
+        void rebuild(ID3D12Device *device, const configuration& config,
+            const std::size_t pipeline_depth);
+
+        /// <summary>
+        /// Inform the context that the size of the data set has changed.
+        /// </summary>
+        /// <remarks>
+        /// Reshaping the data most likely requires a rebuild. Therefore, you
+        /// must reshape before checking whether a rebuild is needed. The
+        /// implementation tries to avoid the need to rebuild whenever possible.
+        /// </remarks>
+        /// <param name="total_spheres"></param>
+        /// <param name="stride"></param>
+        /// <returns><c>true</c> if the buffer needs to be rebuilt, <c>false</c>
+        /// otherwise.</returns>
+        bool reshape(const std::size_t total_spheres, const std::size_t stride);
+
+        /// <summary>
+        /// Inform the context about new data.
+        /// </summary>
+        /// <param name="data"></param>
+        /// <returns><c>true</c> if the buffer needs to be rebuilt, <c>false</c>
+        /// otherwise.</returns>
+        bool reshape(const sphere_data& data) {
+            return this->reshape(data.spheres(), data.stride());
+        }
+
+        /// <summary>
         /// Answer the total number of batches that need to be rendered for
         /// streaming a whole frame given the current configuration.
         /// </summary>
@@ -72,23 +141,18 @@ namespace d3d12 {
             return this->_total_batches;
         }
 
-        /// <summary>
-        /// Move assignment.
-        /// </summary>
-        /// <param name="rhs"></param>
-        /// <returns></returns>
-        sphere_streaming_context& operator =(sphere_streaming_context&& rhs);
+        sphere_streaming_context& operator =(
+            const sphere_streaming_context&) = delete;
 
     private:
-
-        void alloc_buffer(ID3D12Device *device, const std::size_t stride,
-            const std::size_t pipeline_depth);
 
         std::size_t _batch_count;
         std::size_t _batch_size;
         ATL::CComPtr<ID3D12Resource> _buffer;
         void *_data;
+        std::size_t _stride;
         std::size_t _total_batches;
+        std::size_t _total_spheres;
     };
 
 } /* end namespace d3d11 */

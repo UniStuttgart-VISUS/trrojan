@@ -6,7 +6,8 @@
 
 #pragma once
 
-#include "trrojan/d3d12/streaming_sphere_benchmark_base.h"
+#include "trrojan/d3d12/sphere_benchmark_base.h"
+#include "trrojan/d3d12/sphere_streaming_context.h"
 
 
 namespace trrojan {
@@ -16,7 +17,7 @@ namespace d3d12 {
     /// Streams spheres from an in-memory buffer.
     /// </summary>
     class TRROJAND3D12_API ram_streaming_sphere_benchmark final
-            : public streaming_sphere_benchmark_base {
+            : public sphere_benchmark_base {
 
     public:
 
@@ -32,17 +33,14 @@ namespace d3d12 {
             const bool include_root) const override;
 
         /// <inheritdoc />
-        std::size_t on_batch_required(const std::size_t next_batch,
-            const std::size_t batch_size, void *stream_chunk) override;
-
-        /// <inheritdoc />
-        void on_data_changed(d3d12::device& device,
-            const shader_id_type shader_code,
-            const configuration& config) override;
+        trrojan::result on_run(d3d12::device& device,
+            const configuration& config,
+            const std::vector<std::string>& changed) override;
 
     private:
 
         std::vector<std::uint8_t> _buffer;
+        sphere_streaming_context _stream;
     };
 
 } /* end namespace d3d11 */

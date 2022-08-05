@@ -71,7 +71,6 @@ trrojan::d3d12::sphere_data::sphere_data(void)
 trrojan::d3d12::sphere_data::shader_id_type
 trrojan::d3d12::sphere_data::adjust_shader_code(
         shader_id_type shader_code) const {
-    assert(*this);
     // First, get only the data properties relevant for the shader code.
     auto data_code = this->properties(shader_code);
 

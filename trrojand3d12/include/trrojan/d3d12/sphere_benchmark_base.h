@@ -46,8 +46,7 @@ namespace d3d12 {
         /// A descriptor table repesented as a descriptor heap and offsets to
         /// the entries in that heap.
         /// </summary>
-        typedef std::pair<ATL::CComPtr<ID3D12DescriptorHeap>,
-            std::vector<D3D12_GPU_DESCRIPTOR_HANDLE>> descriptor_table_type;
+        typedef sphere_data::descriptor_table_type descriptor_table_type;
 
         /// <summary>
         /// A type to express the properties of a particle data set as a
@@ -123,6 +122,12 @@ namespace d3d12 {
         /// Initialise a new instance.
         /// </summary>
         sphere_benchmark_base(const std::string& name);
+
+        /// <summary>
+        /// Clear the data loaded if the given changes in parameters invalidate
+        /// them.
+        /// </summary>
+        void clear_stale_data(const std::vector<std::string>& changed);
 
         /// <summary>
         /// Updates the field of view and the aspect ratio of the current

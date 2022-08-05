@@ -1,9 +1,9 @@
-/// <copyright file="benchmark.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Valentin Bruder</author>
-/// <author>Christoph Müller</author>
+// <copyright file="benchmark.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
+// Copyright © 2016 - 2022 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Valentin Bruder</author>
+// <author>Christoph Müller</author>
 
 #include "trrojan/benchmark.h"
 
@@ -154,16 +154,6 @@ size_t trrojan::benchmark_base::run(const configuration_set& configs,
     });
 
     return retval;
-}
-
-
-/*
- * trrojan::benchmark_base::contains
- */
-bool trrojan::benchmark_base::contains(const std::vector<std::string>& haystack,
-        const std::string& needle) {
-    auto it = std::find(haystack.begin(), haystack.end(), needle);
-    return (it != haystack.end());
 }
 
 

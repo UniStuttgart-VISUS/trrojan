@@ -207,6 +207,21 @@ trrojan::d3d12::sphere_benchmark_base::sphere_benchmark_base(
 
 
 /*
+ * trrojan::d3d12::sphere_benchmark_base::clear_stale_data
+ */
+void trrojan::d3d12::sphere_benchmark_base::clear_stale_data(
+        const std::vector<std::string>& changed) {
+    if (contains_any(changed,
+            sphere_rendering_configuration::factor_data_set,
+            sphere_rendering_configuration::factor_frame,
+            sphere_rendering_configuration::factor_force_float_colour,
+            sphere_rendering_configuration::factor_fit_bounding_box)) {
+        this->_data.clear();
+    }
+}
+
+
+/*
  * trrojan::d3d12::sphere_benchmark_base::set_clipping_planes
  */
 void trrojan::d3d12::sphere_benchmark_base::configure_camera(
@@ -547,6 +562,9 @@ void trrojan::d3d12::sphere_benchmark_base::on_device_switch(device& device) {
         assert(static_cast<void *>(this->_view_constants)
             < static_cast<void *>(this->_tessellation_constants));
     }
+
+    // Data are also device-specific.
+    this->_data.clear();
 }
 
 

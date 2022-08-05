@@ -1,21 +1,9 @@
-/// <copyright file="benchmark.inl" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Valentin Bruder</author>
-/// <author>Christoph Müller</author>
-
-
-/*
- * trrojan::benchmark_base::contains_any
- */
-template<class... T> bool trrojan::benchmark_base::contains_any(
-        const std::vector<std::string>& haystack, T&&... needles) {
-    std::vector<std::string> n = { needles... };
-    auto it = std::find_if(haystack.begin(), haystack.end(),
-        [&n](const std::string h) { return contains(n, h); });
-    return (it != haystack.end());
-}
+// <copyright file="benchmark.inl" company="Visualisierungsinstitut der Universität Stuttgart">
+// Copyright © 2016 - 2022 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Valentin Bruder</author>
+// <author>Christoph Müller</author>
 
 
 /*
