@@ -51,9 +51,9 @@ namespace d3d12 {
         /// </summary>
         /// <param name="batch"></param>
         /// <param name="frame"></param>
-        /// <returns></returns>
+        /// <returns>The offset and size, both in bytes, of the batch.</returns>
         std::pair<std::size_t, std::size_t> batch(const std::size_t batch,
-            const std::size_t frame);
+            const std::size_t frame) const;
 
         /// <summary>
         /// Answer the number of batches that run in parallel in the current
@@ -78,7 +78,7 @@ namespace d3d12 {
         }
 
         /// <summary>
-        /// Gets the start of the /// <paramref name="batch" />th batch of the
+        /// Gets the start of the <paramref name="batch" />th batch of the
         /// <paramref name="frame" />th frame.
         /// </summary>
         /// <param name="batch"></param>
@@ -88,6 +88,23 @@ namespace d3d12 {
             return static_cast<std::uint8_t *>(this->_data)
                 + this->batch(batch, frame).first;
         }
+
+        /// <summary>
+        /// Gets a descriptor for the start of the data buffer.
+        /// </summary>
+        /// <param name=""></param>
+        /// <returns></returns>
+        D3D12_GPU_VIRTUAL_ADDRESS descriptor(void) const;
+
+        /// <summary>
+        /// Gets a descriptor for the start of the given
+        /// <paramref name="batch" /> of the given <paramref name="frame" />.
+        /// </summary>
+        /// <param name="batch"></param>
+        /// <param name="frame"></param>
+        /// <returns></returns>
+        D3D12_GPU_VIRTUAL_ADDRESS descriptor(const std::size_t batch,
+            const std::size_t frame) const;
 
         /// <summary>
         /// Answer the size in bytes of all batches of a single frame.

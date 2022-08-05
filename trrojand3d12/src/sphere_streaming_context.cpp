@@ -34,7 +34,7 @@ trrojan::d3d12::sphere_streaming_context::sphere_streaming_context(void)
  */
 std::pair<std::size_t, std::size_t>
 trrojan::d3d12::sphere_streaming_context::batch(const std::size_t batch,
-        const std::size_t frame) {
+        const std::size_t frame) const {
     auto size = this->frame_size();
     auto offset = batch * size;
 
@@ -46,6 +46,31 @@ trrojan::d3d12::sphere_streaming_context::batch(const std::size_t batch,
     offset += frame * this->frame_size();
 
     return std::make_pair(offset, size);
+}
+
+
+/*
+ * trrojan::d3d12::sphere_streaming_context::descriptor
+ */
+D3D12_GPU_VIRTUAL_ADDRESS trrojan::d3d12::sphere_streaming_context::descriptor(
+        void) const {
+    if (this->_buffer == nullptr) {
+        throw std::logic_error("A descriptor can only be obtained if the "
+            "streaming buffer has been built.");
+    }
+
+    return this->_buffer->GetGPUVirtualAddress();
+}
+
+
+/*
+ * trrojan::d3d12::sphere_streaming_context::descriptor
+ */
+D3D12_GPU_VIRTUAL_ADDRESS trrojan::d3d12::sphere_streaming_context::descriptor(
+        const std::size_t batch, const std::size_t frame) const {
+    auto retval = this->descriptor();
+    retval += this->batch(batch, frame).first;
+    return retval;
 }
 
 

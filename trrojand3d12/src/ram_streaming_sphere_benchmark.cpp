@@ -70,6 +70,7 @@ trrojan::result trrojan::d3d12::ram_streaming_sphere_benchmark::on_run(
     // As we have the data, we can also configure the camera now.
     this->configure_camera(config);
 
+    // If necessary, build the GPU heap for streaming the data.
     if (this->_stream.rebuild_required(changed)) {
         log::instance().write_line(log_level::information, "Building GPU "
             "stream ...");
