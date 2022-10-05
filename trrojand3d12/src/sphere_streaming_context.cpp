@@ -26,7 +26,7 @@ _SPHERE_BENCH_DEFINE_FACTOR(batch_size);
  */
 trrojan::d3d12::sphere_streaming_context::sphere_streaming_context(void)
         : _batch_count(0), _batch_size(0), _data(nullptr), _stride(0),
-        _total_batches(0), _total_spheres(0) { }
+        _total_spheres(0) { }
 
 
 /*
@@ -149,5 +149,17 @@ bool trrojan::d3d12::sphere_streaming_context::reshape(
     this->_stride = stride;
     this->_total_spheres = total_spheres;
 
+    return retval;
+}
+
+
+/*
+ * trrojan::d3d12::sphere_streaming_context::total_batches
+ */
+std::size_t trrojan::d3d12::sphere_streaming_context::total_batches(void) const {
+    auto retval = this->_total_spheres / this->_batch_size;
+    if (this->_total_spheres % this->_batch_size != 0) {
+        ++retval;
+    }
     return retval;
 }

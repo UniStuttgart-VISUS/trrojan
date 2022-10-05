@@ -13,7 +13,12 @@
  * ...::ram_streaming_sphere_benchmark::ram_streaming_sphere_benchmark
  */
 trrojan::d3d12::ram_streaming_sphere_benchmark::ram_streaming_sphere_benchmark(
-    void) : sphere_benchmark_base("ram-stream-sphere-renderer") { }
+        void) : sphere_benchmark_base("ram-stream-sphere-renderer") {
+    this->_default_configs.add_factor(factor::from_manifestations(
+        sphere_streaming_context::factor_batch_count, 8u));
+    this->_default_configs.add_factor(factor::from_manifestations(
+        sphere_streaming_context::factor_batch_size, 1024u));
+}
 
 
 /*
@@ -77,6 +82,25 @@ trrojan::result trrojan::d3d12::ram_streaming_sphere_benchmark::on_run(
         this->_stream.rebuild(device.d3d_device(), config,
             this->pipeline_depth());
     }
+
+
+
+
+
+
+    // Record a command list for each frame for the CPU measurements.
+    std::vector<ATL::CComPtr<ID3D12GraphicsCommandList>> cmd_lists(
+        this->pipeline_depth());
+    for (UINT i = 0; i < this->pipeline_depth(); ++i) {
+        auto cmd_list = cmd_lists[i] = this->create_graphics_command_list(i);
+        set_debug_object_name(cmd_list, "CPU command list #{}", i);
+
+        for (std::size_t b = 0, t = this->_stream.total_batches(); b < t; ++b) {
+
+        }
+
+    }
+
 
     log::instance().write_line(log_level::debug, "Prewarming ...");
     {

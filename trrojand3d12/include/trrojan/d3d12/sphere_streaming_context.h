@@ -154,9 +154,7 @@ namespace d3d12 {
         /// Answer the total number of batches that need to be rendered for
         /// streaming a whole frame given the current configuration.
         /// </summary>
-        inline std::size_t total_batches(void) const {
-            return this->_total_batches;
-        }
+        std::size_t total_batches(void) const;
 
         sphere_streaming_context& operator =(
             const sphere_streaming_context&) = delete;
@@ -168,7 +166,6 @@ namespace d3d12 {
         ATL::CComPtr<ID3D12Resource> _buffer;
         void *_data;
         std::size_t _stride;
-        std::size_t _total_batches;
         std::size_t _total_spheres;
     };
 
