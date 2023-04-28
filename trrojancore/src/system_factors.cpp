@@ -24,6 +24,10 @@
 #include <winrt/windows.foundation.h>
 #include <winrt/windows.foundation.collections.h>
 #include <winrt/windows.system.h>
+#include <Windows.h>
+#if defined(NTDDI_WIN10_RS3) && (NTDDI_VERSION >= NTDDI_WIN10_RS3)
+#include "Gamingdeviceinformation.h"
+#endif
 #endif
 #ifdef _WIN32
 #include <Windows.h>
@@ -559,6 +563,21 @@ trrojan::variant trrojan::system_factors::user_name(void) const {
 #ifdef _WIN32
 #ifdef _UWP
     // Fairly hacky solution. Needs App permission set in OS to work
+
+    GAMING_DEVICE_MODEL_INFORMATION info = {};
+    GetGamingDeviceModelInformation(&info);
+    switch (info.deviceId)
+    {
+        #ifndef NTDDI_WIN10_NI
+        #pragma warning(disable : 4063)
+        #define GAMING_DEVICE_DEVICE_ID_XBOX_SERIES_S static_cast<GAMING_DEVICE_DEVICE_ID>(0x1D27FABB)
+        #define GAMING_DEVICE_DEVICE_ID_XBOX_SERIES_X static_cast<GAMING_DEVICE_DEVICE_ID>(0x2F7A3DFF)
+        #define GAMING_DEVICE_DEVICE_ID_XBOX_SERIES_X_DEVKIT static_cast<GAMING_DEVICE_DEVICE_ID>(0xDE8A5661)
+        #endif
+        case GAMING_DEVICE_DEVICE_ID_XBOX_SERIES_S: return winrt::to_string(L"unavailable on xbox");
+        case GAMING_DEVICE_DEVICE_ID_XBOX_SERIES_X: return winrt::to_string(L"unavailable on xbox");
+    }
+
     winrt::Windows::Foundation::Collections::IVectorView<winrt::Windows::System::User> users 
         = winrt::Windows::System::User::FindAllAsync(winrt::Windows::System::UserType::LocalUser, winrt::Windows::System::UserAuthenticationStatus::LocallyAuthenticated).get();
     winrt::Windows::System::User currentUser = users.GetAt(0);

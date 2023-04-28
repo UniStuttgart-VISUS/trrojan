@@ -35,12 +35,16 @@ trrojan::d3d11::uwp_debug_render_target::~uwp_debug_render_target(void) {
     this->_rtv = nullptr;
     this->_dsv = nullptr;
     this->_uav = nullptr;
-    this->m_d2dContext->SetTarget(nullptr);
+    if (this->m_d2dContext != nullptr) {
+        this->m_d2dContext->SetTarget(nullptr);
+    }
     this->m_d2dTargetBitmap = nullptr;
     this->swapChain = nullptr;
 
-    this->device_context()->ClearState();
-    this->device_context()->Flush();
+    if (this->device_context() != nullptr) {
+        this->device_context()->ClearState();
+        this->device_context()->Flush();
+    }
 }
 
 

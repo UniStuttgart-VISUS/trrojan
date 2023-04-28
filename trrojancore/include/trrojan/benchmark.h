@@ -167,6 +167,8 @@ namespace trrojan {
 
         virtual result run(const configuration& config) = 0;
 
+        virtual void destroyTargets() = 0;
+
         // TODO: define the interface.
 
     protected:

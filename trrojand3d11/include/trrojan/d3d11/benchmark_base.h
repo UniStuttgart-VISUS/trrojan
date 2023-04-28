@@ -68,6 +68,12 @@ namespace d3d11 {
         /// <param name="window"></param>
         void SetWindow(winrt::agile_ref<winrt::Windows::UI::Core::CoreWindow> const& window);
 
+        virtual inline void destroyTargets() {
+            // destroy render targets
+            render_target.reset();
+            debug_target.reset();
+        }
+
     protected:
 
         benchmark_base(const std::string& name);

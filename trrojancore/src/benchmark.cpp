@@ -153,6 +153,8 @@ size_t trrojan::benchmark_base::run(const configuration_set& configs,
         }
     });
 
+    this->destroyTargets();
+
     return retval;
 }
 
