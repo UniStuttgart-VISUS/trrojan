@@ -69,7 +69,7 @@ void trrojan::stream::worker_thread::start(problem_type problem,
     this->results_lock.unlock();
 
     trrojan::log::instance().write(log_level::verbose, "Starting worker "
-        "thread with rank %u...\n", this->rank);
+        "thread with rank {}...\n", this->rank);
 
 #ifdef _WIN32
     /* Create suspended thread. */

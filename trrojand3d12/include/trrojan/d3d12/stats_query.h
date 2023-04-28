@@ -25,7 +25,7 @@ namespace trrojan {
 namespace d3d12 {
 
     /// <summary>
-    /// Utility class for performing pipeline statistics queries..
+    /// Utility class for performing pipeline statistics queries.
     /// </summary>
     /// <remarks>
     class stats_query final {
@@ -43,18 +43,19 @@ namespace d3d12 {
         typedef D3D12_QUERY_DATA_PIPELINE_STATISTICS value_type;
 
         /// <summary>
-        /// Initialise a new instance.
+        /// The identifier of the query issued by this object.
         /// </summary>
-        /// <param name="device"></param>
-        /// <param name="queries"></param>
-        stats_query(ID3D12Device *device, const size_type queries = 1);
+        static constexpr D3D12_QUERY_TYPE query_type
+            = D3D12_QUERY_TYPE_PIPELINE_STATISTICS;
 
         /// <summary>
         /// Initialise a new instance.
         /// </summary>
-        /// <param name="queue"></param>
+        /// <param name="device"></param>
         /// <param name="queries"></param>
-        stats_query(ID3D12CommandQueue *queue, const size_type queries = 1);
+        /// <param name="buffers"></param>
+        stats_query(ID3D12Device *device, const size_type queries = 1,
+            const size_t buffers = 2);
 
         stats_query(const stats_query&) = delete;
 
@@ -63,7 +64,60 @@ namespace d3d12 {
         /// <summary>
         /// Finalise the instance.
         /// </summary>
-        ~stats_query(void);
+        ~stats_query(void) = default;
+
+        /// <summary>
+        /// Begins the <paramref name="query" />th query within the current
+        /// frame.
+        /// </summary>
+        /// <param name="cmd_list"></param>
+        /// <param name="query"></param>
+        void begin(ID3D12GraphicsCommandList *cmd_list, const UINT query);
+
+        /// <summary>
+        /// Starts a new frame.
+        /// </summary>
+        void begin_frame(void);
+
+        /// <summary>
+        /// Ends the <paramref name="query" />th query within the current frame.
+        /// </summary>
+        /// <param name="cmd_list"></param>
+        /// <param name="query"></param>
+        void end(ID3D12GraphicsCommandList *cmd_list, const UINT query);
+
+        /// <summary>
+        /// Retrieve the query data for the currently active frame and return
+        /// the buffer index for evaluating it.
+        /// </summary>
+        /// <param name="cmd_list"></param>
+        /// <returns></returns>
+        size_type end_frame(ID3D12GraphicsCommandList *cmd_list);
+
+        /// <summary>
+        /// Retrieve all query results of the given <paramref name="buffer "/>.
+        /// </summary>
+        /// <typeparam name="TIterator"></typeparam>
+        /// <param name="oit"></param>
+        /// <param name="buffer"></param>
+        template<class TIterator>
+        void evaluate(TIterator oit, const size_type buffer) const;
+
+        /// <summary>
+        /// Retrieve the <paramref name="query" />th query of the given
+        /// <paramref name="buffer" />.
+        /// </summary>
+        /// <param name="buffer"></param>
+        /// <param name="query"></param>
+        /// <returns></returns>
+        value_type evaluate(const size_type buffer, const UINT query);
+
+        /// <summary>
+        /// Resizes the result buffers.
+        /// </summary>
+        /// <param name="queries"></param>
+        /// <param name="buffers"></param>
+        void resize(const size_type queries, const size_type buffers = 2);
 
         stats_query& operator =(const stats_query&) = delete;
 
@@ -75,26 +129,24 @@ namespace d3d12 {
         typedef ATL::CComPtr<ID3D12QueryHeap> heap_type;
         typedef ATL::CComPtr<ID3D12Resource> result_buffer_type;
 
-        /// <summary>
-        /// The number of queries.
-        /// </summary>
+        inline size_type result_index(const size_type buffer,
+                const UINT query) const {
+            return buffer * this->_cnt_queries + query;
+        }
+
+        inline size_type result_index(const UINT query) const {
+            return this->result_index(this->_idx_active_buffer, query);
+        }
+
+        size_type _cnt_buffers;
         size_type _cnt_queries;
-
-        /// <summary>
-        /// The device that we create the queries on.
-        /// </summary>
         device_type _device;
-
-        /// <summary>
-        /// The heap on which the queries are allocated.
-        /// </summary>
         heap_type _heap;
-
-        /// <summary>
-        /// The buffer receiving the results of the pipeline statistics queries.
-        /// </summary>
+        size_type _idx_active_buffer;
         result_buffer_type _result_buffer;
     };
 
 }
 }
+
+#include "trrojan/d3d12/stats_query.inl"

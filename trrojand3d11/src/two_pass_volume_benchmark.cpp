@@ -383,7 +383,7 @@ trrojan::result trrojan::d3d11::two_pass_volume_benchmark::on_run(
     gpuTimes.resize(cntGpuIterations);
     for (std::uint32_t i = 0; i < cntGpuIterations;) {
         log::instance().write_line(log_level::debug, "GPU counter measurement "
-            "#%d.", i);
+            "#{}.", i);
         gpuTimer.start_frame();
         gpuTimer.start(0);
         this->clear_target();
@@ -407,7 +407,7 @@ trrojan::result trrojan::d3d11::two_pass_volume_benchmark::on_run(
 
     // Do the wall clock measurement.
     log::instance().write_line(log_level::debug, "Measuring wall clock "
-        "timings over %u iterations ...", cntCpuIterations);
+        "timings over {} iterations ...", cntCpuIterations);
     cpuTimer.start();
     for (std::uint32_t i = 0; i < cntCpuIterations; ++i) {
         this->clear_target();

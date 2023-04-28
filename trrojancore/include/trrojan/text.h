@@ -1,8 +1,8 @@
-/// <copyright file="text.h" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+/// <copyright file="text.h" company="Visualisierungsinstitut der Universitï¿½t Stuttgart">
+/// Copyright ï¿½ 2016 - 2018 Visualisierungsinstitut der Universitï¿½t Stuttgart. Alle Rechte vorbehalten.
 /// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 /// </copyright>
-/// <author>Christoph Müller</author>
+/// <author>Christoph Mï¿½ller</author>
 
 #pragma once
 
@@ -129,10 +129,10 @@ namespace trrojan {
     /// Convert a time point into a string including milliseconds.
     /// </summary>
     template<class T, class C>
-    std::basic_string<T> to_string(const std::chrono::time_point<C>& tp, bool forFilepath = false) {
+    std::basic_string<T> to_string(const std::chrono::time_point<C>& tp,
+            const bool no_seps = false) {
         // From https://codereview.stackexchange.com/questions/156695/converting-stdchronotime-point-to-from-stdstring
         using namespace std::chrono;
-        typedef time_point<C> TimePoint;
 
         auto millis = duration_cast<milliseconds>(tp.time_since_epoch());
         auto secs = duration_cast<seconds>(millis);
@@ -141,21 +141,22 @@ namespace trrojan {
         std::size_t rem = millis.count() % 1000;
 
 #if defined(_MSC_VER)
-        std::tm tm;
-        if (localtime_s(&tm, &tt) != 0) {
+        std::tm ltm;
+        auto tm = &ltm;
+        if (localtime_s(&ltm, &tt) != 0) {
 #else
-        if (std::localtime(&tt) == nullptr) {
+        auto tm = std::localtime(&tt);
+        if (tm == nullptr) {
 #endif
             throw std::system_error(errno, std::system_category());
         }
 
         std::basic_ostringstream<T> stream;
-        if (forFilepath) {
-            stream << std::put_time(&tm, "%Y-%m-%dT%H-%M-%S.")
+        if (no_seps) {
+            stream << std::put_time(tm, "%Y%m%d%H%M%S")
                 << std::setw(3) << std::setfill('0') << rem;
-        }
-        else {
-            stream << std::put_time(&tm, "%Y-%m-%dT%H:%M:%S.")
+        } else {
+            stream << std::put_time(tm, "%Y-%m-%dT%H:%M:%S.")
                 << std::setw(3) << std::setfill('0') << rem;
         }
 
@@ -189,9 +190,7 @@ namespace trrojan {
         // http://stackoverflow.com/questions/216823/whats-the-best-way-to-trim-stdstring
         auto end = str.cend();
         auto begin = std::find_if(str.cbegin(), end,
-            //std::not1(std::ptr_fun<int, int>(std::isspace))
-            [](int c) {return !std::isspace(c); }
-        );
+            [](const T c) { return !std::isspace(c); });
         return std::basic_string<T>(begin, str.cend());
     }
 
@@ -205,9 +204,7 @@ namespace trrojan {
             const std::basic_string<T>& str) {
         // http://stackoverflow.com/questions/216823/whats-the-best-way-to-trim-stdstring
         auto end = std::find_if(str.crbegin(), str.crend(),
-            //std::not1(std::ptr_fun<int, int>(std::isspace))
-            [](int c) {return !std::isspace(c); }
-        );
+            [](const T c) { return !std::isspace(c); });
         return std::basic_string<T>(str.cbegin(), end.base());
     }
 

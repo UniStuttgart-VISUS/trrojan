@@ -9,6 +9,8 @@
 #include <cassert>
 #include <sstream>
 
+#include "trrojan/log.h"
+
 #include "trrojan/d3d12/utilities.h"
 
 
@@ -26,7 +28,11 @@ trrojan::d3d12::bench_render_target::bench_render_target(
  */
 void trrojan::d3d12::bench_render_target::resize(const unsigned int width,
         const unsigned int height) {
+    log::instance().write_line(log_level::debug, "Resizing render target {:p} "
+        "to [{}, {}].", static_cast<void *>(this), width, height);
     std::vector<ATL::CComPtr<ID3D12Resource>> buffers(this->pipeline_depth());
+
+    this->wait_for_gpu();
 
     for (std::size_t i = 0; i < buffers.size(); ++i) {
         buffers[i] = create_render_target(this->device(), width, height,

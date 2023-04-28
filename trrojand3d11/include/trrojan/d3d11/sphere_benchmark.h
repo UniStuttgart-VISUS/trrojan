@@ -123,11 +123,23 @@ namespace d3d11 {
         typedef std::unordered_map<shader_id_type, rendering_technique>
             technique_map_type;
 
+        /// <summary>
+        /// Formats the shader ID as it is formatted in the names of the shader
+        /// files.
+        /// </summary>
+        /// <remarks>
+        /// This method can be used to build file names for the CSOs of the
+        /// shader if the embedded resources cannot be used.
+        /// </remarks>
+        /// <param name="id">The ID of the shader as obtained from
+        /// <see cref="get_shader_id" />.</param>
+        /// <returns>The string representation of the shader ID.</returns>
+        static std::string get_shader_file_id(const shader_id_type id);
 
         /// <summary>
         /// Gets the identifier for the given rendering method.
         /// </summary>
-        /// <param name=""></param>
+        /// <param name="method"></param>
         /// <returns>The ID of the requested shader, or 0 if no such shader was
         /// found.</returns>
         static shader_id_type get_shader_id(const std::string& method);
@@ -141,7 +153,7 @@ namespace d3d11 {
         /// features, but not any data-dependent features. These must be added
         /// later.
         /// </remarks>
-        /// <param name=""></param>
+        /// <param name="config"></param>
         /// <returns></returns>
         static shader_id_type get_shader_id(const configuration& config);
 

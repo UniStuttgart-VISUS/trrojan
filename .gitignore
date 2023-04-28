@@ -14,14 +14,6 @@
 *.png
 *.user
 /.vs
-/build
-/build64
-/_build
-/_build64
-/include/Debug
-/include/Debug
-/include/Release
-/include/MinSizeRel
-/include/RelWithDebInfo
-/_install
-/_github64
+
+# Build folders
+/_*/

@@ -15,6 +15,14 @@
 
 
 /*
+ * trrojan::d3d12::render_target_base::default_clear_colour
+ */
+const std::array<float, 4>
+trrojan::d3d12::render_target_base::default_clear_colour
+    = { 0.0f, 0.0f, 0.0f, 0.0f };
+
+
+/*
  * trrojan::d3d12::render_target_base::~render_target_base
  */
 trrojan::d3d12::render_target_base::~render_target_base(void) {
@@ -25,20 +33,43 @@ trrojan::d3d12::render_target_base::~render_target_base(void) {
 /*
  * trrojan::d3d12::render_target_base::clear
  */
-void trrojan::d3d12::render_target_base::clear(ID3D12GraphicsCommandList *cmdList) {
-    assert(cmdList != nullptr);
-    static const FLOAT CLEAR_COLOUR[] = { 0.0f, 0.0f, 0.0f, 0.0f }; // TODO
+void trrojan::d3d12::render_target_base::clear(
+        const std::array<float, 4>& clear_colour,
+        ID3D12GraphicsCommandList *cmd_list, const UINT frame) {
+    assert(cmd_list != nullptr);
 
     {
-        auto handle = this->current_dsv_handle();
-        cmdList->ClearDepthStencilView(handle, D3D12_CLEAR_FLAG_DEPTH,
+        auto handle = this->dsv_handle(frame);
+        cmd_list->ClearDepthStencilView(handle, D3D12_CLEAR_FLAG_DEPTH,
             this->_depth_clear, 0, 0, nullptr);
     }
 
     {
-        auto handle = this->current_rtv_handle();
-        cmdList->ClearRenderTargetView(handle, CLEAR_COLOUR, 0, nullptr);
+        auto handle = this->rtv_handle(frame);
+        cmd_list->ClearRenderTargetView(handle, clear_colour.data(), 0,
+            nullptr);
     }
+}
+
+
+/*
+ * trrojan::d3d12::render_target_base::disable
+ */
+void trrojan::d3d12::render_target_base::disable(
+        ID3D12GraphicsCommandList *cmd_list) {
+    this->disable(cmd_list, this->_buffer_index);
+}
+
+
+/*
+ * trrojan::d3d12::render_target_base::disable
+ */
+void trrojan::d3d12::render_target_base::disable(
+        ID3D12GraphicsCommandList *cmd_list, const UINT frame) {
+    assert(cmd_list != nullptr);
+    assert(frame < this->_buffers.size());
+    transition_subresource(cmd_list, this->_buffers[frame], 0,
+        D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 }
 
 
@@ -46,10 +77,27 @@ void trrojan::d3d12::render_target_base::clear(ID3D12GraphicsCommandList *cmdLis
  * trrojan::d3d12::render_target_base::enable
  */
 void trrojan::d3d12::render_target_base::enable(
-        ID3D12GraphicsCommandList *cmdList) {
-    assert(cmdList != nullptr);
+        ID3D12GraphicsCommandList *cmd_list) {
+    this->enable(cmd_list, this->_buffer_index);
+}
 
-    cmdList->RSSetViewports(1, &this->_viewport);
+
+/*
+ * trrojan::d3d12::render_target_base::enable
+ */
+void trrojan::d3d12::render_target_base::enable(
+        ID3D12GraphicsCommandList *cmd_list, const UINT frame) {
+    assert(cmd_list != nullptr);
+    assert(frame < this->_buffers.size());
+    //log::instance().write_line(log_level::debug, "Queueing render target "
+    //    "{:p} to be enabled in command list {:p} ...",
+    //    static_cast<void *>(this), static_cast<void *>(cmd_list));
+
+    //log::instance().write_line(log_level::debug, "Set viewport from ({}, {}) "
+    //    "with size [{}, {}] in command list {:p}.", this->_viewport.TopLeftX,
+    //    this->_viewport.TopLeftY, this->_viewport.Width,
+    //    this->_viewport.Height, static_cast<void *>(cmd_list));
+    cmd_list->RSSetViewports(1, &this->_viewport);
 
     {
         D3D12_RECT rect;
@@ -58,33 +106,30 @@ void trrojan::d3d12::render_target_base::enable(
         rect.right += static_cast<LONG>(this->_viewport.Width);
         rect.bottom += static_cast<LONG>(this->_viewport.Height);
 
-        cmdList->RSSetScissorRects(1, &rect);
+        cmd_list->RSSetScissorRects(1, &rect);
     }
 
-    transition_subresource(cmdList, this->_buffers[this->_buffer_index], 0,
+    transition_subresource(cmd_list, this->_buffers[frame], 0,
         D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
     {
-        auto hDsv = this->current_dsv_handle();
-        auto hRtv = this->current_rtv_handle();
+        auto hDsv = this->dsv_handle(frame);
+        auto hRtv = this->rtv_handle(frame);
 
-        cmdList->OMSetRenderTargets(1, &hRtv, FALSE, &hDsv);
+        //log::instance().write_line(log_level::debug, "Setting colour target "
+        //    "0x{:x} and depth target 0x{:x} in command list {:p}.",
+        //    hRtv.ptr, hDsv.ptr, static_cast<void *>(cmd_list));
+        cmd_list->OMSetRenderTargets(1, &hRtv, FALSE, &hDsv);
     }
-
-    //this->_device_context->OMSetDepthStencilState(this->_dss.p, 0);
-    //this->_device_context->OMSetRenderTargets(1, &this->_rtv.p, this->_dsv.p);
 }
 
 
 /*
  * trrojan::d3d12::render_target_base::present
  */
-void trrojan::d3d12::render_target_base::present(
-        ID3D12GraphicsCommandList *cmdList) {
-    assert(cmdList != nullptr);
-    transition_subresource(cmdList, this->_buffers[this->_buffer_index], 0,
-        D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
-    this->_buffer_index = ++this->_buffer_index % this->pipeline_depth();
+UINT trrojan::d3d12::render_target_base::present(void) {
+    this->switch_buffer((this->_buffer_index + 1) % this->pipeline_depth());
+    return this->_buffer_index;
 }
 
 
@@ -182,46 +227,6 @@ void trrojan::d3d12::render_target_base::use_reversed_depth_buffer(
 
 
 /*
- * trrojan::d3d12::render_target_base::wait_for_gpu
- */
-void trrojan::d3d12::render_target_base::wait_for_gpu(void) {
-    assert(this->_command_queue != nullptr);
-    auto& fenceValue = this->_fence_values[this->_buffer_index];
-
-    // Make the fence signal in the command queue with its current value.
-    assert(this->_fence != nullptr);
-    {
-        auto hr = this->_command_queue->Signal(this->_fence, fenceValue);
-        if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
-        }
-    }
-
-    // Signal the event if the fence singalled with its current value.
-    assert(this->_fence_event != NULL);
-    {
-        auto hr = this->_fence->SetEventOnCompletion(fenceValue,
-            this->_fence_event);
-        if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
-        }
-    }
-
-    // Wait for the event to signal.
-    switch (::WaitForSingleObjectEx(this->_fence_event, INFINITE, FALSE)) {
-        case WAIT_FAILED:
-            throw ATL::CAtlException(HRESULT_FROM_WIN32(::GetLastError()));
-
-        default:
-            break;
-    }
-
-    // Increase the fence for the next call ('fenceValue' is a ref!).
-    ++fenceValue;
-}
-
-
-/*
  * trrojan::d3d12::render_target_base::render_target_base
  */
 trrojan::d3d12::render_target_base::render_target_base(
@@ -253,13 +258,13 @@ trrojan::d3d12::render_target_base::render_target_base(
             throw ATL::CAtlException(hr);
         }
 
+        set_debug_object_name(this->_fence, "render_target fence");
+
+        // _fence_values always contains the value for the *next* fence.
         ++this->_fence_values[this->_buffer_index];
     }
 
-    this->_fence_event = ::CreateEvent(nullptr, FALSE, FALSE, nullptr);
-    if (!this->_fence_event) {
-        throw ATL::CAtlException(HRESULT_FROM_WIN32(GetLastError()));
-    }
+    this->_fence_event = create_event(false, false);
 }
 
 
@@ -294,6 +299,9 @@ trrojan::d3d12::render_target_base::create_descriptor_heap(
 void trrojan::d3d12::render_target_base::create_dsv_heap(void) {
     this->_dsv_heap = this->create_descriptor_heap(
         D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 1);
+    log::instance().write_line(log_level::debug, "Render target {:p} allocated "
+        "DSV descriptor heap {:p}.", static_cast<void *>(this),
+        static_cast<void *>(this->_dsv_heap.p));
 }
 
 
@@ -305,6 +313,10 @@ void trrojan::d3d12::render_target_base::create_rtv_heap(void) {
         D3D12_DESCRIPTOR_HEAP_TYPE_RTV, this->pipeline_depth());
     this->_rtv_descriptor_size = this->_device->GetDescriptorHandleIncrementSize(
         D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+    log::instance().write_line(log_level::debug, "Render target {:p} allocated "
+        "RTV descriptor heap {:p} with descriptor size {}.", 
+        static_cast<void *>(this), static_cast<void *>(this->_rtv_heap.p),
+        this->_rtv_descriptor_size);
 }
 
 
@@ -376,21 +388,12 @@ ATL::CComPtr<ID3D12Resource> trrojan::d3d12::render_target_base::current_buffer(
 
 
 /*
- * trrojan::d3d12::render_target_base::current_rtv_handle
- */
-D3D12_CPU_DESCRIPTOR_HANDLE
-trrojan::d3d12::render_target_base::current_rtv_handle(void) {
-    auto retval = this->_rtv_heap->GetCPUDescriptorHandleForHeapStart();
-    retval.ptr += static_cast<SIZE_T>(this->_buffer_index)
-        * this->_rtv_descriptor_size;
-    return retval;
-}
-
-
-/*
  * trrojan::d3d12::render_target_base::reset_buffers
  */
 void trrojan::d3d12::render_target_base::reset_buffers(void) {
+    log::instance().write_line(log_level::debug, "Resetting render target "
+        "buffers.");
+
     this->wait_for_gpu();
 
     for (UINT i = 0; i < this->pipeline_depth(); ++i) {
@@ -401,10 +404,20 @@ void trrojan::d3d12::render_target_base::reset_buffers(void) {
 
 
 /*
+ * trrojan::d3d12::render_target_base::rtv_handle
+ */
+D3D12_CPU_DESCRIPTOR_HANDLE trrojan::d3d12::render_target_base::rtv_handle(
+        const UINT frame) {
+    auto retval = this->_rtv_heap->GetCPUDescriptorHandleForHeapStart();
+    retval.ptr += static_cast<SIZE_T>(frame) * this->_rtv_descriptor_size;
+    return retval;
+}
+
+/*
  * trrojan::d3d12::render_target_base::set_buffers
  */
 void trrojan::d3d12::render_target_base::set_buffers(
-        const std::vector<ATL::CComPtr<ID3D12Resource>> &buffers,
+        const std::vector<ATL::CComPtr<ID3D12Resource>>& buffers,
         const UINT buffer_index) {
     if (buffers.size() < this->_buffers.size()) {
         throw std::invalid_argument("A buffer must be provided for each stage "
@@ -415,6 +428,11 @@ void trrojan::d3d12::render_target_base::set_buffers(
         throw std::invalid_argument("The current buffer index cannot be "
             "outside the range of valid buffers.");
     }
+
+    log::instance().write_line(log_level::debug, "Setting {0} new colour "
+        "buffer(s) in render target {1:p} ({2} provided by caller). The next "
+        "frame is reset to be at {3}.", this->_buffers.size(),
+        static_cast<void *>(this), buffers.size(), buffer_index);
 
     // Retain the buffers.
     std::copy_n(buffers.begin(), this->_buffers.size(),
@@ -433,6 +451,9 @@ void trrojan::d3d12::render_target_base::set_buffers(
     {
         auto handle = this->_rtv_heap->GetCPUDescriptorHandleForHeapStart();
         for (auto& b : this->_buffers) {
+            log::instance().write_line(log_level::debug, "Colour buffer "
+                "{0:p} is render target view 0x{1:x}.",
+                static_cast<void *>(b.p), handle.ptr);
             this->_device->CreateRenderTargetView(b, nullptr, handle);
             handle.ptr += this->_rtv_descriptor_size;
         }
@@ -444,47 +465,51 @@ void trrojan::d3d12::render_target_base::set_buffers(
     }
 
     // Create the depth buffer and the DSV.
+    this->_depth_buffer = nullptr;
+
     {
-        ATL::CComPtr<ID3D12Resource> depthBuffer;
+        D3D12_CLEAR_VALUE clearValue;
+        ::ZeroMemory(&clearValue, sizeof(clearValue));
+        clearValue.Format = DXGI_FORMAT_D32_FLOAT;
+        clearValue.DepthStencil.Depth = 1.0f;   // TODO: inverse depth?
+        clearValue.DepthStencil.Stencil = 0;
 
-        {
-            D3D12_CLEAR_VALUE clearValue;
-            ::ZeroMemory(&clearValue, sizeof(clearValue));
-            clearValue.Format = DXGI_FORMAT_D32_FLOAT;
-            clearValue.DepthStencil.Depth = 1.0f;   // TODO: inverse depth?
-            clearValue.DepthStencil.Stencil = 0;
+        auto desc = buffers.front()->GetDesc();
+        desc.Format = DXGI_FORMAT_D32_FLOAT;
+        desc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
 
-            auto desc = buffers.front()->GetDesc();
-            desc.Format = DXGI_FORMAT_D32_FLOAT;
-            desc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+        D3D12_HEAP_PROPERTIES props;
+        ::ZeroMemory(&props, sizeof(props));
+        props.Type = D3D12_HEAP_TYPE_DEFAULT;
+        props.CreationNodeMask = 1;
+        props.VisibleNodeMask = 1;
 
-            D3D12_HEAP_PROPERTIES props;
-            ::ZeroMemory(&props, sizeof(props));
-            props.Type = D3D12_HEAP_TYPE_DEFAULT;
-            props.CreationNodeMask = 1;
-            props.VisibleNodeMask = 1;
-
-            auto hr = this->_device->CreateCommittedResource(&props,
-                D3D12_HEAP_FLAG_NONE,
-                &desc,
-                D3D12_RESOURCE_STATE_DEPTH_WRITE,
-                &clearValue,
-                ::IID_ID3D12Resource,
-                reinterpret_cast<void **>(&depthBuffer));
-            if (FAILED(hr)) {
-                throw ATL::CAtlException(hr);
-            }
+        auto hr = this->_device->CreateCommittedResource(&props,
+            D3D12_HEAP_FLAG_NONE,
+            &desc,
+            D3D12_RESOURCE_STATE_DEPTH_WRITE,
+            &clearValue,
+            ::IID_ID3D12Resource,
+            reinterpret_cast<void **>(&this->_depth_buffer));
+        if (FAILED(hr)) {
+            throw ATL::CAtlException(hr);
         }
 
-        {
-            D3D12_DEPTH_STENCIL_VIEW_DESC desc;
-            ::ZeroMemory(&desc, sizeof(desc));
-            desc.Format = DXGI_FORMAT_D32_FLOAT;
-            desc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+        set_debug_object_name(this->_depth_buffer, "depth_buffer");
+    }
 
-            this->_device->CreateDepthStencilView(depthBuffer, &desc,
-                this->_dsv_heap->GetCPUDescriptorHandleForHeapStart());
-        }
+    {
+        D3D12_DEPTH_STENCIL_VIEW_DESC desc;
+        ::ZeroMemory(&desc, sizeof(desc));
+        desc.Format = DXGI_FORMAT_D32_FLOAT;
+        desc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+
+        auto handle = this->_dsv_heap->GetCPUDescriptorHandleForHeapStart();
+        log::instance().write_line(log_level::debug, "Depth buffer {0:p} "
+            "is depth/stencil view 0x{1:x}.",
+            static_cast<void *>(this->_depth_buffer.p), handle.ptr);
+        this->_device->CreateDepthStencilView(this->_depth_buffer, &desc,
+            handle);
     }
 
     // Fill the viewport dimensions.
@@ -496,50 +521,85 @@ void trrojan::d3d12::render_target_base::set_buffers(
         this->_viewport.TopLeftX = 0.0f;
         this->_viewport.TopLeftY = 0.0f;
         this->_viewport.Width = static_cast<float>(desc.Width);
+        log::instance().write_line(log_level::debug, "Viewport starts at "
+            "({}, {}) with size [{}, {}].", this->_viewport.TopLeftX,
+            this->_viewport.TopLeftY, this->_viewport.Width,
+            this->_viewport.Height);
     }
 }
 
 
 /*
- * trrojan::d3d12::render_target_base::wait_for_frame
+ * trrojan::d3d12::render_target_base::switch_buffer
  */
-void trrojan::d3d12::render_target_base::wait_for_frame(
-        const UINT nextFrame) {
-    assert(nextFrame < this->_fence_values.size());
-    assert(nextFrame != this->_buffer_index);
-    const auto currentFenceValue = this->_fence_values[this->_buffer_index];
+void trrojan::d3d12::render_target_base::switch_buffer(
+        const UINT next_buffer) {
+    assert(next_buffer < this->_fence_values.size());
+    const auto completing_value = this->_fence_values[this->_buffer_index];
 
-    // Schedule a signal in the queue.
+    // Schedule a fence for the current frame in the command queue. We will
+    // wait for this one to become signalled if we activate this buffer again.
     assert(this->_fence != nullptr);
     {
-        auto hr = this->_command_queue->Signal(this->_fence, currentFenceValue);
+        auto hr = this->_command_queue->Signal(this->_fence, completing_value);
         if (FAILED(hr)) {
             throw ATL::CAtlException(hr);
         }
     }
 
     // Move to next frame.
-    this->_buffer_index = nextFrame;
-    auto& fenceValue = this->_fence_values[_buffer_index];
+    this->_buffer_index = next_buffer;
+    auto& completed_value = this->_fence_values[this->_buffer_index];
 
-    // If the next frame is not yet ready, wait for it.
-    if (this->_fence->GetCompletedValue() < fenceValue) {
+    // If the next frame is not yet ready, ie the previously scheduled fence
+    // was not signelled, wait for it.
+    if (this->_fence->GetCompletedValue() < completed_value) {
         assert(this->_fence_event != NULL);
-        auto hr = this->_fence->SetEventOnCompletion(fenceValue,
+        auto hr = this->_fence->SetEventOnCompletion(completed_value,
             this->_fence_event);
         if (FAILED(hr)) {
             throw ATL::CAtlException(hr);
         }
 
-        switch (::WaitForSingleObjectEx(this->_fence_event, INFINITE, FALSE)) {
-            case WAIT_FAILED:
-                throw ATL::CAtlException(HRESULT_FROM_WIN32(::GetLastError()));
+        wait_for_event(this->_fence_event);
+    }
 
-            default:
-                break;
+    // Set the value for the next frame ('completed_value' is ref!), which
+    // must be after the frame we have just completed.
+    completed_value = completing_value + 1;
+}
+
+
+/*
+ * trrojan::d3d12::render_target_base::wait_for_gpu
+ */
+void trrojan::d3d12::render_target_base::wait_for_gpu(void) {
+    assert(this->_command_queue != nullptr);
+    auto& fence_value = this->_fence_values[this->_buffer_index];
+
+    // Make the fence signal in the command queue with the value of the
+    // currently in-flight frame.
+    assert(this->_fence != nullptr);
+    {
+        auto hr = this->_command_queue->Signal(this->_fence, fence_value);
+        if (FAILED(hr)) {
+            throw ATL::CAtlException(hr);
         }
     }
 
-    // Set the value for the next frame ('fenceValue' is ref!).
-    fenceValue = currentFenceValue + 1;
+    assert(this->_fence_event != NULL);
+    {
+        auto hr = this->_fence->SetEventOnCompletion(fence_value,
+            this->_fence_event);
+        if (FAILED(hr)) {
+            throw ATL::CAtlException(hr);
+        }
+    }
+
+    // Wait for the event to signal.
+    wait_for_event(this->_fence_event);
+
+    // Increase the fence value for the current frame ('fenceValue' is a ref!),
+    // because the previous value was now consumed.
+    ++fence_value;
 }

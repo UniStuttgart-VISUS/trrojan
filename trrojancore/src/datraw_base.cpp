@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <stdexcept>
 
+#include "trrojan/clipping.h"
 #include "trrojan/log.h"
 
 
@@ -91,38 +92,8 @@ void trrojan::datraw_base::calc_bounding_box(glm::vec3& outStart,
  * trrojan::datraw_base::calc_clipping_planes
  */
 std::pair<float, float> trrojan::datraw_base::calc_clipping_planes(
-        const camera & cam) const {
-    const auto& camPos = cam.get_look_from();
-    const auto& view = glm::normalize(cam.get_look_to() - camPos);
-
+        const camera& cam) const {
     glm::vec3 bbox[2];
-    auto farPlane = std::numeric_limits<float>::lowest();
-    auto nearPlane = (std::numeric_limits<float>::max)();
-
     this->calc_bounding_box(bbox[0], bbox[1]);
-
-    for (auto x = 0; x < 2; ++x) {
-        for (auto y = 0; y < 2; ++y) {
-            for (auto z = 0; z < 2; ++z) {
-                auto pt = glm::vec3(bbox[x][0], bbox[y][1], bbox[z][2]);
-                //log::instance().write_line(log_level::debug, "Testing "
-                //    "(%f, %f, %f) ...", pt.x, pt.y, pt.z);
-                auto ray = pt - camPos;
-                auto dist = glm::dot(view, ray);
-                if (dist < nearPlane) nearPlane = dist;
-                if (dist > farPlane) farPlane = dist;
-            }
-        }
-    }
-
-    if (nearPlane < 0.0f) {
-        // Plane could become negative in data set, which is illegal. A range of
-        // 10k seems to be something our shaders can still handle.
-        nearPlane = farPlane / 10000.0f;
-    }
-
-    log::instance().write_line(log_level::debug, "Dynamic clipping planes are "
-        "located at {} and {}.", nearPlane, farPlane);
-    return std::make_pair(nearPlane, farPlane);
-
+    return trrojan::calc_clipping_planes(cam, bbox);
 }

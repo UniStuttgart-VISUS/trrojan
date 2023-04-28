@@ -45,46 +45,16 @@ trrojan::d3d12::debug_render_target::~debug_render_target(void) {
 /*
  * trrojan::d3d12::debug_render_target::present
  */
-void trrojan::d3d12::debug_render_target::present(
-        ID3D12GraphicsCommandList *cmd_list) {
-    // Use base class to transition back buffer to present state.
-    render_target_base::present(cmd_list);
-
+UINT trrojan::d3d12::debug_render_target::present(void) {
+    assert(this->_swap_chain != nullptr);
     // Swap the buffers.
-    if (this->_swap_chain != nullptr) {
-        this->_swap_chain->Present(0, 0);
-    }
+    this->_swap_chain->Present(0, 0);
 
-#if 0
-    if (this->_staging_buffer != nullptr) {
-        assert(this->_swapChain != nullptr);
-        ATL::CComPtr<ID3D12Texture2D> dst;
-        ATL::CComPtr<ID3D12Resource> res;
-        ATL::CComPtr<ID3D12Texture2D> src;
+    // Switch to the next buffer used by the swap chain.
+    auto retval = this->_swap_chain->GetCurrentBackBufferIndex();
+    render_target_base::switch_buffer(retval);
 
-        {
-            auto hr = this->swapChain->GetBuffer(0, IID_ID3D12Texture2D,
-                reinterpret_cast<void **>(&dst));
-            if (FAILED(hr)) {
-                throw ATL::CAtlException(hr);
-            }
-        }
-
-        {
-            this->_uav->GetResource(&res);
-            auto hr = res->QueryInterface(&src);
-            if (FAILED(hr)) {
-                throw ATL::CAtlException(hr);
-            }
-        }
-
-        this->device_context()->CopyResource(dst, src);
-    }
-
-    if (this->swapChain != nullptr) {
-        this->swapChain->Present(0, 0);
-    }
-#endif
+    return retval;
 }
 
 
@@ -93,9 +63,35 @@ void trrojan::d3d12::debug_render_target::present(
  */
 void trrojan::d3d12::debug_render_target::resize(const unsigned int width,
         const unsigned int height) {
+    log::instance().write_line(log_level::debug, "Resizing debug render target "
+        "{:p} to [{}, {}].", static_cast<void *>(this), width, height);
+
+    // Resize the window to match the requested client area. This must be done
+    // before the swap chain is created, because the swap chain is created to
+    // match the client area of the window.
+    {
+        DWORD style = ::GetWindowLong(this->_wnd, GWL_STYLE);
+        DWORD styleEx = ::GetWindowLong(this->_wnd, GWL_EXSTYLE);
+        RECT wndRect;
+
+        wndRect.left = 0;
+        wndRect.top = 0;
+        wndRect.right = width;
+        wndRect.bottom = height;
+        if (::AdjustWindowRectEx(&wndRect, style, FALSE, styleEx) == FALSE) {
+            auto hr = __HRESULT_FROM_WIN32(::GetLastError());
+            throw ATL::CAtlException(hr);
+        }
+
+        ::SetWindowPos(this->_wnd, HWND_TOP, 0, 0,
+            wndRect.right - wndRect.left,
+            wndRect.bottom - wndRect.top,
+            SWP_NOMOVE | SWP_SHOWWINDOW);
+    }
+
     if (this->_swap_chain == nullptr) {
         // Initial call to resize, need to create the swap chain.
-        assert(this->device() == nullptr);
+        assert(this->device() != nullptr);
 
         while (this->_wnd.load() == NULL) {
             log::instance().write_line(log_level::verbose, "Waiting for the "
@@ -129,27 +125,6 @@ void trrojan::d3d12::debug_render_target::resize(const unsigned int width,
 
     } /* end if (this->swapChain == nullptr) */
 
-    // Resize the window to match the requested client area.
-    {
-        DWORD style = ::GetWindowLong(this->_wnd, GWL_STYLE);
-        DWORD styleEx = ::GetWindowLong(this->_wnd, GWL_EXSTYLE);
-        RECT wndRect;
-
-        wndRect.left = 0;
-        wndRect.top = 0;
-        wndRect.right = width;
-        wndRect.bottom = height;
-        if (::AdjustWindowRectEx(&wndRect, style, FALSE, styleEx) == FALSE) {
-            auto hr = __HRESULT_FROM_WIN32(::GetLastError());
-            throw ATL::CAtlException(hr);
-        }
-
-        ::SetWindowPos(this->_wnd, HWND_TOP, 0, 0,
-            wndRect.right - wndRect.left,
-            wndRect.bottom - wndRect.top,
-            SWP_NOMOVE | SWP_SHOWWINDOW);
-    }
-
     // Re-create the RTV/DSV.
     {
         std::vector<ATL::CComPtr<ID3D12Resource>> buffers(
@@ -162,8 +137,9 @@ void trrojan::d3d12::debug_render_target::resize(const unsigned int width,
                 throw ATL::CAtlException(hr);
             }
 
-            set_debug_object_name(buffers[i].p, "debug_render_target "
-                "(colour buffer)");
+            std::stringstream name;
+            name << "debug_render_target (colour buffer " << i << ")";
+            set_debug_object_name(buffers[i].p, name.str().c_str());
         }
 
         this->set_buffers(std::move(buffers),
@@ -196,15 +172,6 @@ void trrojan::d3d12::debug_render_target::resize(const unsigned int width,
 //    this->device()->CreateUnorderedAccessView(this->_staging_buffer, nullptr,
 //        nullptr, dst);
 //}
-
-
-/*
- * trrojan::d3d12::debug_render_target::wait_for_frame
- */
-void trrojan::d3d12::debug_render_target::wait_for_frame(void) {
-    render_target_base::wait_for_frame(
-        this->_swap_chain->GetCurrentBackBufferIndex());
-}
 
 
 /*

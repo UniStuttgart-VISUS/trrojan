@@ -1,0 +1,104 @@
+#
+# azure-pipelines.yml
+#
+# Copyright © 2022 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+#
+
+trigger:
+- master
+
+schedules:
+- cron: '0 12 * * 0'
+  displayName: Weekly Sunday build
+  branches:
+    include:
+    - master
+  always: true
+
+variables:
+  cmakeDefines: >-
+     -DCMAKE_INSTALL_PREFIX=$(Build.ArtifactStagingDirectory)\$(platform)\$(configuration)
+     -DBUILD_TESTING=OFF
+     -DSPDLOG_BUILD_EXAMPLES=OFF
+     -DTRROJAN_DEBUG_OVERLAY=OFF
+     -DTRROJAN_WITH_DSTORAGE=OFF
+  cmakeWindowsGenerator: 'Visual Studio 16 2019'
+  cmakeUnixGenerator: 'Unix Makefiles'
+
+jobs:
+- job: Windows
+  strategy:
+    matrix:
+      'Win32 Debug':
+        platform: Win32
+        configuration: Debug
+        generator: $(cmakeWindowsGenerator)
+      'Win32 Release':
+        platform: Win32
+        configuration: Release
+        generator: $(cmakeWindowsGenerator)
+      'Win64 Debug':
+        platform: x64
+        configuration: Debug
+        generator: $(cmakeWindowsGenerator)
+      'Win64 Release':
+        platform: x64
+        configuration: Release
+        generator: $(cmakeWindowsGenerator)
+  pool:
+    name: 'hardware'
+    demands:
+    - cmake
+    - VisualStudio_16.0
+
+  steps:
+  - task: CMake@1
+    inputs:
+      workingDirectory: $(Build.SourcesDirectory)
+      cmakeArgs: '.. -G"$(generator)" -A"$(platform)" -S"$(Build.SourcesDirectory)" -B"$(Build.SourcesDirectory)\_build\$(platform)" $(cmakeDefines)'
+  - task: MSBuild@1
+    inputs:
+        solution: '$(Build.SourcesDirectory)\_build\$(platform)\ALL_BUILD.vcxproj'
+        maximumCpuCount: true
+        configuration: $(configuration)
+        platform: $(platform)
+
+
+- job: CentOS8
+  strategy:
+    matrix:
+      'GCC Debug':
+        configuration: Debug
+        ccompiler: gcc
+        cxxcompiler: g++
+        generator: $(cmakeUnixGenerator)
+      'GCC Release':
+        configuration: Release
+        ccompiler: gcc
+        cxxcompiler: g++
+        generator: $(cmakeUnixGenerator)
+      'Clang Debug':
+        configuration: Debug
+        ccompiler: clang
+        cxxcompiler: clang
+        generator: $(cmakeUnixGenerator)
+      'Clang Release':
+        configuration: Release
+        ccompiler: clang
+        cxxcompiler: clang
+        generator: $(cmakeUnixGenerator)
+  pool:
+    name: 'hardware'
+    demands:
+    - cmake
+    - linuxdistribution -equals centos
+    - linuxrelease -equals 8
+
+  steps:
+  - task: CMake@1
+    inputs:
+      workingDirectory: $(Build.SourcesDirectory)
+      cmakeArgs: '.. -G"$(generator)" -S"$(Build.SourcesDirectory)" -B"$(Build.SourcesDirectory)/_build/$(configuration)" -DCMAKE_BUILD_TYPE=$(configuration) $(cmakeDefines)'
+  - task: CMake@1
+    inputs:
+      cmakeArgs: '--build $(Build.SourcesDirectory)/_build/$(configuration) --parallel $(NUMBER_OF_PROCESSORS)'

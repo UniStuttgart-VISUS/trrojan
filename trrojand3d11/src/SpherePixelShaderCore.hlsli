@@ -1,8 +1,8 @@
-/// <copyright file="SpherePixelShaderCore.hlsli" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Christoph Müller</author>
+// <copyright file="SpherePixelShaderCore.hlsli" company="Visualisierungsinstitut der UniversitÃ¤t Stuttgart">
+// Copyright Â© 2016 - 2022 Visualisierungsinstitut der UniversitÃ¤t Stuttgart. Alle Rechte vorbehalten.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Christoph MÃ¼ller</author>
 
 #include "LocalLighting.hlsli"
 #include "SpherePipeline.hlsli"
@@ -43,6 +43,14 @@ PsOutput Main(PsInput input/*, bool isFront : SV_IsFrontFace*/) {
     //    retval.Colour = float4(0.0, 6.0, 0.0, 1.0);
     //}
     retval.Colour = float4(1.0, 1.0f, 0.0f, 1.0f);
+
+#if defined(PER_PIXEL_INTENSITY)
+    retval.Colour = TransferFunction.SampleLevel(LinearSampler,
+        TexCoordsFromIntensity(input.Intensity, IntensityRange), 0);
+#else /* defined(PER_PIXEL_INTENSITY) */
+    retval.Colour = input.Colour;
+#endif /* defined(PER_PIXEL_INTENSITY) */
+
     return retval;
 #endif
 
@@ -72,24 +80,33 @@ PsOutput Main(PsInput input/*, bool isFront : SV_IsFrontFace*/) {
     float rad = input.SphereParams.w;
     float squarRad = rad * rad;
 
-#if defined(PER_VERTEY_RAY)
+#if defined(PER_VERTEX_RAY)
     ray = input.Ray;
-#else /* defined(PER_VERTEY_RAY) */
-    // transform fragment coordinates from window coordinates to view coordinates.
+#else /* defined(PER_VERTEX_RAY) */
+    // Transform fragment coordinates from window coordinates to view
+    // coordinates.
     input.Position.y = Viewport.w - input.Position.y;
     coord = input.Position
         * float4(2.0 / Viewport.z, 2.0 / Viewport.w, 1.0, 0.0)
         + float4(-1.0, -1.0, 0.0, 1.0);
 
-    // transform fragment coordinates from view coordinates to object coordinates.
-    coord = mul(coord, ViewProjInvMatrix[eye]);
+    // Transform fragment coordinates from view coordinates to object
+    // coordinates...
+    coord = mul(ViewProjInvMatrix[eye], coord);
     coord /= coord.w;
-    coord -= objPos; // ... and to glyph space
+    // ... and to glyph space.
+    coord -= objPos;
 
-                     // calc the viewing ray
+    // Compute the viewing ray.
     ray = coord.xyz - camPos.xyz;
-#endif /* defined(PER_VERTEY_RAY) */
+#endif /* defined(PER_VERTEX_RAY) */
     ray = normalize(ray);
+
+//#define DEBUG_RAY
+#if defined(DEBUG_RAY)
+    retval.Colour = float4(ray, 1.0f);
+    return retval;
+#endif /* defined(DEBUG_RAY) */
 
     // calculate the geometry-ray-intersection
     float d1 = -dot(camPos.xyz, ray);                       // projected length of the cam-SphereParams-vector onto the ray
@@ -98,11 +115,12 @@ PsOutput Main(PsInput input/*, bool isFront : SV_IsFrontFace*/) {
     lambda = d1 - sqrt(radicand);                           // lambda
 
     if ((radicand < 0.0f) || (lambda < 0.0f)) {
+//#define FILL_BILLBOARD
+#if defined(FILL_BILLBOARD)
+        retval.Colour = 0.8.xxxx;
+#else /* defined(FILL_BILLBOARD) */
         discard;
-        //retval.Colour = 0.8.xxxx;
-        retval.Colour = float4(1.0f, 0.0f, 0.0f, 1.0f);
-        //retval.Depth = input.Position.z;
-        return retval;
+#endif /* defined(FILL_BILLBOARD) */
 
     } else {
         // chose color for lighting
@@ -130,14 +148,11 @@ PsOutput Main(PsInput input/*, bool isFront : SV_IsFrontFace*/) {
     // calculate depth
 #define DEPTH
 #ifdef DEPTH
+    // https://docs.microsoft.com/en-us/windows/win32/direct3dhlsl/dx-graphics-hlsl-per-component-math#matrix-ordering
     float4 intPos = float4(sphereintersection + objPos.xyz, 1.0);
     float dz = dot(ViewProjMatrix[eye]._13_23_33_43, intPos);
-    float dw = dot(ViewProjMatrix[eye]._14_24_34_44, intPos);
-    //retval.Depth = ((dz / dw) + 1.0) * 0.5;
-    //retval.Colour.gb = 0.0f.xx;
-    //retval.Colour.r = retval.Depth;
-    //retval.Depth = 1.0f - (dz / dw);
-    retval.Depth = (dz / dw);
+    //float dw = dot(ViewProjMatrix[eye]._14_24_34_44, intPos);
+    retval.Depth = dz;
 #else
     retval.Depth = input.Position.z;
 #endif // DEPTH

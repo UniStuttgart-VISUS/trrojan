@@ -152,12 +152,13 @@ void trrojan::sysinfo::detail::os_info_impl::update(void) {
 
         switch (si.wProcessorArchitecture) {
             case PROCESSOR_ARCHITECTURE_INTEL:
+            case PROCESSOR_ARCHITECTURE_ARM:
                 this->word_size = 32;
                 break;
 
             case PROCESSOR_ARCHITECTURE_IA64:
-                /* Falls through. */
             case PROCESSOR_ARCHITECTURE_AMD64:
+            case PROCESSOR_ARCHITECTURE_ARM64:
                 this->word_size = 64;
                 break;
 

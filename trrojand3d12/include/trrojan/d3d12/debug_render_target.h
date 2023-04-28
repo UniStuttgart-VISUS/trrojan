@@ -47,7 +47,7 @@ namespace d3d12 {
         virtual ~debug_render_target(void);
 
         /// <inheritdoc />
-        void present(ID3D12GraphicsCommandList *cmd_list) override;
+        UINT present(void) override;
 
         // <inheritdoc />
         void resize(const unsigned int width,
@@ -56,9 +56,6 @@ namespace d3d12 {
         ///// <inheritdoc />
         //void to_uav(const D3D12_CPU_DESCRIPTOR_HANDLE dst,
         //    ID3D12GraphicsCommandList *cmd_list) override;
-
-        /// <inheritdoc />
-        void wait_for_frame(void) override;
 
     protected:
 

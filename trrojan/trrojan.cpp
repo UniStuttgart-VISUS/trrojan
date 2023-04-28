@@ -92,7 +92,7 @@ int main(const int argc, const char **argv) {
             if (it != cmdLine.end()) {
                 trrojan::log::instance().write_line(
                     trrojan::log_level::information, "Running benchmarks "
-                    "configured in TRROLL script \"%s\" ...", *it);
+                    "configured in TRROLL script \"{}\" ...", *it);
                 exe.trroll(*it, *output, coolDown);
             }
         }
@@ -104,7 +104,7 @@ int main(const int argc, const char **argv) {
             if (it != cmdLine.end()) {
                 trrojan::log::instance().write_line(
                     trrojan::log_level::information, "Running JavaScript "
-                    "\"%s\" to conduct benchmarks ...", *it);
+                    "\"{}\" to conduct benchmarks ...", *it);
                 exe.javascript(*it, *output, coolDown);
             }
         }

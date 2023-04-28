@@ -127,7 +127,7 @@ void trrojan::executive::load_plugins(const cmd_line& cmdLine) {
 #endif // _UWP
 #endif /* _WIN32 */
 
-        log::instance().write(log_level::verbose, "Found %u potential "
+        log::instance().write(log_level::verbose, "Found {} potential "
             "plugin(s).\n", paths.size());
 
         for (auto& path : paths) {
@@ -155,7 +155,7 @@ void trrojan::executive::load_plugins(const cmd_line& cmdLine) {
             }
         }
 
-        log::instance().write(log_level::verbose, "%u plugin(s) have been "
+        log::instance().write(log_level::verbose, "{} plugin(s) have been "
             "loaded. Retrieving execution environments from them ...\n", 
             this->plugins.size());
 

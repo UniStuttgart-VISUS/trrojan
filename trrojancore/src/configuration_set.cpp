@@ -82,7 +82,7 @@ bool trrojan::configuration_set::foreach_configuration(
         }
 
         log::instance().write_line(log_level::information, "The configuration "
-            "set comprises %u individual configuration(s).", cntTests);
+            "set comprises {} individual configuration(s).", cntTests);
 
         for (size_t i = 0; (i < cntTests) && retval; ++i) {
             config.clear();

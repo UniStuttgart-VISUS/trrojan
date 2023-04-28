@@ -25,7 +25,8 @@ ATL::CComPtr<IDXGIAdapter> trrojan::d3d11::device::get_dxgi_adapter(
         auto hr = dxgiDevice->GetAdapter(&retval);
         if (FAILED(hr)) {
             log::instance().write(log_level::error, "Failed to retrieve DXGI "
-                "adapter for device %p (error 0x%x).\n", (void *) device.p, hr);
+                "adapter for device {} (error {:x}).\n",
+                static_cast<void *>(device.p), hr);
             retval = nullptr;
         }
     }
@@ -68,7 +69,8 @@ ATL::CComPtr<IDXGIFactory> trrojan::d3d11::device::get_dxgi_factory(
             reinterpret_cast<void **>(&retval));
         if (FAILED(hr)) {
             log::instance().write(log_level::error, "Failed to retrieve DXGI "
-                "factory for adapter %p (error 0x%x).\n", (void *)adapter.p, hr);
+                "factory for adapter {} (error {:x}).\n",
+                static_cast<void *>(adapter.p), hr);
             retval = nullptr;
         }
     }

@@ -74,11 +74,9 @@ void trrojan::d3d11::debug_render_target::present(void) {
 #if defined(CREATE_D2D_OVERLAY)
     if (this->_overlay) {
         this->_overlay->begin_draw();
-        this->_overlay->clear();
         this->_overlay->draw_text(L"The way you're meant to be trrolled.",
             L"Segoue UI", 14.0f, D2D1::ColorF::White);
         this->_overlay->end_draw();
-        this->_overlay->draw();
     }
 #endif /* defined(CREATE_D2D_OVERLAY) */
 
@@ -162,6 +160,13 @@ void trrojan::d3d11::debug_render_target::resize(const unsigned int width,
         this->_dsv = nullptr;
         this->_uav = nullptr;
 
+#if defined(CREATE_D2D_OVERLAY)
+        // Clear all resource that depend on the swap chain.
+        if (this->_overlay) {
+            this->_overlay->on_resize();
+        }
+#endif /* defined(CREATE_D2D_OVERLAY) */
+
         hr = this->swapChain->GetDesc(&desc);
         if (FAILED(hr)) {
             throw ATL::CAtlException(hr);
@@ -210,8 +215,9 @@ void trrojan::d3d11::debug_render_target::resize(const unsigned int width,
     this->set_back_buffer(backBuffer.p);
 
 #if defined(CREATE_D2D_OVERLAY)
+    // Recreate the resource of the overlay.
     if (this->_overlay) {
-        this->_overlay->resize(width, height);
+        this->_overlay->on_resized();
     }
 #endif /* defined(CREATE_D2D_OVERLAY) */
 }

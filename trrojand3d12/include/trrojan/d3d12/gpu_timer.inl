@@ -43,7 +43,8 @@ void trrojan::d3d12::gpu_timer::evaluate(TIterator oit,
         }
     }
 
-    auto timestamps = reinterpret_cast<value_type *>(data);
+    auto timestamps = reinterpret_cast<value_type *>(
+        static_cast<std::uint8_t *>(data) + range.Begin);
     for (size_type i = 0; i < this->size(); ++i) {
         *oit++ = timestamps[2 * i + static_cast<size_type>(query_location::end)]
             - timestamps[2 * i + static_cast<size_type>(query_location::start)];

@@ -1,0 +1,45 @@
+opencl::volume_raycast {
+    # general
+    boolean img_output = false
+    string sample_precision = uchar
+    
+    # camera setup
+	int32 maneuver_samples = 36
+	int32 maneuver_iteration = 0; 1; 2; 3; 4; 5; 6; 7; 8; 9; 10; 11; 12; 13; 14; 15; 16; 17; 18; 19; 20; 21; 22; 23; 24; 25; 26; 27; 28; 29; 30; 31; 32; 33; 34; 35
+	string maneuver = orbit_x; orbit_y; diagonal; path_x; path_y; path_z; path_sin_z
+    
+    # rendering config
+    float32 step_size_factor = 2.; 1.; 0.5; 0.25
+    uint32vec2 viewport = 512 512; 1024 1024; 2048 2048
+    
+    # kernel factors
+    boolean use_ERT = true; false
+	boolean use_ESS = true; false
+    boolean use_tff = true
+    boolean use_lerp = true
+    boolean use_illumination = true
+    boolean use_ortho_proj = false
+    boolean shuffle = false
+
+    # transfer functions
+    string tff_file_name = \\trr161store.visus.uni-stuttgart.de\SFB-TRR 161\A02\data\tff\raw256\trrojan_cham1.tff; \\trr161store.visus.uni-stuttgart.de\SFB-TRR 161\A02\data\tff\raw256\trrojan_zeiss1.tff
+    
+    # data sets
+    string volume_file_name = \\trr161store.visus.uni-stuttgart.de\SFB-TRR 161\A02\data\volumes\CT\bonsai.dat; 	\\trr161store.visus.uni-stuttgart.de\SFB-TRR 161\A02\data\volumes\CT\E_1328.dat; \\trr161store.visus.uni-stuttgart.de\SFB-TRR 161\A02\data\volumes\CT\mandelbulb.dat; 	\\trr161store.visus.uni-stuttgart.de\SFB-TRR 161\A02\data\volumes\CT\skull.dat; 	\\trr161store.visus.uni-stuttgart.de\SFB-TRR 161\A02\data\volumes\CT\zeiss.dat; 	\\trr161store.visus.uni-stuttgart.de\SFB-TRR 161\A02\data\volumes\generated\freq\freq_0.dat; 	\\trr161store.visus.uni-stuttgart.de\SFB-TRR 161\A02\data\volumes\generated\freq\freq_1.dat; 	\\trr161store.visus.uni-stuttgart.de\SFB-TRR 161\A02\data\volumes\generated\freq\freq_256.dat; 	\\trr161store.visus.uni-stuttgart.de\SFB-TRR 161\A02\data\volumes\CT\chameleon.dat; 	\\trr161store.visus.uni-stuttgart.de\SFB-TRR 161\A02\data\volumes\CT\microtomography.dat; 	\\trr161store.visus.uni-stuttgart.de\SFB-TRR 161\A02\data\volumes\CT\visFemale.dat; 	\\trr161store.visus.uni-stuttgart.de\SFB-TRR 161\A02\data\volumes\CT\engine.dat; 	\\trr161store.visus.uni-stuttgart.de\SFB-TRR 161\A02\data\volumes\CT\foraminifera.dat; 	\\trr161store.visus.uni-stuttgart.de\SFB-TRR 161\A02\data\volumes\CT\bunny.dat;  	\\trr161store.visus.uni-stuttgart.de\SFB-TRR 161\A02\data\volumes\CT\foot.dat; 	\\trr161store.visus.uni-stuttgart.de\SFB-TRR 161\A02\data\volumes\CT\hazelnut.dat; 	\\trr161store.visus.uni-stuttgart.de\SFB-TRR 161\A02\data\volumes\CT\bat.dat; 	\\trr161store.visus.uni-stuttgart.de\SFB-TRR 161\A02\data\volumes\CT\mouse.dat;	\\trr161store.visus.uni-stuttgart.de\SFB-TRR 161\A02\data\volumes\CT\hoatzin.dat;	\\trr161store.visus.uni-stuttgart.de\SFB-TRR 161\A02\data\volumes\CT\kingfisher.dat; 	\\trr161store.visus.uni-stuttgart.de\SFB-TRR 161\A02\data\volumes\CT\parakeet.dat
+    
+    # GPU only
+    int32 device_type = 4
+    #int32 device_vendor = 8
+    #device device = TITAN X (Pascal)
+    environment environment = NVIDIA CUDA
+    #environment environment = AMD Accelerated Parallel Processing
+}
+
+#stream::stream_benchmark{
+#    string task_type = add; triad
+#}
+
+#d3d11::mmpld-raycaster {
+#    uint32 viewport_width = 800
+#    uint32 viewport_height = 600
+#}

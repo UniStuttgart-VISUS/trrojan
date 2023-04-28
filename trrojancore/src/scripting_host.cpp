@@ -1,8 +1,8 @@
-/// <copyright file="scripting_host.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+/// <copyright file="scripting_host.cpp" company="Visualisierungsinstitut der Universitï¿½t Stuttgart">
+/// Copyright ï¿½ 2016 - 2018 Visualisierungsinstitut der Universitï¿½t Stuttgart. Alle Rechte vorbehalten.
 /// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 /// </copyright>
-/// <author>Christoph Müller</author>
+/// <author>Christoph Mï¿½ller</author>
 
 #include "scripting_host.h"
 
@@ -524,7 +524,7 @@ JsValueRef trrojan::scripting_host::on_configuration_set_ctor(JsValueRef callee,
         benchmark = scripting_host::get_ext_data<benchmark_base>(arguments[1]);
         log::instance().write_line(log_level::debug, "Initialising "
             "configuration_set from the default configuration of benchmark "
-            "%p (native object %p).", reinterpret_cast<void *>(arguments[1]),
+            "{} (native object {}).", reinterpret_cast<void *>(arguments[1]),
             static_cast<void *>(benchmark));
     }
 
@@ -841,7 +841,7 @@ JsValueRef trrojan::scripting_host::project_object(
     JsValueRef retval = JS_INVALID_REFERENCE;
 
     log::instance().write_line(log_level::debug, "Projecting benchmark \"{}\" "
-        "(%p) to JavaScript...", benchmark->name(),
+        "({}) to JavaScript...", benchmark->name(),
         static_cast<void *>(benchmark));
 
     auto r = ::JsCreateExternalObject(benchmark, nullptr, &retval);
@@ -851,7 +851,7 @@ JsValueRef trrojan::scripting_host::project_object(
     }
 
     log::instance().write_line(log_level::debug, "Benchmark \"{}\" "
-        "(%p) is represented by JavaScript object %p.", benchmark->name(),
+        "({}) is represented by JavaScript object {}.", benchmark->name(),
         static_cast<void *>(benchmark), reinterpret_cast<void *>(retval));
 
     auto b = scripting_host::project_value(benchmark->name().c_str());

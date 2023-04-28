@@ -44,14 +44,14 @@ trrojan::power_state_scope::power_state_scope(void) {
             hr = ::D3D12CreateDevice(adapter, D3D_FEATURE_LEVEL_11_0,
                 IID_PPV_ARGS(&device));
             LOG_ERROR(hr, "Failed to create Direct3D 12 device for graphics "
-                "adapter \"%s\". This adapter will not be put into a stable "
+                "adapter \"{}\". This adapter will not be put into a stable "
                 "power state.", W2A(desc.Description));
         }
 
         if (SUCCEEDED(hr)) {
             hr = device->SetStablePowerState(TRUE);
             LOG_ERROR(hr, "Failed to set a stable power state for graphics "
-                "adapter \"%s\". Please make sure that you have installed "
+                "adapter \"{}\". Please make sure that you have installed "
                 "the Windows 10 SDK and that your machine is in developer "
                 "mode. The developer mode can be enabled in the update "
                 "section of the Windows settings app.", W2A(desc.Description));

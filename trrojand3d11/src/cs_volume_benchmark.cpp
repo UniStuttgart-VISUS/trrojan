@@ -76,7 +76,7 @@ trrojan::result trrojan::d3d11::cs_volume_benchmark::on_run(
         src = d3d11::plugin::load_resource(
             MAKEINTRESOURCE(SINGLE_PASS_VOLUME_COMPUTE_SHADER), _T("SHADER"));
 #else
-        auto filepath = GetAppFolder().string() + "trrojand3d11" + "/" + "SinglePassVolumeComputeShader.cso";
+        auto filepath = GetAppFolder().string() + "trrojand3d11" + "/" + "d3d11" + "/" + "SinglePassVolumeComputeShader.cso";
         src = ReadFileBytes(filepath);
 #endif // !_UWP
         auto cs = create_compute_shader(dev, src);
@@ -280,7 +280,7 @@ trrojan::result trrojan::d3d11::cs_volume_benchmark::on_run(
 
     // Do the wall clock measurement.
     log::instance().write_line(log_level::debug, "Measuring wall clock "
-        "timings over %u iterations ...", cntCpuIterations);
+        "timings over {} iterations ...", cntCpuIterations);
     cpuTimer.start();
     for (std::uint32_t i = 0; i < cntCpuIterations; ++i) {
         ctx->Dispatch(groupX, groupY, 1u);

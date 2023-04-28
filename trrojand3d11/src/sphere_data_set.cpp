@@ -1,11 +1,14 @@
-/// <copyright file="sphere_data_set.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Christoph Müller</author>
+// <copyright file="sphere_data_set.cpp" company="Visualisierungsinstitut der Universitï¿½t Stuttgart">
+// Copyright ï¿½ 2016 - 2022 Visualisierungsinstitut der Universitï¿½t Stuttgart. Alle Rechte vorbehalten.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Christoph Mï¿½ller</author>
 
 #include "trrojan/d3d11/sphere_data_set.h"
 
+#include <mmpld.h>
+
+#include "trrojan/clipping.h"
 #include "trrojan/log.h"
 
 #include "sphere_techniques.h"
@@ -17,6 +20,9 @@
 const trrojan::d3d11::sphere_data_set_base::properties_type
 trrojan::d3d11::sphere_data_set_base::property_float_colour
     = SPHERE_INPUT_FLT_COLOUR;
+static_assert(mmpld::particle_properties::float_colour
+    == static_cast<mmpld::particle_properties>(SPHERE_INPUT_FLT_COLOUR),
+    "Constant value SPHERE_INPUT_FLT_COLOUR must match MMLPD library.");
 
 
 /*
@@ -25,6 +31,9 @@ trrojan::d3d11::sphere_data_set_base::property_float_colour
 const trrojan::d3d11::sphere_data_set_base::properties_type
 trrojan::d3d11::sphere_data_set_base::property_per_sphere_colour
     = SPHERE_INPUT_PV_COLOUR;
+static_assert(mmpld::particle_properties::per_particle_colour
+    == static_cast<mmpld::particle_properties>(SPHERE_INPUT_PV_COLOUR),
+    "Constant value SPHERE_INPUT_PV_COLOUR must match MMLPD library.");
 
 
 /*
@@ -33,6 +42,9 @@ trrojan::d3d11::sphere_data_set_base::property_per_sphere_colour
 const trrojan::d3d11::sphere_data_set_base::properties_type
 trrojan::d3d11::sphere_data_set_base::property_per_sphere_intensity
     = SPHERE_INPUT_PP_INTENSITY | SPHERE_INPUT_PV_INTENSITY;
+static_assert(mmpld::particle_properties::per_particle_intensity
+    == static_cast<mmpld::particle_properties>(SPHERE_INPUT_PV_INTENSITY),
+    "Constant value SPHERE_INPUT_PV_INTENSITY must match MMLPD library.");
 
 
 /*
@@ -41,6 +53,9 @@ trrojan::d3d11::sphere_data_set_base::property_per_sphere_intensity
 const trrojan::d3d11::sphere_data_set_base::properties_type
 trrojan::d3d11::sphere_data_set_base::property_per_sphere_radius
     = SPHERE_INPUT_PV_RADIUS;
+static_assert(mmpld::particle_properties::per_particle_radius
+    == static_cast<mmpld::particle_properties>(SPHERE_INPUT_PV_RADIUS),
+    "Constant value SPHERE_INPUT_PV_RADIUS must match MMLPD library.");
 
 
 /*
@@ -117,11 +132,19 @@ trrojan::d3d11::sphere_data_set_base::centre(void) const {
  */
 std::pair<float, float> trrojan::d3d11::sphere_data_set_base::clipping_planes(
         const camera& cam, const float globalRadius) const {
-    const auto& camPos = cam.get_look_from();
+    //point_type bbox[2];
+    //const auto radius = ((this->_properties & property_per_sphere_radius) != 0)
+    //    ? this->max_radius()
+    //    : globalRadius;
+
+    //this->bounding_box(bbox[0], bbox[1]);
+    //return trrojan::calc_clipping_planes(cam, bbox, radius);
+
+    const auto &camPos = cam.get_look_from();
     const auto radius = ((this->_properties & property_per_sphere_radius) != 0)
         ? this->max_radius()
         : globalRadius;
-    const auto& view = glm::normalize(cam.get_look_to() - camPos);
+    const auto &view = glm::normalize(cam.get_look_to() - camPos);
 
     point_type bbox[2];
     auto farPlane = std::numeric_limits<float>::lowest();
@@ -133,8 +156,6 @@ std::pair<float, float> trrojan::d3d11::sphere_data_set_base::clipping_planes(
         for (auto y = 0; y < 2; ++y) {
             for (auto z = 0; z < 2; ++z) {
                 auto pt = glm::vec3(bbox[x][0], bbox[y][1], bbox[z][2]);
-                //log::instance().write_line(log_level::debug, "Testing "
-                //    "({}, {}, {}) ...", pt.x, pt.y, pt.z);
                 auto ray = pt - camPos;
                 auto dist = glm::dot(view, ray);
                 if (dist < nearPlane) nearPlane = dist;
@@ -146,7 +167,8 @@ std::pair<float, float> trrojan::d3d11::sphere_data_set_base::clipping_planes(
     nearPlane -= radius;
     farPlane += radius;
 
-    if (nearPlane < 0.0f) {
+    // TODO: Near does not work as above.
+    if (true || nearPlane < 0.0f) {
         // Plane could become negative in data set, which is illegal. A range of
         // 10k seems to be something our shaders can still handle.
         nearPlane = farPlane / 10000.0f;

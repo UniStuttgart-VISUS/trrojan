@@ -1,21 +1,24 @@
-/// <copyright file="sphere_benchmark.cpp" company="Visualisierungsinstitut der Universit�t Stuttgart">
-/// Copyright � 2016 - 2018 Visualisierungsinstitut der Universit�t Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Christoph M�ller</author>
+// <copyright file="sphere_benchmark.cpp" company="Visualisierungsinstitut der Universit�t Stuttgart">
+// Copyright � 2016 - 2022 Visualisierungsinstitut der Universit�t Stuttgart. Alle Rechte vorbehalten.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Christoph M�ller</author>
 
 #include "trrojan/d3d11/sphere_benchmark.h"
 
 #include <algorithm>
 #include <cassert>
 #include <cinttypes>
+#include <iomanip>
 #include <memory>
+#include <sstream>
 
 #include <glm/ext.hpp>
 
 #include "trrojan/constants.h"
 #include "trrojan/factor_enum.h"
 #include "trrojan/factor_range.h"
+#include "trrojan/io.h"
 #include "trrojan/log.h"
 #include "trrojan/mmpld_reader.h"
 #include "trrojan/result.h"
@@ -349,15 +352,6 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
 
     // Compute the matrices.
     {
-        //auto projection = DirectX::XMMatrixPerspectiveFovRH(std::atan(1) * 4 / 3,
-        //    static_cast<float>(viewport.Width) / static_cast<float>(viewport.Height),
-        //    0.1f, 10.0f);
-
-        //auto eye = DirectX::XMFLOAT4(0, 0, 0.5f * (this->mmpld_header.bounding_box[5] - this->mmpld_header.bounding_box[2]), 0);
-        //auto lookAt = DirectX::XMFLOAT4(0, 0, 0, 0);
-        //auto up = DirectX::XMFLOAT4(0, 1, 0, 0);
-        //auto view = DirectX::XMMatrixLookAtRH(DirectX::XMLoadFloat4(&eye),
-        //    DirectX::XMLoadFloat4(&lookAt), DirectX::XMLoadFloat4(&up));
         const auto aspect = static_cast<float>(viewport.Width)
             / static_cast<float>(viewport.Height);
         const auto fovyDeg = 60.0f;
@@ -383,30 +377,25 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
         this->cam.set_far_plane_dist(clipping.second);
 
         // Retrieve the matrices.
-        auto mat = DirectX::XMFLOAT4X4(
-            glm::value_ptr(this->cam.get_projection_mx()));
-        auto projection = DirectX::XMLoadFloat4x4(&mat);
-        DirectX::XMStoreFloat4x4(viewConstants.ProjMatrix,
-            DirectX::XMMatrixTranspose(projection));
+        auto projection = this->cam.calc_projection_mxz0();
+        viewConstants.ProjMatrix[0] = DirectX::XMFLOAT4X4(
+            glm::value_ptr(projection));
 
-        mat = DirectX::XMFLOAT4X4(glm::value_ptr(this->cam.get_view_mx()));
-        auto view = DirectX::XMLoadFloat4x4(&mat);
-        DirectX::XMStoreFloat4x4(viewConstants.ViewMatrix,
-            DirectX::XMMatrixTranspose(view));
+        auto &view = this->cam.get_view_mx();
+        viewConstants.ViewMatrix[0] = DirectX::XMFLOAT4X4(
+            glm::value_ptr(view));
 
-        auto viewDet = DirectX::XMMatrixDeterminant(view);
-        auto viewInv = DirectX::XMMatrixInverse(&viewDet, view);
-        DirectX::XMStoreFloat4x4(viewConstants.ViewInvMatrix,
-            DirectX::XMMatrixTranspose(viewInv));
+        auto viewInv = glm::inverse(view);
+        viewConstants.ViewInvMatrix[0] = DirectX::XMFLOAT4X4(
+            glm::value_ptr(viewInv));
 
-        auto viewProj = view * projection;
-        DirectX::XMStoreFloat4x4(viewConstants.ViewProjMatrix,
-            DirectX::XMMatrixTranspose(viewProj));
+        auto viewProj = projection * view;
+        viewConstants.ViewProjMatrix[0] = DirectX::XMFLOAT4X4(
+            glm::value_ptr(viewProj));
 
-        auto viewProjDet = DirectX::XMMatrixDeterminant(viewProj);
-        auto viewProjInv = DirectX::XMMatrixInverse(&viewProjDet, viewProj);
-        DirectX::XMStoreFloat4x4(viewConstants.ViewProjInvMatrix,
-            DirectX::XMMatrixTranspose(viewProjInv));
+        auto viewProjInv = glm::inverse(viewProj);
+        viewConstants.ViewProjInvMatrix[0] = DirectX::XMFLOAT4X4(
+            glm::value_ptr(viewProjInv));
     }
 
     // Set tessellation constants.
@@ -493,11 +482,6 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
                     ctx->Draw(cntPrimitives, 0);
                 }
                 this->present_target();
-#if defined(CREATE_D2D_OVERLAY)
-                // Using the overlay will change the state such that we need to
-                // re-apply it after presenting.
-                technique.apply(ctx);
-#endif /* defined(CREATE_D2D_OVERLAY) */
             }
 
             ctx->End(this->done_query);
@@ -528,11 +512,6 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
         } else {
             ctx->Draw(cntPrimitives, 0);
         }
-#if defined(CREATE_D2D_OVERLAY)
-        // Using the overlay will change the state such that we need to
-        // re-apply it after presenting.
-        technique.apply(ctx);
-#endif /* defined(CREATE_D2D_OVERLAY) */
         gpuTimer.end(0);
         gpuTimer.end_frame();
         this->present_target();
@@ -557,11 +536,6 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
     }
     ctx->End(this->stats_query);
     this->present_target();
-#if defined(CREATE_D2D_OVERLAY)
-    // Using the overlay will change the state such that we need to
-    // re-apply it after presenting.
-    technique.apply(ctx);
-#endif /* defined(CREATE_D2D_OVERLAY) */
     wait_for_stats_query(pipeStats, ctx, this->stats_query);
 
     // Do the wall clock measurement.
@@ -576,11 +550,6 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
             ctx->Draw(cntPrimitives, 0);
         }
         this->present_target();
-#if defined(CREATE_D2D_OVERLAY)
-        // Using the overlay will change the state such that we need to
-        // re-apply it after presenting.
-        technique.apply(ctx);
-#endif /* defined(CREATE_D2D_OVERLAY) */
     }
     ctx->End(this->done_query);
     wait_for_event_query(ctx, this->done_query);
@@ -619,6 +588,17 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
     log::instance().write_line(log_level::information, retval_log_output.str());
 
     return retval;
+}
+
+
+/*
+ * trrojan::d3d11::sphere_benchmark::get_shader_file_id
+ */
+std::string trrojan::d3d11::sphere_benchmark::get_shader_file_id(
+        const shader_id_type id) {
+    std::stringstream ss;
+    ss << std::setfill('0') << std::setw(16) << std::hex << id;
+    return ss.str();
 }
 
 
@@ -701,7 +681,7 @@ bool trrojan::d3d11::sphere_benchmark::check_data_compatibility(
             != (dataCode & SPHERE_TECHNIQUE_USE_SRV)) {
         log::instance().write_line(log_level::debug, "Data set is not "
             "compatible with rendering technique because the technique has the "
-            "shader resource view flag {}set in contrast to the data set.",
+            "shader resource view flag {} set in contrast to the data set.",
             ((shaderCode & SPHERE_TECHNIQUE_USE_SRV) != 0) ? "" : "not ");
         return false;
     }
@@ -765,9 +745,8 @@ trrojan::d3d11::sphere_benchmark::get_technique(ID3D11Device *device,
     auto retval = this->technique_cache.find(id);
     if (retval == this->technique_cache.end()) {
         log::instance().write_line(log_level::verbose, "No cached sphere "
-            "rendering technique for 0x%" PRIx64 " with data features 0x%"
-            PRIx64 " (ID 0x%" PRIx64 ") was found. Creating a new one ...",
-            shaderCode, dataCode, id);
+            "rendering technique for {} with data features {} (ID {}) was "
+            "found. Creating a new one ...", shaderCode, dataCode, id);
         rendering_technique::input_layout_type il = nullptr;
         rendering_technique::vertex_shader_type vs = nullptr;
         rendering_technique::hull_shader_type hs = nullptr;
@@ -790,35 +769,36 @@ trrojan::d3d11::sphere_benchmark::get_technique(ID3D11Device *device,
         }
 
 #ifdef _UWP
-
-        std::stringstream stringid;
-        stringid << std::setfill('0') << std::setw(16) << std::hex << sid;
+        //const auto base_path = plugin::get_directory()
+        //    + directory_separator_char;
+        const auto base_path = GetAppFolder().string();
+        const auto fid_ext = get_shader_file_id(sid) + ".cso";
 
         {
-            auto filepath = GetAppFolder().string() + "trrojand3d11" + "/" + "SphereVertexShader" + stringid.str() + ".cso";
+            auto filepath = base_path + "trrojand3d11" + "/" + "d3d11" + "/" + "SphereVertexShader" + fid_ext;
             auto src = ReadFileBytes(filepath);
             vs = create_vertex_shader(device, src);
             il = create_input_layout(device, this->data->layout(), src);
         }
 
         if (isTess) {
-            auto filepath = GetAppFolder().string()  + "trrojand3d11" + "/" + "SphereHullShader" + stringid.str() + ".cso";
+            auto filepath = base_path + "trrojand3d11" + "/" + "d3d11" + "/" + "SphereHullShader" + fid_ext;
             auto src = ReadFileBytes(filepath);
             hs = create_hull_shader(device, src);
             
-            filepath = GetAppFolder().string() + "trrojand3d11" + "/" + "SphereDomainShader" + stringid.str() + ".cso";
+            filepath = base_path + "trrojand3d11" + "/" + "d3d11" + "/" + "SphereDomainShader" + fid_ext;
             src = ReadFileBytes(filepath);
             ds = create_domain_shader(device, src);
         }
 
         if (isGeo) {
-            auto filepath = GetAppFolder().string() + "trrojand3d11" + "/" + "SphereGeometryShader" + stringid.str() + ".cso";
+            auto filepath = base_path + "trrojand3d11" + "/" + "d3d11" + "/" + "SphereGeometryShader" + fid_ext;
             auto src = ReadFileBytes(filepath);
             gs = create_geometry_shader(device, src);
         }
 
         {
-            auto filepath = GetAppFolder().string() + "trrojand3d11" + "/" + "SpherePixelShader" + stringid.str() + ".cso";
+            auto filepath = base_path + "trrojand3d11" + "/" + "d3d11" + "/" + "SpherePixelShader" + fid_ext;
             auto src = ReadFileBytes(filepath);
             ps = create_pixel_shader(device, src);
         }
@@ -861,7 +841,6 @@ trrojan::d3d11::sphere_benchmark::get_technique(ID3D11Device *device,
                 MAKEINTRESOURCE(it->second.pixel_shader), _T("SHADER"));
             ps = create_pixel_shader(device, src);
         }
-
 #endif
 
         if (is_technique(shaderCode, SPHERE_TECHNIQUE_QUAD_INST)) {

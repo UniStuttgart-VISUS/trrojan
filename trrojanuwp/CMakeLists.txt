@@ -19,8 +19,8 @@ set(AssetFiles
   #Assets/coronadir_16_100.mmpld
   #Assets/laser.charge.00104.mmpld
   Assets/volume-tf_demo.trroll
-  Assets/foot.dat
-  Assets/foot.raw
+  #Assets/foot.dat
+  #Assets/foot.raw
   Assets/bonsai.dat
   Assets/bonsai.raw
   Assets/trrojan_cham1.brudervn

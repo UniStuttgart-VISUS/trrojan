@@ -1,2 +1,2 @@
-100 SHADER OverlayVertexShader.cso
-101 SHADER OverlayPixelShader.cso
+100 SHADER d3d11\OverlayVertexShader.cso
+101 SHADER d3d11\OverlayPixelShader.cso

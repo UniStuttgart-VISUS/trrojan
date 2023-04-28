@@ -6,8 +6,9 @@
 
 #include "trrojan/d3d12/gpu_timer.h"
 
+#include "trrojan/d3d12/utilities.h"
 
-//   ThrowIfFailed(m_directCommandQueues[i]->GetTimestampFrequency(&m_directCommandQueueTimestampFrequencies[i]));
+// https://github.com/microsoft/DirectX-Graphics-Samples/blob/164b072185a5360c43c5f0b64e2f672b7f423f95/Samples/Desktop/D3D12HeterogeneousMultiadapter/src/D3D12HeterogeneousMultiadapter.cpp#L843
 
 
 /*
@@ -84,6 +85,10 @@ trrojan::d3d12::gpu_timer::gpu_timer(ID3D12Device *device,
         const size_type queries, const size_type buffers,
         const D3D12_QUERY_HEAP_TYPE heap_type)
         : _device(device), _heap_type(heap_type) {
+    if (this->_device == nullptr) {
+        throw std::invalid_argument("The device cannot be null.");
+    }
+
     this->resize(queries, buffers);
     assert(this->_cnt_buffers = buffers);
     assert(this->_cnt_queries = queries);
@@ -143,9 +148,8 @@ trrojan::d3d12::gpu_timer::~gpu_timer(void) { }
 void trrojan::d3d12::gpu_timer::end(ID3D12GraphicsCommandList *cmd_list,
         const size_type query) {
     assert(cmd_list != nullptr);
-    cmd_list->EndQuery(this->_heap,
-        D3D12_QUERY_TYPE_TIMESTAMP,
-        this->result_index(query, query_location::end));
+    auto idx = this->result_index(query, query_location::end);
+    cmd_list->EndQuery(this->_heap, D3D12_QUERY_TYPE_TIMESTAMP, idx);
 }
 
 
@@ -155,14 +159,13 @@ void trrojan::d3d12::gpu_timer::end(ID3D12GraphicsCommandList *cmd_list,
 trrojan::d3d12::gpu_timer::size_type trrojan::d3d12::gpu_timer::end_frame(
         ID3D12GraphicsCommandList *cmd_list) {
     assert(cmd_list != nullptr);
-    const auto retval = this->result_index(0, query_location::start);
-    cmd_list->ResolveQueryData(this->_heap,
-        D3D12_QUERY_TYPE_TIMESTAMP,
-        retval,
-        this->queries_per_buffer(),
-        this->_result_buffer,
-        retval * sizeof(value_type));
-    return retval;
+    const auto first = std::min(query_location::start, query_location::end);
+    const auto index = this->result_index(0, first);
+    const auto queries = this->queries_per_buffer();
+    const auto offset = index * sizeof(value_type);
+    cmd_list->ResolveQueryData(this->_heap, D3D12_QUERY_TYPE_TIMESTAMP,
+        index, queries, this->_result_buffer, offset);
+    return this->_idx_active_buffer;
 }
 
 
@@ -197,10 +200,10 @@ void trrojan::d3d12::gpu_timer::evaluate(value_type& outStart,
         }
     }
 
-    outStart = *(reinterpret_cast<value_type *>(data)
-        + static_cast<size_type>(query_location::start));
-    outEnd = *(reinterpret_cast<value_type *>(data)
-        + static_cast<size_type>(query_location::end));
+    auto timestamps = reinterpret_cast<value_type *>(
+        static_cast<std::uint8_t *>(data) + range.Begin);
+    outStart = *(timestamps + static_cast<size_type>(query_location::start));
+    outEnd = *(timestamps + static_cast<size_type>(query_location::end));
 
     ::ZeroMemory(&range, sizeof(range));
     this->_result_buffer->Unmap(0, &range);
@@ -272,6 +275,7 @@ void trrojan::d3d12::gpu_timer::resize(const size_type queries,
         if (FAILED(hr)) {
             throw ATL::CAtlException(hr);
         }
+        set_debug_object_name(this->_result_buffer, "gpu_timer buffer");
     }
 
     {
@@ -280,6 +284,7 @@ void trrojan::d3d12::gpu_timer::resize(const size_type queries,
         if (FAILED(hr)) {
             throw ATL::CAtlException(hr);
         }
+        set_debug_object_name(this->_heap, "gpu_timer heap");
     }
 
     // Start at the begin, because all data have been invalidated.
@@ -295,9 +300,8 @@ void trrojan::d3d12::gpu_timer::resize(const size_type queries,
 void trrojan::d3d12::gpu_timer::start(ID3D12GraphicsCommandList *cmd_list,
         const size_type query) {
     assert(cmd_list != nullptr);
-    cmd_list->EndQuery(this->_heap,
-        D3D12_QUERY_TYPE_TIMESTAMP,
-        this->result_index(query, query_location::start));
+    auto idx = this->result_index(query, query_location::start);
+    cmd_list->EndQuery(this->_heap, D3D12_QUERY_TYPE_TIMESTAMP, idx);
 }
 
 
@@ -309,7 +313,7 @@ void trrojan::d3d12::gpu_timer::start_frame(void) {
 }
 
 
-// https://github.com/microsoft/DirectX-Graphics-Samples/blob/164b072185a5360c43c5f0b64e2f672b7f423f95/Samples/Desktop/D3D12HeterogeneousMultiadapter/src/D3D12HeterogeneousMultiadapter.cpp#L843
+
 #if false
 const UINT oldestFrameIndex = m_frameIndex;
 assert(m_frameFenceValues[oldestFrameIndex] <= m_frameFence->GetCompletedValue());

@@ -1,8 +1,8 @@
-/// <copyright file="plugin.h" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Christoph Müller</author>
+// <copyright file="plugin.h" company="Visualisierungsinstitut der Universität Stuttgart">
+// Copyright © 2016 - 2022 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Christoph Müller</author>
 
 #pragma once
 
@@ -11,6 +11,7 @@
 #include <winrt/windows.ui.core.h>
 
 #include <cinttypes>
+#include <string>
 #include <vector>
 
 #include <Windows.h>
@@ -30,6 +31,18 @@ namespace d3d11 {
 
         typedef trrojan::plugin_base::benchmark_list benchmark_list;
         typedef trrojan::plugin_base::environment_list environment_list;
+
+        /// <summary>
+        /// Retrieves the directory where the plugin is located.
+        /// </summary>
+        /// <returns>The location of the plugin.</returns>
+        static std::string get_directory(void);
+
+        /// <summary>
+        /// Gets the location of the plugin.
+        /// </summary>
+        /// <returns>The path to the plugin DLL.</returns>
+        static std::string get_location(void);
 
         /// <summary>
         /// Load a resource from the Direct3D plugin's DLL.

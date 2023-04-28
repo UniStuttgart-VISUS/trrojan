@@ -1,12 +1,13 @@
-/// <copyright file="random_sphere_data_set.h" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Christoph Müller</author>
+// <copyright file="random_sphere_data_set.h" company="Visualisierungsinstitut der Universität Stuttgart">
+// Copyright © 2016 - 2022 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Christoph Müller</author>
 
 #pragma once
 
 #include "trrojan/configuration.h"
+#include "trrojan/random_sphere_generator.h"
 
 #include "trrojan/d3d11/sphere_data_set.h"
 
@@ -24,15 +25,7 @@ namespace d3d11 {
         /// <summary>
         /// Possible types of spheres that can be created.
         /// </summary>
-        enum sphere_type {
-            unspecified,
-            pos_intensity,
-            pos_rgba32,
-            pos_rgba8,
-            pos_rad_intensity,
-            pos_rad_rgba32,
-            pos_rad_rgba8
-        };
+        typedef random_sphere_generator::sphere_type sphere_type;
 
         /// <summary>
         /// The type of flags controlling the data generation.
@@ -95,7 +88,9 @@ namespace d3d11 {
         /// <summary>
         /// Gets the stride (in bytes) of random spheres of the given type.
         /// </summary>
-        static size_type get_stride(const sphere_type type);
+        inline static size_type get_stride(const sphere_type type) {
+            return random_sphere_generator::get_stride(type);
+        }
 
         virtual ~random_sphere_data_set(void) = default;
 

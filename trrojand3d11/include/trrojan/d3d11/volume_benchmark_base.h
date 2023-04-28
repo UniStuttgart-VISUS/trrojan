@@ -71,7 +71,7 @@ namespace d3d11 {
                 device.d3d_device(), outInfo, outTexture, outSrv);
         }
 
-        static void load_xfer_func(const std::vector<char>& data,
+        static void load_xfer_func(const std::vector<std::uint8_t>& data,
             ID3D11Device *device,
             ID3D11Texture1D **outTexture,
             ID3D11ShaderResourceView **outSrv = nullptr);

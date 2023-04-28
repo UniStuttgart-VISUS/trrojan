@@ -1,8 +1,8 @@
-/// <copyright file="random_sphere_data_set.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Christoph Müller</author>
+// <copyright file="random_sphere_data_set.cpp" company="Visualisierungsinstitut der Universitï¿½t Stuttgart">
+// Copyright ï¿½ 2016 - 2022 Visualisierungsinstitut der Universitï¿½t Stuttgart. Alle Rechte vorbehalten.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Christoph Mï¿½ller</author>
 
 #include "trrojan/d3d11/random_sphere_data_set.h"
 
@@ -54,103 +54,9 @@ trrojan::d3d11::random_sphere_data_set::create(ID3D11Device *device,
 trrojan::d3d11::sphere_data_set
 trrojan::d3d11::random_sphere_data_set::create(ID3D11Device *device,
         const create_flags flags, const std::string& configuration) {
-    static const std::runtime_error PARSE_ERROR("The configuration description "
-        "of the random spheres is invalid. The configuration must have the "
-        "following format: \"<sphere type> : <number of spheres> : <random "
-        "seed or \"-\"> : <domain size> : <sphere size range>\"");
-    static const char SEPARATOR = ':';
-#define _ADD_SPHERE_TYPE(n) { #n, sphere_type::n }
-    static const struct {
-        const char *name;
-        sphere_type type;
-    } SPHERE_TYPES[] = {
-        _ADD_SPHERE_TYPE(pos_intensity),
-        _ADD_SPHERE_TYPE(pos_rgba32),
-        _ADD_SPHERE_TYPE(pos_rgba8),
-        _ADD_SPHERE_TYPE(pos_rad_intensity),
-        _ADD_SPHERE_TYPE(pos_rad_rgba32),
-        _ADD_SPHERE_TYPE(pos_rad_rgba8)
-    };
-#undef _ADD_SPHERE_TYPE
-
-    std::uint32_t cntParticles = 0;
-    std::array<float, 3> domainSize = { 0, 0, 0 };
-    std::uint32_t seed = 0;
-    std::array<float, 2> sphereSize = { 0 ,0 };
-    sphere_type sphereType = unspecified;
-
-    /* Parse the type of spheres to generate. */
-    auto tokBegin = configuration.begin();
-    auto tokEnd = std::find(configuration.begin(), configuration.end(),
-        SEPARATOR);
-    if (tokEnd == configuration.end()) {
-        throw PARSE_ERROR;
-    }
-
-    auto token = tolower(trim(std::string(tokBegin, tokEnd)));
-    for (auto& t : SPHERE_TYPES) {
-        if (token == t.name) {
-            sphereType = t.type;
-            break;
-        }
-    }
-    if (sphereType == sphere_type::unspecified) {
-        throw std::runtime_error("The type of random spheres to generate is "
-            "invalid.");
-    }
-    if ((flags & property_float_colour) != 0) {
-        // Force 8-bit colours to float on request.
-        switch (sphereType) {
-            case sphere_type::pos_rgba8:
-                sphereType = sphere_type::pos_rgba32;
-                break;
-
-            case sphere_type::pos_rad_rgba8:
-                sphereType = sphere_type::pos_rad_rgba32;
-                break;
-        }
-    }
-
-    /* Parse the number of spheres to generate. */
-    tokBegin = ++tokEnd;
-    tokEnd = std::find(tokEnd, configuration.end(), SEPARATOR);
-    if (tokEnd == configuration.end()) {
-        throw PARSE_ERROR;
-    }
-
-    cntParticles = parse<decltype(cntParticles)>(std::string(tokBegin, tokEnd));
-
-    /* Parse the random seed. */
-    tokBegin = ++tokEnd;
-    tokEnd = std::find(tokEnd, configuration.end(), SEPARATOR);
-    if (tokEnd == configuration.end()) {
-        throw PARSE_ERROR;
-    }
-
-    try {
-        seed = parse<decltype(seed)>(std::string(tokBegin, tokEnd));
-    } catch (...) {
-        // Special case: use "real" random seed.
-        std::random_device rnd;
-        seed = rnd();
-    }
-
-    /* Parse the size of the domain. */
-    tokBegin = ++tokEnd;
-    tokEnd = std::find(tokEnd, configuration.end(), SEPARATOR);
-    if (tokEnd == configuration.end()) {
-        throw PARSE_ERROR;
-    }
-
-    domainSize = parse<decltype(domainSize)>(std::string(tokBegin, tokEnd));
-
-    /* Parse the range of possible sphere sizes. */
-    tokBegin = ++tokEnd;
-    tokEnd = configuration.end();
-    sphereSize = parse<decltype(sphereSize)>(std::string(tokBegin, tokEnd));
-
-    return random_sphere_data_set::create(device, flags, sphereType,
-        cntParticles, domainSize, sphereSize, seed);
+    auto desc = random_sphere_generator::parse_description(configuration);
+    return random_sphere_data_set::create(device, flags, desc.type,
+        desc.number, desc.domain_size, desc.sphere_size, desc.seed);
 }
 
 
@@ -160,68 +66,8 @@ trrojan::d3d11::random_sphere_data_set::create(ID3D11Device *device,
 std::vector<D3D11_INPUT_ELEMENT_DESC>
 trrojan::d3d11::random_sphere_data_set::get_input_layout(
         const sphere_type type) {
-    D3D11_INPUT_ELEMENT_DESC element;
-    UINT offset = 0;
-    std::vector<D3D11_INPUT_ELEMENT_DESC> retval;
-
-    ::memset(&element, 0, sizeof(element));
-    element.SemanticName = "POSITION";
-    element.AlignedByteOffset = offset;
-    element.InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
-
-    switch (type) {
-        case sphere_type::pos_intensity:
-        case sphere_type::pos_rgba8:
-        case sphere_type::pos_rgba32:
-            element.Format = DXGI_FORMAT_R32G32B32_FLOAT;
-            offset += 3 * sizeof(float);
-            retval.push_back(element);
-            break;
-
-        case sphere_type::pos_rad_intensity:
-        case sphere_type::pos_rad_rgba8:
-        case sphere_type::pos_rad_rgba32:
-            element.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
-            offset += 4 * sizeof(float);
-            retval.push_back(element);
-            break;
-
-        default:
-            throw std::runtime_error("Unexpected sphere format.");
-    }
-
-    ::memset(&element, 0, sizeof(element));
-    element.SemanticName = "COLOR";
-    element.AlignedByteOffset = offset;
-    element.InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
-
-    switch (type) {
-        case sphere_type::pos_intensity:
-        case sphere_type::pos_rad_intensity:
-            element.Format = DXGI_FORMAT_R32_FLOAT;
-            offset += 1 * sizeof(float);
-            retval.push_back(element);
-            break;
-
-        case sphere_type::pos_rgba8:
-        case sphere_type::pos_rad_rgba8:
-            element.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-            offset += 4 * sizeof(float);
-            retval.push_back(element);
-            break;
-
-        case sphere_type::pos_rgba32:
-        case sphere_type::pos_rad_rgba32:
-            element.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
-            offset += 4 * sizeof(float);
-            retval.push_back(element);
-            break;
-
-        default:
-            throw std::runtime_error("Unexpected sphere format.");
-    }
-
-    return std::move(retval);
+    return random_sphere_generator::get_input_layout<
+        D3D11_INPUT_ELEMENT_DESC>(type);
 }
 
 
@@ -233,80 +79,30 @@ trrojan::d3d11::random_sphere_data_set::get_properties(const sphere_type type) {
     properties_type retval = 0;
 
     switch (type) {
-        case pos_rad_intensity:
-        case pos_rad_rgba32:
-        case pos_rad_rgba8:
+        case sphere_type::pos_rad_intensity:
+        case sphere_type::pos_rad_rgba32:
+        case sphere_type::pos_rad_rgba8:
             retval |= property_per_sphere_radius;
             break;
     }
 
     switch (type) {
-        case pos_rgba32:
-        case pos_rad_rgba32:
+        case sphere_type::pos_rgba32:
+        case sphere_type::pos_rad_rgba32:
             retval |= property_float_colour;
             /* falls through. */
-        case pos_rgba8:
-        case pos_rad_rgba8:
+        case sphere_type::pos_rgba8:
+        case sphere_type::pos_rad_rgba8:
             retval |= property_per_sphere_colour;
             break;
     }
 
     switch (type) {
-        case pos_intensity:
-        case pos_rad_intensity:
+        case sphere_type::pos_intensity:
+        case sphere_type::pos_rad_intensity:
             retval |= property_per_sphere_intensity;
             break;
     }
-
-    return retval;
-}
-
-
-/*
- * trrojan::d3d11::random_sphere_data_set::get_stride
- */
-trrojan::d3d11::random_sphere_data_set::size_type
-trrojan::d3d11::random_sphere_data_set::get_stride(
-        const sphere_type type) {
-    size_type retval = 0;
-
-    switch (type) {
-        case sphere_type::pos_intensity:
-        case sphere_type::pos_rgba8:
-        case sphere_type::pos_rgba32:
-            retval += 3 * sizeof(float);
-            break;
-
-        case sphere_type::pos_rad_intensity:
-        case sphere_type::pos_rad_rgba8:
-        case sphere_type::pos_rad_rgba32:
-            retval += 4 * sizeof(float);
-            break;
-
-        default:
-            throw std::runtime_error("Unexpected sphere format.");
-    }
-
-    switch (type) {
-        case sphere_type::pos_intensity:
-        case sphere_type::pos_rad_intensity:
-            retval += 1 * sizeof(float);
-            break;
-
-        case sphere_type::pos_rgba8:
-        case sphere_type::pos_rad_rgba8:
-            retval += 4 * sizeof(byte);
-            break;
-
-        case sphere_type::pos_rgba32:
-        case sphere_type::pos_rad_rgba32:
-            retval += 4 * sizeof(float);
-            break;
-
-        default:
-            throw std::runtime_error("Unexpected sphere format.");
-    }
-
 
     return retval;
 }
@@ -338,16 +134,8 @@ void trrojan::d3d11::random_sphere_data_set::recreate(ID3D11Device *device,
     static const create_flags VALID_INPUT_FLAGS // Flags directly copied from user input.
         = sphere_data_set_base::property_structured_resource;
     D3D11_BUFFER_DESC bufferDesc;
-    auto avgSphereSize = std::abs(this->_sphere_size[1] - this->_sphere_size[0])
-        * 0.5f + (std::min)(this->_sphere_size[0], this->_sphere_size[1]);
-    auto domainSize = this->extents();
     D3D11_SUBRESOURCE_DATA id;
-    std::uniform_real_distribution<float> posDist(0, 1);
-    std::uniform_real_distribution<float> radDist(this->_sphere_size[0],
-        this->_sphere_size[1]);
-    std::vector<std::uint8_t> particles;
-    std::mt19937 prng;
-    auto stride = random_sphere_data_set::get_stride(this->_type);
+    random_sphere_generator::description particleDesc;
 
     if (device == nullptr) {
         throw std::invalid_argument("The Direct3D device to create the vertex "
@@ -356,72 +144,17 @@ void trrojan::d3d11::random_sphere_data_set::recreate(ID3D11Device *device,
 
     this->_properties = random_sphere_data_set::get_properties(this->_type);
     this->_properties |= (flags & VALID_INPUT_FLAGS);
-    this->_max_radius = std::numeric_limits<decltype(this->_max_radius)>::lowest();
 
-    prng.seed(this->_seed);
-    particles.resize(this->_size * stride);
+    particleDesc.domain_size = this->extents();
+    particleDesc.flags = static_cast<random_sphere_generator::create_flags>(
+        flags);
+    particleDesc.number = this->size();
+    particleDesc.seed = this->_seed;
+    particleDesc.sphere_size = this->_sphere_size;
+    particleDesc.type = this->_type;
 
-    log::instance().write_line(log_level::verbose, "Creating {} random "
-        "sphere(s) of type {} on a domain of [{}, {}, {}] with a uniformly "
-        "distributed size in [{}, {}]. The random seed is {}.", this->_size,
-        static_cast<std::uint32_t>(this->_type), domainSize[0], domainSize[1],
-        domainSize[2], this->_sphere_size[0], this->_sphere_size[1],
-        this->_seed);
-    for (std::uint32_t i = 0; i < this->size(); ++i) {
-        auto p = particles.data() + (i * stride);
-        auto g = static_cast<float>(i) / static_cast<float>(this->size());
-        auto cur = reinterpret_cast<float *>(p);
-
-        cur[0] = posDist(prng) * domainSize[0] - 0.5f * domainSize[0];
-        cur[1] = posDist(prng) * domainSize[1] - 0.5f * domainSize[1];
-        cur[2] = posDist(prng) * domainSize[2] - 0.5f * domainSize[2];
-        cur += 3;
-
-#if 0
-        cur->x = cur->y = cur->z = g * domainSize[0] - 0.5f * domainSize[0];
-#endif
-
-        switch (this->_type) {
-            case sphere_type::pos_rad_intensity:
-            case sphere_type::pos_rad_rgba32:
-            case sphere_type::pos_rad_rgba8:
-                *cur = radDist(prng);
-                if (this->_max_radius < *cur) {
-                    this->_max_radius = *cur;
-                }
-                ++cur;
-                break;
-
-            default:
-                this->_max_radius = avgSphereSize;
-        }
-
-        switch (this->_type) {
-            case sphere_type::pos_intensity:
-            case sphere_type::pos_rad_intensity:
-                *reinterpret_cast<float *>(cur) = g;
-                break;
-
-            case sphere_type::pos_rgba32:
-            case sphere_type::pos_rad_rgba32:
-                cur[0] = g;
-                cur[1] = g;
-                cur[2] = g;
-                cur[3] = 1.0f;
-                break;
-
-            case sphere_type::pos_rgba8:
-            case sphere_type::pos_rad_rgba8: {
-                auto s = static_cast<std::uint8_t>(g * 255);
-                auto d = reinterpret_cast<std::uint8_t *>(cur);
-                d[0] = d[1] = d[2] = s;
-                d[3] = 255;
-                } break;
-
-            default:
-                throw std::runtime_error("Unexpected sphere format.");
-        }
-    }
+    auto particles = random_sphere_generator::create(this->_max_radius,
+        particleDesc);
 
     ::ZeroMemory(&bufferDesc, sizeof(bufferDesc));
     bufferDesc.ByteWidth = static_cast<UINT>(particles.size());
@@ -429,7 +162,7 @@ void trrojan::d3d11::random_sphere_data_set::recreate(ID3D11Device *device,
     bufferDesc.CPUAccessFlags = 0;
     if ((flags & property_structured_resource) != 0) {
         bufferDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-        bufferDesc.StructureByteStride = stride;
+        bufferDesc.StructureByteStride = get_stride(particleDesc.type);
         bufferDesc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
     } else {
         bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;

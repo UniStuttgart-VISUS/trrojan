@@ -277,7 +277,7 @@ trrojan::d3d11::mmpld_data_set::read_frame(ID3D11Device *device,
         this->_max_radius = this->_list.radius;
 
     } else {
-        this->_max_radius = (std::numeric_limits<float>::min)();
+        this->_max_radius = (std::numeric_limits<float>::lowest)();
         auto stride = this->stride();
 
         for (auto cur = data.data(), end = data.data() + data.size();
