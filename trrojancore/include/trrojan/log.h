@@ -83,6 +83,8 @@ namespace trrojan {
                 P... params) {
             std::string f(fmt);
             f += "\n";
+            // TODO: calls deprecated spdlog function
+            // this is only a problem for d3d12, but why?
             this->logger->log(static_cast<spdlog::level::level_enum>(level),
                 f.c_str(), params...);
         }
@@ -93,6 +95,16 @@ namespace trrojan {
             fmt += "\n";
             this->logger->log(static_cast<spdlog::level::level_enum>(level),
                 fmt.c_str(), params...);
+        }
+
+        inline void write_line(const log_level level, std::string fmt) {
+            fmt += "\n";
+            this->write(level, fmt.c_str());
+        }
+
+        inline void write_line(const log_level level, const char* fmt) {
+            std::string tmp = fmt + '\n';
+            this->write(level, tmp.c_str());
         }
 
         inline void write_line(const log_level level,

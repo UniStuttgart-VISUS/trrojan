@@ -13,6 +13,8 @@
 
 #include "trrojan/d3d12/utilities.h"
 
+#ifndef _UWP
+
 
 /*
  * trrojan::d3d12::debug_render_target::debug_render_target
@@ -286,3 +288,6 @@ void trrojan::d3d12::debug_render_target::do_msg(void) {
         ::DispatchMessage(&msg);
     }
 }
+
+
+#endif //_UWP

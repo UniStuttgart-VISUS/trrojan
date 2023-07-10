@@ -333,6 +333,7 @@ trrojan::d3d12::render_target_base::create_swap_chain(HWND hWnd) {
     ATL::CComPtr<IDXGISwapChain1> swapChain;
     UINT width = 1;
 
+#ifndef _UWP
     {
         RECT clientRect;
         if (::GetClientRect(hWnd, &clientRect)) {
@@ -340,6 +341,7 @@ trrojan::d3d12::render_target_base::create_swap_chain(HWND hWnd) {
             width = std::abs(clientRect.right - clientRect.left);
         }
     }
+#endif // _UWP
 
     {
         DXGI_SWAP_CHAIN_DESC1 desc;

@@ -117,6 +117,7 @@ if(UWP)
 	add_subdirectory(trrojancore)
 	# Build the D3D plugin
 	add_subdirectory(trrojand3d11)
+	add_subdirectory(trrojand3d12)
 	# Build the executable
 	add_subdirectory(trrojanuwp)
 else()

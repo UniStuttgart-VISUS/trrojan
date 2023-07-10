@@ -18,7 +18,7 @@
 #include "trrojan/factor_enum.h"
 #include "trrojan/factor_range.h"
 #include "trrojan/log.h"
-#include "trrojan/mmpld_reader.h"
+//#include "trrojan/mmpld_reader.h"
 #include "trrojan/result.h"
 #include "trrojan/system_factors.h"
 #include "trrojan/timer.h"
@@ -898,7 +898,7 @@ ATL::CComPtr<ID3D12Resource> trrojan::d3d12::sphere_benchmark_base::load_data(
         const auto path = config.get<std::string>(factor_data_set);
         const auto frame = config.get<frame_type>(factor_frame);
 
-        mmpld::file<HANDLE> file(path.c_str());
+        mmpld::file<std::ifstream> file(path.c_str());
         file.open_frame(frame);
         file.read_particles(false, list_header, nullptr, 0);
         this->set_properties(list_header);
@@ -999,7 +999,7 @@ void trrojan::d3d12::sphere_benchmark_base::load_data_properties(
             "of frame {0} in MMPLD data set \"{}\" ...", frame, path);
         mmpld::list_header list_header;
 
-        mmpld::file<HANDLE> file(path.c_str());
+        mmpld::file<std::ifstream> file(path.c_str());
         file.open_frame(frame);
         file.read_particles(list_header, nullptr, 0);
 

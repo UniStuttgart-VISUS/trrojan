@@ -9,6 +9,7 @@
 #include <cassert>
 #include <unordered_map>
 
+#define MMPLD_WITH_DIRECT3D
 #include <mmpld.h>
 
 #include "trrojan/camera.h"
