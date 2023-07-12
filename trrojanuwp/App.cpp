@@ -86,7 +86,7 @@ struct App : implements<App, IFrameworkViewSource, IFrameworkView>
         trrojan::cool_down cool_down;
         trrojan::executive exe;
 
-        trrojan::plugin plugin = std::make_shared<trrojan::d3d11::plugin>(window);
+        trrojan::plugin plugin = std::make_shared<trrojan::d3d12::plugin>(window);
         exe.add_plugin(plugin, cmdLine);
 
         auto trroll_path = trrojan::GetAppFolder().string() + "Assets/demo.trroll";

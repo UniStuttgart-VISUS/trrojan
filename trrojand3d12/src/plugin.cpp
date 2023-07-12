@@ -36,14 +36,14 @@ BOOL WINAPI DllMain(HINSTANCE hDll, DWORD reason, LPVOID reserved) {
     return TRUE;
 }
 
-
+#ifndef _UWP
 /// <summary>
 /// Gets a new instance of the plugin descriptor.
 /// </summary>
 extern "C" TRROJAND3D12_API trrojan::plugin_base *get_trrojan_plugin(void) {
     return new trrojan::d3d12::plugin();
 }
-
+#endif // _UWP
 
 /*
  * trrojan::d3d12::plugin::get_directory
@@ -83,6 +83,7 @@ std::string trrojan::d3d12::plugin::get_location(void) {
  */
 std::vector<std::uint8_t> trrojan::d3d12::plugin::load_resource(LPCTSTR name,
         LPCTSTR type) {
+#ifndef _UWP
     auto hRes = ::FindResource(::hTrrojanDll, name, type);
     if (hRes == NULL) {
         std::error_code ec(::GetLastError(), std::system_category());
@@ -110,6 +111,9 @@ std::vector<std::uint8_t> trrojan::d3d12::plugin::load_resource(LPCTSTR name,
     UnlockResource(hLock);
 
     return retval;
+#else
+    return {};
+#endif // _UWP
 }
 
 
@@ -123,9 +127,15 @@ trrojan::d3d12::plugin::~plugin(void) { }
  * trrojan::d3d12::plugin::create_benchmarks
  */
 size_t trrojan::d3d12::plugin::create_benchmarks(benchmark_list& dst) const {
+#ifdef _UWP
+    auto sb = std::make_shared<sphere_benchmark>();
+    sb->SetWindow(window_);
+    dst.emplace_back(sb);
+#else
     dst.emplace_back(std::make_shared<empty_benchmark>());
     dst.emplace_back(std::make_shared<sphere_benchmark>());
-    return 2;
+#endif // _UWP
+    return dst.size();
 }
 
 
