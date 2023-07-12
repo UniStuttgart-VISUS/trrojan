@@ -12,6 +12,8 @@ using namespace Windows::UI::Composition;
 #include "trrojan/executive.h"
 #include "trrojan/d3d11/plugin.h"
 #include "trrojan/d3d11/utilities.h"
+#include "trrojan/d3d12/plugin.h"
+#include "trrojan/d3d12/utilities.h"
 
 struct App : implements<App, IFrameworkViewSource, IFrameworkView>
 {

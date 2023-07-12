@@ -54,6 +54,14 @@ include_directories("${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${CMAKE_CFG_INTDIR}")
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTRROJAND3D12_EXPORTS")
 
+set(TrrojanD3D12IncludeDir "${CMAKE_CURRENT_SOURCE_DIR}/${IncludeDirectory}" PARENT_SCOPE)
+
+# Enable debug overlay on rquest.
+#if (TRROJAN_DEBUG_OVERLAY)
+#    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DCREATE_D2D_OVERLAY")
+#endif (TRROJAN_DEBUG_OVERLAY)
+
+
 if (WIN32)
     if(UWP)
         add_library(trrojand3d12 SHARED ${HeaderFiles} ${SourceFiles} ${ShaderFiles} ${ResourceFiles})

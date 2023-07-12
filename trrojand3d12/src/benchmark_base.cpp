@@ -93,22 +93,25 @@ trrojan::result trrojan::d3d12::benchmark_base::run(const configuration& c) {
 #ifdef _UWP
             std::string log_msg = "Lazy creation of d3d12 debug render target on " + device->name();
             log::instance().write_line(log_level::verbose, log_msg);
-            auto uwp_debug_target = std::make_shared<uwp_debug_render_target>();
+            // TODO: correct device?
+            auto uwp_debug_target = std::make_shared<uwp_debug_render_target>(device);
             uwp_debug_target->SetWindow(window_);
             this->debug_target_ = uwp_debug_target;
-            this->debug_device_ = std::make_shared<d3d12::device>(this->debug_target_->device());
             changed.push_back(factor_viewport); // Force resize of target.
 #else // _UWP
             log::instance().write_line(log_level::verbose, "Lazy creation of "
                 "D3D12 debug render target.");
             this->debug_target = std::make_shared<debug_render_target>();
             this->debug_target->resize(1, 1);   // Force resource allocation.
-            this->debug_device = std::make_shared<d3d11::device>(
-                this->debug_target->device());
 #endif // _UWP
         }
 
         // Overwrite device and render target.
+        // TODO: correct factory?
+        this->debug_device_ = std::make_shared<d3d12::device>(
+            this->debug_target_->device(),
+            this->debug_target_->factory()
+        );
         device = this->debug_device_;
         this->render_target_ = this->debug_target_;
         //this->render_target->use_reversed_depth_buffer(true);

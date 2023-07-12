@@ -1,8 +1,8 @@
-/// <copyright file="debug_render_target.h" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Christoph Müller</author>
+//// <copyright file="uwp_debug_render_target.h" company="Visualisierungsinstitut der Universität Stuttgart">
+// Copyright © 2022 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Christoph Müller</author>
 
 #pragma once
 
@@ -10,110 +10,118 @@
 #include <dwrite_3.h>
 #include <wincodec.h>
 
-#include <winrt/windows.ui.core.h>
-#include <winrt/windows.graphics.display.h>
-
 #include <atomic>
 #include <memory>
 #include <thread>
+
+#include <winrt/windows.graphics.display.h>
 
 #include <atlbase.h>
 #include <Windows.h>
 
 #include "trrojan/d3d12/render_target.h"
 
-#ifndef false//_UWP
+#ifdef _UWP
 
-/* Forward declatations. */
+/* Forward declarations. */
 struct DebugConstants;
 
 
 namespace trrojan {
-namespace d3d12 {
-
-    /// <summary>
-    /// The debug view is a render target using a visible window.
-    /// </summary>
-    class TRROJAND3D12_API uwp_debug_render_target : public render_target_base {
-
-    public:
+    namespace d3d12 {
 
         /// <summary>
-        /// Initialises a new instance.
-        /// </summary>
-        uwp_debug_render_target(void);
-
-        /// <summary>
-        /// Finalises the instance.
-        /// </summary>
-        virtual ~uwp_debug_render_target(void);
-
-        /// <inheritdoc />
-        virtual UINT present(void);
-
-        /// <inheritdoc />
-        virtual void resize(const unsigned int width,
-            const unsigned int height);
-
-        /// <inheritdoc />
-        virtual ATL::CComPtr<ID3D12Resource> to_uav(void);
-
-        /// <summary>
-        /// Interface to existing UWP window
-        /// </summary>
-        /// <param name="window"></param>
-        void SetWindow(winrt::agile_ref<winrt::Windows::UI::Core::CoreWindow> const& window);
-
-    private:
-
-        typedef render_target_base base;
-
-        // Cached reference to the Window.
-        winrt::agile_ref<winrt::Windows::UI::Core::CoreWindow> m_window{ nullptr };
-
-        // Cached device properties.
-        winrt::Windows::Foundation::Size                       m_outputSize;
-        winrt::Windows::Foundation::Size                       m_logicalSize;
-        winrt::Windows::Graphics::Display::DisplayOrientations m_nativeOrientation;
-        winrt::Windows::Graphics::Display::DisplayOrientations m_currentOrientation;
-        float                                                  m_dpi;
-
-        /// <summary>
-        /// The swap chain for the window.
-        /// </summary>
-        ATL::CComPtr<IDXGISwapChain1> swapChain;
-
-        /// <summary>
-        /// An unordered access view for compute shaders.
+        /// The debug view is a render target using a visible window.
         /// </summary>
         /// <remarks>
-        /// In contrast to the real benchmarking render target, the debug target
-        /// uses an intermediate buffer (this one) and blits it on present. The
-        /// reason for that is that mapping the back buffer is not recommended
-        /// anymore and is also not supported on D3D12.
+        /// This debug render target works by copying the data from a UAV that is
+        /// used as the actual render target. This way, it is ensured that we
+        /// actually see what the real thing is doing rather than having a
+        /// completely different setup that might hide or induce undesired effects.
         /// </remarks>
-        ATL::CComPtr<ID3D12Resource> _uav;
+        class TRROJAND3D12_API uwp_debug_render_target : public render_target_base {
 
-        /// Direct2D drawing components.
-        winrt::com_ptr<ID2D1Factory3>       m_d2dFactory;
-        winrt::com_ptr<ID2D1Device2>        m_d2dDevice;
-        winrt::com_ptr<ID2D1DeviceContext2> m_d2dContext;
-        winrt::com_ptr<ID2D1Bitmap1>        m_d2dTargetBitmap;
+        public:
 
-        // DirectWrite drawing components.
-        winrt::com_ptr<IDWriteFactory3>		m_dwriteFactory;
-        winrt::com_ptr<IWICImagingFactory2>	m_wicFactory;
+            /// <summary>
+            /// Initialises a new instance.
+            /// </summary>
+            uwp_debug_render_target(const trrojan::device& device);
 
-        // Resources related to text rendering.
-        std::wstring                            m_text;
-        DWRITE_TEXT_METRICS	                    m_textMetrics;
-        winrt::com_ptr<ID2D1SolidColorBrush>    m_whiteBrush;
-        winrt::com_ptr<ID2D1DrawingStateBlock1> m_stateBlock;
-        winrt::com_ptr<IDWriteTextLayout3>      m_textLayout;
-        winrt::com_ptr<IDWriteTextFormat2>      m_textFormat;
-    };
+            /// <summary>
+            /// Finalises the instance.
+            /// </summary>
+            virtual ~uwp_debug_render_target(void);
+
+            /// <inheritdoc />
+            UINT present(void) override;
+
+            // <inheritdoc />
+            void resize(const unsigned int width,
+                const unsigned int height) override;
+
+            ///// <inheritdoc />
+            //void to_uav(const D3D12_CPU_DESCRIPTOR_HANDLE dst,
+            //    ID3D12GraphicsCommandList *cmd_list) override;
+
+            /// <summary>
+            /// Interface to existing UWP window
+            /// </summary>
+            /// <param name="window"></param>
+            void SetWindow(winrt::agile_ref<winrt::Windows::UI::Core::CoreWindow> const& window);
+
+        protected:
+
+            /// <inheritdoc />
+            void reset_buffers(void) override;
+
+        private:
+
+            typedef render_target_base base;
+
+            // Cached reference to the Window.
+            winrt::agile_ref<winrt::Windows::UI::Core::CoreWindow> window_;
+
+            // Cached device properties.
+            winrt::Windows::Foundation::Size                       output_size_;
+            winrt::Windows::Foundation::Size                       logical_size_;
+            winrt::Windows::Graphics::Display::DisplayOrientations native_orientation_;
+            winrt::Windows::Graphics::Display::DisplayOrientations current_orientation_;
+            float                                                  dpi_;
+
+            /// <summary>
+            /// The staging buffer used to back the UAV that we provide to external
+            /// users for writing to the debug render target. If the render target
+            /// is enabled, this staging buffer will actually become the target.
+            /// Before presenting the debug target, its content will be copied to
+            /// the back buffer of the swap chain.
+            /// </summary>
+            ATL::CComPtr<ID3D12Resource> staging_buffer_;
+
+            /// <summary>
+            /// The swap chain for the window.
+            /// </summary>
+            ATL::CComPtr<IDXGISwapChain3> swap_chain_;
+
+            /// Direct2D drawing components
+            winrt::com_ptr<ID2D1Factory3>       d2d_factory_;
+            winrt::com_ptr<ID2D1Device2>        d2d_device_;
+            winrt::com_ptr<ID2D1DeviceContext2> d2d_device_context_;
+            winrt::com_ptr<ID2D1Bitmap1>        d2d_target_bitmap_;
+
+            // DirectWrite drawing components
+            winrt::com_ptr<IDWriteFactory3>     dwrite_factory_;
+            winrt::com_ptr<IWICImagingFactory2> wic_factory_;
+
+            // Resources related to text rendering
+            std::wstring                            text_;
+            DWRITE_TEXT_METRICS                     text_metrics_;
+            winrt::com_ptr<ID2D1SolidColorBrush>    white_brush_;
+            winrt::com_ptr<ID2D1DrawingStateBlock1> state_block_;
+            winrt::com_ptr<IDWriteTextLayout3>      text_layout_;
+            winrt::com_ptr<IDWriteTextFormat2>      text_format_;
+        };
+    }
 }
-}
 
-
-#endif
+#endif // _UWP

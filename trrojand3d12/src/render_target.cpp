@@ -379,6 +379,53 @@ trrojan::d3d12::render_target_base::create_swap_chain(HWND hWnd) {
     return retval;
 }
 
+#ifdef _UWP
+/*
+ * trrojan::d3d12::render_target_base::create_swap_chain
+ */
+ATL::CComPtr<IDXGISwapChain3>
+trrojan::d3d12::render_target_base::create_swap_chain(UINT width, UINT height, 
+    winrt::agile_ref<winrt::Windows::UI::Core::CoreWindow> window) {
+    assert(this->_command_queue != nullptr);
+    assert(this->_dxgi_factory != nullptr);
+    assert(this->pipeline_depth() >= 1);
+    ATL::CComPtr<IDXGISwapChain3> retval;
+    ATL::CComPtr<IDXGISwapChain1> swapChain;
+
+    {
+        DXGI_SWAP_CHAIN_DESC1 desc;
+        ::ZeroMemory(&desc, sizeof(desc));
+        desc.BufferCount = this->pipeline_depth();
+        desc.Width = width;
+        desc.Height = height;
+        desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+        desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+        desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+        desc.SampleDesc.Count = 1;
+
+        auto hr = this->_dxgi_factory->CreateSwapChainForCoreWindow(
+            this->_command_queue, 
+            winrt::get_unknown(window.get()), 
+            &desc,
+            nullptr, 
+            &swapChain
+        );
+        if (FAILED(hr)) {
+            throw ATL::CAtlException(hr);
+        }
+    }
+
+    {
+        auto hr = swapChain.QueryInterface(&retval);
+        if (FAILED(hr)) {
+            throw ATL::CAtlException(hr);
+        }
+    }
+
+    return retval;
+}
+#endif // _UWP
+
 
 /*
  * trrojan::d3d12::render_target_base::current_buffer
