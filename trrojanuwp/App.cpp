@@ -46,6 +46,7 @@ struct App : implements<App, IFrameworkViewSource, IFrameworkView>
 
         //get AppData folder with write access
         winrt::Windows::Storage::StorageFolder localFolder{ winrt::Windows::Storage::ApplicationData::Current().LocalFolder() };//for local saving for future
+        //winrt::Windows::Storage::StorageFolder localFolder( std::nullptr_t );
         //winrt::Windows::Storage::StorageFolder roamingFolder{ winrt::Windows::Storage::ApplicationData::Current().RoamingFolder() };
 
         winrt::hstring path = localFolder.Path();
@@ -60,7 +61,7 @@ struct App : implements<App, IFrameworkViewSource, IFrameworkView>
 
         //get current device type for csv output (mostly differentiate betwen Xbox Series S and Series X)
         //(see https://github.com/microsoft/Xbox-ATG-Samples/tree/main/UWPSamples/System/SystemInfoUWP) 
-        std::string device = "UnkwnonDevice";
+        std::string device = "UnknownDevice";
         GAMING_DEVICE_MODEL_INFORMATION info = {};
         GetGamingDeviceModelInformation(&info);
         switch (info.deviceId)
@@ -86,10 +87,23 @@ struct App : implements<App, IFrameworkViewSource, IFrameworkView>
         trrojan::cool_down cool_down;
         trrojan::executive exe;
 
-        trrojan::plugin plugin = std::make_shared<trrojan::d3d12::plugin>(window);
+        trrojan::plugin plugin;
+        bool dx12 = true;
+        if (!dx12) {
+            plugin = std::make_shared<trrojan::d3d11::plugin>(window);
+        }
+        else {
+            plugin = std::make_shared<trrojan::d3d12::plugin>(window);
+        }
         exe.add_plugin(plugin, cmdLine);
 
-        auto trroll_path = trrojan::GetAppFolder().string() + "Assets/demo.trroll";
+        std::string trroll_path;
+        if (!dx12) {
+            trroll_path = trrojan::GetAppFolder().string() + "Assets/demo_d11.trroll";
+        }
+        else {
+            trroll_path = trrojan::GetAppFolder().string() + "Assets/demo_d12.trroll";
+        }
 
         exe.trroll(trroll_path, *output, cool_down);
 

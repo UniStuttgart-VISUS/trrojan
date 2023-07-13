@@ -47,7 +47,7 @@ trrojan::d3d12::uwp_debug_render_target::~uwp_debug_render_target(void) {
  * trrojan::d3d12::uwp_debug_render_target::present
  */
 UINT trrojan::d3d12::uwp_debug_render_target::present(void) {
-    assert(this->_swap_chain != nullptr);
+    assert(this->swap_chain_ != nullptr);
     // Swap the buffers.
     this->swap_chain_->Present(0, 0);
 

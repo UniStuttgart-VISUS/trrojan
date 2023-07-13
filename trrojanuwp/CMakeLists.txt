@@ -7,7 +7,8 @@ file(GLOB_RECURSE HeaderFiles RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"  "*.h")
 file(GLOB_RECURSE SourceFiles RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"  "*.cpp")
 
 set(AssetFiles
-  Assets/demo.trroll
+  Assets/demo_d11.trroll
+  Assets/demo_d12.trroll
   Assets/spheres.trroll
   Assets/Logo.png
   Assets/SmallLogo.png
