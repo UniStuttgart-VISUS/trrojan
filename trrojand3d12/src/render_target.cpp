@@ -101,6 +101,7 @@ void trrojan::d3d12::render_target_base::enable(
 
     {
         D3D12_RECT rect;
+        ::ZeroMemory(&rect, sizeof(rect));
         rect.left = rect.right = static_cast<LONG>(this->_viewport.TopLeftX);
         rect.top = rect.bottom = static_cast<LONG>(this->_viewport.TopLeftY);
         rect.right += static_cast<LONG>(this->_viewport.Width);
@@ -400,12 +401,12 @@ trrojan::d3d12::render_target_base::create_swap_chain(UINT width, UINT height,
         desc.Height = height;
         desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
         desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-        desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+        desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
         desc.SampleDesc.Count = 1;
 
         auto hr = this->_dxgi_factory->CreateSwapChainForCoreWindow(
             this->_command_queue, 
-            winrt::get_unknown(window.get()), 
+            winrt::get_unknown(window.get()),
             &desc,
             nullptr, 
             &swapChain
@@ -601,7 +602,7 @@ void trrojan::d3d12::render_target_base::switch_buffer(
     auto& completed_value = this->_fence_values[this->_buffer_index];
 
     // If the next frame is not yet ready, ie the previously scheduled fence
-    // was not signelled, wait for it.
+    // was not signalled, wait for it.
     if (this->_fence->GetCompletedValue() < completed_value) {
         assert(this->_fence_event != NULL);
         auto hr = this->_fence->SetEventOnCompletion(completed_value,

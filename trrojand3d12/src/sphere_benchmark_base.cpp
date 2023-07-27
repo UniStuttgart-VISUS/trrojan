@@ -343,12 +343,12 @@ void trrojan::d3d12::sphere_benchmark_base::set_shaders(
         graphics_pipeline_builder& builder, const shader_id_type shader_id) {
     //const auto is_col = ((shader_id & SPHERE_INPUT_PV_COLOUR) != 0);
     builder.reset_shaders();
-#if defined(TRROJAN_FOR_UWP)
+#if defined(_UWP)
     _LOOKUP_SPHERE_SHADER_FILES(builder, shader_id,
         sphere_benchmark_base::resolve_shader_path);
-#else /* defined(TRROJAN_FOR_UWP) */
+#else /* defined(_UWP) */
     _LOOKUP_SPHERE_SHADER_RESOURCES(builder, shader_id);
-#endif /* defined(TRROJAN_FOR_UWP) */
+#endif /* defined(_UWP) */
 }
 
 

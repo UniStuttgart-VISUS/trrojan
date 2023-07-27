@@ -578,12 +578,12 @@ trrojan::variant trrojan::system_factors::user_name(void) const {
         case GAMING_DEVICE_DEVICE_ID_XBOX_SERIES_X: return winrt::to_string(L"unavailable on xbox");
     }
 
-    winrt::Windows::Foundation::Collections::IVectorView<winrt::Windows::System::User> users 
+    /*winrt::Windows::Foundation::Collections::IVectorView<winrt::Windows::System::User> users 
         = winrt::Windows::System::User::FindAllAsync(winrt::Windows::System::UserType::LocalUser, winrt::Windows::System::UserAuthenticationStatus::LocallyAuthenticated).get();
     winrt::Windows::System::User currentUser = users.GetAt(0);
     winrt::Windows::Foundation::IInspectable nameObj = currentUser.GetPropertyAsync(winrt::Windows::System::KnownUserProperties::DisplayName()).get();
-    winrt::hstring myname = winrt::unbox_value<winrt::hstring>(nameObj);
-    return winrt::to_string(myname);
+    winrt::hstring myname = winrt::unbox_value<winrt::hstring>(nameObj);*/
+    return winrt::to_string(L"displayName");
 #else
     std::vector<char> buffer;
     buffer.resize(UNLEN + 1);

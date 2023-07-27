@@ -40,6 +40,7 @@ trrojan::d3d12::uwp_debug_render_target::~uwp_debug_render_target(void) {
             "debug view to end the programme.");
         this->msg_pump_.join();
     }*/
+    // TODO: anything to clear here
 }
 
 
@@ -48,13 +49,15 @@ trrojan::d3d12::uwp_debug_render_target::~uwp_debug_render_target(void) {
  */
 UINT trrojan::d3d12::uwp_debug_render_target::present(void) {
     assert(this->swap_chain_ != nullptr);
+    window_.get().Dispatcher().ProcessEvents(winrt::Windows::UI::Core::CoreProcessEventsOption::ProcessAllIfPresent);
+
     // Swap the buffers.
     this->swap_chain_->Present(0, 0);
 
     // Switch to the next buffer used by the swap chain.
     auto retval = this->swap_chain_->GetCurrentBackBufferIndex();
     render_target_base::switch_buffer(retval);
-
+    
     return retval;
 }
 
@@ -77,27 +80,23 @@ void trrojan::d3d12::uwp_debug_render_target::resize(const unsigned int width,
 
         DXGI_SWAP_CHAIN_DESC1 desc;
         {
-            winrt::check_hresult(
-                this->swap_chain_->GetDesc1(&desc)
-            );
-            /*if (FAILED(hr)) {
+            auto hr = this->swap_chain_->GetDesc1(&desc);
+            if (FAILED(hr)) {
                 throw ATL::CAtlException(hr);
-            }*/
+            }
         }
 
         {
-            winrt::check_hresult(
-                this->swap_chain_->ResizeBuffers(
-                    desc.BufferCount,
-                    width, 
-                    height, 
-                    desc.Format, 
-                    0
-                )
+            auto hr = this->swap_chain_->ResizeBuffers(
+                desc.BufferCount,
+                width,
+                height,
+                desc.Format,
+                0
             );
-            /*if (FAILED(hr)) {
+            if (FAILED(hr)) {
                 throw ATL::CAtlException(hr);
-            }*/
+            }
         }
 
     } /* end if (this->swap_chain_ == nullptr) */

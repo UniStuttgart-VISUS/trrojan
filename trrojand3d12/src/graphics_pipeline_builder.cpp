@@ -93,6 +93,7 @@ trrojan::d3d12::graphics_pipeline_builder::build(ID3D12Device2 *device) {
     }
 
     D3D12_PIPELINE_STATE_STREAM_DESC desc;
+    ZeroMemory(&desc, sizeof(desc));
     desc.SizeInBytes = this->_stream.size();
     desc.pPipelineStateSubobjectStream = this->_stream.data();
 

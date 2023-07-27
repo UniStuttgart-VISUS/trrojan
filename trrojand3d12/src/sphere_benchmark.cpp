@@ -94,7 +94,7 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
 
     // Determine the number of primitives to emit and record the draw call
     // into a command bundle.
-    auto pipeline = this->get_pipeline_state(device.d3d_device(), shader_code);
+    auto pipeline = this->get_pipeline_state(device.d3d_device(), shader_code); 
     auto root_sig = this->get_root_signature(device.d3d_device(), shader_code);
     auto bundle = this->create_command_bundle(0, pipeline);
     set_debug_object_name(bundle, "Drawing bundle of sphere_benchmark");
@@ -188,7 +188,7 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
         } while (batch_time < min_wall_time);
     }
 
-#if 0
+#if 1
     // Do the wall clock measurement using the prepared command lists.
     log::instance().write_line(log_level::debug, "Measuring wall clock "
         "timings over {} iterations ...", cpu_iterations);

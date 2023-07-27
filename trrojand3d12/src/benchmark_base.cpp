@@ -93,7 +93,6 @@ trrojan::result trrojan::d3d12::benchmark_base::run(const configuration& c) {
 #ifdef _UWP
             std::string log_msg = "Lazy creation of d3d12 debug render target on " + device->name();
             log::instance().write_line(log_level::verbose, log_msg);
-            // TODO: correct device?
             auto uwp_debug_target = std::make_shared<uwp_debug_render_target>(device);
             uwp_debug_target->SetWindow(window_);
             this->debug_target_ = uwp_debug_target;
@@ -106,13 +105,7 @@ trrojan::result trrojan::d3d12::benchmark_base::run(const configuration& c) {
 #endif // _UWP
         }
 
-        // Overwrite device and render target.
-        // TODO: correct factory?
-        this->debug_device_ = std::make_shared<d3d12::device>(
-            this->debug_target_->device(),
-            this->debug_target_->factory()
-        );
-        device = this->debug_device_;
+        // Overwrite device and render target
         this->render_target_ = this->debug_target_;
         //this->render_target->use_reversed_depth_buffer(true);
 
@@ -154,7 +147,8 @@ trrojan::result trrojan::d3d12::benchmark_base::run(const configuration& c) {
     auto retval = this->on_run(*device, c, changed);
 
     // Save the resulting image if requested.
-    if (c.get<bool>(factor_save_view)) {
+    // TODO: ::save in ::save_target is missing implementation, just throws "TODO"
+    if (false) {
         auto ts = c.get<std::string>(system_factors::factor_timestamp);
         std::replace(ts.begin(), ts.end(), ':', '-');
         std::replace(ts.begin(), ts.end(), '.', '-');
@@ -257,11 +251,13 @@ trrojan::d3d12::benchmark_base::create_command_list(
  */
 std::string trrojan::d3d12::benchmark_base::resolve_shader_path(
         const std::string& file_name) {
-#if defined(TRROJAN_FOR_UWP)
-#error "TODO: retrieve UWP app directory."
-#else /* defined(TRROJAN_FOR_UWP) */
+#if defined(_UWP)
+//#error "TODO: retrieve UWP app directory."
     return plugin::get_directory() + directory_separator_char + file_name;
-#endif /* defined(TRROJAN_FOR_UWP) */
+    //return plugin::get_directory
+#else /* defined(_UWP) */
+    return plugin::get_directory() + directory_separator_char + file_name;
+#endif /* defined(_UWP) */
 }
 
 
