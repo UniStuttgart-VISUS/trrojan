@@ -20,6 +20,7 @@
 #include <atlbase.h>
 #include <Windows.h>
 
+#include "trrojan/d3d11/d2d_overlay.h"
 #include "trrojan/d3d11/render_target.h"
 
 #ifndef false//_UWP
@@ -99,6 +100,8 @@ namespace d3d11 {
         winrt::com_ptr<ID2D1Device2>        m_d2dDevice;
         winrt::com_ptr<ID2D1DeviceContext2> m_d2dContext;
         winrt::com_ptr<ID2D1Bitmap1>        m_d2dTargetBitmap;
+
+        std::unique_ptr<d2d_overlay> d2d_overlay_;
 
         // DirectWrite drawing components.
         winrt::com_ptr<IDWriteFactory3>		m_dwriteFactory;

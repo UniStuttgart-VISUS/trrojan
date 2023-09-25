@@ -88,7 +88,7 @@ struct App : implements<App, IFrameworkViewSource, IFrameworkView>
         trrojan::executive exe;
 
         trrojan::plugin plugin;
-        bool dx12 = true;
+        bool dx12 = false;
         if (!dx12) {
             plugin = std::make_shared<trrojan::d3d11::plugin>(window);
         }

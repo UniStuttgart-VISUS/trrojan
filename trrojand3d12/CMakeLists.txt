@@ -69,7 +69,7 @@ if (WIN32)
         add_library(trrojand3d12 MODULE ${HeaderFiles} ${SourceFiles} ${ShaderFiles} ${ResourceFiles})
     endif()
     target_link_libraries(trrojand3d12 trrojancore)
-    target_link_libraries(trrojand3d12 d3d12 dxgi dxguid) #d2d1 dwrite?
+    target_link_libraries(trrojand3d12 d3d12 dxgi dxguid d2d1 dwrite)
 
     ## Reference DirectStorage (cf. https://cmake.org/cmake/help/latest/prop_tgt/VS_PACKAGE_REFERENCES.html)
     #set_property(TARGET ${TARGET_NAME} PROPERTY VS_PACKAGE_REFERENCES "Microsoft.Direct3D.DirectStorage")

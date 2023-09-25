@@ -18,12 +18,13 @@
 
 #include "trrojan/d3d11/utilities.h"
 
-#ifndef false//_UWP
-
 /*
  * trrojan::d3d11::uwp_debug_render_target::uwp_debug_render_target
  */
-trrojan::d3d11::uwp_debug_render_target::uwp_debug_render_target(void) : base(nullptr) {
+trrojan::d3d11::uwp_debug_render_target::uwp_debug_render_target(void) : 
+    base(nullptr)
+{
+
 }
 
 
@@ -45,6 +46,8 @@ trrojan::d3d11::uwp_debug_render_target::~uwp_debug_render_target(void) {
         this->device_context()->ClearState();
         this->device_context()->Flush();
     }
+
+    // TODO: kill d2d_overlay_ explicitly?
 }
 
 
@@ -60,7 +63,7 @@ void trrojan::d3d11::uwp_debug_render_target::present(void) {
 
         {
             auto hr = this->swapChain->GetBuffer(0, IID_ID3D11Texture2D,
-                reinterpret_cast<void **>(&dst));
+                reinterpret_cast<void**>(&dst));
             if (FAILED(hr)) {
                 throw ATL::CAtlException(hr);
             }
@@ -77,8 +80,27 @@ void trrojan::d3d11::uwp_debug_render_target::present(void) {
         this->device_context()->CopyResource(dst, src);
     }
 
-    // present log as text rendering on screen
     {
+#if defined(CREATE_D2D_OVERLAY)
+        if (this->d2d_overlay_) {
+            auto log = log::instance().getFullLogString();
+            log = "";
+            auto log_entries = log::instance().getLogStrings(16);
+            for (const auto& ls : log_entries) {
+                log += ls;
+            }
+            int wchars_num = MultiByteToWideChar(CP_UTF8, 0, log.c_str(), -1, NULL, 0);
+            wchar_t* wstr = new wchar_t[wchars_num];
+            MultiByteToWideChar(CP_UTF8, 0, log.c_str(), -1, wstr, wchars_num);
+            m_text = std::wstring(&wstr[0], &wstr[0] + wchars_num);
+
+            this->d2d_overlay_->begin_draw();
+            this->d2d_overlay_->draw_text(m_text.c_str(), L"Segoue UI", 14.f, D2D1::ColorF::White);
+            this->d2d_overlay_->end_draw();
+        }
+#else
+        // present log as text rendering on screen
+        // 
         // update text
         //m_text = L" - FPS";
         auto log = log::instance().getFullLogString();
@@ -104,7 +126,7 @@ void trrojan::d3d11::uwp_debug_render_target::present(void) {
                 m_text.c_str(),
                 m_text.length(),
                 m_textFormat.get(),
-                m_logicalSize.Width*0.9,//1500.0f, // Max width of the input text.
+                m_logicalSize.Width * 0.9,//1500.0f, // Max width of the input text.
                 600.0f, // Max height of the input text.
                 textLayout.put()
             )
@@ -151,6 +173,7 @@ void trrojan::d3d11::uwp_debug_render_target::present(void) {
         }
 
         m_d2dContext->RestoreDrawingState(m_stateBlock.get());
+#endif // defined(CREATE_D2D_OVERLAY)
     }
 
 
@@ -336,7 +359,26 @@ void trrojan::d3d11::uwp_debug_render_target::resize(const unsigned int width,
             }
         }
 
+#if defined(CREATE_D2D_OVERLAY)
+        if (this->swapChain != nullptr) {
+            winrt::com_ptr<IDXGISwapChain> sc;
+            auto hr = this->swapChain->QueryInterface(__uuidof(IDXGISwapChain), reinterpret_cast<void**>(&sc));
+            if (FAILED(hr)) {
+                throw ATL::CAtlException(hr);
+            }
+
+            winrt::com_ptr<ID3D11Device> dev;
+            hr = this->swapChain->GetDevice(__uuidof(ID3D11Device), reinterpret_cast<void**>(&dev));
+            if (FAILED(hr)) {
+                throw ATL::CAtlException(hr);
+            }
+
+            this->d2d_overlay_ = std::make_unique<d2d_overlay>(dev.get(), sc.get());
+        }
+#endif // defined(CREATE_D2D_OVERLAY)
+
     } else {
+
         /* Have existing swap chain. */
         this->_rtv = nullptr;
         this->_dsv = nullptr;
@@ -349,11 +391,19 @@ void trrojan::d3d11::uwp_debug_render_target::resize(const unsigned int width,
             throw ATL::CAtlException(hr);
         }
 
+#if defined(CREATE_D2D_OVERLAY)
+        this->d2d_overlay_->on_resize();
+#endif // defined(CREATE_D2D_OVERLAY)
+
         hr = this->swapChain->ResizeBuffers(desc.BufferCount, width,
             height, desc.Format, 0);
         if (FAILED(hr)) {
             throw ATL::CAtlException(hr);
         }
+
+#if defined(CREATE_D2D_OVERLAY)
+        this->d2d_overlay_->on_resized();
+#endif // defined(CREATE_D2D_OVERLAY)
 
     } /* end if (this->swapChain == nullptr) */
     assert(this->_dsv == nullptr);
@@ -508,5 +558,3 @@ void trrojan::d3d11::uwp_debug_render_target::SetWindow(winrt::agile_ref<winrt::
 
     resize(m_outputSize.Width, m_outputSize.Height);
 }
-
-#endif
