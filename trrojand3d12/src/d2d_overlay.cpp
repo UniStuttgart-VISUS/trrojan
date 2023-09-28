@@ -295,9 +295,6 @@ void trrojan::d3d12::d2d_overlay::create_target_dependent_resources(void) {
     assert(this->_d2d_factory != nullptr);
     assert(this->_d3d11on12_device != nullptr);
     assert(this->_swap_chain != nullptr);
-    // TODO: temporarily removed lines to compile
-    //auto back_buffer = get_back_buffer(this->_swap_chain);
-    // this->create_target_dependent_resources(get_surface(back_buffer));
 
     this->_render_targets.clear();
     this->_render_targets.resize(this->_frame_count);

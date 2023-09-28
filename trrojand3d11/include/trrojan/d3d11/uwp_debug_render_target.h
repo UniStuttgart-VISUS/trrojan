@@ -99,14 +99,15 @@ namespace d3d11 {
         ATL::CComPtr<ID3D11UnorderedAccessView> _uav;
 
         /// Direct2D drawing components.
+#if defined(CREATE_D2D_OVERLAY)
+        std::unique_ptr<d2d_overlay> d2d_overlay_;
+#endif // defined(CREATE_D2D_OVERLAY)
+
+
         winrt::com_ptr<ID2D1Factory3>       m_d2dFactory;
         winrt::com_ptr<ID2D1Device2>        m_d2dDevice;
         winrt::com_ptr<ID2D1DeviceContext2> m_d2dContext;
         winrt::com_ptr<ID2D1Bitmap1>        m_d2dTargetBitmap;
-
-#if defined(CREATE_D2D_OVERLAY)
-        std::unique_ptr<d2d_overlay> d2d_overlay_;
-#endif // defined(CREATE_D2D_OVERLAY)
 
         // DirectWrite drawing components.
         winrt::com_ptr<IDWriteFactory3>		m_dwriteFactory;

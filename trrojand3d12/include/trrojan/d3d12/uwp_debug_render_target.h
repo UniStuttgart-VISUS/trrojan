@@ -111,23 +111,6 @@ namespace trrojan {
 #if defined(CREATE_D2D_OVERLAY)
             std::unique_ptr<d2d_overlay> d2d_overlay_;
 #endif // defined(CREATE_D2D_OVERLAY)
-
-            winrt::com_ptr<ID2D1Factory3>       d2d_factory_;
-            winrt::com_ptr<ID2D1Device2>        d2d_device_;
-            winrt::com_ptr<ID2D1DeviceContext2> d2d_device_context_;
-            winrt::com_ptr<ID2D1Bitmap1>        d2d_target_bitmap_;
-
-            // DirectWrite drawing components
-            winrt::com_ptr<IDWriteFactory3>     dwrite_factory_;
-            winrt::com_ptr<IWICImagingFactory2> wic_factory_;
-
-            // Resources related to text rendering
-            std::wstring                            text_;
-            DWRITE_TEXT_METRICS                     text_metrics_;
-            winrt::com_ptr<ID2D1SolidColorBrush>    white_brush_;
-            winrt::com_ptr<ID2D1DrawingStateBlock1> state_block_;
-            winrt::com_ptr<IDWriteTextLayout3>      text_layout_;
-            winrt::com_ptr<IDWriteTextFormat2>      text_format_;
         };
     }
 }
