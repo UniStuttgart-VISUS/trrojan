@@ -8,11 +8,13 @@
 
 #include <cassert>
 #include <memory>
+#include <vector>
 
 #include <Windows.h>
 #include <atlbase.h>
 #include <d2d1_3.h>
-#include <d3d12.h>
+#include <d3d11on12.h>
+//#include <dxgi1_3.h>
 #include <dwrite.h>
 
 #include "trrojan/device.h"
@@ -58,7 +60,7 @@ namespace d3d12 {
         /// </summary>
         /// <param name="device"></param>
         /// <param name="swap_chain"></param>
-        d2d_overlay(ID3D12Device *device, IDXGISwapChain *swap_chain);
+        d2d_overlay(ID3D11On12Device *device, IDXGISwapChain3 *swap_chain, UINT frame_count);
 
         d2d_overlay(const d2d_overlay& rhs) = delete;
 
@@ -67,7 +69,8 @@ namespace d3d12 {
         /// <summary>
         /// Begin drawing 2D content.
         /// </summary>
-        void begin_draw(void);
+        /// <param name="frame_index"></param>
+        void begin_draw(UINT frame_index);
 
         /// <summary>
         /// Clears the 2D content.
@@ -217,9 +220,10 @@ namespace d3d12 {
 
         /// <summary>
         /// Sets the 2D transformation to be the identity matrix.
+        /// Currently not in use.
         /// </summary>
         void set_identity_transform(void) {
-            assert(this->_d2d_target != nullptr);
+            assert(this->_d2d_render_targets[this->_current_frame] != nullptr);
             this->_d2d_context->SetTransform(D2D1::IdentityMatrix());
         }
 
@@ -234,7 +238,7 @@ namespace d3d12 {
 
     private:
 
-        void create_target_dependent_resources(IDXGISurface *surface);
+        void create_target_dependent_resources(IDXGISurface *surface, int i);
 
         void create_target_dependent_resources(void);
 
@@ -245,13 +249,21 @@ namespace d3d12 {
         ATL::CComPtr<ID2D1DeviceContext2> _d2d_context;
         ATL::CComPtr<ID2D1Device2> _d2d_device;
         ATL::CComPtr<ID2D1Factory3> _d2d_factory;
-        ATL::CComPtr<ID2D1Bitmap1> _d2d_target;
-        ATL::CComPtr<ID3D12Device> _d3d_device;
-        // TODO: temporarily removed lines to compile
+        std::vector<ATL::CComPtr<ID2D1Bitmap1>> _d2d_render_targets;
+
+        ATL::CComPtr<ID3D11DeviceContext> _d3d11_device_context;
+        ATL::CComPtr<ID3D11On12Device> _d3d11on12_device;
+
+        // currently removed since it is not used anyway
         // ATL::CComPtr<ID3D12DepthStencilState> _depth_stencil_state;
         ATL::CComPtr<ID2D1DrawingStateBlock1> _drawing_state_block;
         ATL::CComPtr<IDWriteFactory> _dwrite_factory;
-        ATL::CComPtr<IDXGISwapChain> _swap_chain;
+
+        ATL::CComPtr<IDXGISwapChain3> _swap_chain;
+        std::vector<ATL::CComPtr<ID3D12Resource>> _render_targets;
+        std::vector<ATL::CComPtr<ID3D11Resource>> _wrapped_back_buffers;
+        UINT _frame_count;
+        UINT _current_frame;
     };
 }
 }

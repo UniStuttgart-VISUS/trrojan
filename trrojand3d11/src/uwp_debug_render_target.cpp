@@ -378,7 +378,6 @@ void trrojan::d3d11::uwp_debug_render_target::resize(const unsigned int width,
 #endif // defined(CREATE_D2D_OVERLAY)
 
     } else {
-
         /* Have existing swap chain. */
         this->_rtv = nullptr;
         this->_dsv = nullptr;

@@ -121,6 +121,14 @@ namespace d3d12 {
         }
 
         /// <summary>
+        /// Answer the command queue the render target belongs to.
+        /// </summary>
+        /// <returns></returns>
+        inline ATL::CComPtr<ID3D12CommandQueue>& command_queue(void) {
+            return this->_command_queue;
+        }
+
+        /// <summary>
         /// Queue the currently active frame being transitioned to presentation
         /// state into <paramref name="cmd_list" />.
         /// </summary>

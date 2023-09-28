@@ -6,6 +6,8 @@
 
 #include "trrojan/d3d12/uwp_debug_render_target.h"
 
+#include <d3d11on12.h>
+
 #include <cassert>
 #include <sstream>
 
@@ -49,13 +51,33 @@ trrojan::d3d12::uwp_debug_render_target::~uwp_debug_render_target(void) {
  */
 UINT trrojan::d3d12::uwp_debug_render_target::present(void) {
     assert(this->swap_chain_ != nullptr);
+    auto retval = this->swap_chain_->GetCurrentBackBufferIndex();
+
+#if defined(CREATE_D2D_OVERLAY)
+    if (this->d2d_overlay_) {
+        auto log = log::instance().getFullLogString();
+        log = "";
+        auto log_entries = log::instance().getLogStrings(16);
+        for (const auto& ls : log_entries) {
+            log += ls;
+        }
+        int wchars_num = MultiByteToWideChar(CP_UTF8, 0, log.c_str(), -1, NULL, 0);
+        wchar_t* wstr = new wchar_t[wchars_num];
+        MultiByteToWideChar(CP_UTF8, 0, log.c_str(), -1, wstr, wchars_num);
+        std::wstring w_text = std::wstring(&wstr[0], &wstr[0] + wchars_num);
+
+        this->d2d_overlay_->begin_draw(retval);
+        this->d2d_overlay_->draw_text(w_text.c_str(), L"Segoue UI", 14.f, D2D1::ColorF::White);
+        this->d2d_overlay_->end_draw();
+    }
+#endif // defined(CREATE_D2D_OVERLAY)
+
     window_.get().Dispatcher().ProcessEvents(winrt::Windows::UI::Core::CoreProcessEventsOption::ProcessAllIfPresent);
 
     // Swap the buffers.
     this->swap_chain_->Present(0, 0);
 
     // Switch to the next buffer used by the swap chain.
-    auto retval = this->swap_chain_->GetCurrentBackBufferIndex();
     render_target_base::switch_buffer(retval);
     
     return retval;
@@ -86,6 +108,11 @@ void trrojan::d3d12::uwp_debug_render_target::resize(const unsigned int width,
             }
         }
 
+#if defined(CREATE_D2D_OVERLAY)
+        //this->d2d_overlay_->on_resize();
+        this->d2d_overlay_.reset();
+#endif // defined(CREATE_D2D_OVERLAY)
+
         {
             auto hr = this->swap_chain_->ResizeBuffers(
                 desc.BufferCount,
@@ -98,7 +125,6 @@ void trrojan::d3d12::uwp_debug_render_target::resize(const unsigned int width,
                 throw ATL::CAtlException(hr);
             }
         }
-
     } /* end if (this->swap_chain_ == nullptr) */
 
     // Re-create the RTV/DSV.
@@ -121,6 +147,48 @@ void trrojan::d3d12::uwp_debug_render_target::resize(const unsigned int width,
         this->set_buffers(std::move(buffers),
             this->swap_chain_->GetCurrentBackBufferIndex());
     }
+
+    // create the necessary objects for d2d_overlay
+#if defined(CREATE_D2D_OVERLAY)
+    if (this->d2d_overlay_ == nullptr) {
+        ATL::CComPtr<ID3D11Device> d3d11_device;
+        UINT deviceFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
+        auto hr = D3D11On12CreateDevice(
+            this->device(),
+            deviceFlags,
+            nullptr,
+            0,
+            // TODO: command queue parameter correct?
+            //&this->command_queue(), // command queue parameter
+            reinterpret_cast<IUnknown**>(&this->command_queue()), // command queue parameter
+            1,
+            0,
+            &d3d11_device,
+            // TODO create d3d11devicecontext 
+            nullptr,
+            nullptr
+        );
+        if (FAILED(hr)) {
+            throw ATL::CAtlException(hr);
+        }
+
+        winrt::com_ptr<ID3D11On12Device> d11on12_device;
+        hr = d3d11_device->QueryInterface(
+            __uuidof(ID3D11On12Device),
+            reinterpret_cast<void**>(&d11on12_device)
+        );
+        if (FAILED(hr)) {
+            throw ATL::CAtlException(hr);
+        }
+
+        this->d2d_overlay_ = 
+            std::make_unique<d2d_overlay>(
+                d11on12_device.get(), 
+                this->swap_chain_.Detach(),
+                this->pipeline_depth()
+            );
+    }
+#endif // defined(CREATE_D2D_OVERLAY)
 }
 
 

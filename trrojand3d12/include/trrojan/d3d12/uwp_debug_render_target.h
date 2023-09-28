@@ -19,6 +19,10 @@
 #include <atlbase.h>
 #include <Windows.h>
 
+#if defined(CREATE_D2D_OVERLAY)
+#include "trrojan/d3d12/d2d_overlay.h"
+#endif // defined(CREATE_D2D_OVERLAY)
+
 #include "trrojan/d3d12/render_target.h"
 
 #ifdef _UWP
@@ -104,6 +108,10 @@ namespace trrojan {
             ATL::CComPtr<IDXGISwapChain3> swap_chain_;
 
             /// Direct2D drawing components
+#if defined(CREATE_D2D_OVERLAY)
+            std::unique_ptr<d2d_overlay> d2d_overlay_;
+#endif // defined(CREATE_D2D_OVERLAY)
+
             winrt::com_ptr<ID2D1Factory3>       d2d_factory_;
             winrt::com_ptr<ID2D1Device2>        d2d_device_;
             winrt::com_ptr<ID2D1DeviceContext2> d2d_device_context_;
