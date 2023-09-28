@@ -77,8 +77,10 @@ ATL::CComPtr<IDWriteFont> trrojan::d3d12::d2d_overlay::get_font(
  * trrojan::d3d11::d2d_overlay::d2d_overlay
  */
 trrojan::d3d12::d2d_overlay::d2d_overlay(ID3D11On12Device* device,
-    IDXGISwapChain3* swap_chain, UINT frame_count) : 
+    ID3D11DeviceContext* d3d11_device_context, IDXGISwapChain3* swap_chain, 
+    UINT frame_count) : 
     _d3d11on12_device(device), 
+    _d3d11_device_context(d3d11_device_context),
     _swap_chain(swap_chain),
     _frame_count(frame_count)
 {
@@ -104,7 +106,9 @@ void trrojan::d3d12::d2d_overlay::begin_draw(UINT frame_index) {
     this->_d2d_context->SaveDrawingState(this->_drawing_state_block);
 
     // Acquire our wrapped render target resource for the current back buffer.
-    this->_d3d11on12_device->AcquireWrappedResources(&this->_wrapped_back_buffers[this->_current_frame], 1);
+    this->_d3d11on12_device->AcquireWrappedResources(&this->_wrapped_back_buffers[this->_current_frame].p, 1);
+
+    this->_d2d_context->SetTarget(this->_d2d_render_targets[frame_index]);
 
     this->_d2d_context->BeginDraw();
 }
@@ -218,10 +222,9 @@ void trrojan::d3d12::d2d_overlay::end_draw(void) {
     // Release our wrapped render target resource. Releasing 
     // transitions the back buffer resource to the state specified
     // as the OutState when the wrapped resource was created.
-    this->_d3d11on12_device->ReleaseWrappedResources(&this->_wrapped_back_buffers[this->_current_frame], 1);
+    this->_d3d11on12_device->ReleaseWrappedResources(&this->_wrapped_back_buffers[this->_current_frame].p, 1);
 
     // Flush to submit the 11 command list to the shared command queue
-    // TODO: create d3d11_device_context
     this->_d3d11_device_context->Flush();
 
     this->_d2d_context->RestoreDrawingState(this->_drawing_state_block);
@@ -267,9 +270,6 @@ void trrojan::d3d12::d2d_overlay::create_target_dependent_resources(
         if (FAILED(hr)) {
             throw ATL::CAtlException(hr);
         }
-
-        // TODO: probably wrong now here
-        this->_d2d_context->SetTarget(this->_d2d_render_targets[i]);
     }
 
     this->_d2d_context->SetTextAntialiasMode(
@@ -306,6 +306,8 @@ void trrojan::d3d12::d2d_overlay::create_target_dependent_resources(void) {
             throw ATL::CAtlException(E_POINTER);
         }
 
+        d3d12::set_debug_object_name(this->_render_targets[i].p, "RenderTarget" + i);
+
 
         // Create a wrapped 11On12 resource of this back buffer. Since we are 
         // rendering all D3D12 content first and then all D2D content, we specify 
@@ -335,6 +337,9 @@ void trrojan::d3d12::d2d_overlay::create_target_dependent_resources(void) {
         if (FAILED(hr)) {
             throw ATL::CAtlException(E_POINTER);
         }
+
+        std::string name = "WrappedBuffer" + std::to_string(i);
+        this->_wrapped_back_buffers[i]->SetPrivateData(WKPDID_D3DDebugObjectName, name.length(), name.c_str());
 
         this->create_target_dependent_resources(surface, i);
     }

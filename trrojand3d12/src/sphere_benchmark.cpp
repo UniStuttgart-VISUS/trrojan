@@ -14,6 +14,8 @@
 
 #include "sphere_techniques.h"
 
+#include "trrojan/d3d12/utilities.h"
+
 
 /*
  * trrojan::d3d12::sphere_benchmark::sphere_benchmark
@@ -325,6 +327,11 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
         cpu_time,
         static_cast<double>(cpu_time) / cpu_iterations
         });
+
+
+    std::ostringstream retval_log_output;
+    result_to_string(retval_log_output, *retval);
+    log::instance().write_line(log_level::information, retval_log_output.str());
 #else
 
     auto retval = std::make_shared<basic_result>(config, std::initializer_list<std::string> { "horst"});

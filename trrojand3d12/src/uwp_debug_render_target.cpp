@@ -51,7 +51,7 @@ trrojan::d3d12::uwp_debug_render_target::~uwp_debug_render_target(void) {
  */
 UINT trrojan::d3d12::uwp_debug_render_target::present(void) {
     assert(this->swap_chain_ != nullptr);
-    auto retval = this->swap_chain_->GetCurrentBackBufferIndex();
+
 
 #if defined(CREATE_D2D_OVERLAY)
     if (this->d2d_overlay_) {
@@ -66,7 +66,8 @@ UINT trrojan::d3d12::uwp_debug_render_target::present(void) {
         MultiByteToWideChar(CP_UTF8, 0, log.c_str(), -1, wstr, wchars_num);
         std::wstring w_text = std::wstring(&wstr[0], &wstr[0] + wchars_num);
 
-        this->d2d_overlay_->begin_draw(retval);
+        this->d2d_overlay_->begin_draw(this->buffer_index());
+        //this->d2d_overlay_->begin_draw(this->swap_chain_->GetCurrentBackBufferIndex());
         this->d2d_overlay_->draw_text(w_text.c_str(), L"Segoue UI", 14.f, D2D1::ColorF::White);
         this->d2d_overlay_->end_draw();
     }
@@ -78,6 +79,7 @@ UINT trrojan::d3d12::uwp_debug_render_target::present(void) {
     this->swap_chain_->Present(0, 0);
 
     // Switch to the next buffer used by the swap chain.
+    auto retval = this->swap_chain_->GetCurrentBackBufferIndex();
     render_target_base::switch_buffer(retval);
     
     return retval;
@@ -152,20 +154,18 @@ void trrojan::d3d12::uwp_debug_render_target::resize(const unsigned int width,
 #if defined(CREATE_D2D_OVERLAY)
     if (this->d2d_overlay_ == nullptr) {
         ATL::CComPtr<ID3D11Device> d3d11_device;
+        ATL::CComPtr<ID3D11DeviceContext> d3d11_device_context;
         UINT deviceFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
         auto hr = D3D11On12CreateDevice(
             this->device(),
             deviceFlags,
             nullptr,
             0,
-            // TODO: command queue parameter correct?
-            //&this->command_queue(), // command queue parameter
-            reinterpret_cast<IUnknown**>(&this->command_queue()), // command queue parameter
+            reinterpret_cast<IUnknown**>(&this->command_queue().p),
             1,
             0,
             &d3d11_device,
-            // TODO create d3d11devicecontext 
-            nullptr,
+            &d3d11_device_context,
             nullptr
         );
         if (FAILED(hr)) {
@@ -183,8 +183,9 @@ void trrojan::d3d12::uwp_debug_render_target::resize(const unsigned int width,
 
         this->d2d_overlay_ = 
             std::make_unique<d2d_overlay>(
-                d11on12_device.get(), 
-                this->swap_chain_.Detach(),
+                d11on12_device.get(),
+                d3d11_device_context.p,
+                this->swap_chain_.p,
                 this->pipeline_depth()
             );
     }

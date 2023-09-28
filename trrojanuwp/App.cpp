@@ -10,6 +10,7 @@ using namespace Windows::UI::Core;
 using namespace Windows::UI::Composition;
 
 #include "trrojan/executive.h"
+#include "trrojan/utilities.h"
 #include "trrojan/d3d11/plugin.h"
 #include "trrojan/d3d11/utilities.h"
 #include "trrojan/d3d12/plugin.h"

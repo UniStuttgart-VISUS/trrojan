@@ -14,7 +14,7 @@
 #include <atlbase.h>
 #include <d2d1_3.h>
 #include <d3d11on12.h>
-//#include <dxgi1_3.h>
+#include <dxgi1_4.h>
 #include <dwrite.h>
 
 #include "trrojan/device.h"
@@ -60,7 +60,12 @@ namespace d3d12 {
         /// </summary>
         /// <param name="device"></param>
         /// <param name="swap_chain"></param>
-        d2d_overlay(ID3D11On12Device *device, IDXGISwapChain3 *swap_chain, UINT frame_count);
+        d2d_overlay(
+            ID3D11On12Device *device, 
+            ID3D11DeviceContext* d3d11_device_context, 
+            IDXGISwapChain3 *swap_chain, 
+            UINT frame_count
+        );
 
         d2d_overlay(const d2d_overlay& rhs) = delete;
 
@@ -222,8 +227,8 @@ namespace d3d12 {
         /// Sets the 2D transformation to be the identity matrix.
         /// Currently not in use.
         /// </summary>
-        void set_identity_transform(void) {
-            assert(this->_d2d_render_targets[this->_current_frame] != nullptr);
+        void set_identity_transform(UINT frame_index) {
+            assert(this->_d2d_render_targets[frame_index] != nullptr);
             this->_d2d_context->SetTransform(D2D1::IdentityMatrix());
         }
 
