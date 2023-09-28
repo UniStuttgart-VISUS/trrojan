@@ -61,8 +61,8 @@ namespace d3d12 {
         /// <param name="device"></param>
         /// <param name="swap_chain"></param>
         d2d_overlay(
-            ID3D11On12Device *device, 
-            ID3D11DeviceContext* d3d11_device_context, 
+            ID3D12Device *device,
+            ID3D12CommandQueue* command_queue,
             IDXGISwapChain3 *swap_chain, 
             UINT frame_count
         );
@@ -256,8 +256,10 @@ namespace d3d12 {
         ATL::CComPtr<ID2D1Factory3> _d2d_factory;
         std::vector<ATL::CComPtr<ID2D1Bitmap1>> _d2d_render_targets;
 
-        ATL::CComPtr<ID3D11DeviceContext> _d3d11_device_context;
+        ATL::CComPtr<ID3D12Device> _d3d12_device;
+        ATL::CComPtr<ID3D12CommandQueue> _d3d12_command_queue;
         ATL::CComPtr<ID3D11On12Device> _d3d11on12_device;
+        ATL::CComPtr<ID3D11DeviceContext> _d3d11_device_context;
 
         // currently removed since it is not used anyway
         // ATL::CComPtr<ID3D12DepthStencilState> _depth_stencil_state;

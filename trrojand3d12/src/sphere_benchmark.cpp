@@ -157,6 +157,7 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
 #if !defined(CREATE_D2D_OVERLAY)
         // when d2d overlay is used, the transition occurs
         // when the resource is released by the overlay itself
+        // // i.e. during the this->present_target() call
         // see also the comment in
         // ReleaseWrappedResource in trrojan::d3d12::d2d_overlay::end_draw()
         this->disable_target(cmd_list, i);
@@ -233,7 +234,7 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
 
 #if !defined(CREATE_D2D_OVERLAY)
         // when overlay active, target gets transitioned to PRESENT after overlay rendering
-        // i.e. during this->present_target call
+        // i.e. during this->present_target() call
         this->disable_target(cmd_list);
 #endif // defined(CREATE_D2D_OVERLAY)
         gpu_timer.end(cmd_list, 0);
@@ -271,7 +272,7 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
 
 #if !defined(CREATE_D2D_OVERLAY)
         // when overlay active, target gets transitioned to PRESENT after overlay rendering
-        // i.e. during this->present_target call
+        // i.e. during this->present_target() call
         this->disable_target(cmd_list);
 #endif // defined(CREATE_D2D_OVERLAY)
         const auto stats_index = stats_query.end_frame(cmd_list);

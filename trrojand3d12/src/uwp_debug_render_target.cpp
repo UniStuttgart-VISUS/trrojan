@@ -111,8 +111,10 @@ void trrojan::d3d12::uwp_debug_render_target::resize(const unsigned int width,
         }
 
 #if defined(CREATE_D2D_OVERLAY)
-        //this->d2d_overlay_->on_resize();
-        this->d2d_overlay_.reset(); // TODO: is this a problem?
+        this->d2d_overlay_->on_resize();
+
+        // killing the pointer and completely rebuilding the d2d_overlay also works
+        //this->d2d_overlay_.reset(); 
 #endif // defined(CREATE_D2D_OVERLAY)
 
         {
@@ -127,10 +129,6 @@ void trrojan::d3d12::uwp_debug_render_target::resize(const unsigned int width,
                 throw ATL::CAtlException(hr);
             }
         }
-
-#if defined(CREATE_D2D_OVERLAY)
-        //this->d2d_overlay_->on_resized();
-#endif // defined (CREATE_D2D_OVERLAY)
     } /* end if (this->swap_chain_ == nullptr) */
 
     // Re-create the RTV/DSV.
@@ -157,41 +155,16 @@ void trrojan::d3d12::uwp_debug_render_target::resize(const unsigned int width,
     // create the necessary objects for d2d_overlay
 #if defined(CREATE_D2D_OVERLAY)
     if (this->d2d_overlay_ == nullptr) {
-        ATL::CComPtr<ID3D11Device> d3d11_device;
-        ATL::CComPtr<ID3D11DeviceContext> d3d11_device_context;
-        UINT deviceFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
-        auto hr = D3D11On12CreateDevice(
-            this->device(),
-            deviceFlags,
-            nullptr,
-            0,
-            reinterpret_cast<IUnknown**>(&this->command_queue().p),
-            1,
-            0,
-            &d3d11_device,
-            &d3d11_device_context,
-            nullptr
-        );
-        if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
-        }
-
-        winrt::com_ptr<ID3D11On12Device> d11on12_device;
-        hr = d3d11_device->QueryInterface(
-            __uuidof(ID3D11On12Device),
-            reinterpret_cast<void**>(&d11on12_device)
-        );
-        if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
-        }
-
         this->d2d_overlay_ = 
             std::make_unique<d2d_overlay>(
-                d11on12_device.get(),
-                d3d11_device_context.p,
+                this->device().p,
+                this->command_queue().p,
                 this->swap_chain_.p,
                 this->pipeline_depth()
             );
+    }
+    else {
+        this->d2d_overlay_->on_resized();
     }
 #endif // defined(CREATE_D2D_OVERLAY)
 }

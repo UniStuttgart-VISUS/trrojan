@@ -76,17 +76,20 @@ ATL::CComPtr<IDWriteFont> trrojan::d3d12::d2d_overlay::get_font(
 /*
  * trrojan::d3d11::d2d_overlay::d2d_overlay
  */
-trrojan::d3d12::d2d_overlay::d2d_overlay(ID3D11On12Device* device,
-    ID3D11DeviceContext* d3d11_device_context, IDXGISwapChain3* swap_chain, 
+trrojan::d3d12::d2d_overlay::d2d_overlay(
+    ID3D12Device* device,
+    ID3D12CommandQueue* command_queue,
+    IDXGISwapChain3* swap_chain, 
     UINT frame_count) : 
-    _d3d11on12_device(device), 
-    _d3d11_device_context(d3d11_device_context),
+    _d3d12_device(device), 
+    _d3d12_command_queue(command_queue),
     _swap_chain(swap_chain),
     _frame_count(frame_count)
 {
-    assert(this->_d3d11on12_device != nullptr);
+    assert(this->_d3d12_device != nullptr);
+    assert(this->_d3d12_command_queue != nullptr);
     assert(this->_swap_chain != nullptr);
-    this->create_target_independent_resources();
+
     this->on_resized();
 }
 
@@ -97,6 +100,8 @@ trrojan::d3d12::d2d_overlay::d2d_overlay(ID3D11On12Device* device,
 void trrojan::d3d12::d2d_overlay::begin_draw(UINT frame_index) {
     assert(this->_d2d_context != nullptr);
     assert(this->_drawing_state_block != nullptr);
+    assert(this->_d3d11on12_device != nullptr);
+
     if (this->_d2d_context == nullptr) {
         throw ATL::CAtlException(E_NOT_VALID_STATE);
     }
@@ -190,6 +195,7 @@ void trrojan::d3d12::d2d_overlay::draw_text(const wchar_t* text,
     const D2D1_RECT_F* layout_rect) {
     assert(this->_d2d_context != nullptr);
     assert(this->_d2d_render_targets[this->_current_frame] != nullptr);
+
     auto len = (text != nullptr) ? ::wcslen(text) : 0;
     D2D1_RECT_F rect;
 
@@ -213,6 +219,8 @@ void trrojan::d3d12::d2d_overlay::draw_text(const wchar_t* text,
  */
 void trrojan::d3d12::d2d_overlay::end_draw(void) {
     assert(this->_d2d_context != nullptr);
+    assert(this->_d3d11on12_device != nullptr);
+    assert(this->_d3d11_device_context != nullptr);
 
     auto hr = _d2d_context->EndDraw();
     if (FAILED(hr) && (hr != D2DERR_RECREATE_TARGET)) {
@@ -243,6 +251,7 @@ void trrojan::d3d12::d2d_overlay::on_resize(void) {
  * trrojan::d3d11::d2d_overlay::on_resized
  */
 void trrojan::d3d12::d2d_overlay::on_resized(void) {
+    this->create_target_independent_resources();
     this->create_target_dependent_resources();
 }
 
@@ -285,6 +294,7 @@ void trrojan::d3d12::d2d_overlay::create_target_dependent_resources(void) {
     assert(this->_d2d_device != nullptr);
     assert(this->_d2d_factory != nullptr);
     assert(this->_d3d11on12_device != nullptr);
+    assert(this->_swap_chain != nullptr);
     // TODO: temporarily removed lines to compile
     //auto back_buffer = get_back_buffer(this->_swap_chain);
     // this->create_target_dependent_resources(get_surface(back_buffer));
@@ -338,8 +348,6 @@ void trrojan::d3d12::d2d_overlay::create_target_dependent_resources(void) {
             throw ATL::CAtlException(E_POINTER);
         }
 
-        //this->_wrapped_back_buffers[i]->
-
         std::string name = "WrappedBuffer" + std::to_string(i);
         this->_wrapped_back_buffers[i]->SetPrivateData(WKPDID_D3DDebugObjectName, name.length(), name.c_str());
 
@@ -356,6 +364,11 @@ void trrojan::d3d12::d2d_overlay::create_target_independent_resources(void) {
     assert(this->_d2d_device == nullptr);
     assert(this->_d2d_factory == nullptr);
     assert(this->_dwrite_factory == nullptr);
+    assert(this->_drawing_state_block == nullptr);
+    assert(this->_d3d11_device_context == nullptr);
+    assert(this->_d3d11on12_device == nullptr);
+    assert(this->_d3d12_device != nullptr);
+    assert(this->_d3d12_command_queue != nullptr);
     // currently not used anyway
     //assert(this->_depth_stencil_state == nullptr);
 
@@ -369,8 +382,34 @@ void trrojan::d3d12::d2d_overlay::create_target_independent_resources(void) {
     }
 
     {
+        ATL::CComPtr<ID3D11Device> d3d11_device;
+        UINT deviceFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
+        auto hr = D3D11On12CreateDevice(
+            this->_d3d12_device,
+            deviceFlags,
+            nullptr,
+            0,
+            reinterpret_cast<IUnknown**>(&this->_d3d12_command_queue.p),
+            1,
+            0,
+            &d3d11_device,
+            &this->_d3d11_device_context,
+            nullptr
+        );
+        if (FAILED(hr)) {
+            throw ATL::CAtlException(hr);
+        }
+
+        hr = d3d11_device->QueryInterface(
+            __uuidof(ID3D11On12Device),
+            reinterpret_cast<void**>(&this->_d3d11on12_device)
+        );
+        if (FAILED(hr)) {
+            throw ATL::CAtlException(hr);
+        }
+
         ATL::CComPtr<IDXGIDevice> idxgi_device;
-        auto hr = this->_d3d11on12_device->QueryInterface(::IID_IDXGIDevice,
+        hr = this->_d3d11on12_device->QueryInterface(::IID_IDXGIDevice,
             reinterpret_cast<void**>(&idxgi_device));
         if (FAILED(hr)) {
             throw ATL::CAtlException(E_POINTER);
@@ -416,10 +455,19 @@ void trrojan::d3d12::d2d_overlay::create_target_independent_resources(void) {
 void trrojan::d3d12::d2d_overlay::release_target_dependent_resources(void) {
     this->_d2d_context->SetTarget(nullptr);
     this->_d2d_context.Release();
-    for(auto rt : this->_d2d_render_targets) rt.Release();
-    for(auto wr : this->_wrapped_back_buffers) wr.Release();
+    for (auto rt : this->_render_targets) rt.Release();
+    for (auto wbb : this->_wrapped_back_buffers) wbb.Release();
+    for (auto d2drt : this->_d2d_render_targets) d2drt.Release();
+    this->_render_targets.clear();
+    this->_wrapped_back_buffers.clear();
+    this->_d2d_render_targets.clear();
+    this->_d3d11_device_context.Release();
     this->_d3d11on12_device.Release();
     this->_d2d_device.Release();
-    // TODO: something is still missing
-    // maybe doesnt matter cause we kill the unique ptr in main code anyway
+
+    // technically not needed, but release anyway
+    // since we have to build some things that are based on the objects below
+    this->_d2d_factory.Release();
+    this->_drawing_state_block.Release();
+    this->_dwrite_factory.Release();
 }
