@@ -76,7 +76,7 @@ UINT trrojan::d3d12::uwp_debug_render_target::present(void) {
     window_.get().Dispatcher().ProcessEvents(winrt::Windows::UI::Core::CoreProcessEventsOption::ProcessAllIfPresent);
 
     // Swap the buffers.
-    this->swap_chain_->Present(0, 0);
+    this->swap_chain_->Present(1, 0);
 
     // Switch to the next buffer used by the swap chain.
     auto retval = this->swap_chain_->GetCurrentBackBufferIndex();
@@ -112,7 +112,7 @@ void trrojan::d3d12::uwp_debug_render_target::resize(const unsigned int width,
 
 #if defined(CREATE_D2D_OVERLAY)
         //this->d2d_overlay_->on_resize();
-        this->d2d_overlay_.reset();
+        this->d2d_overlay_.reset(); // TODO: is this a problem?
 #endif // defined(CREATE_D2D_OVERLAY)
 
         {
@@ -127,6 +127,10 @@ void trrojan::d3d12::uwp_debug_render_target::resize(const unsigned int width,
                 throw ATL::CAtlException(hr);
             }
         }
+
+#if defined(CREATE_D2D_OVERLAY)
+        //this->d2d_overlay_->on_resized();
+#endif // defined (CREATE_D2D_OVERLAY)
     } /* end if (this->swap_chain_ == nullptr) */
 
     // Re-create the RTV/DSV.

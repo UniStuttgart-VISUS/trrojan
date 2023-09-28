@@ -338,6 +338,8 @@ void trrojan::d3d12::d2d_overlay::create_target_dependent_resources(void) {
             throw ATL::CAtlException(E_POINTER);
         }
 
+        //this->_wrapped_back_buffers[i]->
+
         std::string name = "WrappedBuffer" + std::to_string(i);
         this->_wrapped_back_buffers[i]->SetPrivateData(WKPDID_D3DDebugObjectName, name.length(), name.c_str());
 
