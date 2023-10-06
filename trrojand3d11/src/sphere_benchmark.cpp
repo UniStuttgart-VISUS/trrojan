@@ -108,6 +108,8 @@ trrojan::d3d11::sphere_benchmark::sphere_benchmark(void)
         factor_vs_raygen, false));
     this->_default_configs.add_factor(factor::from_manifestations(
         factor_vs_xfer_function, false));
+    this->_default_configs.add_factor(factor::from_manifestations(
+        factor_sync_interval, static_cast<unsigned int>(0)));
 
     this->add_default_manoeuvre();
 
@@ -146,7 +148,9 @@ std::vector<std::string> trrojan::d3d11::sphere_benchmark::required_factors(
  * trrojan::d3d11::sphere_benchmark::on_run
  */
 trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
-    const configuration& config, const std::vector<std::string>& changed) {
+        const configuration& config,
+        power_collector::pointer& powerCollector,
+        const std::vector<std::string>& changed) {
     typedef rendering_technique::shader_stage shader_stage;
 
     std::array<float, 3> bboxSize;
@@ -162,6 +166,7 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
     auto isDisjoint = true;
     const auto minWallTime = config.get<std::uint32_t>(factor_min_wall_time);
     D3D11_QUERY_DATA_PIPELINE_STATISTICS pipeStats;
+    std::string powerUid;
     auto shaderCode = sphere_benchmark::get_shader_id(config);
     SphereConstants sphereConstants;
     TessellationConstants tessConstants;
@@ -298,8 +303,10 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
     gpuTimer.initialise(dev);
 
     // Prepare the result set.
-    auto retval = std::make_shared<basic_result>(std::move(config),
+    auto retval = std::make_shared<basic_result>(config,
         std::initializer_list<std::string> {
+            "benchmark",
+            "power_uid",
             "particles",
             "data_extents",
             "ia_vertices",
@@ -480,7 +487,12 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
                 } else {
                     ctx->Draw(cntPrimitives, 0);
                 }
-                this->present_target();
+                this->present_target(config);
+#if defined(CREATE_D2D_OVERLAY)
+                // Using the overlay will change the state such that we need to
+                // re-apply it after presenting.
+                technique.apply(ctx);
+#endif /* defined(CREATE_D2D_OVERLAY) */
             }
 
             ctx->End(this->done_query);
@@ -489,7 +501,7 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
 
             if (batchTime < minWallTime) {
                 cntPrewarms = static_cast<std::uint32_t>(std::ceil(
-                    static_cast<double>(minWallTime * cntCpuIterations)
+                    static_cast<double>(minWallTime) * cntCpuIterations
                     / batchTime));
                 if (cntPrewarms < 1) {
                     cntPrewarms = 1;
@@ -533,12 +545,24 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
         ctx->Draw(cntPrimitives, 0);
     }
     ctx->End(this->stats_query);
-    this->present_target();
+    this->present_target(0);
+#if defined(CREATE_D2D_OVERLAY)
+    // Using the overlay will change the state such that we need to
+    // re-apply it after presenting.
+    technique.apply(ctx);
+#endif /* defined(CREATE_D2D_OVERLAY) */
     wait_for_stats_query(pipeStats, ctx, this->stats_query);
 
     // Do the wall clock measurement.
     log::instance().write_line(log_level::debug, "Measuring wall clock "
         "timings over {} iterations ...", cntCpuIterations);
+#if defined(TRROJAN_WITH_POWER_OVERWHELMING)
+    if (powerCollector != nullptr) {
+        // If we have a power sensor, we want to record data now.
+        powerUid = powerCollector->set_next_unique_description();
+    }
+#endif /* defined(TRROJAN_WITH_POWER_OVERWHELMING) */
+
     cpuTimer.start();
     for (std::uint32_t i = 0; i < cntCpuIterations; ++i) {
         this->clear_target();
@@ -547,11 +571,24 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
         } else {
             ctx->Draw(cntPrimitives, 0);
         }
-        this->present_target();
+        this->present_target(config);
+#if defined(CREATE_D2D_OVERLAY)
+        // Using the overlay will change the state such that we need to
+        // re-apply it after presenting.
+        technique.apply(ctx);
+#endif /* defined(CREATE_D2D_OVERLAY) */
     }
     ctx->End(this->done_query);
     wait_for_event_query(ctx, this->done_query);
     auto cpuTime = cpuTimer.elapsed_millis();
+
+#if defined(TRROJAN_WITH_POWER_OVERWHELMING)
+    if (powerCollector != nullptr) {
+        // Commit power samples and prevent collection until next wall-clock
+        // measurement cycle.
+        powerCollector->set_description("");
+    }
+#endif /* defined(TRROJAN_WITH_POWER_OVERWHELMING) */
 
     // Compute derived statistics for GPU counters.
     std::sort(gpuTimes.begin(), gpuTimes.end());
@@ -563,6 +600,8 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
 
     // Output the results.
     retval->add({
+        this->name(),
+        powerUid,
         this->data->size(),
         bboxSize,
         pipeStats.IAVertices,

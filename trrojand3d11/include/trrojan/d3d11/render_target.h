@@ -71,7 +71,11 @@ namespace d3d11 {
         /// <remarks>
         /// The default implementation does nothing.
         /// </remarks>
-        virtual void present(void);
+        /// <param name="sync_interval">Zero for immediately presentation, N for
+        /// synchronising on the Nth vblank. The parameter has only an effect on
+        /// the debug render target that has an actual swap chain.
+        /// </param>
+        virtual void present(const UINT sync_interval);
 
         /// <summary>
         /// Resizes the swap chain of the render target to the given dimension.

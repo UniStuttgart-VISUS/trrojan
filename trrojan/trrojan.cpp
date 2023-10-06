@@ -1,8 +1,8 @@
-/// <copyright file="trrojan.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Christoph Müller</author>
+// <copyright file="trrojan.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
+// Copyright © 2016 - 2023 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Christoph Müller</author>
 
 #include <iostream>
 #include <memory>
@@ -12,6 +12,7 @@
 #include "trrojan/console_output.h"
 #include "trrojan/executive.h"
 #include "trrojan/log.h"
+#include "trrojan/power_collector.h"
 #include "trrojan/power_state_scope.h"
 
 
@@ -24,6 +25,7 @@
 /// </returns>
 int main(const int argc, const char **argv) {
     const trrojan::cmd_line cmdLine(argv, argv + argc);
+    std::shared_ptr<trrojan::power_collector> powerCollector;
     std::unique_ptr<trrojan::power_state_scope> powerStateScope;
 
     try {
@@ -50,6 +52,18 @@ int main(const int argc, const char **argv) {
             std::cout << "The way you're meant to be trrolled." 
                 << std::endl << std::endl;
         }
+
+#if defined(TRROJAN_WITH_POWER_OVERWHELMING)
+        {
+            auto it = trrojan::find_argument("--power", cmdLine.begin(),
+                cmdLine.end());
+            if (it != cmdLine.end()) {
+                // Create and start a power collector on request.
+                powerCollector = std::make_shared<trrojan::power_collector>();
+                powerCollector->start(*it, std::chrono::milliseconds(5));
+            }
+        }
+#endif /* defined(TRROJAN_WITH_POWER_OVERWHELMING) */
 
         /* Configure the output target for the results. */
         auto output = trrojan::open_output(cmdLine);
@@ -93,7 +107,7 @@ int main(const int argc, const char **argv) {
                 trrojan::log::instance().write_line(
                     trrojan::log_level::information, "Running benchmarks "
                     "configured in TRROLL script \"{}\" ...", *it);
-                exe.trroll(*it, *output, coolDown);
+                exe.trroll(*it, *output, coolDown, powerCollector);
             }
         }
 

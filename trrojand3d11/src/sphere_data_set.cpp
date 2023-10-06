@@ -177,7 +177,7 @@ std::pair<float, float> trrojan::d3d11::sphere_data_set_base::clipping_planes(
     //farPlane *= 1.1f;
 
     log::instance().write_line(log_level::debug, "Dynamic clipping planes are "
-        "located at %f and %f.", nearPlane, farPlane);
+        "located at {} and {}.", nearPlane, farPlane);
     return std::make_pair(nearPlane, farPlane);
 }
 

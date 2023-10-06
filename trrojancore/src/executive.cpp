@@ -189,12 +189,20 @@ void trrojan::executive::load_plugins(const cmd_line& cmdLine) {
  * trrojan::executive::run
  */
 void trrojan::executive::run(benchmark_base& benchmark,
-        configuration_set configs, output_base& output,
-        const cool_down& coolDown) {
+        configuration_set configs,
+        output_base& output,
+        const cool_down& coolDown,
+        power_collector::pointer powerCollector) {
     // Note: This method is called from the scripting interface and possibly
     // from other places we do not yet know. Therefore, we do not optimise
     // the order of the parameters, but keep them as they have been passed
     // to the method.
+
+#if defined(TRROJAN_WITH_POWER_OVERWHELMING)
+    // Inject the power collector into all configurations.
+    configs.replace_factor(factor::from_manifestations(
+        power_collector::factor_name, powerCollector));
+#endif /* defined(TRROJAN_WITH_POWER_OVERWHELMING) */
 
     auto eds = this->prepare_env_devs(configs);
     for (auto e : eds) {
@@ -244,21 +252,25 @@ void trrojan::executive::run(benchmark_base& benchmark,
  * trrojan::executive::run
  */
 void trrojan::executive::run(const benchmark& benchmark,
-        const configuration_set& configs, output_base& output,
-        const cool_down& coolDown) {
+        const configuration_set& configs,
+        output_base& output,
+        const cool_down& coolDown,
+        power_collector::pointer powerCollector) {
     if (benchmark == nullptr) {
         throw std::runtime_error("The benchmark to run must not be nullptr.");
     }
 
-    this->run(*benchmark, configs, output, coolDown);
+    this->run(*benchmark, configs, output, coolDown, powerCollector);
 }
 
 
 /*
  * trrojan::executive::trroll
  */
-void trrojan::executive::trroll(const std::string& path, output_base& output,
-        const cool_down& coolDown) {
+void trrojan::executive::trroll(const std::string& path,
+        output_base& output,
+        const cool_down& coolDown,
+        power_collector::pointer powerCollector) {
     typedef trroll_parser::benchmark_configs bcs;
     auto bcss = trroll_parser::parse(path);
     std::vector<benchmark> benchmarks;
@@ -304,7 +316,7 @@ void trrojan::executive::trroll(const std::string& path, output_base& output,
                     b.benchmark.c_str(), b.plugin.c_str());
 
                 (**it).optimise_order(b.configs);
-                this->run(*it, b.configs, output, coolDown);
+                this->run(*it, b.configs, output, coolDown, powerCollector);
 
             } else {
                 log::instance().write(log_level::warning, "No benchmark named "

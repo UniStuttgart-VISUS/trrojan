@@ -13,3 +13,6 @@
 [submodule "mmpld"]
 	path = mmpld
 	url = https://github.com/UniStuttgart-VISUS/mmpld.git
+[submodule "power-overwhelming"]
+	path = power-overwhelming
+	url = https://github.com/UniStuttgart-VISUS/power-overwhelming.git
