@@ -68,6 +68,10 @@ mark_as_advanced(FORCE
     FETCHCONTENT_UPDATES_DISCONNECTED_DATRAW)
 
 
+# DirectStorage
+set(DSTORAGE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Microsoft.Direct3D.DirectStorage.1.0.0" CACHE STRING "Directory holding the DirectStorage APIs.")
+
+
 # glm
 FetchContent_Declare(glm
     URL "https://github.com/g-truc/glm/releases/download/0.9.9.8/glm-0.9.9.8.zip"
@@ -94,30 +98,32 @@ mark_as_advanced(FORCE
 
 
 # Power Overwhelming
-FetchContent_Declare(pwrowg
-    URL "https://github.com/UniStuttgart-VISUS/power-overwhelming/archive/refs/tags/v1.8.0.zip"
-    DOWNLOAD_EXTRACT_TIMESTAMP ON
-)
-option(PWROWG_BuildDemo "" OFF)
-option(PWROWG_BuildDriver "" OFF)
-option(PWROWG_BuildDumpSensors "" OFF)
-option(PWROWG_BuildStablePower "" OFF)
-option(PWROWG_BuildTests "" OFF)
-option(PWROWG_BuildWeb "" OFF)
-FetchContent_MakeAvailable(pwrowg)
-mark_as_advanced(FORCE
-    FETCHCONTENT_SOURCE_DIR_PWROWG
-    FETCHCONTENT_UPDATES_DISCONNECTED_PWROWG
-    PWROWG_BuildDemo
-    PWROWG_BuildDriver
-    PWROWG_BuildDumpSensors
-    PWROWG_BuildStablePower
-    PWROWG_BuildTests
-    PWROWG_BuildWeb
-    PWROWG_WithAdl
-    PWROWG_WithNvml
-    PWROWG_WithTimeSynchronisation
-    PWROWG_WithVisa)
+if (TRROJAN_WITH_POWER_OVERWHELMING)
+    FetchContent_Declare(power_overwhelming
+        URL "https://github.com/UniStuttgart-VISUS/power-overwhelming/archive/refs/tags/v1.8.0.zip"
+        DOWNLOAD_EXTRACT_TIMESTAMP ON
+    )
+    option(PWROWG_BuildDemo "" OFF)
+    option(PWROWG_BuildDriver "" OFF)
+    option(PWROWG_BuildDumpSensors "" OFF)
+    option(PWROWG_BuildStablePower "" OFF)
+    option(PWROWG_BuildTests "" OFF)
+    option(PWROWG_BuildWeb "" OFF)
+    FetchContent_MakeAvailable(power_overwhelming)
+    mark_as_advanced(FORCE
+        FETCHCONTENT_SOURCE_DIR_POWER_OVERWHELMING
+        FETCHCONTENT_UPDATES_DISCONNECTED_POWER_OVERWHELMING
+        PWROWG_BuildDemo
+        PWROWG_BuildDriver
+        PWROWG_BuildDumpSensors
+        PWROWG_BuildStablePower
+        PWROWG_BuildTests
+        PWROWG_BuildWeb
+        PWROWG_WithAdl
+        PWROWG_WithNvml
+        PWROWG_WithTimeSynchronisation
+        PWROWG_WithVisa)
+endif ()
 
 
 # spdlog
@@ -133,3 +139,16 @@ mark_as_advanced(FORCE
     FETCHCONTENT_UPDATES_DISCONNECTED_SPDLOG
     SPDLOG_BUILD_TESTING
     SPDLOG_BUILD_EXAMPLES)
+
+
+# We need to know whether we have OpenCL to enable the project
+find_package(OpenCL)
+find_package(OpenGL)
+
+
+# Stuff that Valentin randomly included
+find_package(JPEG)
+find_package(TIFF)
+find_package(ZLIB)
+find_package(PNG)
+find_package(OpenMP)

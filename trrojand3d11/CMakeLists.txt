@@ -1,16 +1,16 @@
 # CMakeLists.txt
-# Copyright (C) 2017 SFB-TRR 161. Alle Rechte vorbehalten.
+# Copyright (C) 2018 - 2023 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
 
-cmake_minimum_required(VERSION 3.1.0)
+project(trrojand3d11)
 
 
-set(IncludeDirectory "include")
-set(SourceDirectory "src")
+# Glob and add sources and resources
+set(IncludeDirectory "${CMAKE_CURRENT_SOURCE_DIR}/include")
+set(SourceDirectory "${CMAKE_CURRENT_SOURCE_DIR}/src")
 
-file(GLOB_RECURSE HeaderFiles RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${IncludeDirectory}/*.h" "${SourceDirectory}/*.h" "${IncludeDirectory}/*.inl" "${SourceDirectory}/*.inl")
+file(GLOB_RECURSE PublicHeaderFiles RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${IncludeDirectory}/*.h" "${IncludeDirectory}/*.inl")
+file(GLOB_RECURSE PrivateHeaderFiles RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${SourceDirectory}/*.h" "${SourceDirectory}/*.inl")
 file(GLOB_RECURSE SourceFiles RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${SourceDirectory}/*.cpp")
-
-# Glob and add resoruce scripts
 file(GLOB_RECURSE ResourceFiles RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${SourceDirectory}/*.rc")
 
 # Glob shaders
@@ -41,31 +41,48 @@ set_property(SOURCE ${ComputeShaderFiles} PROPERTY VS_SHADER_TYPE Compute)
 file(GLOB_RECURSE ShaderHeaderFiles RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${IncludeDirectory}/*.hlsli" "${SourceDirectory}/*.hlsli")
 set(ShaderFiles ${ShaderHeaderFiles} ${ShaderFiles})
 
-include_directories("${IncludeDirectory}")
-include_directories("${TrrojanCoreIncludeDir}")
-include_directories("${TrrojanSysInfoIncludeDir}")
-
 # Create CSOs for packing them into the resource files.
 #add_dependencies(${ResourceFiles} ${ShaderFiles})
 include_directories("${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${CMAKE_CFG_INTDIR}")
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTRROJAND3D11_EXPORTS")
 
+# Define the library target
+add_library(${PROJECT_NAME} SHARED ${PublicHeaderFiles} ${PrivateHeaderFiles} ${SourceFiles} ${ResourceFiles})
+target_compile_definitions(${PROJECT_NAME} PRIVATE TRROJAND3D11_EXPORTS)
+target_include_directories(${PROJECT_NAME}
+    PUBLIC
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+        $<BUILD_INTERFACE:${IncludeDirectory}>
+    PRIVATE
+        $<BUILD_INTERFACE:${SourceDirectory}>)
+target_link_libraries(${PROJECT_NAME} PRIVATE trrojancore)
+target_link_libraries(${PROJECT_NAME} PRIVATE d3d11 dxgi dxguid d2d1 dwrite)
+target_link_libraries(${PROJECT_NAME} PRIVATE glm::glm)
 
-# Enable debug overlay on rquest.
 if (TRROJAN_DEBUG_OVERLAY)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DCREATE_D2D_OVERLAY")
-endif (TRROJAN_DEBUG_OVERLAY)
+    # Enable debug overlay on request.
+    target_compile_definitions(${PROJECT_NAME} PRIVATE CREATE_D2D_OVERLAY)
+endif ()
 
 
-if (WIN32)
-    add_library(trrojand3d11 MODULE ${HeaderFiles} ${SourceFiles} ${ShaderFiles} ${ResourceFiles})
-    target_link_libraries(trrojand3d11 trrojancore)
-    target_link_libraries(trrojand3d11 d3d11 dxgi dxguid d2d1 dwrite)
+# Group all HLSL into a new filter (cf. https://stackoverflow.com/questions/33808087/cmake-how-to-create-visual-studio-filters).
+source_group("Shader Files" FILES ${ShaderFiles})
 
-    # Group all HLSL into a new filter (cf. https://stackoverflow.com/questions/33808087/cmake-how-to-create-visual-studio-filters).
-    source_group("Shader Files" FILES ${ShaderFiles})
+# Group resource scripts into a new filter.
+source_group("Resource Files" FILES ${ResourceFiles})
 
-    # Group resource scripts into a new filter.
-    source_group("Resource Files" FILES ${ResourceFiles})
-endif (WIN32)
+
+# Installation
+install(TARGETS ${PROJECT_NAME}
+    EXPORT ${PROJECT_NAME}Targets
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+
+install(DIRECTORY ${IncludeDirectory}
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+
+install(EXPORT ${PROJECT_NAME}Targets
+    FILE ${PROJECT_NAME}Config.cmake
+    NAMESPACE ${PROJECT_NAME}::
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME})
