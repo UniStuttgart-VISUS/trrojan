@@ -5,6 +5,7 @@
 // <author>Christoph Müller</author>
 
 #include "hlsltypemapping.hlsli"
+#include "VolumeCamera.hlsli"
 
 #ifdef _MSC_VER
 #pragma once
@@ -32,17 +33,6 @@ struct PsOutput {
 #pragma pack(push)
 #pragma pack(4)
 #endif /* _MSC_VER */
-
-
-cbuffer ViewConstants CBUFFER(0) {
-    float4 CameraPosition;
-    float4 CameraDirection;
-    float4 CameraUp;
-    float4 CameraRight;
-    float2 ClippingPlanes;
-    float2 FieldOfView;
-    uint2 ImageSize;
-};
 
 
 cbuffer RaycastingConstants CBUFFER(1) {

@@ -300,8 +300,11 @@ ATL::CComPtr<ID3D12Resource> trrojan::d3d12::create_resource(
  * trrojan::d3d12::create_texture
  */
 ATL::CComPtr<ID3D12Resource> trrojan::d3d12::create_texture(
-        ID3D12Device *device, const UINT64 width, const DXGI_FORMAT format,
-        const D3D12_RESOURCE_FLAGS flags) {
+        ID3D12Device *device,
+        const UINT64 width,
+        const DXGI_FORMAT format,
+        const D3D12_RESOURCE_FLAGS flags,
+        const D3D12_RESOURCE_STATES state) {
     assert(device != nullptr);
 
     D3D12_RESOURCE_DESC desc;
@@ -316,32 +319,36 @@ ATL::CComPtr<ID3D12Resource> trrojan::d3d12::create_texture(
     desc.SampleDesc.Quality = 0;
     desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE1D;
 
-    return create_resource(device, desc);
+    return create_resource(device, desc, D3D12_HEAP_TYPE_DEFAULT, state);
 }
 
 
 /*
  * trrojan::d3d12::create_texture
  */
-//ATL::CComPtr<ID3D12Resource> trrojan::d3d12::create_texture(
-//        ID3D12Device *device, const UINT64 width, const UINT height,
-//        const DXGI_FORMAT format, const D3D12_RESOURCE_FLAGS flags) {
-//    assert(device != nullptr);
-//
-//    D3D12_RESOURCE_DESC desc;
-//    ::ZeroMemory(&desc, sizeof(desc));
-//    desc.MipLevels = 1;
-//    desc.Format = format;
-//    desc.Width = width;
-//    desc.Height = height;
-//    desc.Flags = flags;
-//    desc.DepthOrArraySize = 1;
-//    desc.SampleDesc.Count = 1;
-//    desc.SampleDesc.Quality = 0;
-//    desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-//
-//    return create_resource(device, desc);
-//}
+ATL::CComPtr<ID3D12Resource> trrojan::d3d12::create_texture(
+        ID3D12Device *device,
+        const UINT64 width,
+        const UINT height,
+        const DXGI_FORMAT format,
+        const D3D12_RESOURCE_FLAGS flags,
+        const D3D12_RESOURCE_STATES state) {
+    assert(device != nullptr);
+
+    D3D12_RESOURCE_DESC desc;
+    ::ZeroMemory(&desc, sizeof(desc));
+    desc.MipLevels = 1;
+    desc.Format = format;
+    desc.Width = width;
+    desc.Height = height;
+    desc.Flags = flags;
+    desc.DepthOrArraySize = 1;
+    desc.SampleDesc.Count = 1;
+    desc.SampleDesc.Quality = 0;
+    desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+
+    return create_resource(device, desc, D3D12_HEAP_TYPE_DEFAULT, state);
+}
 
 
 /*
@@ -353,7 +360,8 @@ ATL::CComPtr<ID3D12Resource> trrojan::d3d12::create_texture(
         const UINT64 height,
         const UINT64 depth,
         const DXGI_FORMAT format,
-        const D3D12_RESOURCE_FLAGS flags) {
+        const D3D12_RESOURCE_FLAGS flags,
+        const D3D12_RESOURCE_STATES state) {
     assert(device != nullptr);
 
     D3D12_RESOURCE_DESC desc;
@@ -368,7 +376,7 @@ ATL::CComPtr<ID3D12Resource> trrojan::d3d12::create_texture(
     desc.SampleDesc.Quality = 0;
     desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE1D;
 
-    return create_resource(device, desc);
+    return create_resource(device, desc, D3D12_HEAP_TYPE_DEFAULT, state);
 }
 
 

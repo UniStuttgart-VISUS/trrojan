@@ -18,7 +18,8 @@ namespace d3d12 {
     /// <summary>
     /// A D3D12 volume renderer using a compute shader for traversing the rays.
     /// </summary>
-    class TRROJAND3D12_API cs_volume_benchmark : public volume_benchmark_base {
+    class TRROJAND3D12_API cs_volume_benchmark final
+        : public volume_benchmark_base {
 
     public:
 

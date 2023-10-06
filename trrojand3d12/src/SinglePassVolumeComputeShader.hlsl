@@ -29,9 +29,14 @@ Texture1D TransferFunction : register(t1);
 Texture3D Volume : register(t0);
 
 
+#define SHADER_ROOT_SIGNATURE "RootFlags(ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT),"\
+"DescriptorTable(CBV(b0), CBV(b1), SRV(t0), SRV(t1), visibility=SHADER_VISIBILITY_ALL)"
+
+
 /// <summary>
 /// Entry point of the compute shader.
 /// </summary>
+//[RootSignature(SHADER_ROOT_SIGNATURE)]
 [numthreads(16, 16, 1)]
 void Main(uint3 threadID : SV_DispatchThreadID) {
     // Terminate threads which do not produce a pixel.

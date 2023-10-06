@@ -1,11 +1,13 @@
 // <copyright file="benchmark_base.h" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2016 - 2022 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+// Copyright © 2016 - 2023 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
 // <author>Christoph Müller</author>
 
 #pragma once
 
+#include <algorithm>
+#include <array>
 #include <cassert>
 #include <sstream>
 #include <stdexcept>
@@ -62,6 +64,8 @@ namespace d3d12 {
 
         typedef std::vector<ATL::CComPtr<ID3D12CommandAllocator>>
             command_allocator_list;
+
+        typedef ATL::CComPtr<ID3D12GraphicsCommandList> graphics_command_list;
 
         /// <summary>
         /// In-place sorts <paramref name="times" /> and computes the median.
@@ -197,38 +201,6 @@ namespace d3d12 {
             ID3D12PipelineState *initial_state = nullptr);
 
         /// <summary>
-        /// Creates a new command list of the specified type and casts it to a
-        /// <see cref="ID3D12GraphicsCommandList" />.
-        /// </summary>
-        /// <param name="type"></param>
-        /// <param name="frame"></param>
-        /// <param name="initial_state"></param>
-        /// <returns></returns>
-        ATL::CComPtr<ID3D12GraphicsCommandList> create_graphics_command_list(
-            const D3D12_COMMAND_LIST_TYPE type, const std::size_t frame,
-            ID3D12PipelineState *initial_state = nullptr);
-
-        /// <summary>
-        /// Creates a new direct graphics command list using the allocator for
-        /// the specified frame.
-        /// </summary>
-        /// <param name="frame"></param>
-        /// <param name="initial_state"></param>
-        /// <returns></returns>
-        ATL::CComPtr<ID3D12GraphicsCommandList> create_graphics_command_list(
-            const std::size_t frame,
-            ID3D12PipelineState *initial_state = nullptr);
-
-        /// <summary>
-        /// Creates a new direct graphics command list for the currently active
-        /// buffer/frame.
-        /// </summary>
-        /// <param name="initial_state"></param>
-        /// <returns></returns>
-        ATL::CComPtr<ID3D12GraphicsCommandList> create_graphics_command_list(
-            ID3D12PipelineState *initial_state = nullptr);
-
-        /// <summary>
         /// Allocate generic descriptor heaps (one for each frame) into the
         /// <see cref="_descriptor_heaps" /> member that can be used for constant
         /// buffers, shader resource views and all other kinds of resource
@@ -265,6 +237,55 @@ namespace d3d12 {
         void create_descriptor_heaps(ID3D12Device *device,
             const std::vector<D3D12_DESCRIPTOR_HEAP_DESC>& descs);
 
+        /// <summary>
+        /// Creates a new command list of the specified type and casts it to a
+        /// <see cref="ID3D12GraphicsCommandList" />.
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="frame"></param>
+        /// <param name="initial_state"></param>
+        /// <returns></returns>
+        graphics_command_list create_graphics_command_list(
+            const D3D12_COMMAND_LIST_TYPE type, const std::size_t frame,
+            ID3D12PipelineState *initial_state = nullptr);
+
+        /// <summary>
+        /// Creates a new direct graphics command list using the allocator for
+        /// the specified frame.
+        /// </summary>
+        /// <param name="frame"></param>
+        /// <param name="initial_state"></param>
+        /// <returns></returns>
+        graphics_command_list create_graphics_command_list(
+            const std::size_t frame,
+            ID3D12PipelineState *initial_state = nullptr);
+
+        /// <summary>
+        /// Creates a new direct graphics command list for the currently active
+        /// buffer/frame.
+        /// </summary>
+        /// <param name="initial_state"></param>
+        /// <returns></returns>
+        graphics_command_list create_graphics_command_list(
+            ID3D12PipelineState *initial_state = nullptr);
+
+        /// <summary>
+        /// Creates a new direct graphics command list for the currently active
+        /// buffer/frame if any of the specified <paramref name="resources" />
+        /// is <c>nullptr</c>.
+        /// </summary>
+        /// <typeparam name="TResource"></typeparam>
+        /// <param name="resources"></param>
+        /// <returns></returns>
+        template<class... TResource>
+        graphics_command_list create_graphics_command_list_for(
+            TResource&&... resources);
+
+        /// <summary>
+        /// Queues the current render target to be disabled in the given command
+        /// list.
+        /// </summary>
+        /// <param name="cmd_list"></param>
         inline void disable_target(ID3D12GraphicsCommandList *cmd_list) {
             assert(this->_render_target != nullptr);
             assert(cmd_list != nullptr);
@@ -439,8 +460,10 @@ namespace d3d12 {
 
         render_target _debug_target;
         render_target _render_target;
-
     };
 
 } /* end namespace d3d12 */
 } /* end namespace trrojan */
+
+
+#include "trrojan/d3d12/benchmark_base.inl"

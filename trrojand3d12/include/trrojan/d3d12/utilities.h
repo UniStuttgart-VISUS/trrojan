@@ -171,33 +171,37 @@ namespace d3d12 {
 
     /// <summary>
     /// Create an uninitialised 1D texture which is in
-    /// <see cref="D3D12_RESOURCE_STATE_COPY_DEST" />.
+    /// <paramref name="state" />.
     /// </summary>
     /// <param name="device"></param>
     /// <param name="width"></param>
     /// <param name="format"></param>
+    /// <param name="state"></param>
     /// <returns></returns>
     ATL::CComPtr<ID3D12Resource> create_texture(ID3D12Device *device,
         const UINT64 width, const DXGI_FORMAT format,
-        const D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE);
+        const D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE,
+        const D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_COPY_DEST);
 
     /// <summary>
     /// Create an uninitialised 2D texture which is in
-    /// <see cref="D3D12_RESOURCE_STATE_COPY_DEST" />.
+    /// <paramref name="state" />.
     /// </summary>
     /// <param name="device"></param>
     /// <param name="width"></param>
     /// <param name="height"></param>
     /// <param name="format"></param>
     /// <param name="flags"></param>
+    /// <param name="state"></param>
     /// <returns></returns>
-    //ATL::CComPtr<ID3D12Resource> create_texture(ID3D12Device *device,
-    //    const UINT64 width, const UINT height, const DXGI_FORMAT format,
-    //    const D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE);
+    ATL::CComPtr<ID3D12Resource> create_texture(ID3D12Device *device,
+        const UINT64 width, const UINT height, const DXGI_FORMAT format,
+        const D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE,
+        const D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_COPY_DEST);
 
     /// <summary>
     /// Create an uninitailisd 3D texture which is in state
-    /// <see cref="D3D12_RESOURCE_STATE_COPY_DEST" />.
+    /// <paramref name="state" />.
     /// </summary>
     /// <param name="device"></param>
     /// <param name="width"></param>
@@ -205,11 +209,13 @@ namespace d3d12 {
     /// <param name="depth"></param>
     /// <param name="format"></param>
     /// <param name="flags"></param>
+    /// <param name="state"></param>
     /// <returns></returns>
     ATL::CComPtr<ID3D12Resource> create_texture(ID3D12Device *device,
         const UINT64 width, const UINT64 height, const UINT64 depth,
         const DXGI_FORMAT format,
-        const D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE);
+        const D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE,
+        const D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_COPY_DEST);
 
     /// <summary>
     /// Create an upload buffer for the specified subresource of the given

@@ -17,6 +17,23 @@
 #include "trrojan/d3d12/utilities.h"
 
 
+#define _VOLUME_BENCH_DEFINE_FACTOR(f)                                         \
+const char *trrojan::d3d12::volume_benchmark_base::factor_##f = #f
+
+_VOLUME_BENCH_DEFINE_FACTOR(data_set);
+_VOLUME_BENCH_DEFINE_FACTOR(ert_threshold);
+_VOLUME_BENCH_DEFINE_FACTOR(frame);
+_VOLUME_BENCH_DEFINE_FACTOR(fovy_deg);
+_VOLUME_BENCH_DEFINE_FACTOR(gpu_counter_iterations);
+_VOLUME_BENCH_DEFINE_FACTOR(max_steps);
+_VOLUME_BENCH_DEFINE_FACTOR(min_prewarms);
+_VOLUME_BENCH_DEFINE_FACTOR(min_wall_time);
+_VOLUME_BENCH_DEFINE_FACTOR(step_size);
+_VOLUME_BENCH_DEFINE_FACTOR(xfer_func);
+
+#undef _VOLUME_BENCH_DEFINE_FACTOR
+
+
 /*
  * trrojan::d3d12::volume_benchmark_base::get_format
  */
@@ -117,6 +134,8 @@ trrojan::d3d12::volume_benchmark_base::load_brudervn_xfer_func(
         d3d12::device& device,
         ID3D12GraphicsCommandList *cmd_list,
         const D3D12_RESOURCE_STATES state) {
+    log::instance().write_line(log_level::debug, "Loading transfer function "
+        "from {} ...", path);
     const auto data = trrojan::load_brudervn_xfer_func(path);
     return load_xfer_func(data, device, cmd_list, state);
 }
@@ -133,6 +152,8 @@ trrojan::d3d12::volume_benchmark_base::load_volume(
         ID3D12GraphicsCommandList *cmd_list,
         const D3D12_RESOURCE_STATES state,
         info_type& outInfo) {
+    log::instance().write_line(log_level::debug, "Loading volume data "
+        "from {} ...", path);
     auto reader = reader_type::open(path);
 
     if (!reader.move_to(frame)) {
@@ -170,8 +191,6 @@ trrojan::d3d12::volume_benchmark_base::load_volume(
     cmd_list->CopyTextureRegion(&dst_loc, 0, 0, 0, &src_loc, nullptr);
     transition_resource(cmd_list, retval, D3D12_RESOURCE_STATE_COPY_DEST,
         state);
-    device.close_and_execute_command_list(cmd_list);
-    device.wait_for_gpu();
 
     // Return the info block in case of success.
     outInfo = reader.info();
@@ -220,8 +239,6 @@ trrojan::d3d12::volume_benchmark_base::load_xfer_func(
     cmd_list->CopyTextureRegion(&dst_loc, 0, 0, 0, &src_loc, nullptr);
     transition_resource(cmd_list, retval, D3D12_RESOURCE_STATE_COPY_DEST,
         state);
-    device.close_and_execute_command_list(cmd_list);
-    device.wait_for_gpu();
 
     return retval;
 }
@@ -236,6 +253,8 @@ trrojan::d3d12::volume_benchmark_base::load_xfer_func(
         d3d12::device& device,
         ID3D12GraphicsCommandList *cmd_list,
         const D3D12_RESOURCE_STATES state) {
+    log::instance().write_line(log_level::debug, "Loading transfer function "
+        "from {} ...", path);
     const auto data = read_binary_file(path);
     return load_xfer_func(data, device, cmd_list, state);
 }
@@ -246,12 +265,12 @@ trrojan::d3d12::volume_benchmark_base::load_xfer_func(
  */
 ATL::CComPtr<ID3D12Resource>
 trrojan::d3d12::volume_benchmark_base::load_xfer_func(
-        const volume_rendering_configuration& config,
+        const configuration& config,
         d3d12::device& device,
         ID3D12GraphicsCommandList *cmd_list,
         const D3D12_RESOURCE_STATES state) {
     try {
-        auto path = config.xfer_func();
+        auto path = config.get<std::string>(factor_xfer_func);
 
         if (ends_with(path, std::string(".brudervn"))) {
             return volume_benchmark_base::load_brudervn_xfer_func(
@@ -262,7 +281,8 @@ trrojan::d3d12::volume_benchmark_base::load_xfer_func(
         }
 
     } catch (...) {
-        // Fall back to a fully linear transfer function.
+        log::instance().write_line(log_level::debug, "Creating linear transfer "
+            "function as fallback solution.");
         std::vector<std::uint8_t> data(256 * 4);
         for (std::uint8_t i = 0; i < data.size(); i += 4) {
             data[static_cast<std::size_t>(i) * 4 + 0] = i;
@@ -281,33 +301,52 @@ trrojan::d3d12::volume_benchmark_base::load_xfer_func(
  * trrojan::d3d12::volume_benchmark_base::volume_benchmark_base
  */
 trrojan::d3d12::volume_benchmark_base::volume_benchmark_base(
-        const std::string& name) : benchmark_base(name) {
+        const std::string& name)
+    : benchmark_base(name),
+        _view_constants(nullptr) {
     this->_default_configs.add_factor(factor::from_manifestations(
-        volume_rendering_configuration::factor_ert_threshold,
-        0.0f));
+        factor_ert_threshold, 0.0f));
     this->_default_configs.add_factor(factor::from_manifestations(
-        volume_rendering_configuration::factor_frame,
-        static_cast<frame_type>(0)));
+        factor_frame, static_cast<frame_type>(0)));
     this->_default_configs.add_factor(factor::from_manifestations(
-        volume_rendering_configuration::factor_fovy_deg,
-        60.0f));
+        factor_fovy_deg, 60.0f));
     this->_default_configs.add_factor(factor::from_manifestations(
-        volume_rendering_configuration::factor_gpu_counter_iterations,
-        static_cast<unsigned int>(7)));
+        factor_gpu_counter_iterations, static_cast<unsigned int>(7)));
     this->_default_configs.add_factor(factor::from_manifestations(
-        volume_rendering_configuration::factor_step_size,
-        static_cast<step_size_type>(1)));
+        factor_step_size, static_cast<step_size_type>(1)));
     this->_default_configs.add_factor(factor::from_manifestations(
-        volume_rendering_configuration::factor_max_steps,
-        static_cast<unsigned int>(0)));
+        factor_max_steps, static_cast<unsigned int>(0)));
     this->_default_configs.add_factor(factor::from_manifestations(
-        volume_rendering_configuration::factor_min_prewarms,
-        static_cast<unsigned int>(4)));
+        factor_min_prewarms, static_cast<unsigned int>(4)));
     this->_default_configs.add_factor(factor::from_manifestations(
-        volume_rendering_configuration::factor_min_wall_time,
-        static_cast<unsigned int>(1000)));
+        factor_min_wall_time, static_cast<unsigned int>(1000)));
 
     this->add_default_manoeuvre();
+}
+
+
+/*
+ * trrojan::d3d12::volume_benchmark_base::on_device_switch
+ */
+void trrojan::d3d12::volume_benchmark_base::on_device_switch(device& device) {
+    benchmark_base::on_device_switch(device);
+    this->_tex_volume = nullptr;
+    this->_tex_xfer_func = nullptr;
+
+    // Create the buffer for the view constants and map it persistently.
+    this->_cb_view = create_constant_buffer(device.d3d_device(),
+        this->pipeline_depth() * sizeof(ViewConstants));
+    set_debug_object_name(this->_cb_view.p, "view_constants");
+
+    {
+        void *p;
+        auto hr = this->_cb_view->Map(0, nullptr, &p);
+        if (FAILED(hr)) {
+            throw ATL::CAtlException(hr);
+        }
+
+        this->_view_constants = static_cast<ViewConstants *>(p);
+    }
 }
 
 
@@ -315,52 +354,39 @@ trrojan::d3d12::volume_benchmark_base::volume_benchmark_base(
  * trrojan::d3d12::volume_benchmark_base::on_run
  */
 trrojan::result trrojan::d3d12::volume_benchmark_base::on_run(
-        d3d12::device& device, const configuration& config,
+        d3d12::device& device,
+        const configuration& config,
         const std::vector<std::string>& changed) {
-#if 0
-    // If the device has changed, invalidate the data as well. Data-independent
-    // resources can be re-created immediately.
-    if (contains(changed, factor_device)) {
-        // Constant buffers.
-        //this->sphere_constants = create_buffer(dev, d3d12_USAGE_DEFAULT,
-        //    d3d12_BIND_CONSTANT_BUFFER, nullptr, sizeof(SphereConstants));
-        //set_debug_object_name(this->sphere_constants.p, "sphere_constants");
-
-        // Textures and SRVs.
-        this->data_view = nullptr;
-        this->xfer_func_view = nullptr;
-
-        // Samplers.
-        this->linear_sampler = create_linear_sampler(device.d3d_device());
-
-        // Queries.
-        //this->done_query = create_event_query(dev);
-        //this->stats_query = create_pipline_stats_query(dev);
+    // Clear all resource that have been invalidated by the change of factors.
+    if (contains_any(changed, factor_device, factor_data_set, factor_frame)) {
+        this->_tex_volume = nullptr;
+    }
+    if (contains_any(changed, factor_device, factor_xfer_func)) {
+        this->_tex_xfer_func = nullptr;
     }
 
-    // Invalidate data set if it has changed.
-    if (contains_any(changed, factor_data_set, factor_frame)) {
-        this->data_view = nullptr;
+    // Create all resources managed by the base class that are invalid.
+    {
+        auto cmd_list = this->create_graphics_command_list_for(
+            this->_tex_volume,
+            this->_tex_xfer_func);
+
+        if (this->_tex_volume == nullptr) {
+            this->_tex_volume = this->load_volume(config, device,
+                cmd_list, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE,
+                this->_volume_info);
+        }
+
+        if (this->_tex_xfer_func == nullptr) {
+            this->_tex_xfer_func = this->load_xfer_func(config, device,
+                cmd_list, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+        }
+
+        if (cmd_list != nullptr) {
+            device.close_and_execute_command_list(cmd_list);
+            device.wait_for_gpu();
+        }
     }
 
-    // Invalidate transfer function if it has changed.
-    if (contains(changed, factor_xfer_func)) {
-        this->xfer_func_view = nullptr;
-    }
-
-    // Recreate resources.
-    if (this->data_view == nullptr) {
-        ATL::CComPtr<Id3d12Texture3D> tex;
-        volume_benchmark_base::load_volume(config, device, this->_volume_info,
-            &tex, &this->data_view);
-    }
-
-    if (this->xfer_func_view == nullptr) {
-        ATL::CComPtr<Id3d12Texture1D> tex;
-        volume_benchmark_base::load_xfer_func(config, device, &tex,
-            &this->xfer_func_view);
-    }
-
-#endif
     return trrojan::result();
 }

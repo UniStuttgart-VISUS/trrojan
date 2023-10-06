@@ -15,8 +15,8 @@
 #include "trrojan/d3d12/plugin.h"
 #include "trrojan/d3d12/utilities.h"
 
-//#include "SinglePassVolumePipeline.hlsli"
-//#include "volume_techniques.h"
+#include "SinglePassVolumePipeline.hlsli"
+#include "volume_techniques.h"
 
 
 /*

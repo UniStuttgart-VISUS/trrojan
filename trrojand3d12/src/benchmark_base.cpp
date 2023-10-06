@@ -325,48 +325,6 @@ trrojan::d3d12::benchmark_base::create_command_list(
 
 
 /*
- * trrojan::d3d12::benchmark_base::create_graphics_command_list
- */
-ATL::CComPtr<ID3D12GraphicsCommandList>
-trrojan::d3d12::benchmark_base::create_graphics_command_list(
-        const D3D12_COMMAND_LIST_TYPE type, const std::size_t frame,
-        ID3D12PipelineState *initial_state) {
-    auto cmd_list = this->create_command_list(type, frame, initial_state);
-
-    ATL::CComPtr<ID3D12GraphicsCommandList> retval;
-    auto hr = cmd_list.QueryInterface(&retval);
-    if (FAILED(hr)) {
-        throw ATL::CAtlException(hr);
-    }
-
-    return retval;
-}
-
-
-/*
- * trrojan::d3d12::benchmark_base::create_graphics_command_list
- */
-ATL::CComPtr<ID3D12GraphicsCommandList>
-trrojan::d3d12::benchmark_base::create_graphics_command_list(
-        const std::size_t frame, ID3D12PipelineState *initial_state) {
-    return this->create_graphics_command_list(D3D12_COMMAND_LIST_TYPE_DIRECT,
-        frame, initial_state);
-}
-
-
-/*
- * trrojan::d3d12::benchmark_base::create_graphics_command_list
- */
-ATL::CComPtr<ID3D12GraphicsCommandList>
-trrojan::d3d12::benchmark_base::create_graphics_command_list(
-        ID3D12PipelineState *initial_state) {
-    assert(!this->_direct_cmd_allocators.empty());
-    return this->create_graphics_command_list(D3D12_COMMAND_LIST_TYPE_DIRECT,
-        this->buffer_index(), initial_state);
-}
-
-
-/*
  * trrojan::d3d12::benchmark_base::create_descriptor_heaps
  */
 void trrojan::d3d12::benchmark_base::create_descriptor_heaps(
@@ -429,6 +387,48 @@ void trrojan::d3d12::benchmark_base::create_descriptor_heaps(
             this->_descriptor_heaps.push_back(std::move(heap));
         }
     }
+}
+
+
+/*
+ * trrojan::d3d12::benchmark_base::create_graphics_command_list
+ */
+trrojan::d3d12::benchmark_base::graphics_command_list
+trrojan::d3d12::benchmark_base::create_graphics_command_list(
+        const D3D12_COMMAND_LIST_TYPE type, const std::size_t frame,
+        ID3D12PipelineState *initial_state) {
+    auto cmd_list = this->create_command_list(type, frame, initial_state);
+
+    ATL::CComPtr<ID3D12GraphicsCommandList> retval;
+    auto hr = cmd_list.QueryInterface(&retval);
+    if (FAILED(hr)) {
+        throw ATL::CAtlException(hr);
+    }
+
+    return retval;
+}
+
+
+/*
+ * trrojan::d3d12::benchmark_base::create_graphics_command_list
+ */
+trrojan::d3d12::benchmark_base::graphics_command_list
+trrojan::d3d12::benchmark_base::create_graphics_command_list(
+        const std::size_t frame, ID3D12PipelineState *initial_state) {
+    return this->create_graphics_command_list(D3D12_COMMAND_LIST_TYPE_DIRECT,
+        frame, initial_state);
+}
+
+
+/*
+ * trrojan::d3d12::benchmark_base::create_graphics_command_list
+ */
+trrojan::d3d12::benchmark_base::graphics_command_list
+trrojan::d3d12::benchmark_base::create_graphics_command_list(
+        ID3D12PipelineState *initial_state) {
+    assert(!this->_direct_cmd_allocators.empty());
+    return this->create_graphics_command_list(D3D12_COMMAND_LIST_TYPE_DIRECT,
+        this->buffer_index(), initial_state);
 }
 
 
