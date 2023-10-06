@@ -12,13 +12,46 @@ mark_as_advanced(FORCE
 
 
 # Chakra Core
-#FetchContent_Declare(ChakraCore
-#    URL "https://github.com/chakra-core/ChakraCore/archive/refs/tags/v1.11.24.zip"
-#)
-#FetchContent_MakeAvailable(ChakraCore)
-#mark_as_advanced(FORCE
-#    FETCHCONTENT_SOURCE_DIR_CHAKRACORE
-#    FETCHCONTENT_UPDATES_DISCONNECTED_CHAKRACORE)
+FetchContent_Declare(ChakraCore
+    URL "https://github.com/chakra-core/ChakraCore/archive/refs/tags/v1.11.24.zip"
+    DOWNLOAD_EXTRACT_TIMESTAMP ON
+)
+if (WIN32)
+    FetchContent_GetProperties(ChakraCore)
+    if (NOT ChakraCore_POPULATED)
+        FetchContent_Populate(ChakraCore)
+
+        set(CHAKRA_CONFIGURATION "Release")
+
+        # On Windows, we need to determine whether we are cross-compiling or
+        # building for the native platform.
+        if ("${CMAKE_SIZEOF_VOID_P}" STREQUAL "4")
+            set(CHAKRA_PLATFORM "x86")
+        else ()
+            set (CHAKRA_PLATFORM "x64")
+        endif ()
+
+        set (CHAKRA_BIN_DIR "${ChakraCore_SOURCE_DIR}/Build/VcBuild/bin/${CHAKRA_PLATFORM}_${CHAKRA_CONFIGURATION}")
+        set (CHAKRA_BIN "${CHAKRA_BIN_DIR}/chakracore.dll")
+        set (CHAKRA_LIB "${CHAKRA_BIN_DIR}/chakracore.lib")
+        #add_custom_command(TARGET trrojancore
+        #                   PRE_BUILD
+        #                   COMMAND msbuild /m /p:Platform=${CHAKRA_PLATFORM} /p:Configuration=${CHAKRA_CONFIGURATION} /p:RuntimeLib=static_library "${CHAKRA_DIR}/Build/Chakra.Core.sln"
+        #                   COMMENT "Building Chakra Core ...")
+        #add_custom_command(TARGET trrojancore
+        #                   POST_BUILD
+        #                   COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CHAKRA_BIN} $<TARGET_FILE_DIR:trrojancore>)
+        #target_link_libraries(trrojancore ${CHAKRA_LIB})
+
+        #add_subdirectory(${wil_SOURCE_DIR} ${wil_BINARY_DIR} EXCLUDE_FROM_ALL)
+    endif ()
+
+else ()
+    FetchContent_MakeAvailable(ChakraCore)
+endif ()
+mark_as_advanced(FORCE
+    FETCHCONTENT_SOURCE_DIR_CHAKRACORE
+    FETCHCONTENT_UPDATES_DISCONNECTED_CHAKRACORE)
 
 
 # datraw
@@ -65,10 +98,26 @@ FetchContent_Declare(pwrowg
     URL "https://github.com/UniStuttgart-VISUS/power-overwhelming/archive/refs/tags/v1.8.0.zip"
     DOWNLOAD_EXTRACT_TIMESTAMP ON
 )
+option(PWROWG_BuildDemo "" OFF)
+option(PWROWG_BuildDriver "" OFF)
+option(PWROWG_BuildDumpSensors "" OFF)
+option(PWROWG_BuildStablePower "" OFF)
+option(PWROWG_BuildTests "" OFF)
+option(PWROWG_BuildWeb "" OFF)
 FetchContent_MakeAvailable(pwrowg)
 mark_as_advanced(FORCE
     FETCHCONTENT_SOURCE_DIR_PWROWG
-    FETCHCONTENT_UPDATES_DISCONNECTED_PWROWG)
+    FETCHCONTENT_UPDATES_DISCONNECTED_PWROWG
+    PWROWG_BuildDemo
+    PWROWG_BuildDriver
+    PWROWG_BuildDumpSensors
+    PWROWG_BuildStablePower
+    PWROWG_BuildTests
+    PWROWG_BuildWeb
+    PWROWG_WithAdl
+    PWROWG_WithNvml
+    PWROWG_WithTimeSynchronisation
+    PWROWG_WithVisa)
 
 
 # spdlog
