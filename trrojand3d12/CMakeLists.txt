@@ -24,12 +24,13 @@ file(GLOB_RECURSE ShaderHeaderFiles RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${In
 set(ShaderFiles ${VertexShaderFiles} ${DomainShaderFiles} ${HullShaderFiles} ${GeometryShaderFiles} ${PixelShaderFiles} ${ComputeShaderFiles})
 
 # Configure fxc
+set(ShaderOutputDirectory "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}")
 set_property(SOURCE ${ShaderFiles} PROPERTY VS_SHADER_ENTRYPOINT Main)
 set_property(SOURCE ${ShaderFiles} PROPERTY VS_SHADER_MODEL 6.0)
 #set_property(SOURCE ${ShaderFiles} PROPERTY VS_SHADER_FLAGS /Zi)
 set_property(SOURCE ${ShaderFiles} PROPERTY VS_SHADER_ENABLE_DEBUG On)
 set_property(SOURCE ${ShaderFiles} PROPERTY VS_SHADER_FLAGS /Qembed_debug)
-set_property(SOURCE ${ShaderFiles} PROPERTY VS_SHADER_OBJECT_FILE_NAME "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${CMAKE_CFG_INTDIR}/d3d12/%(Filename).cso")
+set_property(SOURCE ${ShaderFiles} PROPERTY VS_SHADER_OBJECT_FILE_NAME "${ShaderOutputDirectory}/d3d12/%(Filename).cso")
 
 # Configure shader types
 set_property(SOURCE ${VertexShaderFiles} PROPERTY VS_SHADER_TYPE Vertex)
@@ -43,20 +44,17 @@ set_property(SOURCE ${ComputeShaderFiles} PROPERTY VS_SHADER_TYPE Compute)
 file(GLOB_RECURSE ShaderHeaderFiles RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${IncludeDirectory}/*.hlsli" "${SourceDirectory}/*.hlsli")
 set(ShaderFiles ${ShaderHeaderFiles} ${ShaderFiles})
 
-# Create CSOs for packing them into the resource files.
-#add_dependencies(${ResourceFiles} ${ShaderFiles})
-include_directories("${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${CMAKE_CFG_INTDIR}")
-
 
 # Define the library target
-add_library(${PROJECT_NAME} SHARED ${PublicHeaderFiles} ${PrivateHeaderFiles} ${SourceFiles} ${ResourceFiles})
-target_compile_definitions(${PROJECT_NAME} PRIVATE TRROJAND3D11_EXPORTS)
+add_library(${PROJECT_NAME} SHARED ${PublicHeaderFiles} ${PrivateHeaderFiles} ${SourceFiles} ${ShaderFiles} ${ResourceFiles})
+target_compile_definitions(${PROJECT_NAME} PRIVATE TRROJAND3D12_EXPORTS MMPLD_WITH_DIRECT3D)
 target_include_directories(${PROJECT_NAME}
     PUBLIC
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
         $<BUILD_INTERFACE:${IncludeDirectory}>
     PRIVATE
-        $<BUILD_INTERFACE:${SourceDirectory}>)
+        $<BUILD_INTERFACE:${SourceDirectory}>
+        $<BUILD_INTERFACE:${ShaderOutputDirectory}>)
 target_link_libraries(${PROJECT_NAME} PRIVATE trrojancore)
 target_link_libraries(${PROJECT_NAME} PRIVATE d3d12 dxgi dxguid)
 target_link_libraries(${PROJECT_NAME} PRIVATE glm::glm)

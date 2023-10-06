@@ -5,8 +5,8 @@ project(trrojancore)
 
 
 # Glob and add sources and resources
-set(IncludeDirectory "include")
-set(SourceDirectory "src")
+set(IncludeDirectory "${CMAKE_CURRENT_SOURCE_DIR}/include")
+set(SourceDirectory "${CMAKE_CURRENT_SOURCE_DIR}/src")
 
 file(GLOB_RECURSE PublicHeaderFiles RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${IncludeDirectory}/*.h" "${IncludeDirectory}/*.inl")
 file(GLOB_RECURSE PrivateHeaderFiles RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${SourceDirectory}/*.h" "${SourceDirectory}/*.inl")
@@ -21,8 +21,13 @@ endif ()
 
 # Define the library target
 add_library(${PROJECT_NAME} SHARED ${PublicHeaderFiles} ${PrivateHeaderFiles} ${SourceFiles} ${ResourceFiles})
-target_include_directories(${PROJECT_NAME} PRIVATE ${IncludeDirectory})
 target_compile_definitions(${PROJECT_NAME} PRIVATE TRROJANCORE_EXPORTS)
+target_include_directories(${PROJECT_NAME}
+    PUBLIC
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+        $<BUILD_INTERFACE:${IncludeDirectory}>
+    PRIVATE
+        $<BUILD_INTERFACE:${SourceDirectory}>)
 
 target_link_libraries(${PROJECT_NAME} PUBLIC trrojansnfo)
 target_link_libraries(${PROJECT_NAME} PUBLIC datraw)

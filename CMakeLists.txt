@@ -19,8 +19,6 @@ option(TRROJAN_DEBUG_OVERLAY "Enable overlay in debug view." OFF)
 # Third-party software
 include("ThirdParty.cmake")
 
-
-
 set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_USE_RELATIVE_PATHS ON)
 set(CMAKE_CXX_STANDARD 17)
@@ -82,7 +80,6 @@ add_subdirectory(trrojanstream)
 
 # Build the D3D plugins.
 if (WIN32)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMMPLD_WITH_DIRECT3D")
     add_subdirectory(trrojand3d11)
     add_subdirectory(trrojand3d12)
 endif ()
