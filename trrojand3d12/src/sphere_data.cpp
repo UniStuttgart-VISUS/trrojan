@@ -530,9 +530,9 @@ void trrojan::d3d12::sphere_data::set_properties(
     this->_colour[2] = 0.5f;
     this->_colour[3] = 1.0f;
     this->_properties = random_sphere_generator::get_properties(
-        desc.sphere_type);
+        desc.type);
     this->_input_layout = random_sphere_generator::get_input_layout<
-        D3D12_INPUT_ELEMENT_DESC>(desc.sphere_type);
+        D3D12_INPUT_ELEMENT_DESC>(desc.type);
     this->_intensity_range[0] = 0.0f;
     this->_intensity_range[1] = 1.0f;
 
@@ -540,7 +540,7 @@ void trrojan::d3d12::sphere_data::set_properties(
     // the actually realised maximum.
     this->_max_radius = desc.sphere_size[1];
 
-    this->_stride = random_sphere_generator::get_stride(desc.sphere_type);
+    this->_stride = random_sphere_generator::get_stride(desc.type);
 }
 
 
