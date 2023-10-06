@@ -46,7 +46,7 @@ jobs:
         configuration: Release
         generator: $(cmakeWindowsGenerator)
   pool:
-    name: 'hardware'
+    name: 'default'
     demands:
     - cmake
     - VisualStudio_16.0
