@@ -6,8 +6,8 @@
 
 #include "trrojan/d3d12/volume_rendering_configuration.h"
 
-//#include "sphere_techniques.h"
-//#include "SpherePipeline.hlsli"
+#include "volume_techniques.h"
+#include "SinglePassVolumePipeline.hlsli"
 
 
 #define _VOLUME_BENCH_DEFINE_FACTOR(f)                                         \
