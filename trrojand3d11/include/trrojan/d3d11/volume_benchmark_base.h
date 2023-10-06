@@ -109,6 +109,9 @@ namespace d3d11 {
             const configuration& config,
             const std::vector<std::string>& changed);
 
+        /// <inheritdoc />
+        void optimise_order(configuration_set& inOutConfs) override;
+
         trrojan::perspective_camera camera;
         ATL::CComPtr<ID3D11ShaderResourceView> data_view;
         ATL::CComPtr<ID3D11SamplerState> linear_sampler;

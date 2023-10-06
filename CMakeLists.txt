@@ -39,9 +39,11 @@ endif ()
 option(TRROJAN_WITH_CHAKRA "Enable JavaScript support." OFF)
 if (WIN32)
     option(TRROJAN_WITH_DSTORAGE "Enable support for DirectStorage in Direct3D 12 plugin." ON)
-else ()
+    option(TRROJAN_WITH_POWER_OVERWHELMING "Enable power_overwhelming for measuring GPU power consumption." ON)
+else (WIN32)
     set(TRROJAN_WITH_DSTORAGE OFF)
-endif ()
+    set(TRROJAN_WITH_POWER_OVERWHELMING OFF)
+endif (WIN32)
 option(TRROJAN_DEBUG_OVERLAY "Enable overlay in debug view." OFF)
 
 # Set the directory where we expect Chakra Core.
@@ -100,6 +102,17 @@ include_directories("glm")
 include_directories("spdlog/include")
 include_directories("datraw/datraw")
 include_directories("mmpld/mmpld")
+
+
+# Build the power measurement library.
+if (TRROJAN_WITH_POWER_OVERWHELMING)
+    add_subdirectory(power-overwhelming)
+    add_definitions(-DTRROJAN_WITH_POWER_OVERWHELMING)
+    set(POWER_OVERWHELMING_DIR "${CMAKE_CURRENT_SOURCE_DIR}/power-overwhelming")
+    include_directories("${POWER_OVERWHELMING_DIR}/power_overwhelming/include")
+    link_directories("${POWER_OVERWHELMING_DIR}/${CMAKE_VS_PLATFORM_NAME}/Release")
+endif (TRROJAN_WITH_POWER_OVERWHELMING)
+
 
 # Build the system information library.
 add_subdirectory(trrojansnfo)

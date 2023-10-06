@@ -51,6 +51,16 @@ TRROJANCORE_API std::ostream& trrojan::detail::operator <<(std::ostream& lhs,
 
 
 /*
+ * trrojan::detail::operator <<
+ */
+TRROJANCORE_API std::ostream& trrojan::detail::operator <<(std::ostream &lhs,
+        const power_collector::pointer& rhs) {
+    lhs << ((rhs != nullptr) ? rhs->file() : "null");
+    return lhs;
+}
+
+
+/*
  * trrojan::variant::~variant
  */
 trrojan::variant::~variant(void) {

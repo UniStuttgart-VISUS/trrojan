@@ -127,14 +127,14 @@ void trrojan::d3d11::volume_benchmark_base::load_brudervn_xfer_func(
         const char *path, ID3D11Device *device, ID3D11Texture1D **outTexture,
         ID3D11ShaderResourceView **outSrv) {
     std::vector<std::uint8_t> data;
-    std::uint8_t value;
+    std::uint32_t value;
 
     std::ifstream file(path, std::ios::in);
     if (file.is_open()) {
         data.reserve(256);
 
         while (file >> value) {
-            data.push_back(value);
+            data.push_back(static_cast<uint8_t>(value));
         }
 
     } else {
@@ -350,6 +350,8 @@ trrojan::d3d11::volume_benchmark_base::volume_benchmark_base(
         factor_min_prewarms, static_cast<unsigned int>(4)));
     this->_default_configs.add_factor(factor::from_manifestations(
         factor_min_wall_time, static_cast<unsigned int>(1000)));
+    this->_default_configs.add_factor(factor::from_manifestations(
+        factor_sync_interval, static_cast<unsigned int>(0)));
 
     this->add_default_manoeuvre();
 }
@@ -405,4 +407,17 @@ trrojan::result trrojan::d3d11::volume_benchmark_base::on_run(
     }
 
     return trrojan::result();
+}
+
+
+/*
+ * trrojan::d3d11::volume_benchmark_base::optimise_order
+ */
+void trrojan::d3d11::volume_benchmark_base::optimise_order(
+        configuration_set& inOutConfs) {
+    inOutConfs.optimise_order({
+        factor_data_set,
+        factor_xfer_func,
+        factor_device
+    });
 }

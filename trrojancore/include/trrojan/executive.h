@@ -1,8 +1,8 @@
-/// <copyright file="executive.h" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Christoph Müller</author>
+// <copyright file="executive.h" company="Visualisierungsinstitut der Universität Stuttgart">
+// Copyright © 2016 - 2022 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Christoph Müller</author>
 
 #pragma once
 
@@ -22,6 +22,7 @@
 #include "trrojan/export.h"
 #include "trrojan/image_helper.h"
 #include "trrojan/output.h"
+#include "trrojan/power_collector.h"
 #include "trrojan/plugin.h"
 #include "trrojan/trroll_parser.h"
 
@@ -107,17 +108,20 @@ namespace trrojan {
         /// names of <see cref="environment" /> and <see cref="device" />s need
         /// to be replaces with their actual instantiation.</param>
         void run(benchmark_base& benchmark, configuration_set configs,
-            output_base& output, const cool_down& coolDown);
+            output_base& output, const cool_down& coolDown,
+            power_collector::pointer powerCollector);
 
         void run(const benchmark& benchmark, const configuration_set& configs,
-            output_base& output, const cool_down& coolDown);
+            output_base& output, const cool_down& coolDown,
+            power_collector::pointer powerCollector);
 
         /// <summary>
         /// Runs the benchmarks in the given TRROLL script writing the results
         /// to the given <paramref name="output" />.
         /// </summary>
         void trroll(const std::string& path, output_base& output,
-            const cool_down& coolDown);
+            const cool_down& coolDown,
+            power_collector::pointer powerCollector);
 
         executive operator =(const executive&) = delete;
 
@@ -200,7 +204,7 @@ namespace trrojan {
             /// <summary>
             /// Move <paramref name="rhs" />.
             /// </summary>
-            inline plugin_dll(plugin_dll&& rhs) : handle(rhs.handle) {
+            inline plugin_dll(plugin_dll&& rhs) noexcept : handle(rhs.handle) {
                 rhs.handle = plugin_dll::invalid_handle;
             }
 
