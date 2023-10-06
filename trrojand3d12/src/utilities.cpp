@@ -345,6 +345,34 @@ ATL::CComPtr<ID3D12Resource> trrojan::d3d12::create_texture(
 
 
 /*
+ * trrojan::d3d12::create_texture
+ */
+ATL::CComPtr<ID3D12Resource> trrojan::d3d12::create_texture(
+        ID3D12Device *device,
+        const UINT64 width,
+        const UINT64 height,
+        const UINT64 depth,
+        const DXGI_FORMAT format,
+        const D3D12_RESOURCE_FLAGS flags) {
+    assert(device != nullptr);
+
+    D3D12_RESOURCE_DESC desc;
+    ::ZeroMemory(&desc, sizeof(desc));
+    desc.MipLevels = 1;
+    desc.Format = format;
+    desc.Width = width;
+    desc.Height = height;
+    desc.Flags = flags;
+    desc.DepthOrArraySize = depth;
+    desc.SampleDesc.Count = 1;
+    desc.SampleDesc.Quality = 0;
+    desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE1D;
+
+    return create_resource(device, desc);
+}
+
+
+/*
  * trrojan::d3d12::create_upload_buffer
  */
 ATL::CComPtr<ID3D12Resource> trrojan::d3d12::create_upload_buffer(

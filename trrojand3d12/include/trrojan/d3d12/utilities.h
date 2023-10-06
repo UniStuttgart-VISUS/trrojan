@@ -196,6 +196,22 @@ namespace d3d12 {
     //    const D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE);
 
     /// <summary>
+    /// Create an uninitailisd 3D texture which is in state
+    /// <see cref="D3D12_RESOURCE_STATE_COPY_DEST" />.
+    /// </summary>
+    /// <param name="device"></param>
+    /// <param name="width"></param>
+    /// <param name="height"></param>
+    /// <param name="depth"></param>
+    /// <param name="format"></param>
+    /// <param name="flags"></param>
+    /// <returns></returns>
+    ATL::CComPtr<ID3D12Resource> create_texture(ID3D12Device *device,
+        const UINT64 width, const UINT64 height, const UINT64 depth,
+        const DXGI_FORMAT format,
+        const D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE);
+
+    /// <summary>
     /// Create an upload buffer for the specified subresource of the given
     /// GPU resource.
     /// </summary>

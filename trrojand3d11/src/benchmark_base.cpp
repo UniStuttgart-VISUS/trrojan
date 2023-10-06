@@ -1,8 +1,8 @@
-/// <copyright file="benchmark_base.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Christoph Müller</author>
+ï»¿// <copyright file="benchmark_base.cpp" company="Visualisierungsinstitut der UniversitÃ¤t Stuttgart">
+// Copyright Â© 2016 - 2023 Visualisierungsinstitut der UniversitÃ¤t Stuttgart. Alle Rechte vorbehalten.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Christoph MÃ¼ller</author>
 
 #include "trrojan/d3d11/benchmark_base.h"
 
@@ -108,7 +108,7 @@ trrojan::result trrojan::d3d11::benchmark_base::run(const configuration& c) {
     if (contains(changed, factor_viewport)) {
         auto vp = c.get<viewport_type>(factor_viewport);
         log::instance().write_line(log_level::verbose, "Resizing the "
-            "benchmarking render target to {} × {} px ...", vp[0], vp[1]);
+            "benchmarking render target to {} Ã— {} px ...", vp[0], vp[1]);
         this->render_target->resize(vp[0], vp[1]);
     }
 
