@@ -274,7 +274,7 @@ void trrojan::d3d11::volume_benchmark_base::load_xfer_func(
         std::array<std::uint32_t, 256> linearXfer;
 
         {
-            size_t i = 0;
+            std::uint32_t i = 0;
             std::generate(linearXfer.begin(), linearXfer.end(), [&i]() {
                 auto retval = (i << 24) | (i << 16) | (i << 8) | i;
                 ++i;
