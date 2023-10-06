@@ -1,5 +1,5 @@
 // <copyright file="trrojan.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2016 - 2022 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+// Copyright © 2016 - 2023 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
 // <author>Christoph Müller</author>
@@ -53,6 +53,7 @@ int main(const int argc, const char **argv) {
                 << std::endl << std::endl;
         }
 
+#if defined(TRROJAN_WITH_POWER_OVERWHELMING)
         {
             auto it = trrojan::find_argument("--power", cmdLine.begin(),
                 cmdLine.end());
@@ -62,6 +63,7 @@ int main(const int argc, const char **argv) {
                 powerCollector->start(*it, std::chrono::milliseconds(5));
             }
         }
+#endif /* defined(TRROJAN_WITH_POWER_OVERWHELMING) */
 
         /* Configure the output target for the results. */
         auto output = trrojan::open_output(cmdLine);

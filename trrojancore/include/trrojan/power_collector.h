@@ -6,7 +6,7 @@
 
 #pragma once
 
-#if defined(TRROJAN_WITH_POWER_OVERWHELMING)
+
 #include <array>
 #include <atomic>
 #include <chrono>
@@ -15,7 +15,9 @@
 #include <thread>
 #include <vector>
 
+#if defined(TRROJAN_WITH_POWER_OVERWHELMING)
 #include "power_overwhelming/collector.h"
+#endif /* defined(TRROJAN_WITH_POWER_OVERWHELMING) */
 
 #include "trrojan/export.h"
 
@@ -42,6 +44,7 @@ namespace trrojan {
         /// </summary>
         typedef std::shared_ptr<power_collector> pointer;
 
+#if defined(TRROJAN_WITH_POWER_OVERWHELMING)
         /// <summary>
         /// The column delimiter.
         /// </summary>
@@ -177,9 +180,7 @@ namespace trrojan {
         std::ofstream _stream;
         std::vector<visus::power_overwhelming::tinkerforge_sensor> _tinkerforge_sensors;
         std::atomic<std::uint64_t> _unique_identifier;
-
+#endif /* defined(TRROJAN_WITH_POWER_OVERWHELMING) */
     };
 
 } /* end namespace trrojan */
-
-#endif /* defined(TRROJAN_WITH_POWER_OVERWHELMING) */

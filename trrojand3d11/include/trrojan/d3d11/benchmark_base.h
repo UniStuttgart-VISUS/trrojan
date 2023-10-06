@@ -1,5 +1,5 @@
 // <copyright file="benchmark_base.h" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2016 - 2022 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+// Copyright © 2016 - 2023 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
 // <author>Christoph Müller</author>
@@ -20,7 +20,9 @@
 #include "trrojan/d3d11/gpu_timer.h"
 #include "trrojan/d3d11/render_target.h"
 
+#if defined(TRROJAN_WITH_POWER_OVERWHELMING)
 #include "power_overwhelming/collector.h"
+#endif /* defined(TRROJAN_WITH_POWER_OVERWHELMING) */
 
 
 namespace trrojan {
@@ -36,11 +38,8 @@ namespace d3d11 {
 
         typedef trrojan::graphics_benchmark_base::manoeuvre_step_type
             manoeuvre_step_type;
-
         typedef trrojan::graphics_benchmark_base::manoeuvre_type manoeuvre_type;
-
         typedef trrojan::graphics_benchmark_base::point_type point_type;
-
         typedef trrojan::graphics_benchmark_base::viewport_type viewport_type;
 
         /// <summary>

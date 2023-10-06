@@ -556,10 +556,12 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
     // Do the wall clock measurement.
     log::instance().write_line(log_level::debug, "Measuring wall clock "
         "timings over {} iterations ...", cntCpuIterations);
+#if defined(TRROJAN_WITH_POWER_OVERWHELMING)
     if (powerCollector != nullptr) {
         // If we have a power sensor, we want to record data now.
         powerUid = powerCollector->set_next_unique_description();
     }
+#endif /* defined(TRROJAN_WITH_POWER_OVERWHELMING) */
 
     cpuTimer.start();
     for (std::uint32_t i = 0; i < cntCpuIterations; ++i) {
@@ -580,11 +582,13 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
     wait_for_event_query(ctx, this->done_query);
     auto cpuTime = cpuTimer.elapsed_millis();
 
+#if defined(TRROJAN_WITH_POWER_OVERWHELMING)
     if (powerCollector != nullptr) {
         // Commit power samples and prevent collection until next wall-clock
         // measurement cycle.
         powerCollector->set_description("");
     }
+#endif /* defined(TRROJAN_WITH_POWER_OVERWHELMING) */
 
     // Compute derived statistics for GPU counters.
     std::sort(gpuTimes.begin(), gpuTimes.end());
