@@ -5,6 +5,8 @@ cmake_minimum_required(VERSION 3.15.0)
 
 project(TRRojan)
 
+include("ThirdParty.cmake")
+
 find_package(JPEG)
 find_package(TIFF)
 find_package(ZLIB)
@@ -96,7 +98,7 @@ endif ()
 # Build spdlog
 set(SPDLOG_BUILD_TESTING "NO" FORCE)
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DSPDLOG_FMT_PRINTF")
-add_subdirectory(spdlog)
+#add_subdirectory(spdlog)
 
 # Include headers for all of TRRojan.
 include_directories("glm")

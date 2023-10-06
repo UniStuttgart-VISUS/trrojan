@@ -1,24 +1,28 @@
 # CMakeLists.txt
-# Copyright (C) 2016 SFB-TRR 161. Alle Rechte vorbehalten.
+# Copyright (C) 2016 - 2023 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
 
-cmake_minimum_required(VERSION 3.1.0)
+project(trrojancore)
 
+
+# Glob and add sources and resources
 set(IncludeDirectory "include")
 set(SourceDirectory "src")
-set(LibraryDirectory "lib")
 
-file(GLOB_RECURSE HeaderFiles RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${IncludeDirectory}/*.h" "${SourceDirectory}/*.h" "${IncludeDirectory}/*.inl" "${SourceDirectory}/*.inl")
+file(GLOB_RECURSE PublicHeaderFiles RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${IncludeDirectory}/*.h" "${IncludeDirectory}/*.inl")
+file(GLOB_RECURSE PrivateHeaderFiles RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${SourceDirectory}/*.h" "${SourceDirectory}/*.inl")
 file(GLOB_RECURSE SourceFiles RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${SourceDirectory}/*.cpp")
 
-include_directories("${IncludeDirectory}")
-include_directories("${LibraryDirectory}")
-include_directories("${TrrojanSysInfoIncludeDir}")
+if (WIN32)
+    file(GLOB_RECURSE ResourceFiles RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${SourceDirectory}/*.rc")
+else ()
+    set(ResourceFiles "")
+endif ()
 
-add_definitions("-DTRROJANCORE_EXPORTS")
 
-set(TrrojanCoreIncludeDir "${CMAKE_CURRENT_SOURCE_DIR}/${IncludeDirectory}" PARENT_SCOPE)
-
-add_library(trrojancore SHARED ${HeaderFiles} ${SourceFiles})
+# Define the library target
+add_library(${PROJECT_NAME} SHARED ${PublicHeaderFiles} ${PrivateHeaderFiles} ${SourceFiles} ${ResourceFiles})
+target_include_directories(${PROJECT_NAME} PRIVATE ${IncludeDirectory})
+target_compile_definitions(${PROJECT_NAME} PRIVATE TRROJANCORE_EXPORTS)
 
 # Disable Chakra core if we cannot build it.
 if (NOT EXISTS ${CHAKRA_DIR})
@@ -57,7 +61,7 @@ if (TRROJAN_WITH_CHAKRA)
                            COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CHAKRA_BIN} $<TARGET_FILE_DIR:trrojancore>)
         target_link_libraries(trrojancore ${CHAKRA_LIB})
 
-    else (WIN32)
+    else ()
         set (CHAKRA_BIN_DIR "${CHAKRA_DIR}/out/${CHAKRA_CONFIGURATION}")
         set (CHAKRA_LIB "${CHAKRA_BIN_DIR}/libChakraCore.so")
 
@@ -71,23 +75,43 @@ if (TRROJAN_WITH_CHAKRA)
         set_property(TARGET ChakraCore PROPERTY IMPORTED_LOCATION ${CHAKRA_LIB})
 
         target_link_libraries(trrojancore ChakraCore)
-    endif (WIN32)
-endif (TRROJAN_WITH_CHAKRA)
+    endif ()
+endif ()
 
-# Configure the linker.
-target_link_libraries(trrojancore trrojansnfo)
+# Configure the linker
+target_link_libraries(${PROJECT_NAME} trrojansnfo)
 
 if (${CMAKE_COMPILER_IS_GNUCXX})
-    target_link_libraries(trrojancore dl)
-endif (${CMAKE_COMPILER_IS_GNUCXX})
+    target_link_libraries(${PROJECT_NAME} dl)
+endif ()
 
 if (TRROJAN_WITH_POWER_OVERWHELMING)
-    target_link_libraries(trrojancore power_overwhelming)
-    add_custom_command(TARGET trrojancore POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy "${POWER_OVERWHELMING_DIR}/${CMAKE_VS_PLATFORM_NAME}/Release/power_overwhelming.dll" "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/$<CONFIG>")
-endif (TRROJAN_WITH_POWER_OVERWHELMING)
+    target_link_libraries(${PROJECT_NAME} power_overwhelming)
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy "${POWER_OVERWHELMING_DIR}/${CMAKE_VS_PLATFORM_NAME}/Release/power_overwhelming.dll" "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/$<CONFIG>")
+endif ()
 
 if (TRROJAN_WITH_DSTORAGE)
-    target_link_libraries(trrojancore dstorage)
+    target_link_libraries(${PROJECT_NAME} dstorage)
     #install(FILES "${DSTORAGE_DIR}/bin/${CMAKE_VS_PLATFORM_NAME}/dstorage.dll" DESTINATION bin)
-    add_custom_command(TARGET trrojancore POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy "${DSTORAGE_DIR}/bin/${CMAKE_VS_PLATFORM_NAME}/dstorage.dll" "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/$<CONFIG>")
-endif (TRROJAN_WITH_DSTORAGE)
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy "${DSTORAGE_DIR}/bin/${CMAKE_VS_PLATFORM_NAME}/dstorage.dll" "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/$<CONFIG>")
+endif ()
+
+
+# Installation
+install(TARGETS ${PROJECT_NAME}
+    EXPORT ${PROJECT_NAME}Targets
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+
+install(DIRECTORY ${IncludeDirectory}
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+
+install(EXPORT ${PROJECT_NAME}Targets
+    FILE ${PROJECT_NAME}Config.cmake
+    NAMESPACE ${PROJECT_NAME}::
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME})
+
+
+# TODO: Remove this
+set(TrrojanCoreIncludeDir "${CMAKE_CURRENT_SOURCE_DIR}/${IncludeDirectory}" PARENT_SCOPE)
