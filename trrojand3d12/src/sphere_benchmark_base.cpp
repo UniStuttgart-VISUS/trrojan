@@ -661,6 +661,89 @@ trrojan::d3d12::sphere_benchmark_base::set_descriptors(
 
 
 /*
+ * trrojan::d3d12::sphere_benchmark_base::set_max_radius
+ */
+void trrojan::d3d12::sphere_benchmark_base::set_max_radius(
+        const mmpld::list_header& header, const void *particles) {
+    this->_max_radius = header.radius;
+
+    if (this->_max_radius <= 0.0f) {
+        // This list has per-particle radii, which we must check individually.
+        auto cur = static_cast<const std::uint8_t *>(particles);
+        const auto stride = mmpld::get_stride<std::size_t>(header);
+
+        this->_max_radius = std::numeric_limits<
+            decltype(header.radius)>::lowest();
+        for (std::size_t i = 0; i < header.particles; ++i, cur += stride) {
+            const auto pos = reinterpret_cast<const float *>(cur);
+            if (pos[4] > this->_max_radius) {
+                this->_max_radius = pos[4];
+            }
+        }
+    }
+
+    log::instance().write_line(log_level::verbose, "Maximum radius in MMPLD "
+        "particle list was computed as {}.", this->_max_radius);
+}
+
+
+/*
+ * trrojan::d3d12::sphere_benchmark_base::set_properties
+ */
+void trrojan::d3d12::sphere_benchmark_base::set_properties(
+        const random_sphere_generator::description& desc) {
+    for (glm::length_t i = 0; i < this->_bbox[0].length(); ++i) {
+        this->_bbox[0][i] = -0.5 * desc.domain_size[i];
+        this->_bbox[1][i] = 0.5 * desc.domain_size[i];
+    }
+
+    this->_cnt_spheres = static_cast<UINT>(desc.number);
+    this->_colour[0] = 0.5f;
+    this->_colour[1] = 0.5f;
+    this->_colour[2] = 0.5f;
+    this->_colour[3] = 1.0f;
+    this->_data_properties = random_sphere_generator::get_properties(
+        desc.type);
+    this->_input_layout = random_sphere_generator::get_input_layout<
+        D3D12_INPUT_ELEMENT_DESC>(desc.type);
+    this->_intensity_range[0] = 0.0f;
+    this->_intensity_range[1] = 1.0f;
+
+    // Without the actual data, we can only set the requested maximum size, not
+    // the actually realised maximum.
+    this->_max_radius = desc.sphere_size[1];
+
+    this->_stride = random_sphere_generator::get_stride(desc.type);
+}
+
+
+/*
+ * trrojan::d3d12::sphere_benchmark_base::set_properties
+ */
+void trrojan::d3d12::sphere_benchmark_base::set_properties(
+        const mmpld::list_header& header) {
+    for (glm::length_t i = 0; i < this->_bbox[0].length(); ++i) {
+        this->_bbox[0][i] = header.bounding_box[i];
+        this->_bbox[1][i] = header.bounding_box[i + 3];
+    }
+
+    this->_cnt_spheres = static_cast<UINT>(header.particles);
+    ::memcpy(this->_colour.data(), &header.colour, sizeof(header.colour));
+    this->_data_properties = mmpld::get_properties<properties_type>(header);
+    this->_input_layout = mmpld::get_input_layout<D3D12_INPUT_ELEMENT_DESC>(
+        header);
+    this->_intensity_range[0] = header.min_intensity;
+    this->_intensity_range[1] = header.max_intensity;
+
+    // The global radius from the list header might be wrong, but we cannot do
+    // any better than this without the actual data.
+    this->_max_radius = header.radius;
+
+    this->_stride = mmpld::get_stride<UINT>(header);
+}
+
+
+/*
  * trrojan::d3d12::sphere_benchmark_base::set_vertex_buffer
  */
 void trrojan::d3d12::sphere_benchmark_base::set_vertex_buffer(

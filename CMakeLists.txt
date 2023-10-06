@@ -13,7 +13,7 @@ find_package(OpenMP)
 
 set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_USE_RELATIVE_PATHS ON)
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -24,18 +24,18 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/bin")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/lib")
 
 
-# Checkout git submodules.
+# Checkout Git submodules.
 find_package(Git QUIET)
 if (GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
     message(STATUS "Updating Git submodules ...")
     execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} RESULT_VARIABLE GIT_SUBMOD_RESULT)
     if (NOT GIT_SUBMOD_RESULT EQUAL "0")
-        message(FATAL_ERROR "Updating Uit submodules failed with error code ${GIT_SUBMOD_RESULT}, please checkout submodules manually.")
+        message(FATAL_ERROR "Updating Git submodules failed with error code ${GIT_SUBMOD_RESULT}, please checkout submodules manually.")
     endif ()
 endif ()
 
 
-# Configure optional features.
+# Configure optional features with a reasonable default value.
 option(TRROJAN_WITH_CHAKRA "Enable JavaScript support." OFF)
 if (WIN32)
     option(TRROJAN_WITH_DSTORAGE "Enable support for DirectStorage in Direct3D 12 plugin." ON)
@@ -49,6 +49,7 @@ set(CHAKRA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/chakra" CACHE STRING "Directory hold
 
 # Set the directory where we expect DirectStorage.
 set(DSTORAGE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Microsoft.Direct3D.DirectStorage.1.0.0" CACHE STRING "Directory holding the DirectStorage APIs.")
+
 
 
 # Configure the compiler.

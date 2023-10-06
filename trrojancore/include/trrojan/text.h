@@ -133,7 +133,6 @@ namespace trrojan {
             const bool no_seps = false) {
         // From https://codereview.stackexchange.com/questions/156695/converting-stdchronotime-point-to-from-stdstring
         using namespace std::chrono;
-        typedef time_point<C> TimePoint;
 
         auto millis = duration_cast<milliseconds>(tp.time_since_epoch());
         auto secs = duration_cast<seconds>(millis);
@@ -142,20 +141,22 @@ namespace trrojan {
         std::size_t rem = millis.count() % 1000;
 
 #if defined(_MSC_VER)
-        std::tm tm;
-        if (localtime_s(&tm, &tt) != 0) {
+        std::tm ltm;
+        auto tm = &ltm;
+        if (localtime_s(&ltm, &tt) != 0) {
 #else
-        if (std::localtime(&tt) == nullptr) {
+        auto tm = std::localtime(&tt);
+        if (tm == nullptr) {
 #endif
             throw std::system_error(errno, std::system_category());
         }
 
         std::basic_ostringstream<T> stream;
         if (no_seps) {
-            stream << std::put_time(&tm, "%Y%m%d%H%M%S")
+            stream << std::put_time(tm, "%Y%m%d%H%M%S")
                 << std::setw(3) << std::setfill('0') << rem;
         } else {
-            stream << std::put_time(&tm, "%Y-%m-%dT%H:%M:%S.")
+            stream << std::put_time(tm, "%Y-%m-%dT%H:%M:%S.")
                 << std::setw(3) << std::setfill('0') << rem;
         }
 
@@ -189,7 +190,7 @@ namespace trrojan {
         // http://stackoverflow.com/questions/216823/whats-the-best-way-to-trim-stdstring
         auto end = str.cend();
         auto begin = std::find_if(str.cbegin(), end,
-            std::not1(std::ptr_fun<int, int>(std::isspace)));
+            [](const T c) { return !std::isspace(c); });
         return std::basic_string<T>(begin, str.cend());
     }
 
@@ -203,7 +204,7 @@ namespace trrojan {
             const std::basic_string<T>& str) {
         // http://stackoverflow.com/questions/216823/whats-the-best-way-to-trim-stdstring
         auto end = std::find_if(str.crbegin(), str.crend(),
-            std::not1(std::ptr_fun<int, int>(std::isspace)));
+            [](const T c) { return !std::isspace(c); });
         return std::basic_string<T>(str.cbegin(), end.base());
     }
 

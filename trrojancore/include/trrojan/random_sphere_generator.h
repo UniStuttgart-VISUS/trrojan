@@ -64,7 +64,7 @@ namespace trrojan {
             std::size_t number;
             std::uint32_t seed;
             std::array<float, 2> sphere_size;
-            sphere_type sphere_type;
+            sphere_type type;
 
             inline description(void)
                 : domain_size({ 0.0f, 0.0f, 0.0f }),
@@ -72,7 +72,7 @@ namespace trrojan {
                 number(0),
                 seed(0),
                 sphere_size({ 0.0f, 0.0f }),
-                sphere_type(sphere_type::unspecified) { }
+                type(sphere_type::unspecified) { }
         };
 
         /// <summary>
