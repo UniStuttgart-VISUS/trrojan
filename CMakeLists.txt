@@ -26,9 +26,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 
-# Set the directory where we expect Chakra Core.
-set(CHAKRA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/chakra" CACHE STRING "Directory holding the source of Chakra Core.")
-
 # Global compiler configuration for all of TRRojan.
 if (WIN32)
     add_compile_options(/wd4251)	# We cannot fix that - TRRojan just needs to be compiled in a single step.
@@ -71,7 +68,8 @@ add_subdirectory(trrojansnfo)
 add_subdirectory(trrojancore)
 
 # Build the OpenCL plugin
-if (${OpenCL_FOUND} AND ${OPENGL_FOUND})
+set(WITH_OPENCL ${OpenCL_FOUND} AND ${OPENGL_FOUND})
+if (${WITH_OPENCL})
     add_subdirectory(trrojancl)
 endif ()
 

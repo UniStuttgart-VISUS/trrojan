@@ -1,10 +1,9 @@
 # CMakeLists.txt
 # Copyright © 2016 - 2023 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
 
-include(FindPkgConfig)
-
 
 project(trrojan)
+include(FindPkgConfig)
 
 
 file(GLOB_RECURSE HeaderFiles RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "*.h")
@@ -20,7 +19,7 @@ add_executable(trrojan ${SourceFiles})
 target_link_libraries(trrojan PRIVATE ${SYSTEM_LIBS} trrojancore)
 
 
-# All the CImg crap by Valentin, but refactored to avoid unnecessary stuff.
+# All the CImg crap Valentin needs to save screenies on Linux.
 #find_package(OpenCV)
 find_package(JPEG)
 find_package(TIFF)
@@ -94,12 +93,6 @@ if (X11_FOUND)
     target_link_libraries(${PROJECT_NAME} PRIVATE ${X11_LIBRARIES})
 endif ()
 
-
-#Path of CImg.h file relative to this file path
-#set(CIMG_H_PATH ${TrrojanCoreIncludeDir}/lib/)
-#include_directories( ${CIMG_H_PATH} )
-
-
 if (NOT WIN32)
     target_link_libraries(${PROJECT_NAME} PRIVATE ${CMAKE_THREAD_LIBS_INIT})
 endif ()
@@ -107,6 +100,29 @@ endif ()
 if (WIN32)
     target_link_libraries(${PROJECT_NAME} PRIVATE gdi32)
 endif()
+
+#Path of CImg.h file relative to this file path
+#set(CIMG_H_PATH ${TrrojanCoreIncludeDir}/lib/)
+#include_directories( ${CIMG_H_PATH} )
+
+
+# For debugging the executable directly from Visual Studio, copy all of the
+# benchmark DLLs to the output directory.
+set(TRROJAN_INTERNAL_DEPENDENCIES "trrojancore" "trrojansnfo" "trrojanstream")
+if (WITH_OPENCL)
+    set(TRROJAN_INTERNAL_DEPENDENCIES ${TRROJAN_INTERNAL_DEPENDENCIES} "trrojancl")
+endif ()
+if (WIN32)
+    set(TRROJAN_INTERNAL_DEPENDENCIES ${TRROJAN_INTERNAL_DEPENDENCIES} "trrojand3d11" "trrojand3d12")
+endif ()
+
+foreach (TRROJAN_INT_DEP ${TRROJAN_INTERNAL_DEPENDENCIES})
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different "${${TRROJAN_INT_DEP}_BINARY_DIR}/$<CONFIG>/${TRROJAN_INT_DEP}${CMAKE_SHARED_LIBRARY_SUFFIX}" "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>")
+endforeach ()
+
+if (TRROJAN_WITH_CHAKRA)
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different "${trrojancore_BINARY_DIR}/$<CONFIG>/chakracore${CMAKE_SHARED_LIBRARY_SUFFIX}" "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>")
+endif ()
 
 
 # Installation

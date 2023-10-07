@@ -1,6 +1,7 @@
 ﻿# ThirdParty.cmake
 # Copyright © 2023 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
 
+include(ExternalProject)
 include(FetchContent)
 
 set(FETCHCONTENT_QUIET ON)
@@ -12,46 +13,42 @@ mark_as_advanced(FORCE
 
 
 # Chakra Core
-FetchContent_Declare(ChakraCore
-    URL "https://github.com/chakra-core/ChakraCore/archive/refs/tags/v1.11.24.zip"
-    DOWNLOAD_EXTRACT_TIMESTAMP ON
-)
 if (WIN32)
-    FetchContent_GetProperties(ChakraCore)
-    if (NOT ChakraCore_POPULATED)
-        FetchContent_Populate(ChakraCore)
+    set(CHAKRA_CONFIGURATION "Release")
 
-        set(CHAKRA_CONFIGURATION "Release")
-
-        # On Windows, we need to determine whether we are cross-compiling or
-        # building for the native platform.
-        if ("${CMAKE_SIZEOF_VOID_P}" STREQUAL "4")
-            set(CHAKRA_PLATFORM "x86")
-        else ()
-            set (CHAKRA_PLATFORM "x64")
-        endif ()
-
-        set (CHAKRA_BIN_DIR "${ChakraCore_SOURCE_DIR}/Build/VcBuild/bin/${CHAKRA_PLATFORM}_${CHAKRA_CONFIGURATION}")
-        set (CHAKRA_BIN "${CHAKRA_BIN_DIR}/chakracore.dll")
-        set (CHAKRA_LIB "${CHAKRA_BIN_DIR}/chakracore.lib")
-        #add_custom_command(TARGET trrojancore
-        #                   PRE_BUILD
-        #                   COMMAND msbuild /m /p:Platform=${CHAKRA_PLATFORM} /p:Configuration=${CHAKRA_CONFIGURATION} /p:RuntimeLib=static_library "${CHAKRA_DIR}/Build/Chakra.Core.sln"
-        #                   COMMENT "Building Chakra Core ...")
-        #add_custom_command(TARGET trrojancore
-        #                   POST_BUILD
-        #                   COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CHAKRA_BIN} $<TARGET_FILE_DIR:trrojancore>)
-        #target_link_libraries(trrojancore ${CHAKRA_LIB})
-
-        #add_subdirectory(${wil_SOURCE_DIR} ${wil_BINARY_DIR} EXCLUDE_FROM_ALL)
+    # On Windows, we need to determine whether we are cross-compiling or
+    # building for the native platform.
+    if ("${CMAKE_SIZEOF_VOID_P}" STREQUAL "4")
+        set(CHAKRA_PLATFORM "x86")
+    else ()
+        set (CHAKRA_PLATFORM "x64")
     endif ()
 
+    ExternalProject_Add(ChakraCore
+        URL "https://github.com/chakra-core/ChakraCore/archive/refs/tags/v1.11.24.zip"
+        DOWNLOAD_EXTRACT_TIMESTAMP ON
+        PREFIX _deps/ChakraCore
+        CMAKE_COMMAND ""
+        CONFIGURE_COMMAND ""
+        BUILD_COMMAND msbuild /m /p:Platform=${CHAKRA_PLATFORM} /p:Configuration=${CHAKRA_CONFIGURATION} /p:RuntimeLib=static_library "Build/Chakra.Core.sln"
+        INSTALL_COMMAND ""  
+        BUILD_IN_SOURCE ON)
+
+    ExternalProject_Get_Property(ChakraCore SOURCE_DIR)
+    set(ChakraCore_SOURCE_DIR ${SOURCE_DIR})
+    set(ChakraCore_BINARY_DIR "${ChakraCore_SOURCE_DIR}/Build/VcBuild/bin/${CHAKRA_PLATFORM}_${CHAKRA_CONFIGURATION}")
+
 else ()
+    # On Linux, we can use Cmake ... I think.
+    FetchContent_Declare(ChakraCore
+        URL "https://github.com/chakra-core/ChakraCore/archive/refs/tags/v1.11.24.zip"
+        DOWNLOAD_EXTRACT_TIMESTAMP ON
+    )
     FetchContent_MakeAvailable(ChakraCore)
+    mark_as_advanced(FORCE
+        FETCHCONTENT_SOURCE_DIR_CHAKRACORE
+        FETCHCONTENT_UPDATES_DISCONNECTED_CHAKRACORE)
 endif ()
-mark_as_advanced(FORCE
-    FETCHCONTENT_SOURCE_DIR_CHAKRACORE
-    FETCHCONTENT_UPDATES_DISCONNECTED_CHAKRACORE)
 
 
 # datraw
@@ -146,7 +143,7 @@ find_package(OpenCL)
 find_package(OpenGL)
 
 
-# Stuff that Valentin randomly included
+# Stuff required for CImg.
 find_package(JPEG)
 find_package(TIFF)
 find_package(ZLIB)
