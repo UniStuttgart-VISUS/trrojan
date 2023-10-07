@@ -228,7 +228,7 @@ void trrojan::d3d12::sphere_benchmark_base::configure_camera(
         const configuration& config, const float fovy) {
     this->set_aspect_from_viewport(this->_camera);
     this->_camera.set_fovy(fovy);
-    sphere_benchmark::apply_manoeuvre(this->_camera, config,
+    graphics_benchmark_base::apply_manoeuvre(this->_camera, config,
         this->_data.bbox_start(), this->_data.bbox_end());
     trrojan::set_clipping_planes(this->_camera, this->_data.bbox(),
         this->_data.max_radius());

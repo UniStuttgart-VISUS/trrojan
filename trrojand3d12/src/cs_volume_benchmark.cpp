@@ -23,7 +23,51 @@
  * trrojan::d3d12::cs_volume_benchmark::cs_volume_benchmark
  */
 trrojan::d3d12::cs_volume_benchmark::cs_volume_benchmark(void)
-    : volume_benchmark_base("cs-volume-renderer") { }
+        : volume_benchmark_base("cs-volume-renderer"),
+        _ray_constants(nullptr),
+        _view_constants(nullptr) { }
+
+
+/*
+ * trrojan::d3d12::cs_volume_benchmark::on_device_switch
+ */
+void trrojan::d3d12::cs_volume_benchmark::on_device_switch(device& device) {
+    volume_benchmark_base::on_device_switch(device);
+
+    // Create the buffer for the raycasting constants and map it persistently.
+    // Note that we can get away with a buffer of one, because these data never
+    // change throughout the benchmark run.
+    this->_cb_ray = create_constant_buffer(device.d3d_device(),
+        sizeof(RaycastingConstants));
+    set_debug_object_name(this->_cb_ray.p, "ray_constants");
+
+    {
+        void *p;
+        auto hr = this->_cb_ray->Map(0, nullptr, &p);
+        if (FAILED(hr)) {
+            throw ATL::CAtlException(hr);
+        }
+
+        this->_ray_constants = static_cast<RaycastingConstants *>(p);
+    }
+
+    // Create the buffer for the view constants and map it persistently.
+    // Note that we can get away with a buffer of one, because these data never
+    // change throughout the benchmark run.
+    this->_cb_view = create_constant_buffer(device.d3d_device(),
+        sizeof(ViewConstants));
+    set_debug_object_name(this->_cb_view.p, "view_constants");
+
+    {
+        void *p;
+        auto hr = this->_cb_view->Map(0, nullptr, &p);
+        if (FAILED(hr)) {
+            throw ATL::CAtlException(hr);
+        }
+
+        this->_view_constants = static_cast<ViewConstants *>(p);
+    }
+}
 
 
 /*
@@ -33,9 +77,93 @@ trrojan::result trrojan::d3d12::cs_volume_benchmark::on_run(
         d3d12::device& device,
         const configuration& config,
         const std::vector<std::string>& changed) {
-#if false
+    // Prepare the data set, the volume meta data and the camera.
     volume_benchmark_base::on_run(device, config, changed);
 
+    auto cnt_cpu_iterations = static_cast<std::uint32_t>(0);
+    trrojan::timer cpu_timer;
+    const auto cnt_gpu_iterations = config.get<std::uint32_t>(
+        factor_gpu_counter_iterations);
+    auto dev = device.d3d_device();
+    //gpu_timer_type::value_type gpu_freq;
+    //gpu_timer_type gpu_timer;
+    //std::vector<gpu_timer_type::millis_type> gpuTimes;
+    //auto isDisjoint = true;
+    const auto min_wall_time = config.get<std::uint32_t>(factor_min_wall_time);
+    const auto volume_size = this->calc_physical_volume_size();
+
+    // Update the camera and view parameters.
+    {
+        auto& view_constants = this->_view_constants[0];
+        ::ZeroMemory(&view_constants, sizeof(view_constants));
+
+        // Retrieve the final view parameters.
+        const auto dir = this->_camera.get_direction();
+        const auto pos = this->_camera.get_look_from();
+        const auto up = this->_camera.get_look_up();
+        const auto right = glm::normalize(glm::cross(dir, up));
+
+        view_constants.CameraDirection.x = dir.x;
+        view_constants.CameraDirection.y = dir.y;
+        view_constants.CameraDirection.z = dir.z;
+        view_constants.CameraDirection.w = 0.0f;
+
+        view_constants.CameraPosition.x = pos.x;
+        view_constants.CameraPosition.y = pos.y;
+        view_constants.CameraPosition.z = pos.z;
+        view_constants.CameraPosition.w = 1.0f;
+
+        view_constants.CameraRight.x = right.x;
+        view_constants.CameraRight.y = right.y;
+        view_constants.CameraRight.z = right.z;
+        view_constants.CameraRight.w = 0.0f;
+
+        view_constants.CameraUp.x = up.x;
+        view_constants.CameraUp.y = up.y;
+        view_constants.CameraUp.z = up.z;
+        view_constants.CameraUp.w = 0.0f;
+
+        auto clip = this->calc_clipping_planes(this->_camera);
+        clip.first = 0.1f;
+        view_constants.ClippingPlanes.x = clip.first;
+        view_constants.ClippingPlanes.y = clip.second;
+
+        const auto aspect = this->_camera.get_aspect_ratio();
+        const auto fovy = this->_camera.get_fovy();
+        view_constants.FieldOfView.y = glm::radians(fovy);
+        view_constants.FieldOfView.x = aspect * view_constants.FieldOfView.y;
+
+        const auto viewport = this->viewport();
+        view_constants.ImageSize.x = viewport.Width;
+        view_constants.ImageSize.y = viewport.Height;
+    }
+
+    // Update the raycasting parameters.
+    {
+        auto& ray_constants = this->_ray_constants[0];
+        ::ZeroMemory(&ray_constants, sizeof(ray_constants));
+
+        ray_constants.BoxMax.x = this->_volume_bbox[1][0];
+        ray_constants.BoxMax.y = this->_volume_bbox[1][1];
+        ray_constants.BoxMax.z = this->_volume_bbox[1][2];
+        ray_constants.BoxMax.w = 0.0f;
+
+        ray_constants.BoxMin.x = this->_volume_bbox[0][0];
+        ray_constants.BoxMin.y = this->_volume_bbox[0][1];
+        ray_constants.BoxMin.z = this->_volume_bbox[0][2];
+        ray_constants.BoxMin.w = 0.0f;
+
+        ray_constants.ErtThreshold = config.get<float>(factor_ert_threshold);
+        volume_benchmark_base::zero_is_max(ray_constants.ErtThreshold);
+
+        ray_constants.StepLimit = config.get<std::uint32_t>(factor_max_steps);
+        volume_benchmark_base::zero_is_max(ray_constants.StepLimit);
+
+        ray_constants.StepSize = this->calc_base_step_size()
+            * config.get<float>(factor_step_size);
+    }
+
+#if false
     static const auto DATA_STAGE = static_cast<rendering_technique::shader_stages>(
         rendering_technique::shader_stage::compute);
 

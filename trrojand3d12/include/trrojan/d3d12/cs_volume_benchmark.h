@@ -11,6 +11,8 @@
 
 #include "trrojan/d3d12/gpu_timer.h"
 
+#include "SinglePassVolumePipeline.hlsli"
+
 
 namespace trrojan {
 namespace d3d12 {
@@ -40,11 +42,19 @@ namespace d3d12 {
     protected:
 
         /// <inheritdoc />
-        virtual trrojan::result on_run(d3d12::device& device,
+        void on_device_switch(device &device) override;
+
+        /// <inheritdoc />
+        trrojan::result on_run(d3d12::device& device,
             const configuration& config,
-            const std::vector<std::string>& changed);
+            const std::vector<std::string>& changed) override;
 
     private:
+
+        ATL::CComPtr< ID3D12Resource> _cb_ray;
+        RaycastingConstants *_ray_constants;
+        ATL::CComPtr<ID3D12Resource> _cb_view;
+        ViewConstants *_view_constants;
 
         //rendering_technique::uav_type compute_target;
         //ATL::CComPtr<ID3D11Query> done_query;

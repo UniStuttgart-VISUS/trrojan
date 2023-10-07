@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include <array>
 #include <limits>
 
 #include "trrojan/camera.h"
@@ -13,8 +14,6 @@
 
 #include "trrojan/d3d12/benchmark_base.h"
 #include "trrojan/d3d12/graphics_pipeline_builder.h"
-
-#include "VolumeCamera.hlsli"
 
 
 namespace trrojan {
@@ -97,6 +96,14 @@ namespace d3d12 {
             ID3D12GraphicsCommandList *cmd_list,
             const D3D12_RESOURCE_STATES state);
 
+        template<class TValue>
+        static inline TValue zero_is_max(TValue& value) noexcept {
+            if (value == static_cast<TValue>(0)) {
+                value = (std::numeric_limits<TValue>::max)();
+            }
+            return value;
+        }
+
         /// <summary>
         /// Initialises a new instance.
         /// </summary>
@@ -128,32 +135,34 @@ namespace d3d12 {
         /// <summary>
         /// The camera determining the view constants.
         /// </summary>
+        /// <remarks>
+        /// <see cref="volume_benchmark_base::on_run" /> will update the camera
+        /// from the <see cref="configuration" /> passed to the method.
+        /// </remarks>
         trrojan::perspective_camera _camera;
+
+        /// <summary>
+        /// The bounding box (begin and end, in this order) of the volume data
+        /// set currently loaded.
+        /// </summary>
+        /// <remarks>
+        /// <see cref="volume_benchmark_base::on_run" /> will update this
+        /// information when loading a new <see cref="_volume_info" />.
+        /// </remarks>
+        std::array<glm::vec3, 2> _volume_bbox;
 
         /// <summary>
         /// The contents of the dat file of the currently loaded data.
         /// </summary>
-        info_type _volume_info;
-
-        /// <summary>
-        /// The persistently mapped view constants for all frames.
-        /// </summary>
         /// <remarks>
-        /// <para>This variable is an array of range
-        /// [0, this->pipeline_depth()[. Applications must make sure to write
-        /// to the correct frame when updating the constans as the buffer is
-        /// persistently mapped and other entries might be in use by the GPU.
-        /// </para>
-        /// <para>This variable is only valid after a call to
-        /// <see cref="on_device_switch" />. Each further call to this method
-        /// will also discard data stored in the previously mapped region.
-        /// </para>
+        /// <see cref="volume_benchmark_base::on_run" /> will update the
+        /// metadata when loading a new volume from the
+        /// <see cref="configuration" /> passed to the method.
         /// </remarks>
-        ViewConstants *_view_constants;
+        info_type _volume_info;
 
     private:
 
-        ATL::CComPtr<ID3D12Resource> _cb_view;
         ATL::CComPtr<ID3D12Resource> _tex_volume;
         ATL::CComPtr<ID3D12Resource> _tex_xfer_func;
     };

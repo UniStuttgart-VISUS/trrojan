@@ -10,6 +10,7 @@
 #include <stdexcept>
 
 #include "trrojan/brudervn_xfer_func.h"
+#include "trrojan/clipping.h"
 #include "trrojan/io.h"
 #include "trrojan/log.h"
 #include "trrojan/text.h"
@@ -301,9 +302,7 @@ trrojan::d3d12::volume_benchmark_base::load_xfer_func(
  * trrojan::d3d12::volume_benchmark_base::volume_benchmark_base
  */
 trrojan::d3d12::volume_benchmark_base::volume_benchmark_base(
-        const std::string& name)
-    : benchmark_base(name),
-        _view_constants(nullptr) {
+        const std::string& name) : benchmark_base(name) {
     this->_default_configs.add_factor(factor::from_manifestations(
         factor_ert_threshold, 0.0f));
     this->_default_configs.add_factor(factor::from_manifestations(
@@ -332,21 +331,6 @@ void trrojan::d3d12::volume_benchmark_base::on_device_switch(device& device) {
     benchmark_base::on_device_switch(device);
     this->_tex_volume = nullptr;
     this->_tex_xfer_func = nullptr;
-
-    // Create the buffer for the view constants and map it persistently.
-    this->_cb_view = create_constant_buffer(device.d3d_device(),
-        this->pipeline_depth() * sizeof(ViewConstants));
-    set_debug_object_name(this->_cb_view.p, "view_constants");
-
-    {
-        void *p;
-        auto hr = this->_cb_view->Map(0, nullptr, &p);
-        if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
-        }
-
-        this->_view_constants = static_cast<ViewConstants *>(p);
-    }
 }
 
 
@@ -375,6 +359,8 @@ trrojan::result trrojan::d3d12::volume_benchmark_base::on_run(
             this->_tex_volume = this->load_volume(config, device,
                 cmd_list, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE,
                 this->_volume_info);
+            this->calc_bounding_box(this->_volume_bbox.front(),
+                this->_volume_bbox.back());
         }
 
         if (this->_tex_xfer_func == nullptr) {
@@ -387,6 +373,13 @@ trrojan::result trrojan::d3d12::volume_benchmark_base::on_run(
             device.wait_for_gpu();
         }
     }
+
+    // Update the camera from the configuration.
+    this->set_aspect_from_viewport(this->_camera);
+    this->_camera.set_fovy(config.get<float>(factor_fovy_deg));
+    graphics_benchmark_base::apply_manoeuvre(this->_camera, config,
+        this->_volume_bbox.front(), this->_volume_bbox.back());
+    trrojan::set_clipping_planes(this->_camera, this->_volume_bbox);
 
     return trrojan::result();
 }
