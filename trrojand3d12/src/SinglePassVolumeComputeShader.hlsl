@@ -29,14 +29,16 @@ Texture1D TransferFunction : register(t1);
 Texture3D Volume : register(t0);
 
 
-#define SHADER_ROOT_SIGNATURE "RootFlags(ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT),"\
-"DescriptorTable(CBV(b0), CBV(b1), SRV(t0), SRV(t1), visibility=SHADER_VISIBILITY_ALL)"
+#define SHADER_ROOT_SIGNATURE\
+"RootFlags(0),"\
+"DescriptorTable(SRV(t0), SRV(t1), CBV(b0), CBV(b1), UAV(u0), visibility = SHADER_VISIBILITY_ALL),"\
+"StaticSampler(s0, addressU = TEXTURE_ADDRESS_CLAMP, addressV = TEXTURE_ADDRESS_CLAMP, addressW = TEXTURE_ADDRESS_CLAMP, filter = FILTER_MIN_MAG_MIP_LINEAR, visibility = SHADER_VISIBILITY_ALL)"
 
 
 /// <summary>
 /// Entry point of the compute shader.
 /// </summary>
-//[RootSignature(SHADER_ROOT_SIGNATURE)]
+[RootSignature(SHADER_ROOT_SIGNATURE)]
 [numthreads(16, 16, 1)]
 void Main(uint3 threadID : SV_DispatchThreadID) {
     // Terminate threads which do not produce a pixel.
@@ -99,7 +101,7 @@ void Main(uint3 threadID : SV_DispatchThreadID) {
             break;
         }
 
-        lambda += StepSize * volSize;
+        lambda += length(StepSize * volSize);
         pos += step;
     }
 

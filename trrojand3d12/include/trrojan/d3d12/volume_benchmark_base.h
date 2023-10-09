@@ -57,7 +57,8 @@ namespace d3d12 {
             const std::string& path,
             d3d12::device& device,
             ID3D12GraphicsCommandList *cmd_list,
-            const D3D12_RESOURCE_STATES state);
+            const D3D12_RESOURCE_STATES state,
+            ATL::CComPtr<ID3D12Resource>& out_staging);
 
         static ATL::CComPtr<ID3D12Resource> load_volume(
             const std::string& path,
@@ -65,36 +66,41 @@ namespace d3d12 {
             d3d12::device& device,
             ID3D12GraphicsCommandList *cmd_list,
             const D3D12_RESOURCE_STATES state,
-            info_type& outInfo);
+            info_type& out_info,
+            ATL::CComPtr<ID3D12Resource>& out_staging);
 
         static inline ATL::CComPtr<ID3D12Resource> load_volume(
                 const configuration& config,
                 d3d12::device& device,
                 ID3D12GraphicsCommandList *cmd_list,
                 const D3D12_RESOURCE_STATES state,
-                info_type& outInfo) {
+                info_type&out_info,
+                ATL::CComPtr<ID3D12Resource>& out_staging) {
             return load_volume(config.get<std::string>(factor_data_set),
                 config.get<unsigned int>(factor_frame),
-                device, cmd_list, state, outInfo);
+                device, cmd_list, state, out_info, out_staging);
         }
 
         static ATL::CComPtr<ID3D12Resource> load_xfer_func(
             const std::vector<std::uint8_t>& data,
             d3d12::device& device,
             ID3D12GraphicsCommandList *cmd_list,
-            const D3D12_RESOURCE_STATES state);
+            const D3D12_RESOURCE_STATES state,
+            ATL::CComPtr<ID3D12Resource>& out_staging);
 
         static ATL::CComPtr<ID3D12Resource> load_xfer_func(
             const std::string& path,
             d3d12::device& device,
             ID3D12GraphicsCommandList *cmd_list,
-            const D3D12_RESOURCE_STATES state);
+            const D3D12_RESOURCE_STATES state,
+            ATL::CComPtr<ID3D12Resource>& out_staging);
 
         static ATL::CComPtr<ID3D12Resource> load_xfer_func(
             const configuration& config,
             d3d12::device& device,
             ID3D12GraphicsCommandList *cmd_list,
-            const D3D12_RESOURCE_STATES state);
+            const D3D12_RESOURCE_STATES state,
+            ATL::CComPtr<ID3D12Resource>& out_staging);
 
         template<class TValue>
         static inline TValue zero_is_max(TValue& value) noexcept {
@@ -133,6 +139,15 @@ namespace d3d12 {
             const std::vector<std::string>& changed);
 
         /// <summary>
+        /// Creates shader resource views for the volume and the transfer
+        /// function textures at the specified descriptor locations.
+        /// </summary>
+        /// <param name="handle_volume"></param>
+        /// <param name="handle_xfer_func"></param>
+        void set_textures(const D3D12_CPU_DESCRIPTOR_HANDLE handle_volume,
+            const D3D12_CPU_DESCRIPTOR_HANDLE handle_xfer_func) const;
+
+        /// <summary>
         /// The camera determining the view constants.
         /// </summary>
         /// <remarks>
@@ -150,16 +165,6 @@ namespace d3d12 {
         /// information when loading a new <see cref="_volume_info" />.
         /// </remarks>
         std::array<glm::vec3, 2> _volume_bbox;
-
-        /// <summary>
-        /// The contents of the dat file of the currently loaded data.
-        /// </summary>
-        /// <remarks>
-        /// <see cref="volume_benchmark_base::on_run" /> will update the
-        /// metadata when loading a new volume from the
-        /// <see cref="configuration" /> passed to the method.
-        /// </remarks>
-        info_type _volume_info;
 
     private:
 

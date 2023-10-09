@@ -51,9 +51,19 @@ namespace d3d12 {
 
     private:
 
-        ATL::CComPtr< ID3D12Resource> _cb_ray;
+        void set_constants(const D3D12_CPU_DESCRIPTOR_HANDLE handle_view,
+            const D3D12_CPU_DESCRIPTOR_HANDLE handle_ray) const;
+
+        void set_descriptors(ID3D12GraphicsCommandList *cmd_list,
+            const UINT frame) const;
+
+        ATL::CComPtr<ID3D12Resource> _cb_ray;
+        ATL::CComPtr<ID3D12PipelineState> _compute_pipeline;
+        ATL::CComPtr<ID3D12RootSignature> _compute_signature;
+        std::vector<std::vector<D3D12_GPU_DESCRIPTOR_HANDLE>> _descriptors;
         RaycastingConstants *_ray_constants;
         ATL::CComPtr<ID3D12Resource> _cb_view;
+        std::vector<ATL::CComPtr<ID3D12Resource>> _uavs;
         ViewConstants *_view_constants;
 
         //rendering_technique::uav_type compute_target;

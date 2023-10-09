@@ -184,7 +184,7 @@ ATL::CComPtr<ID3D12Resource> trrojan::d3d12::sphere_data::load(
 
     auto size = this->load([this, &device, &retval](const UINT64 size) {
         this->_data = create_buffer(device, size);
-        retval = create_upload_buffer(this->_data);
+        retval = create_upload_buffer_for(this->_data);
 
         void *data;
         auto hr = retval->Map(0, nullptr, &data);

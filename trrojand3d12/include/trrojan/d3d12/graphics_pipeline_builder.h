@@ -26,13 +26,26 @@ namespace d3d12 {
     /// A builder object for <see cref="D3D12_GRAPHICS_PIPELINE_STATE_DESC" />.
     /// </summary>
     /// <remarks>
-    /// The builder will not only hold the descriptor, but also create a copy
-    /// of all dynamic elements like shader code to make sure that there are
-    /// no dangling pointers to these data.
+    /// <para>The builder will not only hold the descriptor, but also create a
+    /// copy of all dynamic elements like shader code to make sure that there
+    /// are no dangling pointers to these data.</para>
+    /// <para>As compute pipelines are much simpler, there is a free function
+    /// <see cref="create_compute_pipeline" /> in the utiltiies header for
+    /// creating compute pipeline states.</para>
     /// </remarks>
     class graphics_pipeline_builder final {
 
     public:
+
+        /// <summary>
+        /// Extracts, if any embedded, the root signature from shader byte code.
+        /// </summary>
+        /// <param name="device"></param>
+        /// <param name="byte_code"></param>
+        /// <param name="length"></param>
+        /// <returns></returns>
+        static ATL::CComPtr<ID3D12RootSignature> root_signature_from_shader(
+            ID3D12Device *device, const BYTE *byte_code, const SIZE_T length);
 
         /// <summary>
         /// Extracts, if any embedded, the root signature from shader byte code.

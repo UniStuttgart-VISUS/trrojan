@@ -14,19 +14,33 @@
  */
 ATL::CComPtr<ID3D12RootSignature>
 trrojan::d3d12::graphics_pipeline_builder::root_signature_from_shader(
-        ID3D12Device *device, const std::vector<BYTE>& byte_code) {
+        ID3D12Device *device, const BYTE *byte_code, const SIZE_T length) {
     if (device == nullptr) {
+        throw ATL::CAtlException(E_POINTER);
+    }
+    if (byte_code == nullptr) {
         throw ATL::CAtlException(E_POINTER);
     }
 
     ATL::CComPtr<ID3D12RootSignature> retval;
-    auto hr = device->CreateRootSignature(0, byte_code.data(), byte_code.size(),
-        ::IID_ID3D12RootSignature, reinterpret_cast<void **>(&retval));
+    auto hr = device->CreateRootSignature(0, byte_code, length,
+        IID_PPV_ARGS(&retval));
     if (FAILED(hr)) {
         throw ATL::CAtlException(hr);
     }
 
     return retval;
+}
+
+
+/*
+ * trrojan::d3d12::graphics_pipeline_builder::root_signature_from_shader
+ */
+ATL::CComPtr<ID3D12RootSignature>
+trrojan::d3d12::graphics_pipeline_builder::root_signature_from_shader(
+        ID3D12Device *device, const std::vector<BYTE>& byte_code) {
+    return root_signature_from_shader(device, byte_code.data(),
+        byte_code.size());
 }
 
 
@@ -199,7 +213,7 @@ trrojan::d3d12::graphics_pipeline_builder::set_root_signature(
         ID3D12RootSignature *root_signature) {
     auto& so = this->get_value<
         CD3DX12_PIPELINE_STATE_STREAM_ROOT_SIGNATURE>();
-    // Implementation note: is is much easier for us to keep a smart pointer
+    // Implementation note: It is much easier for us to keep a smart pointer
     // reference in the form of '_root_sig' instead of manually managing the
     // reference count of the pointer in '_desc', which would require custom
     // copy ctors and assignment operators.

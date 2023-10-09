@@ -1,13 +1,14 @@
-// <copyright file="plugin.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2016 - 2022 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+ï»¿// <copyright file="plugin.cpp" company="Visualisierungsinstitut der UniversitÃ¤t Stuttgart">
+// Copyright Â© 2016 - 2023 Visualisierungsinstitut der UniversitÃ¤t Stuttgart. Alle Rechte vorbehalten.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
-// <author>Christoph Müller</author>
+// <author>Christoph MÃ¼ller</author>
 
 #include "trrojan/d3d12/plugin.h"
 
 #include "trrojan/io.h"
 
+#include "trrojan/d3d12/cs_volume_benchmark.h"
 #include "trrojan/d3d12/empty_benchmark.h"
 #include "trrojan/d3d12/environment.h"
 #include "trrojan/d3d12/ram_streaming_sphere_benchmark.h"
@@ -127,6 +128,7 @@ size_t trrojan::d3d12::plugin::create_benchmarks(benchmark_list& dst) const {
     dst.emplace_back(std::make_shared<empty_benchmark>());
     dst.emplace_back(std::make_shared<sphere_benchmark>());
     dst.emplace_back(std::make_shared<ram_streaming_sphere_benchmark>());
+    dst.emplace_back(std::make_shared<cs_volume_benchmark>());
     return 3;
 }
 

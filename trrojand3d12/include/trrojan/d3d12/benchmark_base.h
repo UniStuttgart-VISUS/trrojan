@@ -168,6 +168,22 @@ namespace d3d12 {
         }
 
         /// <summary>
+        /// Copy the contents of <paramref name="source" /> into the specified
+        /// back buffer of the render target, which must have been enabled using
+        /// <see cref="D3D12_RESOURCE_STATE_COPY_DEST" /> as rendering state.
+        /// </summary>
+        /// <param name="cmd_list"></param>
+        /// <param name="source"></param>
+        /// <param name="frame"></param>
+        inline void copy_to_target(ID3D12GraphicsCommandList *cmd_list,
+                ID3D12Resource *source, const UINT frame) {
+            assert(this->_render_target != nullptr);
+            assert(cmd_list != nullptr);
+            assert(source != nullptr);
+            this->_render_target->copy_from(cmd_list, source, frame);
+        }
+
+        /// <summary>
         /// Creates a shader resource view for a buffer.
         /// </summary>
         /// <param name="resource"></param>
@@ -285,18 +301,24 @@ namespace d3d12 {
         /// Queues the current render target to be disabled in the given command
         /// list.
         /// </summary>
-        /// <param name="cmd_list"></param>
-        inline void disable_target(ID3D12GraphicsCommandList *cmd_list) {
+        inline void disable_target(ID3D12GraphicsCommandList *cmd_list,
+                const D3D12_RESOURCE_STATES render_state
+                = D3D12_RESOURCE_STATE_RENDER_TARGET) {
             assert(this->_render_target != nullptr);
             assert(cmd_list != nullptr);
-            this->_render_target->disable(cmd_list);
+            this->_render_target->disable(cmd_list, render_state);
         }
 
+        /// <summary>
+        /// Queues the current render target to be disabled in the given command
+        /// list.
+        /// </summary>
         inline void disable_target(ID3D12GraphicsCommandList *cmd_list,
-                const UINT frame) {
+                const UINT frame, const D3D12_RESOURCE_STATES render_state
+                = D3D12_RESOURCE_STATE_RENDER_TARGET) {
             assert(this->_render_target != nullptr);
             assert(cmd_list != nullptr);
-            this->_render_target->disable(cmd_list, frame);
+            this->_render_target->disable(cmd_list, frame, render_state);
         }
 
         /// <summary>
@@ -308,11 +330,12 @@ namespace d3d12 {
         /// viewport to the dimension of the render target and (iii) set the
         /// scissor rectangle to include the whole viewport.
         /// </remarks>
-        /// <param name="cmd_list"></param>
-        inline void enable_target(ID3D12GraphicsCommandList *cmd_list) {
+        inline void enable_target(ID3D12GraphicsCommandList *cmd_list,
+                const D3D12_RESOURCE_STATES render_state
+                = D3D12_RESOURCE_STATE_RENDER_TARGET) {
             assert(this->_render_target != nullptr);
             assert(cmd_list != nullptr);
-            this->_render_target->enable(cmd_list);
+            this->_render_target->enable(cmd_list, render_state);
         }
 
         /// <summary>
@@ -324,13 +347,12 @@ namespace d3d12 {
         /// but it enables to preparing command lists for all frames in case
         /// the draw calls do not change over time.
         /// </remarks>
-        /// <param name="cmd_list"></param>
-        /// <param name="frame"></param>
         inline void enable_target(ID3D12GraphicsCommandList *cmd_list,
-                const UINT frame) {
+                const UINT frame, const D3D12_RESOURCE_STATES render_state
+                = D3D12_RESOURCE_STATE_RENDER_TARGET) {
             assert(this->_render_target != nullptr);
             assert(cmd_list != nullptr);
-            this->_render_target->enable(cmd_list, frame);
+            this->_render_target->enable(cmd_list, frame, render_state);
         }
 
         /// <summary>

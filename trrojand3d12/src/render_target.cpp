@@ -53,11 +53,16 @@ void trrojan::d3d12::render_target_base::clear(
 
 
 /*
- * trrojan::d3d12::render_target_base::disable
+ * trrojan::d3d12::render_target_base::copy_from
  */
-void trrojan::d3d12::render_target_base::disable(
-        ID3D12GraphicsCommandList *cmd_list) {
-    this->disable(cmd_list, this->_buffer_index);
+void trrojan::d3d12::render_target_base::copy_from(
+        ID3D12GraphicsCommandList *cmd_list,
+        ID3D12Resource *source,
+        const UINT frame) {
+    assert(cmd_list != nullptr);
+    assert(source != nullptr);
+    assert(frame < this->_buffers.size());
+    cmd_list->CopyResource(this->_buffers[frame], source);
 }
 
 
@@ -65,11 +70,23 @@ void trrojan::d3d12::render_target_base::disable(
  * trrojan::d3d12::render_target_base::disable
  */
 void trrojan::d3d12::render_target_base::disable(
-        ID3D12GraphicsCommandList *cmd_list, const UINT frame) {
+        ID3D12GraphicsCommandList *cmd_list,
+        const D3D12_RESOURCE_STATES render_state) {
+    this->disable(cmd_list, this->_buffer_index, render_state);
+}
+
+
+/*
+ * trrojan::d3d12::render_target_base::disable
+ */
+void trrojan::d3d12::render_target_base::disable(
+        ID3D12GraphicsCommandList *cmd_list,
+        const UINT frame,
+        const D3D12_RESOURCE_STATES render_state) {
     assert(cmd_list != nullptr);
     assert(frame < this->_buffers.size());
     transition_subresource(cmd_list, this->_buffers[frame], 0,
-        D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+        render_state, D3D12_RESOURCE_STATE_PRESENT);
 }
 
 
@@ -77,8 +94,9 @@ void trrojan::d3d12::render_target_base::disable(
  * trrojan::d3d12::render_target_base::enable
  */
 void trrojan::d3d12::render_target_base::enable(
-        ID3D12GraphicsCommandList *cmd_list) {
-    this->enable(cmd_list, this->_buffer_index);
+        ID3D12GraphicsCommandList *cmd_list,
+        const D3D12_RESOURCE_STATES render_state) {
+    this->enable(cmd_list, this->_buffer_index, render_state);
 }
 
 
@@ -86,7 +104,9 @@ void trrojan::d3d12::render_target_base::enable(
  * trrojan::d3d12::render_target_base::enable
  */
 void trrojan::d3d12::render_target_base::enable(
-        ID3D12GraphicsCommandList *cmd_list, const UINT frame) {
+        ID3D12GraphicsCommandList *cmd_list,
+        const UINT frame,
+        const D3D12_RESOURCE_STATES render_state) {
     assert(cmd_list != nullptr);
     assert(frame < this->_buffers.size());
     //log::instance().write_line(log_level::debug, "Queueing render target "
@@ -110,7 +130,7 @@ void trrojan::d3d12::render_target_base::enable(
     }
 
     transition_subresource(cmd_list, this->_buffers[frame], 0,
-        D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+        D3D12_RESOURCE_STATE_PRESENT, render_state);
 
     {
         auto hDsv = this->dsv_handle(frame);
