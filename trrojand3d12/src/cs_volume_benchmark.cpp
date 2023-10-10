@@ -129,7 +129,7 @@ trrojan::result trrojan::d3d12::cs_volume_benchmark::on_run(
     const auto min_wall_time = config.get<std::uint32_t>(factor_min_wall_time);
     stats_query::value_type pipeline_stats;
     stats_query stats_query(device.d3d_device(), 1, 1);
-    const auto volume_size = this->calc_physical_volume_size();
+    const auto volume_size = this->get_volume_resolution();
     const auto viewport = config.get<viewport_type>(factor_viewport);
 
     // Invalidate resources that depend on factors that have changed.

@@ -425,7 +425,7 @@ trrojan::result trrojan::d3d11::two_pass_volume_benchmark::on_run(
     retval->add({
         this->name(),
         powerUid,
-        volSize,
+        this->get_volume_resolution(),
         gpuTimes.front(),
         gpuMedian,
         gpuTimes.back(),

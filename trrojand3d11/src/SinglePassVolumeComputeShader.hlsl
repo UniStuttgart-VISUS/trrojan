@@ -81,12 +81,13 @@ void Main(uint3 threadID : SV_DispatchThreadID) {
     const float3 step = StepSize * dir;
 
     float4 colour = 0.0f.xxxx;
-    float3 pos = (camPos + start * dir - BoxMin.xyz) / volSize;
+    float3 pos = camPos + start * dir;
     float lambda = start;
 
     for (uint i = 0; (i < StepLimit) && (lambda < end); ++i) {
-        float4 value = Volume.SampleLevel(LinearSampler, pos, 0);
+        float4 value = Volume.SampleLevel(LinearSampler, (pos - BoxMin.xyz) / volSize, 0);
         float4 emission = TransferFunction.SampleLevel(LinearSampler, value.x, 0);
+        //emission = 0.1f.xxxx;
         emission.rgb *= emission.a;
         colour += emission * (1.0f - colour.a);
 

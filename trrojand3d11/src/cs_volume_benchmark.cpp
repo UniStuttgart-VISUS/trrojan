@@ -53,7 +53,7 @@ trrojan::result trrojan::d3d11::cs_volume_benchmark::on_run(
     RaycastingConstants raycastingConstants;
     ViewConstants viewConstants;
     const auto viewport = config.get<viewport_type>(factor_viewport);
-    const auto volSize = this->calc_physical_volume_size();
+    const auto volSize = this->get_volume_resolution();
 
     // Compute the bounding box in world space.
     this->calc_bounding_box(bbs, bbe);
