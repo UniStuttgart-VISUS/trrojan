@@ -132,10 +132,12 @@ namespace d3d12 {
         /// </remarks>
         /// <param name="device"></param>
         /// <param name="config"></param>
+        /// <param name="power_collector"></param>
         /// <param name="changed"></param>
         /// <returns><c>nullptr</c>.</returns>
         virtual trrojan::result on_run(d3d12::device& device,
             const configuration& config,
+            power_collector::pointer& power_collector,
             const std::vector<std::string>& changed);
 
         /// <summary>

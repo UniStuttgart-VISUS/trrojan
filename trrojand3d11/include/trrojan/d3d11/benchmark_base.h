@@ -20,10 +20,6 @@
 #include "trrojan/d3d11/gpu_timer.h"
 #include "trrojan/d3d11/render_target.h"
 
-#if defined(TRROJAN_WITH_POWER_OVERWHELMING)
-#include "power_overwhelming/collector.h"
-#endif /* defined(TRROJAN_WITH_POWER_OVERWHELMING) */
-
 
 namespace trrojan {
 namespace d3d11 {

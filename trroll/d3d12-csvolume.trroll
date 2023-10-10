@@ -2,18 +2,19 @@ d3d12::cs-volume-renderer {
     string data_set = S:\Daten\Volumen\tuebingen\foot.dat
 
     uint32vec2 viewport = 1024 1024; 2048 2048
-    uint32 sync_interval = 0; 1
+    uint32 sync_interval = 0
 
     string xfer_func = C:\trrojan\src\trroll\trrojan_cham1.brudervn
     boolean debug_view = true
 
-    float32 step_size = 2; 1; 0.5
-    float32 ert_threshold = 0; 0.99
+    float32 step_size = 2; 1
+    float32 ert_threshold = 0
 
     uint32 min_wall_time = 5000
     uint32 iterations = 1
+    uint32 gpu_counter_iterations = 4
 
     string manoeuvre = random
     uint32 manoeuvre_steps = 100
-    uint32 manoeuvre_step = 0; 19; 39; 59; 79; 99
+    uint32 manoeuvre_step = 0; 99
 }

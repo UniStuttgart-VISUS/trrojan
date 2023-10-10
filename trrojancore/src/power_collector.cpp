@@ -1,10 +1,9 @@
 // <copyright file="power_collector.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2022 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+// Copyright © 2022 - 2023 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
 // <author>Christoph Müller</author>
 
-#if defined(TRROJAN_WITH_POWER_OVERWHELMING)
 #include "trrojan/power_collector.h"
 
 #include "power_overwhelming/csv_iomanip.h"
@@ -27,6 +26,7 @@ const char trrojan::power_collector::delimiter = ';';
 const char *trrojan::power_collector::factor_name = "powerlog";
 
 
+#if defined(TRROJAN_WITH_POWER_OVERWHELMING)
 /*
  * trrojan::power_collector::power_collector
  */
@@ -444,5 +444,4 @@ void trrojan::power_collector::setup_tinkerforge_sensors(void) {
         log::instance().write_line(ex);
     }
 }
-
 #endif /* defined(TRROJAN_WITH_POWER_OVERWHELMING) */

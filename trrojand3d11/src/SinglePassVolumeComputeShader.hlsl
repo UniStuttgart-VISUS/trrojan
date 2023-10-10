@@ -94,7 +94,7 @@ void Main(uint3 threadID : SV_DispatchThreadID) {
             break;
         }
 
-        lambda += StepSize * volSize;
+        lambda += StepSize;
         pos += step;
     }
 

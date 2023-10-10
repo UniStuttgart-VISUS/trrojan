@@ -46,7 +46,9 @@ UINT trrojan::d3d12::ram_streaming_sphere_benchmark::count_descriptor_tables(
  * trrojan::d3d12::ram_streaming_sphere_benchmark::on_run
  */
 trrojan::result trrojan::d3d12::ram_streaming_sphere_benchmark::on_run(
-        d3d12::device& device, const configuration& config,
+        d3d12::device& device,
+        const configuration& config,
+        power_collector::pointer& power_collector,
         const std::vector<std::string>& changed) {
     sphere_rendering_configuration cfg(config);
     measurement_context mctx(device, 1, this->pipeline_depth());

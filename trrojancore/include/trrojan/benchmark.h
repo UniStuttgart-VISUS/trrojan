@@ -1,5 +1,5 @@
 // <copyright file="benchmark.h" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2016 - 2022 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+// Copyright © 2016 - 2023 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
 // <author>Valentin Bruder</author>
@@ -19,6 +19,7 @@
 #include "trrojan/device.h"
 #include "trrojan/environment.h"
 #include "trrojan/export.h"
+#include "trrojan/power_collector.h"
 #include "trrojan/result_set.h"
 
 
@@ -171,6 +172,37 @@ namespace trrojan {
         // TODO: define the interface.
 
     protected:
+
+        /// <summary>
+        /// If <paramref name="collector" /> is not <c>nullptr</c>, enter a new
+        /// unique power measurement scope and return its name.
+        /// </summary>
+        /// <param name="collector">An optional power collector.</param>
+        /// <returns>The ID of the power measuring scope.</returns>
+        static std::string enter_power_scope(
+            const power_collector::pointer& collector);
+
+        /// <summary>
+        /// Checks whether <paramref name="c" /> contains a power collector, and
+        /// if so, sets the output header.
+        /// </summary>
+        /// <param name="c">The configuration to retrieve the collector from.
+        /// </param>
+        /// <returns>The power collector if there was one and it has been
+        /// successfully initialised, <c>nullptr</c> otherwise.</returns>
+        static power_collector::pointer initialise_power_collector(
+            const trrojan::configuration& c);
+
+        /// <summary>
+        /// If <paramref name="collector" /> is not <c>nullptr</c>, notify it
+        /// that the active measurement scope was left. The collector will
+        /// commit all power samples collected since
+        /// <see cref="enter_power_scope" /> and prevent collection of further
+        /// samples until the next scope is entered.
+        /// </summary>
+        /// <param name="collector">An optional power collector.</param>
+        static void leave_power_scope(
+            const power_collector::pointer& collector);
 
         /// <summary>
         /// Merges all system factors into <paramref name="c" />.

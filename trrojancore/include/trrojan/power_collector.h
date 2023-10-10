@@ -1,5 +1,5 @@
 // <copyright file="power_collector.h" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2022 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+// Copyright © 2022 - 2023 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
 // <author>Christoph Müller</author>
@@ -44,7 +44,6 @@ namespace trrojan {
         /// </summary>
         typedef std::shared_ptr<power_collector> pointer;
 
-#if defined(TRROJAN_WITH_POWER_OVERWHELMING)
         /// <summary>
         /// The column delimiter.
         /// </summary>
@@ -56,6 +55,7 @@ namespace trrojan {
         /// </summary>
         static const char *factor_name;
 
+#if defined(TRROJAN_WITH_POWER_OVERWHELMING)
         /// <summary>
         /// Initialises a new instance.
         /// </summary>
@@ -180,6 +180,8 @@ namespace trrojan {
         std::ofstream _stream;
         std::vector<visus::power_overwhelming::tinkerforge_sensor> _tinkerforge_sensors;
         std::atomic<std::uint64_t> _unique_identifier;
+#else /* defined(TRROJAN_WITH_POWER_OVERWHELMING) */
+        power_collector(void) = delete;
 #endif /* defined(TRROJAN_WITH_POWER_OVERWHELMING) */
     };
 

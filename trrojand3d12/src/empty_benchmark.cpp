@@ -50,7 +50,9 @@ trrojan::d3d12::empty_benchmark::~empty_benchmark(void) { }
  * trrojan::result trrojan::d3d12::empty_benchmark::on_run
  */
 trrojan::result trrojan::d3d12::empty_benchmark::on_run(d3d12::device& device,
-        const configuration& config, const std::vector<std::string>& changed) {
+        const configuration& config,
+        power_collector::pointer& power_collector,
+        const std::vector<std::string>& changed) {
     auto clear_colour = config.get<std::array<float, 4>>(factor_clear_colour);
     const auto cpu_iterations = config.get<std::uint32_t>(
         factor_cpu_counter_iterations);

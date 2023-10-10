@@ -41,7 +41,9 @@ void trrojan::d3d12::sphere_benchmark::on_device_switch(device& device) {
  * trrojan::d3d12::sphere_benchmark::on_run
  */
 trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
-        const configuration& config, const std::vector<std::string>& changed) {
+        const configuration& config,
+        power_collector::pointer& power_collector,
+        const std::vector<std::string>& changed) {
     sphere_rendering_configuration cfg(config);
     std::vector<gpu_timer::millis_type> bundle_times, gpu_times;
     std::uint32_t cpu_iterations = 1;
@@ -223,6 +225,7 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
         device.close_and_execute_command_list(cmd_list);
         this->present_target();
 
+        device.wait_for_gpu();
         gpu_times[i] = gpu_timer::to_milliseconds(
             gpu_timer.evaluate(timer_index, 0),
             gpu_freq);

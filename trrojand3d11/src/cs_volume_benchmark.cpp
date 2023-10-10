@@ -50,7 +50,6 @@ trrojan::result trrojan::d3d11::cs_volume_benchmark::on_run(
     std::vector<gpu_timer_type::millis_type> gpuTimes;
     auto isDisjoint = true;
     const auto minWallTime = config.get<std::uint32_t>(factor_min_wall_time);
-    std::string powerUid;
     RaycastingConstants raycastingConstants;
     ViewConstants viewConstants;
     const auto viewport = config.get<viewport_type>(factor_viewport);
@@ -135,7 +134,7 @@ trrojan::result trrojan::d3d11::cs_volume_benchmark::on_run(
 
     raycastingConstants.StepSize = this->calc_base_step_size()
         * config.get<float>(factor_step_size);
-    
+
     ctx->UpdateSubresource(this->raycasting_constants.p, 0, nullptr,
         &raycastingConstants, 0, 0);
 
@@ -279,13 +278,7 @@ trrojan::result trrojan::d3d11::cs_volume_benchmark::on_run(
     // Do the wall clock measurement.
     log::instance().write_line(log_level::debug, "Measuring wall clock "
         "timings over {} iterations ...", cntCpuIterations);
-#if defined(TRROJAN_WITH_POWER_OVERWHELMING)
-    if (powerCollector != nullptr) {
-        // If we have a power sensor, we want to record data now.
-        powerUid = powerCollector->set_next_unique_description();
-    }
-#endif /* defined(TRROJAN_WITH_POWER_OVERWHELMING) */
-
+    const auto powerUid = benchmark_base::enter_power_scope(powerCollector);
     cpuTimer.start();
     for (std::uint32_t i = 0; i < cntCpuIterations; ++i) {
         ctx->Dispatch(groupX, groupY, 1u);
@@ -294,14 +287,7 @@ trrojan::result trrojan::d3d11::cs_volume_benchmark::on_run(
     ctx->End(this->done_query);
     wait_for_event_query(ctx, this->done_query);
     auto cpuTime = cpuTimer.elapsed_millis();
-
-#if defined(TRROJAN_WITH_POWER_OVERWHELMING)
-    if (powerCollector != nullptr) {
-        // Commit power samples and prevent collection until next wall-clock
-        // measurement cycle.
-        powerCollector->set_description("");
-    }
-#endif /* defined(TRROJAN_WITH_POWER_OVERWHELMING) */
+    benchmark_base::leave_power_scope(powerCollector);
 
     // Compute derived statistics for GPU counters.
     std::sort(gpuTimes.begin(), gpuTimes.end());

@@ -56,6 +56,7 @@ trrojan::result trrojan::d3d12::benchmark_base::run(const configuration& c) {
 
     auto genericDev = c.get<trrojan::device>(factor_device);
     auto device = std::dynamic_pointer_cast<trrojan::d3d12::device>(genericDev);
+    auto power_collector = initialise_power_collector(c);
 
     if (device == nullptr) {
         throw std::runtime_error("A configuration without a Direct3D device was "
@@ -124,7 +125,7 @@ trrojan::result trrojan::d3d12::benchmark_base::run(const configuration& c) {
     }
 
     // Run the bechmark.
-    auto retval = this->on_run(*device, c, changed);
+    auto retval = this->on_run(*device, c, power_collector, changed);
 
     // Save the resulting image if requested.
     if (c.get<bool>(factor_save_view)) {

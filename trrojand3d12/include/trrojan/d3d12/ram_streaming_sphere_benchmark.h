@@ -35,6 +35,7 @@ namespace d3d12 {
         /// <inheritdoc />
         trrojan::result on_run(d3d12::device& device,
             const configuration& config,
+            power_collector::pointer& power_collector,
             const std::vector<std::string>& changed) override;
 
     private:

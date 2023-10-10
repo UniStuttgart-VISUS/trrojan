@@ -13,6 +13,7 @@
 
 #include "trrojan/d3d12/device.h"
 #include "trrojan/d3d12/plugin.h"
+#include "trrojan/d3d12/stats_query.h"
 #include "trrojan/d3d12/utilities.h"
 
 #include "SinglePassVolumePipeline.hlsli"
@@ -111,20 +112,23 @@ void trrojan::d3d12::cs_volume_benchmark::on_device_switch(device& device) {
 trrojan::result trrojan::d3d12::cs_volume_benchmark::on_run(
         d3d12::device& device,
         const configuration& config,
+        power_collector::pointer& power_collector,
         const std::vector<std::string>& changed) {
     // Prepare the data set, the volume meta data and the camera.
-    volume_benchmark_base::on_run(device, config, changed);
+    volume_benchmark_base::on_run(device, config, power_collector, changed);
 
     auto cpu_iterations = static_cast<std::uint32_t>(0);
     trrojan::timer cpu_timer;
-    const auto cnt_gpu_iterations = config.get<std::uint32_t>(
-        factor_gpu_counter_iterations);
     auto dev = device.d3d_device();
-    //gpu_timer_type::value_type gpu_freq;
-    //gpu_timer_type gpu_timer;
-    //std::vector<gpu_timer_type::millis_type> gpuTimes;
-    //auto isDisjoint = true;
+    const auto gpu_freq = gpu_timer::get_timestamp_frequency(
+        device.command_queue());
+    const auto gpu_iterations = config.get<std::uint32_t>(
+        factor_gpu_counter_iterations);
+    gpu_timer gpu_timer(device.d3d_device(), 1, this->pipeline_depth());
+    std::vector<gpu_timer_type::millis_type> gpu_times;
     const auto min_wall_time = config.get<std::uint32_t>(factor_min_wall_time);
+    stats_query::value_type pipeline_stats;
+    stats_query stats_query(device.d3d_device(), 1, 1);
     const auto volume_size = this->calc_physical_volume_size();
     const auto viewport = config.get<viewport_type>(factor_viewport);
 
@@ -380,6 +384,7 @@ trrojan::result trrojan::d3d12::cs_volume_benchmark::on_run(
     // Do the wall clock measurement using the prepared command lists.
     log::instance().write_line(log_level::debug, "Measuring wall clock "
         "timings over {} iterations ...", cpu_iterations);
+    const auto power_uid = benchmark_base::enter_power_scope(power_collector);
     cpu_timer.start();
     for (std::uint32_t i = 0; i < cpu_iterations; ++i) {
         auto cmd_list = cmd_lists[this->buffer_index()];
@@ -388,71 +393,92 @@ trrojan::result trrojan::d3d12::cs_volume_benchmark::on_run(
     }
     device.wait_for_gpu();
     const auto cpu_time = cpu_timer.elapsed_millis();
+    benchmark_base::leave_power_scope(power_collector);
 #endif
 
-#if 0
+#if 1
     // Do the GPU counter measurements using individual command lists.
-    bundle_times.resize(cfg.gpu_counter_iterations());
-    gpu_times.resize(cfg.gpu_counter_iterations());
-    for (std::uint32_t i = 0; i < cfg.gpu_counter_iterations(); ++i) {
+    gpu_times.resize(gpu_iterations);
+    for (std::size_t it = 0; it < gpu_times.size(); ++it) {
         log::instance().write_line(log_level::debug, "GPU counter measurement "
-            "#{}.", i);
-        auto cmd_list = cmd_lists[this->buffer_index()];
+            "#{}.", it);
+        const auto i = this->buffer_index();
+        auto cmd_list = cmd_lists[i];
         this->reset_command_list(cmd_list);
 
-        cmd_list->SetGraphicsRootSignature(root_sig);
-        set_descriptors(cmd_list, desc_tables);
+        cmd_list->SetComputeRootSignature(this->_compute_signature);
+        cmd_list->SetPipelineState(this->_compute_pipeline);
+        this->set_descriptors(cmd_list, i);
 
         gpu_timer.start_frame();
         gpu_timer.start(cmd_list, 0);
-        this->enable_target(cmd_list);
-        this->clear_target(cmd_list);
+        transition_resource(cmd_list, this->_uavs[i],
+            D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
-        gpu_timer.start(cmd_list, 1);
-        cmd_list->ExecuteBundle(bundle);
-        gpu_timer.end(cmd_list, 1);
+        cmd_list->Dispatch(groupX, groupY, 1u);
 
-        this->disable_target(cmd_list);
+        transition_resource(cmd_list, this->_uavs[i],
+            D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+            D3D12_RESOURCE_STATE_COPY_SOURCE);
+
+        this->enable_target(cmd_list, i, D3D12_RESOURCE_STATE_COPY_DEST);
+        this->copy_to_target(cmd_list, this->_uavs[i], i);
+        this->disable_target(cmd_list, i, D3D12_RESOURCE_STATE_COPY_DEST);
+
+        transition_resource(cmd_list, this->_uavs[i],
+            D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_COMMON);
         gpu_timer.end(cmd_list, 0);
         const auto timer_index = gpu_timer.end_frame(cmd_list);
 
         device.close_and_execute_command_list(cmd_list);
         this->present_target();
 
-        gpu_times[i] = gpu_timer::to_milliseconds(
+        device.wait_for_gpu();
+        gpu_times[it] = gpu_timer::to_milliseconds(
             gpu_timer.evaluate(timer_index, 0),
-            gpu_freq);
-        bundle_times[i] = gpu_timer::to_milliseconds(
-            gpu_timer.evaluate(timer_index, 1),
             gpu_freq);
     }
 #endif
 
-#if 0
+#if 1
     // Obtain pipeline statistics.
     log::instance().write_line(log_level::debug, "Collecting pipeline "
         "statistics ...");
     {
-        auto cmd_list = cmd_lists[this->buffer_index()];
+        const auto i = this->buffer_index();
+        auto cmd_list = cmd_lists[i];
         this->reset_command_list(cmd_list);
 
-        cmd_list->SetGraphicsRootSignature(root_sig);
-        set_descriptors(cmd_list, desc_tables);
+        cmd_list->SetComputeRootSignature(this->_compute_signature);
+        cmd_list->SetPipelineState(this->_compute_pipeline);
+        this->set_descriptors(cmd_list, i);
 
-        stats_query.begin_frame();
+        // Enable the UAV to write to.
+        transition_resource(cmd_list, this->_uavs[i],
+            D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
-        this->enable_target(cmd_list);
-        this->clear_target(cmd_list);
-
+        // Dispatch the compute call.
         stats_query.begin(cmd_list, 0);
-        cmd_list->ExecuteBundle(bundle);
+        cmd_list->Dispatch(groupX, groupY, 1u);
         stats_query.end(cmd_list, 0);
 
-        this->disable_target(cmd_list);
-        const auto stats_index = stats_query.end_frame(cmd_list);
+        // Transition UAV to copy source.
+        transition_resource(cmd_list, this->_uavs[i],
+            D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+            D3D12_RESOURCE_STATE_COPY_SOURCE);
 
+        // Enable the render target as copy destination and copy the data from
+        // the UAV to the back buffer.
+        this->enable_target(cmd_list, i, D3D12_RESOURCE_STATE_COPY_DEST);
+        this->copy_to_target(cmd_list, this->_uavs[i], i);
+        this->disable_target(cmd_list, i, D3D12_RESOURCE_STATE_COPY_DEST);
+
+        // Transition the UAV back to its initial state.
+        transition_resource(cmd_list, this->_uavs[i],
+            D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_COMMON);
+
+        const auto stats_index = stats_query.end_frame(cmd_list);
         device.close_and_execute_command_list(cmd_list);
-        this->present_target();
 
         // Wait until the results are here.
         device.wait_for_gpu();
@@ -461,287 +487,41 @@ trrojan::result trrojan::d3d12::cs_volume_benchmark::on_run(
     }
 #endif
 
-#if 0
+#if 1
     // Compute derived statistics for GPU counters.
-    const auto bundle_median = calc_median(bundle_times);
     const auto gpu_median = calc_median(gpu_times);
 #endif
-
-
-#if false
-    static const auto DATA_STAGE = static_cast<rendering_technique::shader_stages>(
-        rendering_technique::shader_stage::compute);
-
-    glm::vec3 bbe, bbs;
-    auto cntCpuIterations = static_cast<std::uint32_t>(0);
-    trrojan::timer cpuTimer;
-    const auto cntGpuIterations = config.get<std::uint32_t>(
-        factor_gpu_counter_iterations);
-    auto ctx = device.d3d_context();
-    auto dev = device.d3d_device();
-    gpu_timer_type::value_type gpuFreq;
-    gpu_timer_type gpuTimer;
-    std::vector<gpu_timer_type::millis_type> gpuTimes;
-    auto isDisjoint = true;
-    const auto minWallTime = config.get<std::uint32_t>(factor_min_wall_time);
-    RaycastingConstants raycastingConstants;
-    ViewConstants viewConstants;
-    const auto viewport = config.get<viewport_type>(factor_viewport);
-    const auto volSize = this->calc_physical_volume_size();
-
-    // Compute the bounding box in world space.
-    this->calc_bounding_box(bbs, bbe);
-
-    // If the device has changed, invalidate all GPU resources. Note that
-    // a lot of this has already been done in the base class, eg for the
-    // volume texture and the transfer function.
-    if (contains(changed, factor_device)) {
-        // Constant buffers.
-        this->raycasting_constants = create_buffer(dev, D3D11_USAGE_DEFAULT,
-            D3D11_BIND_CONSTANT_BUFFER, nullptr, sizeof(RaycastingConstants));
-        set_debug_object_name(this->raycasting_constants.p,
-            "raycasting_constants");
-        this->view_constants = create_buffer(dev, D3D11_USAGE_DEFAULT,
-            D3D11_BIND_CONSTANT_BUFFER, nullptr, sizeof(ViewConstants));
-        set_debug_object_name(this->view_constants.p, "view_constants");
-
-        // Rebuild the technique.
-        auto src = d3d12::plugin::load_resource(
-            MAKEINTRESOURCE(SINGLE_PASS_VOLUME_COMPUTE_SHADER), _T("SHADER"));
-        auto cs = create_compute_shader(dev, src);
-        auto res = rendering_technique::shader_resources();
-        res.sampler_states.push_back(this->linear_sampler);
-        res.resource_views.push_back(this->data_view);
-        res.resource_views.push_back(this->xfer_func_view);
-        res.constant_buffers.push_back(this->view_constants);
-        res.constant_buffers.push_back(this->raycasting_constants);
-        this->technique = rendering_technique("Compute shader single pass "
-            "volume raycasting", cs, std::move(res));
-
-        // Queries.
-        this->done_query = create_event_query(dev);
-    }
-
-    // The data set has changed, so update SRV in the technique.
-    if (contains(changed, factor_data_set)) {
-        this->technique.set_shader_resource_views(this->data_view,
-            DATA_STAGE, 0);
-    }
-
-    // The transfer function has changed, so update the SRV in the technique.
-    if (contains(changed, factor_xfer_func)) {
-        this->technique.set_shader_resource_views(this->xfer_func_view,
-            DATA_STAGE, 1);
-    }
-
-    // Switch to an UAV for the compute shader. If the render target cannot
-    // return an UAV, this means that the target has already been converted
-    // to an UAV. In this case, we do not change anything and assume no one
-    // else has changed the render target in the meantime.
-    {
-        auto target = this->switch_to_uav_target();
-        if (target != nullptr) {
-            this->technique.set_uavs(target,
-                static_cast<rendering_technique::shader_stages>(
-                    rendering_technique::shader_stage::compute));
-        }
-    }
-
-    // Update the raycasting parameters.
-    ::ZeroMemory(&raycastingConstants, sizeof(raycastingConstants));
-
-    raycastingConstants.BoxMax.x = bbe[0];
-    raycastingConstants.BoxMax.y = bbe[1];
-    raycastingConstants.BoxMax.z = bbe[2];
-    raycastingConstants.BoxMax.w = 0.0f;
-
-    raycastingConstants.BoxMin.x = bbs[0];
-    raycastingConstants.BoxMin.y = bbs[1];
-    raycastingConstants.BoxMin.z = bbs[2];
-    raycastingConstants.BoxMin.w = 0.0f;
-
-    raycastingConstants.ErtThreshold = config.get<float>(factor_ert_threshold);
-    volume_benchmark_base::zero_is_max(raycastingConstants.ErtThreshold);
-
-    raycastingConstants.StepLimit = config.get<std::uint32_t>(factor_max_steps);
-    volume_benchmark_base::zero_is_max(raycastingConstants.StepLimit);
-
-    raycastingConstants.StepSize = this->calc_base_step_size()
-        * config.get<float>(factor_step_size);
-    
-    ctx->UpdateSubresource(this->raycasting_constants.p, 0, nullptr,
-        &raycastingConstants, 0, 0);
-
-    // Update the camera and view parameters.
-    {
-        ::ZeroMemory(&viewConstants, sizeof(viewConstants));
-        const auto aspect = static_cast<float>(viewport[0])
-            / static_cast<float>(viewport[1]);
-
-        // First, set some basic camera parameters.
-        this->camera.set_fovy(config.get<float>(factor_fovy_deg));
-        this->camera.set_aspect_ratio(aspect);
-
-        // Second, compute the current position based on the manoeuvre.
-        cs_volume_benchmark::apply_manoeuvre(this->camera, config, bbs, bbe);
-
-        // Once the camera is positioned, compute the clipping planes.
-        auto clip = this->calc_clipping_planes(this->camera);
-        clip.first = 0.1f;
-
-        // Retrieve the final view parameters.
-        const auto dir = this->camera.get_direction();
-        const auto pos = this->camera.get_look_from();
-        const auto up = this->camera.get_look_up();
-        const auto right = glm::normalize(glm::cross(dir, up));
-
-        viewConstants.CameraDirection.x = dir.x;
-        viewConstants.CameraDirection.y = dir.y;
-        viewConstants.CameraDirection.z = dir.z;
-        viewConstants.CameraDirection.w = 0.0f;
-
-        viewConstants.CameraPosition.x = pos.x;
-        viewConstants.CameraPosition.y = pos.y;
-        viewConstants.CameraPosition.z = pos.z;
-        viewConstants.CameraPosition.w = 1.0f;
-
-        viewConstants.CameraRight.x = right.x;
-        viewConstants.CameraRight.y = right.y;
-        viewConstants.CameraRight.z = right.z;
-        viewConstants.CameraRight.w = 0.0f;
-
-        viewConstants.CameraUp.x = up.x;
-        viewConstants.CameraUp.y = up.y;
-        viewConstants.CameraUp.z = up.z;
-        viewConstants.CameraUp.w = 0.0f;
-
-        viewConstants.ClippingPlanes.x = clip.first;
-        viewConstants.ClippingPlanes.y = clip.second;
-
-        viewConstants.FieldOfView.y = glm::radians(this->camera.get_fovy());
-        viewConstants.FieldOfView.x = aspect * viewConstants.FieldOfView.y;
-            //= 2.0f * atan(0.5f * tan(viewConstants.FieldOfView.y) * aspect);
-
-        viewConstants.ImageSize.x = viewport[0];
-        viewConstants.ImageSize.y = viewport[1];
-
-        // Update the GPU resources.
-        ctx->UpdateSubresource(this->view_constants.p, 0, nullptr,
-            &viewConstants, 0, 0);
-    }
-
-    // Initialise the GPU timer.
-    gpuTimer.initialise(dev);
 
     // Prepare the result set.
     auto retval = std::make_shared<basic_result>(std::move(config),
         std::initializer_list<std::string> {
+            "benchmark",
+            "power_uid",
             "data_extents",
             "gpu_time_min",
             "gpu_time_med",
             "gpu_time_max",
             "wall_time_iterations",
             "wall_time",
-            "wall_time_avg"
+            "wall_time_avg",
+            "cs_invocations"
     });
-
-    // Activate the technique.
-    this->technique.apply(ctx);
-
-    // Determine the size of the dispatch groups. This must be synchronised with
-    // the group size in the shader itself.
-    const auto groupX = static_cast<UINT>(ceil(static_cast<float>(viewport[0])
-        / 16.0f));
-    const auto groupY = static_cast<UINT>(ceil(static_cast<float>(viewport[1])
-        / 16.0f));
-
-    // Do prewarming and compute number of CPU iterations at the same time.
-    log::instance().write_line(log_level::debug, "Prewarming ...");
-    {
-        auto batchTime = 0.0;
-        auto cntPrewarms = (std::max)(1u,
-            config.get<std::uint32_t>(factor_min_prewarms));
-
-        do {
-            cntCpuIterations = 0;
-            assert(cntPrewarms >= 1);
-
-            cpuTimer.start();
-            for (; cntCpuIterations < cntPrewarms; ++cntCpuIterations) {
-                ctx->Dispatch(groupX, groupY, 1u);
-                this->present_target();
-            }
-
-            ctx->End(this->done_query);
-            wait_for_event_query(ctx, this->done_query);
-            batchTime = cpuTimer.elapsed_millis();
-
-            if (batchTime < minWallTime) {
-                cntPrewarms = static_cast<std::uint32_t>(std::ceil(
-                    static_cast<double>(minWallTime * cntCpuIterations)
-                    / batchTime));
-                if (cntPrewarms < 1) {
-                    cntPrewarms = 1;
-                }
-            }
-        } while (batchTime < minWallTime);
-    }
-
-    // Do the GPU counter measurements
-    gpuTimes.resize(cntGpuIterations);
-    for (std::uint32_t i = 0; i < cntGpuIterations;) {
-        log::instance().write_line(log_level::debug, "GPU counter measurement "
-            "#{}.", i);
-        gpuTimer.start_frame();
-        gpuTimer.start(0);
-        ctx->Dispatch(groupX, groupY, 1u);
-        this->present_target();
-        gpuTimer.end(0);
-        gpuTimer.end_frame();
-
-        gpuTimer.evaluate_frame(isDisjoint, gpuFreq);
-        if (!isDisjoint) {
-            gpuTimes[i] = gpu_timer_type::to_milliseconds(
-                gpuTimer.evaluate(0), gpuFreq);
-            ++i;    // Only proceed in case of success.
-        }
-    }
-
-    // Do the wall clock measurement.
-    log::instance().write_line(log_level::debug, "Measuring wall clock "
-        "timings over {} iterations ...", cntCpuIterations);
-    cpuTimer.start();
-    for (std::uint32_t i = 0; i < cntCpuIterations; ++i) {
-        ctx->Dispatch(groupX, groupY, 1u);
-        this->present_target();
-    }
-    ctx->End(this->done_query);
-    wait_for_event_query(ctx, this->done_query);
-    auto cpuTime = cpuTimer.elapsed_millis();
-
-    // Compute derived statistics for GPU counters.
-    std::sort(gpuTimes.begin(), gpuTimes.end());
-    auto gpuMedian = gpuTimes[gpuTimes.size() / 2];
-    if (gpuTimes.size() % 2 == 0) {
-        gpuMedian += gpuTimes[gpuTimes.size() / 2 - 1];
-        gpuMedian *= 0.5;
-    }
 
     // Output the results.
     retval->add({
-        volSize,
-        gpuTimes.front(),
-        gpuMedian,
-        gpuTimes.back(),
-        cntCpuIterations,
-        cpuTime,
-        static_cast<double>(cpuTime) / cntCpuIterations
+        this->name(),
+        power_uid,
+        volume_size,
+        gpu_times.front(),
+        gpu_median,
+        gpu_times.back(),
+        cpu_iterations,
+        cpu_time,
+        static_cast<double>(cpu_time) / cpu_iterations,
+        pipeline_stats.CSInvocations
     });
 
     return retval;
-#endif
-//    throw "TODO";
-    return trrojan::result();
 }
 
 

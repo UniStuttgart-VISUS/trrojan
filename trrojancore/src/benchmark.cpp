@@ -1,5 +1,5 @@
 // <copyright file="benchmark.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2016 - 2022 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+// Copyright © 2016 - 2023 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
 // <author>Valentin Bruder</author>
@@ -154,6 +154,58 @@ size_t trrojan::benchmark_base::run(const configuration_set& configs,
     });
 
     return retval;
+}
+
+
+/*
+ * trrojan::benchmark_base::enter_power_scope
+ */
+std::string trrojan::benchmark_base::enter_power_scope(
+        const power_collector::pointer& collector) {
+#if defined(TRROJAN_WITH_POWER_OVERWHELMING)
+    if (powerCollector != nullptr) {
+        // If we have a power sensor, we want to record data now.
+        powerUid = powerCollector->set_next_unique_description();
+    }
+#endif /* defined(TRROJAN_WITH_POWER_OVERWHELMING) */
+
+    return "";
+}
+
+
+/*
+ * trrojan::benchmark_base::initialise_power_collector
+ */
+trrojan::power_collector::pointer
+trrojan::benchmark_base::initialise_power_collector(
+        const trrojan::configuration& c) {
+    power_collector::pointer retval;
+
+#if defined(TRROJAN_WITH_POWER_OVERWHELMING)
+    auto it = c.find(power_collector::factor_name);
+    if (it != c.end()) {
+        retval = it->value().as<power_collector::pointer>();
+    }
+
+    if (retval != nullptr) {
+        retval->set_header();
+    }
+#endif /* defined(TRROJAN_WITH_POWER_OVERWHELMING) */
+
+    return retval;
+}
+
+
+/*
+ * trrojan::benchmark_base::leave_power_scope
+ */
+void trrojan::benchmark_base::leave_power_scope(
+        const power_collector::pointer& collector) {
+#if defined(TRROJAN_WITH_POWER_OVERWHELMING)
+    if (powerCollector != nullptr) {
+        powerCollector->set_description("");
+    }
+#endif /* defined(TRROJAN_WITH_POWER_OVERWHELMING) */
 }
 
 

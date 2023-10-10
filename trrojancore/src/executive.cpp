@@ -198,11 +198,9 @@ void trrojan::executive::run(benchmark_base& benchmark,
     // the order of the parameters, but keep them as they have been passed
     // to the method.
 
-#if defined(TRROJAN_WITH_POWER_OVERWHELMING)
     // Inject the power collector into all configurations.
     configs.replace_factor(factor::from_manifestations(
         power_collector::factor_name, powerCollector));
-#endif /* defined(TRROJAN_WITH_POWER_OVERWHELMING) */
 
     auto eds = this->prepare_env_devs(configs);
     for (auto e : eds) {

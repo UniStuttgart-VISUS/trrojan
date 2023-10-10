@@ -52,25 +52,11 @@ bool trrojan::d3d11::benchmark_base::can_run(trrojan::environment env,
  */
 trrojan::result trrojan::d3d11::benchmark_base::run(const configuration& c) {
     std::vector<std::string> changed;
-    power_collector::pointer powerCollector;
     this->check_changed_factors(c, std::back_inserter(changed));
-
-#if defined(TRROJAN_WITH_POWER_OVERWHELMING)
-    // Check whether we have a power collector to pass on. Furthermore, set the
-    // header such that the actual benchmark does not have to care about this.
-    {
-        auto it = c.find(power_collector::factor_name);
-        if (it != c.end()) {
-            powerCollector = it->value().as<power_collector::pointer>();
-        }
-        if (powerCollector != nullptr) {
-            powerCollector->set_header();
-        }
-    }
-#endif /* defined(TRROJAN_WITH_POWER_OVERWHELMING) */
 
     auto genericDev = c.get<trrojan::device>(factor_device);
     auto device = std::dynamic_pointer_cast<trrojan::d3d11::device>(genericDev);
+    auto powerCollector = initialise_power_collector(c);
 
     if (device == nullptr) {
         throw std::runtime_error("A configuration without a Direct3D device was "

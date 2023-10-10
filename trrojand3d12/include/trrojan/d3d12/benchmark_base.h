@@ -377,11 +377,14 @@ namespace d3d12 {
         /// <param name="device">The device to use. It is guaranteed that the
         /// device is obtained from <paramref name="config" />.</param>
         /// <param name="config">The configuration to run.</param>
+        /// <param name="power_collector">The power data collector from
+        /// <pararmef name="config" /> if there is any.</param>
         /// <param name="changed">The names of the factors that have been
         /// changed since the last test run.</param>
         /// <returns>The test results.</returns>
         virtual trrojan::result on_run(d3d12::device& device,
             const configuration& config,
+            power_collector::pointer& power_collector,
             const std::vector<std::string>& changed) = 0;
 
         /// <summary>

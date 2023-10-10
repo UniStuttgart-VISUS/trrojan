@@ -348,6 +348,7 @@ void trrojan::d3d12::volume_benchmark_base::on_device_switch(device& device) {
 trrojan::result trrojan::d3d12::volume_benchmark_base::on_run(
         d3d12::device& device,
         const configuration& config,
+        power_collector::pointer& power_collector,
         const std::vector<std::string>& changed) {
     // Clear all resource that have been invalidated by the change of factors.
     if (contains_any(changed, factor_device, factor_data_set, factor_frame)) {
