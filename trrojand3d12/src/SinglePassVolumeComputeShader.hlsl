@@ -29,7 +29,7 @@ Texture1D TransferFunction : register(t1);
 Texture3D Volume : register(t0);
 
 
-#define SHADER_ROOT_SIGNATURE\
+#define SHADER_ROOT_SIGNATURE \
 "RootFlags(0),"\
 "DescriptorTable(SRV(t0), SRV(t1), CBV(b0), CBV(b1), UAV(u0), visibility = SHADER_VISIBILITY_ALL),"\
 "StaticSampler(s0, addressU = TEXTURE_ADDRESS_CLAMP, addressV = TEXTURE_ADDRESS_CLAMP, addressW = TEXTURE_ADDRESS_CLAMP, filter = FILTER_MIN_MAG_MIP_LINEAR, visibility = SHADER_VISIBILITY_ALL)"
@@ -77,9 +77,9 @@ void Main(uint3 threadID : SV_DispatchThreadID) {
     // Find intersection with data bounding box.
     float start, end;
     if (!RayBoxIntersection(camPos, dir, BoxMin.xyz, BoxMax.xyz, start, end)) {
+        Output[threadID.xy] = 0.0f.xxxx;
         //Output[threadID.xy] = float4(dir, 1.0f);
         //Output[threadID.xy] = float4(BoxMax.xyz / 128.0f, 1.0f);
-        Output[threadID.xy] = 0.0f.xxxx;
         return;
     }
     if (start < 0.0f) start = 0.0f; // Clamp to near plane.
@@ -94,6 +94,7 @@ void Main(uint3 threadID : SV_DispatchThreadID) {
     for (uint i = 0; (i < StepLimit) && (lambda < end); ++i) {
         float4 value = Volume.SampleLevel(LinearSampler, pos, 0);
         float4 emission = TransferFunction.SampleLevel(LinearSampler, value.x, 0);
+        //emission = 0.1f.xxxx;
         emission.rgb *= emission.a;
         colour += emission * (1.0f - colour.a);
 
@@ -101,12 +102,21 @@ void Main(uint3 threadID : SV_DispatchThreadID) {
             break;
         }
 
-        lambda += length(StepSize * volSize);
+        lambda += StepSize;
         pos += step;
     }
 
     Output[threadID.xy] = colour;
+    //Output[threadID.xy] = float4((float3)threadID.xyy / ImageSize.xyy, 1.0f);
+    //Output[threadID.xy] = TransferFunction.SampleLevel(LinearSampler, (float) threadID.x / ImageSize.x, 0);
+    //Output[threadID.xy] = float4(Volume.SampleLevel(LinearSampler, float3((float2) threadID.xy / ImageSize.xy, 0.5f), 0).xyz, 1.0f);
+    //Output[threadID.xy] = float4(abs(BoxMax.xyz) / 256.0f, 1.0f);
+    //Output[threadID.xy] = float4(abs(CameraPosition.xyz), 1.0f);
+    //Output[threadID.xy] = float4(abs(CameraRight.xyz), 1.0f);
+    //Output[threadID.xy] = float2(ImageSize / 2048).xyxy;
+    //Output[threadID.xy] = float2(1.0f, 0.0f).xyyx;
     //Output[threadID.xy] = float4((pos - BoxMin.xyz) / volSize, 1.0f);
+    //Output[threadID.xy] = float4(start.xxx, 1.0f);
     //Output[threadID.xy] = float4(dir, 1.0f);
     //Output[threadID.xy] = float4((camPos + start * dir - BoxMin.xyz) / volSize, 1.0f);
 }

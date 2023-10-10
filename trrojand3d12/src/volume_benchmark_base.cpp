@@ -174,7 +174,7 @@ trrojan::d3d12::volume_benchmark_base::load_volume(
     }
 
     // Stage the volume.
-    auto data = reader.read_current();
+    const auto data = reader.read_current();
     out_staging = create_upload_buffer(device.d3d_device(), data.size());
     set_debug_object_name(out_staging.p, "volume_staging");
     stage_data(out_staging, data.data(), data.size());
@@ -188,7 +188,10 @@ trrojan::d3d12::volume_benchmark_base::load_volume(
     auto src_loc = get_copy_location(out_staging);
     assert(src_loc.PlacedFootprint.Footprint.Format == DXGI_FORMAT_UNKNOWN);
     src_loc.PlacedFootprint.Footprint.Format = format;
-    src_loc.PlacedFootprint.Footprint.Width = reader.info().element_size();
+    src_loc.PlacedFootprint.Footprint.Width = resolution[0];
+    src_loc.PlacedFootprint.Footprint.Height = resolution[1];
+    src_loc.PlacedFootprint.Footprint.Depth = resolution[2];
+    src_loc.PlacedFootprint.Footprint.RowPitch = reader.info().row_pitch();
     auto dst_loc = get_copy_location(retval);
 
     cmd_list->CopyTextureRegion(&dst_loc, 0, 0, 0, &src_loc, nullptr);

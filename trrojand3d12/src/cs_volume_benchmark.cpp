@@ -250,6 +250,7 @@ trrojan::result trrojan::d3d12::cs_volume_benchmark::on_run(
         this->_descriptors.emplace_back();
         auto& descriptors = this->_descriptors.back();
 
+        // t0 == data set, t1 == transfer function.
         {
             descriptors.push_back(gpu_handle);
             const auto handle_volume = cpu_handle;
@@ -264,6 +265,7 @@ trrojan::result trrojan::d3d12::cs_volume_benchmark::on_run(
             this->set_textures(handle_volume, handle_xfer_func);
         }
 
+        // b0 == view, b1 == raycasting
         {
             descriptors.push_back(gpu_handle);
             const auto handle_view = cpu_handle;
@@ -278,6 +280,7 @@ trrojan::result trrojan::d3d12::cs_volume_benchmark::on_run(
             this->set_constants(handle_view, handle_ray);
         }
 
+        // u0 == render target
         {
             D3D12_UNORDERED_ACCESS_VIEW_DESC desc;
             ::ZeroMemory(&desc, sizeof(desc));
@@ -373,7 +376,7 @@ trrojan::result trrojan::d3d12::cs_volume_benchmark::on_run(
     }
 #endif
 
-#if 0
+#if 1
     // Do the wall clock measurement using the prepared command lists.
     log::instance().write_line(log_level::debug, "Measuring wall clock "
         "timings over {} iterations ...", cpu_iterations);

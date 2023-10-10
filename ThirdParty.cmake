@@ -53,7 +53,7 @@ endif ()
 
 # datraw
 FetchContent_Declare(datraw
-    URL "https://github.com/UniStuttgart-VISUS/datraw/archive/refs/tags/v1.0.6.zip"
+    URL "https://github.com/UniStuttgart-VISUS/datraw/archive/refs/tags/v1.0.8.zip"
     DOWNLOAD_EXTRACT_TIMESTAMP ON
 )
 FetchContent_MakeAvailable(datraw)

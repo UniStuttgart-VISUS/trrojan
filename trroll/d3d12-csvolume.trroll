@@ -13,7 +13,7 @@ d3d12::cs-volume-renderer {
     uint32 min_wall_time = 5000
     uint32 iterations = 1
 
-    string manoeuvre = orbit_y
+    string manoeuvre = random
     uint32 manoeuvre_steps = 100
     uint32 manoeuvre_step = 0; 19; 39; 59; 79; 99
 }
