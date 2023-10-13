@@ -11,6 +11,10 @@
 #include <stdexcept>
 #include <vector>
 
+#ifdef _UWP
+#include <winrt/windows.ui.core.h>
+#endif // _UWP
+
 #include <Windows.h>
 #include <d3d12.h>
 
@@ -57,6 +61,14 @@ namespace d3d12 {
             trrojan::device device) const noexcept override;
 
         virtual trrojan::result run(const configuration& c) override;
+
+        void SetWindow(winrt::agile_ref<winrt::Windows::UI::Core::CoreWindow> const& window);
+
+        virtual inline void destroyTargets() {
+            // destroy render targets
+            render_target_.reset();
+            debug_target_.reset();
+        }
 
     protected:
 
@@ -122,8 +134,8 @@ namespace d3d12 {
         /// </remarks>
         /// <returns></returns>
         inline UINT buffer_index(void) const {
-            return (this->_render_target != nullptr)
-                ? this->_render_target->buffer_index()
+            return (this->render_target_ != nullptr)
+                ? this->render_target_->buffer_index()
                 : 0;
         }
 
@@ -132,16 +144,16 @@ namespace d3d12 {
         /// </summary>
         /// <param name="cmd_list"></param>
         inline void clear_target(ID3D12GraphicsCommandList *cmd_list) {
-            assert(this->_render_target != nullptr);
+            assert(this->render_target_ != nullptr);
             assert(cmd_list != nullptr);
-            this->_render_target->clear(cmd_list);
+            this->render_target_->clear(cmd_list);
         }
 
         inline void clear_target(ID3D12GraphicsCommandList *cmd_list,
                 const UINT frame) {
-            assert(this->_render_target != nullptr);
+            assert(this->render_target_ != nullptr);
             assert(cmd_list != nullptr);
-            this->_render_target->clear(cmd_list, frame);
+            this->render_target_->clear(cmd_list, frame);
         }
 
         /// <summary>
@@ -151,16 +163,16 @@ namespace d3d12 {
         /// <param name="cmd_list"></param>
         inline void clear_target(const std::array<float, 4>& clear_colour,
                 ID3D12GraphicsCommandList *cmd_list) {
-            assert(this->_render_target != nullptr);
+            assert(this->render_target_ != nullptr);
             assert(cmd_list != nullptr);
-            this->_render_target->clear(clear_colour, cmd_list);
+            this->render_target_->clear(clear_colour, cmd_list);
         }
 
         inline void clear_target(const std::array<float, 4>& clear_colour,
                 ID3D12GraphicsCommandList *cmd_list, const UINT frame) {
-            assert(this->_render_target != nullptr);
+            assert(this->render_target_ != nullptr);
             assert(cmd_list != nullptr);
-            this->_render_target->clear(clear_colour, cmd_list, frame);
+            this->render_target_->clear(clear_colour, cmd_list, frame);
         }
 
         /// <summary>
@@ -266,16 +278,16 @@ namespace d3d12 {
             const std::vector<D3D12_DESCRIPTOR_HEAP_DESC>& descs);
 
         inline void disable_target(ID3D12GraphicsCommandList *cmd_list) {
-            assert(this->_render_target != nullptr);
+            assert(this->render_target_ != nullptr);
             assert(cmd_list != nullptr);
-            this->_render_target->disable(cmd_list);
+            this->render_target_->disable(cmd_list);
         }
 
         inline void disable_target(ID3D12GraphicsCommandList *cmd_list,
                 const UINT frame) {
-            assert(this->_render_target != nullptr);
+            assert(this->render_target_ != nullptr);
             assert(cmd_list != nullptr);
-            this->_render_target->disable(cmd_list, frame);
+            this->render_target_->disable(cmd_list, frame);
         }
 
         /// <summary>
@@ -289,9 +301,9 @@ namespace d3d12 {
         /// </remarks>
         /// <param name="cmd_list"></param>
         inline void enable_target(ID3D12GraphicsCommandList *cmd_list) {
-            assert(this->_render_target != nullptr);
+            assert(this->render_target_ != nullptr);
             assert(cmd_list != nullptr);
-            this->_render_target->enable(cmd_list);
+            this->render_target_->enable(cmd_list);
         }
 
         /// <summary>
@@ -307,9 +319,9 @@ namespace d3d12 {
         /// <param name="frame"></param>
         inline void enable_target(ID3D12GraphicsCommandList *cmd_list,
                 const UINT frame) {
-            assert(this->_render_target != nullptr);
+            assert(this->render_target_ != nullptr);
             assert(cmd_list != nullptr);
-            this->_render_target->enable(cmd_list, frame);
+            this->render_target_->enable(cmd_list, frame);
         }
 
         /// <summary>
@@ -346,7 +358,7 @@ namespace d3d12 {
         /// </summary>
         /// <returns>The number of buffers used by the render target.</returns>
         inline UINT pipeline_depth(void) const {
-            return this->_render_target->pipeline_depth();
+            return this->render_target_->pipeline_depth();
         }
 
         /// <summary>
@@ -378,8 +390,8 @@ namespace d3d12 {
         /// </remarks>
         /// <returns>The index of the next buffer/frame to write to.</returns>
         inline UINT present_target(void) {
-            assert(this->_render_target != nullptr);
-            return this->_render_target->present();
+            assert(this->render_target_ != nullptr);
+            return this->render_target_->present();
         }
 
         void save_target(const char *path = nullptr);
@@ -395,8 +407,8 @@ namespace d3d12 {
         /// </summary>
         /// <returns></returns>
         inline const D3D12_VIEWPORT& viewport(void) const noexcept {
-            assert(this->_render_target != nullptr);
-            return this->_render_target->viewport();
+            assert(this->render_target_ != nullptr);
+            return this->render_target_->viewport();
         }
 
         /// <summary>
@@ -433,12 +445,18 @@ namespace d3d12 {
         /// </remarks>
         command_allocator_list _direct_cmd_allocators;
 
+#ifdef _UWP
+        // Cached reference to the Window.
+        winrt::agile_ref<winrt::Windows::UI::Core::CoreWindow> window_{ nullptr };
+#endif // _UWP
+
     private:
 
         typedef trrojan::benchmark_base base;
 
-        render_target _debug_target;
-        render_target _render_target;
+        std::shared_ptr<trrojan::d3d12::device> debug_device_;
+        render_target debug_target_;
+        render_target render_target_;
 
     };
 

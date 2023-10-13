@@ -14,6 +14,8 @@
 #include <atlbase.h>
 #include <d3d12.h>
 
+#include <winrt/windows.ui.core.h>
+
 #include "trrojan/d3d12/device.h"
 #include "trrojan/d3d12/export.h"
 #include "trrojan/d3d12/handle.h"
@@ -108,6 +110,22 @@ namespace d3d12 {
         /// <returns></returns>
         inline ATL::CComPtr<ID3D12Device>& device(void) {
             return this->_device;
+        }
+
+        /// <summary>
+        /// Answer the dxgi factory the render target belongs to.
+        /// </summary>
+        /// <returns></returns>
+        inline ATL::CComPtr<IDXGIFactory4>& factory(void) {
+            return this->_dxgi_factory;
+        }
+
+        /// <summary>
+        /// Answer the command queue the render target belongs to.
+        /// </summary>
+        /// <returns></returns>
+        inline ATL::CComPtr<ID3D12CommandQueue>& command_queue(void) {
+            return this->_command_queue;
         }
 
         /// <summary>
@@ -254,6 +272,23 @@ namespace d3d12 {
         /// <param name="hWnd"></param>
         /// <returns></returns>
         ATL::CComPtr<IDXGISwapChain3> create_swap_chain(HWND hWnd);
+
+#ifdef _UWP
+        /// <summary>
+        /// Allocate a swap chain for the pipeline depth of the render target
+        /// and associated with the given window for UWP.
+        /// </summary>
+        /// <remarks>
+        /// This method is a convenience method for subclasses to create a
+        /// compatible swap chain.
+        /// </remarks>
+        /// <param name="width"></param>
+        /// <param name="height"></param>
+        /// <param name="window"></param>
+        /// <returns></returns>
+        ATL::CComPtr<IDXGISwapChain3> create_swap_chain(UINT width, UINT height, 
+            winrt::agile_ref<winrt::Windows::UI::Core::CoreWindow> window);
+#endif // _UWP
 
         /// <summary>
         /// Answer the current buffer.

@@ -44,7 +44,9 @@ set(ShaderFiles ${ShaderHeaderFiles} ${ShaderFiles})
 
 include_directories("${IncludeDirectory}")
 include_directories("${TrrojanCoreIncludeDir}")
+if(NOT UWP)
 include_directories("${TrrojanSysInfoIncludeDir}")
+endif()
 
 # Create CSOs for packing them into the resource files.
 #add_dependencies(${ResourceFiles} ${ShaderFiles})
@@ -52,10 +54,22 @@ include_directories("${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${CMAKE_CFG_INTDIR}")
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTRROJAND3D12_EXPORTS")
 
+set(TrrojanD3D12IncludeDir "${CMAKE_CURRENT_SOURCE_DIR}/${IncludeDirectory}" PARENT_SCOPE)
+
+# Enable debug overlay on rquest.
+if (TRROJAN_DEBUG_OVERLAY)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DCREATE_D2D_OVERLAY")
+endif (TRROJAN_DEBUG_OVERLAY)
+
+
 if (WIN32)
-    add_library(trrojand3d12 MODULE ${HeaderFiles} ${SourceFiles} ${ShaderFiles} ${ResourceFiles})
+    if(UWP)
+        add_library(trrojand3d12 SHARED ${HeaderFiles} ${SourceFiles} ${ShaderFiles} ${ResourceFiles})
+    else()
+        add_library(trrojand3d12 MODULE ${HeaderFiles} ${SourceFiles} ${ShaderFiles} ${ResourceFiles})
+    endif()
     target_link_libraries(trrojand3d12 trrojancore)
-    target_link_libraries(trrojand3d12 d3d12 dxgi dxguid)
+    target_link_libraries(trrojand3d12 d3d12 dxgi dxguid d2d1 dwrite)
 
     ## Reference DirectStorage (cf. https://cmake.org/cmake/help/latest/prop_tgt/VS_PACKAGE_REFERENCES.html)
     #set_property(TARGET ${TARGET_NAME} PROPERTY VS_PACKAGE_REFERENCES "Microsoft.Direct3D.DirectStorage")

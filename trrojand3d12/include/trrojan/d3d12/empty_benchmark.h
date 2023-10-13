@@ -31,7 +31,9 @@ namespace d3d12 {
 
         virtual trrojan::result on_run(d3d12::device& device,
             const configuration& config,
-            const std::vector<std::string>& changed) override;
+            const std::vector<std::string>& changed) override {
+            return {};
+        }
 
     };
 

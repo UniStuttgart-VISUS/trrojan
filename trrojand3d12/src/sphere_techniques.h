@@ -1450,1411 +1450,1411 @@ switch (id) {\
 #define _LOOKUP_SPHERE_SHADER_FILES(builder, id, resolve_path)\
 switch (id) {\
    case (9223372037794299908):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader8000000038000004.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader8000000038000004.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader8000000038000004.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader8000000038000004.cso"));\
         break;\
    case (9007200328482816):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0020000040000000.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader0020000040000000.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader0020000040000000.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0020000040000000.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0020000040000000.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader0020000040000000.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader0020000040000000.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0020000040000000.cso"));\
         break;\
    case (144115190491776006):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0200000090000406.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0200000090000406.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0200000090000406.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0200000090000406.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0200000090000406.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0200000090000406.cso"));\
         break;\
    case (144115190491776004):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0200000090000404.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0200000090000404.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0200000090000404.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0200000090000404.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0200000090000404.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0200000090000404.cso"));\
         break;\
    case (144115190491776003):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0200000090000403.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0200000090000403.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0200000090000403.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0200000090000403.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0200000090000403.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0200000090000403.cso"));\
         break;\
    case (144115190491776002):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0200000090000402.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0200000090000402.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0200000090000402.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0200000090000402.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0200000090000402.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0200000090000402.cso"));\
         break;\
    case (144115190491776001):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0200000090000401.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0200000090000401.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0200000090000401.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0200000090000401.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0200000090000401.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0200000090000401.cso"));\
         break;\
    case (144115190491776000):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0200000090000400.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0200000090000400.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0200000090000400.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0200000090000400.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0200000090000400.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0200000090000400.cso"));\
         break;\
    case (2305843010555872259):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader2000000050000403.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader2000000050000403.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader2000000050000403.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader2000000050000403.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader2000000050000403.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader2000000050000403.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader2000000050000403.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader2000000050000403.cso"));\
         break;\
    case (2305843010555872258):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader2000000050000402.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader2000000050000402.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader2000000050000402.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader2000000050000402.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader2000000050000402.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader2000000050000402.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader2000000050000402.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader2000000050000402.cso"));\
         break;\
    case (2305843010555872257):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader2000000050000401.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader2000000050000401.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader2000000050000401.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader2000000050000401.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader2000000050000401.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader2000000050000401.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader2000000050000401.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader2000000050000401.cso"));\
         break;\
    case (2305843010555872256):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader2000000050000400.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader2000000050000400.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader2000000050000400.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader2000000050000400.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader2000000050000400.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader2000000050000400.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader2000000050000400.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader2000000050000400.cso"));\
         break;\
    case (288230378567631618):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0400000090000302.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0400000090000302.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0400000090000302.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0400000090000302.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0400000090000302.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0400000090000302.cso"));\
         break;\
    case (576460753645600771):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0800000050000003.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader0800000050000003.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader0800000050000003.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0800000050000003.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0800000050000003.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader0800000050000003.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader0800000050000003.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0800000050000003.cso"));\
         break;\
    case (72057596453848834):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0100000090000702.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0100000090000702.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0100000090000702.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0100000090000702.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0100000090000702.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0100000090000702.cso"));\
         break;\
    case (2305843010555872260):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader2000000050000404.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader2000000050000404.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader2000000050000404.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader2000000050000404.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader2000000050000404.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader2000000050000404.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader2000000050000404.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader2000000050000404.cso"));\
         break;\
    case (72057596453847296):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0100000090000100.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0100000090000100.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0100000090000100.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0100000090000100.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0100000090000100.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0100000090000100.cso"));\
         break;\
    case (1152921505949025793):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader1000000050000601.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader1000000050000601.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader1000000050000601.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader1000000050000601.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader1000000050000601.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader1000000050000601.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader1000000050000601.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader1000000050000601.cso"));\
         break;\
    case (72057596453848582):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0100000090000606.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0100000090000606.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0100000090000606.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0100000090000606.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0100000090000606.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0100000090000606.cso"));\
         break;\
    case (72057596453848580):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0100000090000604.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0100000090000604.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0100000090000604.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0100000090000604.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0100000090000604.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0100000090000604.cso"));\
         break;\
    case (72057596453848579):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0100000090000603.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0100000090000603.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0100000090000603.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0100000090000603.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0100000090000603.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0100000090000603.cso"));\
         break;\
    case (18014399583223812):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0040000040000004.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader0040000040000004.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader0040000040000004.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0040000040000004.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0040000040000004.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader0040000040000004.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader0040000040000004.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0040000040000004.cso"));\
         break;\
    case (72057596453848577):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0100000090000601.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0100000090000601.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0100000090000601.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0100000090000601.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0100000090000601.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0100000090000601.cso"));\
         break;\
    case (1152921505949025794):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader1000000050000602.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader1000000050000602.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader1000000050000602.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader1000000050000602.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader1000000050000602.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader1000000050000602.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader1000000050000602.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader1000000050000602.cso"));\
         break;\
    case (18014399583223809):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0040000040000001.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader0040000040000001.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader0040000040000001.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0040000040000001.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0040000040000001.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader0040000040000001.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader0040000040000001.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0040000040000001.cso"));\
         break;\
    case (1152921505949025792):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader1000000050000600.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader1000000050000600.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader1000000050000600.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader1000000050000600.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader1000000050000600.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader1000000050000600.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader1000000050000600.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader1000000050000600.cso"));\
         break;\
    case (9223372037794300162):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader8000000038000102.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader8000000038000102.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader8000000038000102.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader8000000038000102.cso"));\
         break;\
    case (1152921505949026050):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader1000000050000702.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader1000000050000702.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader1000000050000702.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader1000000050000702.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader1000000050000702.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader1000000050000702.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader1000000050000702.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader1000000050000702.cso"));\
         break;\
    case (9223372037794300160):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader8000000038000100.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader8000000038000100.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader8000000038000100.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader8000000038000100.cso"));\
         break;\
    case (576460753645601538):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0800000050000302.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader0800000050000302.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader0800000050000302.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0800000050000302.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0800000050000302.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader0800000050000302.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader0800000050000302.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0800000050000302.cso"));\
         break;\
    case (9223372037794301451):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader800000003800060B.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader800000003800060B.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader800000003800060B.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader800000003800060B.cso"));\
         break;\
    case (9223372037794301449):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader8000000038000609.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader8000000038000609.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader8000000038000609.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader8000000038000609.cso"));\
         break;\
    case (288230378567631875):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0400000090000403.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0400000090000403.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0400000090000403.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0400000090000403.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0400000090000403.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0400000090000403.cso"));\
         break;\
    case (9223372037794301446):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader8000000038000606.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader8000000038000606.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader8000000038000606.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader8000000038000606.cso"));\
         break;\
    case (72057596453848322):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0100000090000502.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0100000090000502.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0100000090000502.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0100000090000502.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0100000090000502.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0100000090000502.cso"));\
         break;\
    case (9223372037794301444):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader8000000038000604.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader8000000038000604.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader8000000038000604.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader8000000038000604.cso"));\
         break;\
    case (9223372037794301443):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader8000000038000603.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader8000000038000603.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader8000000038000603.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader8000000038000603.cso"));\
         break;\
    case (9223372037794301442):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader8000000038000602.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader8000000038000602.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader8000000038000602.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader8000000038000602.cso"));\
         break;\
    case (9223372037794301441):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader8000000038000601.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader8000000038000601.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader8000000038000601.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader8000000038000601.cso"));\
         break;\
    case (9223372037794301440):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader8000000038000600.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader8000000038000600.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader8000000038000600.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader8000000038000600.cso"));\
         break;\
    case (576460753645601798):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0800000050000406.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader0800000050000406.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader0800000050000406.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0800000050000406.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0800000050000406.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader0800000050000406.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader0800000050000406.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0800000050000406.cso"));\
         break;\
    case (288230378567632385):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0400000090000601.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0400000090000601.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0400000090000601.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0400000090000601.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0400000090000601.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0400000090000601.cso"));\
         break;\
    case (576460753645601796):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0800000050000404.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader0800000050000404.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader0800000050000404.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0800000050000404.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0800000050000404.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader0800000050000404.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader0800000050000404.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0800000050000404.cso"));\
         break;\
    case (576460753645601795):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0800000050000403.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader0800000050000403.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader0800000050000403.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0800000050000403.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0800000050000403.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader0800000050000403.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader0800000050000403.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0800000050000403.cso"));\
         break;\
    case (288230378567631872):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0400000090000400.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0400000090000400.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0400000090000400.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0400000090000400.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0400000090000400.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0400000090000400.cso"));\
         break;\
    case (576460753645601793):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0800000050000401.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader0800000050000401.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader0800000050000401.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0800000050000401.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0800000050000401.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader0800000050000401.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader0800000050000401.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0800000050000401.cso"));\
         break;\
    case (576460753645601792):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0800000050000400.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader0800000050000400.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader0800000050000400.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0800000050000400.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0800000050000400.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader0800000050000400.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader0800000050000400.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0800000050000400.cso"));\
         break;\
    case (4503600701112578):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0010000040000102.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader0010000040000102.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader0010000040000102.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0010000040000102.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0010000040000102.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader0010000040000102.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader0010000040000102.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0010000040000102.cso"));\
         break;\
    case (4503600701112576):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0010000040000100.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader0010000040000100.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader0010000040000100.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0010000040000100.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0010000040000100.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader0010000040000100.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader0010000040000100.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0010000040000100.cso"));\
         break;\
    case (2305843010555872514):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader2000000050000502.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader2000000050000502.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader2000000050000502.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader2000000050000502.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader2000000050000502.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader2000000050000502.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader2000000050000502.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader2000000050000502.cso"));\
         break;\
    case (288230378567632642):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0400000090000702.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0400000090000702.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0400000090000702.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0400000090000702.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0400000090000702.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0400000090000702.cso"));\
         break;\
    case (2305843010555871235):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader2000000050000003.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader2000000050000003.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader2000000050000003.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader2000000050000003.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader2000000050000003.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader2000000050000003.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader2000000050000003.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader2000000050000003.cso"));\
         break;\
    case (144115190491775494):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0200000090000206.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0200000090000206.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0200000090000206.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0200000090000206.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0200000090000206.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0200000090000206.cso"));\
         break;\
    case (144115190491775492):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0200000090000204.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0200000090000204.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0200000090000204.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0200000090000204.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0200000090000204.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0200000090000204.cso"));\
         break;\
    case (144115190491775491):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0200000090000203.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0200000090000203.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0200000090000203.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0200000090000203.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0200000090000203.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0200000090000203.cso"));\
         break;\
    case (144115190491775490):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0200000090000202.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0200000090000202.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0200000090000202.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0200000090000202.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0200000090000202.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0200000090000202.cso"));\
         break;\
    case (144115190491775489):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0200000090000201.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0200000090000201.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0200000090000201.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0200000090000201.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0200000090000201.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0200000090000201.cso"));\
         break;\
    case (144115190491775488):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0200000090000200.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0200000090000200.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0200000090000200.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0200000090000200.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0200000090000200.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0200000090000200.cso"));\
         break;\
    case (2305843010555871747):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader2000000050000203.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader2000000050000203.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader2000000050000203.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader2000000050000203.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader2000000050000203.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader2000000050000203.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader2000000050000203.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader2000000050000203.cso"));\
         break;\
    case (2305843010555871746):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader2000000050000202.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader2000000050000202.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader2000000050000202.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader2000000050000202.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader2000000050000202.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader2000000050000202.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader2000000050000202.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader2000000050000202.cso"));\
         break;\
    case (2305843010555871745):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader2000000050000201.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader2000000050000201.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader2000000050000201.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader2000000050000201.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader2000000050000201.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader2000000050000201.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader2000000050000201.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader2000000050000201.cso"));\
         break;\
    case (2305843010555871744):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader2000000050000200.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader2000000050000200.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader2000000050000200.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader2000000050000200.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader2000000050000200.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader2000000050000200.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader2000000050000200.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader2000000050000200.cso"));\
         break;\
    case (1152921505949024259):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader1000000050000003.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader1000000050000003.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader1000000050000003.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader1000000050000003.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader1000000050000003.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader1000000050000003.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader1000000050000003.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader1000000050000003.cso"));\
         break;\
    case (1152921505949024262):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader1000000050000006.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader1000000050000006.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader1000000050000006.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader1000000050000006.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader1000000050000006.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader1000000050000006.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader1000000050000006.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader1000000050000006.cso"));\
         break;\
    case (72057596453847043):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0100000090000003.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0100000090000003.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0100000090000003.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0100000090000003.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0100000090000003.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0100000090000003.cso"));\
         break;\
    case (9223372037794299907):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader8000000038000003.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader8000000038000003.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader8000000038000003.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader8000000038000003.cso"));\
         break;\
    case (144115190491776770):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0200000090000702.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0200000090000702.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0200000090000702.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0200000090000702.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0200000090000702.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0200000090000702.cso"));\
         break;\
    case (144115190491776768):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0200000090000700.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0200000090000700.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0200000090000700.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0200000090000700.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0200000090000700.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0200000090000700.cso"));\
         break;\
    case (2305843010555873026):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader2000000050000702.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader2000000050000702.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader2000000050000702.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader2000000050000702.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader2000000050000702.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader2000000050000702.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader2000000050000702.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader2000000050000702.cso"));\
         break;\
    case (2305843010555873024):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader2000000050000700.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader2000000050000700.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader2000000050000700.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader2000000050000700.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader2000000050000700.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader2000000050000700.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader2000000050000700.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader2000000050000700.cso"));\
         break;\
    case (288230378567630850):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0400000090000002.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0400000090000002.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0400000090000002.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0400000090000002.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0400000090000002.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0400000090000002.cso"));\
         break;\
    case (9007200328483072):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0020000040000100.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader0020000040000100.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader0020000040000100.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0020000040000100.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0020000040000100.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader0020000040000100.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader0020000040000100.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0020000040000100.cso"));\
         break;\
    case (72057596453848070):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0100000090000406.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0100000090000406.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0100000090000406.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0100000090000406.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0100000090000406.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0100000090000406.cso"));\
         break;\
    case (72057596453848068):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0100000090000404.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0100000090000404.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0100000090000404.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0100000090000404.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0100000090000404.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0100000090000404.cso"));\
         break;\
    case (72057596453848067):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0100000090000403.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0100000090000403.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0100000090000403.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0100000090000403.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0100000090000403.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0100000090000403.cso"));\
         break;\
    case (1152921505949025284):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader1000000050000404.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader1000000050000404.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader1000000050000404.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader1000000050000404.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader1000000050000404.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader1000000050000404.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader1000000050000404.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader1000000050000404.cso"));\
         break;\
    case (1152921505949025282):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader1000000050000402.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader1000000050000402.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader1000000050000402.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader1000000050000402.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader1000000050000402.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader1000000050000402.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader1000000050000402.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader1000000050000402.cso"));\
         break;\
    case (72057596453848064):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0100000090000400.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0100000090000400.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0100000090000400.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0100000090000400.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0100000090000400.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0100000090000400.cso"));\
         break;\
    case (1152921505949025281):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader1000000050000401.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader1000000050000401.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader1000000050000401.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader1000000050000401.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader1000000050000401.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader1000000050000401.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader1000000050000401.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader1000000050000401.cso"));\
         break;\
    case (1152921505949025280):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader1000000050000400.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader1000000050000400.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader1000000050000400.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader1000000050000400.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader1000000050000400.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader1000000050000400.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader1000000050000400.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader1000000050000400.cso"));\
         break;\
    case (288230378567631106):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0400000090000102.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0400000090000102.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0400000090000102.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0400000090000102.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0400000090000102.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0400000090000102.cso"));\
         break;\
    case (288230378567631104):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0400000090000100.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0400000090000100.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0400000090000100.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0400000090000100.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0400000090000100.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0400000090000100.cso"));\
         break;\
    case (72057596453847554):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0100000090000202.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0100000090000202.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0100000090000202.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0100000090000202.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0100000090000202.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0100000090000202.cso"));\
         break;\
    case (9223372037794300939):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader800000003800040B.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader800000003800040B.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader800000003800040B.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader800000003800040B.cso"));\
         break;\
    case (9223372037794300937):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader8000000038000409.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader8000000038000409.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader8000000038000409.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader8000000038000409.cso"));\
         break;\
    case (288230378567630854):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0400000090000006.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0400000090000006.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0400000090000006.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0400000090000006.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0400000090000006.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0400000090000006.cso"));\
         break;\
    case (9223372037794300934):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader8000000038000406.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader8000000038000406.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader8000000038000406.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader8000000038000406.cso"));\
         break;\
    case (9223372037794300932):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader8000000038000404.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader8000000038000404.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader8000000038000404.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader8000000038000404.cso"));\
         break;\
    case (288230378567631878):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0400000090000406.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0400000090000406.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0400000090000406.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0400000090000406.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0400000090000406.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0400000090000406.cso"));\
         break;\
    case (9223372037794300930):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader8000000038000402.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader8000000038000402.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader8000000038000402.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader8000000038000402.cso"));\
         break;\
    case (9223372037794300929):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader8000000038000401.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader8000000038000401.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader8000000038000401.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader8000000038000401.cso"));\
         break;\
    case (9223372037794300928):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader8000000038000400.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader8000000038000400.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader8000000038000400.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader8000000038000400.cso"));\
         break;\
    case (1152921505949025286):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader1000000050000406.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader1000000050000406.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader1000000050000406.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader1000000050000406.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader1000000050000406.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader1000000050000406.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader1000000050000406.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader1000000050000406.cso"));\
         break;\
    case (576460753645601286):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0800000050000206.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader0800000050000206.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader0800000050000206.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0800000050000206.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0800000050000206.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader0800000050000206.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader0800000050000206.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0800000050000206.cso"));\
         break;\
    case (576460753645601284):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0800000050000204.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader0800000050000204.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader0800000050000204.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0800000050000204.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0800000050000204.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader0800000050000204.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader0800000050000204.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0800000050000204.cso"));\
         break;\
    case (9223372037794300931):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader8000000038000403.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader8000000038000403.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader8000000038000403.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader8000000038000403.cso"));\
         break;\
    case (576460753645601282):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0800000050000202.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader0800000050000202.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader0800000050000202.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0800000050000202.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0800000050000202.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader0800000050000202.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader0800000050000202.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0800000050000202.cso"));\
         break;\
    case (576460753645601281):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0800000050000201.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader0800000050000201.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader0800000050000201.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0800000050000201.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0800000050000201.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader0800000050000201.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader0800000050000201.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0800000050000201.cso"));\
         break;\
    case (576460753645601280):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0800000050000200.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader0800000050000200.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader0800000050000200.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0800000050000200.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0800000050000200.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader0800000050000200.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader0800000050000200.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0800000050000200.cso"));\
         break;\
    case (36028798092705795):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0080000040000003.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader0080000040000003.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader0080000040000003.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0080000040000003.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0080000040000003.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader0080000040000003.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader0080000040000003.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0080000040000003.cso"));\
         break;\
    case (1152921505949025796):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader1000000050000604.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader1000000050000604.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader1000000050000604.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader1000000050000604.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader1000000050000604.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader1000000050000604.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader1000000050000604.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader1000000050000604.cso"));\
         break;\
    case (288230378567631874):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0400000090000402.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0400000090000402.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0400000090000402.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0400000090000402.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0400000090000402.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0400000090000402.cso"));\
         break;\
    case (144115190491774979):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0200000090000003.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0200000090000003.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0200000090000003.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0200000090000003.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0200000090000003.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0200000090000003.cso"));\
         break;\
    case (576460753645602562):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0800000050000702.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader0800000050000702.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader0800000050000702.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0800000050000702.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0800000050000702.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader0800000050000702.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader0800000050000702.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0800000050000702.cso"));\
         break;\
    case (576460753645602560):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0800000050000700.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader0800000050000700.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader0800000050000700.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0800000050000700.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0800000050000700.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader0800000050000700.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader0800000050000700.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0800000050000700.cso"));\
         break;\
    case (288230378567632384):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0400000090000600.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0400000090000600.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0400000090000600.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0400000090000600.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0400000090000600.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0400000090000600.cso"));\
         break;\
    case (144115190491774980):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0200000090000004.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0200000090000004.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0200000090000004.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0200000090000004.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0200000090000004.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0200000090000004.cso"));\
         break;\
    case (1152921505949025026):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader1000000050000302.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader1000000050000302.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader1000000050000302.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader1000000050000302.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader1000000050000302.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader1000000050000302.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader1000000050000302.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader1000000050000302.cso"));\
         break;\
    case (144115190491774978):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0200000090000002.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0200000090000002.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0200000090000002.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0200000090000002.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0200000090000002.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0200000090000002.cso"));\
         break;\
    case (144115190491774977):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0200000090000001.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0200000090000001.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0200000090000001.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0200000090000001.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0200000090000001.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0200000090000001.cso"));\
         break;\
    case (144115190491774976):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0200000090000000.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0200000090000000.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0200000090000000.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0200000090000000.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0200000090000000.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0200000090000000.cso"));\
         break;\
    case (72057596453848578):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0100000090000602.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0100000090000602.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0100000090000602.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0100000090000602.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0100000090000602.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0100000090000602.cso"));\
         break;\
    case (2305843010555871234):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader2000000050000002.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader2000000050000002.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader2000000050000002.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader2000000050000002.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader2000000050000002.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader2000000050000002.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader2000000050000002.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader2000000050000002.cso"));\
         break;\
    case (2305843010555871233):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader2000000050000001.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader2000000050000001.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader2000000050000001.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader2000000050000001.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader2000000050000001.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader2000000050000001.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader2000000050000001.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader2000000050000001.cso"));\
         break;\
    case (2305843010555871232):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader2000000050000000.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader2000000050000000.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader2000000050000000.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader2000000050000000.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader2000000050000000.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader2000000050000000.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader2000000050000000.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader2000000050000000.cso"));\
         break;\
    case (72057596453848066):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0100000090000402.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0100000090000402.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0100000090000402.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0100000090000402.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0100000090000402.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0100000090000402.cso"));\
         break;\
    case (144115190491776256):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0200000090000500.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0200000090000500.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0200000090000500.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0200000090000500.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0200000090000500.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0200000090000500.cso"));\
         break;\
    case (2305843010555872774):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader2000000050000606.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader2000000050000606.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader2000000050000606.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader2000000050000606.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader2000000050000606.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader2000000050000606.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader2000000050000606.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader2000000050000606.cso"));\
         break;\
    case (288230378567632388):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0400000090000604.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0400000090000604.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0400000090000604.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0400000090000604.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0400000090000604.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0400000090000604.cso"));\
         break;\
    case (2305843010555872512):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader2000000050000500.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader2000000050000500.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader2000000050000500.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader2000000050000500.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader2000000050000500.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader2000000050000500.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader2000000050000500.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader2000000050000500.cso"));\
         break;\
    case (1152921505949024514):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader1000000050000102.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader1000000050000102.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader1000000050000102.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader1000000050000102.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader1000000050000102.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader1000000050000102.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader1000000050000102.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader1000000050000102.cso"));\
         break;\
    case (72057596453847558):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0100000090000206.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0100000090000206.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0100000090000206.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0100000090000206.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0100000090000206.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0100000090000206.cso"));\
         break;\
    case (72057596453847556):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0100000090000204.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0100000090000204.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0100000090000204.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0100000090000204.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0100000090000204.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0100000090000204.cso"));\
         break;\
    case (72057596453847555):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0100000090000203.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0100000090000203.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0100000090000203.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0100000090000203.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0100000090000203.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0100000090000203.cso"));\
         break;\
    case (1152921505949024772):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader1000000050000204.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader1000000050000204.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader1000000050000204.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader1000000050000204.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader1000000050000204.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader1000000050000204.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader1000000050000204.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader1000000050000204.cso"));\
         break;\
    case (72057596453847553):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0100000090000201.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0100000090000201.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0100000090000201.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0100000090000201.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0100000090000201.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0100000090000201.cso"));\
         break;\
    case (72057596453847552):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0100000090000200.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0100000090000200.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0100000090000200.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0100000090000200.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0100000090000200.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0100000090000200.cso"));\
         break;\
    case (1152921505949024769):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader1000000050000201.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader1000000050000201.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader1000000050000201.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader1000000050000201.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader1000000050000201.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader1000000050000201.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader1000000050000201.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader1000000050000201.cso"));\
         break;\
    case (1152921505949024768):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader1000000050000200.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader1000000050000200.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader1000000050000200.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader1000000050000200.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader1000000050000200.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader1000000050000200.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader1000000050000200.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader1000000050000200.cso"));\
         break;\
    case (18014399583224066):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0040000040000102.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader0040000040000102.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader0040000040000102.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0040000040000102.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0040000040000102.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader0040000040000102.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader0040000040000102.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0040000040000102.cso"));\
         break;\
    case (2305843010555871238):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader2000000050000006.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader2000000050000006.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader2000000050000006.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader2000000050000006.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader2000000050000006.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader2000000050000006.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader2000000050000006.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader2000000050000006.cso"));\
         break;\
    case (9223372037794300427):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader800000003800020B.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader800000003800020B.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader800000003800020B.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader800000003800020B.cso"));\
         break;\
    case (1152921505949024771):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader1000000050000203.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader1000000050000203.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader1000000050000203.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader1000000050000203.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader1000000050000203.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader1000000050000203.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader1000000050000203.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader1000000050000203.cso"));\
         break;\
    case (9223372037794300425):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader8000000038000209.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader8000000038000209.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader8000000038000209.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader8000000038000209.cso"));\
         break;\
    case (72057596453848832):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0100000090000700.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0100000090000700.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0100000090000700.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0100000090000700.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0100000090000700.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0100000090000700.cso"));\
         break;\
    case (9223372037794300422):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader8000000038000206.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader8000000038000206.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader8000000038000206.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader8000000038000206.cso"));\
         break;\
    case (1152921505949026048):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader1000000050000700.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader1000000050000700.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader1000000050000700.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader1000000050000700.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader1000000050000700.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader1000000050000700.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader1000000050000700.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader1000000050000700.cso"));\
         break;\
    case (2305843010555871748):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader2000000050000204.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader2000000050000204.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader2000000050000204.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader2000000050000204.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader2000000050000204.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader2000000050000204.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader2000000050000204.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader2000000050000204.cso"));\
         break;\
    case (9223372037794300419):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader8000000038000203.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader8000000038000203.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader8000000038000203.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader8000000038000203.cso"));\
         break;\
    case (9223372037794300418):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader8000000038000202.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader8000000038000202.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader8000000038000202.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader8000000038000202.cso"));\
         break;\
    case (9223372037794300417):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader8000000038000201.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader8000000038000201.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader8000000038000201.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader8000000038000201.cso"));\
         break;\
    case (9223372037794300416):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader8000000038000200.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader8000000038000200.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader8000000038000200.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader8000000038000200.cso"));\
         break;\
    case (576460753645600769):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0800000050000001.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader0800000050000001.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader0800000050000001.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0800000050000001.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0800000050000001.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader0800000050000001.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader0800000050000001.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0800000050000001.cso"));\
         break;\
    case (576460753645600774):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0800000050000006.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader0800000050000006.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader0800000050000006.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0800000050000006.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0800000050000006.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader0800000050000006.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader0800000050000006.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0800000050000006.cso"));\
         break;\
    case (36028798092705796):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0080000040000004.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader0080000040000004.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader0080000040000004.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0080000040000004.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0080000040000004.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader0080000040000004.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader0080000040000004.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0080000040000004.cso"));\
         break;\
    case (576460753645600772):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0800000050000004.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader0800000050000004.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader0800000050000004.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0800000050000004.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0800000050000004.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader0800000050000004.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader0800000050000004.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0800000050000004.cso"));\
         break;\
    case (9007200328482818):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0020000040000002.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader0020000040000002.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader0020000040000002.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0020000040000002.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0020000040000002.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader0020000040000002.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader0020000040000002.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0020000040000002.cso"));\
         break;\
    case (36028798092705793):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0080000040000001.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader0080000040000001.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader0080000040000001.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0080000040000001.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0080000040000001.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader0080000040000001.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader0080000040000001.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0080000040000001.cso"));\
         break;\
    case (36028798092705792):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0080000040000000.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader0080000040000000.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader0080000040000000.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0080000040000000.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0080000040000000.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader0080000040000000.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader0080000040000000.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0080000040000000.cso"));\
         break;\
    case (576460753645600768):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0800000050000000.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader0800000050000000.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader0800000050000000.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0800000050000000.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0800000050000000.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader0800000050000000.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader0800000050000000.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0800000050000000.cso"));\
         break;\
    case (9223372037794301698):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader8000000038000702.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader8000000038000702.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader8000000038000702.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader8000000038000702.cso"));\
         break;\
    case (9007200328482817):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0020000040000001.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader0020000040000001.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader0020000040000001.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0020000040000001.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0020000040000001.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader0020000040000001.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader0020000040000001.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0020000040000001.cso"));\
         break;\
    case (9223372037794301696):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader8000000038000700.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader8000000038000700.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader8000000038000700.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader8000000038000700.cso"));\
         break;\
    case (9223372037794300420):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader8000000038000204.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader8000000038000204.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader8000000038000204.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader8000000038000204.cso"));\
         break;\
    case (1152921505949025538):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader1000000050000502.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader1000000050000502.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader1000000050000502.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader1000000050000502.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader1000000050000502.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader1000000050000502.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader1000000050000502.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader1000000050000502.cso"));\
         break;\
    case (288230378567631616):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0400000090000300.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0400000090000300.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0400000090000300.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0400000090000300.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0400000090000300.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0400000090000300.cso"));\
         break;\
    case (576460753645602050):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0800000050000502.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader0800000050000502.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader0800000050000502.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0800000050000502.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0800000050000502.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader0800000050000502.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader0800000050000502.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0800000050000502.cso"));\
         break;\
    case (576460753645602048):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0800000050000500.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader0800000050000500.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader0800000050000500.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0800000050000500.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0800000050000500.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader0800000050000500.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader0800000050000500.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0800000050000500.cso"));\
         break;\
    case (1152921505949025283):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader1000000050000403.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader1000000050000403.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader1000000050000403.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader1000000050000403.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader1000000050000403.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader1000000050000403.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader1000000050000403.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader1000000050000403.cso"));\
         break;\
    case (288230378567631363):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0400000090000203.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0400000090000203.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0400000090000203.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0400000090000203.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0400000090000203.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0400000090000203.cso"));\
         break;\
    case (72057596453847810):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0100000090000302.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0100000090000302.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0100000090000302.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0100000090000302.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0100000090000302.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0100000090000302.cso"));\
         break;\
    case (2305843010555872262):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader2000000050000406.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader2000000050000406.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader2000000050000406.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader2000000050000406.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader2000000050000406.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader2000000050000406.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader2000000050000406.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader2000000050000406.cso"));\
         break;\
    case (288230378567632640):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0400000090000700.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0400000090000700.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0400000090000700.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0400000090000700.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0400000090000700.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0400000090000700.cso"));\
         break;\
    case (1152921505949025795):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader1000000050000603.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader1000000050000603.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader1000000050000603.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader1000000050000603.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader1000000050000603.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader1000000050000603.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader1000000050000603.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader1000000050000603.cso"));\
         break;\
    case (288230378567631873):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0400000090000401.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0400000090000401.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0400000090000401.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0400000090000401.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0400000090000401.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0400000090000401.cso"));\
         break;\
    case (2305843010555872772):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader2000000050000604.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader2000000050000604.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader2000000050000604.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader2000000050000604.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader2000000050000604.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader2000000050000604.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader2000000050000604.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader2000000050000604.cso"));\
         break;\
    case (288230378567632390):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0400000090000606.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0400000090000606.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0400000090000606.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0400000090000606.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0400000090000606.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0400000090000606.cso"));\
         break;\
    case (144115190491775746):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0200000090000302.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0200000090000302.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0200000090000302.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0200000090000302.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0200000090000302.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0200000090000302.cso"));\
         break;\
    case (18014399583223808):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0040000040000000.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader0040000040000000.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader0040000040000000.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0040000040000000.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0040000040000000.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader0040000040000000.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader0040000040000000.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0040000040000000.cso"));\
         break;\
    case (144115190491775744):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0200000090000300.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0200000090000300.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0200000090000300.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0200000090000300.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0200000090000300.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0200000090000300.cso"));\
         break;\
    case (2305843010555872002):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader2000000050000302.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader2000000050000302.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader2000000050000302.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader2000000050000302.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader2000000050000302.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader2000000050000302.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader2000000050000302.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader2000000050000302.cso"));\
         break;\
    case (2305843010555872000):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader2000000050000300.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader2000000050000300.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader2000000050000300.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader2000000050000300.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader2000000050000300.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader2000000050000300.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader2000000050000300.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader2000000050000300.cso"));\
         break;\
    case (18014399583224064):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0040000040000100.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader0040000040000100.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader0040000040000100.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0040000040000100.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0040000040000100.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader0040000040000100.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader0040000040000100.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0040000040000100.cso"));\
         break;\
    case (288230378567632130):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0400000090000502.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0400000090000502.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0400000090000502.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0400000090000502.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0400000090000502.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0400000090000502.cso"));\
         break;\
    case (36028798092705798):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0080000040000006.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader0080000040000006.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader0080000040000006.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0080000040000006.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0080000040000006.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader0080000040000006.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader0080000040000006.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0080000040000006.cso"));\
         break;\
    case (72057596453847046):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0100000090000006.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0100000090000006.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0100000090000006.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0100000090000006.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0100000090000006.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0100000090000006.cso"));\
         break;\
    case (18014399583223811):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0040000040000003.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader0040000040000003.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader0040000040000003.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0040000040000003.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0040000040000003.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader0040000040000003.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader0040000040000003.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0040000040000003.cso"));\
         break;\
    case (72057596453847044):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0100000090000004.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0100000090000004.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0100000090000004.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0100000090000004.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0100000090000004.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0100000090000004.cso"));\
         break;\
    case (36028798092705794):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0080000040000002.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader0080000040000002.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader0080000040000002.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0080000040000002.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0080000040000002.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader0080000040000002.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader0080000040000002.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0080000040000002.cso"));\
         break;\
    case (1152921505949024260):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader1000000050000004.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader1000000050000004.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader1000000050000004.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader1000000050000004.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader1000000050000004.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader1000000050000004.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader1000000050000004.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader1000000050000004.cso"));\
         break;\
    case (72057596453847041):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0100000090000001.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0100000090000001.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0100000090000001.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0100000090000001.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0100000090000001.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0100000090000001.cso"));\
         break;\
    case (72057596453847040):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0100000090000000.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0100000090000000.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0100000090000000.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0100000090000000.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0100000090000000.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0100000090000000.cso"));\
         break;\
    case (1152921505949024257):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader1000000050000001.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader1000000050000001.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader1000000050000001.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader1000000050000001.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader1000000050000001.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader1000000050000001.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader1000000050000001.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader1000000050000001.cso"));\
         break;\
    case (1152921505949024256):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader1000000050000000.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader1000000050000000.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader1000000050000000.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader1000000050000000.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader1000000050000000.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader1000000050000000.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader1000000050000000.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader1000000050000000.cso"));\
         break;\
    case (18014399583223810):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0040000040000002.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader0040000040000002.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader0040000040000002.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0040000040000002.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0040000040000002.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader0040000040000002.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader0040000040000002.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0040000040000002.cso"));\
         break;\
    case (2305843010555871750):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader2000000050000206.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader2000000050000206.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader2000000050000206.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader2000000050000206.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader2000000050000206.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader2000000050000206.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader2000000050000206.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader2000000050000206.cso"));\
         break;\
    case (288230378567632387):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0400000090000603.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0400000090000603.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0400000090000603.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0400000090000603.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0400000090000603.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0400000090000603.cso"));\
         break;\
    case (9223372037794299915):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader800000003800000B.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader800000003800000B.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader800000003800000B.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader800000003800000B.cso"));\
         break;\
    case (1152921505949025798):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader1000000050000606.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader1000000050000606.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader1000000050000606.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader1000000050000606.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader1000000050000606.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader1000000050000606.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader1000000050000606.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader1000000050000606.cso"));\
         break;\
    case (9223372037794299913):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader8000000038000009.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader8000000038000009.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader8000000038000009.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader8000000038000009.cso"));\
         break;\
    case (72057596453848320):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0100000090000500.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0100000090000500.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0100000090000500.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0100000090000500.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0100000090000500.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0100000090000500.cso"));\
         break;\
    case (9223372037794299910):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader8000000038000006.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader8000000038000006.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader8000000038000006.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader8000000038000006.cso"));\
         break;\
    case (1152921505949025536):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader1000000050000500.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader1000000050000500.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader1000000050000500.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader1000000050000500.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader1000000050000500.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader1000000050000500.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader1000000050000500.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader1000000050000500.cso"));\
         break;\
    case (288230378567631364):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0400000090000204.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0400000090000204.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0400000090000204.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0400000090000204.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0400000090000204.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0400000090000204.cso"));\
         break;\
    case (1152921505949024258):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader1000000050000002.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader1000000050000002.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader1000000050000002.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader1000000050000002.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader1000000050000002.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader1000000050000002.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader1000000050000002.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader1000000050000002.cso"));\
         break;\
    case (9223372037794299906):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader8000000038000002.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader8000000038000002.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader8000000038000002.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader8000000038000002.cso"));\
         break;\
    case (288230378567631361):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0400000090000201.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0400000090000201.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0400000090000201.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0400000090000201.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0400000090000201.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0400000090000201.cso"));\
         break;\
    case (288230378567631360):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0400000090000200.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0400000090000200.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0400000090000200.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0400000090000200.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0400000090000200.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0400000090000200.cso"));\
         break;\
    case (9223372037794299905):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader8000000038000001.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader8000000038000001.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader8000000038000001.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader8000000038000001.cso"));\
         break;\
    case (1152921505949024770):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader1000000050000202.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader1000000050000202.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader1000000050000202.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader1000000050000202.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader1000000050000202.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader1000000050000202.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader1000000050000202.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader1000000050000202.cso"));\
         break;\
    case (9223372037794301184):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader8000000038000500.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader8000000038000500.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader8000000038000500.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader8000000038000500.cso"));\
         break;\
    case (72057596453847042):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0100000090000002.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0100000090000002.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0100000090000002.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0100000090000002.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0100000090000002.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0100000090000002.cso"));\
         break;\
    case (576460753645601536):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0800000050000300.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader0800000050000300.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader0800000050000300.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0800000050000300.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0800000050000300.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader0800000050000300.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader0800000050000300.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0800000050000300.cso"));\
         break;\
    case (4503600701112326):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0010000040000006.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader0010000040000006.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader0010000040000006.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0010000040000006.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0010000040000006.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader0010000040000006.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader0010000040000006.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0010000040000006.cso"));\
         break;\
    case (4503600701112324):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0010000040000004.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader0010000040000004.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader0010000040000004.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0010000040000004.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0010000040000004.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader0010000040000004.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader0010000040000004.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0010000040000004.cso"));\
         break;\
    case (4503600701112323):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0010000040000003.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader0010000040000003.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader0010000040000003.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0010000040000003.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0010000040000003.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader0010000040000003.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader0010000040000003.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0010000040000003.cso"));\
         break;\
    case (4503600701112322):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0010000040000002.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader0010000040000002.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader0010000040000002.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0010000040000002.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0010000040000002.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader0010000040000002.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader0010000040000002.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0010000040000002.cso"));\
         break;\
    case (4503600701112321):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0010000040000001.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader0010000040000001.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader0010000040000001.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0010000040000001.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0010000040000001.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader0010000040000001.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader0010000040000001.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0010000040000001.cso"));\
         break;\
    case (4503600701112320):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0010000040000000.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader0010000040000000.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader0010000040000000.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0010000040000000.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0010000040000000.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader0010000040000000.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader0010000040000000.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0010000040000000.cso"));\
         break;\
    case (9223372037794300672):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader8000000038000300.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader8000000038000300.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader8000000038000300.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader8000000038000300.cso"));\
         break;\
    case (1152921505949024774):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader1000000050000206.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader1000000050000206.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader1000000050000206.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader1000000050000206.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader1000000050000206.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader1000000050000206.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader1000000050000206.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader1000000050000206.cso"));\
         break;\
    case (576460753645600770):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0800000050000002.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader0800000050000002.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader0800000050000002.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0800000050000002.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0800000050000002.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader0800000050000002.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader0800000050000002.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0800000050000002.cso"));\
         break;\
    case (144115190491775234):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0200000090000102.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0200000090000102.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0200000090000102.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0200000090000102.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0200000090000102.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0200000090000102.cso"));\
         break;\
    case (9007200328483074):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0020000040000102.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader0020000040000102.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader0020000040000102.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0020000040000102.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0020000040000102.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader0020000040000102.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader0020000040000102.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0020000040000102.cso"));\
         break;\
    case (144115190491775232):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0200000090000100.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0200000090000100.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0200000090000100.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0200000090000100.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0200000090000100.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0200000090000100.cso"));\
         break;\
    case (288230378567631362):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0400000090000202.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0400000090000202.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0400000090000202.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0400000090000202.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0400000090000202.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0400000090000202.cso"));\
         break;\
    case (2305843010555871490):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader2000000050000102.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader2000000050000102.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader2000000050000102.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader2000000050000102.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader2000000050000102.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader2000000050000102.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader2000000050000102.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader2000000050000102.cso"));\
         break;\
    case (2305843010555871488):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader2000000050000100.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader2000000050000100.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader2000000050000100.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader2000000050000100.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader2000000050000100.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader2000000050000100.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader2000000050000100.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader2000000050000100.cso"));\
         break;\
    case (144115190491776518):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0200000090000606.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0200000090000606.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0200000090000606.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0200000090000606.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0200000090000606.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0200000090000606.cso"));\
         break;\
    case (144115190491776516):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0200000090000604.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0200000090000604.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0200000090000604.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0200000090000604.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0200000090000604.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0200000090000604.cso"));\
         break;\
    case (144115190491776515):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0200000090000603.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0200000090000603.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0200000090000603.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0200000090000603.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0200000090000603.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0200000090000603.cso"));\
         break;\
    case (144115190491776514):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0200000090000602.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0200000090000602.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0200000090000602.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0200000090000602.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0200000090000602.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0200000090000602.cso"));\
         break;\
    case (144115190491776513):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0200000090000601.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0200000090000601.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0200000090000601.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0200000090000601.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0200000090000601.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0200000090000601.cso"));\
         break;\
    case (144115190491776512):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0200000090000600.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0200000090000600.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0200000090000600.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0200000090000600.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0200000090000600.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0200000090000600.cso"));\
         break;\
    case (2305843010555872771):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader2000000050000603.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader2000000050000603.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader2000000050000603.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader2000000050000603.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader2000000050000603.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader2000000050000603.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader2000000050000603.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader2000000050000603.cso"));\
         break;\
    case (2305843010555872770):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader2000000050000602.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader2000000050000602.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader2000000050000602.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader2000000050000602.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader2000000050000602.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader2000000050000602.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader2000000050000602.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader2000000050000602.cso"));\
         break;\
    case (2305843010555872769):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader2000000050000601.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader2000000050000601.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader2000000050000601.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader2000000050000601.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader2000000050000601.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader2000000050000601.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader2000000050000601.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader2000000050000601.cso"));\
         break;\
    case (2305843010555872768):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader2000000050000600.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader2000000050000600.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader2000000050000600.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader2000000050000600.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader2000000050000600.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader2000000050000600.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader2000000050000600.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader2000000050000600.cso"));\
         break;\
    case (576460753645601794):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0800000050000402.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader0800000050000402.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader0800000050000402.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0800000050000402.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0800000050000402.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader0800000050000402.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader0800000050000402.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0800000050000402.cso"));\
         break;\
    case (9223372037794301186):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader8000000038000502.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader8000000038000502.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader8000000038000502.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader8000000038000502.cso"));\
         break;\
    case (576460753645601283):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0800000050000203.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader0800000050000203.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader0800000050000203.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0800000050000203.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0800000050000203.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader0800000050000203.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader0800000050000203.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0800000050000203.cso"));\
         break;\
    case (288230378567631366):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0400000090000206.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0400000090000206.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0400000090000206.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0400000090000206.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0400000090000206.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0400000090000206.cso"));\
         break;\
    case (36028798092706050):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0080000040000102.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader0080000040000102.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader0080000040000102.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0080000040000102.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0080000040000102.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader0080000040000102.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader0080000040000102.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0080000040000102.cso"));\
         break;\
    case (9007200328482822):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0020000040000006.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader0020000040000006.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader0020000040000006.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0020000040000006.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0020000040000006.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader0020000040000006.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader0020000040000006.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0020000040000006.cso"));\
         break;\
    case (9007200328482820):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0020000040000004.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader0020000040000004.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader0020000040000004.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0020000040000004.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0020000040000004.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader0020000040000004.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader0020000040000004.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0020000040000004.cso"));\
         break;\
    case (9007200328482819):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0020000040000003.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader0020000040000003.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader0020000040000003.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0020000040000003.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0020000040000003.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader0020000040000003.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader0020000040000003.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0020000040000003.cso"));\
         break;\
    case (72057596453847808):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0100000090000300.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0100000090000300.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0100000090000300.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0100000090000300.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0100000090000300.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0100000090000300.cso"));\
         break;\
    case (72057596453848576):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0100000090000600.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0100000090000600.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0100000090000600.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0100000090000600.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0100000090000600.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0100000090000600.cso"));\
         break;\
    case (1152921505949025024):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader1000000050000300.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader1000000050000300.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader1000000050000300.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader1000000050000300.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader1000000050000300.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader1000000050000300.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader1000000050000300.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader1000000050000300.cso"));\
         break;\
    case (288230378567630852):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0400000090000004.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0400000090000004.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0400000090000004.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0400000090000004.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0400000090000004.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0400000090000004.cso"));\
         break;\
    case (288230378567630851):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0400000090000003.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0400000090000003.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0400000090000003.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0400000090000003.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0400000090000003.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0400000090000003.cso"));\
         break;\
    case (288230378567631876):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0400000090000404.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0400000090000404.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0400000090000404.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0400000090000404.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0400000090000404.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0400000090000404.cso"));\
         break;\
    case (288230378567630849):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0400000090000001.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0400000090000001.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0400000090000001.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0400000090000001.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0400000090000001.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0400000090000001.cso"));\
         break;\
    case (288230378567630848):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0400000090000000.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0400000090000000.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0400000090000000.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0400000090000000.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0400000090000000.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0400000090000000.cso"));\
         break;\
    case (72057596453848065):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0100000090000401.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0100000090000401.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0100000090000401.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0100000090000401.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0100000090000401.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0100000090000401.cso"));\
         break;\
    case (288230378567632386):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0400000090000602.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0400000090000602.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0400000090000602.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0400000090000602.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0400000090000602.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0400000090000602.cso"));\
         break;\
    case (9223372037794300674):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader8000000038000302.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader8000000038000302.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader8000000038000302.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader8000000038000302.cso"));\
         break;\
    case (72057596453847298):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0100000090000102.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0100000090000102.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0100000090000102.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0100000090000102.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0100000090000102.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0100000090000102.cso"));\
         break;\
    case (288230378567632128):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0400000090000500.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0400000090000500.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0400000090000500.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0400000090000500.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0400000090000500.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0400000090000500.cso"));\
         break;\
    case (1152921505949024512):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader1000000050000100.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader1000000050000100.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader1000000050000100.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader1000000050000100.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader1000000050000100.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader1000000050000100.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader1000000050000100.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader1000000050000100.cso"));\
         break;\
    case (18014399583223814):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0040000040000006.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader0040000040000006.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader0040000040000006.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0040000040000006.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0040000040000006.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader0040000040000006.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader0040000040000006.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0040000040000006.cso"));\
         break;\
    case (144115190491774982):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0200000090000006.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0200000090000006.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0200000090000006.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0200000090000006.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0200000090000006.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0200000090000006.cso"));\
         break;\
    case (576460753645601026):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0800000050000102.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader0800000050000102.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader0800000050000102.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0800000050000102.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0800000050000102.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader0800000050000102.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader0800000050000102.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0800000050000102.cso"));\
         break;\
    case (36028798092706048):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0080000040000100.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader0080000040000100.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader0080000040000100.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0080000040000100.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0080000040000100.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader0080000040000100.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader0080000040000100.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0080000040000100.cso"));\
         break;\
    case (576460753645601024):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0800000050000100.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader0800000050000100.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader0800000050000100.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0800000050000100.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0800000050000100.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader0800000050000100.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader0800000050000100.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0800000050000100.cso"));\
         break;\
    case (9223372037794299904):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader8000000038000000.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader8000000038000000.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader8000000038000000.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader8000000038000000.cso"));\
         break;\
    case (2305843010555871236):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader2000000050000004.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader2000000050000004.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader2000000050000004.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader2000000050000004.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader2000000050000004.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader2000000050000004.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader2000000050000004.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader2000000050000004.cso"));\
         break;\
    case (576460753645602310):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0800000050000606.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader0800000050000606.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader0800000050000606.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0800000050000606.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0800000050000606.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader0800000050000606.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader0800000050000606.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0800000050000606.cso"));\
         break;\
    case (576460753645602308):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0800000050000604.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader0800000050000604.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader0800000050000604.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0800000050000604.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0800000050000604.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader0800000050000604.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader0800000050000604.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0800000050000604.cso"));\
         break;\
    case (576460753645602307):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0800000050000603.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader0800000050000603.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader0800000050000603.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0800000050000603.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0800000050000603.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader0800000050000603.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader0800000050000603.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0800000050000603.cso"));\
         break;\
    case (576460753645602306):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0800000050000602.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader0800000050000602.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader0800000050000602.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0800000050000602.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0800000050000602.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader0800000050000602.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader0800000050000602.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0800000050000602.cso"));\
         break;\
    case (576460753645602305):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0800000050000601.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader0800000050000601.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader0800000050000601.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0800000050000601.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0800000050000601.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader0800000050000601.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader0800000050000601.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0800000050000601.cso"));\
         break;\
    case (576460753645602304):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0800000050000600.cso"));\
-        builder.set_hull_shader_from_file(resolve_path("d3d12\SphereHullShader0800000050000600.cso"));\
-        builder.set_domain_shader_from_file(resolve_path("d3d12\SphereDomainShader0800000050000600.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0800000050000600.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0800000050000600.cso"));\
+        builder.set_hull_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereHullShader0800000050000600.cso"));\
+        builder.set_domain_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereDomainShader0800000050000600.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0800000050000600.cso"));\
         break;\
    case (144115190491776258):\
-        builder.set_vertex_shader_from_file(resolve_path("d3d12\SphereVertexShader0200000090000502.cso"));\
-        builder.set_geometry_shader_from_file(resolve_path("d3d12\SphereGeometryShader0200000090000502.cso"));\
-        builder.set_pixel_shader_from_file(resolve_path("d3d12\SpherePixelShader0200000090000502.cso"));\
+        builder.set_vertex_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereVertexShader0200000090000502.cso"));\
+        builder.set_geometry_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SphereGeometryShader0200000090000502.cso"));\
+        builder.set_pixel_shader_from_file(resolve_path("trrojand3d12\\d3d12\\SpherePixelShader0200000090000502.cso"));\
         break;\
     }

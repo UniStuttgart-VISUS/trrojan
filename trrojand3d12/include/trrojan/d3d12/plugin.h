@@ -8,6 +8,8 @@
 
 #include "trrojan/plugin.h"
 
+#include <winrt/windows.ui.core.h>
+
 #include <cinttypes>
 #include <vector>
 
@@ -54,7 +56,17 @@ namespace d3d12 {
         static std::vector<std::uint8_t> load_resource(LPCTSTR name,
             LPCTSTR type);
 
-        inline plugin(void) : trrojan::plugin_base("d3d12") { }
+        //inline plugin(void) : trrojan::plugin_base("d3d12") { }
+
+        inline plugin(
+#ifdef _UWP
+            winrt::Windows::UI::Core::CoreWindow const& window
+#endif
+        ) : trrojan::plugin_base("d3d12")
+#ifdef _UWP
+            , window_(window)
+#endif
+        { }
 
         virtual ~plugin(void);
 
@@ -62,7 +74,11 @@ namespace d3d12 {
 
         virtual size_t create_environments(environment_list& dst) const;
 
+#ifdef _UWP
+        // Cached reference to the Window.
+        winrt::agile_ref<winrt::Windows::UI::Core::CoreWindow> window_{ nullptr };
+#endif
     };
 
-}
-}
+} // namespace d3d12
+} // namespace trrojan

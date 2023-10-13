@@ -15,8 +15,9 @@
 
 #include "trrojan/d3d12/render_target.h"
 
+#ifndef _UWP
 
-/* Forward declatations. */
+/* Forward declarations. */
 struct DebugConstants;
 
 
@@ -109,3 +110,5 @@ namespace d3d12 {
     };
 }
 }
+
+#endif // _UWP

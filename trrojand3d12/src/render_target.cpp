@@ -101,6 +101,7 @@ void trrojan::d3d12::render_target_base::enable(
 
     {
         D3D12_RECT rect;
+        ::ZeroMemory(&rect, sizeof(rect));
         rect.left = rect.right = static_cast<LONG>(this->_viewport.TopLeftX);
         rect.top = rect.bottom = static_cast<LONG>(this->_viewport.TopLeftY);
         rect.right += static_cast<LONG>(this->_viewport.Width);
@@ -333,6 +334,7 @@ trrojan::d3d12::render_target_base::create_swap_chain(HWND hWnd) {
     ATL::CComPtr<IDXGISwapChain1> swapChain;
     UINT width = 1;
 
+#ifndef _UWP
     {
         RECT clientRect;
         if (::GetClientRect(hWnd, &clientRect)) {
@@ -340,6 +342,7 @@ trrojan::d3d12::render_target_base::create_swap_chain(HWND hWnd) {
             width = std::abs(clientRect.right - clientRect.left);
         }
     }
+#endif // _UWP
 
     {
         DXGI_SWAP_CHAIN_DESC1 desc;
@@ -376,6 +379,53 @@ trrojan::d3d12::render_target_base::create_swap_chain(HWND hWnd) {
 
     return retval;
 }
+
+#ifdef _UWP
+/*
+ * trrojan::d3d12::render_target_base::create_swap_chain
+ */
+ATL::CComPtr<IDXGISwapChain3>
+trrojan::d3d12::render_target_base::create_swap_chain(UINT width, UINT height, 
+    winrt::agile_ref<winrt::Windows::UI::Core::CoreWindow> window) {
+    assert(this->_command_queue != nullptr);
+    assert(this->_dxgi_factory != nullptr);
+    assert(this->pipeline_depth() >= 1);
+    ATL::CComPtr<IDXGISwapChain3> retval;
+    ATL::CComPtr<IDXGISwapChain1> swapChain;
+
+    {
+        DXGI_SWAP_CHAIN_DESC1 desc;
+        ::ZeroMemory(&desc, sizeof(desc));
+        desc.BufferCount = this->pipeline_depth();
+        desc.Width = width;
+        desc.Height = height;
+        desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+        desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+        desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
+        desc.SampleDesc.Count = 1;
+
+        auto hr = this->_dxgi_factory->CreateSwapChainForCoreWindow(
+            this->_command_queue, 
+            winrt::get_unknown(window.get()),
+            &desc,
+            nullptr, 
+            &swapChain
+        );
+        if (FAILED(hr)) {
+            throw ATL::CAtlException(hr);
+        }
+    }
+
+    {
+        auto hr = swapChain.QueryInterface(&retval);
+        if (FAILED(hr)) {
+            throw ATL::CAtlException(hr);
+        }
+    }
+
+    return retval;
+}
+#endif // _UWP
 
 
 /*
@@ -552,7 +602,7 @@ void trrojan::d3d12::render_target_base::switch_buffer(
     auto& completed_value = this->_fence_values[this->_buffer_index];
 
     // If the next frame is not yet ready, ie the previously scheduled fence
-    // was not signelled, wait for it.
+    // was not signalled, wait for it.
     if (this->_fence->GetCompletedValue() < completed_value) {
         assert(this->_fence_event != NULL);
         auto hr = this->_fence->SetEventOnCompletion(completed_value,

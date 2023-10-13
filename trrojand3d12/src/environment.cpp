@@ -61,7 +61,9 @@ void trrojan::d3d12::environment::on_deactivate(void) { }
  */
 void trrojan::d3d12::environment::on_finalise(void) {
     this->_devices.clear();
+#ifndef _UWP
     ::CoUninitialize();
+#endif // _UWP
 }
 
 
@@ -79,12 +81,14 @@ void trrojan::d3d12::environment::on_initialise(const cmd_line& cmdLine) {
     std::set<std::pair<UINT, UINT>> pciIds;
 
     // Initialise COM (for WIC).
+#ifndef _UWP
     {
         auto hr = ::CoInitialize(nullptr);
         if (FAILED(hr)) {
             throw ATL::CAtlException(hr);
         }
     }
+#endif
 
     // Enable the debug layer in debug builds, which requires the debugging
     // layer being installed like for D3D11. Enabling the debug layer after
