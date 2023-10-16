@@ -1,8 +1,9 @@
-/// <copyright file="executive.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Christoph Müller</author>
+ï»¿// <copyright file="executive.cpp" company="Visualisierungsinstitut der UniversitÃ¤t Stuttgart">
+// Copyright Â© 2016 - 2023 Visualisierungsinstitut der UniversitÃ¤t Stuttgart. Alle Rechte vorbehalten.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Christoph MÃ¼ller</author>
+// <author>Michael Becher</author>
 
 #include "trrojan/executive.h"
 
@@ -11,16 +12,60 @@
 #include <iostream>
 #include <iterator>
 #include <stdexcept>
+#include <system_error>
 
-#ifndef _WIN32
+#if defined(_WIN32)
+#include <Windows.h>
+#else  /* defined(_WIN32) */
 #include <dlfcn.h>
-#endif /* !_WIN32 */
+#endif /* defined(_WIN32) */
 
 #include "trrojan/io.h"
+#include "trrojan/on_exit.h"
 #include "trrojan/log.h"
 #include "trrojan/text.h"
 
 #include "scripting_host.h"
+
+
+#if defined(_WIN32)
+/*
+ * trrojan::executive::executable_directory
+ */
+std::string trrojan::executive::executable_directory(void) {
+    auto retval = executable_path();
+    auto end = retval.find_last_of(directory_separator_char);
+    return (end == std::string::npos) ? retval : retval.substr(0, end);
+}
+#endif /* defined(_WIN32) */
+
+
+#if defined(_WIN32)
+/*
+ * trrojan::executive::executable_path
+ */
+std::string trrojan::executive::executable_path(void) {
+    std::vector<char> retval(MAX_PATH);
+
+    while (true) {
+        const auto len = ::GetModuleFileNameA(nullptr, retval.data(),
+            static_cast<DWORD>(retval.size()));
+        const auto error = ::GetLastError();
+
+        if (len == 0) {
+            throw std::system_error(error, std::system_category());
+
+        } else if (error == ERROR_INSUFFICIENT_BUFFER) {
+            const auto increment = (std::max)(retval.size() / 2,
+                static_cast<std::size_t>(1));
+            retval.resize(retval.size() + increment);
+
+        } else {
+            return std::string(retval.data(), retval.data() + len);
+        }
+    }
+}
+#endif /* defined(_WIN32) */
 
 
 /*
@@ -88,44 +133,16 @@ void trrojan::executive::load_plugins(const cmd_line& cmdLine) {
         get_file_system_entries(std::back_inserter(paths), std::string("."),
             false, trrojan::has_extension(plugin_dll::extension));
 
-#ifdef _WIN32
-#ifdef _UWP
-            std::array<wchar_t, MAX_PATH>  mfn;
-            uint32_t path_size = MAX_PATH;
-            DWORD actual_size{};
-
-            actual_size = ::GetModuleFileName(NULL, mfn.data(), path_size);
-
-            {
-                auto it = std::find(mfn.rbegin(), mfn.rend(),
-                    directory_separator_char);
-                auto p = std::wstring(mfn.begin(), it.base()-1);
-                std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
-                std::string np = converter.to_bytes(p);
-
-                log::instance().write(log_level::verbose, "Considering plugins "
-                    "from the directory \"{}\" holding the executable.\n",
-                    np.c_str());
-                get_file_system_entries(std::back_inserter(paths), np,
-                    false, trrojan::has_extension(plugin_dll::extension));
-            }
-#else
+#if defined(_WIN32)
         {
-            std::vector<char> mfn(MAX_PATH);
-            if (::GetModuleFileName(NULL, mfn.data(),
-                    static_cast<DWORD>(mfn.size()))) {
-                auto it = std::find(mfn.rbegin(), mfn.rend(),
-                    directory_separator_char);
-                auto p = std::string(mfn.begin(), it.base());
-                log::instance().write(log_level::verbose, "Considering plugins "
-                    "from the directory \"{}\" holding the executable.\n",
-                    p.c_str());
-                get_file_system_entries(std::back_inserter(paths), p,
-                    false, trrojan::has_extension(plugin_dll::extension));
-            }
+            auto p = executive::executable_directory();
+            log::instance().write(log_level::verbose, "Considering plugins "
+                "from the directory \"{}\" holding the executable.\n",
+                p.c_str());
+            get_file_system_entries(std::back_inserter(paths), p,
+                false, trrojan::has_extension(plugin_dll::extension));
         }
-#endif // _UWP
-#endif /* _WIN32 */
+#endif /* defined(_WIN32) */
 
         log::instance().write(log_level::verbose, "Found {} potential "
             "plugin(s).\n", paths.size());
@@ -202,59 +219,6 @@ void trrojan::executive::load_plugins(const cmd_line& cmdLine) {
         }
 
     } catch (std::exception& ex) {
-        log::instance().write_line(ex);
-    }
-}
-
-void trrojan::executive::add_plugin(const plugin& plugin, const cmd_line& cmdLine)
-{
-    try {
-        
-        this->plugins.push_back(std::move(plugin));
-
-        std::vector<environment> envs;
-        this->plugins.back()->create_environments(envs);
-
-        for (auto e : envs) {
-            // First, handle potential violations of the contract with the
-            // plugin. If the plugin returns invalid stuff, just skip it.
-            if (e == nullptr) {
-                log::instance().write(log_level::debug, "The plugin \"{}\" "
-                    "returned a nullptr as environment.\n",
-                    this->plugins.back()->name().c_str());
-                continue;
-            }
-
-            auto name = e->name();
-            if (this->environments.find(name) != this->environments.end()) {
-                log::instance().write(log_level::debug, "The plugin \"{}\" "
-                    "returned the environment \"{}\", which conflicts with "
-                    "an already loaded environment. The new environment "
-                    "will be ignored.\n", this->plugins.back()->name().c_str(), name.c_str());
-                continue;
-            }
-
-            // Secon, initialise the plugin and add it to the map.
-            try {
-                e->on_initialise(cmdLine);
-                this->environments.insert(std::make_pair(name, e));
-                log::instance().write(log_level::verbose, "The "
-                    "environment \"{}\", provided by plugin \"{}\", was "
-                    "successfully initialised.\n", name.c_str(),
-                    this->plugins.back()->name().c_str());
-
-            }
-            catch (std::exception& ex) {
-                log::instance().write_line(ex);
-                log::instance().write(log_level::verbose, "The "
-                    "environment \"{}\", provided by plugin \"{}\", failed "
-                    "to initialise. The environment will be ignored.\n",
-                    name.c_str(), this->plugins.back()->name().c_str());
-            }
-        }
-
-    }
-    catch (std::exception& ex) {
         log::instance().write_line(ex);
     }
 }
@@ -592,35 +556,35 @@ trrojan::executive::plugin_dll trrojan::executive::plugin_dll::open(
         const std::string& path) {
     plugin_dll retval;
 
-#ifdef _WIN32
+#if defined(_WIN32)
+#if defined(TRROJAN_FOR_UWP)
+    std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> conv;
+    auto wpath = conv.from_bytes(path.c_str());
+    retval.handle = ::LoadPackagedLibrary(wpath.c_str(), 0);
 
-#ifdef _UWP
-    std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
-    std::wstring wpath = converter.from_bytes(path.c_str());
-    retval.handle = ::LoadPackagedLibrary(wpath.c_str(),0);
-    auto nec = ::GetLastError();
-#else
-    auto oldErrorMode = ::SetErrorMode(SEM_FAILCRITICALERRORS);
+#else /* defined(TRROJAN_FOR_UWP) */
+    const auto error_mode = ::SetErrorMode(SEM_FAILCRITICALERRORS);
+    on_exit([error_mode](void) {::SetErrorMode(error_mode); });
     retval.handle = ::LoadLibraryExA(path.c_str(), NULL, 0);
-    auto nec = ::GetLastError();
-    ::SetErrorMode(oldErrorMode);
-#endif // _UWP
+#endif /* defined(TRROJAN_FOR_UWP) */
 
     if (retval.handle == plugin_dll::invalid_handle) {
+        auto ec = ::GetLastError();
+        std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> conv;
         std::stringstream msg;
         msg << "Failed opening DLL \"" << path << "\"." << std::ends;
-        std::error_code ec(nec, std::system_category());
-        throw std::system_error(ec, msg.str());
+        throw std::system_error(ec, std::system_category(), msg.str());
     }
-#else /* _WIN32 */
+
+#else /* defined(_WIN32) */
+
     retval.handle = ::dlopen(path.c_str(), RTLD_LAZY | RTLD_GLOBAL);
     if (retval.handle == plugin_dll::invalid_handle) {
         throw std::runtime_error(::dlerror());
     }
+#endif /* defined(_WIN32) */
 
-#endif /* _WIN32 */
-
-    return std::move(retval);
+    return retval;
 }
 
 
@@ -639,17 +603,17 @@ trrojan::executive::plugin_dll::~plugin_dll(void) {
  */
 void trrojan::executive::plugin_dll::close(void) {
     if (this->handle != plugin_dll::invalid_handle) {
-#ifdef _WIN32
+#if defined(_WIN32)
         if (::FreeLibrary(this->handle) != TRUE) {
             std::error_code ec(::GetLastError(), std::system_category());
             throw std::system_error(ec, "Failed to close DLL.");
         }
-#else /* _WIN32 */
+#else /* defined(_WIN32) */
         auto ec = ::dlclose(this->handle);
         if (ec != 0) {
             throw std::runtime_error(::dlerror());
         }
-#endif /* _WIN32 */
+#endif /* defined(_WIN32) */
 
         this->handle = plugin_dll::invalid_handle;
     }
@@ -673,7 +637,7 @@ trrojan::executive::plugin_dll::proc_type trrojan::executive::plugin_dll::find(
  * trrojan::executive::plugin_dll::operator =
  */
 trrojan::executive::plugin_dll& trrojan::executive::plugin_dll::operator =(
-        plugin_dll&& rhs) {
+        plugin_dll&& rhs) noexcept {
     if (this != std::addressof(rhs)) {
         this->handle = rhs.handle;
         rhs.handle = plugin_dll::invalid_handle;

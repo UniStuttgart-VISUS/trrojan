@@ -13,7 +13,7 @@
  * trrojan::d3d12::stats_query::stats_query
  */
 trrojan::d3d12::stats_query::stats_query(ID3D12Device *device,
-        const size_type queries, const size_t buffers) : _device(device) {
+        const size_type queries, const size_type buffers) : _device(device) {
     if (this->_device == nullptr) {
         throw std::invalid_argument("The device cannot be null.");
     }

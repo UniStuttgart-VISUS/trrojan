@@ -13,7 +13,18 @@ mark_as_advanced(FORCE
 
 
 # Chakra Core
-if (WIN32 AND NOT ${TRROJAN_FOR_UWP})
+if (NOT WIN32)
+    # On Linux, we can use Cmake ... I think.
+    FetchContent_Declare(ChakraCore
+        URL "https://github.com/chakra-core/ChakraCore/archive/refs/tags/v1.11.24.zip"
+        DOWNLOAD_EXTRACT_TIMESTAMP ON
+    )
+    FetchContent_MakeAvailable(ChakraCore)
+    mark_as_advanced(FORCE
+        FETCHCONTENT_SOURCE_DIR_CHAKRACORE
+        FETCHCONTENT_UPDATES_DISCONNECTED_CHAKRACORE)
+
+elseif (NOT TRROJAN_FOR_UWP)
     set(CHAKRA_CONFIGURATION "Release")
 
     # On Windows, we need to determine whether we are cross-compiling or
@@ -37,17 +48,6 @@ if (WIN32 AND NOT ${TRROJAN_FOR_UWP})
     ExternalProject_Get_Property(ChakraCore SOURCE_DIR)
     set(ChakraCore_SOURCE_DIR ${SOURCE_DIR})
     set(ChakraCore_BINARY_DIR "${ChakraCore_SOURCE_DIR}/Build/VcBuild/bin/${CHAKRA_PLATFORM}_${CHAKRA_CONFIGURATION}")
-
-else (NOT WIN32)
-    # On Linux, we can use Cmake ... I think.
-    FetchContent_Declare(ChakraCore
-        URL "https://github.com/chakra-core/ChakraCore/archive/refs/tags/v1.11.24.zip"
-        DOWNLOAD_EXTRACT_TIMESTAMP ON
-    )
-    FetchContent_MakeAvailable(ChakraCore)
-    mark_as_advanced(FORCE
-        FETCHCONTENT_SOURCE_DIR_CHAKRACORE
-        FETCHCONTENT_UPDATES_DISCONNECTED_CHAKRACORE)
 endif ()
 
 
@@ -125,9 +125,10 @@ endif ()
 
 # spdlog
 FetchContent_Declare(spdlog
-    URL "https://github.com/gabime/spdlog/archive/refs/tags/v0.17.0.zip"
+    URL "https://github.com/gabime/spdlog/archive/refs/tags/v1.12.0.zip"
     DOWNLOAD_EXTRACT_TIMESTAMP ON
 )
+option(SPDLOG_INSTALL "" ON)
 option(SPDLOG_BUILD_TESTING "" OFF)
 option(SPDLOG_BUILD_EXAMPLES "" OFF)
 FetchContent_MakeAvailable(spdlog)

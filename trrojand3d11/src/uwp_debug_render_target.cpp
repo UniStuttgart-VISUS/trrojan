@@ -102,13 +102,8 @@ void trrojan::d3d11::uwp_debug_render_target::present(void) {
         // present log as text rendering on screen
         // 
         // update text
-        //m_text = L" - FPS";
-        auto log = log::instance().getFullLogString();
-        //std::wstring_convert<std::codecvt_utf8_utf16 <wchar_t>> conv;
-        //m_text = conv.from_bytes(log);
-
-        log = "";
-        auto log_entries = log::instance().getLogStrings(16);
+        std::string log;
+        auto log_entries = log::instance().last(16);
         for (auto ls : log_entries) {
             log += ls;
         }

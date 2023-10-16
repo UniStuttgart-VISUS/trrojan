@@ -1,8 +1,8 @@
-// <copyright file="trrojan.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2016 - 2023 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+ï»¿// <copyright file="trrojan.cpp" company="Visualisierungsinstitut der UniversitÃ¤t Stuttgart">
+// Copyright Â© 2016 - 2023 Visualisierungsinstitut der UniversitÃ¤t Stuttgart. Alle Rechte vorbehalten.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
-// <author>Christoph Müller</author>
+// <author>Christoph MÃ¼ller</author>
 
 #include <iostream>
 #include <memory>
@@ -25,8 +25,8 @@
 /// </returns>
 int main(const int argc, const char **argv) {
     const trrojan::cmd_line cmdLine(argv, argv + argc);
-    std::shared_ptr<trrojan::power_collector> powerCollector;
-    std::unique_ptr<trrojan::power_state_scope> powerStateScope;
+    std::shared_ptr<trrojan::power_collector> power_collector;
+    std::unique_ptr<trrojan::power_state_scope> power_state_scope;
 
     try {
         /* Configure the log, which must be the very first step. */
@@ -37,7 +37,7 @@ int main(const int argc, const char **argv) {
                 // Initialise the singleton with a file sink. If this is not
                 // done, the default initialisation with a console sink is done
                 // lazily.
-                auto l = trrojan::log::instance(it->c_str());
+                auto& l = trrojan::log::instance(it->c_str());
             }
         }
 
@@ -46,7 +46,7 @@ int main(const int argc, const char **argv) {
                 cmdLine.end())) {
             std::cout << "TRRojan" << std::endl;
             std::cout << "Copyright (C) 2016 - 2023 Visualisierungsinstitut "
-                "der Universität Stuttgart."
+                "der UniversitÃ¤t Stuttgart."
                 << std::endl << "All rights reserved."
                 << std::endl << std::endl;
             std::cout << "The way you're meant to be trrolled." 
@@ -59,8 +59,8 @@ int main(const int argc, const char **argv) {
                 cmdLine.end());
             if (it != cmdLine.end()) {
                 // Create and start a power collector on request.
-                powerCollector = std::make_shared<trrojan::power_collector>();
-                powerCollector->start(*it, std::chrono::milliseconds(5));
+                power_collector = std::make_shared<trrojan::power_collector>();
+                power_collector->start(*it, std::chrono::milliseconds(5));
             }
         }
 #endif /* defined(TRROJAN_WITH_POWER_OVERWHELMING) */
@@ -91,7 +91,7 @@ int main(const int argc, const char **argv) {
         {
             if (trrojan::contains_switch("--stable-power-state",
                     cmdLine.begin(), cmdLine.end())) {
-                powerStateScope.reset(new trrojan::power_state_scope());
+                power_state_scope.reset(new trrojan::power_state_scope());
             }
         }
 
@@ -107,7 +107,7 @@ int main(const int argc, const char **argv) {
                 trrojan::log::instance().write_line(
                     trrojan::log_level::information, "Running benchmarks "
                     "configured in TRROLL script \"{}\" ...", *it);
-                exe.trroll(*it, *output, coolDown, powerCollector);
+                exe.trroll(*it, *output, coolDown, power_collector);
             }
         }
 

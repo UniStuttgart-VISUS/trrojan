@@ -6,7 +6,9 @@
 
 #include "trrojan/power_collector.h"
 
+#if defined(TRROJAN_WITH_POWER_OVERWHELMING)
 #include "power_overwhelming/csv_iomanip.h"
+#endif /* defined(TRROJAN_WITH_POWER_OVERWHELMING) */
 
 #include "trrojan/configuration.h"
 #include "trrojan/csv_util.h"

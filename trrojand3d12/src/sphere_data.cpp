@@ -6,6 +6,8 @@
 
 #include "trrojan/d3d12/sphere_data.h"
 
+#include <fstream>
+
 #include "trrojan/benchmark.h"
 #include "trrojan/log.h"
 #include "trrojan/timer.h"
@@ -257,7 +259,11 @@ UINT64 trrojan::d3d12::sphere_data::load(
 
         log::instance().write_line(log_level::information, "Load MMPLD data "
             "set \"{}\".", path);
+#if defined(TRROJAN_FOR_UWP)
+        mmpld::file<std::ifstream> file(path.c_str());
+#else /* defined(TRROJAN_FOR_UWP) */
         mmpld::file<HANDLE> file(path.c_str());
+#endif /* defined(TRROJAN_FOR_UWP) */
         file.open_frame(frame);
         file.read_particles(false, list_header, nullptr, 0);
         this->set_properties(list_header);
@@ -337,7 +343,11 @@ void trrojan::d3d12::sphere_data::load_properties(
             "of frame {0} in MMPLD data set \"{}\" ...", frame, path);
         mmpld::list_header list_header;
 
+#if defined(TRROJAN_FOR_UWP)
+        mmpld::file<std::ifstream> file(path.c_str());
+#else /* defined(TRROJAN_FOR_UWP) */
         mmpld::file<HANDLE> file(path.c_str());
+#endif /* defined(TRROJAN_FOR_UWP) */
         file.open_frame(frame);
         file.read_particles(list_header, nullptr, 0);
 

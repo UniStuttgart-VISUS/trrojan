@@ -1,8 +1,8 @@
-// <copyright file="cs_volume_benchmark.cpp" company="Visualisierungsinstitut der Universit�t Stuttgart">
-// Copyright � 2016 - 2022 Visualisierungsinstitut der Universit�t Stuttgart. Alle Rechte vorbehalten.
+﻿// <copyright file="cs_volume_benchmark.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
+// Copyright © 2016 - 2023 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
-// <author>Christoph M�ller</author>
+// <author>Christoph Müller</author>
 
 #include "trrojan/d3d11/cs_volume_benchmark.h"
 
@@ -272,7 +272,6 @@ trrojan::result trrojan::d3d11::cs_volume_benchmark::on_run(
         this->present_target(0);
         gpuTimer.end(0);
         gpuTimer.end_frame();
-        this->present_target();
 
         gpuTimer.evaluate_frame(isDisjoint, gpuFreq);
         if (!isDisjoint) {

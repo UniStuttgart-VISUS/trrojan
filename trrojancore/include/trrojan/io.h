@@ -121,18 +121,19 @@ namespace trrojan {
     /// Returns the base name of the file without the path.
     /// </summary>
     /// <param name="path">The path to extract the name from.</param>
-    /// <param name="with_extension">If <c>true</c>, return the file name with extension,
-    /// otherwise remove all characters starting with the last '.'.</param>
+    /// <param name="with_extension">If <c>true</c>, return the file name
+    /// with the extension, otherwise remove all characters starting from
+    /// the last <see cref="extension_separator_char" />.</param>
     /// <retruns>The extracted file name.</retruns>
-    std::string TRROJANCORE_API get_file_name(const std::string &path,
-                                              const bool with_extension = true);
+    std::string TRROJANCORE_API get_file_name(const std::string& path,
+        const bool with_extension = true);
 
     /// <summary>
     /// Returns the path of the file. This does not include the file name.
     /// </summary>
     /// <param name="file_path">The file path to extract the path from.</param>
     /// <retruns>The extracted path.</retruns>
-    std::string TRROJANCORE_API get_path(const std::string &file_path);
+    std::string TRROJANCORE_API get_path(const std::string& file_path);
 
     /// <summary>
     /// Read a whole binary file at the location designated by
@@ -140,7 +141,8 @@ namespace trrojan {
     /// </summary>
     /// <param name="path"></param>
     /// <returns></returns>
-    std::vector<std::uint8_t> TRROJANCORE_API read_binary_file(const char *path);
+    std::vector<std::uint8_t> TRROJANCORE_API read_binary_file(
+        const char *path);
 
     /// <summary>
     /// Read a whole binary file at the location designated by

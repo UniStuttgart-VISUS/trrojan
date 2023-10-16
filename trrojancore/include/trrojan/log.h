@@ -1,13 +1,14 @@
-/// <copyright file="log.h" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Christoph Müller</author>
+ï»¿// <copyright file="log.h" company="Visualisierungsinstitut der UniversitÃ¤t Stuttgart">
+// Copyright Â© 2016 - 2023 Visualisierungsinstitut der UniversitÃ¤t Stuttgart. Alle Rechte vorbehalten.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Christoph MÃ¼ller</author>
 
 #pragma once
 
 #include <cstdio>
 #include <iostream>
+#include <mutex>
 #include <sstream>
 
 #include <spdlog/spdlog.h>
@@ -23,8 +24,7 @@ namespace trrojan {
     /// <summary>
     /// Defines possible log levels which can be filtered.
     /// </summary>
-    enum class log_level : std::underlying_type<
-            spdlog::level::level_enum>::type {
+    enum class log_level : std::underlying_type<spdlog::level::level_enum>::type {
         debug = spdlog::level::trace,
         verbose = spdlog::level::debug,
         information = spdlog::level::info,
@@ -58,16 +58,26 @@ namespace trrojan {
         /// </summary>
         ~log(void);
 
-        inline void write(const log_level level, const char *str) {
-            this->logger->log(static_cast<spdlog::level::level_enum>(level),
-                str);
+        /// <summary>
+        /// Get the <paramref name="cnt" /> last log entries on UWP.
+        /// </summary>
+        /// <param name="cnt"></param>
+        /// <returns></returns>
+        std::vector<std::string> last(const std::size_t cnt) const {
+#if defined(TRROJAN_FOR_UWP)
+            return this->_buffer_sink->last_formatted(cnt);
+#else /* defined(TRROJAN_FOR_UWP) */
+            return std::vector<std::string>();
+#endif /* defined(TRROJAN_FOR_UWP) */
         }
 
-        template<class... P>
+        void write(const log_level level, const char *str);
+
+        template<class... TParams>
         inline void write(const log_level level, const char *fmt,
-                P... params) {
-            this->logger->log(static_cast<spdlog::level::level_enum>(level),
-                fmt, params...);
+                TParams&&... params) {
+            this->_logger->log(static_cast<spdlog::level::level_enum>(level),
+                fmt, std::forward<TParams>(params)...);
         }
 
         inline void write(const log_level level, const std::exception& ex) {
@@ -78,23 +88,23 @@ namespace trrojan {
             this->write(log_level::error, ex);
         }
 
-        template<class... P>
+        template<class... TParams>
         inline void write_line(const log_level level, const char *fmt,
-                P... params) {
+                TParams&&... params) {
             std::string f(fmt);
             f += "\n";
             // TODO: calls deprecated spdlog function
             // this is only a problem for d3d12, but why?
-            this->logger->log(static_cast<spdlog::level::level_enum>(level),
-                f.c_str(), params...);
+            this->_logger->log(static_cast<spdlog::level::level_enum>(level),
+                f.c_str(), std::forward<TParams>(params)...);
         }
 
-        template<class... P>
+        template<class... TParams>
         inline void write_line(const log_level level, std::string fmt,
-                P... params) {
+                TParams&&... params) {
             fmt += "\n";
-            this->logger->log(static_cast<spdlog::level::level_enum>(level),
-                fmt.c_str(), params...);
+            this->_logger->log(static_cast<spdlog::level::level_enum>(level),
+                fmt.c_str(), std::forward< TParams>(params)...);
         }
 
         inline void write_line(const log_level level, std::string fmt) {
@@ -116,71 +126,19 @@ namespace trrojan {
             this->write_line(log_level::error, ex);
         }
 
-#ifdef _UWP
-        inline std::string getFullLogString() { return oss.str(); }
-
-        inline std::vector<std::string> getLogStrings(size_t cnt) { return ringbuffer_sink->last_formatted(cnt); }
-#endif
-
     private:
 
-        static std::shared_ptr<spdlog::logger> create_logger(
-            const char *file
-#ifdef _UWP
-            , std::shared_ptr<spdlog::sinks::ostream_sink_st> ostream_sink
-            , std::shared_ptr<spdlog::sinks::ringbuffer_sink<std::mutex>> ringbuffer_sink
-#endif
-        ) {
-            if (file != nullptr) {
-                return spdlog::basic_logger_mt("file", file);
-            } else {
-#ifdef _UWP
-                std::vector<spdlog::sink_ptr> sinks;
-                sinks.push_back(ostream_sink);
-                sinks.push_back(ringbuffer_sink);
-                return std::make_shared<spdlog::logger>("console", std::begin(sinks), std::end(sinks));
-                //return spdlog::create("console", );
-                //auto ostream_sink = std::make_shared<spdlog::sinks::ostream_sink_st>(oss);
-                //ostream_logger = std::make_shared<spdlog::logger>("console", ostream_sink);
-                //ostream_logger->set_pattern(">%v<");
-                //ostream_logger->set_level(spdlog::level::debug);
-                //spdlog::set_default_logger(ostream_logger);
-#else
-                return spdlog::stdout_color_mt("console");
-#endif // _UWP
-            }
-        }
+        typedef spdlog::sinks::ringbuffer_sink<std::mutex> ring_sink_type;
 
         /// <summary>
         /// Initialises a new instance.
         /// </summary>
-        inline log(
-            const char *file
-        ) : 
-            oss(),
-            ostream_sink(std::make_shared<spdlog::sinks::ostream_sink_st>(oss)),
-            ringbuffer_sink(std::make_shared<spdlog::sinks::ringbuffer_sink<std::mutex>>(128)),
-            logger(log::create_logger(
-                file
-#ifdef _UWP
-                , ostream_sink
-                , ringbuffer_sink
-#endif
-            ))
-        {
-#if (defined(DEBUG) || defined(_DEBUG))
-            logger->set_level(spdlog::level::trace);
-            spdlog::set_level(spdlog::level::trace);
-#endif /* (defined(DEBUG) || defined(_DEBUG)) */
-        }
+        log(const char *file);
 
-#ifdef _UWP
-        std::ostringstream oss;
-        std::shared_ptr<spdlog::sinks::ostream_sink_st> ostream_sink;
-        std::shared_ptr<spdlog::sinks::ringbuffer_sink<std::mutex>> ringbuffer_sink;
-#endif
+#if defined(TRROJAN_FOR_UWP)
+        std::shared_ptr<ring_sink_type> _buffer_sink;
+#endif /* defined(TRROJAN_FOR_UWP) */
 
-        std::shared_ptr<spdlog::logger> logger;
-
+        std::shared_ptr<spdlog::logger> _logger;
     };
 }

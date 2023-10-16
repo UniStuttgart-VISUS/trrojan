@@ -1,9 +1,9 @@
-/// <copyright file="io.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Christoph Müller</author>
-/// <author>Valentin Bruder</author>
+ï»¿// <copyright file="io.cpp" company="Visualisierungsinstitut der UniversitÃ¤t Stuttgart">
+// Copyright Â© 2016 - 2023 Visualisierungsinstitut der UniversitÃ¤t Stuttgart. Alle Rechte vorbehalten.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Christoph MÃ¼ller</author>
+// <author>Valentin Bruder</author>
 
 #include "trrojan/io.h"
 
@@ -87,12 +87,10 @@ std::string trrojan::get_extension(const std::string& path) {
 /*
  * trrojan::get_file_name
  */
-std::string TRROJANCORE_API trrojan::get_file_name(const std::string &path,
-                                                   const bool with_extension)
-{
+std::string TRROJANCORE_API trrojan::get_file_name(const std::string& path,
+        const bool with_extension) {
     std::string retval = path.substr(path.find_last_of(directory_separator_char) + 1);
-    if (!with_extension)
-    {
+    if (!with_extension) {
         retval = retval.substr(0, retval.find_last_of("."));
     }
     return retval;
@@ -102,8 +100,7 @@ std::string TRROJANCORE_API trrojan::get_file_name(const std::string &path,
 /*
  * trrojan::get_path
  */
-std::string TRROJANCORE_API trrojan::get_path(const std::string &file_path)
-{
+std::string TRROJANCORE_API trrojan::get_path(const std::string& file_path) {
     return file_path.substr(0, file_path.find_last_of(directory_separator_char));
 }
 
@@ -147,19 +144,19 @@ const std::string TRROJANCORE_API trrojan::parent_directory_name("..");
  * trrojan::path_separator_char
  */
 const char TRROJANCORE_API trrojan::path_separator_char
-#ifdef _WIN32
+#if defined(_WIN32)
     = ';';
-#else /* _WIN32 */
+#else /* defined(_WIN32) */
     = ':';
-#endif /* _WIN32 */
+#endif /* defined(_WIN32) */
 
 
 /*
  * trrojan::volume_separator_char
  */
 const char TRROJANCORE_API trrojan::volume_separator_char
-#ifdef __linux
-    = '/';
-#else /* __linux */
+#if defined(_WIN32)
     = ':';
-#endif /* __linux */
+#else /* defined(_WIN32) */
+    = '/';
+#endif /* defined(_WIN32) */

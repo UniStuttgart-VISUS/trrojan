@@ -1,8 +1,8 @@
-/// <copyright file="utilities.h" company="Visualisierungsinstitut der Universit�t Stuttgart">
-/// Copyright � 2016 - 2018 Visualisierungsinstitut der Universit�t Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Christoph M�ller</author>
+// <copyright file="utilities.h" company="Visualisierungsinstitut der Universität Stuttgart">
+// Copyright © 2016 - 2023 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+/// <author>Christoph Müller</author>
 
 #pragma once
 

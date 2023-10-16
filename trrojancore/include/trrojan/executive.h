@@ -1,14 +1,15 @@
-// <copyright file="executive.h" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2016 - 2022 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+ï»¿// <copyright file="executive.h" company="Visualisierungsinstitut der UniversitÃ¤t Stuttgart">
+// Copyright Â© 2016 - 2023 Visualisierungsinstitut der UniversitÃ¤t Stuttgart. Alle Rechte vorbehalten.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
-// <author>Christoph Müller</author>
+// <author>Christoph MÃ¼ller</author>
 
 #pragma once
 
 #include <iterator>
 #include <map>
 #include <memory>
+#include <string>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -33,12 +34,26 @@ namespace trrojan {
     /// This is the root class which manages all the plugins and the
     /// environments.
     /// </summary>
-    /// <remarks>
-    /// 
-    /// </remarks>
     class TRROJANCORE_API executive {
 
     public:
+
+#if defined(_WIN32)
+        /// <summary>
+        /// Gets the path of the directory where the exeuctable is located, but
+        /// only on Windows.
+        /// </summary>
+        /// <returns>The directory containing the executable.</returns>
+        std::string executable_directory(void);
+#endif /* defined(_WIN32) */
+
+#if defined(_WIN32)
+        /// <summary>
+        /// Gets the path to the TRRojan executable, but only on Windows.
+        /// </summary>
+        /// <returns>The path to the executable.</returns>
+        std::string executable_path(void);
+#endif /* defined(_WIN32) */
 
         /// <summary>
         /// Initialises a new instance.
@@ -132,7 +147,8 @@ namespace trrojan {
         /// tested.
         /// </summary>
         /// <remarks>
-        /// There might be restrictions on which environment is acce
+        /// There might be restrictions on which environment is acceptable on
+        /// which device.
         /// </remarks>
         struct env_dev_set {
             trrojan::environment environment;
@@ -159,21 +175,21 @@ namespace trrojan {
             /// <summary>
             /// The type of a native DLL handle.
             /// </summary>
-#ifdef _WIN32
+#if defined(_WIN32)
             typedef HMODULE handle_type;
-#else /* _WIN32 */
+#else /* defined(_WIN32) */
             typedef void *handle_type;
-#endif /* _WIN32 */
+#endif /* defined(_WIN32) */
 
             /// <summary>
             /// The type of a native function pointer returned for a resolved
             /// procedure name.
             /// </summary>
-#ifdef _WIN32
+#if defined(_WIN32)
             typedef FARPROC proc_type;
-#else /* _WIN32 */
+#else /* defined(_WIN32) */
             typedef void *proc_type;
-#endif /* _WIN32 */
+#endif /* defined(_WIN32) */
 
             /// <summary>
             /// Open the DLL at the specified location.
@@ -231,7 +247,7 @@ namespace trrojan {
             /// <summary>
             /// Move assignment.
             /// </summary>
-            plugin_dll& operator =(plugin_dll&& rhs);
+            plugin_dll& operator =(plugin_dll&& rhs) noexcept;
 
         private:
 

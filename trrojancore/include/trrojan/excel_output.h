@@ -1,8 +1,8 @@
-/// <copyright file="excel_output.h" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Christoph Müller</author>
+ï»¿// <copyright file="excel_output.h" company="Visualisierungsinstitut der UniversitÃ¤t Stuttgart">
+// Copyright Â© 2016 - 2023 Visualisierungsinstitut der UniversitÃ¤t Stuttgart. Alle Rechte vorbehalten.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Christoph MÃ¼ller</author>
 
 #pragma once
 
@@ -11,10 +11,10 @@
 #include <string>
 #include <vector>
 
-#ifdef _WIN32
+#if (defined(_WIN32) && !defined(TRROJAN_FOR_UWP))
 #include <atlbase.h>
 #include <Ole2.h>
-#endif /* _WIN32 */
+#endif /* (defined(_WIN32) && !defined(TRROJAN_FOR_UWP)) */
 
 #include "trrojan/excel_output_params.h"
 #include "trrojan/output.h"
@@ -22,7 +22,7 @@
 
 namespace trrojan {
 
-#if defined(_WIN32) && !defined(_UWP)
+#if (defined(_WIN32) && !defined(TRROJAN_FOR_UWP))
     /// <summary>
     /// Base class for output handlers.
     /// </summary>
@@ -134,7 +134,7 @@ namespace trrojan {
         ATL::CComPtr<IDispatch> excel;
         ATL::CComPtr<IDispatch> sheet;
     };
-#endif /* _WIN32 */
+#endif /* (defined(_WIN32) && !defined(TRROJAN_FOR_UWP)) */
 }
 
 #include "trrojan/excel_output.inl"

@@ -1,7 +1,6 @@
 # CMakeLists.txt
 # Copyright © 2016 - 2023 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
 
-
 project(trrojan)
 include(FindPkgConfig)
 
@@ -106,15 +105,23 @@ endif()
 #include_directories( ${CIMG_H_PATH} )
 
 
+## Ensure the right build order such that the following debugging copy
+## operations will work.
+#if (TRROJAN_WITH_OPENCL)
+#    add_dependencies(trrojan trrojancl)
+#endif ()
+#add_dependencies(trrojan trrojanstream)
+#if (WIN32)
+#    add_dependencies(trrojan trrojand3d11)
+#    add_dependencies(trrojan trrojand3d12)
+#endif ()
+
 # For debugging the executable directly from Visual Studio, copy all of the
 # benchmark DLLs to the output directory.
-set(TRROJAN_INTERNAL_DEPENDENCIES "trrojancore" "trrojansnfo" "trrojanstream")
-if (WITH_OPENCL)
-    set(TRROJAN_INTERNAL_DEPENDENCIES ${TRROJAN_INTERNAL_DEPENDENCIES} "trrojancl")
-endif ()
-if (WIN32)
-    set(TRROJAN_INTERNAL_DEPENDENCIES ${TRROJAN_INTERNAL_DEPENDENCIES} "trrojand3d11" "trrojand3d12")
-endif ()
+set(TRROJAN_INTERNAL_DEPENDENCIES trrojancore ${TRROJAN_PLUGINS})
+if (NOT TRROJAN_FOR_UWP)
+    set(TRROJAN_INTERNAL_DEPENDENCIES "${TRROJAN_INTERNAL_DEPENDENCIES}" trrojansnfo)
+endif()
 
 foreach (TRROJAN_INT_DEP ${TRROJAN_INTERNAL_DEPENDENCIES})
     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different "${${TRROJAN_INT_DEP}_BINARY_DIR}/$<CONFIG>/${TRROJAN_INT_DEP}${CMAKE_SHARED_LIBRARY_SUFFIX}" "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>")

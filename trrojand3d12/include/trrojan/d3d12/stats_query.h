@@ -54,7 +54,7 @@ namespace d3d12 {
         /// <param name="queries"></param>
         /// <param name="buffers"></param>
         stats_query(ID3D12Device *device, const size_type queries = 1,
-            const size_t buffers = 2);
+            const size_type buffers = 2);
 
         stats_query(const stats_query&) = delete;
 
