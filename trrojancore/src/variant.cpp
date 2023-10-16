@@ -1,8 +1,8 @@
-/// <copyright file="variant.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Christoph Müller</author>
+// <copyright file="variant.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
+// Copyright © 2016 - 2023 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Christoph Müller</author>
 
 #include "trrojan/variant.h"
 
@@ -46,6 +46,20 @@ TRROJANCORE_API std::ostream& trrojan::detail::operator <<(std::ostream& lhs,
 TRROJANCORE_API std::ostream& trrojan::detail::operator <<(std::ostream& lhs,
         const trrojan::environment& rhs) {
     lhs << ((rhs != nullptr) ? rhs->name() : "null");
+    return lhs;
+}
+
+
+/*
+ * trrojan::detail::operator <<
+ */
+TRROJANCORE_API std::ostream& trrojan::detail::operator <<(std::ostream &lhs,
+        const power_collector::pointer& rhs) {
+#if defined(TRROJAN_WITH_POWER_OVERWHELMING)
+    lhs << ((rhs != nullptr) ? rhs->file() : "null");
+#else /* defined(TRROJAN_WITH_POWER_OVERWHELMING) */
+    lhs << "null";
+#endif /* defined(TRROJAN_WITH_POWER_OVERWHELMING) */
     return lhs;
 }
 

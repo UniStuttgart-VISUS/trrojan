@@ -1,0 +1,2 @@
+// This file was auto-generated using .\Create-VolumeShaders.ps1 -OutPath . -ResourceStart 2000 on 10/06/2023 15:23:41
+2000 SHADER d3d12\SinglePassVolumeComputeShader.cso

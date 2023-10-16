@@ -1,8 +1,8 @@
-/// <copyright file="benchmark_base.cpp" company="Visualisierungsinstitut der Universit�t Stuttgart">
-/// Copyright � 2016 - 2018 Visualisierungsinstitut der Universit�t Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Christoph M�ller</author>
+// <copyright file="benchmark_base.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
+// Copyright © 2016 - 2023 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Christoph Müller</author>
 
 #include "trrojan/d3d11/benchmark_base.h"
 
@@ -27,6 +27,7 @@ const std::string trrojan::d3d11::benchmark_base::factor_##f(#f)
 
 _D3D_BENCH_DEFINE_FACTOR(debug_view);
 _D3D_BENCH_DEFINE_FACTOR(save_view);
+_D3D_BENCH_DEFINE_FACTOR(sync_interval);
 
 #undef _D3D_BENCH_DEFINE_FACTOR
 
@@ -56,6 +57,7 @@ trrojan::result trrojan::d3d11::benchmark_base::run(const configuration& c) {
 
     auto genericDev = c.get<trrojan::device>(factor_device);
     auto device = std::dynamic_pointer_cast<trrojan::d3d11::device>(genericDev);
+    auto powerCollector = initialise_power_collector(c);
 
     if (device == nullptr) {
         throw std::runtime_error("A configuration without a Direct3D device was "
@@ -125,7 +127,7 @@ trrojan::result trrojan::d3d11::benchmark_base::run(const configuration& c) {
     }
 
     this->render_target->enable();
-    auto retval = this->on_run(*device, c, changed);
+    auto retval = this->on_run(*device, c, powerCollector, changed);
 
     if (c.get<bool>(factor_save_view)) {
         auto ts = c.get<std::string>(system_factors::factor_timestamp);

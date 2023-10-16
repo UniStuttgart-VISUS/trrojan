@@ -1,8 +1,8 @@
-/// <copyright file="cs_volume_benchmark.h" company="Visualisierungsinstitut der Universitï¿½t Stuttgart">
-/// Copyright ï¿½ 2016 - 2018 Visualisierungsinstitut der Universitï¿½t Stuttgart. Alle Rechte vorbehalten.
+/// <copyright file="cs_volume_benchmark.h" company="Visualisierungsinstitut der Universität Stuttgart">
+/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
 /// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 /// </copyright>
-/// <author>Christoph Mï¿½ller</author>
+/// <author>Christoph Müller</author>
 
 #pragma once
 
@@ -41,6 +41,7 @@ namespace d3d11 {
         /// <inheritdoc />
         virtual trrojan::result on_run(d3d11::device& device,
             const configuration& config,
+            power_collector::pointer& powerCollector,
             const std::vector<std::string>& changed);
 
     private:

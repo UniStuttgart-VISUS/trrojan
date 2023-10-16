@@ -31,6 +31,7 @@ trrojan::d3d11::cs_volume_benchmark::cs_volume_benchmark(void)
  */
 trrojan::result trrojan::d3d11::cs_volume_benchmark::on_run(
         d3d11::device& device, const configuration& config,
+        power_collector::pointer& powerCollector,
         const std::vector<std::string>& changed) {
     volume_benchmark_base::on_run(device, config, changed);
 
@@ -52,7 +53,7 @@ trrojan::result trrojan::d3d11::cs_volume_benchmark::on_run(
     RaycastingConstants raycastingConstants;
     ViewConstants viewConstants;
     const auto viewport = config.get<viewport_type>(factor_viewport);
-    const auto volSize = this->calc_physical_volume_size();
+    const auto volSize = this->get_volume_resolution();
 
     // Compute the bounding box in world space.
     this->calc_bounding_box(bbs, bbe);
@@ -139,7 +140,7 @@ trrojan::result trrojan::d3d11::cs_volume_benchmark::on_run(
 
     raycastingConstants.StepSize = this->calc_base_step_size()
         * config.get<float>(factor_step_size);
-    
+
     ctx->UpdateSubresource(this->raycasting_constants.p, 0, nullptr,
         &raycastingConstants, 0, 0);
 
@@ -207,6 +208,8 @@ trrojan::result trrojan::d3d11::cs_volume_benchmark::on_run(
     // Prepare the result set.
     auto retval = std::make_shared<basic_result>(std::move(config),
         std::initializer_list<std::string> {
+            "benchmark",
+            "power_uid",
             "data_extents",
             "gpu_time_min",
             "gpu_time_med",
@@ -240,7 +243,7 @@ trrojan::result trrojan::d3d11::cs_volume_benchmark::on_run(
             cpuTimer.start();
             for (; cntCpuIterations < cntPrewarms; ++cntCpuIterations) {
                 ctx->Dispatch(groupX, groupY, 1u);
-                this->present_target();
+                this->present_target(config);
             }
 
             ctx->End(this->done_query);
@@ -266,6 +269,7 @@ trrojan::result trrojan::d3d11::cs_volume_benchmark::on_run(
         gpuTimer.start_frame();
         gpuTimer.start(0);
         ctx->Dispatch(groupX, groupY, 1u);
+        this->present_target(0);
         gpuTimer.end(0);
         gpuTimer.end_frame();
         this->present_target();
@@ -281,14 +285,16 @@ trrojan::result trrojan::d3d11::cs_volume_benchmark::on_run(
     // Do the wall clock measurement.
     log::instance().write_line(log_level::debug, "Measuring wall clock "
         "timings over {} iterations ...", cntCpuIterations);
+    const auto powerUid = benchmark_base::enter_power_scope(powerCollector);
     cpuTimer.start();
     for (std::uint32_t i = 0; i < cntCpuIterations; ++i) {
         ctx->Dispatch(groupX, groupY, 1u);
-        this->present_target();
+        this->present_target(config);
     }
     ctx->End(this->done_query);
     wait_for_event_query(ctx, this->done_query);
     auto cpuTime = cpuTimer.elapsed_millis();
+    benchmark_base::leave_power_scope(powerCollector);
 
     // Compute derived statistics for GPU counters.
     std::sort(gpuTimes.begin(), gpuTimes.end());
@@ -300,6 +306,8 @@ trrojan::result trrojan::d3d11::cs_volume_benchmark::on_run(
 
     // Output the results.
     retval->add({
+        this->name(),
+        powerUid,
         volSize,
         gpuTimes.front(),
         gpuMedian,

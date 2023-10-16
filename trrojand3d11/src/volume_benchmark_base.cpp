@@ -1,5 +1,5 @@
 // <copyright file="volume_benchmark_base.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2016 - 2022 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+// Copyright © 2016 - 2023 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
 // <author>Christoph Müller</author>
@@ -8,6 +8,7 @@
 
 #include <stdexcept>
 
+#include "trrojan/brudervn_xfer_func.h"
 #include "trrojan/io.h"
 #include "trrojan/log.h"
 #include "trrojan/text.h"
@@ -126,23 +127,7 @@ _VOL_BENCH_DEFINE_FACTOR(xfer_func);
 void trrojan::d3d11::volume_benchmark_base::load_brudervn_xfer_func(
         const char *path, ID3D11Device *device, ID3D11Texture1D **outTexture,
         ID3D11ShaderResourceView **outSrv) {
-    std::vector<std::uint8_t> data;
-    std::uint8_t value;
-
-    std::ifstream file(path, std::ios::in);
-    if (file.is_open()) {
-        data.reserve(256);
-
-        while (file >> value) {
-            data.push_back(value);
-        }
-
-    } else {
-        std::stringstream msg;
-        msg << "Failed to open \"" << path << "\"." << std::ends;
-        throw std::runtime_error(msg.str());
-    }
-
+    auto data = trrojan::load_brudervn_xfer_func(path);
     load_xfer_func(data, device, outTexture, outSrv);
 }
 
@@ -289,7 +274,7 @@ void trrojan::d3d11::volume_benchmark_base::load_xfer_func(
         std::array<std::uint32_t, 256> linearXfer;
 
         {
-            size_t i = 0;
+            std::uint32_t i = 0;
             std::generate(linearXfer.begin(), linearXfer.end(), [&i]() {
                 auto retval = (i << 24) | (i << 16) | (i << 8) | i;
                 ++i;
@@ -350,6 +335,8 @@ trrojan::d3d11::volume_benchmark_base::volume_benchmark_base(
         factor_min_prewarms, static_cast<unsigned int>(4)));
     this->_default_configs.add_factor(factor::from_manifestations(
         factor_min_wall_time, static_cast<unsigned int>(1000)));
+    this->_default_configs.add_factor(factor::from_manifestations(
+        factor_sync_interval, static_cast<unsigned int>(0)));
 
     this->add_default_manoeuvre();
 }
@@ -405,4 +392,17 @@ trrojan::result trrojan::d3d11::volume_benchmark_base::on_run(
     }
 
     return trrojan::result();
+}
+
+
+/*
+ * trrojan::d3d11::volume_benchmark_base::optimise_order
+ */
+void trrojan::d3d11::volume_benchmark_base::optimise_order(
+        configuration_set& inOutConfs) {
+    inOutConfs.optimise_order({
+        factor_data_set,
+        factor_xfer_func,
+        factor_device
+    });
 }

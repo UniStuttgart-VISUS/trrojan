@@ -1,8 +1,8 @@
-/// <copyright file="scripting_host.cpp" company="Visualisierungsinstitut der Universitï¿½t Stuttgart">
-/// Copyright ï¿½ 2016 - 2018 Visualisierungsinstitut der Universitï¿½t Stuttgart. Alle Rechte vorbehalten.
+/// <copyright file="scripting_host.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
+/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
 /// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 /// </copyright>
-/// <author>Christoph Mï¿½ller</author>
+/// <author>Christoph Müller</author>
 
 #include "scripting_host.h"
 
@@ -734,7 +734,7 @@ JsValueRef trrojan::scripting_host::on_trrojan_run(JsValueRef callee,
     auto b = scripting_host::get_ext_data<benchmark_base>(arguments[1]);
     auto c = scripting_host::get_ext_data<configuration_set>(arguments[2]);
 
-    that->executive->run(*b, *c, that->output, that->coolDown);
+    that->executive->run(*b, *c, that->output, that->coolDown, nullptr);
 
     return retval;
 }

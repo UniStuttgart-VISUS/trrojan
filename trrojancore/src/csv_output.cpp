@@ -1,13 +1,15 @@
-/// <copyright file="csv_output.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Christoph Müller</author>
+// <copyright file="csv_output.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
+// Copyright © 2016 - 2022 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Christoph Müller</author>
 
 #include "trrojan/csv_output.h"
 
 #include <sstream>
 #include <stdexcept>
+
+#include "trrojan/csv_util.h"
 
 
 
@@ -122,6 +124,8 @@ trrojan::output_base& trrojan::csv_output::operator <<(
         this->file << nl;
     }
 
+    this->file.flush();
+
     return *this;
 }
 
@@ -142,22 +146,5 @@ void trrojan::csv_output::print(const std::string& str) {
  * trrojan::csv_output::print
  */
 void trrojan::csv_output::print(const variant& v) {
-    bool isString;
-    switch (v.type()) {
-        case variant_type::string:
-        case variant_type::wstring:
-        case variant_type::device:
-        case variant_type::environment:
-            isString = true;
-            break;
-
-        default:
-            isString = false;
-    }
-
-    if (this->params->quote_string() && isString) {
-        this->file << "\"" << v << "\"";
-    } else {
-        this->file << v;
-    }
+    print_csv_value(this->file, v, this->params->quote_string());
 }

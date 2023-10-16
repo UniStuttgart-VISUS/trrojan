@@ -109,17 +109,45 @@ namespace d3d12 {
     /// <param name="heap_type"></param>
     /// <param name="state"></param>
     /// <returns></returns>
-    ATL::CComPtr<ID3D12Resource> create_buffer(ID3D12Device *device,
+    ATL::CComPtr<ID3D12Resource> TRROJAND3D12_API create_buffer(
+        ID3D12Device *device,
         const UINT64 size, const UINT64 alignment = 0,
         const D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE,
         const D3D12_HEAP_TYPE heap_type = D3D12_HEAP_TYPE_DEFAULT,
         const D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_COPY_DEST);
 
     /// <summary>
+    /// Creates a compute pipeline state for the given compute shader and root
+    /// signature.
+    /// </summary>
+    /// <param name="device"></param>
+    /// <param name="shader"></param>
+    /// <param name="size"></param>
+    /// <param name="signature"></param>
+    /// <returns></returns>
+    ATL::CComPtr<ID3D12PipelineState> TRROJAND3D12_API create_compute_pipeline(
+        ID3D12Device *device, const BYTE *shader, const SIZE_T size,
+        ID3D12RootSignature *signature);
+
+    /// <summary>
+    /// Creates a compute pipeline state for teh given compute shader using the
+    /// root signature embedded in the byte code of the shader.
+    /// </summary>
+    /// <param name="signature"></param>
+    /// <param name="device"></param>
+    /// <param name="shader"></param>
+    /// <param name="size"></param>
+    /// <returns></returns>
+    ATL::CComPtr<ID3D12PipelineState> TRROJAND3D12_API create_compute_pipeline(
+        ATL::CComPtr<ID3D12RootSignature>& signature, ID3D12Device *device,
+        const BYTE *shader, const SIZE_T size);
+
+    /// <summary>
     /// Create a row-major committed buffer of the given size satisfying the
     /// alignment requirements of a constant buffer.
     /// </summary>
-    ATL::CComPtr<ID3D12Resource> create_constant_buffer(ID3D12Device *device,
+    ATL::CComPtr<ID3D12Resource> TRROJAND3D12_API create_constant_buffer(
+        ID3D12Device *device,
         const UINT64 size,
         const D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE,
         const D3D12_HEAP_TYPE heap_type = D3D12_HEAP_TYPE_UPLOAD,
@@ -131,8 +159,18 @@ namespace d3d12 {
     /// <param name="manual_reset"></param>
     /// <param name="initially_signalled"></param>
     /// <returns></returns>
-    handle<> create_event(const bool manual_reset,
+    handle<> TRROJAND3D12_API create_event(const bool manual_reset,
         const bool initially_signalled);
+
+    /// <summary>
+    /// Create a fence on the given device.
+    /// </summary>
+    /// <param name="device"></param>
+    /// <param name="initial_value"></param>
+    /// <returns></returns>
+    ATL::CComPtr<ID3D12Fence> TRROJAND3D12_API create_fence(
+        ID3D12Device *device,
+        const UINT64 initial_value = 0);
 
     /// <summary>
     /// Creates a 2D texture which is initially in the present state.
@@ -143,8 +181,9 @@ namespace d3d12 {
     /// <param name="format"></param>
     /// <param name="flags"></param>
     /// <returns></returns>
-    ATL::CComPtr<ID3D12Resource> create_render_target(ID3D12Device *device,
-        const UINT width, const UINT height, const DXGI_FORMAT format,
+    ATL::CComPtr<ID3D12Resource> TRROJAND3D12_API create_render_target(
+        ID3D12Device *device, const UINT width, const UINT height,
+        const DXGI_FORMAT format,
         const D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE);
 
     /// <summary>
@@ -156,53 +195,59 @@ namespace d3d12 {
     /// <param name="heap_type"></param>
     /// <param name="state"></param>
     /// <returns></returns>
-    ATL::CComPtr<ID3D12Resource> create_resource(ID3D12Device *device,
-        const D3D12_RESOURCE_DESC& desc,
+    ATL::CComPtr<ID3D12Resource> TRROJAND3D12_API create_resource(
+        ID3D12Device *device, const D3D12_RESOURCE_DESC& desc,
         const D3D12_HEAP_TYPE heap_type = D3D12_HEAP_TYPE_DEFAULT,
         const D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_COPY_DEST);
 
     /// <summary>
     /// Create an uninitialised 1D texture which is in
-    /// <see cref="D3D12_RESOURCE_STATE_COPY_DEST" />.
+    /// <paramref name="state" />.
     /// </summary>
     /// <param name="device"></param>
     /// <param name="width"></param>
     /// <param name="format"></param>
+    /// <param name="state"></param>
     /// <returns></returns>
-    ATL::CComPtr<ID3D12Resource> create_texture(ID3D12Device *device,
-        const UINT64 width, const DXGI_FORMAT format,
-        const D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE);
+    ATL::CComPtr<ID3D12Resource> TRROJAND3D12_API create_texture(
+        ID3D12Device *device, const UINT64 width, const DXGI_FORMAT format,
+        const D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE,
+        const D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_COPY_DEST);
 
     /// <summary>
     /// Create an uninitialised 2D texture which is in
-    /// <see cref="D3D12_RESOURCE_STATE_COPY_DEST" />.
+    /// <paramref name="state" />.
     /// </summary>
     /// <param name="device"></param>
     /// <param name="width"></param>
     /// <param name="height"></param>
     /// <param name="format"></param>
     /// <param name="flags"></param>
+    /// <param name="state"></param>
     /// <returns></returns>
-    //ATL::CComPtr<ID3D12Resource> create_texture(ID3D12Device *device,
-    //    const UINT64 width, const UINT height, const DXGI_FORMAT format,
-    //    const D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE);
+    ATL::CComPtr<ID3D12Resource> TRROJAND3D12_API create_texture(
+        ID3D12Device *device, const UINT64 width, const UINT height,
+        const DXGI_FORMAT format,
+        const D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE,
+        const D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_COPY_DEST);
 
     /// <summary>
-    /// Create an upload buffer for the specified subresource of the given
-    /// GPU resource.
+    /// Create an uninitailisd 3D texture which is in state
+    /// <paramref name="state" />.
     /// </summary>
-    /// <remarks>
-    /// The function determines the copyable footprints of the given
-    /// <paramref name="resource" /> and creates an upload buffer with this
-    /// size, thus fulfilling implicitly all alignment requirements for upload
-    /// buffers.
-    /// </remarks>
-    /// <param name="resource"></param>
-    /// <param name="first_subresource"></param>
-    /// <param name="cnt_subresources"></param>
+    /// <param name="device"></param>
+    /// <param name="width"></param>
+    /// <param name="height"></param>
+    /// <param name="depth"></param>
+    /// <param name="format"></param>
+    /// <param name="flags"></param>
+    /// <param name="state"></param>
     /// <returns></returns>
-    ATL::CComPtr<ID3D12Resource> create_upload_buffer(ID3D12Resource *resource,
-        const UINT first_subresource = 0, const UINT cnt_subresources = 1);
+    ATL::CComPtr<ID3D12Resource> TRROJAND3D12_API create_texture(
+        ID3D12Device *device, const UINT64 width, const UINT64 height,
+        const UINT64 depth, const DXGI_FORMAT format,
+        const D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE,
+        const D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_COPY_DEST);
 
     /// <summary>
     /// Create an upload buffer of the specified size.
@@ -216,8 +261,10 @@ namespace d3d12 {
     /// <param name="size"></param>
     /// <param name="alignment"></param>
     /// <returns></returns>
-    ATL::CComPtr<ID3D12Resource> create_upload_buffer(ID3D12Device *device,
-        const UINT64 size, const UINT64 alignment = 0);
+    ATL::CComPtr<ID3D12Resource> TRROJAND3D12_API create_upload_buffer(
+        ID3D12Device *device,
+        const UINT64 size,
+        const UINT64 alignment = 0);
 
     /// <summary>
     /// Create an upload buffer and fill it with the specified data.
@@ -233,15 +280,35 @@ namespace d3d12 {
     /// <param name="size"></param>
     /// <param name="alignment"></param>
     /// <returns></returns>
-    ATL::CComPtr<ID3D12Resource> create_upload_buffer(ID3D12Device *device,
-        const void *data, const UINT64 size, const UINT64 alignment = 0);
+    ATL::CComPtr<ID3D12Resource> TRROJAND3D12_API create_upload_buffer(
+        ID3D12Device *device, const void *data, const UINT64 size,
+        const UINT64 alignment = 0);
+
+    /// <summary>
+    /// Create an upload buffer for the specified subresource of the given
+    /// GPU resource.
+    /// </summary>
+    /// <remarks>
+    /// The function determines the copyable footprints of the given
+    /// <paramref name="resource" /> and creates an upload buffer with this
+    /// size, thus fulfilling implicitly all alignment requirements for upload
+    /// buffers.
+    /// </remarks>
+    /// <param name="resource"></param>
+    /// <param name="first_subresource"></param>
+    /// <param name="cnt_subresources"></param>
+    /// <returns></returns>
+    ATL::CComPtr<ID3D12Resource> TRROJAND3D12_API create_upload_buffer_for(
+        ID3D12Resource *resource,
+        const UINT first_subresource = 0,
+        const UINT cnt_subresources = 1);
 
     /// <summary>
     /// Create a 1D upload buffer containing the Viridis colour map.
     /// </summary>
     /// <param name="device"></param>
     /// <returns></returns>
-    ATL::CComPtr<ID3D12Resource> create_viridis_colour_map(
+    ATL::CComPtr<ID3D12Resource> TRROJAND3D12_API create_viridis_colour_map(
         ID3D12Device *device);
 
     /// <summary>
@@ -258,8 +325,9 @@ namespace d3d12 {
     /// parameter defaults to<
     /// <c>D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE</c>.</param>
     /// <returns></returns>
-    ATL::CComPtr<ID3D12Resource> create_viridis_colour_map(device& device,
-        ID3D12GraphicsCommandList *cmd_list, const D3D12_RESOURCE_STATES state
+    ATL::CComPtr<ID3D12Resource> TRROJAND3D12_API create_viridis_colour_map(
+        device& device, ID3D12GraphicsCommandList *cmd_list,
+        const D3D12_RESOURCE_STATES state
         = static_cast<D3D12_RESOURCE_STATES>(0x40 | 0x80));
 
     /// <summary>
@@ -267,7 +335,8 @@ namespace d3d12 {
     /// </summary>
     /// <param name="child"></param>
     /// <returns></returns>
-    ATL::CComPtr<ID3D12Device> get_device(ID3D12DeviceChild *child);
+    ATL::CComPtr<ID3D12Device> TRROJAND3D12_API get_device(
+        ID3D12DeviceChild *child);
 
     /// <summary>
     /// Gets a <see cref="D3D12_TEXTURE_COPY_LOCATION" /> for the given
@@ -276,8 +345,8 @@ namespace d3d12 {
     /// <param name="resource"></param>
     /// <param name="subresource"></param>
     /// <returns></returns>
-    D3D12_TEXTURE_COPY_LOCATION get_copy_location(ID3D12Resource *resource,
-        const UINT subresource = 0);
+    D3D12_TEXTURE_COPY_LOCATION TRROJAND3D12_API get_copy_location(
+        ID3D12Resource *resource, const UINT subresource = 0);
 
     /// <summary>
     /// Index into an array aligned according to constant buffer alignment
@@ -447,7 +516,8 @@ namespace d3d12 {
     /// </summary>
     /// <param name="obj"></param>
     /// <param name="name"></param>
-    void set_debug_object_name(ID3D12Object *obj, const char *name);
+    void TRROJAND3D12_API set_debug_object_name(ID3D12Object *obj,
+        const char *name);
 
     /// <summary>
     /// Applies the given debug name to the given object for use in the graphics
@@ -471,7 +541,7 @@ namespace d3d12 {
     /// <param name="resource"></param>
     /// <param name="data"></param>
     /// <param name="cnt"></param>
-    void stage_data(ID3D12Resource *resource, const void *data,
+    void TRROJAND3D12_API stage_data(ID3D12Resource *resource, const void *data,
         const UINT64 cnt);
 
     /// <summary>
@@ -480,7 +550,7 @@ namespace d3d12 {
     /// </summary>
     /// <param name="resource"></param>
     /// <param name="producer"></param>
-    void stage_data(ID3D12Resource *resource,
+    void TRROJAND3D12_API stage_data(ID3D12Resource *resource,
         const std::function<void(void *, const UINT64)>& producer);
 
     /// <summary>
@@ -492,7 +562,7 @@ namespace d3d12 {
     /// <param name="cnt_cols"></param>
     /// <param name="cnt_rows"></param>
     /// <param name="row_pitch"></param>
-    void stage_data(ID3D12Resource *resource, const void *data,
+    void TRROJAND3D12_API stage_data(ID3D12Resource *resource, const void *data,
         const UINT64 cnt_cols, const UINT cnt_rows, UINT64 row_pitch = 0);
 
     /// <summary>
@@ -502,13 +572,14 @@ namespace d3d12 {
     template<class T>
     std::vector<T *> unsmart(std::vector<ATL::CComPtr<T>>& input);
 
-    void transition_resource(ID3D12GraphicsCommandList *cmd_list,
-        ID3D12Resource *resource, const D3D12_RESOURCE_STATES state_before,
+    void TRROJAND3D12_API transition_resource(
+        ID3D12GraphicsCommandList *cmd_list, ID3D12Resource *resource,
+        const D3D12_RESOURCE_STATES state_before,
         const D3D12_RESOURCE_STATES state_after);
 
-    void transition_subresource(ID3D12GraphicsCommandList *cmd_list,
-        ID3D12Resource *resource, const UINT subresource,
-        const D3D12_RESOURCE_STATES state_before,
+    void TRROJAND3D12_API transition_subresource(
+        ID3D12GraphicsCommandList *cmd_list, ID3D12Resource *resource,
+        const UINT subresource, const D3D12_RESOURCE_STATES state_before,
         const D3D12_RESOURCE_STATES state_after);
 
     /// <summary>
@@ -523,10 +594,10 @@ namespace d3d12 {
     /// <param name="staging"></param>
     /// <param name="data"></param>
     /// <param name="cnt"></param>
-    void update_subresource(ID3D12GraphicsCommandList *cmd_list,
-        ID3D12Resource *dst, const UINT subresource,
-        const D3D12_RESOURCE_STATES state_after, ID3D12Resource *staging,
-        const void *data, const UINT64 cnt);
+    void TRROJAND3D12_API update_subresource(
+        ID3D12GraphicsCommandList *cmd_list, ID3D12Resource *dst,
+        const UINT subresource, const D3D12_RESOURCE_STATES state_after,
+        ID3D12Resource *staging, const void *data, const UINT64 cnt);
 
     /// <summary>
     /// Update <paramref name="dst" /> with the specified two-dimensional
@@ -542,17 +613,17 @@ namespace d3d12 {
     /// <param name="cnt_cols"></param>
     /// <param name="cnt_rows"></param>
     /// <param name="row_pitch"></param>
-    void update_subresource(ID3D12GraphicsCommandList *cmd_list,
-        ID3D12Resource *dst, const UINT subresource,
-        const D3D12_RESOURCE_STATES state_after, ID3D12Resource *staging,
-        const void *data, const UINT64 cnt_cols, const UINT cnt_rows,
-        const UINT64 row_pitch = 0);
+    void TRROJAND3D12_API update_subresource(
+        ID3D12GraphicsCommandList *cmd_list, ID3D12Resource *dst,
+        const UINT subresource, const D3D12_RESOURCE_STATES state_after,
+        ID3D12Resource *staging, const void *data, const UINT64 cnt_cols,
+        const UINT cnt_rows, const UINT64 row_pitch = 0);
 
     /// <summary>
     /// Infinitely wait for the given event to become signalled.
     /// </summary>
     /// <param name="handle"></param>
-    void wait_for_event(handle<>& handle);
+    void TRROJAND3D12_API wait_for_event(handle<>& handle);
 
 } /* end namespace d3d12 */
 } /* end namespace trrojan */

@@ -113,6 +113,17 @@ namespace trrojan {
         }
 
         /// <summary>
+        /// Gets the number of voxels in the currently loaded data set.
+        /// </summary>
+        inline std::array<std::uint32_t, 3> get_volume_resolution(void) const {
+            return std::array<std::uint32_t, 3> {
+                this->_volume_info.resolution()[0],
+                this->_volume_info.resolution()[1],
+                this->_volume_info.resolution()[2]
+            };
+        }
+
+        /// <summary>
         /// Stores the dat file currently being processed.
         /// </summary>
         info_type _volume_info;

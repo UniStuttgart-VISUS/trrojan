@@ -22,7 +22,7 @@
 
 #include "trrojan/device.h"
 #include "trrojan/environment.h"
-#include "trrojan/export.h"
+#include "trrojan/power_collector.h"
 
 
 namespace trrojan {
@@ -68,6 +68,7 @@ namespace trrojan {
         wstring,
         device,
         environment,
+        power_collector,
 
 #define __TRROJAN_VARIANT_VEC(type, dim) type##vec##dim
 #define __TRROJAN_VARIANT_VECS(type)                                           \
@@ -124,6 +125,7 @@ namespace detail {
         std::wstring val_wstring;
         device val_device;
         environment val_environment;
+        power_collector::pointer val_power_collector;
 
 #define __TRROJAN_VARIANT_VEC(type, dim) val_##type##vec##dim
 #define __TRROJAN_VARIANT_IVECS(type)                                          \
@@ -177,12 +179,13 @@ namespace detail {
         variant_type::uint8, variant_type::uint16, variant_type::uint32,
         variant_type::uint64, variant_type::float32, variant_type::float64,
         variant_type::string, variant_type::wstring, variant_type::device,
-        variant_type::environment, __TRROJAN_VARIANT_VECS(int8),
-        __TRROJAN_VARIANT_VECS(int16), __TRROJAN_VARIANT_VECS(int32),
-        __TRROJAN_VARIANT_VECS(int64), __TRROJAN_VARIANT_VECS(uint8),
-        __TRROJAN_VARIANT_VECS(uint16), __TRROJAN_VARIANT_VECS(uint32),
-        __TRROJAN_VARIANT_VECS(uint64), __TRROJAN_VARIANT_VECS(float32),
-        __TRROJAN_VARIANT_VECS(float64) /* Add new members here. */>
+        variant_type::environment, variant_type::power_collector,
+        __TRROJAN_VARIANT_VECS(int8), __TRROJAN_VARIANT_VECS(int16),
+        __TRROJAN_VARIANT_VECS(int32), __TRROJAN_VARIANT_VECS(int64),
+        __TRROJAN_VARIANT_VECS(uint8), __TRROJAN_VARIANT_VECS(uint16),
+        __TRROJAN_VARIANT_VECS(uint32), __TRROJAN_VARIANT_VECS(uint64),
+        __TRROJAN_VARIANT_VECS(float32), __TRROJAN_VARIANT_VECS(float64)
+        /* Add new members here. */>
         variant_type_list;
 
 #undef __TRROJAN_VARIANT_VECS
@@ -268,6 +271,7 @@ namespace detail {
     __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(wstring, false);
     __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(device, false);
     __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(environment, false);
+    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(power_collector, false);
 
 #define __TRROJANCORE_DECL_VARIANT_VEC_TYPE_TRAITS(type)                       \
     __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(type##vec##2, true);                \
@@ -319,6 +323,13 @@ namespace detail {
     /// </summary>
     TRROJANCORE_API std::ostream& operator <<(std::ostream& lhs,
         const trrojan::environment& rhs);
+
+    /// <summary>
+    /// Output of a <see cref="trrojan::power_collector" /> to an
+    /// <see cref="std::ostream" />.
+    /// </summary>
+    TRROJANCORE_API std::ostream& operator <<(std::ostream& lhs,
+        const power_collector::pointer& rhs);
 
     /// <summary>
     /// Functor which tries casting the value of the variant to a specific

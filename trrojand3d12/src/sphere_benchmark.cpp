@@ -36,9 +36,6 @@ void trrojan::d3d12::sphere_benchmark::on_device_switch(device& device) {
     this->_bundle_allocators.clear();
     create_command_allocators(this->_bundle_allocators, device.d3d_device(),
         D3D12_COMMAND_LIST_TYPE_BUNDLE, 1);
-
-    // Invalidate the data.
-    this->_data = nullptr;
 }
 
 
@@ -46,33 +43,30 @@ void trrojan::d3d12::sphere_benchmark::on_device_switch(device& device) {
  * trrojan::d3d12::sphere_benchmark::on_run
  */
 trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
-        const configuration& config, const std::vector<std::string>& changed) {
+        const configuration& config,
+        power_collector::pointer& power_collector,
+        const std::vector<std::string>& changed) {
+    sphere_rendering_configuration cfg(config);
     std::vector<gpu_timer::millis_type> bundle_times, gpu_times;
     std::uint32_t cpu_iterations = 1;
     timer cpu_timer;
     const auto gpu_freq = gpu_timer::get_timestamp_frequency(
         device.command_queue());
-    const auto gpu_iterations = config.get<std::uint32_t>(
-        factor_gpu_counter_iterations);
     gpu_timer gpu_timer(device.d3d_device(), 2, this->pipeline_depth());
-    const auto min_wall_time = config.get<std::uint32_t>(factor_min_wall_time);
     stats_query::value_type pipeline_stats;
-    auto shader_code = sphere_benchmark_base::get_shader_id(config);
+    auto shader_code = cfg.shader_id();
     stats_query stats_query(device.d3d_device(), 1, 1);
 
     // If the data or any factor influencing their representation on the GPU
     // have changed, clear them.
-    if (contains_any(changed, factor_data_set, factor_frame, factor_device,
-            factor_force_float_colour, factor_fit_bounding_box)) {
-        this->_data = nullptr;
-    }
+    this->clear_stale_data(changed);
 
     // Load the data if necessary.
-    if (this->_data == nullptr) {
+    if (!this->_data) {
         log::instance().write_line(log_level::information, "Loading data set \""
-            "{}\" ...", config.get<std::string>(factor_data_set));
+            "{}\" ...", cfg.data_set());
         auto cmd_list = this->create_graphics_command_list();
-        auto upload = this->load_data(cmd_list, shader_code, config,
+        auto upload = this->_data.load(cmd_list, shader_code, cfg,
             D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER
             | D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
         device.close_and_execute_command_list(cmd_list);
@@ -83,8 +77,7 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
     }
 
     // Now that we have the data, update the shader code to match it.
-    shader_code = sphere_benchmark_base::get_shader_id(shader_code,
-        this->get_data_properties(shader_code));
+    shader_code = this->_data.adjust_shader_code(shader_code);
 
     // As we have the data, we can also configure the camera now.
     this->configure_camera(config);
@@ -114,17 +107,17 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
     if (is_technique(shader_code, SPHERE_TECHNIQUE_QUAD_INST)) {
         // Instancing of quads requires 4 vertices per particle.
         log::instance().write_line(log_level::debug, "Drawing {0} instances of "
-            "four vertices.", this->get_sphere_count());
-        bundle->DrawInstanced(4, this->get_sphere_count(), 0, 0);
+            "four vertices.", this->_data.spheres());
+        bundle->DrawInstanced(4, this->_data.spheres(), 0, 0);
     } else {
         log::instance().write_line(log_level::debug, "Drawing 1 instance of "
-            "{0} vertices.", this->get_sphere_count());
-        bundle->DrawInstanced(this->get_sphere_count(), 1, 0, 0);
+            "{0} vertices.", this->_data.spheres());
+        bundle->DrawInstanced(this->_data.spheres(), 1, 0, 0);
     }
     close_command_list(bundle);
 
     // Update constant buffers.
-    this->update_constants(config, 0);
+    this->update_constants(cfg, 0);
 
     // Record a command list for each frame for the CPU measurements.
     std::vector<ATL::CComPtr<ID3D12GraphicsCommandList>> cmd_lists(
@@ -146,12 +139,12 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
         if (is_technique(shader_code, SPHERE_TECHNIQUE_QUAD_INST)) {
             // Instancing of quads requires 4 vertices per particle.
             log::instance().write_line(log_level::debug, "Drawing {0} instances of "
-                "four vertices.", this->get_sphere_count());
-            cmd_list->DrawInstanced(4, this->get_sphere_count(), 0, 0);
+                "four vertices.", this->_data.spheres());
+            cmd_list->DrawInstanced(4, this->_data.spheres(), 0, 0);
         } else {
             log::instance().write_line(log_level::debug, "Drawing 1 instance of "
-                "{0} vertices.", this->get_sphere_count());
-            cmd_list->DrawInstanced(this->get_sphere_count(), 1, 0, 0);
+                "{0} vertices.", this->_data.spheres());
+            cmd_list->DrawInstanced(this->_data.spheres(), 1, 0, 0);
         }
 
 #if !defined(CREATE_D2D_OVERLAY)
@@ -165,12 +158,12 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
         close_command_list(cmd_list);
     }
 
+#if 1
     // Do prewarming and compute number of CPU iterations at the same time.
     log::instance().write_line(log_level::debug, "Prewarming ...");
     {
         auto batch_time = 0.0;
-        auto prewarms = (std::max)(1u, config.get<std::uint32_t>(
-            factor_min_prewarms));
+        auto prewarms = (std::max)(1u, cfg.min_prewarms());
 
         do {
             cpu_iterations = 0;
@@ -186,16 +179,17 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
 
             batch_time = cpu_timer.elapsed_millis();
 
-            if (batch_time < min_wall_time) {
+            if (batch_time < cfg.min_wall_time()) {
                 prewarms = static_cast<std::uint32_t>(std::ceil(
-                    (static_cast<double>(min_wall_time) * cpu_iterations)
+                    (static_cast<double>(cfg.min_wall_time()) * cpu_iterations)
                     / batch_time));
                 if (prewarms < 1) {
                     prewarms = 1;
                 }
             }
-        } while (batch_time < min_wall_time);
+        } while (batch_time < cfg.min_wall_time());
     }
+#endif
 
 #if 1
     // Do the wall clock measurement using the prepared command lists.
@@ -209,11 +203,13 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
     }
     device.wait_for_gpu();
     const auto cpu_time = cpu_timer.elapsed_millis();
+#endif
 
+#if 1
     // Do the GPU counter measurements using individual command lists.
-    bundle_times.resize(gpu_iterations);
-    gpu_times.resize(gpu_iterations);
-    for (std::uint32_t i = 0; i < gpu_iterations; ++i) {
+    bundle_times.resize(cfg.gpu_counter_iterations());
+    gpu_times.resize(cfg.gpu_counter_iterations());
+    for (std::uint32_t i = 0; i < cfg.gpu_counter_iterations(); ++i) {
         log::instance().write_line(log_level::debug, "GPU counter measurement "
             "#{}.", i);
         auto cmd_list = cmd_lists[this->buffer_index()];
@@ -243,6 +239,7 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
         device.close_and_execute_command_list(cmd_list);
         this->present_target();
 
+        device.wait_for_gpu();
         gpu_times[i] = gpu_timer::to_milliseconds(
             gpu_timer.evaluate(timer_index, 0),
             gpu_freq);
@@ -250,6 +247,7 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
             gpu_timer.evaluate(timer_index, 1),
             gpu_freq);
     }
+#endif
 
     // Obtain pipeline statistics.
     log::instance().write_line(log_level::debug, "Collecting pipeline "
@@ -280,16 +278,17 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
         device.close_and_execute_command_list(cmd_list);
         this->present_target();
 
+        // Wait until the results are here.
+        device.wait_for_gpu();
+
         pipeline_stats = stats_query.evaluate(stats_index, 0);
     }
 
-    // Wait for everything to complete before we allow any other benchmark to
-    // run.
-    device.wait_for_gpu();
-
+#if 1
     // Compute derived statistics for GPU counters.
     const auto bundle_median = calc_median(bundle_times);
     const auto gpu_median = calc_median(gpu_times);
+#endif
 
     // Prepare the result set.
     auto retval = std::make_shared<basic_result>(config,
@@ -320,8 +319,8 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
 
     // Output the results.
     retval->add({
-        this->get_sphere_count(),
-        this->get_data_extents(),
+        this->_data.spheres(),
+        this->_data.extents(),
         pipeline_stats.IAVertices,
         pipeline_stats.IAPrimitives,
         pipeline_stats.VSInvocations,
@@ -343,16 +342,6 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
         cpu_time,
         static_cast<double>(cpu_time) / cpu_iterations
         });
-
-
-    std::ostringstream retval_log_output;
-    result_to_string(retval_log_output, *retval);
-    log::instance().write_line(log_level::information, retval_log_output.str());
-#else
-
-    auto retval = std::make_shared<basic_result>(config, std::initializer_list<std::string> { "horst"});
-    retval->add({ std::string("horst") });
-#endif
 
     return retval;
 }

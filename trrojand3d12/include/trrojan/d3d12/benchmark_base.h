@@ -1,11 +1,13 @@
 // <copyright file="benchmark_base.h" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2016 - 2022 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+// Copyright © 2016 - 2023 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
 // <author>Christoph Müller</author>
 
 #pragma once
 
+#include <algorithm>
+#include <array>
 #include <cassert>
 #include <sstream>
 #include <stdexcept>
@@ -74,6 +76,8 @@ namespace d3d12 {
 
         typedef std::vector<ATL::CComPtr<ID3D12CommandAllocator>>
             command_allocator_list;
+
+        typedef ATL::CComPtr<ID3D12GraphicsCommandList> graphics_command_list;
 
         /// <summary>
         /// In-place sorts <paramref name="times" /> and computes the median.
@@ -176,6 +180,22 @@ namespace d3d12 {
         }
 
         /// <summary>
+        /// Copy the contents of <paramref name="source" /> into the specified
+        /// back buffer of the render target, which must have been enabled using
+        /// <see cref="D3D12_RESOURCE_STATE_COPY_DEST" /> as rendering state.
+        /// </summary>
+        /// <param name="cmd_list"></param>
+        /// <param name="source"></param>
+        /// <param name="frame"></param>
+        inline void copy_to_target(ID3D12GraphicsCommandList *cmd_list,
+                ID3D12Resource *source, const UINT frame) {
+            assert(this->_render_target != nullptr);
+            assert(cmd_list != nullptr);
+            assert(source != nullptr);
+            this->_render_target->copy_from(cmd_list, source, frame);
+        }
+
+        /// <summary>
         /// Creates a shader resource view for a buffer.
         /// </summary>
         /// <param name="resource"></param>
@@ -206,38 +226,6 @@ namespace d3d12 {
         /// <returns></returns>
         ATL::CComPtr<ID3D12CommandList> create_command_list(
             const D3D12_COMMAND_LIST_TYPE type, const std::size_t frame,
-            ID3D12PipelineState *initial_state = nullptr);
-
-        /// <summary>
-        /// Creates a new command list of the specified type and casts it to a
-        /// <see cref="ID3D12GraphicsCommandList" />.
-        /// </summary>
-        /// <param name="type"></param>
-        /// <param name="frame"></param>
-        /// <param name="initial_state"></param>
-        /// <returns></returns>
-        ATL::CComPtr<ID3D12GraphicsCommandList> create_graphics_command_list(
-            const D3D12_COMMAND_LIST_TYPE type, const std::size_t frame,
-            ID3D12PipelineState *initial_state = nullptr);
-
-        /// <summary>
-        /// Creates a new direct graphics command list using the allocator for
-        /// the specified frame.
-        /// </summary>
-        /// <param name="frame"></param>
-        /// <param name="initial_state"></param>
-        /// <returns></returns>
-        ATL::CComPtr<ID3D12GraphicsCommandList> create_graphics_command_list(
-            const std::size_t frame,
-            ID3D12PipelineState *initial_state = nullptr);
-
-        /// <summary>
-        /// Creates a new direct graphics command list for the currently active
-        /// buffer/frame.
-        /// </summary>
-        /// <param name="initial_state"></param>
-        /// <returns></returns>
-        ATL::CComPtr<ID3D12GraphicsCommandList> create_graphics_command_list(
             ID3D12PipelineState *initial_state = nullptr);
 
         /// <summary>
@@ -277,17 +265,72 @@ namespace d3d12 {
         void create_descriptor_heaps(ID3D12Device *device,
             const std::vector<D3D12_DESCRIPTOR_HEAP_DESC>& descs);
 
-        inline void disable_target(ID3D12GraphicsCommandList *cmd_list) {
-            assert(this->render_target_ != nullptr);
+        /// <summary>
+        /// Creates a new command list of the specified type and casts it to a
+        /// <see cref="ID3D12GraphicsCommandList" />.
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="frame"></param>
+        /// <param name="initial_state"></param>
+        /// <returns></returns>
+        graphics_command_list create_graphics_command_list(
+            const D3D12_COMMAND_LIST_TYPE type, const std::size_t frame,
+            ID3D12PipelineState *initial_state = nullptr);
+
+        /// <summary>
+        /// Creates a new direct graphics command list using the allocator for
+        /// the specified frame.
+        /// </summary>
+        /// <param name="frame"></param>
+        /// <param name="initial_state"></param>
+        /// <returns></returns>
+        graphics_command_list create_graphics_command_list(
+            const std::size_t frame,
+            ID3D12PipelineState *initial_state = nullptr);
+
+        /// <summary>
+        /// Creates a new direct graphics command list for the currently active
+        /// buffer/frame.
+        /// </summary>
+        /// <param name="initial_state"></param>
+        /// <returns></returns>
+        graphics_command_list create_graphics_command_list(
+            ID3D12PipelineState *initial_state = nullptr);
+
+        /// <summary>
+        /// Creates a new direct graphics command list for the currently active
+        /// buffer/frame if any of the specified <paramref name="resources" />
+        /// is <c>nullptr</c>.
+        /// </summary>
+        /// <typeparam name="TResource"></typeparam>
+        /// <param name="resources"></param>
+        /// <returns></returns>
+        template<class... TResource>
+        graphics_command_list create_graphics_command_list_for(
+            TResource&&... resources);
+
+        /// <summary>
+        /// Queues the current render target to be disabled in the given command
+        /// list.
+        /// </summary>
+        inline void disable_target(ID3D12GraphicsCommandList *cmd_list,
+                const D3D12_RESOURCE_STATES render_state
+                = D3D12_RESOURCE_STATE_RENDER_TARGET) {
+            assert(this->_render_target != nullptr);
             assert(cmd_list != nullptr);
-            this->render_target_->disable(cmd_list);
+            this->_render_target->disable(cmd_list, render_state);
         }
 
+        /// <summary>
+        /// Queues the current render target to be disabled in the given command
+        /// list.
+        /// </summary>
         inline void disable_target(ID3D12GraphicsCommandList *cmd_list,
-                const UINT frame) {
-            assert(this->render_target_ != nullptr);
+                const UINT frame, const D3D12_RESOURCE_STATES render_state
+                = D3D12_RESOURCE_STATE_RENDER_TARGET) {
+            assert(this->_render_target != nullptr);
             assert(cmd_list != nullptr);
-            this->render_target_->disable(cmd_list, frame);
+            this->_render_target->disable(cmd_list, frame, render_state);
         }
 
         /// <summary>
@@ -299,11 +342,12 @@ namespace d3d12 {
         /// viewport to the dimension of the render target and (iii) set the
         /// scissor rectangle to include the whole viewport.
         /// </remarks>
-        /// <param name="cmd_list"></param>
-        inline void enable_target(ID3D12GraphicsCommandList *cmd_list) {
-            assert(this->render_target_ != nullptr);
+        inline void enable_target(ID3D12GraphicsCommandList *cmd_list,
+                const D3D12_RESOURCE_STATES render_state
+                = D3D12_RESOURCE_STATE_RENDER_TARGET) {
+            assert(this->_render_target != nullptr);
             assert(cmd_list != nullptr);
-            this->render_target_->enable(cmd_list);
+            this->_render_target->enable(cmd_list, render_state);
         }
 
         /// <summary>
@@ -315,13 +359,12 @@ namespace d3d12 {
         /// but it enables to preparing command lists for all frames in case
         /// the draw calls do not change over time.
         /// </remarks>
-        /// <param name="cmd_list"></param>
-        /// <param name="frame"></param>
         inline void enable_target(ID3D12GraphicsCommandList *cmd_list,
-                const UINT frame) {
-            assert(this->render_target_ != nullptr);
+                const UINT frame, const D3D12_RESOURCE_STATES render_state
+                = D3D12_RESOURCE_STATE_RENDER_TARGET) {
+            assert(this->_render_target != nullptr);
             assert(cmd_list != nullptr);
-            this->render_target_->enable(cmd_list, frame);
+            this->_render_target->enable(cmd_list, frame, render_state);
         }
 
         /// <summary>
@@ -346,11 +389,14 @@ namespace d3d12 {
         /// <param name="device">The device to use. It is guaranteed that the
         /// device is obtained from <paramref name="config" />.</param>
         /// <param name="config">The configuration to run.</param>
+        /// <param name="power_collector">The power data collector from
+        /// <pararmef name="config" /> if there is any.</param>
         /// <param name="changed">The names of the factors that have been
         /// changed since the last test run.</param>
         /// <returns>The test results.</returns>
         virtual trrojan::result on_run(d3d12::device& device,
             const configuration& config,
+            power_collector::pointer& power_collector,
             const std::vector<std::string>& changed) = 0;
 
         /// <summary>
@@ -454,11 +500,12 @@ namespace d3d12 {
 
         typedef trrojan::benchmark_base base;
 
-        std::shared_ptr<trrojan::d3d12::device> debug_device_;
-        render_target debug_target_;
-        render_target render_target_;
-
+        render_target _debug_target;
+        render_target _render_target;
     };
 
 } /* end namespace d3d12 */
 } /* end namespace trrojan */
+
+
+#include "trrojan/d3d12/benchmark_base.inl"

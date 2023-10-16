@@ -15,7 +15,7 @@ namespace d3d12 {
     /// <summary>
     /// An empty benchmark that does nothing but clearing the screen.
     /// </summary>
-    class TRROJAND3D12_API empty_benchmark : public benchmark_base {
+    class TRROJAND3D12_API empty_benchmark final : public benchmark_base {
 
     public:
 
@@ -29,11 +29,10 @@ namespace d3d12 {
 
     protected:
 
-        virtual trrojan::result on_run(d3d12::device& device,
+        trrojan::result on_run(d3d12::device& device,
             const configuration& config,
-            const std::vector<std::string>& changed) override {
-            return {};
-        }
+            power_collector::pointer& power_collector,
+            const std::vector<std::string>& changed) override;
 
     };
 

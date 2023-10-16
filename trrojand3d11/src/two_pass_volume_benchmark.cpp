@@ -31,6 +31,7 @@ trrojan::d3d11::two_pass_volume_benchmark::two_pass_volume_benchmark(void)
  */
 trrojan::result trrojan::d3d11::two_pass_volume_benchmark::on_run(
         d3d11::device& device, const configuration& config,
+        power_collector::pointer& powerCollector,
         const std::vector<std::string>& changed) {
     volume_benchmark_base::on_run(device, config, changed);
 
@@ -326,6 +327,8 @@ trrojan::result trrojan::d3d11::two_pass_volume_benchmark::on_run(
     // Prepare the result set.
     auto retval = std::make_shared<basic_result>(std::move(config),
         std::initializer_list<std::string> {
+            "benchmark",
+            "power_uid",
             "data_extents",
             "gpu_time_min",
             "gpu_time_med",
@@ -361,7 +364,7 @@ trrojan::result trrojan::d3d11::two_pass_volume_benchmark::on_run(
                 this->begin_volume_pass(ctx);
                 this->volume_technique.apply(ctx);
                 ctx->Dispatch(groupX, groupY, 1);
-                this->present_target();
+                this->present_target(config);
             }
 
             ctx->End(this->done_query);
@@ -393,7 +396,7 @@ trrojan::result trrojan::d3d11::two_pass_volume_benchmark::on_run(
         this->begin_volume_pass(ctx);
         this->volume_technique.apply(ctx);
         ctx->Dispatch(groupX, groupY, 1);
-        this->present_target();
+        this->present_target(config);
         gpuTimer.end(0);
         gpuTimer.end_frame();
 
@@ -408,6 +411,7 @@ trrojan::result trrojan::d3d11::two_pass_volume_benchmark::on_run(
     // Do the wall clock measurement.
     log::instance().write_line(log_level::debug, "Measuring wall clock "
         "timings over {} iterations ...", cntCpuIterations);
+    const auto powerUid = benchmark_base::enter_power_scope(powerCollector);
     cpuTimer.start();
     for (std::uint32_t i = 0; i < cntCpuIterations; ++i) {
         this->clear_target();
@@ -417,11 +421,12 @@ trrojan::result trrojan::d3d11::two_pass_volume_benchmark::on_run(
         this->begin_volume_pass(ctx);
         this->volume_technique.apply(ctx);
         ctx->Dispatch(groupX, groupY, 1);
-        this->present_target();
+        this->present_target(config);
     }
     ctx->End(this->done_query);
     wait_for_event_query(ctx, this->done_query);
     auto cpuTime = cpuTimer.elapsed_millis();
+    benchmark_base::leave_power_scope(powerCollector);
 
     // Compute derived statistics for GPU counters.
     std::sort(gpuTimes.begin(), gpuTimes.end());
@@ -433,7 +438,9 @@ trrojan::result trrojan::d3d11::two_pass_volume_benchmark::on_run(
 
     // Output the results.
     retval->add({
-        volSize,
+        this->name(),
+        powerUid,
+        this->get_volume_resolution(),
         gpuTimes.front(),
         gpuMedian,
         gpuTimes.back(),

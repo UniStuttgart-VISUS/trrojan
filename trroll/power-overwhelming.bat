@@ -1,0 +1,9 @@
+REM C:\trrojan\src\bin\Release\trrojan.exe --trroll "C:\trrojan\src\trroll\power-csvolume.trroll" --power g:\power-csvolume-3090.csv --output g:\timings-csvolume-3090.csv --log g:\csvolume-3090.txt
+REM C:\trrojan\src\bin\Release\trrojan.exe --trroll "C:\trrojan\src\trroll\power-2passvolume.trroll" --power g:\power-2passvolume-3090.csv --output g:\timings-2passvolume-3090.csv --log g:\2passvolume-3090.txt
+REM C:\trrojan\src\bin\Release\trrojan.exe --trroll "C:\trrojan\src\trroll\power-rayspheres.trroll" --power g:\power-rayspheres-3090.csv --output g:\timings-rayspheres-3090.csv --log g:\rayspheres-3090.txt
+REM C:\trrojan\src\bin\Release\trrojan.exe --trroll "C:\trrojan\src\trroll\power-tessspheres.trroll" --power g:\power-tessspheres-3090.csv --output g:\timings-tessspheres-3090.csv --log g:\tessspheres-3090.txt
+
+REM C:\trrojan\src\bin\Release\trrojan.exe --trroll "C:\trrojan\src\trroll\power-csvolume.trroll" --stable-power-state --power g:\power-csvolume-stablepower-3090.csv --output g:\timings-csvolume-3090-stablepower.csv --log g:\csvolume-3090-stablepower.txt
+C:\trrojan\src\bin\Release\trrojan.exe --trroll "C:\trrojan\src\trroll\power-2passvolume.trroll" --stable-power-state --power g:\power-2passvolume-3090-stablepower.csv --output g:\timings-2passvolume-3090-stablepower.csv --log g:\2passvolume-3090-stablepower.txt
+REM C:\trrojan\src\bin\Release\trrojan.exe --trroll "C:\trrojan\src\trroll\power-rayspheres.trroll" --stable-power-state --power g:\power-rayspheres-3090-stablepower.csv --output g:\timings-rayspheres-3090-stablepower.csv --log g:\rayspheres-3090-stablepower.txt
+REM C:\trrojan\src\bin\Release\trrojan.exe --trroll "C:\trrojan\src\trroll\power-tessspheres.trroll" --stable-power-state --power g:\power-tessspheres-3090-stablepower.csv --output g:\timings-tessspheres-stablepower-3090.csv --log g:\tessspheres-3090-stablepower.txt

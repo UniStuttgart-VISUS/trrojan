@@ -50,7 +50,7 @@ void trrojan::d3d11::render_target_base::enable(void) {
 /*
  * trrojan::d3d11::render_target_base::present
  */
-void trrojan::d3d11::render_target_base::present(void) { }
+void trrojan::d3d11::render_target_base::present(const UINT sync_interval) { }
 
 
 /*

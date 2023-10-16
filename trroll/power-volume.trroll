@@ -1,0 +1,23 @@
+d3d11::cs-volume-renderer {
+	#string data_set = S:\Daten\Volumen\kauker\tiere\veiled-chameleon.u8.dat; S:\Daten\Volumen\tuebingen\foot.dat; S:\Daten\Volumen\kauker\tiere\malachite-kingfisher.u8.dat
+	#string data_set = S:\Daten\Volumen\kauker\tiere\veiled-chameleon.u8.dat
+	string data_set = S:\Daten\Volumen\tuebingen\foot.dat
+	#string data_set = S:\Daten\Volumen\kauker\tiere\malachite-kingfisher.u8.dat
+
+	uint32vec2 viewport = 1024 1024; 2048 2048
+
+	#string xfer_func = T:\Programmcode\trrojan\trroll\trrojan_cham1.brudervn
+	string xfer_func = C:\trrojan\src\trroll\trrojan_cham1.brudervn
+	boolean debug_view = true
+
+	float32 step_size = 2; 1; 0.5
+	float32 ert_threshold = 0; 0.99
+
+	uint32 min_wall_time = 5000
+	uint32 iterations = 1
+
+	string manoeuvre = path_z; orbit_y
+	uint32 manoeuvre_steps = 100
+	uint32 manoeuvre_step = 0; 19; 39; 59; 79; 99
+}
+

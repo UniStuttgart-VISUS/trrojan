@@ -1,8 +1,8 @@
-// <copyright file="sphere_benchmark.cpp" company="Visualisierungsinstitut der Universitï¿½t Stuttgart">
-// Copyright ï¿½ 2016 - 2022 Visualisierungsinstitut der Universitï¿½t Stuttgart. Alle Rechte vorbehalten.
+// <copyright file="sphere_benchmark.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
+// Copyright © 2016 - 2022 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
-// <author>Christoph Mï¿½ller</author>
+// <author>Christoph Müller</author>
 
 #include "trrojan/d3d11/sphere_benchmark.h"
 
@@ -108,6 +108,8 @@ trrojan::d3d11::sphere_benchmark::sphere_benchmark(void)
         factor_vs_raygen, false));
     this->_default_configs.add_factor(factor::from_manifestations(
         factor_vs_xfer_function, false));
+    this->_default_configs.add_factor(factor::from_manifestations(
+        factor_sync_interval, static_cast<unsigned int>(0)));
 
     this->add_default_manoeuvre();
 
@@ -146,7 +148,9 @@ std::vector<std::string> trrojan::d3d11::sphere_benchmark::required_factors(
  * trrojan::d3d11::sphere_benchmark::on_run
  */
 trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
-    const configuration& config, const std::vector<std::string>& changed) {
+        const configuration& config,
+        power_collector::pointer& powerCollector,
+        const std::vector<std::string>& changed) {
     typedef rendering_technique::shader_stage shader_stage;
 
     std::array<float, 3> bboxSize;
@@ -298,8 +302,10 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
     gpuTimer.initialise(dev);
 
     // Prepare the result set.
-    auto retval = std::make_shared<basic_result>(std::move(config),
+    auto retval = std::make_shared<basic_result>(config,
         std::initializer_list<std::string> {
+            "benchmark",
+            "power_uid",
             "particles",
             "data_extents",
             "ia_vertices",
@@ -474,14 +480,18 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
 
             cpuTimer.start();
             for (; cntCpuIterations < cntPrewarms; ++cntCpuIterations) {
-                this->render_target->enable();
                 this->clear_target();
                 if (isInstanced) {
                     ctx->DrawInstanced(cntPrimitives, cntInstances, 0, 0);
                 } else {
                     ctx->Draw(cntPrimitives, 0);
                 }
-                this->present_target();
+                this->present_target(config);
+#if defined(CREATE_D2D_OVERLAY)
+                // Using the overlay will change the state such that we need to
+                // re-apply it after presenting.
+                technique.apply(ctx);
+#endif /* defined(CREATE_D2D_OVERLAY) */
             }
 
             ctx->End(this->done_query);
@@ -490,7 +500,7 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
 
             if (batchTime < minWallTime) {
                 cntPrewarms = static_cast<std::uint32_t>(std::ceil(
-                    static_cast<double>(minWallTime * cntCpuIterations)
+                    static_cast<double>(minWallTime) * cntCpuIterations
                     / batchTime));
                 if (cntPrewarms < 1) {
                     cntPrewarms = 1;
@@ -514,7 +524,6 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
         }
         gpuTimer.end(0);
         gpuTimer.end_frame();
-        this->present_target();
 
         gpuTimer.evaluate_frame(isDisjoint, gpuFreq);
         if (!isDisjoint) {
@@ -535,12 +544,18 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
         ctx->Draw(cntPrimitives, 0);
     }
     ctx->End(this->stats_query);
-    this->present_target();
+    this->present_target(0);
+#if defined(CREATE_D2D_OVERLAY)
+    // Using the overlay will change the state such that we need to
+    // re-apply it after presenting.
+    technique.apply(ctx);
+#endif /* defined(CREATE_D2D_OVERLAY) */
     wait_for_stats_query(pipeStats, ctx, this->stats_query);
 
     // Do the wall clock measurement.
     log::instance().write_line(log_level::debug, "Measuring wall clock "
         "timings over {} iterations ...", cntCpuIterations);
+    const auto powerUid = benchmark_base::enter_power_scope(powerCollector);
     cpuTimer.start();
     for (std::uint32_t i = 0; i < cntCpuIterations; ++i) {
         this->clear_target();
@@ -549,11 +564,17 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
         } else {
             ctx->Draw(cntPrimitives, 0);
         }
-        this->present_target();
+        this->present_target(config);
+#if defined(CREATE_D2D_OVERLAY)
+        // Using the overlay will change the state such that we need to
+        // re-apply it after presenting.
+        technique.apply(ctx);
+#endif /* defined(CREATE_D2D_OVERLAY) */
     }
     ctx->End(this->done_query);
     wait_for_event_query(ctx, this->done_query);
     auto cpuTime = cpuTimer.elapsed_millis();
+    benchmark_base::leave_power_scope(powerCollector);
 
     // Compute derived statistics for GPU counters.
     std::sort(gpuTimes.begin(), gpuTimes.end());
@@ -565,6 +586,8 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
 
     // Output the results.
     retval->add({
+        this->name(),
+        powerUid,
         this->data->size(),
         bboxSize,
         pipeStats.IAVertices,
@@ -582,10 +605,6 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
         cpuTime,
         static_cast<double>(cpuTime) / cntCpuIterations
         });
-
-    std::ostringstream retval_log_output;
-    result_to_string(retval_log_output, *retval);
-    log::instance().write_line(log_level::information, retval_log_output.str());
 
     return retval;
 }
@@ -768,42 +787,46 @@ trrojan::d3d11::sphere_benchmark::get_technique(ID3D11Device *device,
             sid &= ~SPHERE_INPUT_FLT_COLOUR;
         }
 
-#ifdef _UWP
-        //const auto base_path = plugin::get_directory()
-        //    + directory_separator_char;
-        const auto base_path = GetAppFolder().string();
+#if defined(TRROJAN_FOR_UWP)
+        // TODO: this is only prepared, probably not working (read_binary_file) out of the box.
+        const auto base_path = plugin::get_directory()
+            + directory_separator_char;
         const auto fid_ext = get_shader_file_id(sid) + ".cso";
 
         {
-            auto filepath = base_path + "trrojand3d11" + "/" + "d3d11" + "/" + "SphereVertexShader" + fid_ext;
-            auto src = ReadFileBytes(filepath);
+            auto path = base_path + "SphereVertexShader" + fid_ext;
+            auto src = read_binary_file(path);
             vs = create_vertex_shader(device, src);
             il = create_input_layout(device, this->data->layout(), src);
         }
 
         if (isTess) {
-            auto filepath = base_path + "trrojand3d11" + "/" + "d3d11" + "/" + "SphereHullShader" + fid_ext;
-            auto src = ReadFileBytes(filepath);
-            hs = create_hull_shader(device, src);
-            
-            filepath = base_path + "trrojand3d11" + "/" + "d3d11" + "/" + "SphereDomainShader" + fid_ext;
-            src = ReadFileBytes(filepath);
-            ds = create_domain_shader(device, src);
+            {
+                auto path = base_path + "SphereHullShader" + fid_ext;
+                auto src = read_binary_file(path);
+                hs = create_hull_shader(device, src);
+            }
+
+            {
+                auto path = base_path + "SphereDomainShader" + fid_ext;
+                auto src = read_binary_file(path);
+                ds = create_domain_shader(device, src);
+            }
         }
 
         if (isGeo) {
-            auto filepath = base_path + "trrojand3d11" + "/" + "d3d11" + "/" + "SphereGeometryShader" + fid_ext;
-            auto src = ReadFileBytes(filepath);
+            auto path = base_path + "SphereGeometryShader" + fid_ext;
+            auto src = read_binary_file(path);
             gs = create_geometry_shader(device, src);
         }
 
         {
-            auto filepath = base_path + "trrojand3d11" + "/" + "d3d11" + "/" + "SpherePixelShader" + fid_ext;
-            auto src = ReadFileBytes(filepath);
+            auto path = base_path + "SpherePixelShader" + fid_ext;
+            auto src = read_binary_file(path);
             ps = create_pixel_shader(device, src);
         }
-#else
 
+#else /* defined(TRROJAN_FOR_UWP) */
         auto it = this->shader_resources.find(sid);
         if (it == this->shader_resources.end()) {
             std::stringstream msg;
@@ -841,7 +864,8 @@ trrojan::d3d11::sphere_benchmark::get_technique(ID3D11Device *device,
                 MAKEINTRESOURCE(it->second.pixel_shader), _T("SHADER"));
             ps = create_pixel_shader(device, src);
         }
-#endif
+#endif /* defined(TRROJAN_FOR_UWP) */
+
 
         if (is_technique(shaderCode, SPHERE_TECHNIQUE_QUAD_INST)) {
             assert(isRay);

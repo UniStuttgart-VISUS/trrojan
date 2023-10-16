@@ -1,0 +1,22 @@
+d3d11::cs-volume-renderer {
+	string data_set = S:\Daten\Volumen\kauker\tiere\veiled-chameleon.u8.dat
+	#string data_set = S:\Daten\Volumen\tuebingen\foot.dat
+
+	uint32vec2 viewport = 1920 1080
+	boolean save_view = true
+
+	string xfer_func = T:\Programmcode\trrojan\trroll\trrojan_cham1.brudervn
+	#string xfer_func = C:\trrojan\src\trroll\trrojan_cham1.brudervn
+	boolean debug_view = true
+
+	float32 step_size = 0.5
+	float32 ert_threshold = 0
+
+	uint32 min_wall_time = 100
+	uint32 iterations = 1
+
+	string manoeuvre = orbit_y
+	uint32 manoeuvre_steps = 50
+	uint32 manoeuvre_step = 0; 1; 2; 3; 4; 5; 6; 7; 8; 9; 10; 11; 12; 13; 14; 15; 16; 17; 18; 19; 20; 21; 22; 23; 24; 25; 26; 27; 28; 29; 30; 31; 32; 33; 34; 35; 36; 37; 38; 39; 40; 41; 42; 43; 44; 45; 46; 47; 48; 49;
+}
+

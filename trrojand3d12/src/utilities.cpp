@@ -11,6 +11,8 @@
 #include "trrojan/log.h"
 #include "trrojan/io.h"
 
+#include "trrojan/d3d12/graphics_pipeline_builder.h"
+
 
 ///*
 // * trrojan::d3d12::create_cube
@@ -198,6 +200,47 @@ ATL::CComPtr<ID3D12Resource> trrojan::d3d12::create_buffer(ID3D12Device *device,
 
 
 /*
+ * trrojan::d3d12::create_compute_pipeline
+ */
+ATL::CComPtr<ID3D12PipelineState> trrojan::d3d12::create_compute_pipeline(
+        ID3D12Device *device, const BYTE *shader, const SIZE_T size,
+        ID3D12RootSignature *signature) {
+    assert(device != nullptr);
+    assert(shader != nullptr);
+    assert(signature != nullptr);
+
+    ATL::CComPtr<ID3D12PipelineState> retval;
+
+    D3D12_COMPUTE_PIPELINE_STATE_DESC desc;
+    ::ZeroMemory(&desc, sizeof(desc));
+    desc.pRootSignature = signature;
+    desc.CS.pShaderBytecode = shader;
+    desc.CS.BytecodeLength = size;
+
+    auto hr = device->CreateComputePipelineState(&desc, IID_PPV_ARGS(&retval));
+    if (FAILED(hr)) {
+        throw ATL::CAtlException(hr);
+    }
+
+    return retval;
+}
+
+
+/*
+ * trrojan::d3d12::create_compute_pipeline
+ */
+ATL::CComPtr<ID3D12PipelineState> trrojan::d3d12::create_compute_pipeline(
+        ATL::CComPtr<ID3D12RootSignature>& signature, ID3D12Device *device,
+        const BYTE *shader, const SIZE_T size) {
+    assert(device != nullptr);
+    assert(shader != nullptr);
+    signature = graphics_pipeline_builder::root_signature_from_shader(device,
+        shader, size);
+    return create_compute_pipeline(device, shader, size, signature.p);
+}
+
+
+/*
  * trrojan::d3d12::create_constant_buffer
  */
 ATL::CComPtr<ID3D12Resource> trrojan::d3d12::create_constant_buffer(
@@ -220,6 +263,26 @@ trrojan::d3d12::handle<> trrojan::d3d12::create_event(const bool manual_reset,
     if (!retval) {
         throw ATL::CAtlException(HRESULT_FROM_WIN32(GetLastError()));
     }
+    return retval;
+}
+
+
+/*
+ * trrojan::d3d12::create_fence
+ */
+ATL::CComPtr<ID3D12Fence> trrojan::d3d12::create_fence(ID3D12Device *device,
+        const UINT64 initial_value) {
+    if (device == nullptr) {
+        throw ATL::CAtlException(E_POINTER);
+    }
+
+    ATL::CComPtr<ID3D12Fence> retval;
+    auto hr = device->CreateFence(initial_value, D3D12_FENCE_FLAG_NONE,
+        ::IID_ID3D12Fence, reinterpret_cast<void **>(&retval));
+    if (FAILED(hr)) {
+        throw ATL::CAtlException(hr);
+    }
+
     return retval;
 }
 
@@ -280,8 +343,11 @@ ATL::CComPtr<ID3D12Resource> trrojan::d3d12::create_resource(
  * trrojan::d3d12::create_texture
  */
 ATL::CComPtr<ID3D12Resource> trrojan::d3d12::create_texture(
-        ID3D12Device *device, const UINT64 width, const DXGI_FORMAT format,
-        const D3D12_RESOURCE_FLAGS flags) {
+        ID3D12Device *device,
+        const UINT64 width,
+        const DXGI_FORMAT format,
+        const D3D12_RESOURCE_FLAGS flags,
+        const D3D12_RESOURCE_STATES state) {
     assert(device != nullptr);
 
     D3D12_RESOURCE_DESC desc;
@@ -296,51 +362,64 @@ ATL::CComPtr<ID3D12Resource> trrojan::d3d12::create_texture(
     desc.SampleDesc.Quality = 0;
     desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE1D;
 
-    return create_resource(device, desc);
+    return create_resource(device, desc, D3D12_HEAP_TYPE_DEFAULT, state);
 }
 
 
 /*
  * trrojan::d3d12::create_texture
  */
-//ATL::CComPtr<ID3D12Resource> trrojan::d3d12::create_texture(
-//        ID3D12Device *device, const UINT64 width, const UINT height,
-//        const DXGI_FORMAT format, const D3D12_RESOURCE_FLAGS flags) {
-//    assert(device != nullptr);
-//
-//    D3D12_RESOURCE_DESC desc;
-//    ::ZeroMemory(&desc, sizeof(desc));
-//    desc.MipLevels = 1;
-//    desc.Format = format;
-//    desc.Width = width;
-//    desc.Height = height;
-//    desc.Flags = flags;
-//    desc.DepthOrArraySize = 1;
-//    desc.SampleDesc.Count = 1;
-//    desc.SampleDesc.Quality = 0;
-//    desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-//
-//    return create_resource(device, desc);
-//}
+ATL::CComPtr<ID3D12Resource> trrojan::d3d12::create_texture(
+        ID3D12Device *device,
+        const UINT64 width,
+        const UINT height,
+        const DXGI_FORMAT format,
+        const D3D12_RESOURCE_FLAGS flags,
+        const D3D12_RESOURCE_STATES state) {
+    assert(device != nullptr);
+
+    D3D12_RESOURCE_DESC desc;
+    ::ZeroMemory(&desc, sizeof(desc));
+    desc.MipLevels = 1;
+    desc.Format = format;
+    desc.Width = width;
+    desc.Height = height;
+    desc.Flags = flags;
+    desc.DepthOrArraySize = 1;
+    desc.SampleDesc.Count = 1;
+    desc.SampleDesc.Quality = 0;
+    desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+
+    return create_resource(device, desc, D3D12_HEAP_TYPE_DEFAULT, state);
+}
 
 
 /*
- * trrojan::d3d12::create_upload_buffer
+ * trrojan::d3d12::create_texture
  */
-ATL::CComPtr<ID3D12Resource> trrojan::d3d12::create_upload_buffer(
-        ID3D12Resource *resource, const UINT first_subresource,
-        const UINT cnt_subresources) {
-    assert(resource != nullptr);
-    // Cf. https://github.com/microsoft/DirectX-Graphics-Samples/blob/164b072185a5360c43c5f0b64e2f672b7f423f95/Libraries/D3D12RaytracingFallback/Include/d3dx12.h#L1875
-    const auto desc = resource->GetDesc();
-    auto device = get_device(resource);
-    UINT64 size;
+ATL::CComPtr<ID3D12Resource> trrojan::d3d12::create_texture(
+        ID3D12Device *device,
+        const UINT64 width,
+        const UINT64 height,
+        const UINT64 depth,
+        const DXGI_FORMAT format,
+        const D3D12_RESOURCE_FLAGS flags,
+        const D3D12_RESOURCE_STATES state) {
+    assert(device != nullptr);
 
-    device->GetCopyableFootprints(&desc, first_subresource, cnt_subresources,
-        0, nullptr, nullptr, nullptr, &size);
+    D3D12_RESOURCE_DESC desc;
+    ::ZeroMemory(&desc, sizeof(desc));
+    desc.MipLevels = 1;
+    desc.Format = format;
+    desc.Width = width;
+    desc.Height = height;
+    desc.Flags = flags;
+    desc.DepthOrArraySize = depth;
+    desc.SampleDesc.Count = 1;
+    desc.SampleDesc.Quality = 0;
+    desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE3D;
 
-    return create_buffer(device, size, 0, D3D12_RESOURCE_FLAG_NONE,
-        D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ);
+    return create_resource(device, desc, D3D12_HEAP_TYPE_DEFAULT, state);
 }
 
 
@@ -380,6 +459,26 @@ ATL::CComPtr<ID3D12Resource> trrojan::d3d12::create_upload_buffer(
     }
 
     return retval;
+}
+
+
+/*
+ * trrojan::d3d12::create_upload_buffer_for
+ */
+ATL::CComPtr<ID3D12Resource> trrojan::d3d12::create_upload_buffer_for(
+        ID3D12Resource *resource, const UINT first_subresource,
+        const UINT cnt_subresources) {
+    assert(resource != nullptr);
+    // Cf. https://github.com/microsoft/DirectX-Graphics-Samples/blob/164b072185a5360c43c5f0b64e2f672b7f423f95/Libraries/D3D12RaytracingFallback/Include/d3dx12.h#L1875
+    const auto desc = resource->GetDesc();
+    auto device = get_device(resource);
+    UINT64 size;
+
+    device->GetCopyableFootprints(&desc, first_subresource, cnt_subresources,
+        0, nullptr, nullptr, nullptr, &size);
+
+    return create_buffer(device, size, 0, D3D12_RESOURCE_FLAG_NONE,
+        D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ);
 }
 
 

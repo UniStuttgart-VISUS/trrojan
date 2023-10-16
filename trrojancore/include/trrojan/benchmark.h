@@ -1,9 +1,9 @@
-/// <copyright file="benchmark.h" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Valentin Bruder</author>
-/// <author>Christoph Müller</author>
+// <copyright file="benchmark.h" company="Visualisierungsinstitut der Universität Stuttgart">
+// Copyright © 2016 - 2023 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Valentin Bruder</author>
+// <author>Christoph Müller</author>
 
 #pragma once
 
@@ -14,10 +14,12 @@
 #include <vector>
 
 #include "trrojan/configuration_set.h"
+#include "trrojan/contains.h"
 #include "trrojan/cool_down.h"
 #include "trrojan/device.h"
 #include "trrojan/environment.h"
 #include "trrojan/export.h"
+#include "trrojan/power_collector.h"
 #include "trrojan/result_set.h"
 
 
@@ -167,32 +169,40 @@ namespace trrojan {
 
         virtual result run(const configuration& config) = 0;
 
-        virtual void destroyTargets() = 0;
-
         // TODO: define the interface.
 
     protected:
 
         /// <summary>
-        /// Answer whether the array <paramref name="haystack" /> contains
-        /// <paramref name="needle" />.
+        /// If <paramref name="collector" /> is not <c>nullptr</c>, enter a new
+        /// unique power measurement scope and return its name.
         /// </summary>
-        /// <param name="haystack"></param>
-        /// <param name="needle"></param>
-        /// <returns></returns>
-        static bool contains(const std::vector<std::string>& haystack,
-            const std::string& needle);
+        /// <param name="collector">An optional power collector.</param>
+        /// <returns>The ID of the power measuring scope.</returns>
+        static std::string enter_power_scope(
+            const power_collector::pointer& collector);
 
         /// <summary>
-        /// Answer whether the array <paramref name="haystack" /> contains any
-        /// of <paramref name="needles" />.
+        /// Checks whether <paramref name="c" /> contains a power collector, and
+        /// if so, sets the output header.
         /// </summary>
-        /// <param name="haystack"></param>
-        /// <param name="needles"></param>
-        /// <returns></returns>
-        template<class... T>
-        static bool contains_any(const std::vector<std::string>& haystack,
-            T&&... needles);
+        /// <param name="c">The configuration to retrieve the collector from.
+        /// </param>
+        /// <returns>The power collector if there was one and it has been
+        /// successfully initialised, <c>nullptr</c> otherwise.</returns>
+        static power_collector::pointer initialise_power_collector(
+            const trrojan::configuration& c);
+
+        /// <summary>
+        /// If <paramref name="collector" /> is not <c>nullptr</c>, notify it
+        /// that the active measurement scope was left. The collector will
+        /// commit all power samples collected since
+        /// <see cref="enter_power_scope" /> and prevent collection of further
+        /// samples until the next scope is entered.
+        /// </summary>
+        /// <param name="collector">An optional power collector.</param>
+        static void leave_power_scope(
+            const power_collector::pointer& collector);
 
         /// <summary>
         /// Merges all system factors into <paramref name="c" />.

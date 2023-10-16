@@ -105,6 +105,20 @@ namespace d3d12 {
         }
 
         /// <summary>
+        /// Copy the content of <paramref name="source" /> into the render
+        /// target.
+        /// </summary>
+        /// <remarks>
+        /// It is assumed that the render target and <pararmef name="source" />
+        /// are both in a state that allows the copy operation.
+        /// </remarks>
+        /// <param name="cmd_list"></param>
+        /// <param name="source"></param>
+        /// <param name="frame"></param>
+        void copy_from(ID3D12GraphicsCommandList *cmd_list,
+            ID3D12Resource *source, const UINT frame);
+
+        /// <summary>
         /// Answer the device the render target belongs to.
         /// </summary>
         /// <returns></returns>
@@ -133,7 +147,11 @@ namespace d3d12 {
         /// state into <paramref name="cmd_list" />.
         /// </summary>
         /// <param name="cmdList"></param>
-        void disable(ID3D12GraphicsCommandList *cmd_list);
+        /// <param name="render_state">The render state to transition
+        /// <i>from</i>, which typically is
+        ///  <see cref="D3D12_RESOURCE_STATE_RENDER_TARGET" />.</param>
+        void disable(ID3D12GraphicsCommandList *cmd_list,
+            const D3D12_RESOURCE_STATES render_state);
 
         /// <summary>
         /// Queue the given <paramref name="frame" /> being transitioned to
@@ -141,7 +159,11 @@ namespace d3d12 {
         /// </summary>
         /// <param name="cmd_list"></param>
         /// <param name="frame"></param>
-        void disable(ID3D12GraphicsCommandList *cmd_list, const UINT frame);
+        /// <param name="render_state">The render state to transition
+        /// <i>from</i>, which typically is
+        ///  <see cref="D3D12_RESOURCE_STATE_RENDER_TARGET" />.</param>
+        void disable(ID3D12GraphicsCommandList *cmd_list, const UINT frame,
+            const D3D12_RESOURCE_STATES render_state);
 
         /// <summary>
         /// Queues the render target as active target in the given command list.
@@ -150,8 +172,14 @@ namespace d3d12 {
         /// <para>This method also sets the viewport and the scissor
         /// rectangle.</para>
         /// </remarks>
-        /// <param name="cmdList"></param>
-        void enable(ID3D12GraphicsCommandList *cmdList);
+        /// <param name="cmdList">The command list that will transition the
+        /// render target.</param>
+        /// <param name="render_state">The state used for rendering. This
+        /// typically is <see cref="D3D12_RESOURCE_STATE_RENDER_TARGET" "/>, but
+        /// also could be <see cref="D3D12_RESOURCE_STATE_COPY_DEST" /> if
+        /// rendering happened to a different buffer.</param>
+        void enable(ID3D12GraphicsCommandList *cmdList,
+            const D3D12_RESOURCE_STATES render_state);
 
         /// <summary>
         /// Queues the specified buffer/frame of the render target being enabled
@@ -161,9 +189,16 @@ namespace d3d12 {
         /// <para>This method also sets the viewport and the scissor
         /// rectangle.</para>
         /// </remarks>
-        /// <param name="cmdList"></param>
-        /// <param name="frame"></param>
-        void enable(ID3D12GraphicsCommandList *cmdList, const UINT frame);
+        /// <param name="cmdList">The command list that will transition the
+        /// render target.</param>
+        /// <param name="frame">The zero-based index of the back buffer to be
+        /// enabled.</param>
+        /// <param name="render_state">The state used for rendering. This
+        /// typically is <see cref="D3D12_RESOURCE_STATE_RENDER_TARGET" "/>, but
+        /// also could be <see cref="D3D12_RESOURCE_STATE_COPY_DEST" /> if
+        /// rendering happened to a different buffer.</param>
+        void enable(ID3D12GraphicsCommandList *cmdList, const UINT frame,
+            const D3D12_RESOURCE_STATES render_state);
 
         /// <summary>
         /// Answer the number of buffers used by the render target.

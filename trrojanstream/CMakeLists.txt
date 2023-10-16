@@ -1,26 +1,48 @@
 # CMakeLists.txt
-# Copyright (C) 2016 SFB-TRR 161. Alle Rechte vorbehalten.
+# Copyright (C) 2018 - 2023 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
 
-cmake_minimum_required(VERSION 3.1.0)
+project(trrojanstream)
 
-find_package (Threads)
 
-set(IncludeDirectory "include")
-set(SourceDirectory "src")
+# Glob and add sources and resources
+set(IncludeDirectory "${CMAKE_CURRENT_SOURCE_DIR}/include")
+set(SourceDirectory "${CMAKE_CURRENT_SOURCE_DIR}/src")
 
-file(GLOB_RECURSE HeaderFiles RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${IncludeDirectory}/*.h" "${SourceDirectory}/*.h" "${IncludeDirectory}/*.inl" "${SourceDirectory}/*.inl")
+file(GLOB_RECURSE PublicHeaderFiles RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${IncludeDirectory}/*.h" "${IncludeDirectory}/*.inl")
+file(GLOB_RECURSE PrivateHeaderFiles RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${SourceDirectory}/*.h" "${SourceDirectory}/*.inl")
 file(GLOB_RECURSE SourceFiles RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${SourceDirectory}/*.cpp")
 
-include_directories("${IncludeDirectory}")
-include_directories("${TrrojanCoreIncludeDir}")
-#include_directories("${TrrojanSysInfoIncludeDir}")
+if (WIN32)
+    file(GLOB_RECURSE ResourceFiles RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${SourceDirectory}/*.rc")
+else ()
+    set(ResourceFiles "")
+endif ()
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTRROJANSTREAM_EXPORTS")
 
-add_library(trrojanstream MODULE ${HeaderFiles} ${SourceFiles})
+# Define the library target
+add_library(${PROJECT_NAME} SHARED ${PublicHeaderFiles} ${PrivateHeaderFiles} ${SourceFiles} ${ResourceFiles})
+target_compile_definitions(${PROJECT_NAME} PRIVATE TRROJANSTREAM_EXPORTS)
+target_include_directories(${PROJECT_NAME}
+    PUBLIC
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+        $<BUILD_INTERFACE:${IncludeDirectory}>
+    PRIVATE
+        $<BUILD_INTERFACE:${SourceDirectory}>)
+target_link_libraries(${PROJECT_NAME} PRIVATE trrojancore)
+target_link_libraries(${PROJECT_NAME} PRIVATE ${CMAKE_THREAD_LIBS_INIT})
 
-# HACK:
-#set(TrrojanStreamIncludeDir "${CMAKE_CURRENT_SOURCE_DIR}/${IncludeDirectory}" PARENT_SCOPE)
-#add_library(trrojanstream SHARED ${HeaderFiles} ${SourceFiles})
 
-target_link_libraries(trrojanstream LINK_PUBLIC trrojancore ${CMAKE_THREAD_LIBS_INIT})
+# Installation
+install(TARGETS ${PROJECT_NAME}
+    EXPORT ${PROJECT_NAME}Targets
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+
+install(DIRECTORY ${IncludeDirectory}
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+
+install(EXPORT ${PROJECT_NAME}Targets
+    FILE ${PROJECT_NAME}Config.cmake
+    NAMESPACE ${PROJECT_NAME}::
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME})

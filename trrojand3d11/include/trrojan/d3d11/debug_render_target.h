@@ -43,7 +43,7 @@ namespace d3d11 {
         virtual ~debug_render_target(void);
 
         /// <inheritdoc />
-        virtual void present(void);
+        virtual void present(const UINT sync_interval) override;
 
         /// <inheritdoc />
         virtual void resize(const unsigned int width,

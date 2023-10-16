@@ -1,8 +1,8 @@
-// <copyright file="sphere_data_set.cpp" company="Visualisierungsinstitut der Universitï¿½t Stuttgart">
-// Copyright ï¿½ 2016 - 2022 Visualisierungsinstitut der Universitï¿½t Stuttgart. Alle Rechte vorbehalten.
+// <copyright file="sphere_data_set.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
+// Copyright © 2016 - 2022 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
-// <author>Christoph Mï¿½ller</author>
+// <author>Christoph Müller</author>
 
 #include "trrojan/d3d11/sphere_data_set.h"
 

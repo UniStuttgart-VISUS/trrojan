@@ -1,0 +1,20 @@
+d3d11::2pass-volume-renderer {
+	string data_set = S:\Daten\Volumen\kauker\tiere\veiled-chameleon.u8.dat
+
+	uint32vec2 viewport = 3840 2160
+
+	#string xfer_func = T:\Programmcode\trrojan\trroll\trrojan_cham1.brudervn
+	string xfer_func = C:\trrojan\src\trroll\trrojan_cham1.brudervn
+	boolean debug_view = true
+
+	float32 step_size = 0.25
+	float32 ert_threshold = 0
+
+	uint32 min_wall_time = 10000
+	uint32 iterations = 1
+
+	string manoeuvre = path_z
+	uint32 manoeuvre_steps = 100
+	uint32 manoeuvre_step = 0
+}
+

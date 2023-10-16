@@ -1,16 +1,16 @@
 # CMakeLists.txt
-# Copyright (C) 2017 SFB-TRR 161. Alle Rechte vorbehalten.
+# Copyright (C) 2018 - 2023 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
 
-cmake_minimum_required(VERSION 3.1.0)
+project(trrojand3d11)
 
 
-set(IncludeDirectory "include")
-set(SourceDirectory "src")
+# Glob and add sources and resources
+set(IncludeDirectory "${CMAKE_CURRENT_SOURCE_DIR}/include")
+set(SourceDirectory "${CMAKE_CURRENT_SOURCE_DIR}/src")
 
-file(GLOB_RECURSE HeaderFiles RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${IncludeDirectory}/*.h" "${SourceDirectory}/*.h" "${IncludeDirectory}/*.inl" "${SourceDirectory}/*.inl")
+file(GLOB_RECURSE PublicHeaderFiles RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${IncludeDirectory}/*.h" "${IncludeDirectory}/*.inl")
+file(GLOB_RECURSE PrivateHeaderFiles RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${SourceDirectory}/*.h" "${SourceDirectory}/*.inl")
 file(GLOB_RECURSE SourceFiles RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${SourceDirectory}/*.cpp")
-
-# Glob and add resoruce scripts
 file(GLOB_RECURSE ResourceFiles RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${SourceDirectory}/*.rc")
 
 # Glob shaders
@@ -24,10 +24,11 @@ file(GLOB_RECURSE ShaderHeaderFiles RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${In
 set(ShaderFiles ${VertexShaderFiles} ${DomainShaderFiles} ${HullShaderFiles} ${GeometryShaderFiles} ${PixelShaderFiles} ${ComputeShaderFiles})
 
 # Configure fxc
+set(ShaderOutputDirectory "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}")
 set_property(SOURCE ${ShaderFiles} PROPERTY VS_SHADER_ENTRYPOINT Main)
 set_property(SOURCE ${ShaderFiles} PROPERTY VS_SHADER_MODEL 5.0)
 set_property(SOURCE ${ShaderFiles} PROPERTY VS_SHADER_FLAGS /Zi)
-set_property(SOURCE ${ShaderFiles} PROPERTY VS_SHADER_OBJECT_FILE_NAME "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${CMAKE_CFG_INTDIR}/d3d11/%(Filename).cso")
+set_property(SOURCE ${ShaderFiles} PROPERTY VS_SHADER_OBJECT_FILE_NAME "${ShaderOutputDirectory}/d3d11/%(Filename).cso")
 
 # Configure shader types
 set_property(SOURCE ${VertexShaderFiles} PROPERTY VS_SHADER_TYPE Vertex)
@@ -41,38 +42,45 @@ set_property(SOURCE ${ComputeShaderFiles} PROPERTY VS_SHADER_TYPE Compute)
 file(GLOB_RECURSE ShaderHeaderFiles RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${IncludeDirectory}/*.hlsli" "${SourceDirectory}/*.hlsli")
 set(ShaderFiles ${ShaderHeaderFiles} ${ShaderFiles})
 
-include_directories("${IncludeDirectory}")
-include_directories("${TrrojanCoreIncludeDir}")
-if(NOT UWP)
-include_directories("${TrrojanSysInfoIncludeDir}")
-endif()
 
-# Create CSOs for packing them into the resource files.
-#add_dependencies(${ResourceFiles} ${ShaderFiles})
-include_directories("${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${CMAKE_CFG_INTDIR}")
+# Define the library target
+add_library(${PROJECT_NAME} SHARED ${PublicHeaderFiles} ${PrivateHeaderFiles} ${SourceFiles} ${ShaderFiles} ${ResourceFiles})
+target_compile_definitions(${PROJECT_NAME} PRIVATE TRROJAND3D11_EXPORTS MMPLD_WITH_DIRECT3D)
+target_include_directories(${PROJECT_NAME}
+    PUBLIC
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+        $<BUILD_INTERFACE:${IncludeDirectory}>
+    PRIVATE
+        $<BUILD_INTERFACE:${SourceDirectory}>
+        $<BUILD_INTERFACE:${ShaderOutputDirectory}>)
+target_link_libraries(${PROJECT_NAME} PRIVATE trrojancore)
+target_link_libraries(${PROJECT_NAME} PRIVATE d3d11 dxgi dxguid d2d1 dwrite)
+target_link_libraries(${PROJECT_NAME} PRIVATE glm::glm)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTRROJAND3D11_EXPORTS")
-
-set(TrrojanD3D11IncludeDir "${CMAKE_CURRENT_SOURCE_DIR}/${IncludeDirectory}" PARENT_SCOPE)
-
-# Enable debug overlay on rquest.
 if (TRROJAN_DEBUG_OVERLAY)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DCREATE_D2D_OVERLAY")
-endif (TRROJAN_DEBUG_OVERLAY)
+    # Enable debug overlay on request.
+    target_compile_definitions(${PROJECT_NAME} PRIVATE CREATE_D2D_OVERLAY)
+endif ()
 
 
-if (WIN32)
-    if (UWP)
-        add_library(trrojand3d11 SHARED ${HeaderFiles} ${SourceFiles} ${ShaderFiles} ${ResourceFiles})
-    else()
-        add_library(trrojand3d11 MODULE ${HeaderFiles} ${SourceFiles} ${ShaderFiles} ${ResourceFiles})
-    endif()
-    target_link_libraries(trrojand3d11 trrojancore)
-    target_link_libraries(trrojand3d11 d3d11 dxgi dxguid d2d1 dwrite)
+# Group all HLSL into a new filter (cf. https://stackoverflow.com/questions/33808087/cmake-how-to-create-visual-studio-filters).
+source_group("Shader Files" FILES ${ShaderFiles})
 
-    # Group all HLSL into a new filter (cf. https://stackoverflow.com/questions/33808087/cmake-how-to-create-visual-studio-filters).
-    source_group("Shader Files" FILES ${ShaderFiles})
+# Group resource scripts into a new filter.
+source_group("Resource Files" FILES ${ResourceFiles})
 
-    # Group resource scripts into a new filter.
-    source_group("Resource Files" FILES ${ResourceFiles})
-endif (WIN32)
+
+# Installation
+install(TARGETS ${PROJECT_NAME}
+    EXPORT ${PROJECT_NAME}Targets
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+
+install(DIRECTORY ${IncludeDirectory}
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+
+install(EXPORT ${PROJECT_NAME}Targets
+    FILE ${PROJECT_NAME}Config.cmake
+    NAMESPACE ${PROJECT_NAME}::
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME})

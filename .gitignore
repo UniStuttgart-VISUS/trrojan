@@ -17,3 +17,5 @@
 
 # Build folders
 /_*/
+*.aps
+/out/*
