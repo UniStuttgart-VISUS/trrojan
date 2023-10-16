@@ -8,11 +8,14 @@ include(GNUInstallDirs)
 
 project(TRRojan)
 
+# Detect UWP
+set(TRROJAN_FOR_UWP ${CMAKE_SYSTEM_NAME} STREQUAL "WindowsStore")
+
 
 # Customise TRRojan
-option(TRROJAN_WITH_CHAKRA "Enable JavaScript support." OFF)
+cmake_dependent_option(TRROJAN_WITH_CHAKRA "Enable JavaScript support." OFF NOT ${TRROJAN_FOR_UWP} OFF)
 cmake_dependent_option(TRROJAN_WITH_DSTORAGE "Enable support for DirectStorage in Direct3D 12 plugin." ON WIN32 OFF)
-option(TRROJAN_WITH_POWER_OVERWHELMING "Enable power_overwhelming for measuring GPU power consumption." OFF)
+cmake_dependent_option(TRROJAN_WITH_POWER_OVERWHELMING "Enable power_overwhelming for measuring GPU power consumption." ON NOT ${TRROJAN_FOR_UWP} OFF)
 option(TRROJAN_DEBUG_OVERLAY "Enable overlay in debug view." OFF)
 
 
