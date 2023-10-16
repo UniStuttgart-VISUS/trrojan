@@ -29,7 +29,9 @@ target_include_directories(${PROJECT_NAME}
     PRIVATE
         $<BUILD_INTERFACE:${SourceDirectory}>)
 
-target_link_libraries(${PROJECT_NAME} PUBLIC trrojansnfo)
+if (NOT ${TRROJAN_FOR_UWP})
+    target_link_libraries(${PROJECT_NAME} PUBLIC trrojansnfo)
+endif ()
 target_link_libraries(${PROJECT_NAME} PUBLIC datraw)
 target_link_libraries(${PROJECT_NAME} PUBLIC mmpld)
 target_link_libraries(${PROJECT_NAME} PUBLIC spdlog)

@@ -13,7 +13,7 @@ mark_as_advanced(FORCE
 
 
 # Chakra Core
-if (WIN32)
+if (WIN32 AND NOT ${TRROJAN_FOR_UWP})
     set(CHAKRA_CONFIGURATION "Release")
 
     # On Windows, we need to determine whether we are cross-compiling or
@@ -38,7 +38,7 @@ if (WIN32)
     set(ChakraCore_SOURCE_DIR ${SOURCE_DIR})
     set(ChakraCore_BINARY_DIR "${ChakraCore_SOURCE_DIR}/Build/VcBuild/bin/${CHAKRA_PLATFORM}_${CHAKRA_CONFIGURATION}")
 
-else ()
+else (NOT WIN32)
     # On Linux, we can use Cmake ... I think.
     FetchContent_Declare(ChakraCore
         URL "https://github.com/chakra-core/ChakraCore/archive/refs/tags/v1.11.24.zip"

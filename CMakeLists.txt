@@ -66,29 +66,22 @@ if (${TRROJAN_WITH_DSTORAGE})
 endif ()
 
 
-if(UWP)
-	# Build the core library
-	add_subdirectory(trrojancore)
-	# Build the D3D plugin
-	add_subdirectory(trrojand3d11)
-	add_subdirectory(trrojand3d12)
-	# Build the executable
-	add_subdirectory(trrojanuwp)
-else()
-	# Build the system information library.
-	add_subdirectory(trrojansnfo)
+if (NOT ${TRROJAN_FOR_UWP})
+    # Build the system information library.
+    add_subdirectory(trrojansnfo)
+endif()
 
-	# Build the core library
-	add_subdirectory(trrojancore)
+# Build the core library
+add_subdirectory(trrojancore)
 
 # Build the OpenCL plugin
-set(WITH_OPENCL ${OpenCL_FOUND} AND ${OPENGL_FOUND})
+set(WITH_OPENCL ${OpenCL_FOUND} AND ${OPENGL_FOUND} AND NOT ${TRROJAN_FOR_UWP})
 if (${WITH_OPENCL})
     add_subdirectory(trrojancl)
 endif ()
 
-	# Build the RAM stream plugin
-	add_subdirectory(trrojanstream)
+# Build the RAM stream plugin
+add_subdirectory(trrojanstream)
 
 # Build the D3D plugins.
 if (WIN32)
@@ -96,6 +89,5 @@ if (WIN32)
     add_subdirectory(trrojand3d12)
 endif ()
 
-	# Build the executable
-	add_subdirectory(trrojan)
-endif()
+# Build the executable
+add_subdirectory(trrojan)
