@@ -73,14 +73,9 @@ void trrojan::d3d12::cs_volume_benchmark::on_device_switch(device& device) {
     // (re-)create the PSO, which is independent from the data and the
     // configuration being run.
     {
-#if defined(TRROJAN_FOR_UWP)
-        const auto shader = read_binary_file(
-            SINGLE_PASS_VOLUME_COMPUTE_SHADER_PATH);
-#else /* defined(TRROJAN_FOR_UWP) */
         const auto shader = plugin::load_resource(
             MAKEINTRESOURCE(SINGLE_PASS_VOLUME_COMPUTE_SHADER),
             _T("SHADER"));
-#endif /* defined(TRROJAN_FOR_UWP) */
 
         log::instance().write_line(log_level::debug, "Creating compute "
             "pipeline for single-pass compute shader ...");

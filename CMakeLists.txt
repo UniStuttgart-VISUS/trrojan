@@ -97,8 +97,8 @@ set(TRROJAN_PLUGINS ${TRROJAN_PLUGINS} trrojanstream)
 if (WIN32)
     add_subdirectory(trrojand3d11)
     set(TRROJAN_PLUGINS ${TRROJAN_PLUGINS} trrojand3d11)
-    #add_subdirectory(trrojand3d12)
-    #set(TRROJAN_PLUGINS ${TRROJAN_PLUGINS} trrojand3d12)
+    add_subdirectory(trrojand3d12)
+    set(TRROJAN_PLUGINS ${TRROJAN_PLUGINS} trrojand3d12)
 endif ()
 
 # Build the executable

@@ -90,7 +90,7 @@ namespace trrojan {
     /// <param name="path">The path to terminate. It is safe to pass
     /// <c>nullptr</c>, which will be interpreted as an empty string.</param>
     /// <returns>The terminated string.</returns>
-    std::string ensure_directory_end(const char *path);
+    std::string TRROJANCORE_API ensure_directory_end(const char *path);
 
     /// <summary>
     /// Ensures that the given path ends with a
@@ -98,13 +98,13 @@ namespace trrojan {
     /// </summary>
     /// <param name="path">The path to terminate.</param>
     /// <returns>The terminated string.</returns>
-    std::string ensure_directory_end(const std::string& path);
+    std::string TRROJANCORE_API ensure_directory_end(const std::string& path);
 
     /// <summary>
     /// Gets the file name extension of <paramref name="path" /> including the
     /// leading <see cref="trrojan::extension_separator_char" />.
     /// </summary>
-    std::string get_extension(const std::string& path);
+    std::string TRROJANCORE_API get_extension(const std::string& path);
 
     /// <summary>
     /// Enumerates all file system entries (files and directories) in

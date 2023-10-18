@@ -51,7 +51,7 @@ namespace d3d12 {
     /// </code>
     /// </para>
     /// </remarks>
-    class gpu_timer final {
+    class TRROJAND3D12_API gpu_timer final {
 
     public:
 

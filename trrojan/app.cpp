@@ -43,7 +43,7 @@ void App::Run(void) {
     std::string trroll_path;
     trroll_path = trrojan::join_path(trrojan::executive::executable_directory(),
         "Assets",
-        "demo_d11.trroll");
+        "demo_d12.trroll");
     exe.trroll(trroll_path, *output, cool_down, power_collector);
 
     //// Copy from local folder to usb pen drive?

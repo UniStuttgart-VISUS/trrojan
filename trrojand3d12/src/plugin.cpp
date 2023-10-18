@@ -85,7 +85,6 @@ std::string trrojan::d3d12::plugin::get_location(void) {
  */
 std::vector<std::uint8_t> trrojan::d3d12::plugin::load_resource(LPCTSTR name,
         LPCTSTR type) {
-#ifndef _UWP
     auto hRes = ::FindResource(::hTrrojanDll, name, type);
     if (hRes == NULL) {
         std::error_code ec(::GetLastError(), std::system_category());
@@ -113,9 +112,6 @@ std::vector<std::uint8_t> trrojan::d3d12::plugin::load_resource(LPCTSTR name,
     UnlockResource(hLock);
 
     return retval;
-#else
-    return {};
-#endif // _UWP
 }
 
 
@@ -129,16 +125,16 @@ trrojan::d3d12::plugin::~plugin(void) { }
  * trrojan::d3d12::plugin::create_benchmarks
  */
 size_t trrojan::d3d12::plugin::create_benchmarks(benchmark_list& dst) const {
-#ifdef _UWP
-    auto sb = std::make_shared<sphere_benchmark>();
-    sb->SetWindow(window_);
-    dst.emplace_back(sb);
-#else
+    auto retval = dst.size();
     dst.emplace_back(std::make_shared<empty_benchmark>());
     dst.emplace_back(std::make_shared<sphere_benchmark>());
+#if !defined(TRROJAN_FOR_UWP)
     dst.emplace_back(std::make_shared<ram_streaming_sphere_benchmark>());
+#endif /* !defined(TRROJAN_FOR_UWP) */
     dst.emplace_back(std::make_shared<cs_volume_benchmark>());
-    return 3;
+
+    retval = dst.size() - retval;
+    return retval;
 }
 
 

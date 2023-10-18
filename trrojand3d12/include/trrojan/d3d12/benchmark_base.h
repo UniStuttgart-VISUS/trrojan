@@ -64,13 +64,11 @@ namespace d3d12 {
 
         virtual trrojan::result run(const configuration& c) override;
 
-        void SetWindow(winrt::agile_ref<winrt::Windows::UI::Core::CoreWindow> const& window);
-
-        virtual inline void destroyTargets() {
-            // destroy render targets
-            render_target_.reset();
-            debug_target_.reset();
-        }
+        //virtual inline void destroyTargets() {
+        //    // destroy render targets
+        //    render_target_.reset();
+        //    debug_target_.reset();
+        //}
 
     protected:
 
@@ -138,8 +136,8 @@ namespace d3d12 {
         /// </remarks>
         /// <returns></returns>
         inline UINT buffer_index(void) const {
-            return (this->render_target_ != nullptr)
-                ? this->render_target_->buffer_index()
+            return (this->_render_target != nullptr)
+                ? this->_render_target->buffer_index()
                 : 0;
         }
 
@@ -148,16 +146,16 @@ namespace d3d12 {
         /// </summary>
         /// <param name="cmd_list"></param>
         inline void clear_target(ID3D12GraphicsCommandList *cmd_list) {
-            assert(this->render_target_ != nullptr);
+            assert(this->_render_target != nullptr);
             assert(cmd_list != nullptr);
-            this->render_target_->clear(cmd_list);
+            this->_render_target->clear(cmd_list);
         }
 
         inline void clear_target(ID3D12GraphicsCommandList *cmd_list,
                 const UINT frame) {
-            assert(this->render_target_ != nullptr);
+            assert(this->_render_target != nullptr);
             assert(cmd_list != nullptr);
-            this->render_target_->clear(cmd_list, frame);
+            this->_render_target->clear(cmd_list, frame);
         }
 
         /// <summary>
@@ -167,16 +165,16 @@ namespace d3d12 {
         /// <param name="cmd_list"></param>
         inline void clear_target(const std::array<float, 4>& clear_colour,
                 ID3D12GraphicsCommandList *cmd_list) {
-            assert(this->render_target_ != nullptr);
+            assert(this->_render_target != nullptr);
             assert(cmd_list != nullptr);
-            this->render_target_->clear(clear_colour, cmd_list);
+            this->_render_target->clear(clear_colour, cmd_list);
         }
 
         inline void clear_target(const std::array<float, 4>& clear_colour,
                 ID3D12GraphicsCommandList *cmd_list, const UINT frame) {
-            assert(this->render_target_ != nullptr);
+            assert(this->_render_target != nullptr);
             assert(cmd_list != nullptr);
-            this->render_target_->clear(clear_colour, cmd_list, frame);
+            this->_render_target->clear(clear_colour, cmd_list, frame);
         }
 
         /// <summary>
@@ -404,7 +402,7 @@ namespace d3d12 {
         /// </summary>
         /// <returns>The number of buffers used by the render target.</returns>
         inline UINT pipeline_depth(void) const {
-            return this->render_target_->pipeline_depth();
+            return this->_render_target->pipeline_depth();
         }
 
         /// <summary>
@@ -436,8 +434,8 @@ namespace d3d12 {
         /// </remarks>
         /// <returns>The index of the next buffer/frame to write to.</returns>
         inline UINT present_target(void) {
-            assert(this->render_target_ != nullptr);
-            return this->render_target_->present();
+            assert(this->_render_target != nullptr);
+            return this->_render_target->present();
         }
 
         void save_target(const char *path = nullptr);
@@ -453,8 +451,8 @@ namespace d3d12 {
         /// </summary>
         /// <returns></returns>
         inline const D3D12_VIEWPORT& viewport(void) const noexcept {
-            assert(this->render_target_ != nullptr);
-            return this->render_target_->viewport();
+            assert(this->_render_target != nullptr);
+            return this->_render_target->viewport();
         }
 
         /// <summary>
@@ -490,11 +488,6 @@ namespace d3d12 {
         /// <see cref="on_device_switch" />.
         /// </remarks>
         command_allocator_list _direct_cmd_allocators;
-
-#ifdef _UWP
-        // Cached reference to the Window.
-        winrt::agile_ref<winrt::Windows::UI::Core::CoreWindow> window_{ nullptr };
-#endif // _UWP
 
     private:
 

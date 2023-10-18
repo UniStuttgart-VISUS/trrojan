@@ -1,14 +1,15 @@
-// <copyright file="benchmark_base.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2016 - 2022 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+ï»¿// <copyright file="benchmark_base.cpp" company="Visualisierungsinstitut der UniversitÃ¤t Stuttgart">
+// Copyright Â© 2016 - 2023 Visualisierungsinstitut der UniversitÃ¤t Stuttgart. Alle Rechte vorbehalten.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
-// <author>Christoph Müller</author>
+// <author>Christoph MÃ¼ller</author>
 
 #include "trrojan/d3d12/benchmark_base.h"
 
 #include <chrono>
 #include <ctime>
 
+#include "trrojan/executive.h"
 #include "trrojan/factor.h"
 #include "trrojan/io.h"
 #include "trrojan/log.h"
@@ -38,12 +39,6 @@ _D3D_BENCH_DEFINE_FACTOR(save_view);
 trrojan::d3d12::benchmark_base::~benchmark_base(void) { }
 
 
-void trrojan::d3d12::benchmark_base::SetWindow(winrt::agile_ref<winrt::Windows::UI::Core::CoreWindow> const& window)
-{
-    window_ = window;
-}
-
-
 /*
  * trrojan::d3d12::benchmark_base::can_run
  */
@@ -64,6 +59,13 @@ trrojan::result trrojan::d3d12::benchmark_base::run(const configuration& c) {
     auto genericDev = c.get<trrojan::device>(factor_device);
     auto device = std::dynamic_pointer_cast<trrojan::d3d12::device>(genericDev);
     auto power_collector = initialise_power_collector(c);
+#if defined(TRROJAN_FOR_UWP)
+    auto window = c.get<executive::window_type>(executive::factor_core_window);
+    if (!window) {
+        throw std::invalid_argument("A confguration without a core window was "
+            "passed to a benchmark running on the UWP.");
+    }
+#endif /* defined(TRROJAN_FOR_UWP) */
 
     if (device == nullptr) {
         throw std::runtime_error("A configuration without a Direct3D device was "
@@ -87,27 +89,27 @@ trrojan::result trrojan::d3d12::benchmark_base::run(const configuration& c) {
             log::instance().write_line(log_level::verbose, "Forcing the "
                 "debug render target to be re-created as the device has "
                 "changed.");
-            this->debug_target_ = nullptr;
+            this->_debug_target = nullptr;
         }
         
-        if (this->debug_target_ == nullptr) {
-#ifdef _UWP
-            std::string log_msg = "Lazy creation of d3d12 debug render target on " + device->name();
-            log::instance().write_line(log_level::verbose, log_msg);
+        if (this->_debug_target == nullptr) {
+#if defined(TRROJAN_FOR_UWP)
+            log::instance().write_line(log_level::verbose, "Lazy creation of "
+                "D3D12 debug render target on {}.", device->name());
             auto uwp_debug_target = std::make_shared<uwp_debug_render_target>(device);
-            uwp_debug_target->SetWindow(window_);
-            this->debug_target_ = uwp_debug_target;
+            uwp_debug_target->SetWindow(window);
+            this->_debug_target = uwp_debug_target;
             changed.push_back(factor_viewport); // Force resize of target.
-#else // _UWP
+#else /* defined(TRROJAN_FOR_UWP) */
             log::instance().write_line(log_level::verbose, "Lazy creation of "
                 "D3D12 debug render target.");
-            this->debug_target = std::make_shared<debug_render_target>();
-            this->debug_target->resize(1, 1);   // Force resource allocation.
-#endif // _UWP
+            this->_debug_target = std::make_shared<debug_render_target>();
+            this->_debug_target->resize(1, 1);   // Force resource allocation.
+#endif /* defined(TRROJAN_FOR_UWP) */
         }
 
         // Overwrite device and render target
-        this->render_target_ = this->debug_target_;
+        this->_render_target = this->_debug_target;
         //this->render_target->use_reversed_depth_buffer(true);
 
         // Invoke device switch once the target has been changed.
@@ -124,7 +126,7 @@ trrojan::result trrojan::d3d12::benchmark_base::run(const configuration& c) {
         if (contains_any(changed, factor_device)) {
             log::instance().write_line(log_level::verbose, "The D3D device has "
                 "changed. Reallocating all graphics resources ...");
-            this->render_target_ = std::make_shared<bench_render_target>(device);
+            this->_render_target = std::make_shared<bench_render_target>(device);
             //this->render_target->use_reversed_depth_buffer(true);
             this->on_device_switch(*device);
             // If the device has changed, force the viewport to be re-created:
@@ -141,7 +143,7 @@ trrojan::result trrojan::d3d12::benchmark_base::run(const configuration& c) {
         log_msg += vp[1];
         log_msg += " px ...";
         log::instance().write_line(log_level::verbose, log_msg);
-        this->render_target_->resize(vp[0], vp[1]);
+        this->_render_target->resize(vp[0], vp[1]);
     }
 
     // Run the bechmark.
@@ -218,16 +220,16 @@ trrojan::d3d12::benchmark_base::create_command_list(
         ID3D12PipelineState *initial_state) {
     if (frame >= allocators.size()) {
         std::string log_msg = "The given list of command allocators only supports ";
-        log_msg += allocators.size();
+        log_msg += std::to_string(allocators.size());
         log_msg += " frames, but frame ";
-        log_msg += frame;
+        log_msg += std::to_string(frame);
         log_msg += " was requested.";
         log::instance().write_line(log_level::error, log_msg);
         throw ATL::CAtlException(E_INVALIDARG);
     }
     if (allocators[frame] == nullptr) {
         std::string log_msg = "The command allocator at position ";
-        log_msg += frame;
+        log_msg += std::to_string(frame);
         log_msg = " is invalid.";
         log::instance().write_line(log_level::error, log_msg);
         throw ATL::CAtlException(E_INVALIDARG);
@@ -403,9 +405,9 @@ void trrojan::d3d12::benchmark_base::create_descriptor_heaps(
     this->_descriptor_heaps.reserve(this->pipeline_depth() * descs.size());
 
     std::string log_msg = "Allocating ";
-    log_msg += descs.size();
+    log_msg += std::to_string(descs.size());
     log_msg += " descriptor heap(s) for ";
-    log_msg += this->pipeline_depth();
+    log_msg += std::to_string(this->pipeline_depth());
     log_msg += " frame(s) ...";
     log::instance().write_line(log_level::verbose, log_msg);
 
@@ -478,7 +480,7 @@ void trrojan::d3d12::benchmark_base::on_device_switch(device& device) {
     assert(device.d3d_device() != nullptr);
 
     std::string log_msg = "(Re-) Allocating ";
-    log_msg += this->_descriptor_heaps.size();
+    log_msg += std::to_string(this->_descriptor_heaps.size());
     log_msg += " descriptor heap(s).";
     log::instance().write_line(log_level::verbose, log_msg);
     for (auto& h : this->_descriptor_heaps) {
@@ -503,7 +505,7 @@ void trrojan::d3d12::benchmark_base::on_device_switch(device& device) {
 
         log_msg.clear();
         log_msg = "(Re-) Allocating ";
-        log_msg += cnt;
+        log_msg += std::to_string(cnt);
         log_msg += " direct command allocator(s).";
         log::instance().write_line(log_level::verbose, log_msg);
         create_command_allocators(this->_direct_cmd_allocators,
@@ -551,7 +553,7 @@ void trrojan::d3d12::benchmark_base::reset_command_list(
  * trrojan::d3d12::benchmark_base::save_target
  */
 void trrojan::d3d12::benchmark_base::save_target(const char *path) {
-    if (this->render_target_ != nullptr) {
+    if (this->_render_target != nullptr) {
         std::string p;
 
         if (path != nullptr) {
@@ -563,13 +565,13 @@ void trrojan::d3d12::benchmark_base::save_target(const char *path) {
         {
             // If file name does not have a user-defined extension to select
             // the format, use PNG as the default.
-            auto ext = p.find_last_of(extension_separator_char);
-            if (ext == std::string::npos) {
+            auto ext = trrojan::get_extension(p);
+            if (ext.empty()) {
                 p += ".png";
             }
         }
 
-        this->render_target_->save(p);
+        this->_render_target->save(p);
     }
 }
 

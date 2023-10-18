@@ -27,7 +27,7 @@ namespace d3d12 {
     /// <summary>
     /// Utility class for performing pipeline statistics queries.
     /// </summary>
-    class stats_query final {
+    class TRROJAND3D12_API stats_query final {
 
     public:
 
