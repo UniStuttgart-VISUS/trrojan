@@ -38,6 +38,8 @@ trrojan::log::log(const char *file) {
 #endif /* defined(TRROJAN_FOR_UWP) */
     }
 
+    //msvc_sink
+
 #if (defined(DEBUG) || defined(_DEBUG))
     this->_logger->set_level(spdlog::level::trace);
     spdlog::set_level(spdlog::level::trace);

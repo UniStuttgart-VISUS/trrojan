@@ -38,14 +38,14 @@ BOOL WINAPI DllMain(HINSTANCE hDll, DWORD reason, LPVOID reserved) {
     return TRUE;
 }
 
-#ifndef _UWP
+
 /// <summary>
 /// Gets a new instance of the plugin descriptor.
 /// </summary>
 extern "C" TRROJAND3D12_API trrojan::plugin_base *get_trrojan_plugin(void) {
     return new trrojan::d3d12::plugin();
 }
-#endif // _UWP
+
 
 /*
  * trrojan::d3d12::plugin::get_directory
