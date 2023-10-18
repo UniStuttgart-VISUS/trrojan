@@ -72,14 +72,8 @@ trrojan::result trrojan::d3d11::cs_volume_benchmark::on_run(
         set_debug_object_name(this->view_constants.p, "view_constants");
 
         // Rebuild the technique.
-        std::vector<uint8_t> src;
-#ifndef _UWP
-        src = d3d11::plugin::load_resource(
+        auto src = d3d11::plugin::load_resource(
             MAKEINTRESOURCE(SINGLE_PASS_VOLUME_COMPUTE_SHADER), _T("SHADER"));
-#else
-        auto filepath = GetAppFolder().string() + "trrojand3d11" + "/" + "d3d11" + "/" + "SinglePassVolumeComputeShader.cso";
-        src = ReadFileBytes(filepath);
-#endif // !_UWP
         auto cs = create_compute_shader(dev, src);
         auto res = rendering_technique::shader_resources();
         res.sampler_states.push_back(this->linear_sampler);

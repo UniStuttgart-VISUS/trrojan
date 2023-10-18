@@ -11,10 +11,6 @@
 #include <stdexcept>
 #include <vector>
 
-#ifdef _UWP
-#include <winrt/windows.ui.core.h>
-#endif
-
 #include <Windows.h>
 #include <d3d11.h>
 

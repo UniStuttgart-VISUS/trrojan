@@ -83,9 +83,7 @@ std::string trrojan::d3d11::plugin::get_location(void) {
  * trrojan::d3d11::plugin::load_resource
  */
 std::vector<std::uint8_t> trrojan::d3d11::plugin::load_resource(LPCTSTR name,
-        LPCSTR type) {
-#ifndef _UWP
-
+        LPCTSTR type) {
     auto hRes = ::FindResource(::hTrrojanDll, name, type);
     if (hRes == NULL) {
         std::error_code ec(::GetLastError(), std::system_category());
@@ -114,9 +112,6 @@ std::vector<std::uint8_t> trrojan::d3d11::plugin::load_resource(LPCTSTR name,
     UnlockResource(hLock);
 
     return std::move(retval);
-#else
-    return {};
-#endif // !_UWP
 }
 
 

@@ -26,7 +26,7 @@
 
 #include "trrojan/d3d11/render_target.h"
 
-#ifndef false//_UWP
+#ifdef _UWP
 
 /* Forward declatations. */
 struct DebugConstants;
@@ -54,6 +54,11 @@ namespace d3d11 {
 
         /// <inheritdoc />
         virtual void present(void);
+
+        virtual void present(const UINT sync_interval) {
+            // TODO: massive hack.
+            this->present();
+        }
 
         /// <inheritdoc />
         virtual void resize(const unsigned int width,

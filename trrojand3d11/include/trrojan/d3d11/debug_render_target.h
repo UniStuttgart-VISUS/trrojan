@@ -107,5 +107,4 @@ namespace d3d11 {
 }
 }
 
-
 #endif
