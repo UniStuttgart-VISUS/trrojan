@@ -35,7 +35,9 @@
 std::string trrojan::executive::executable_directory(void) {
     auto retval = executable_path();
     auto end = retval.find_last_of(directory_separator_char);
-    return (end == std::string::npos) ? retval : retval.substr(0, end);
+    return (end == std::string::npos)
+        ? ensure_directory_end(retval)
+        : retval.substr(0, end + 1);
 }
 #endif /* defined(_WIN32) */
 
@@ -66,6 +68,25 @@ std::string trrojan::executive::executable_path(void) {
     }
 }
 #endif /* defined(_WIN32) */
+
+
+/*
+ * trrojan::executive::factor_core_window
+ */
+const char *trrojan::executive::factor_core_window = "core_window";
+
+
+#if defined(TRROJAN_FOR_UWP)
+/*
+ * trrojan::executive::executive
+ */
+trrojan::executive::executive(window_type core_window) : window(core_window) {
+    if (!this->window) {
+        throw std::invalid_argument("The valid core window of the UWP "
+            "application must be passed to the TRRojan executive.");
+    }
+}
+#endif /* defined(TRROJAN_FOR_UWP) */
 
 
 /*
@@ -133,7 +154,10 @@ void trrojan::executive::load_plugins(const cmd_line& cmdLine) {
         get_file_system_entries(std::back_inserter(paths), std::string("."),
             false, trrojan::has_extension(plugin_dll::extension));
 
-#if defined(_WIN32)
+#if (defined(_WIN32) && !defined(TRROJAN_FOR_UWP))
+        // We do not check the executable directory on UWP, because only the
+        // APPX directory is working there and using the executable directory
+        // explicitly does not work for some reason ...
         {
             auto p = executive::executable_directory();
             log::instance().write(log_level::verbose, "Considering plugins "
@@ -142,7 +166,7 @@ void trrojan::executive::load_plugins(const cmd_line& cmdLine) {
             get_file_system_entries(std::back_inserter(paths), p,
                 false, trrojan::has_extension(plugin_dll::extension));
         }
-#endif /* defined(_WIN32) */
+#endif /* (defined(_WIN32) && !defined(TRROJAN_FOR_UWP)) */
 
         log::instance().write(log_level::verbose, "Found {} potential "
             "plugin(s).\n", paths.size());
@@ -199,7 +223,7 @@ void trrojan::executive::load_plugins(const cmd_line& cmdLine) {
                     continue;
                 }
 
-                // Secon, initialise the plugin and add it to the map.
+                // Second, initialise the plugin and add it to the map.
                 try {
                     e->on_initialise(cmdLine);
                     this->environments.insert(std::make_pair(name, e));
@@ -240,6 +264,12 @@ void trrojan::executive::run(benchmark_base& benchmark,
     // Inject the power collector into all configurations.
     configs.replace_factor(factor::from_manifestations(
         power_collector::factor_name, powerCollector));
+
+#if defined(TRROJAN_FOR_UWP)
+    // Inject the core window into all UWP configurations.
+    configs.replace_factor(factor::from_manifestations(
+        factor_core_window, this->window));
+#endif /* defined(TRROJAN_FOR_UWP) */
 
     auto eds = this->prepare_env_devs(configs);
     for (auto e : eds) {

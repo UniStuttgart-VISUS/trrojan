@@ -1,8 +1,9 @@
-/// <copyright file="system_factors.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Christoph Müller</author>
+ï»¿// <copyright file="system_factors.cpp" company="Visualisierungsinstitut der UniversitÃ¤t Stuttgart">
+// Copyright Â© 2016 - 2023 Visualisierungsinstitut der UniversitÃ¤t Stuttgart. Alle Rechte vorbehalten.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Christoph MÃ¼ller</author>
+// <author>Michael Becher</author>
 
 #include "trrojan/system_factors.h"
 
@@ -18,27 +19,44 @@
 #include <system_error>
 #include <thread>
 
-#ifdef _UWP
+#if defined(_WIN32)
+#include <Windows.h>
+#include <lmcons.h>
+
+#if defined(TRROJAN_FOR_UWP)
 #include <winrt/windows.security.exchangeactivesyncprovisioning.h>
 #include <winrt/windows.system.profile.h>
 #include <winrt/windows.foundation.h>
 #include <winrt/windows.foundation.collections.h>
 #include <winrt/windows.system.h>
-#include <Windows.h>
-#if defined(NTDDI_WIN10_RS3) && (NTDDI_VERSION >= NTDDI_WIN10_RS3)
+#if (defined(NTDDI_WIN10_RS3) && (NTDDI_VERSION >= NTDDI_WIN10_RS3))
 #include "Gamingdeviceinformation.h"
-#endif
-#endif
-#ifdef _WIN32
-#include <Windows.h>
-#include <lmcons.h>
-#else /* _WIN32 */
+#endif /* (defined(NTDDI_WIN10_RS3) && (NTDDI_VERSION >= NTDDI_WIN10_RS3)) */
+
+#if !defined(GAMING_DEVICE_DEVICE_ID_XBOX_SERIES_S)
+#define GAMING_DEVICE_DEVICE_ID_XBOX_SERIES_S \
+static_cast<GAMING_DEVICE_DEVICE_ID>(0x1D27FABB)
+#endif /* !defined(GAMING_DEVICE_DEVICE_ID_XBOX_SERIES_S) */
+
+#if !defined(GAMING_DEVICE_DEVICE_ID_XBOX_SERIES_X)
+#define GAMING_DEVICE_DEVICE_ID_XBOX_SERIES_X \
+static_cast<GAMING_DEVICE_DEVICE_ID>(0x2F7A3DFF)
+#endif /* !defined(GAMING_DEVICE_DEVICE_ID_XBOX_SERIES_X) */
+
+#if !defined(GAMING_DEVICE_DEVICE_ID_XBOX_SERIES_X_DEVKIT)
+#define GAMING_DEVICE_DEVICE_ID_XBOX_SERIES_X_DEVKIT \
+static_cast<GAMING_DEVICE_DEVICE_ID>(0xDE8A5661)
+#endif /* !defined(GAMING_DEVICE_DEVICE_ID_XBOX_SERIES_X_DEVKIT) */
+
+#endif /* defined(TRROJAN_FOR_UWP) */
+
+#else /* defined(_WIN32) */
 #include <pwd.h>
 #include <unistd.h>
 #include <sys/utsname.h>
 #include <sys/sysinfo.h>
 #include <sys/types.h>
-#endif /* _WIN32 */
+#endif /* defined(_WIN32) */
 
 #include "trrojan/io.h"
 #include "trrojan/log.h"
@@ -88,6 +106,7 @@ const std::string trrojan::system_factors::factor_##n                          \
 __TRROJAN_DEFINE_FACTOR(bios);
 __TRROJAN_DEFINE_FACTOR(computer_name);
 __TRROJAN_DEFINE_FACTOR(cpu);
+__TRROJAN_DEFINE_FACTOR(gaming_device);
 __TRROJAN_DEFINE_FACTOR(installed_memory);
 __TRROJAN_DEFINE_FACTOR(logical_cores);
 __TRROJAN_DEFINE_FACTOR(mainboard);
@@ -108,7 +127,7 @@ __TRROJAN_DEFINE_FACTOR(user_name);
  * trrojan::system_factors::bios
  */
 trrojan::variant trrojan::system_factors::bios(void) const {
-#ifndef _UWP
+#if !defined(TRROJAN_FOR_UWP)
     typedef sysinfo::smbios_information::bios_information_type entry_type;
     std::vector<const entry_type *> entries;
     smbios.entries_by_type<entry_type>(std::back_inserter(entries));
@@ -126,11 +145,11 @@ trrojan::variant trrojan::system_factors::bios(void) const {
             << e->get_release_date() << ")";
         return variant(value.str());
     }
-#else
-    log::instance().write(log_level::warning, "No information about the "
-        "BIOS could be retrieved from SMBIOS.");
+#else /* defined(TRROJAN_FOR_UWP) */
+    log::instance().write(log_level::warning, "BIOS information is "
+        "unavailable on the Universal Windows Platform.");
     return variant();
-#endif
+#endif /* defined(TRROJAN_FOR_UWP) */
 }
 
 
@@ -138,11 +157,12 @@ trrojan::variant trrojan::system_factors::bios(void) const {
 * trrojan::system_factors::computer_name
 */
 trrojan::variant trrojan::system_factors::computer_name(void) const {
-#ifdef _UWP
-    winrt::Windows::Security::ExchangeActiveSyncProvisioning::EasClientDeviceInformation easinfo;
+#if defined(TRROJAN_FOR_UWP)
+    using namespace winrt::Windows::Security::ExchangeActiveSyncProvisioning;
+    EasClientDeviceInformation easinfo;
     return winrt::to_string(easinfo.FriendlyName());
-#elif defined (_WIN32)
 
+#elif defined(_WIN32)
     std::vector<char> buffer;
     buffer.resize(UNLEN + 1);
     auto oldBufSize = static_cast<DWORD>(buffer.size());
@@ -161,7 +181,8 @@ trrojan::variant trrojan::system_factors::computer_name(void) const {
     }
 
     return std::string(buffer.data());
-#else /* _WIN32 */
+
+#else /* defined(TRROJAN_FOR_UWP) */
     utsname names;
 
     if (::uname(&names) < 0) {
@@ -170,8 +191,7 @@ trrojan::variant trrojan::system_factors::computer_name(void) const {
     }
 
     return std::string(names.nodename);
-
-#endif /* _UWP _WIN32 */
+#endif /* defined(TRROJAN_FOR_UWP) */
 }
 
 
@@ -179,27 +199,25 @@ trrojan::variant trrojan::system_factors::computer_name(void) const {
  * trrojan::system_factors::cpu
  */
 trrojan::variant trrojan::system_factors::cpu(void) const {
-#ifdef  _UWP
+#if defined(TRROJAN_FOR_UWP)
     SYSTEM_INFO info = {};
-    GetNativeSystemInfo(&info);
+    ::GetNativeSystemInfo(&info);
 
-    std::string arch = "UNKNOWN";
-    switch (info.wProcessorArchitecture)
-    {
-    case PROCESSOR_ARCHITECTURE_AMD64:  arch = "AMD64"; break;
-    case PROCESSOR_ARCHITECTURE_ARM:    arch = "ARM"; break;
-    case PROCESSOR_ARCHITECTURE_ARM64:  arch = "ARM64"; break;
-    case PROCESSOR_ARCHITECTURE_INTEL:  arch = "INTEL"; break;
+    switch (info.wProcessorArchitecture) {
+        case PROCESSOR_ARCHITECTURE_AMD64: return std::string("AMD64");
+        case PROCESSOR_ARCHITECTURE_ARM: return std::string("ARM");
+        case PROCESSOR_ARCHITECTURE_ARM64: return std::string("ARM64");
+        case PROCESSOR_ARCHITECTURE_INTEL: return std::string("x86");
+        default: return std::string("unknown");
     }
 
-    return arch;
-#else
+#else /* defined(TRROJAN_FOR_UWP) */
     typedef sysinfo::smbios_information::processor_information_type entry_type;
     std::vector<const entry_type *> entries;
     smbios.entries_by_type<entry_type>(std::back_inserter(entries));
 
     if (entries.empty()) {
-#ifndef _WIN32
+#if !defined(_WIN32)
         /* Try /proc/cpuinfo as fallback (eg if not running as root). */
         try {
             std::ifstream pf("/proc/cpuinfo", std::ios::in);
@@ -243,7 +261,7 @@ trrojan::variant trrojan::system_factors::cpu(void) const {
             log::instance().write_line(log_level::verbose, ex);
             /* Fall through to error handling. */
         }
-#endif /* !_WIN32 */
+#endif /* !defined(_WIN32) */
 
         log::instance().write(log_level::warning, "No information about the "
             "installed CPUs could be retrieved from SMBIOS.");
@@ -266,24 +284,33 @@ trrojan::variant trrojan::system_factors::cpu(void) const {
 
         return variant(value.str());
     }
-#endif
+#endif /* defined(TRROJAN_FOR_UWP) */
+}
 
-    //{
-    //    typedef smbios_information::processor_information_type entry_type;
-    //    std::vector<const smbios_information::header_type *> entries;
-    //    smbios.entries_by_type<entry_type>(std::back_inserter(entries));
-    //    for (auto h : entries) {
-    //        auto e = reinterpret_cast<const entry_type *>(h);
-    //        std::cout << e->get_manufacturer() << std::endl;
-    //        std::cout << e->get_version() << std::endl;
-    //        std::cout << e->get_socket_designation() << std::endl;
-    //        std::cout << ((e->core_count == 0xFF)
-    //            ? e->core_count2 : e->core_count) << std::endl;
-    //        std::cout << ((e->thread_count == 0xFF)
-    //            ? e->thread_count2 : e->thread_count) << std::endl;
-    //        std::cout << static_cast<double>(e->current_speed) << std::endl;
-    //    }
-    //}
+
+/*
+ * trrojan::system_factors::gaming_device
+ */
+trrojan::variant trrojan::system_factors::gaming_device(void) const {
+#if defined(TRROJAN_FOR_UWP)
+    //Cf. https://github.com/microsoft/Xbox-ATG-Samples/tree/main/UWPSamples/System/SystemInfoUWP
+    GAMING_DEVICE_MODEL_INFORMATION info;
+    auto hr = ::GetGamingDeviceModelInformation(&info);
+    if (SUCCEEDED(hr)) {
+        switch (info.deviceId) {
+            case GAMING_DEVICE_DEVICE_ID_XBOX_SERIES_S:
+                return std::string("Xbox Series S");
+
+            case GAMING_DEVICE_DEVICE_ID_XBOX_SERIES_X:
+                return std::string("Xbox Series X");
+
+            case GAMING_DEVICE_DEVICE_ID_XBOX_SERIES_X_DEVKIT:
+                return std::string("Xbox Series X dev kit");
+        }
+    }
+#endif /* defined(TRROJAN_FOR_UWP) */
+
+    return std::string("unknown");
 }
 
 
@@ -306,7 +333,7 @@ trrojan::variant trrojan::system_factors::get(const std::string& factor) const {
 trrojan::variant trrojan::system_factors::installed_memory(void) const {
     typedef std::uint64_t memory_size_type;
 
-#ifdef _WIN32
+#if defined(_WIN32)
     MEMORYSTATUSEX memoryStatus;
     ::ZeroMemory(&memoryStatus, sizeof(memoryStatus));
     memoryStatus.dwLength = sizeof(memoryStatus);
@@ -320,7 +347,7 @@ trrojan::variant trrojan::system_factors::installed_memory(void) const {
             "of installed physical memory with error code {:x}.", err);
     }
 
-#else /* _WIN32 */
+#else /* defined(_WIN32) */
     struct sysinfo info;
 
     if (::sysinfo(&info) == 0) {
@@ -339,7 +366,7 @@ trrojan::variant trrojan::system_factors::installed_memory(void) const {
             "of installed physical memory with error code {:x}.", err);
     }
 
-#endif /* _WIN32 */
+#endif /* defined(_WIN32) */
 
     return variant();   // At this point, an error occurred ...
 }
@@ -357,7 +384,7 @@ trrojan::variant trrojan::system_factors::logical_cores(void) const {
  * trrojan::system_factors::mainboard
  */
 trrojan::variant trrojan::system_factors::mainboard(void) const {
-#ifndef _UWP
+#if !defined(TRROJAN_FOR_UWP)
     typedef sysinfo::smbios_information::baseboard_information_type entry_type;
     std::vector<const entry_type *> entries;
     smbios.entries_by_type<entry_type>(std::back_inserter(entries));
@@ -375,9 +402,9 @@ trrojan::variant trrojan::system_factors::mainboard(void) const {
             << e->get_version() << ")";
         return variant(value.str());
     }
-#else
-    log::instance().write(log_level::warning, "No information about the "
-        "mainboard could be retrieved from SMBIOS.");
+#else /* !defined(TRROJAN_FOR_UWP) */
+    log::instance().write(log_level::warning, "The mainboard model is "
+        "unavailable on the Universal Windows Platform.");
     return variant();
 #endif
 }
@@ -387,12 +414,14 @@ trrojan::variant trrojan::system_factors::mainboard(void) const {
  * trrojan::system_factors::os
  */
 trrojan::variant trrojan::system_factors::os(void) const {
-#ifdef _UWP
-    auto versionInfo = winrt::Windows::System::Profile::AnalyticsInfo::VersionInfo();
+#if defined(TRROJAN_FOR_UWP)
+    using namespace winrt::Windows::System::Profile;
+    auto versionInfo = AnalyticsInfo::VersionInfo();
     return winrt::to_string(versionInfo.DeviceFamily());
-#else
+
+#else /* defined(TRROJAN_FOR_UWP) */
     return std::string(this->osinfo.name());
-#endif
+#endif /*  defined(TRROJAN_FOR_UWP) */
 }
 
 
@@ -400,20 +429,24 @@ trrojan::variant trrojan::system_factors::os(void) const {
  * trrojan::system_factors::os_version
  */
 trrojan::variant trrojan::system_factors::os_version(void) const {
-#ifdef _UWP
-    auto versionInfo = winrt::Windows::System::Profile::AnalyticsInfo::VersionInfo();
+#if defined(TRROJAN_FOR_UWP)
+    using namespace winrt::Windows::System::Profile;
+    auto versionInfo = AnalyticsInfo::VersionInfo();
 
     // From SystemInfo UWP example:
-    // For real-world use just log it as an opaque string, and do the decode in the reader instead
+    // For real-world use just log it as an opaque string, and do the decode
+    // in the reader instead.
     LARGE_INTEGER li;
-    li.QuadPart = _wtoi64(versionInfo.DeviceFamilyVersion().c_str());
+    li.QuadPart = ::_wtoi64(versionInfo.DeviceFamilyVersion().c_str());
     wchar_t buff[128] = {};
-    swprintf_s(buff, L"%u.%u.%u.%u", HIWORD(li.HighPart), LOWORD(li.HighPart), HIWORD(li.LowPart), LOWORD(li.LowPart));
+    swprintf_s(buff, L"%u.%u.%u.%u", HIWORD(li.HighPart), LOWORD(li.HighPart),
+        HIWORD(li.LowPart), LOWORD(li.LowPart));
 
     return winrt::to_string(buff);
-#else
+
+#else /* defined(TRROJAN_FOR_UWP) */
     return std::string(this->osinfo.version());
-#endif
+#endif /* defined(TRROJAN_FOR_UWP) */
 }
 
 
@@ -421,7 +454,7 @@ trrojan::variant trrojan::system_factors::os_version(void) const {
  * trrojan::system_factors::process_elevated
  */
 trrojan::variant trrojan::system_factors::process_elevated(void) const {
-#ifdef _WIN32
+#if defined(_WIN32)
     HANDLE hToken = NULL;
     DWORD size = 0;
     TOKEN_ELEVATION_TYPE tet;
@@ -441,7 +474,7 @@ trrojan::variant trrojan::system_factors::process_elevated(void) const {
         throw std::system_error(ec, "Failed to obtain token information.");
     }
 
-#else  /* _WIN32*/
+#else  /* defined(_WIN32) */
     auto uid = ::getuid();
     auto euid = ::geteuid();
 
@@ -458,7 +491,7 @@ trrojan::variant trrojan::system_factors::process_elevated(void) const {
     //}
 
     return (euid == 0);
-#endif /* _WIN32 */
+#endif /* defined(_WIN32) */
 }
 
 
@@ -466,11 +499,11 @@ trrojan::variant trrojan::system_factors::process_elevated(void) const {
  * trrojan::system_factors::ram
  */
 trrojan::variant trrojan::system_factors::ram(void) const {
-#ifdef _UWP
-    log::instance().write(log_level::warning, "No information about the "
-        "ram version could be retrieved from SMBIOS.");
+#if defined(TRROJAN_FOR_UWP)
+    log::instance().write(log_level::warning, "The installed RAM modules "
+        "cannot be determined on the Universal Windows Platform.");
     return variant();
-#else
+#else /* defined(TRROJAN_FOR_UWP) */
     typedef sysinfo::smbios_information::memory_device_type entry_type;
     std::vector<const entry_type *> entries;
     smbios.entries_by_type<entry_type>(std::back_inserter(entries));
@@ -499,7 +532,7 @@ trrojan::variant trrojan::system_factors::ram(void) const {
 
         return variant(value.str());
     }
-#endif
+#endif /* defined(TRROJAN_FOR_UWP) */
     //for (auto h : entries) {
     //    if (e->size != 0) {
     //        std::cout << e->get_manufacturer() << std::endl;
@@ -523,10 +556,12 @@ trrojan::variant trrojan::system_factors::ram(void) const {
  * trrojan::system_factors::system_desc
  */
 trrojan::variant trrojan::system_factors::system_desc(void) const {
-#ifdef _UWP
-    winrt::Windows::Security::ExchangeActiveSyncProvisioning::EasClientDeviceInformation easinfo;
+#if defined(TRROJAN_FOR_UWP)
+    using namespace winrt::Windows::Security::ExchangeActiveSyncProvisioning;
+    EasClientDeviceInformation easinfo;
     return winrt::to_string(easinfo.SystemProductName());
-#else
+
+#else /* defined(TRROJAN_FOR_UWP) */
     typedef sysinfo::smbios_information::system_information_type entry_type;
     std::vector<const entry_type *> entries;
     smbios.entries_by_type<entry_type>(std::back_inserter(entries));
@@ -544,7 +579,7 @@ trrojan::variant trrojan::system_factors::system_desc(void) const {
             << e->get_version() << ")";
         return variant(value.str());
     }
-#endif
+#endif /* defined(TRROJAN_FOR_UWP) */
 }
 
 
@@ -560,31 +595,27 @@ trrojan::variant trrojan::system_factors::timestamp(void) const {
  * trrojan::system_factors::user_name
  */
 trrojan::variant trrojan::system_factors::user_name(void) const {
-#ifdef _WIN32
-#ifdef _UWP
+#if defined(TRROJAN_FOR_UWP)
     // Fairly hacky solution. Needs App permission set in OS to work
 
     GAMING_DEVICE_MODEL_INFORMATION info = {};
     GetGamingDeviceModelInformation(&info);
-    switch (info.deviceId)
-    {
-        #ifndef NTDDI_WIN10_NI
-        #pragma warning(disable : 4063)
-        #define GAMING_DEVICE_DEVICE_ID_XBOX_SERIES_S static_cast<GAMING_DEVICE_DEVICE_ID>(0x1D27FABB)
-        #define GAMING_DEVICE_DEVICE_ID_XBOX_SERIES_X static_cast<GAMING_DEVICE_DEVICE_ID>(0x2F7A3DFF)
-        #define GAMING_DEVICE_DEVICE_ID_XBOX_SERIES_X_DEVKIT static_cast<GAMING_DEVICE_DEVICE_ID>(0xDE8A5661)
-        #endif
-        case GAMING_DEVICE_DEVICE_ID_XBOX_SERIES_S: return winrt::to_string(L"unavailable on xbox");
-        case GAMING_DEVICE_DEVICE_ID_XBOX_SERIES_X: return winrt::to_string(L"unavailable on xbox");
+    switch (info.deviceId) {
+        case GAMING_DEVICE_DEVICE_ID_XBOX_SERIES_S:
+        case GAMING_DEVICE_DEVICE_ID_XBOX_SERIES_X:
+        case GAMING_DEVICE_DEVICE_ID_XBOX_SERIES_X_DEVKIT:
+            return std::string("unavailable on Xbox");
     }
 
+    // TODO: seems incomplete
     /*winrt::Windows::Foundation::Collections::IVectorView<winrt::Windows::System::User> users 
         = winrt::Windows::System::User::FindAllAsync(winrt::Windows::System::UserType::LocalUser, winrt::Windows::System::UserAuthenticationStatus::LocallyAuthenticated).get();
     winrt::Windows::System::User currentUser = users.GetAt(0);
     winrt::Windows::Foundation::IInspectable nameObj = currentUser.GetPropertyAsync(winrt::Windows::System::KnownUserProperties::DisplayName()).get();
     winrt::hstring myname = winrt::unbox_value<winrt::hstring>(nameObj);*/
     return winrt::to_string(L"displayName");
-#else
+
+#elif defined(_WIN32)
     std::vector<char> buffer;
     buffer.resize(UNLEN + 1);
     auto oldBufSize = static_cast<DWORD>(buffer.size());
@@ -603,8 +634,8 @@ trrojan::variant trrojan::system_factors::user_name(void) const {
     }
 
     return std::string(buffer.data());
-#endif
-#else /* _WIN32 */
+
+#else /* defined(TRROJAN_FOR_UWP) */
     uid_t uid = ::getuid();
     auto passwd = ::getpwuid(uid);
 
@@ -614,8 +645,7 @@ trrojan::variant trrojan::system_factors::user_name(void) const {
     }
 
     return std::string(passwd->pw_name);
-
-#endif /* _WIN32 */
+#endif /* defined(TRROJAN_FOR_UWP) */
 }
 
 
@@ -717,7 +747,7 @@ trrojan::system_factors::get_retrievers(void) {
  * trrojan::system_factors::system_factors
  */
 trrojan::system_factors::system_factors(void) {
-#ifndef _UWP
+#if !defined(TRROJAN_FOR_UWP)
     try {
         this->hwinfo = sysinfo::hardware_info::collect();
     } catch (std::exception ex) {
@@ -733,5 +763,5 @@ trrojan::system_factors::system_factors(void) {
     } catch (std::exception ex) {
         log::instance().write(log_level::warning, ex);
     }
-#endif
+#endif /* !defined(TRROJAN_FOR_UWP) */
 }

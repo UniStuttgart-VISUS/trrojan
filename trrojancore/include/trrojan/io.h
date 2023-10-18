@@ -84,6 +84,23 @@ namespace trrojan {
     std::string combine_path(std::string path, P&&... paths);
 
     /// <summary>
+    /// Ensures that the given path ends with a
+    /// <see cref="directory_separator_char" />.
+    /// </summary>
+    /// <param name="path">The path to terminate. It is safe to pass
+    /// <c>nullptr</c>, which will be interpreted as an empty string.</param>
+    /// <returns>The terminated string.</returns>
+    std::string ensure_directory_end(const char *path);
+
+    /// <summary>
+    /// Ensures that the given path ends with a
+    /// <see cref="directory_separator_char" />.
+    /// </summary>
+    /// <param name="path">The path to terminate.</param>
+    /// <returns>The terminated string.</returns>
+    std::string ensure_directory_end(const std::string& path);
+
+    /// <summary>
     /// Gets the file name extension of <paramref name="path" /> including the
     /// leading <see cref="trrojan::extension_separator_char" />.
     /// </summary>
@@ -129,11 +146,71 @@ namespace trrojan {
         const bool with_extension = true);
 
     /// <summary>
+    /// Gets the path to the local storage folder of an UWP app or the
+    /// application folder on all other platforms.
+    /// </summary>
+    /// <returns>The local storage folder.</returns>
+    std::string TRROJANCORE_API get_local_storage_folder(void);
+
+    /// <summary>
     /// Returns the path of the file. This does not include the file name.
     /// </summary>
     /// <param name="file_path">The file path to extract the path from.</param>
     /// <retruns>The extracted path.</retruns>
     std::string TRROJANCORE_API get_path(const std::string& file_path);
+
+
+    /// <summary>
+    /// Joins two paths with a <see cref="directory_separator_char" />.
+    /// </summary>
+    /// <param name="lhs">The left-hand side operand. It is safe to pass
+    /// <see cref="nullptr" />, which will be interpreted as an empty string.
+    /// </param>
+    /// <param name="rhs">The right-hand side operand. It is safe to pass
+    /// <see cref="nullptr" />, which will be interpreted as an empty string.
+    /// </param>
+    /// <returns>The joined path.</returns>
+    std::string TRROJANCORE_API join_path(const char *lhs, const char *rhs);
+
+    /// <summary>
+    /// Joins two paths with a <see cref="directory_separator_char" />.
+    /// </summary>
+    /// <param name="lhs"></param>
+    /// <param name="rhs"></param>
+    /// <returns></returns>
+    inline std::string join_path(const std::string& lhs,
+            const std::string& rhs) {
+        return join_path(lhs.c_str(), rhs.c_str());
+    }
+
+    /// <summary>
+    /// Joins two or more paths with <see cref="directory_separator_char" />s.
+    /// </summary>
+    /// <typeparam name="TRights"></typeparam>
+    /// <param name="lhs"></param>
+    /// <param name="rhs"></param>
+    /// <returns></returns>
+    template<class... TRights>
+    inline std::string join_path(const std::string& lhs, TRights&&... rhs) {
+        return join_path(lhs, join_path(std::forward<TRights>(rhs)...));
+    }
+
+    /// <summary>
+    /// Recursion stop for variadic <see cref="join_path" />.
+    /// </summary>
+    /// <param name="lhs"></param>
+    /// <returns></returns>
+    inline const std::string& join_path(const std::string& lhs) {
+        return lhs;
+    }
+
+    /// <summary>
+    /// Recursion stop for variadic <see cref="join_path" />.
+    /// </summary>
+    /// <returns></returns>
+    inline std::string join_path(void) {
+        return std::string("");
+    }
 
     /// <summary>
     /// Read a whole binary file at the location designated by

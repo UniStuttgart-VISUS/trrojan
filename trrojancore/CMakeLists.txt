@@ -29,7 +29,7 @@ target_include_directories(${PROJECT_NAME}
     PRIVATE
         $<BUILD_INTERFACE:${SourceDirectory}>)
 
-if (NOT ${TRROJAN_FOR_UWP})
+if (NOT TRROJAN_FOR_UWP)
     target_link_libraries(${PROJECT_NAME} PUBLIC trrojansnfo)
 endif ()
 target_link_libraries(${PROJECT_NAME} PUBLIC datraw)
@@ -37,7 +37,7 @@ target_link_libraries(${PROJECT_NAME} PUBLIC mmpld)
 target_link_libraries(${PROJECT_NAME} PUBLIC spdlog)
 target_link_libraries(${PROJECT_NAME} PRIVATE glm::glm)
 
-if (${TRROJAN_WITH_CHAKRA})
+if (TRROJAN_WITH_CHAKRA)
     target_compile_definitions(${PROJECT_NAME} PRIVATE WITH_CHAKRA)
     target_include_directories(${PROJECT_NAME} PRIVATE "${ChakraCore_SOURCE_DIR}/lib/Jsrt")
 
@@ -49,7 +49,7 @@ if (${TRROJAN_WITH_CHAKRA})
     endif ()
 endif ()
 
-if (${CMAKE_COMPILER_IS_GNUCXX})
+if (CMAKE_COMPILER_IS_GNUCXX)
     target_link_libraries(${PROJECT_NAME} PRIVATE dl)
 endif ()
 

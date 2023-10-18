@@ -89,7 +89,8 @@ namespace d3d11 {
         /// Gets the stride (in bytes) of random spheres of the given type.
         /// </summary>
         inline static size_type get_stride(const sphere_type type) {
-            return random_sphere_generator::get_stride(type);
+            auto retval = random_sphere_generator::get_stride(type);
+            return static_cast<size_type>(retval);
         }
 
         virtual ~random_sphere_data_set(void) = default;

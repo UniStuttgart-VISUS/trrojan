@@ -64,6 +64,20 @@ TRROJANCORE_API std::ostream& trrojan::detail::operator <<(std::ostream &lhs,
 }
 
 
+#if defined(TRROJAN_FOR_UWP)
+/*
+ * trrojan::detail::operator <<
+ */
+TRROJANCORE_API std::ostream& trrojan::detail::operator <<(std::ostream& lhs,
+        const winrt::agile_ref<winrt::Windows::UI::Core::CoreWindow>& rhs) {
+    // It does not make sense logging anything but whether a valid core window
+    // was set.
+    lhs << static_cast<bool>(rhs);
+    return lhs;
+}
+#endif  /* defined(TRROJAN_FOR_UWP) */
+
+
 /*
  * trrojan::variant::~variant
  */
@@ -87,7 +101,7 @@ trrojan::variant& trrojan::variant::operator =(const variant& rhs) {
 /*
  * trrojan::variant::operator =
  */
-trrojan::variant& trrojan::variant::operator =(variant&& rhs) {
+trrojan::variant& trrojan::variant::operator =(variant&& rhs) noexcept {
     if (this != std::addressof(rhs)) {
         rhs.conditional_invoke<detail::move_to>(*this);
         rhs.clear();

@@ -57,15 +57,20 @@ namespace d3d11 {
         static std::vector<std::uint8_t> load_resource(LPCTSTR name,
             LPCSTR type);
 
-        inline plugin(
-#ifdef _UWP
-            winrt::Windows::UI::Core::CoreWindow const& window
-#endif
-        ) : trrojan::plugin_base("d3d11")
-#ifdef _UWP
-            , m_window(window) 
-#endif
-        { }
+        /// <summary>
+        /// Initialises a new instance.
+        /// </summary>
+        inline plugin(void) : trrojan::plugin_base("d3d11") { }
+
+//        inline plugin(
+//#ifdef _UWP
+//            winrt::Windows::UI::Core::CoreWindow const& window
+//#endif
+//        ) : trrojan::plugin_base("d3d11")
+//#ifdef _UWP
+//            , m_window(window) 
+//#endif
+//        { }
 
         virtual ~plugin(void);
 

@@ -66,6 +66,12 @@ namespace trrojan {
         static const std::string factor_cpu;
 
         /// <summary>
+        /// Gets the version of the XBox console provided the application is
+        /// running on Xbox.
+        /// </summary>
+        static const std::string factor_gaming_device;
+
+        /// <summary>
         /// Name of the built-in factor descrbing the amount of RAM installed.
         /// </summary>
         static const std::string factor_installed_memory;
@@ -135,6 +141,8 @@ namespace trrojan {
         variant computer_name(void) const;
 
         variant cpu(void) const;
+
+        variant gaming_device(void) const;
 
         variant get(const std::string& factor) const;
 

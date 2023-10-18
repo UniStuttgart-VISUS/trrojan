@@ -37,14 +37,14 @@ BOOL WINAPI DllMain(HINSTANCE hDll, DWORD reason, LPVOID reserved) {
     return TRUE;
 }
 
-#ifndef _UWP
+
 /// <summary>
 /// Gets a new instance of the plugin descriptor.
 /// </summary>
 extern "C" TRROJAND3D11_API trrojan::plugin_base *get_trrojan_plugin(void) {
     return new trrojan::d3d11::plugin();
 }
-#endif
+
 
 /*
  * trrojan::d3d11::plugin::get_directory
@@ -130,20 +130,16 @@ trrojan::d3d11::plugin::~plugin(void) { }
  * trrojan::d3d11::plugin::create_benchmarks
  */
 size_t trrojan::d3d11::plugin::create_benchmarks(benchmark_list& dst) const {
-#ifdef _UWP
-    auto sb = std::make_shared<sphere_benchmark>();
-    sb->SetWindow(m_window);
-    dst.emplace_back(sb);
-    auto vb = std::make_shared<cs_volume_benchmark>();
-    vb->SetWindow(m_window);
-    dst.emplace_back(vb);
-#endif
-#ifndef _UWP
+    auto retval = dst.size();
+
     dst.emplace_back(std::make_shared<sphere_benchmark>());
     dst.emplace_back(std::make_shared<cs_volume_benchmark>());
+#if !defined(TRROJAN_FOR_UWP)
     dst.emplace_back(std::make_shared<two_pass_volume_benchmark>());
-#endif
-    return dst.size(); //3;
+#endif /*!defined(TRROJAN_FOR_UWP) */
+
+    retval = dst.size() - retval;
+    return retval;
 }
 
 

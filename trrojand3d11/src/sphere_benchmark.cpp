@@ -16,6 +16,7 @@
 #include <glm/ext.hpp>
 
 #include "trrojan/constants.h"
+#include "trrojan/executive.h"
 #include "trrojan/factor_enum.h"
 #include "trrojan/factor_range.h"
 #include "trrojan/io.h"

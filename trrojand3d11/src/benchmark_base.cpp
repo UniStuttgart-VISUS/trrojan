@@ -3,12 +3,14 @@
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
 // <author>Christoph Müller</author>
+// <author>Michael Becher</author>
 
 #include "trrojan/d3d11/benchmark_base.h"
 
 #include <chrono>
 #include <ctime>
 
+#include "trrojan/executive.h"
 #include "trrojan/factor.h"
 #include "trrojan/io.h"
 #include "trrojan/log.h"
@@ -58,6 +60,13 @@ trrojan::result trrojan::d3d11::benchmark_base::run(const configuration& c) {
     auto genericDev = c.get<trrojan::device>(factor_device);
     auto device = std::dynamic_pointer_cast<trrojan::d3d11::device>(genericDev);
     auto powerCollector = initialise_power_collector(c);
+#if defined(TRROJAN_FOR_UWP)
+    auto window = c.get<executive::window_type>(executive::factor_core_window);
+    if (!window) {
+        throw std::invalid_argument("A confguration without a core window was "
+            "passed to a benchmark running on the UWP.");
+    }
+#endif /* defined(TRROJAN_FOR_UWP) */
 
     if (device == nullptr) {
         throw std::runtime_error("A configuration without a Direct3D device was "
@@ -80,23 +89,23 @@ trrojan::result trrojan::d3d11::benchmark_base::run(const configuration& c) {
             "restricts the benchmark to the GPU connected to the display. The "
             "device parameter has no effect.");
         if (this->debug_target == nullptr) {
-#ifdef _UWP
+#if defined(TRROJAN_FOR_UWP)
             log::instance().write_line(log_level::verbose, "Lazy creation of "
                 "D3D11 debug render target.");
             auto uwp_debug_target = std::make_shared<uwp_debug_render_target>();
-            uwp_debug_target->SetWindow(m_window);
+            uwp_debug_target->SetWindow(window);
             this->debug_target = uwp_debug_target;
             //this->debug_target->resize(1, 1);   // Force resource allocation.
             this->debug_device = std::make_shared<d3d11::device>(
                 this->debug_target->device());
-#else
+#else /* defined(TRROJAN_FOR_UWP) */
             log::instance().write_line(log_level::verbose, "Lazy creation of "
                 "D3D11 debug render target.");
             this->debug_target = std::make_shared<debug_render_target>();
             this->debug_target->resize(1, 1);   // Force resource allocation.
             this->debug_device = std::make_shared<d3d11::device>(
                 this->debug_target->device());
-#endif
+#endif /* defined(TRROJAN_FOR_UWP) */
         }
 
         // Overwrite device and render target.
@@ -137,12 +146,6 @@ trrojan::result trrojan::d3d11::benchmark_base::run(const configuration& c) {
     }
 
     return retval;
-}
-
-
-void trrojan::d3d11::benchmark_base::SetWindow(winrt::agile_ref<winrt::Windows::UI::Core::CoreWindow> const& window)
-{
-    m_window = window;
 }
 
 

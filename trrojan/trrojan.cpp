@@ -3,10 +3,16 @@
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
 // <author>Christoph Müller</author>
+// <author>Michael Becher</author>
 
 #include <iostream>
 #include <memory>
 #include <numeric>
+
+#if defined(TRROJAN_FOR_UWP)
+#include <Windows.h>
+#include <winrt/Windows.ApplicationModel.Core.h>
+#endif /* defined(TRROJAN_FOR_UWP) */
 
 #include "trrojan/cmd_line.h"
 #include "trrojan/console_output.h"
@@ -15,7 +21,26 @@
 #include "trrojan/power_collector.h"
 #include "trrojan/power_state_scope.h"
 
+#include "app.h"
 
+
+#if defined(TRROJAN_FOR_UWP)
+/// <summary>
+/// Entry point of the TRRojan UWP app.
+/// </summary>
+/// <param name="hInst"></param>
+/// <param name="hPrev"></param>
+/// <param name="cmdLine"></param>
+/// <param name="show"></param>
+/// <returns></returns>
+int __stdcall wWinMain(HINSTANCE hInst, HINSTANCE hPrev, PWSTR cmdLine,
+        int show) {
+    using namespace winrt;
+    Windows::ApplicationModel::Core::CoreApplication::Run(make<App>());
+    return 0;
+}
+
+#else /* defined(TRROJAN_FOR_UWP) */
 /// <summary>
 /// Entry point of the TRRojan application.
 /// </summary>
@@ -130,3 +155,4 @@ int main(const int argc, const char **argv) {
         return -1;
     }
 }
+#endif /* defined(TRROJAN_FOR_UWP) */

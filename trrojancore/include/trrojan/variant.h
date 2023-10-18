@@ -1,8 +1,8 @@
-// <copyright file="variant.h" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2016 - 2022 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+ï»¿// <copyright file="variant.h" company="Visualisierungsinstitut der UniversitÃ¤t Stuttgart">
+// Copyright Â© 2016 - 2022 Visualisierungsinstitut der UniversitÃ¤t Stuttgart. Alle Rechte vorbehalten.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
-// <author>Christoph Müller</author>
+// <author>Christoph MÃ¼ller</author>
 
 #pragma once
 
@@ -20,9 +20,14 @@
 #include <type_traits>
 #include <utility>
 
+#if defined(TRROJAN_FOR_UWP)
+#include <winrt/windows.ui.core.h>
+#endif /* defined(TRROJAN_FOR_UWP) */
+
 #include "trrojan/device.h"
 #include "trrojan/environment.h"
 #include "trrojan/power_collector.h"
+#include "trrojan/winrt_traits.h"
 
 
 namespace trrojan {
@@ -69,6 +74,9 @@ namespace trrojan {
         device,
         environment,
         power_collector,
+#if defined(TRROJAN_FOR_UWP)
+        core_window,
+#endif  /* defined(TRROJAN_FOR_UWP) */
 
 #define __TRROJAN_VARIANT_VEC(type, dim) type##vec##dim
 #define __TRROJAN_VARIANT_VECS(type)                                           \
@@ -126,6 +134,9 @@ namespace detail {
         device val_device;
         environment val_environment;
         power_collector::pointer val_power_collector;
+#if defined(TRROJAN_FOR_UWP)
+        winrt::agile_ref<winrt::Windows::UI::Core::CoreWindow> val_core_window;
+#endif /* defined(TRROJAN_FOR_UWP) */
 
 #define __TRROJAN_VARIANT_VEC(type, dim) val_##type##vec##dim
 #define __TRROJAN_VARIANT_IVECS(type)                                          \
@@ -180,6 +191,7 @@ namespace detail {
         variant_type::uint64, variant_type::float32, variant_type::float64,
         variant_type::string, variant_type::wstring, variant_type::device,
         variant_type::environment, variant_type::power_collector,
+        variant_type::core_window,
         __TRROJAN_VARIANT_VECS(int8), __TRROJAN_VARIANT_VECS(int16),
         __TRROJAN_VARIANT_VECS(int32), __TRROJAN_VARIANT_VECS(int64),
         __TRROJAN_VARIANT_VECS(uint8), __TRROJAN_VARIANT_VECS(uint16),
@@ -272,6 +284,9 @@ namespace detail {
     __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(device, false);
     __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(environment, false);
     __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(power_collector, false);
+#if defined(TRROJAN_FOR_UWP)
+    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(core_window, false);
+#endif /* defined(TRROJAN_FOR_UWP) */
 
 #define __TRROJANCORE_DECL_VARIANT_VEC_TYPE_TRAITS(type)                       \
     __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(type##vec##2, true);                \
@@ -330,6 +345,15 @@ namespace detail {
     /// </summary>
     TRROJANCORE_API std::ostream& operator <<(std::ostream& lhs,
         const power_collector::pointer& rhs);
+
+#if defined(TRROJAN_FOR_UWP)
+    /// <summary>
+    /// Output of a <see cref="winrt::Windows::UI::Core::CoreWindow" /> to an
+    /// <see cref="std::ostream" />.
+    /// </summary>
+    TRROJANCORE_API std::ostream &operator <<(std::ostream &lhs,
+        const winrt::agile_ref<winrt::Windows::UI::Core::CoreWindow>& rhs);
+#endif  /* defined(TRROJAN_FOR_UWP) */
 
     /// <summary>
     /// Functor which tries casting the value of the variant to a specific
@@ -428,7 +452,7 @@ namespace detail {
         /// Move <paramref name="rhs" />.
         /// </summary>
         /// <param name="rhs">The object to be moved.</param>
-        inline variant(variant&& rhs) : cur_type(variant_type::empty) {
+        inline variant(variant&& rhs) noexcept : cur_type(variant_type::empty) {
             *this = std::move(rhs);
         }
 
@@ -605,7 +629,7 @@ namespace detail {
         /// </summary>
         /// <param name="rhs">The right hand side operand.</param>
         /// <returns><c>*this</c></returns>
-        variant& operator =(variant&& rhs);
+        variant& operator =(variant&& rhs) noexcept;
 
         /// <summary>
         /// Test for equality.

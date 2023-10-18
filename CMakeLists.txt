@@ -17,6 +17,7 @@ cmake_dependent_option(TRROJAN_WITH_CHAKRA "Enable JavaScript support." OFF "NOT
 cmake_dependent_option(TRROJAN_WITH_DSTORAGE "Enable support for DirectStorage in Direct3D 12 plugin." ON WIN32 OFF)
 cmake_dependent_option(TRROJAN_WITH_POWER_OVERWHELMING "Enable power_overwhelming for measuring GPU power consumption." ON "NOT TRROJAN_FOR_UWP" OFF)
 option(TRROJAN_DEBUG_OVERLAY "Enable overlay in debug view." OFF)
+set(TRROJAN_UWP_PLATFORM_VERSION "10.0.19041.0" CACHE STRING "Specifies the minimum target platform version for UWP.")
 
 
 # Third-party software
@@ -96,8 +97,8 @@ set(TRROJAN_PLUGINS ${TRROJAN_PLUGINS} trrojanstream)
 if (WIN32)
     add_subdirectory(trrojand3d11)
     set(TRROJAN_PLUGINS ${TRROJAN_PLUGINS} trrojand3d11)
-    add_subdirectory(trrojand3d12)
-    set(TRROJAN_PLUGINS ${TRROJAN_PLUGINS} trrojand3d12)
+    #add_subdirectory(trrojand3d12)
+    #set(TRROJAN_PLUGINS ${TRROJAN_PLUGINS} trrojand3d12)
 endif ()
 
 # Build the executable

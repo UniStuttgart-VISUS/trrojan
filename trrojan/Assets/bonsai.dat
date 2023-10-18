@@ -1,0 +1,4 @@
+ObjectFileName:     bonsai.raw
+Resolution:         256 256 256
+SliceThickness:     1.0 1.0 1.0
+Format:             UCHAR

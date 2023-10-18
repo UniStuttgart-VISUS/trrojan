@@ -64,12 +64,6 @@ namespace d3d11 {
 
         virtual trrojan::result run(const configuration& c);
 
-        /// <summary>
-        /// Interface to existing UWP window
-        /// </summary>
-        /// <param name="window"></param>
-        void SetWindow(winrt::agile_ref<winrt::Windows::UI::Core::CoreWindow> const& window);
-
         virtual inline void destroyTargets() {
             // destroy render targets
             render_target.reset();
@@ -135,12 +129,6 @@ namespace d3d11 {
         std::shared_ptr<trrojan::d3d11::device> debug_device;
         render_target debug_target;
         render_target render_target;
-
-#ifdef _UWP
-        // Cached reference to the Window.
-        winrt::agile_ref<winrt::Windows::UI::Core::CoreWindow> m_window{ nullptr };
-#endif // _UWP
-
     };
 
 } /* end namespace d3d11 */

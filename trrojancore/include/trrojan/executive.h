@@ -18,6 +18,10 @@
 #include <Windows.h>
 #endif /* _WIN32 */
 
+#if defined(TRROJAN_FOR_UWP)
+#include <winrt/windows.ui.core.h>
+#endif /* defined(TRROJAN_FOR_UWP) */
+
 #include "trrojan/cool_down.h"
 #include "trrojan/environment.h"
 #include "trrojan/export.h"
@@ -38,13 +42,23 @@ namespace trrojan {
 
     public:
 
+#if defined(TRROJAN_FOR_UWP)
+        /// <summary>
+        /// The type used to reference the core window of an UWP application.
+        /// </summary>
+        typedef winrt::agile_ref<winrt::Windows::UI::Core::CoreWindow>
+            window_type;
+#endif /* defined(TRROJAN_FOR_UWP) */
+
 #if defined(_WIN32)
         /// <summary>
         /// Gets the path of the directory where the exeuctable is located, but
         /// only on Windows.
         /// </summary>
-        /// <returns>The directory containing the executable.</returns>
-        std::string executable_directory(void);
+        /// <returns>The directory containing the executable, which is
+        /// guaranteed to end with <see cref="directory_separator_char" />.
+        /// </returns>
+        static std::string executable_directory(void);
 #endif /* defined(_WIN32) */
 
 #if defined(_WIN32)
@@ -52,13 +66,22 @@ namespace trrojan {
         /// Gets the path to the TRRojan executable, but only on Windows.
         /// </summary>
         /// <returns>The path to the executable.</returns>
-        std::string executable_path(void);
+        static std::string executable_path(void);
 #endif /* defined(_WIN32) */
+
+        /// <summary>
+        /// The name of the factor passing the UWP core window in UWP builds.
+        /// </summary>
+        static const char *factor_core_window;
 
         /// <summary>
         /// Initialises a new instance.
         /// </summary>
-        inline executive(void) { }
+#if defined(TRROJAN_FOR_UWP)
+        executive(window_type core_window);
+#else /* defined(TRROJAN_FOR_UWP) */
+        inline executive(void) = default;
+#endif /* defined(TRROJAN_FOR_UWP) */
 
         executive(const executive&) = delete;
 
@@ -320,6 +343,18 @@ namespace trrojan {
         /// Holds all of the plugin descriptors the application has found.
         /// </summary>
         std::vector<plugin> plugins;
+
+#if defined(TRROJAN_FOR_UWP)
+        /// <summary>
+        /// Remembers the core window that was created for the application in
+        /// order to allow the plugins to draw into this window.
+        /// </summary>
+        /// <remarks>
+        /// <para>In UWP builds, the executive will pass this window to all
+        /// benchmarks as <see cref="factor_core_window" />.</para>
+        /// </remarks>
+        window_type window;
+#endif /* defined(TRROJAN_FOR_UWP) */
     };
 }
 
