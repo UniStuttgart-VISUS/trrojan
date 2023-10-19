@@ -30,47 +30,64 @@ void App::Run(void) {
     std::atomic<State> state(State::Idle);
     auto window = CoreWindow::GetForCurrentThread();
     auto dispatcher = window.Dispatcher();
+    StorageFile trroll_file(nullptr);
+    std::string trroll_path;
 
     window.Activate();
 
     while (state.load(std::memory_order::memory_order_consume) != State::Done) {
         switch (state.load(std::memory_order::memory_order_consume)) {
             case State::Idle:
-                // In idle state, we ask the user for a new test script to run.
-                state = State::Benchmarking;
+                // In idle state, mark the benchmark selection as pending and
+                // ask the user to select a trroll script.
+                state = State::Waiting;
+
                 trrojan::pick_file_and_continue({ L".trroll" },
-                        [&](StorageFile file) {
+                        [&trroll_file, &trroll_path, &state](StorageFile file) {
                     if (file) {
-                        // If the user provided a test script, we run it.
-                        on_exit([&state](void) { state = State::Idle; });
-                        const auto trroll_path = winrt::to_string(file.Path());
-                        const auto log_base = GetBaseLogPath(trroll_path);
-
-                        // Build the command line.
-                        trrojan::cmd_line cmd_line;
-                        cmd_line.push_back("--output");
-                        cmd_line.push_back(log_base + ".csv");
-                        cmd_line.push_back("--log");
-                        cmd_line.push_back(log_base + ".log");
-
-                        // Configure the executive.
-                        trrojan::executive exe(window);
-                        exe.load_plugins(cmd_line);
-
-                        // Prepare the global parameters for the test run.
-                        auto output = trrojan::open_output(cmd_line);
-                        trrojan::cool_down cool_down;
-                        std::shared_ptr<trrojan::power_collector> power_collector;
-
-                        // Run the test.
-                        exe.trroll(file, *output, cool_down, power_collector);
-
+                        // If the user provided a test script, queue it for
+                        // execution from the main thread.
+                        trroll_file = file;
+                        trroll_path = winrt::to_string(file.Path());
+                        state = State::Benchmarking;
                     } else {
                         // If the user did not provide a test script, we exit.
                         state = State::Done;
                     }
                 });
                 break;
+
+            case State::Benchmarking: {
+                // In the benchmarking state, we run the previously selected
+                // troll script. We cannot do that in any other thread, because
+                // (i) the UWP render target must periodically call the
+                // dispatcher from the main thread and (ii) running it via
+                // 'dispatcher' would cause the evenr processing to be queued
+                // recursively.
+                // Note that we install a scope exit handler to make sure that
+                // the state is reset even in case of an exception.
+                on_exit([&state](void) { state = State::Idle; });
+                const auto log_base = GetBaseLogPath(trroll_path);
+
+                // Build the command line.
+                trrojan::cmd_line cmd_line;
+                cmd_line.push_back("--output");
+                cmd_line.push_back(log_base + ".csv");
+                cmd_line.push_back("--log");
+                cmd_line.push_back(log_base + ".log");
+
+                // Configure the executive.
+                trrojan::executive exe(window);
+                exe.load_plugins(cmd_line);
+
+                // Prepare the global parameters for the test run.
+                auto output = trrojan::open_output(cmd_line);
+                trrojan::cool_down cool_down;
+                std::shared_ptr<trrojan::power_collector> power_collector;
+
+                // Run the test.
+                exe.trroll(trroll_file, *output, cool_down, power_collector);
+                } break;
         }
 
         dispatcher.ProcessEvents(CoreProcessEventsOption::ProcessOneAndAllPending);

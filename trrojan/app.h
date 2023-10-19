@@ -55,7 +55,8 @@ private:
     enum class State {
         Done = 0x0000,
         Idle = 0x0001,
-        Benchmarking = 0x0002
+        Waiting = 0x0002,
+        Benchmarking = 0x0004
     };
 
     static std::string GetBaseLogPath(const std::string& trroll);

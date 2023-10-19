@@ -94,6 +94,17 @@ namespace d3d12 {
     }
 
     /// <summary>
+    /// Computes the correctly aligned size of a constant buffer with the
+    /// specified minimum isze.
+    /// </summary>
+    /// <param name="size"></param>
+    /// <returns></returns>
+    inline constexpr UINT align_constant_buffer_size(const UINT size) {
+        return (size + D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT)
+            & ~(D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT - 1);
+    }
+
+    /// <summary>
     /// Close the given command list.
     /// </summary>
     void close_command_list(ID3D12GraphicsCommandList *cmd_list);
