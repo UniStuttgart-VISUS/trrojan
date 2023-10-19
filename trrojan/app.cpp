@@ -87,6 +87,8 @@ void App::Run(void) {
 
                 // Run the test.
                 exe.trroll(trroll_file, *output, cool_down, power_collector);
+
+                // TODO: Prompt user to copy output and log.
                 } break;
         }
 
