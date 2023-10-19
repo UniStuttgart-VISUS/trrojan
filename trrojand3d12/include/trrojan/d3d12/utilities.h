@@ -244,8 +244,8 @@ namespace d3d12 {
     /// <param name="state"></param>
     /// <returns></returns>
     ATL::CComPtr<ID3D12Resource> TRROJAND3D12_API create_texture(
-        ID3D12Device *device, const UINT64 width, const UINT64 height,
-        const UINT64 depth, const DXGI_FORMAT format,
+        ID3D12Device *device, const UINT64 width, const UINT height,
+        const UINT16 depth, const DXGI_FORMAT format,
         const D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE,
         const D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_COPY_DEST);
 

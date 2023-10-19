@@ -1,8 +1,8 @@
-/// <copyright file="io.inl" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Christoph Müller</author>
+ï»¿// <copyright file="io.inl" company="Visualisierungsinstitut der UniversitÃ¤t Stuttgart">
+// Copyright Â© 2016 - 2023 Visualisierungsinstitut der UniversitÃ¤t Stuttgart. Alle Rechte vorbehalten.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Christoph MÃ¼ller</author>
 
 
 /*
@@ -10,8 +10,8 @@
  */
 template<class... P> std::string trrojan::combine_path(std::string path,
         P&&... paths) {
-    return trrojan::join(std::string(1, directory_separator_char),
-        path, std::forward<P>(paths)...);
+    const std::string sep(1, directory_separator_char);
+    return trrojan::join(sep, path, std::forward<P>(paths)...);
 }
 
 

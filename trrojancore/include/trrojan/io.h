@@ -1,11 +1,12 @@
 // <copyright file="io.h" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2016 - 2022 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+// Copyright © 2016 - 2023 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
 // <author>Christoph Müller</author>
 
 #pragma once
 
+#include <cassert>
 #include <cinttypes>
 #include <cstdio>
 #include <string>
@@ -14,16 +15,22 @@
 #include <stdexcept>
 #include <system_error>
 
-#ifdef _WIN32
+#if defined(_WIN32)
 #include <Windows.h>
 #include <direct.h>
-#else /* _WIN32 */
+#else /* defined(_WIN32) */
 #include <dirent.h>
 #include <errno.h>
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#endif /* _WIN32 */
+#endif /* defined(_WIN32) */
+
+#if defined(TRROJAN_FOR_UWP)
+#include <winrt/windows.applicationmodel.core.h>
+#include <winrt/windows.storage.h>
+#include <winrt/windows.storage.pickers.h>
+#endif /* defined(TRROJAN_FOR_UWP) */
 
 #include "trrojan/export.h"
 #include "trrojan/text.h"
@@ -159,58 +166,166 @@ namespace trrojan {
     /// <retruns>The extracted path.</retruns>
     std::string TRROJANCORE_API get_path(const std::string& file_path);
 
-
+#if defined(TRROJAN_FOR_UWP)
     /// <summary>
-    /// Joins two paths with a <see cref="directory_separator_char" />.
+    /// Passes the result of the given operation to the given callback once the
+    /// operation completed.
     /// </summary>
-    /// <param name="lhs">The left-hand side operand. It is safe to pass
-    /// <see cref="nullptr" />, which will be interpreted as an empty string.
+    /// <typeparam name="TResult"></typeparam>
+    /// <typeparam name="TAction"></typeparam>
+    /// <param name="operation"></param>
+    /// <param name="action"></param>
+    template<class TResult, class TAction> void on_completed(
+            winrt::Windows::Foundation::IAsyncOperation<TResult> operation,
+            TAction&& action) {
+        using namespace winrt::Windows::Foundation;
+        assert(operation);
+        operation.Completed([action](
+                IAsyncOperation<TResult> operation,
+                const AsyncStatus status) {
+            assert(status == AsyncStatus::Completed);
+            action(operation.get());
+        });
+    }
+#endif /* defined(TRROJAN_FOR_UWP) */
+
+#if defined(TRROJAN_FOR_UWP)
+    /// <summary>
+    /// Passes the result of the given operation to the given callback once the
+    /// operation completed.
+    /// </summary>
+    /// <typeparam name="TResult"></typeparam>
+    /// <typeparam name="TProgress"></typeparam>
+    /// <typeparam name="TAction"></typeparam>
+    /// <param name="operation"></param>
+    /// <param name="action"></param>
+    template<class TResult, class TProgress, class TAction> void on_completed(
+            winrt::Windows::Foundation::IAsyncOperationWithProgress<TResult,
+                TProgress> operation,
+            TAction&& action) {
+        using namespace winrt::Windows::Foundation;
+        assert(operation);
+        operation.Completed([action](
+                IAsyncOperationWithProgress<TResult, TProgress> operation,
+                const AsyncStatus status) {
+            assert(status == AsyncStatus::Completed);
+            action(operation.get());
+        });
+    }
+#endif /* defined(TRROJAN_FOR_UWP) */
+
+#if defined(TRROJAN_FOR_UWP)
+    /// <summary>
+    /// Picks a file using the given <paramref name="picker" /> and invokes the
+    /// given action with the
+    /// <see cref="winrt::Windows::Storage::StorageFile" />.
+    /// </summary>
+    /// <typeparam name="TAction">The type of the functor to be invoked, which
+    /// must accept a single <see cref="winrt::Windows::Storage::StorageFile" />
+    /// parameter.</typeparam>
+    /// <param name="picker">The file picker used to select the file. The picker
+    /// must have been fully configured according to the callers needs.</param>
+    /// <param name="action">The action to be invoked for the selected file.
     /// </param>
-    /// <param name="rhs">The right-hand side operand. It is safe to pass
-    /// <see cref="nullptr" />, which will be interpreted as an empty string.
+    template<class TAction> void pick_file_and_continue(
+            winrt::Windows::Storage::Pickers::FileOpenPicker picker,
+            TAction&& action) {
+        using namespace winrt::Windows::UI::Core;
+        using namespace winrt::Windows::Foundation;
+        using namespace winrt::Windows::Storage;
+        picker.PickSingleFileAsync().Completed([action](
+                const IAsyncOperation<StorageFile> operation,
+                const AsyncStatus status) {
+            assert(status == AsyncStatus::Completed);
+            if (status == AsyncStatus::Completed) {
+                action(operation.get());
+            }
+        });
+    }
+#endif /* defined(TRROJAN_FOR_UWP) */
+
+#if defined(TRROJAN_FOR_UWP)
+    /// <summary>
+    /// Picks a file using the given <paramref name="picker" /> and invokes the
+    /// given action with the
+    ///  <see cref="winrt::Windows::Storage::StorageFile" />.
+    /// </summary>
+    /// <typeparam name="TAction">The type of the functor to be invoked, which
+    /// must accept a single <see cref="winrt::Windows::Storage::StorageFile" />
+    /// parameter.</typeparam>
+    /// <param name="filter">The file filter that is applied to the picker that
+    /// the function creates for selecting files.</param>
+    /// <param name="action">The action to be invoked for the selected file.
     /// </param>
-    /// <returns>The joined path.</returns>
-    std::string TRROJANCORE_API join_path(const char *lhs, const char *rhs);
-
-    /// <summary>
-    /// Joins two paths with a <see cref="directory_separator_char" />.
-    /// </summary>
-    /// <param name="lhs"></param>
-    /// <param name="rhs"></param>
-    /// <returns></returns>
-    inline std::string join_path(const std::string& lhs,
-            const std::string& rhs) {
-        return join_path(lhs.c_str(), rhs.c_str());
+    template<class TAction> void pick_file_and_continue(
+            const std::vector<winrt::hstring>& filter,
+            TAction&& action) {
+        winrt::Windows::Storage::Pickers::FileOpenPicker picker;
+        picker.FileTypeFilter().ReplaceAll(filter);
+        pick_file_and_continue(picker, std::forward<TAction>(action));
     }
+#endif /* defined(TRROJAN_FOR_UWP) */
 
+#if defined(TRROJAN_FOR_UWP)
     /// <summary>
-    /// Joins two or more paths with <see cref="directory_separator_char" />s.
+    /// Picks a file using the given <paramref name="picker" /> and dispatches
+    /// the given <paramref name="action" /> accepting the selected file to the
+    ///  given <paramref name="dispatcher" />.
     /// </summary>
-    /// <typeparam name="TRights"></typeparam>
-    /// <param name="lhs"></param>
-    /// <param name="rhs"></param>
-    /// <returns></returns>
-    template<class... TRights>
-    inline std::string join_path(const std::string& lhs, TRights&&... rhs) {
-        return join_path(lhs, join_path(std::forward<TRights>(rhs)...));
+    /// <typeparam name="TAction">The type of the functor to be invoked, which
+    /// must accept a single <see cref="winrt::Windows::Storage::StorageFile" />
+    /// parameter.</typeparam>
+    /// <param name="picker">The file picker used to select the file. The picker
+    /// must have been fully configured according to the callers needs.</param>
+    /// <param name="dispatcher">The dispatcher to which the
+    /// <paramref name="action" /> is queued.</param>
+    /// <param name="action">The action to be invoked for the selected file.
+    /// </param>
+    template<class TAction> void pick_file_and_dispatch(
+            winrt::Windows::Storage::Pickers::FileOpenPicker picker,
+            winrt::Windows::UI::Core::CoreDispatcher dispatcher,
+            TAction&& action) {
+        using namespace winrt::Windows::UI::Core;
+        using namespace winrt::Windows::Foundation;
+        using namespace winrt::Windows::Storage;
+        picker.PickSingleFileAsync().Completed([dispatcher, action](
+                const IAsyncOperation<StorageFile> operation,
+                const AsyncStatus status) {
+            assert(status == AsyncStatus::Completed);
+            if (status == AsyncStatus::Completed) {
+                auto file = operation.get();
+                dispatcher.RunAsync(CoreDispatcherPriority::Normal,
+                    [action, file](void) { action(file); });
+            }
+        });
     }
+#endif /* defined(TRROJAN_FOR_UWP) */
 
+#if defined(TRROJAN_FOR_UWP)
     /// <summary>
-    /// Recursion stop for variadic <see cref="join_path" />.
+    /// Picks a file using the given <paramref name="picker" /> and dispatches
+    /// the given <paramref name="action" /> accepting the selected file to the
+    ///  given <paramref name="dispatcher" />.
     /// </summary>
-    /// <param name="lhs"></param>
-    /// <returns></returns>
-    inline const std::string& join_path(const std::string& lhs) {
-        return lhs;
+    /// <typeparam name="TAction">The type of the functor to be invoked, which
+    /// must accept a single <see cref="winrt::Windows::Storage::StorageFile" />
+    /// parameter.</typeparam>
+    /// <param name="filter">The file filter that is applied to the picker that
+    /// the function creates for selecting files.</param>
+    /// <param name="dispatcher">The dispatcher to which the
+    /// <paramref name="action" /> is queued.</param>
+    /// <param name="action">The action to be invoked for the selected file.
+    /// </param>
+    template<class TAction> void pick_file_and_dispatch(
+            const std::vector<winrt::hstring>& filter,
+            winrt::Windows::UI::Core::CoreDispatcher dispatcher,
+            TAction&& action) {
+        winrt::Windows::Storage::Pickers::FileOpenPicker picker;
+        picker.FileTypeFilter().ReplaceAll(filter);
+        pick_file_and_dispatch(picker, dispatcher,
+            std::forward<TAction>(action));
     }
-
-    /// <summary>
-    /// Recursion stop for variadic <see cref="join_path" />.
-    /// </summary>
-    /// <returns></returns>
-    inline std::string join_path(void) {
-        return std::string("");
-    }
+#endif /* defined(TRROJAN_FOR_UWP) */
 
     /// <summary>
     /// Read a whole binary file at the location designated by
@@ -240,6 +355,16 @@ namespace trrojan {
     /// <returns></returns>
     std::string TRROJANCORE_API read_text_file(const char *path);
 
+#if defined(TRROJAN_FOR_UWP)
+    /// <summary>
+    /// Read a the whole file as text.
+    /// </summary>
+    /// <param name="file"></param>
+    /// <returns></returns>
+    std::string TRROJANCORE_API read_text_file(
+        const winrt::Windows::Storage::StorageFile file);
+#endif /* defined(TRROJAN_FOR_UWP) */
+
     /// <summary>
     /// Read a whole text file at the location designated by
     /// <see cref="path" />.
@@ -254,7 +379,7 @@ namespace trrojan {
     /// Specifies the alternative directory separator character if the
     /// platform uses one. Otherwise, this value is equivalent to
     /// <see cref="trrojan::directory_separator_char" />.
-    /// <summary>
+    /// </summary>
     extern const char TRROJANCORE_API alt_directory_separator_char;
 
     /// <summary>
@@ -287,6 +412,6 @@ namespace trrojan {
     /// </summary>
     extern const char TRROJANCORE_API volume_separator_char;
 
-}
+} /* namespace trrojan */
 
 #include "trrojan/io.inl"

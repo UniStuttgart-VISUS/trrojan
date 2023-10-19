@@ -3,12 +3,23 @@
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
 // <author>Michael Becher</author>
+// <author>Christoph Müller</author>
 
 #if defined(TRROJAN_FOR_UWP)
 #include "app.h"
 
+#include <atomic>
+
+#include <winrt/windows.foundation.collections.h>
+#include <winrt/windows.storage.pickers.h>
+
+// Does not work:
+//#include <WindowsStorageCOM.h>
+//#include <pplawait.h>
+
 #include "trrojan/executive.h"
 #include "trrojan/io.h"
+#include "trrojan/on_exit.h"
 #include "trrojan/system_factors.h"
 
 
@@ -16,51 +27,54 @@
  * App::Run
  */
 void App::Run(void) {
-    trrojan::cmd_line cmd_line;
-    trrojan::cool_down cool_down;
-    std::shared_ptr<trrojan::power_collector> power_collector;
-
+    std::atomic<State> state(State::Idle);
     auto window = CoreWindow::GetForCurrentThread();
+    auto dispatcher = window.Dispatcher();
+
     window.Activate();
 
-    // Generate the file name of the output file.
-    const auto storage_folder = trrojan::get_local_storage_folder();
-    const auto current_time = trrojan::to_string<char>(std::chrono::system_clock::now(), true);
-    const auto device = trrojan::system_factors::instance().gaming_device().get<std::string>();
+    while (state.load(std::memory_order::memory_order_consume) != State::Done) {
+        switch (state.load(std::memory_order::memory_order_consume)) {
+            case State::Idle:
+                // In idle state, we ask the user for a new test script to run.
+                state = State::Benchmarking;
+                trrojan::pick_file_and_continue({ L".trroll" },
+                        [&](StorageFile file) {
+                    if (file) {
+                        // If the user provided a test script, we run it.
+                        on_exit([&state](void) { state = State::Idle; });
+                        const auto trroll_path = winrt::to_string(file.Path());
+                        const auto log_base = GetBaseLogPath(trroll_path);
 
-    // Add the output directory and the log directory to the command line.
-    cmd_line.push_back("--output");
-    cmd_line.push_back(storage_folder + device + "_" + current_time + ".csv");
-    cmd_line.push_back("--log");
-    cmd_line.push_back(storage_folder + device + "_" + current_time + ".log");
+                        // Build the command line.
+                        trrojan::cmd_line cmd_line;
+                        cmd_line.push_back("--output");
+                        cmd_line.push_back(log_base + ".csv");
+                        cmd_line.push_back("--log");
+                        cmd_line.push_back(log_base + ".log");
 
-    // Configure the executive.
-    trrojan::executive exe(window);
-    exe.load_plugins(cmd_line);
+                        // Configure the executive.
+                        trrojan::executive exe(window);
+                        exe.load_plugins(cmd_line);
 
-    auto output = trrojan::open_output(cmd_line);
+                        // Prepare the global parameters for the test run.
+                        auto output = trrojan::open_output(cmd_line);
+                        trrojan::cool_down cool_down;
+                        std::shared_ptr<trrojan::power_collector> power_collector;
 
-    std::string trroll_path;
-    trroll_path = trrojan::join_path(trrojan::executive::executable_directory(),
-        "Assets",
-        "demo_d12.trroll");
-    exe.trroll(trroll_path, *output, cool_down, power_collector);
+                        // Run the test.
+                        exe.trroll(file, *output, cool_down, power_collector);
 
-    //// Copy from local folder to usb pen drive?
-    //auto csv_output{ localFolder.GetFileAsync(trrojan::from_utf8(device + "_" + current_time + ".csv")).get() };
-    //winrt::Windows::Storage::StorageFolder removableFolder{ winrt::Windows::Storage::KnownFolders::RemovableDevices() };
-    //auto folders{ removableFolder.GetFoldersAsync().get() };
-    ////Windows::Foundation::Collections::IVectorView<Windows::Storage::StorageFolder> itemsInFolder{
-    //// };
-    //auto folder_cnt = folders.Size();
+                    } else {
+                        // If the user did not provide a test script, we exit.
+                        state = State::Done;
+                    }
+                });
+                break;
+        }
 
-    //if (folder_cnt > 0) {
-    //    auto folder = folders.GetAt(0);
-    //    auto copy_csv_output = csv_output.CopyAsync(folder);
-    //}
-
-    auto dispatcher = window.Dispatcher();
-    dispatcher.ProcessEvents(CoreProcessEventsOption::ProcessOneAndAllPending);
+        dispatcher.ProcessEvents(CoreProcessEventsOption::ProcessOneAndAllPending);
+    }
 }
 
 
@@ -162,5 +176,20 @@ void App::Run(void) {
 //    m_offset.x = -BlockSize / 2.0f;
 //    m_offset.y = -BlockSize / 2.0f;
 //}
+
+
+/*
+ * App::GetBaseLogPath
+ */
+std::string App::GetBaseLogPath(const std::string& trroll) {
+    const auto& factors = trrojan::system_factors::instance();
+    const auto device = factors.gaming_device().get<std::string>();
+    const auto now = std::chrono::system_clock::now();
+    const auto storage_folder = trrojan::get_local_storage_folder();
+    const auto timestamp = trrojan::to_string<char>(now, true);
+    const auto trroll_file = trrojan::get_file_name(trroll, false);
+    const auto base = trroll_file + "_" + device + "_" + timestamp;
+    return trrojan::combine_path(storage_folder, base);
+}
 
 #endif /* defined(TRROJAN_FOR_UWP) */

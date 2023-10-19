@@ -20,6 +20,7 @@
 
 #if defined(TRROJAN_FOR_UWP)
 #include <winrt/windows.ui.core.h>
+#include <winrt/windows.storage.h>
 #endif /* defined(TRROJAN_FOR_UWP) */
 
 #include "trrojan/cool_down.h"
@@ -41,6 +42,11 @@ namespace trrojan {
     class TRROJANCORE_API executive {
 
     public:
+
+        /// <summary>
+        /// Defines the type used to pass a troll file to the executive.
+        /// </summary>
+        typedef trroll_parser::troll_input_type troll_input_type;
 
 #if defined(TRROJAN_FOR_UWP)
         /// <summary>
@@ -157,9 +163,10 @@ namespace trrojan {
         /// Runs the benchmarks in the given TRROLL script writing the results
         /// to the given <paramref name="output" />.
         /// </summary>
-        void trroll(const std::string& path, output_base& output,
-            const cool_down& coolDown,
-            power_collector::pointer powerCollector);
+        void trroll(const troll_input_type& path,
+            output_base& output,
+            const cool_down& cool_down,
+            power_collector::pointer power_collector);
 
         executive operator =(const executive&) = delete;
 

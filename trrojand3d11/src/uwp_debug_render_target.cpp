@@ -171,7 +171,6 @@ void trrojan::d3d11::uwp_debug_render_target::present(void) {
 #endif // defined(CREATE_D2D_OVERLAY)
     }
 
-
     m_window.get().Dispatcher().ProcessEvents(winrt::Windows::UI::Core::CoreProcessEventsOption::ProcessAllIfPresent);
 
     if (this->swapChain != nullptr) {

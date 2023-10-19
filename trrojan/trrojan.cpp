@@ -11,7 +11,7 @@
 
 #if defined(TRROJAN_FOR_UWP)
 #include <Windows.h>
-#include <winrt/Windows.ApplicationModel.Core.h>
+#include <winrt/windows.applicationmodel.core.h>
 #endif /* defined(TRROJAN_FOR_UWP) */
 
 #include "trrojan/cmd_line.h"

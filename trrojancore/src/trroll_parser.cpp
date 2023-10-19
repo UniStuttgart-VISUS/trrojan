@@ -1,8 +1,8 @@
-/// <copyright file="trroll_parser.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Christoph Müller</author>
+ï»¿// <copyright file="trroll_parser.cpp" company="Visualisierungsinstitut der UniversitÃ¤t Stuttgart">
+// Copyright Â© 2016 - 2023 Visualisierungsinstitut der UniversitÃ¤t Stuttgart. Alle Rechte vorbehalten.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Christoph MÃ¼ller</author>
 
 #include "trrojan/trroll_parser.h"
 
@@ -18,7 +18,7 @@
  * trrojan::trroll_parser::parse
  */
 std::vector<trrojan::trroll_parser::benchmark_configs>
-trrojan::trroll_parser::parse(const std::string& path) {
+trrojan::trroll_parser::parse(const troll_input_type& path) {
     static const char NF[] = { ';' };
     static const char NL[] = { '\r', '\n' };
     static const char CL = '#';

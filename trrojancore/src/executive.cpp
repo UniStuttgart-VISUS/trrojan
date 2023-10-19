@@ -129,8 +129,8 @@ trrojan::plugin trrojan::executive::find_plugin(const std::string& name) {
  * trrojan::executive::javascript
  */
 void trrojan::executive::javascript(const std::string& path,
-        output_base& output, const cool_down& coolDown) {
-    scripting_host host(output, coolDown);
+        output_base& output, const cool_down& cool_down) {
+    scripting_host host(output, cool_down);
     host.run_script(*this, path);
 }
 
@@ -254,8 +254,8 @@ void trrojan::executive::load_plugins(const cmd_line& cmdLine) {
 void trrojan::executive::run(benchmark_base& benchmark,
         configuration_set configs,
         output_base& output,
-        const cool_down& coolDown,
-        power_collector::pointer powerCollector) {
+        const cool_down& cool_down,
+        power_collector::pointer power_collector) {
     // Note: This method is called from the scripting interface and possibly
     // from other places we do not yet know. Therefore, we do not optimise
     // the order of the parameters, but keep them as they have been passed
@@ -263,7 +263,7 @@ void trrojan::executive::run(benchmark_base& benchmark,
 
     // Inject the power collector into all configurations.
     configs.replace_factor(factor::from_manifestations(
-        power_collector::factor_name, powerCollector));
+        power_collector::factor_name, power_collector));
 
 #if defined(TRROJAN_FOR_UWP)
     // Inject the core window into all UWP configurations.
@@ -284,7 +284,7 @@ void trrojan::executive::run(benchmark_base& benchmark,
             benchmark.run(configs, [&output](result&& r) {
                 output << r;
                 return true;
-            }, coolDown);
+            }, cool_down);
         }
     }
 
@@ -321,23 +321,23 @@ void trrojan::executive::run(benchmark_base& benchmark,
 void trrojan::executive::run(const benchmark& benchmark,
         const configuration_set& configs,
         output_base& output,
-        const cool_down& coolDown,
-        power_collector::pointer powerCollector) {
+        const cool_down& cool_down,
+        power_collector::pointer power_collector) {
     if (benchmark == nullptr) {
         throw std::runtime_error("The benchmark to run must not be nullptr.");
     }
 
-    this->run(*benchmark, configs, output, coolDown, powerCollector);
+    this->run(*benchmark, configs, output, cool_down, power_collector);
 }
 
 
 /*
  * trrojan::executive::trroll
  */
-void trrojan::executive::trroll(const std::string& path,
+void trrojan::executive::trroll(const troll_input_type& path,
         output_base& output,
-        const cool_down& coolDown,
-        power_collector::pointer powerCollector) {
+        const cool_down& cool_down,
+        power_collector::pointer power_collector) {
     typedef trroll_parser::benchmark_configs bcs;
     auto bcss = trroll_parser::parse(path);
     std::vector<benchmark> benchmarks;
@@ -383,7 +383,7 @@ void trrojan::executive::trroll(const std::string& path,
                     b.benchmark.c_str(), b.plugin.c_str());
 
                 (**it).optimise_order(b.configs);
-                this->run(*it, b.configs, output, coolDown, powerCollector);
+                this->run(*it, b.configs, output, cool_down, power_collector);
 
             } else {
                 log::instance().write(log_level::warning, "No benchmark named "

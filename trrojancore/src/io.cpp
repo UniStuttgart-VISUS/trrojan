@@ -15,11 +15,14 @@
 #include <streambuf>
 
 #if defined(TRROJAN_FOR_UWP)
+#include <winrt/windows.foundation.h>
 #include <winrt/windows.applicationModel.core.h>
 #include <winrt/windows.storage.h>
+#include <winrt/windows.storage.streams.h>
 #endif /* defined(TRROJAN_FOR_UWP) */
 
 #include "trrojan/executive.h"
+#include "trrojan/on_exit.h"
 
 
 /*
@@ -104,33 +107,6 @@ std::string TRROJANCORE_API trrojan::get_path(const std::string& file_path) {
 
 
 /*
- * trrojan::join_path
- */
-std::string trrojan::join_path(const char *lhs, const char *rhs) {
-    if ((lhs == nullptr) && (rhs == nullptr)) {
-        return std::string();
-
-    } else if (lhs == nullptr) {
-        return rhs;
-
-    } else if (rhs == nullptr) {
-        return lhs;
-
-    } else {
-        std::string retval(lhs);
-
-        if (retval.empty() || (retval.back() != directory_separator_char)) {
-            retval += directory_separator_char;
-        }
-
-        retval += rhs;
-
-        return retval;
-    }
-}
-
-
-/*
  * trrojan::read_binary_file
  */
 std::vector<std::uint8_t> TRROJANCORE_API trrojan::read_binary_file(
@@ -186,6 +162,45 @@ std::string TRROJANCORE_API trrojan::read_text_file(const char *path) {
     }
 }
 
+
+#if defined(TRROJAN_FOR_UWP)
+/*
+ * trrojan::read_text_file
+ */
+std::string trrojan::read_text_file(
+        const winrt::Windows::Storage::StorageFile file) {
+    using namespace winrt::Windows::Storage::Streams;
+
+    auto evt = ::CreateEvent(nullptr, FALSE, FALSE, nullptr);
+    if (evt == NULL) {
+        throw std::system_error(::GetLastError(), std::system_category());
+    }
+    on_exit([evt](void) { ::CloseHandle(evt); });
+
+    std::string retval;
+    on_completed(file.OpenReadAsync(), [&retval, evt](IRandomAccessStream s) {
+        try {
+            auto size = static_cast<std::uint32_t>(s.Size());
+            auto buffer = Buffer(size);
+
+            on_completed(s.ReadAsync(buffer, size, InputStreamOptions::None),
+                    [&retval, evt](IBuffer b) {
+                on_exit([evt](void) { ::SetEvent(evt); });
+                auto d = reinterpret_cast<const char *>(b.data());
+                retval = std::string(d, d + b.Length());
+            });
+
+        } catch (...) {
+            ::SetEvent(evt);
+            throw;
+        }
+    });
+
+    // F*#$%! you, STA thread ...
+    ::WaitForSingleObject(evt, INFINITE);
+    return retval;
+}
+#endif /* defined(TRROJAN_FOR_UWP) */
 
 
 /*

@@ -1,8 +1,8 @@
-/// <copyright file="text.inl" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Christoph Müller</author>
+ï»¿// <copyright file="text.inl" company="Visualisierungsinstitut der UniversitÃ¤t Stuttgart">
+// Copyright Â© 2016 - 2023 Visualisierungsinstitut der UniversitÃ¤t Stuttgart. Alle Rechte vorbehalten.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Christoph MÃ¼ller</author>
 
 
 namespace trrojan {
@@ -58,8 +58,10 @@ template<class... P> std::string trrojan::join(const std::string& sep,
 /*
  * trrojan::join
  */
-template<class I> std::string trrojan::join(const std::string& sep,
-        I begin, I end) {
+template<class I>
+typename std::enable_if<!std::is_same<std::string,
+    typename std::decay<I>::type>::value, std::string>::type
+trrojan::join(const std::string& sep, I begin, I end) {
     bool isFirst = true;
     std::string retval;
 

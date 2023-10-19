@@ -400,8 +400,8 @@ ATL::CComPtr<ID3D12Resource> trrojan::d3d12::create_texture(
 ATL::CComPtr<ID3D12Resource> trrojan::d3d12::create_texture(
         ID3D12Device *device,
         const UINT64 width,
-        const UINT64 height,
-        const UINT64 depth,
+        const UINT height,
+        const UINT16 depth,
         const DXGI_FORMAT format,
         const D3D12_RESOURCE_FLAGS flags,
         const D3D12_RESOURCE_STATES state) {

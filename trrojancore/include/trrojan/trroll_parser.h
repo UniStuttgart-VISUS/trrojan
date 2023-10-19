@@ -1,8 +1,8 @@
-/// <copyright file="trroll_parser.h" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Christoph Müller</author>
+ï»¿// <copyright file="trroll_parser.h" company="Visualisierungsinstitut der UniversitÃ¤t Stuttgart">
+// Copyright Â© 2016 - 2023 Visualisierungsinstitut der UniversitÃ¤t Stuttgart. Alle Rechte vorbehalten.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Christoph MÃ¼ller</author>
 
 #pragma once
 
@@ -26,13 +26,27 @@ namespace trrojan {
 
     public:
 
+        /// <summary>
+        /// The benchmark along with the configurations that should be run
+        /// on it.
+        /// </summary>
         struct benchmark_configs {
             std::string plugin;
             std::string benchmark;
             configuration_set configs;
         };
 
-        static std::vector<benchmark_configs> parse(const std::string& path);
+        /// <summary>
+        /// Defines the type used to pass a troll file to the executive.
+        /// </summary>
+#if defined(TRROJAN_FOR_UWP)
+        typedef winrt::Windows::Storage::StorageFile troll_input_type;
+#else /* defined(TRROJAN_FOR_UWP) */
+        typedef std::string troll_input_type;
+#endif /* defined(TRROJAN_FOR_UWP) */
+
+        static std::vector<benchmark_configs> parse(
+            const troll_input_type& path);
 
         trroll_parser(void) = delete;
 

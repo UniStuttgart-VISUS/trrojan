@@ -7,17 +7,8 @@
 #if defined(TRROJAN_FOR_UWP)
 #include <windows.h>
 
-#include <winrt/Windows.Foundation.h>
-#include <winrt/Windows.Foundation.Collections.h>
-#include <winrt/Windows.ApplicationModel.Core.h>
+#include <winrt/windows.applicationmodel.core.h>
 #include <winrt/windows.storage.h>
-#include <winrt/Windows.UI.Core.h>
-#include <winrt/Windows.UI.Composition.h>
-#include <winrt/Windows.UI.Input.h>
-
-#if (defined(NTDDI_WIN10_RS3) && (NTDDI_VERSION >= NTDDI_WIN10_RS3))
-#include <Gamingdeviceinformation.h>
-#endif /* (defined(NTDDI_WIN10_RS3) && (NTDDI_VERSION >= NTDDI_WIN10_RS3)) */
 
 
 /// <summary>
@@ -29,15 +20,15 @@ class App : public winrt::implements<App,
 
 public:
 
-    typedef winrt::Windows::UI::Core::CoreDispatcher CoreDispatcher;
-    typedef winrt::Windows::UI::Core::CoreProcessEventsOption
-        CoreProcessEventsOption;
-    typedef winrt::Windows::ApplicationModel::Core::CoreApplicationView
-        CoreApplicationView;
-    typedef winrt::Windows::UI::Core::CoreWindow CoreWindow;
-    typedef winrt::Windows::ApplicationModel::Core::IFrameworkView
-        IFrameworkView;
-    typedef winrt::Windows::UI::Core::PointerEventArgs PointerEventArgs;
+    template<class R> using IAsyncOperation = winrt::Windows::Foundation::IAsyncOperation<R>;
+    using AsyncStatus = winrt::Windows::Foundation::AsyncStatus;
+    using CoreDispatcher = winrt::Windows::UI::Core::CoreDispatcher;
+    using CoreProcessEventsOption = winrt::Windows::UI::Core::CoreProcessEventsOption;
+    using CoreApplicationView = winrt::Windows::ApplicationModel::Core::CoreApplicationView;
+    using CoreWindow = winrt::Windows::UI::Core::CoreWindow;
+    using IFrameworkView =winrt::Windows::ApplicationModel::Core::IFrameworkView;
+    using PointerEventArgs =winrt::Windows::UI::Core::PointerEventArgs;
+    using StorageFile = winrt::Windows::Storage::StorageFile;
 
     inline IFrameworkView CreateView(void) noexcept {
         return *this;
@@ -60,6 +51,14 @@ public:
     //void AddVisual(float2 const point);
 
 private:
+
+    enum class State {
+        Done = 0x0000,
+        Idle = 0x0001,
+        Benchmarking = 0x0002
+    };
+
+    static std::string GetBaseLogPath(const std::string& trroll);
 
     //CompositionTarget m_target{ nullptr };
     //VisualCollection m_visuals{ nullptr };

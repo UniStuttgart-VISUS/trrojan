@@ -1,8 +1,8 @@
-/// <copyright file="text.h" company="Visualisierungsinstitut der Universit�t Stuttgart">
-/// Copyright � 2016 - 2018 Visualisierungsinstitut der Universit�t Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Christoph M�ller</author>
+﻿// <copyright file="text.h" company="Visualisierungsinstitut der Universität Stuttgart">
+// Copyright © 2016 - 2023 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Christoph Müller</author>
 
 #pragma once
 
@@ -56,8 +56,10 @@ namespace trrojan {
     /// <summary>
     /// Joins a range of strings with the given separator between them.
     /// </summary>
-    template<class I> std::string join(
-        const std::string& sep, I begin, I end);
+    template<class I>
+    typename std::enable_if<!std::is_same<std::string,
+        typename std::decay<I>::type>::value, std::string>::type
+    join(const std::string& sep, I begin, I end);
 
     /// <summary>
     /// Parses the given string <paramref name="str" /> as type
