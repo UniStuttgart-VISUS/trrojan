@@ -89,6 +89,19 @@ void App::Run(void) {
                 exe.trroll(trroll_file, *output, cool_down, power_collector);
 
                 // TODO: Prompt user to copy output and log.
+#if 0
+                auto csv_output{ localFolder.GetFileAsync(trrojan::from_utf8(device + "_" + current_time + ".csv")).get() };
+                winrt::Windows::Storage::StorageFolder removableFolder{ winrt::Windows::Storage::KnownFolders::RemovableDevices() };
+                auto folders{ removableFolder.GetFoldersAsync().get() };
+                //Windows::Foundation::Collections::IVectorView<Windows::Storage::StorageFolder> itemsInFolder{
+                // };
+                auto folder_cnt = folders.Size();
+
+                if (folder_cnt > 0) {
+                    auto folder = folders.GetAt(0);
+                    auto copy_csv_output = csv_output.CopyAsync(folder);
+                }
+#endif
                 } break;
         }
 
