@@ -1,9 +1,8 @@
 ﻿# CMakeLists.txt
 # Copyright © 2016 - 2023 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
 
-cmake_minimum_required(VERSION 3.15.0)
+cmake_minimum_required(VERSION 3.24.0)
 include(CMakeDependentOption)
-include(GNUInstallDirs)
 
 
 project(TRRojan)
