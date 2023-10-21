@@ -1,8 +1,9 @@
-// <copyright file="two_pass_volume_benchmark.cpp" company="Visualisierungsinstitut der Universit�t Stuttgart">
-// Copyright � 2016 - 2022 Visualisierungsinstitut der Universit�t Stuttgart. Alle Rechte vorbehalten.
+﻿// <copyright file="two_pass_volume_benchmark.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
+// Copyright © 2016 - 2023 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
-// <author>Christoph M�ller</author>
+// <author>Christoph Müller</author>
+
 
 #include "trrojan/d3d11/two_pass_volume_benchmark.h"
 
@@ -10,6 +11,7 @@
 
 #include <glm/ext.hpp>
 
+#include "trrojan/io.h"
 #include "trrojan/log.h"
 
 #include "trrojan/d3d11/plugin.h"
@@ -38,6 +40,9 @@ trrojan::result trrojan::d3d11::two_pass_volume_benchmark::on_run(
     static const auto DATA_STAGE = static_cast<rendering_technique::shader_stages>(
         rendering_technique::shader_stage::compute);
 
+#if defined(TRROJAN_FOR_UWP)
+    const auto base_path = plugin::get_directory();
+#endif /* defined(TRROJAN_FOR_UWP) */
     glm::vec3 bbe, bbs;
     auto cntCpuIterations = static_cast<std::uint32_t>(0);
     trrojan::timer cpuTimer;
@@ -72,9 +77,14 @@ trrojan::result trrojan::d3d11::two_pass_volume_benchmark::on_run(
 
         // Rebuild the ray computation technique.
         {
-            auto vss = d3d11::plugin::load_resource(
+#if defined(TRROJAN_FOR_UWP)
+            const auto vss = read_binary_file(combine_path(base_path,
+                "trrojand3d11", "d3d11", "VolumeRayPassVertexShader.cso"));
+#else /* defined(TRROJAN_FOR_UWP) */
+            const auto vss = d3d11::plugin::load_resource(
                 MAKEINTRESOURCE(VOLUME_RAY_PASS_VERTEX_SHADER),
                 _T("SHADER"));
+#endif /* defined(TRROJAN_FOR_UWP) */
             auto vs = create_vertex_shader(dev, vss);
 
             ATL::CComPtr<ID3D11Buffer> ib;
@@ -82,9 +92,14 @@ trrojan::result trrojan::d3d11::two_pass_volume_benchmark::on_run(
             auto ils = create_cube(dev, &vb, &ib);
             auto il = create_input_layout(dev, ils, vss);
 
-            auto pss = d3d11::plugin::load_resource(
+#if defined(TRROJAN_FOR_UWP)
+            const auto pss = read_binary_file(combine_path(base_path,
+                "trrojand3d11", "d3d11", "VolumeRayPassPixelShader.cso"));
+#else /* defined(TRROJAN_FOR_UWP) */
+            const auto pss = d3d11::plugin::load_resource(
                 MAKEINTRESOURCE(VOLUME_RAY_PASS_PIXEL_SHADER),
                 _T("SHADER"));
+#endif /* defined(TRROJAN_FOR_UWP) */
             auto ps = create_pixel_shader(dev, pss);
 
             auto stride = static_cast<UINT>(sizeof(DirectX::XMFLOAT3));
@@ -143,8 +158,13 @@ trrojan::result trrojan::d3d11::two_pass_volume_benchmark::on_run(
 
         // Rebuild the raycasting technique.
         {
-            auto src = d3d11::plugin::load_resource(MAKEINTRESOURCE(
+#if defined(TRROJAN_FOR_UWP)
+            const auto src = read_binary_file(combine_path(base_path,
+                "trrojand3d11", "d3d11", "VolumePassComputeShader.cso"));
+#else /* defined(TRROJAN_FOR_UWP) */
+            const auto src = d3d11::plugin::load_resource(MAKEINTRESOURCE(
                 VOLUME_PASS_COMPUTE_SHADER), _T("SHADER"));
+#endif /* defined(TRROJAN_FOR_UWP) */
             auto cs = create_compute_shader(dev, src);
             auto res = rendering_technique::shader_resources();
             res.sampler_states.push_back(this->linear_sampler);

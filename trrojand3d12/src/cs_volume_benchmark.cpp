@@ -9,6 +9,7 @@
 #include <limits>
 #include <memory>
 
+#include "trrojan/io.h"
 #include "trrojan/log.h"
 
 #include "trrojan/d3d12/device.h"
@@ -73,9 +74,17 @@ void trrojan::d3d12::cs_volume_benchmark::on_device_switch(device& device) {
     // (re-)create the PSO, which is independent from the data and the
     // configuration being run.
     {
+#if defined(TRROJAN_FOR_UWP)
+        const auto shader = read_binary_file(combine_path(
+            plugin::get_directory(),
+            "trrojand3d12",
+            "d3d12",
+            "SinglePassVolumeComputeShader.cso"));
+#else /* defined(TRROJAN_FOR_UWP) */
         const auto shader = plugin::load_resource(
             MAKEINTRESOURCE(SINGLE_PASS_VOLUME_COMPUTE_SHADER),
             _T("SHADER"));
+#endif /* defined(TRROJAN_FOR_UWP) */
 
         log::instance().write_line(log_level::debug, "Creating compute "
             "pipeline for single-pass compute shader ...");

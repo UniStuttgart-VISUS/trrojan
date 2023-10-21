@@ -867,7 +867,6 @@ trrojan::d3d11::sphere_benchmark::get_technique(ID3D11Device *device,
         }
 #endif /* defined(TRROJAN_FOR_UWP) */
 
-
         if (is_technique(shaderCode, SPHERE_TECHNIQUE_QUAD_INST)) {
             assert(isRay);
             pt = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP;

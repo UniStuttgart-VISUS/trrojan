@@ -370,7 +370,9 @@ trrojan::result trrojan::d3d12::volume_benchmark_base::on_run(
 
         if (this->_tex_volume == nullptr) {
             this->_tex_volume = this->load_volume(config, device,
-                cmd_list, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE,
+                cmd_list,
+                D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+                //D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE,
                 this->_volume_info, staging_buffers.front());
             this->calc_bounding_box(this->_volume_bbox.front(),
                 this->_volume_bbox.back());
@@ -378,7 +380,9 @@ trrojan::result trrojan::d3d12::volume_benchmark_base::on_run(
 
         if (this->_tex_xfer_func == nullptr) {
             this->_tex_xfer_func = this->load_xfer_func(config, device,
-                cmd_list, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE,
+                cmd_list,
+                D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+                //D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE,
                 staging_buffers.back());
         }
 

@@ -44,6 +44,7 @@ namespace d3d11 {
         /// <returns>The path to the plugin DLL.</returns>
         static std::string get_location(void);
 
+#if !defined(_WIN32)
         /// <summary>
         /// Load a resource from the Direct3D plugin's DLL.
         /// </summary>
@@ -56,32 +57,18 @@ namespace d3d11 {
         /// <returns>The content of the resource.</returns>
         static std::vector<std::uint8_t> load_resource(LPCTSTR name,
             LPCTSTR type);
+#endif /* !defined(_WIN32) */
 
         /// <summary>
         /// Initialises a new instance.
         /// </summary>
         inline plugin(void) : trrojan::plugin_base("d3d11") { }
 
-//        inline plugin(
-//#ifdef _UWP
-//            winrt::Windows::UI::Core::CoreWindow const& window
-//#endif
-//        ) : trrojan::plugin_base("d3d11")
-//#ifdef _UWP
-//            , m_window(window) 
-//#endif
-//        { }
-
         virtual ~plugin(void);
 
         virtual size_t create_benchmarks(benchmark_list& dst) const;
 
         virtual size_t create_environments(environment_list& dst) const;
-
-#ifdef _UWP
-        // Cached reference to the Window.
-        winrt::agile_ref<winrt::Windows::UI::Core::CoreWindow> m_window{ nullptr };
-#endif
 
     };
 

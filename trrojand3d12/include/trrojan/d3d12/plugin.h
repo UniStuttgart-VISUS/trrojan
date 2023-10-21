@@ -43,6 +43,7 @@ namespace d3d12 {
         /// <returns>The path to the plugin DLL.</returns>
         static std::string get_location(void);
 
+#if !defined(TRROJAN_FOR_UWP)
         /// <summary>
         /// Load a resource from the Direct3D plugin's DLL.
         /// </summary>
@@ -55,6 +56,7 @@ namespace d3d12 {
         /// <returns>The content of the resource.</returns>
         static std::vector<std::uint8_t> load_resource(LPCTSTR name,
             LPCTSTR type);
+#endif /* !defined(TRROJAN_FOR_UWP) */
 
         inline plugin(void) : trrojan::plugin_base("d3d12") { }
 

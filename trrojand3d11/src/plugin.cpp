@@ -79,6 +79,7 @@ std::string trrojan::d3d11::plugin::get_location(void) {
 }
 
 
+#if !defined(_WIN32)
 /*
  * trrojan::d3d11::plugin::load_resource
  */
@@ -111,8 +112,9 @@ std::vector<std::uint8_t> trrojan::d3d11::plugin::load_resource(LPCTSTR name,
 
     UnlockResource(hLock);
 
-    return std::move(retval);
+    return retval;
 }
+#endif /* !defined(_WIN32) */
 
 
 /*

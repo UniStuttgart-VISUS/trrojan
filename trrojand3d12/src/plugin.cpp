@@ -6,6 +6,8 @@
 
 #include "trrojan/d3d12/plugin.h"
 
+#include <Windows.h>
+
 #include "trrojan/io.h"
 
 #include "trrojan/d3d12/cs_volume_benchmark.h"
@@ -80,6 +82,7 @@ std::string trrojan::d3d12::plugin::get_location(void) {
 }
 
 
+#if !defined(TRROJAN_FOR_UWP)
 /*
  * trrojan::d3d12::plugin::load_resource
  */
@@ -113,6 +116,7 @@ std::vector<std::uint8_t> trrojan::d3d12::plugin::load_resource(LPCTSTR name,
 
     return retval;
 }
+#endif /* !defined(TRROJAN_FOR_UWP) */
 
 
 /*
