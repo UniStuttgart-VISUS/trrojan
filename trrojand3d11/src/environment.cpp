@@ -1,8 +1,8 @@
-/// <copyright file="environment.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Christoph Müller</author>
+ï»¿// <copyright file="environment.cpp" company="Visualisierungsinstitut der UniversitÃ¤t Stuttgart">
+// Copyright Â© 2016 - 2023 Visualisierungsinstitut der UniversitÃ¤t Stuttgart. Alle Rechte vorbehalten.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Christoph MÃ¼ller</author>
 
 #include "trrojan/d3d11/environment.h"
 
@@ -59,9 +59,9 @@ void trrojan::d3d11::environment::on_deactivate(void) { }
  */
 void trrojan::d3d11::environment::on_finalise(void) {
     this->_devices.clear();
-#ifndef _UWP
+#if defined(TRROJAN_FOR_UWP)
     ::CoUninitialize();
-#endif
+#endif /* defined(TRROJAN_FOR_UWP) */
 }
 
 
@@ -80,14 +80,13 @@ void trrojan::d3d11::environment::on_initialise(const cmd_line& cmdLine) {
         cmdLine.begin(), cmdLine.end());
     std::set<std::pair<UINT, UINT>> pciIds;
 
+#if defined(TRROJAN_FOR_UWP)
     /* Initialise COM (for WIC). */
-#ifndef _UWP
-
     hr = ::CoInitialize(nullptr);
     if (FAILED(hr)) {
         throw ATL::CAtlException(hr);
     }
-#endif
+#endif /* defined(TRROJAN_FOR_UWP) */
 
     /* Create DXGI factory. */
     hr = ::CreateDXGIFactory1(IID_IDXGIFactory1, reinterpret_cast<void **>(
@@ -96,11 +95,11 @@ void trrojan::d3d11::environment::on_initialise(const cmd_line& cmdLine) {
         throw ATL::CAtlException(hr);
     }
 
-#if (defined(DEBUG) || defined(_DEBUG))
+#if (!defined(TRROJAN_FOR_UWP) && (defined(DEBUG) || defined(_DEBUG)))
     if (supports_debug_layer()) {
         deviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
     }
-#endif /* (defined(DEBUG) || defined(_DEBUG)) */
+#endif /* (!defined(TRROJAN_FOR_UWP) && (defined(DEBUG) || defined(_DEBUG))) */
 
     for (UINT a = 0; SUCCEEDED(hr) || (hr != DXGI_ERROR_NOT_FOUND); ++a) {
         ATL::CComPtr<IDXGIAdapter> adapter;
