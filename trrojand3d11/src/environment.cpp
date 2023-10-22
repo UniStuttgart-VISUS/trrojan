@@ -80,7 +80,7 @@ void trrojan::d3d11::environment::on_initialise(const cmd_line& cmdLine) {
         cmdLine.begin(), cmdLine.end());
     std::set<std::pair<UINT, UINT>> pciIds;
 
-#if defined(TRROJAN_FOR_UWP)
+#if !defined(TRROJAN_FOR_UWP)
     /* Initialise COM (for WIC). */
     hr = ::CoInitialize(nullptr);
     if (FAILED(hr)) {
@@ -95,11 +95,11 @@ void trrojan::d3d11::environment::on_initialise(const cmd_line& cmdLine) {
         throw ATL::CAtlException(hr);
     }
 
-#if (!defined(TRROJAN_FOR_UWP) && (defined(DEBUG) || defined(_DEBUG)))
+#if (defined(DEBUG) || defined(_DEBUG))
     if (supports_debug_layer()) {
         deviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
     }
-#endif /* (!defined(TRROJAN_FOR_UWP) && (defined(DEBUG) || defined(_DEBUG))) */
+#endif /* (defined(DEBUG) || defined(_DEBUG)) */
 
     for (UINT a = 0; SUCCEEDED(hr) || (hr != DXGI_ERROR_NOT_FOUND); ++a) {
         ATL::CComPtr<IDXGIAdapter> adapter;
