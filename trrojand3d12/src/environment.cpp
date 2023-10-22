@@ -1,5 +1,5 @@
 ﻿// <copyright file="environment.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2016 - 2022 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+// Copyright © 2016 - 2023 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
 // <author>Christoph Müller</author>
@@ -177,7 +177,7 @@ void trrojan::d3d12::environment::on_initialise(const cmd_line& cmdLine) {
 
             if (SUCCEEDED(hr)) {
                 if ((desc.VendorId == 0x1414) && (desc.DeviceId == 0x8c)
-                    && !isBasicRender) {
+                        && !isBasicRender) {
                     // Skip Microsoft's software emulation (cf.
                     // https://msdn.microsoft.com/en-us/library/windows/desktop/bb205075(v=vs.85).aspx)
                     log::instance().write_line(log_level::information,
