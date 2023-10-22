@@ -1,8 +1,8 @@
-// <copyright file="device.h" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2016 - 2022 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+ï»¿// <copyright file="device.h" company="Visualisierungsinstitut der UniversitÃ¤t Stuttgart">
+// Copyright Â© 2016 - 2023 Visualisierungsinstitut der UniversitÃ¤t Stuttgart. Alle Rechte vorbehalten.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
-// <author>Christoph Müller</author>
+// <author>Christoph MÃ¼ller</author>
 
 #pragma once
 
@@ -15,6 +15,7 @@
 #include <dxgi1_4.h>
 
 #include "trrojan/device.h"
+#include "trrojan/lazy.h"
 
 #include "trrojan/d3d12/export.h"
 
@@ -136,7 +137,7 @@ namespace d3d12 {
         ATL::CComPtr<IDXGIFactory4> _dxgi_factory;
         ATL::CComPtr<ID3D12Fence> _fence;
         std::atomic<UINT64> _next_fence;
-
     };
-}
-}
+
+} /* namespace d3d12 */
+} /* namespace d3d11 */

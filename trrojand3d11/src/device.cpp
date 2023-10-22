@@ -1,8 +1,8 @@
-/// <copyright file="device.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Christoph Müller</author>
+ï»¿// <copyright file="device.cpp" company="Visualisierungsinstitut der UniversitÃ¤t Stuttgart">
+// Copyright Â© 2016 - 2023 Visualisierungsinstitut der UniversitÃ¤t Stuttgart. Alle Rechte vorbehalten.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Christoph MÃ¼ller</author>
 
 #include "trrojan/d3d11/device.h"
 
@@ -79,33 +79,52 @@ ATL::CComPtr<IDXGIFactory> trrojan::d3d11::device::get_dxgi_factory(
 }
 
 
+#if !defined(TRROJAN_FOR_UWP)
 /*
  * trrojan::d3d11::device::device
  */
 trrojan::d3d11::device::device(ATL::CComPtr<ID3D11Device> d3dDevice)
         : d3dDevice(d3dDevice) {
-    assert(this->d3dDevice != nullptr);
-    DXGI_ADAPTER_DESC desc;
-    auto adapter = device::get_dxgi_adapter(this->d3dDevice);
-    HRESULT hr = (adapter != nullptr) ? S_OK : E_POINTER;
+    this->set_desc(this->d3dDevice);
+    this->d3dDevice->GetImmediateContext(&this->d3dContext);
+}
+#endif /* !defined(TRROJAN_FOR_UWP) */
 
-    if (SUCCEEDED(hr)) {
-        hr = adapter->GetDesc(&desc);
-    }
 
-    if (SUCCEEDED(hr)) {
-        std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
-        this->_name = conv.to_bytes(desc.Description);
-        this->_unique_id = desc.DeviceId;
-    }
-
-    if (SUCCEEDED(hr)) {
-        this->d3dDevice->GetImmediateContext(&this->d3dContext);
+#if defined(TRROJAN_FOR_UWP)
+/*
+ * trrojan::d3d11::device::make_context
+ */
+ATL::CComPtr<ID3D11DeviceContext> trrojan::d3d11::device::make_context(
+        void) {
+    if (this->d3dDevice.get() == nullptr) {
+        return nullptr;
+    } else {
+        ATL::CComPtr<ID3D11DeviceContext> retval;
+        this->d3dDevice.get()->GetImmediateContext(&retval);
+        return retval;
     }
 }
+#endif /* defined(TRROJAN_FOR_UWP) */
 
 
 /*
- * trrojan::d3d11::device::~device
+ * trrojan::d3d11::device::set_desc
  */
-trrojan::d3d11::device::~device(void) { }
+void trrojan::d3d11::device::set_desc(
+        const ATL::CComPtr<ID3D11Device>& device) {
+    auto adapter = device::get_dxgi_adapter(device);
+    if (adapter == nullptr) {
+        throw ATL::CAtlException(E_POINTER);
+    }
+
+    DXGI_ADAPTER_DESC desc;
+    auto hr = adapter->GetDesc(&desc);
+    if (FAILED(hr)) {
+        throw ATL::CAtlException(hr);
+    }
+
+    std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
+    this->_name = conv.to_bytes(desc.Description);
+    this->_unique_id = desc.DeviceId;
+}

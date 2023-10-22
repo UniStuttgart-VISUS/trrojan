@@ -1,8 +1,8 @@
-// <copyright file="environment.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2016 - 2022 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+ï»¿// <copyright file="environment.cpp" company="Visualisierungsinstitut der UniversitÃ¤t Stuttgart">
+// Copyright Â© 2016 - 2022 Visualisierungsinstitut der UniversitÃ¤t Stuttgart. Alle Rechte vorbehalten.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
-// <author>Christoph Müller</author>
+// <author>Christoph MÃ¼ller</author>
 
 #include "trrojan/d3d12/environment.h"
 
@@ -61,9 +61,9 @@ void trrojan::d3d12::environment::on_deactivate(void) { }
  */
 void trrojan::d3d12::environment::on_finalise(void) {
     this->_devices.clear();
-#ifndef _UWP
+#if !defined(TRROJAN_FOR_UWP)
     ::CoUninitialize();
-#endif // _UWP
+#endif /* !defined(TRROJAN_FOR_UWP) */
 }
 
 
@@ -80,15 +80,15 @@ void trrojan::d3d12::environment::on_initialise(const cmd_line& cmdLine) {
         cmdLine.begin(), cmdLine.end());
     std::set<std::pair<UINT, UINT>> pciIds;
 
+#if !defined(TRROJAN_FOR_UWP)
     // Initialise COM (for WIC).
-#ifndef _UWP
     {
         auto hr = ::CoInitialize(nullptr);
         if (FAILED(hr)) {
             throw ATL::CAtlException(hr);
         }
     }
-#endif
+#endif /* !defined(TRROJAN_FOR_UWP) */
 
     // Enable the debug layer in debug builds, which requires the debugging
     // layer being installed like for D3D11. Enabling the debug layer after
@@ -179,7 +179,7 @@ void trrojan::d3d12::environment::on_initialise(const cmd_line& cmdLine) {
                 if (isUniqueDevice) {
                     auto pciId = std::make_pair(desc.VendorId, desc.DeviceId);
                     if (std::find(pciIds.begin(), pciIds.end(), pciId)
-                        != pciIds.end()) {
+                            != pciIds.end()) {
                         log::instance().write_line(log_level::information,
                             "Excluding \"{}\" from list of device eligible for "
                             "benchmarking because another device with the same "

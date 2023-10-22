@@ -98,7 +98,7 @@ trrojan::result trrojan::d3d11::benchmark_base::run(const configuration& c) {
             this->debug_target = uwp_debug_target;
             //this->debug_target->resize(1, 1);   // Force resource allocation.
             this->debug_device = std::make_shared<d3d11::device>(
-                this->debug_target->device());
+                [this](void) { return this->debug_target->device(); });
 #else /* defined(TRROJAN_FOR_UWP) */
             log::instance().write_line(log_level::verbose, "Lazy creation of "
                 "D3D11 debug render target.");
