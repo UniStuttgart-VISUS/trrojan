@@ -1,8 +1,8 @@
-// <copyright file="mmpld_data_set.cpp" company="Visualisierungsinstitut der Universit�t Stuttgart">
-// Copyright � 2016 - 2022 Visualisierungsinstitut der Universit�t Stuttgart. Alle Rechte vorbehalten.
+﻿// <copyright file="mmpld_data_set.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
+// Copyright © 2016 - 2023 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
-// <author>Christoph M�ller</author>
+// <author>Christoph Müller</author>
 
 #include "trrojan/d3d11/mmpld_data_set.h"
 
@@ -14,6 +14,7 @@
 #include <sstream>
 #include <stdexcept>
 
+#include "trrojan/io.h"
 #include "trrojan/log.h"
 
 #include "sphere_techniques.h"
@@ -23,9 +24,16 @@
  * trrojan::d3d11::mmpld_data_set::create
  */
 trrojan::d3d11::sphere_data_set trrojan::d3d11::mmpld_data_set::create(
-        const char *path) {
+        const char *path, const char *folder) {
     std::shared_ptr<mmpld_data_set> retval(new mmpld_data_set());
-    retval->open(path);
+
+    if (folder == nullptr) {
+        retval->open(path);
+    } else {
+        auto p = combine_path(folder, path);
+        retval->open(p.c_str());
+    }
+
     return retval;
 }
 

@@ -8,7 +8,6 @@
 
 #include <fstream>
 
-#include "trrojan/benchmark.h"
 #include "trrojan/log.h"
 #include "trrojan/timer.h"
 
@@ -530,8 +529,8 @@ void trrojan::d3d12::sphere_data::set_max_radius(
 void trrojan::d3d12::sphere_data::set_properties(
         const random_sphere_generator::description& desc) {
     for (glm::length_t i = 0; i < this->_bbox[0].length(); ++i) {
-        this->_bbox[0][i] = -0.5 * desc.domain_size[i];
-        this->_bbox[1][i] = 0.5 * desc.domain_size[i];
+        this->_bbox[0][i] = -0.5f * desc.domain_size[i];
+        this->_bbox[1][i] = 0.5f * desc.domain_size[i];
     }
 
     this->_cnt_spheres = static_cast<UINT>(desc.number);
@@ -550,7 +549,8 @@ void trrojan::d3d12::sphere_data::set_properties(
     // the actually realised maximum.
     this->_max_radius = desc.sphere_size[1];
 
-    this->_stride = random_sphere_generator::get_stride(desc.type);
+    this->_stride = static_cast<UINT>(random_sphere_generator::get_stride(
+        desc.type));
 }
 
 

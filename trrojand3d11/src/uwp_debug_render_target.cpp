@@ -385,7 +385,7 @@ void trrojan::d3d11::uwp_debug_render_target::resize(const unsigned int width,
         }
 
 #if defined(CREATE_D2D_OVERLAY)
-        this->d2d_overlay_->on_resize();
+        this->d:d_overlay_->on_resize();
 #endif // defined(CREATE_D2D_OVERLAY)
 
         hr = this->swapChain->ResizeBuffers(desc.BufferCount, width,

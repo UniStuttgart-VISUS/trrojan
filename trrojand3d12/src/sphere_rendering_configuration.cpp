@@ -1,10 +1,14 @@
-// <copyright file="sphere_rendering_configuration.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2022 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+ï»¿// <copyright file="sphere_rendering_configuration.cpp" company="Visualisierungsinstitut der UniversitÃ¤t Stuttgart">
+// Copyright Â© 2022 - 2023 Visualisierungsinstitut der UniversitÃ¤t Stuttgart. Alle Rechte vorbehalten.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
-// <author>Christoph Müller</author>
+// <author>Christoph MÃ¼ller</author>
 
 #include "trrojan/d3d12/sphere_rendering_configuration.h"
+
+#include "trrojan/io.h"
+
+#include "trrojan/d3d12/benchmark_base.h"
 
 #include "sphere_techniques.h"
 #include "SpherePipeline.hlsli"
@@ -95,7 +99,12 @@ trrojan::d3d12::sphere_rendering_configuration::sphere_rendering_configuration(
         _SPHERE_BENCH_INIT_FACTOR(min_wall_time),
         _SPHERE_BENCH_INIT_FACTOR(poly_corners),
         _SPHERE_BENCH_INIT_FACTOR(vs_raygen),
-        _SPHERE_BENCH_INIT_FACTOR(vs_xfer_function) { }
+        _SPHERE_BENCH_INIT_FACTOR(vs_xfer_function) {
+    try {
+        auto f = config.get<std::string>(benchmark_base::factor_data_folder);
+        this->_data_set = combine_path(f, this->_data_set);
+    } catch (...) { /* This is not fatal. */ }
+}
 
 #undef _SPHERE_BENCH_INIT_FACTOR
 

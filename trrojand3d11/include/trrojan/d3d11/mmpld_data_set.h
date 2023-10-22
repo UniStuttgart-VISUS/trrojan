@@ -1,8 +1,8 @@
-/// <copyright file="mmpld_data_set.h" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Christoph Müller</author>
+ï»¿// <copyright file="mmpld_data_set.h" company="Visualisierungsinstitut der UniversitÃ¤t Stuttgart">
+// Copyright Â© 2016 - 2023 Visualisierungsinstitut der UniversitÃ¤t Stuttgart. Alle Rechte vorbehalten.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Christoph MÃ¼ller</author>
 
 #pragma once
 
@@ -37,11 +37,6 @@ namespace d3d11 {
         /// </summary>
         typedef mmpld_reader::vertex_type sphere_type;
 
-        /// <summary>
-        /// Open the given MMPLD data set without reading a frame.
-        /// </summary>
-        static sphere_data_set create(const char *path);
-
         static const frame_load_flags load_flag_fit_bounding_box;
         static const frame_load_flags load_flag_float_colour;
         static const frame_load_flags load_flag_structured_resource;
@@ -49,8 +44,16 @@ namespace d3d11 {
         /// <summary>
         /// Open the given MMPLD data set without reading a frame.
         /// </summary>
-        inline static sphere_data_set create(const std::string& path) {
-            return mmpld_data_set::create(path.c_str());
+        static sphere_data_set create(const char *path,
+            const char *folder = nullptr);
+
+        /// <summary>
+        /// Open the given MMPLD data set without reading a frame.
+        /// </summary>
+        inline static sphere_data_set create(const std::string& path,
+                const std::string& folder = "") {
+            return mmpld_data_set::create(path.c_str(),
+                folder.empty() ? nullptr : folder.c_str());
         }
 
         /// <summary>

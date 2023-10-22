@@ -39,6 +39,13 @@ namespace d3d11 {
         typedef trrojan::graphics_benchmark_base::viewport_type viewport_type;
 
         /// <summary>
+        /// A string factor that allows for specifying where to look for the
+        /// data sets, which might be useful when separating the benchmarking
+        /// scripts from the data set storage.
+        /// </summary>
+        static const std::string factor_data_folder;
+
+        /// <summary>
         /// Boolean factor enabling the debug view.
         /// </summary>
         static const std::string factor_debug_view;

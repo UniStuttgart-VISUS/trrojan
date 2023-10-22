@@ -185,8 +185,10 @@ trrojan::result trrojan::d3d12::cs_volume_benchmark::on_run(
         view_constants.FieldOfView.x = aspect * view_constants.FieldOfView.y;
 
         const auto viewport = this->viewport();
-        view_constants.ImageSize.x = viewport.Width;
-        view_constants.ImageSize.y = viewport.Height;
+        const auto width = static_cast<std::uint32_t>(viewport.Width);
+        const auto height = static_cast<std::uint32_t>(viewport.Height);
+        view_constants.ImageSize.x = width;
+        view_constants.ImageSize.y = height;
     }
 
     // Update the raycasting parameters.
