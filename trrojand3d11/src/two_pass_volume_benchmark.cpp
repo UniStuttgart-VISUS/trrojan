@@ -40,9 +40,6 @@ trrojan::result trrojan::d3d11::two_pass_volume_benchmark::on_run(
     static const auto DATA_STAGE = static_cast<rendering_technique::shader_stages>(
         rendering_technique::shader_stage::compute);
 
-#if defined(TRROJAN_FOR_UWP)
-    const auto base_path = plugin::get_directory();
-#endif /* defined(TRROJAN_FOR_UWP) */
     glm::vec3 bbe, bbs;
     auto cntCpuIterations = static_cast<std::uint32_t>(0);
     trrojan::timer cpuTimer;
@@ -78,8 +75,8 @@ trrojan::result trrojan::d3d11::two_pass_volume_benchmark::on_run(
         // Rebuild the ray computation technique.
         {
 #if defined(TRROJAN_FOR_UWP)
-            const auto vss = read_binary_file(combine_path(base_path,
-                "trrojand3d11", "d3d11", "VolumeRayPassVertexShader.cso"));
+            const auto vss = plugin::load_shader_asset(
+                "VolumeRayPassVertexShader.cso");
 #else /* defined(TRROJAN_FOR_UWP) */
             const auto vss = d3d11::plugin::load_resource(
                 MAKEINTRESOURCE(VOLUME_RAY_PASS_VERTEX_SHADER),
@@ -93,8 +90,8 @@ trrojan::result trrojan::d3d11::two_pass_volume_benchmark::on_run(
             auto il = create_input_layout(dev, ils, vss);
 
 #if defined(TRROJAN_FOR_UWP)
-            const auto pss = read_binary_file(combine_path(base_path,
-                "trrojand3d11", "d3d11", "VolumeRayPassPixelShader.cso"));
+            const auto pss = plugin::load_shader_asset(
+                "VolumeRayPassPixelShader.cso");
 #else /* defined(TRROJAN_FOR_UWP) */
             const auto pss = d3d11::plugin::load_resource(
                 MAKEINTRESOURCE(VOLUME_RAY_PASS_PIXEL_SHADER),
@@ -159,8 +156,8 @@ trrojan::result trrojan::d3d11::two_pass_volume_benchmark::on_run(
         // Rebuild the raycasting technique.
         {
 #if defined(TRROJAN_FOR_UWP)
-            const auto src = read_binary_file(combine_path(base_path,
-                "trrojand3d11", "d3d11", "VolumePassComputeShader.cso"));
+            const auto src = plugin::load_shader_asset(
+                "VolumePassComputeShader.cso");
 #else /* defined(TRROJAN_FOR_UWP) */
             const auto src = d3d11::plugin::load_resource(MAKEINTRESOURCE(
                 VOLUME_PASS_COMPUTE_SHADER), _T("SHADER"));

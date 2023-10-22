@@ -789,41 +789,38 @@ trrojan::d3d11::sphere_benchmark::get_technique(ID3D11Device *device,
         }
 
 #if defined(TRROJAN_FOR_UWP)
-        // TODO: this is only prepared, probably not working (read_binary_file) out of the box.
-        const auto base_path = plugin::get_directory()
-            + directory_separator_char;
         const auto fid_ext = get_shader_file_id(sid) + ".cso";
 
         {
-            auto path = base_path + "SphereVertexShader" + fid_ext;
-            auto src = read_binary_file(path);
+            auto name = std::string("SphereVertexShader") + fid_ext;
+            auto src = plugin::load_shader_asset(name);
             vs = create_vertex_shader(device, src);
             il = create_input_layout(device, this->data->layout(), src);
         }
 
         if (isTess) {
             {
-                auto path = base_path + "SphereHullShader" + fid_ext;
-                auto src = read_binary_file(path);
+                auto name = std::string("SphereHullShader") + fid_ext;
+                auto src = plugin::load_shader_asset(name);
                 hs = create_hull_shader(device, src);
             }
 
             {
-                auto path = base_path + "SphereDomainShader" + fid_ext;
-                auto src = read_binary_file(path);
+                auto name = std::string("SphereDomainShader") + fid_ext;
+                auto src = plugin::load_shader_asset(name);
                 ds = create_domain_shader(device, src);
             }
         }
 
         if (isGeo) {
-            auto path = base_path + "SphereGeometryShader" + fid_ext;
-            auto src = read_binary_file(path);
+            auto name = std::string("SphereGeometryShader") + fid_ext;
+            auto src = plugin::load_shader_asset(name);
             gs = create_geometry_shader(device, src);
         }
 
         {
-            auto path = base_path + "SpherePixelShader" + fid_ext;
-            auto src = read_binary_file(path);
+            auto name = std::string("SpherePixelShader") + fid_ext;
+            auto src = plugin::load_shader_asset(name);
             ps = create_pixel_shader(device, src);
         }
 

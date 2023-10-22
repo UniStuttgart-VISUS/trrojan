@@ -60,6 +60,16 @@ namespace d3d11 {
 #endif /* !defined(_WIN32) */
 
         /// <summary>
+        /// Loads a shader resource from the asset directory.
+        /// </summary>
+        /// <param name="file">The relative path to the shader file. The
+        /// plugin-specific asset directory will be prepended to this name.
+        /// </param>
+        /// <returns>The content of the resource.</returns>
+        static std::vector<std::uint8_t> load_shader_asset(
+            const std::string& file);
+
+        /// <summary>
         /// Initialises a new instance.
         /// </summary>
         inline plugin(void) : trrojan::plugin_base("d3d11") { }

@@ -75,11 +75,8 @@ void trrojan::d3d12::cs_volume_benchmark::on_device_switch(device& device) {
     // configuration being run.
     {
 #if defined(TRROJAN_FOR_UWP)
-        const auto shader = read_binary_file(combine_path(
-            plugin::get_directory(),
-            "trrojand3d12",
-            "d3d12",
-            "SinglePassVolumeComputeShader.cso"));
+        const auto shader = plugin::load_shader_asset(
+            "SinglePassVolumeComputeShader.cso");
 #else /* defined(TRROJAN_FOR_UWP) */
         const auto shader = plugin::load_resource(
             MAKEINTRESOURCE(SINGLE_PASS_VOLUME_COMPUTE_SHADER),

@@ -74,8 +74,8 @@ trrojan::result trrojan::d3d11::cs_volume_benchmark::on_run(
 
         // Rebuild the technique.
 #if defined(TRROJAN_FOR_UWP)
-        const auto src = read_binary_file(combine_path(plugin::get_directory(),
-            "trrojand3d11", "d3d11", "SinglePassVolumeComputeShader.cso"));
+        const auto src = plugin::load_shader_asset(
+            "SinglePassVolumeComputeShader.cso");
 #else /* defined(TRROJAN_FOR_UWP) */
         const auto src = d3d11::plugin::load_resource(
             MAKEINTRESOURCE(SINGLE_PASS_VOLUME_COMPUTE_SHADER), _T("SHADER"));

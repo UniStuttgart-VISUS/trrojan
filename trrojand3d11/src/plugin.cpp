@@ -117,6 +117,19 @@ std::vector<std::uint8_t> trrojan::d3d11::plugin::load_resource(LPCTSTR name,
 #endif /* !defined(_WIN32) */
 
 
+
+/*
+ * trrojan::d3d12::plugin::load_shader_asset
+ */
+std::vector<std::uint8_t> trrojan::d3d11::plugin::load_shader_asset(
+        const std::string& file) {
+    const auto path = combine_path(plugin::get_directory(),
+        "trrojand3d11", "d3d11", file);
+    return read_binary_file(path);
+}
+
+
+
 /*
  * trrojan::d3d11::plugin::~plugin
  */
