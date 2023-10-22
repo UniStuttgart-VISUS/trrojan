@@ -216,6 +216,34 @@ namespace trrojan {
 
 #if defined(TRROJAN_FOR_UWP)
     /// <summary>
+    /// Picks a file for writing using the given <paramref name="picker" />
+    /// and calls the given action with the selected
+    /// <see cref="winrt::Windows::Storage::StorageFile" />.
+    /// </summary>
+    /// <typeparam name="TAction">The type of the functor to be invoked, which
+    /// must accept a single <see cref="winrt::Windows::Storage::StorageFile" />
+    /// parameter.</typeparam>
+    /// <param name="picker">The picker that has been configured to
+    /// select a file.</param>
+    /// <param name="action">The action to be executed on the selected
+    /// file.</param>
+    template<class TAction> void pick_file_and_continue(
+            winrt::Windows::Storage::Pickers::FileSavePicker picker,
+            TAction&& action) {
+        using namespace winrt::Windows::UI::Core;
+        using namespace winrt::Windows::Foundation;
+        using namespace winrt::Windows::Storage;
+        picker.PickSingleFileAsync().Completed([action](
+                const IAsyncOperation<StorageFile> operation,
+                const AsyncStatus status) {
+            assert(status == AsyncStatus::Completed);
+            action(operation.get());
+        });
+    }
+#endif /* defined(TRROJAN_FOR_UWP) */
+
+#if defined(TRROJAN_FOR_UWP)
+    /// <summary>
     /// Picks a file using the given <paramref name="picker" /> and invokes the
     /// given action with the
     /// <see cref="winrt::Windows::Storage::StorageFile" />.
@@ -237,9 +265,7 @@ namespace trrojan {
                 const IAsyncOperation<StorageFile> operation,
                 const AsyncStatus status) {
             assert(status == AsyncStatus::Completed);
-            if (status == AsyncStatus::Completed) {
-                action(operation.get());
-            }
+            action(operation.get());
         });
     }
 #endif /* defined(TRROJAN_FOR_UWP) */
@@ -292,11 +318,9 @@ namespace trrojan {
                 const IAsyncOperation<StorageFile> operation,
                 const AsyncStatus status) {
             assert(status == AsyncStatus::Completed);
-            if (status == AsyncStatus::Completed) {
-                auto file = operation.get();
-                dispatcher.RunAsync(CoreDispatcherPriority::Normal,
-                    [action, file](void) { action(file); });
-            }
+            auto file = operation.get();
+            dispatcher.RunAsync(CoreDispatcherPriority::Normal,
+                [action, file](void) { action(file); });
         });
     }
 #endif /* defined(TRROJAN_FOR_UWP) */
@@ -324,6 +348,35 @@ namespace trrojan {
         picker.FileTypeFilter().ReplaceAll(filter);
         pick_file_and_dispatch(picker, dispatcher,
             std::forward<TAction>(action));
+    }
+#endif /* defined(TRROJAN_FOR_UWP) */
+
+#if defined(TRROJAN_FOR_UWP)
+    /// <summary>
+    /// Picks a folder using the given <paramref name="picker" /> and calls the
+    /// given action with the selected
+    /// <see cref="winrt::Windows::Storage::StorageFolder" />.
+    /// </summary>
+    /// <typeparam name="TAction">The type of the functor to be invoked, which
+    /// must accept a single
+    /// <see cref="winrt::Windows::Storage::StorageFolder" /> parameter.
+    /// </typeparam>
+    /// <param name="picker">The picker that has been configured to
+    /// select a folder.</param>
+    /// <param name="action">The action to be executed on the selected
+    /// folder.</param>
+    template<class TAction> void pick_folder_and_continue(
+            winrt::Windows::Storage::Pickers::FolderPicker picker,
+            TAction&& action) {
+        using namespace winrt::Windows::UI::Core;
+        using namespace winrt::Windows::Foundation;
+        using namespace winrt::Windows::Storage;
+        picker.PickSingleFolderAsync().Completed([action](
+                const IAsyncOperation<StorageFolder> operation,
+                const AsyncStatus status) {
+            assert(status == AsyncStatus::Completed);
+            action(operation.get());
+        });
     }
 #endif /* defined(TRROJAN_FOR_UWP) */
 

@@ -27,9 +27,14 @@
  * App::Run
  */
 void App::Run(void) {
-    std::atomic<State> state(State::Idle);
+    using namespace winrt::Windows::Foundation;
+    using namespace winrt::Windows::Storage;
+
+    std::atomic<State> state(State::PromptTrroll);
     auto window = CoreWindow::GetForCurrentThread();
     auto dispatcher = window.Dispatcher();
+    std::string log_path;
+    std::string output_path;
     StorageFile trroll_file(nullptr);
     std::string trroll_path;
 
@@ -37,10 +42,10 @@ void App::Run(void) {
 
     while (state.load(std::memory_order::memory_order_consume) != State::Done) {
         switch (state.load(std::memory_order::memory_order_consume)) {
-            case State::Idle:
+            case State::PromptTrroll:
                 // In idle state, mark the benchmark selection as pending and
                 // ask the user to select a trroll script.
-                state = State::Waiting;
+                state = State::PromptingTrroll;
 
                 trrojan::pick_file_and_continue({ L".trroll" },
                         [&trroll_file, &trroll_path, &state](StorageFile file) {
@@ -66,15 +71,17 @@ void App::Run(void) {
                 // recursively.
                 // Note that we install a scope exit handler to make sure that
                 // the state is reset even in case of an exception.
-                on_exit([&state](void) { state = State::Idle; });
+                on_exit([&state](void) { state = State::PromptResult; });
                 const auto log_base = GetBaseLogPath(trroll_path);
 
                 // Build the command line.
                 trrojan::cmd_line cmd_line;
                 cmd_line.push_back("--output");
-                cmd_line.push_back(log_base + ".csv");
+                cmd_line.push_back((output_path = log_base + ".csv"));
+                output_path = trrojan::get_file_name(output_path);
                 cmd_line.push_back("--log");
-                cmd_line.push_back(log_base + ".log");
+                cmd_line.push_back((log_path = log_base + ".log"));
+                log_path = trrojan::get_file_name(log_path);
 
                 // Configure the executive.
                 trrojan::executive exe(window);
@@ -103,6 +110,52 @@ void App::Run(void) {
                 }
 #endif
                 } break;
+
+            case State::PromptResult:
+                // Set the two bits for the asynchronous copy operations we are
+                // going to start and for the next prompt, too. Once the files
+                // are moved, both bits will be erased and only 'PromptTrroll'
+                // will remain.
+                state = static_cast<State>
+                    (static_cast<StateBits>(State::MovingOutput)
+                    | static_cast<StateBits>(State::MovingLog)
+                    | static_cast<StateBits>(State::PromptTrroll));
+
+                trrojan::pick_folder_and_continue(Pickers::FolderPicker(),
+                        [&log_path, &output_path, &state](StorageFolder f) {
+                    if (f) {
+                        // Open the application folder, where we have the stored
+                        // the output files that are to be copied to 'f'.
+                        auto folder = ApplicationData::Current().LocalFolder();
+                        auto output = winrt::to_hstring(output_path);
+                        auto log = winrt::to_hstring(log_path);
+
+                        // Copy the results to the specified folder and
+                        // atomically erase the status bit for that on
+                        // completion.
+                        trrojan::on_completed(folder.GetFileAsync(output),
+                                [&f, &state](StorageFile file) {
+                            file.MoveAsync(f).Completed([&state](
+                                    const IAsyncAction&, const AsyncStatus&) {
+                                EraseBits(state, State::MovingOutput);
+                            });
+                        });
+
+                        // Copy the log file and erase the bit.
+                        trrojan::on_completed(folder.GetFileAsync(log),
+                                [&f, &state](StorageFile file) {
+                            file.MoveAsync(f).Completed([&state](
+                                    const IAsyncAction&, const AsyncStatus&) {
+                                EraseBits(state, State::MovingLog);
+                            });
+                        });
+
+                    } else {
+                        // If the user did not provide a folder, we exit now.
+                        state = State::Done;
+                    }
+                });
+                break;
         }
 
         dispatcher.ProcessEvents(CoreProcessEventsOption::ProcessOneAndAllPending);
@@ -211,6 +264,21 @@ void App::Run(void) {
 
 
 /*
+ * App::EraseBits
+ */
+void App::EraseBits(std::atomic<State>& state, const State erase) {
+    auto expected = state.load();
+    auto desired = static_cast<State>(static_cast<StateBits>(expected)
+        & ~static_cast<StateBits>(erase));
+
+    while (!state.compare_exchange_weak(expected, desired)) {
+        desired = static_cast<State>(static_cast<StateBits>(expected)
+            & ~static_cast<StateBits>(erase));
+    }
+}
+
+
+/*
  * App::GetBaseLogPath
  */
 std::string App::GetBaseLogPath(const std::string& trroll) {
@@ -223,5 +291,4 @@ std::string App::GetBaseLogPath(const std::string& trroll) {
     const auto base = trroll_file + "_" + device + "_" + timestamp;
     return trrojan::combine_path(storage_folder, base);
 }
-
 #endif /* defined(TRROJAN_FOR_UWP) */

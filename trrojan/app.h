@@ -52,12 +52,57 @@ public:
 
 private:
 
+    /// <summary>
+    /// The state of the main thread.
+    /// </summary>
     enum class State {
+
+        /// <summary>
+        /// The user selected no trroll file, which indicates that the
+        /// application should exit.
+        /// </summary>
         Done = 0x0000,
-        Idle = 0x0001,
-        Waiting = 0x0002,
-        Benchmarking = 0x0004
+
+        /// <summary>
+        /// The initial state, which requests the application to show a file
+        /// picker asking for the trroll script to execute.
+        /// </summary>
+        PromptTrroll = 0x0001,
+
+        /// <summary>
+        /// The file picker for the troll script is currently displayed, but has
+        /// not yet been confirmed or cancelled by the user.
+        /// </summary>
+        PromptingTrroll = 0x0002,
+
+        /// <summary>
+        /// The trroll script has been set and should be executed. Requesting
+        /// the script to run and actually running the script is the same
+        /// thread, because the benchmark will block the STA thread and
+        /// periodically execute the dispatcher.
+        /// </summary>
+        Benchmarking = 0x0004,
+
+        /// <summary>
+        /// THe benchmark has completed and the user should be prompted for the
+        /// location to copy the results to.
+        /// </summary>
+        PromptResult = 0x0008,
+
+        /// <summary>
+        /// The the application is copying the output file.
+        /// </summary>
+        MovingOutput = 0x0010,
+
+        /// <summary>
+        /// The the application is copying the log file.
+        /// </summary>
+        MovingLog = 0x0020,
     };
+
+    typedef std::underlying_type<State>::type StateBits;
+
+    static void EraseBits(std::atomic<State>& state, const State erase);
 
     static std::string GetBaseLogPath(const std::string& trroll);
 
