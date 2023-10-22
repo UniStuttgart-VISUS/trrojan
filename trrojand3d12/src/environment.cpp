@@ -53,7 +53,18 @@ void trrojan::d3d12::environment::on_activate(void) { }
 /*
  * trrojan::d3d12::environment::on_deactivate
  */
-void trrojan::d3d12::environment::on_deactivate(void) { }
+void trrojan::d3d12::environment::on_deactivate(void) {
+#if defined(TRROJAN_FOR_UWP)
+    // See ctor for why we need to do that on UWP.
+    log::instance().write_line(log_level::information,
+        "Cleaning up Direct3D devices of \"{}\" as part of deactiviating "
+        "the environment.", this->name());
+
+    for (auto &d : this->_devices) {
+        d.reset();
+    }
+#endif /* defined(TRROJAN_FOR_UWP) */
+}
 
 
 /*
@@ -191,14 +202,30 @@ void trrojan::d3d12::environment::on_initialise(const cmd_line& cmdLine) {
                 }
             }
 
+#if !defined(TRROJAN_FOR_UWP)
             if (SUCCEEDED(hr)) {
                 hr = ::D3D12CreateDevice(adapter, D3D_FEATURE_LEVEL_12_1,
                     ::IID_ID3D12Device, reinterpret_cast<void **>(&device));
             }
+#endif /* !defined(TRROJAN_FOR_UWP) */
 
             if (SUCCEEDED(hr)) {
+#if defined(TRROJAN_FOR_UWP)
+                // On UWP, we must generate the D3D devices lazily as we cannot have
+                // a D3D11 device and a D3D12 device open at the same time on Xbox.
+                // For this reason, the environment must reset all devices it has
+                // created during benchmarks once it is deactivated.
+                this->_devices.push_back(std::make_shared<d3d12::device>(
+                        factory, [adapter](void) {
+                    ATL::CComPtr<ID3D12Device> retval;
+                    auto hr = ::D3D12CreateDevice(adapter, D3D_FEATURE_LEVEL_12_1,
+                        ::IID_ID3D12Device, reinterpret_cast<void **>(&retval));
+                    return retval;
+                }));
+#else /* !defined(TRROJAN_FOR_UWP) */
                 this->_devices.push_back(std::make_shared<d3d12::device>(device,
                     factory));
+#endif /* !defined(TRROJAN_FOR_UWP) */
             }
         }
 

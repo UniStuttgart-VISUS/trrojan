@@ -6,17 +6,21 @@
 
 
 /*
- * trrojan::d3d11::device::device
+ * trrojan::d3d12::device::device
  */
 template<class TGenerator>
-trrojan::d3d11::device::device(TGenerator&& generator)
-        : d3dContext(std::bind(&device::make_context, this)),
-        d3dDevice(std::forward<TGenerator>(generator)) {
+trrojan::d3d12::device::device(const ATL::CComPtr<IDXGIFactory4>& dxgiFactory,
+            TGenerator&& d3dDevice)
+        : _d3d_device(std::forward<TGenerator>(d3dDevice)),
+            _dxgi_factory(dxgiFactory),
+            _next_fence(0) {
     // First of all, make sure that the generator is working and obtain the
     // metadata for the device.
     this->set_desc();
 
     // Now, delete the device again such that it is not active unless a
     // benchmark actually needs it.
-    this->d3dDevice.reset(nullptr);
+    this->_d3d_device.reset(nullptr);
+    assert(this->_command_queue == nullptr);
+    assert(this->_fence == nullptr);
 }

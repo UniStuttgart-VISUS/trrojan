@@ -85,7 +85,7 @@ ATL::CComPtr<IDXGIFactory> trrojan::d3d11::device::get_dxgi_factory(
  */
 trrojan::d3d11::device::device(ATL::CComPtr<ID3D11Device> d3dDevice)
         : d3dDevice(d3dDevice) {
-    this->set_desc(this->d3dDevice);
+    this->set_desc();
     this->d3dDevice->GetImmediateContext(&this->d3dContext);
 }
 #endif /* !defined(TRROJAN_FOR_UWP) */
@@ -111,9 +111,9 @@ ATL::CComPtr<ID3D11DeviceContext> trrojan::d3d11::device::make_context(
 /*
  * trrojan::d3d11::device::set_desc
  */
-void trrojan::d3d11::device::set_desc(
-        const ATL::CComPtr<ID3D11Device>& device) {
-    auto adapter = device::get_dxgi_adapter(device);
+void trrojan::d3d11::device::set_desc(void) {
+    assert(this->d3d_device() != nullptr);
+    auto adapter = device::get_dxgi_adapter(this->d3d_device());
     if (adapter == nullptr) {
         throw ATL::CAtlException(E_POINTER);
     }

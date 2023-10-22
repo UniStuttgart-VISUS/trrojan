@@ -120,7 +120,7 @@ namespace d3d11 {
         ATL::CComPtr<ID3D11DeviceContext> make_context(void);
 #endif /* defined(TRROJAN_FOR_UWP) */
 
-        void set_desc(const ATL::CComPtr<ID3D11Device>& device);
+        void set_desc(void);
 
 #if defined(TRROJAN_FOR_UWP)
         lazy<ATL::CComPtr<ID3D11DeviceContext>> d3dContext;

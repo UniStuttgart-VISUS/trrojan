@@ -41,56 +41,23 @@ ATL::CComPtr<ID3D12CommandQueue> trrojan::d3d12::device::create_command_queue(
 }
 
 
+#if !defined(TRROJAN_FOR_UWP)
 /*
  * trrojan::d3d12::device::device
  */
 trrojan::d3d12::device::device(const ATL::CComPtr<ID3D12Device>& d3dDevice,
         const ATL::CComPtr<IDXGIFactory4>& dxgiFactory)
-    : _command_queue(create_command_queue(d3dDevice)),
-        _d3d_device(d3dDevice),
+    : _d3d_device(d3dDevice),
         _dxgi_factory(dxgiFactory),
         _next_fence(0) {
+    this->_command_queue = this->make_cmd_queue();
+    this->_fence = this->make_fence();
+    this->set_desc();
     assert(this->_command_queue != nullptr);
     assert(this->_d3d_device != nullptr);
-    DXGI_ADAPTER_DESC desc;
-
-    if (this->_dxgi_factory == nullptr) {
-        throw std::invalid_argument("The DXGI factory passed to a TRRojan "
-            "device wrapper must not be nullptr.");
-    }
-
-    {
-        auto hr = this->dxgi_adapter()->GetDesc(&desc);
-        if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
-        }
-    }
-
-    {
-        std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
-        this->_name = conv.to_bytes(desc.Description);
-        this->_unique_id = desc.DeviceId;
-    }
-
-    {
-        auto hr = this->_d3d_device->CreateFence(this->_next_fence++,
-            D3D12_FENCE_FLAG_NONE, ::IID_ID3D12Fence,
-            reinterpret_cast<void **>(&this->_fence));
-        if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
-        }
-    }
-
-    set_debug_object_name(this->_command_queue, "Device command queue \"{0}\"",
-        this->name());
-    set_debug_object_name(this->_fence, "Device fence \"{0}\"", this->name());
+    assert(this->_fence != nullptr);
 }
-
-
-/*
- * trrojan::d3d12::device::~device
- */
-trrojan::d3d12::device::~device(void) { }
+#endif /* !defined(TRROJAN_FOR_UWP) */
 
 
 /*
@@ -107,12 +74,12 @@ void trrojan::d3d12::device::close_and_execute_command_list(
  * trrojan::d3d12::device::dxgi_adapter
  */
 ATL::CComPtr<IDXGIAdapter> trrojan::d3d12::device::dxgi_adapter(void) {
-    assert(this->_d3d_device != nullptr);
+    assert(this->d3d_device() != nullptr);
     assert(this->_dxgi_factory != nullptr);
     ATL::CComPtr<IDXGIAdapter> retval;
 
     auto hr = this->_dxgi_factory->EnumAdapterByLuid(
-        this->_d3d_device->GetAdapterLuid(),
+        this->d3d_device()->GetAdapterLuid(),
         IID_IDXGIAdapter,
         reinterpret_cast<void **>(&retval));
     if (FAILED(hr)) {
@@ -131,12 +98,13 @@ void trrojan::d3d12::device::execute_command_list(ID3D12CommandList *cmd_list) {
     this->command_queue()->ExecuteCommandLists(1, &cmd_list);
 }
 
+
 /*
  * trrojan::d3d12::device::set_stable_power_state
  */
 void trrojan::d3d12::device::set_stable_power_state(const bool enabled) {
-    assert(this->_d3d_device != nullptr);
-    auto hr = this->_d3d_device->SetStablePowerState(enabled);
+    assert(this->d3d_device() != nullptr);
+    auto hr = this->d3d_device()->SetStablePowerState(enabled);
     if (FAILED(hr)) {
         throw CAtlException(hr);
     }
@@ -150,18 +118,17 @@ void trrojan::d3d12::device::wait_for_gpu(void) {
     auto value = this->_next_fence++;
 
     // Make the fence signal in the command queue with its current value.
-    assert(this->_fence != nullptr);
     {
-        auto hr = this->_command_queue->Signal(this->_fence, value);
+        auto hr = this->command_queue()->Signal(this->fence(), value);
         if (FAILED(hr)) {
             throw ATL::CAtlException(hr);
         }
     }
 
-    // Signal the event if the fence singalled with its current value.
+    // Signal the event if the fence signalled with its current value.
     auto evt = create_event(false, false);
     {
-        auto hr = this->_fence->SetEventOnCompletion(value, evt);
+        auto hr = this->fence()->SetEventOnCompletion(value, evt);
         if (FAILED(hr)) {
             throw ATL::CAtlException(hr);
         }
@@ -169,4 +136,54 @@ void trrojan::d3d12::device::wait_for_gpu(void) {
 
     // Wait for the event to signal.
     wait_for_event(evt);
+}
+
+
+/*
+ * trrojan::d3d12::device::make_cmd_queue
+ */
+ATL::CComPtr<ID3D12CommandQueue> trrojan::d3d12::device::make_cmd_queue(void) {
+    auto retval = create_command_queue(this->d3d_device());
+    set_debug_object_name(retval, "Device command queue \"{0}\"", this->name());
+    return retval;
+}
+
+
+/*
+ * trrojan::d3d12::device::make_fence
+ */
+ATL::CComPtr<ID3D12Fence> trrojan::d3d12::device::make_fence(void) {
+    ATL::CComPtr<ID3D12Fence> retval;
+
+    auto hr = this->d3d_device()->CreateFence(this->_next_fence++,
+        D3D12_FENCE_FLAG_NONE, ::IID_ID3D12Fence,
+        reinterpret_cast<void **>(&retval));
+    if (FAILED(hr)) {
+        throw ATL::CAtlException(hr);
+    }
+
+    set_debug_object_name(retval, "Device fence \"{0}\"", this->name());
+    return retval;
+}
+
+
+/*
+ * trrojan::d3d12::device::set_desc
+ */
+void trrojan::d3d12::device::set_desc(void) {
+    assert(this->d3d_device() != nullptr);
+    if (this->_dxgi_factory == nullptr) {
+        throw std::invalid_argument("The DXGI factory passed to a TRRojan "
+            "device wrapper must not be nullptr.");
+    }
+
+    DXGI_ADAPTER_DESC desc;
+    auto hr = this->dxgi_adapter()->GetDesc(&desc);
+    if (FAILED(hr)) {
+        throw ATL::CAtlException(hr);
+    }
+
+    std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
+    this->_name = conv.to_bytes(desc.Description);
+    this->_unique_id = desc.DeviceId;
 }

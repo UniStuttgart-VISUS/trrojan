@@ -45,6 +45,7 @@ namespace d3d12 {
             ID3D12Device *device, const D3D12_COMMAND_LIST_TYPE type
             = D3D12_COMMAND_LIST_TYPE_DIRECT);
 
+#if !defined(TRROJAN_FOR_UWP)
         /// <summary>
         /// Initialises a new instance representing the given D3D device.
         /// </summary>
@@ -56,11 +57,25 @@ namespace d3d12 {
         /// </param>
         device(const ATL::CComPtr<ID3D12Device>& d3dDevice,
             const ATL::CComPtr<IDXGIFactory4>& dxgiFactory);
+#endif /* !defined(TRROJAN_FOR_UWP) */
+
+#if defined(TRROJAN_FOR_UWP)
+        /// <summary>
+        /// Initialises a new instance representing the given D3D device.
+        /// </summary>
+        /// <param name="dxgiFactory">The DXGI factory used to obtain the
+        /// underlying adapter. Note that this must be the same factory used in
+        /// the generator.</param>
+        /// <param name="d3dDevice">The generator for the D3D device.</param>
+        template<class TGenerator>
+        device(const ATL::CComPtr<IDXGIFactory4>& dxgiFactory,
+            TGenerator&& d3dDevice);
+#endif /* defined(TRROJAN_FOR_UWP) */
 
         /// <summary>
         /// Finalises the instance.
         /// </summary>
-        virtual ~device(void);
+        virtual ~device(void) = default;
 
         /// <summary>
         /// Close the given command list and execute it immediately.
@@ -73,6 +88,11 @@ namespace d3d12 {
         /// </summary>
         /// <returns></returns>
         inline ATL::CComPtr<ID3D12CommandQueue> command_queue(void) {
+#if defined(TRROJAN_FOR_UWP)
+            if (this->_command_queue == nullptr) {
+                this->_command_queue = this->make_cmd_queue();
+            }
+#endif /* defined(TRROJAN_FOR_UWP) */
             return this->_command_queue;
         }
 
@@ -104,6 +124,19 @@ namespace d3d12 {
         /// <param name="cmd_list"></param>
         void execute_command_list(ID3D12CommandList *cmd_list);
 
+#if defined(TRROJAN_FOR_UWP)
+        /// <summary>
+        /// Releases the underlying D3D device and all resources from this
+        /// device that are stored in this object such that it must be recreated
+        /// if it is needed again.
+        /// </summary>
+        inline void reset(void) {
+            this->_command_queue = nullptr;
+            this->_d3d_device.reset(nullptr);
+            this->_fence = nullptr;
+        }
+#endif /* defined(TRROJAN_FOR_UWP) */
+
         /// <summary>
         /// Enables or disables the stable power state on the device.
         /// </summary>
@@ -132,12 +165,33 @@ namespace d3d12 {
 
     private:
 
+        inline ATL::CComPtr<ID3D12Fence>& fence(void) {
+#if defined(TRROJAN_FOR_UWP)
+            if (this->_fence == nullptr) {
+                this->_fence = this->make_fence();
+            }
+#endif /* defined(TRROJAN_FOR_UWP) */
+            return this->_fence;
+        }
+
+        ATL::CComPtr<ID3D12CommandQueue> make_cmd_queue(void);
+
+        ATL::CComPtr<ID3D12Fence> make_fence(void);
+
+        void set_desc(void);
+
         ATL::CComPtr<ID3D12CommandQueue> _command_queue;
+#if defined(TRROJAN_FOR_UWP)
+        lazy<ATL::CComPtr<ID3D12Device>> _d3d_device;
+#else /* defined(TRROJAN_FOR_UWP) */
         ATL::CComPtr<ID3D12Device> _d3d_device;
+#endif /* defined(TRROJAN_FOR_UWP) */
         ATL::CComPtr<IDXGIFactory4> _dxgi_factory;
         ATL::CComPtr<ID3D12Fence> _fence;
         std::atomic<UINT64> _next_fence;
     };
 
 } /* namespace d3d12 */
-} /* namespace d3d11 */
+} /* namespace trrojan */
+
+#include "trrojan/d3d12/device.inl"
