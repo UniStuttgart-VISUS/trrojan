@@ -1,0 +1,18 @@
+d3d11::sphere-renderer {
+	string data_set =  pos_rad_intensity : 200 : 0 : 10 10 10 : 0.01 0.1
+	float32 global_radius = 0.07
+	uint32 frame = 0
+
+	uint32vec2 viewport = 1920 1080
+	boolean debug_view = true
+
+	boolean vs_raygen = false
+	boolean vs_xfer_function = true
+
+	string method = quad_inst
+
+	string manoeuvre = path_z
+	uint32 manoeuvre_steps = 100
+	uint32 manoeuvre_step = 50
+}
+

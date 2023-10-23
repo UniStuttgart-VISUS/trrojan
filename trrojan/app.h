@@ -104,7 +104,7 @@ private:
 
     static void EraseBits(std::atomic<State>& state, const State erase);
 
-    static std::string GetBaseLogPath(const std::string& trroll);
+    static std::string GetBaseLogName(const std::string& trroll);
 
     //CompositionTarget m_target{ nullptr };
     //VisualCollection m_visuals{ nullptr };

@@ -65,10 +65,12 @@ namespace trrojan {
         /// <returns></returns>
         std::vector<std::string> last(const std::size_t cnt) const {
 #if defined(TRROJAN_FOR_UWP)
-            return this->_buffer_sink->last_formatted(cnt);
-#else /* defined(TRROJAN_FOR_UWP) */
-            return std::vector<std::string>();
+            if (this->_buffer_sink != nullptr) {
+                return this->_buffer_sink->last_formatted(cnt);
+            }
 #endif /* defined(TRROJAN_FOR_UWP) */
+
+            return std::vector<std::string>();
         }
 
         void write(const log_level level, const char *str);
