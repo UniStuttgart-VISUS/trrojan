@@ -8,7 +8,11 @@ include(CMakeDependentOption)
 project(TRRojan)
 
 # Detect UWP
-set(TRROJAN_FOR_UWP ${CMAKE_SYSTEM_NAME} STREQUAL "WindowsStore")
+if (${CMAKE_SYSTEM_NAME} STREQUAL "WindowsStore")
+    set(TRROJAN_FOR_UWP TRUE)
+else ()
+    set(TRROJAN_FOR_UWP FALSE)
+endif ()
 
 
 # Customise TRRojan
