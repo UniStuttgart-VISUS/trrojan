@@ -294,65 +294,6 @@ namespace trrojan {
 
 #if defined(TRROJAN_FOR_UWP)
     /// <summary>
-    /// Picks a file using the given <paramref name="picker" /> and dispatches
-    /// the given <paramref name="action" /> accepting the selected file to the
-    ///  given <paramref name="dispatcher" />.
-    /// </summary>
-    /// <typeparam name="TAction">The type of the functor to be invoked, which
-    /// must accept a single <see cref="winrt::Windows::Storage::StorageFile" />
-    /// parameter.</typeparam>
-    /// <param name="picker">The file picker used to select the file. The picker
-    /// must have been fully configured according to the callers needs.</param>
-    /// <param name="dispatcher">The dispatcher to which the
-    /// <paramref name="action" /> is queued.</param>
-    /// <param name="action">The action to be invoked for the selected file.
-    /// </param>
-    template<class TAction> void pick_file_and_dispatch(
-            winrt::Windows::Storage::Pickers::FileOpenPicker picker,
-            winrt::Windows::UI::Core::CoreDispatcher dispatcher,
-            TAction&& action) {
-        using namespace winrt::Windows::UI::Core;
-        using namespace winrt::Windows::Foundation;
-        using namespace winrt::Windows::Storage;
-        picker.PickSingleFileAsync().Completed([dispatcher, action](
-                const IAsyncOperation<StorageFile> operation,
-                const AsyncStatus status) {
-            assert(status == AsyncStatus::Completed);
-            auto file = operation.get();
-            dispatcher.RunAsync(CoreDispatcherPriority::Normal,
-                [action, file](void) { action(file); });
-        });
-    }
-#endif /* defined(TRROJAN_FOR_UWP) */
-
-#if defined(TRROJAN_FOR_UWP)
-    /// <summary>
-    /// Picks a file using the given <paramref name="picker" /> and dispatches
-    /// the given <paramref name="action" /> accepting the selected file to the
-    ///  given <paramref name="dispatcher" />.
-    /// </summary>
-    /// <typeparam name="TAction">The type of the functor to be invoked, which
-    /// must accept a single <see cref="winrt::Windows::Storage::StorageFile" />
-    /// parameter.</typeparam>
-    /// <param name="filter">The file filter that is applied to the picker that
-    /// the function creates for selecting files.</param>
-    /// <param name="dispatcher">The dispatcher to which the
-    /// <paramref name="action" /> is queued.</param>
-    /// <param name="action">The action to be invoked for the selected file.
-    /// </param>
-    template<class TAction> void pick_file_and_dispatch(
-            const std::vector<winrt::hstring>& filter,
-            winrt::Windows::UI::Core::CoreDispatcher dispatcher,
-            TAction&& action) {
-        winrt::Windows::Storage::Pickers::FileOpenPicker picker;
-        picker.FileTypeFilter().ReplaceAll(filter);
-        pick_file_and_dispatch(picker, dispatcher,
-            std::forward<TAction>(action));
-    }
-#endif /* defined(TRROJAN_FOR_UWP) */
-
-#if defined(TRROJAN_FOR_UWP)
-    /// <summary>
     /// Picks a folder using the given <paramref name="picker" /> and calls the
     /// given action with the selected
     /// <see cref="winrt::Windows::Storage::StorageFolder" />.
@@ -376,40 +317,6 @@ namespace trrojan {
                 const AsyncStatus status) {
             assert(status == AsyncStatus::Completed);
             action(operation.get());
-        });
-    }
-#endif /* defined(TRROJAN_FOR_UWP) */
-
-#if defined(TRROJAN_FOR_UWP)
-    /// <summary>
-    /// Picks a folder using the given <paramref name="picker" /> and dispatches
-    /// the given action to be called in the given context with the selected
-    /// <see cref="winrt::Windows::Storage::StorageFolder" />.
-    /// </summary>
-    /// <typeparam name="TAction">The type of the functor to be invoked, which
-    /// must accept a single
-    /// <see cref="winrt::Windows::Storage::StorageFolder" /> parameter.
-    /// </typeparam>
-    /// <param name="picker">The picker that has been configured to
-    /// select a folder.</param>
-    /// <param name="dispatcher">The dispatcher to eventually run the action.
-    /// </param>
-    /// <param name="action">The action to be executed on the selected
-    /// folder.</param>
-    template<class TAction> void pick_folder_and_dispatch(
-            winrt::Windows::Storage::Pickers::FolderPicker picker,
-            winrt::Windows::UI::Core::CoreDispatcher dispatcher,
-            TAction&& action) {
-        using namespace winrt::Windows::UI::Core;
-        using namespace winrt::Windows::Foundation;
-        using namespace winrt::Windows::Storage;
-        picker.PickSingleFolderAsync().Completed([action, dispatcher](
-                const IAsyncOperation<StorageFolder> operation,
-                const AsyncStatus status) {
-            assert(status == AsyncStatus::Completed);
-            auto folder = operation.get();
-            dispatcher.RunAsync(CoreDispatcherPriority::Normal,
-                [action, folder](void) { action(folder); });
         });
     }
 #endif /* defined(TRROJAN_FOR_UWP) */
