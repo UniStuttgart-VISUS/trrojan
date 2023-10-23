@@ -218,8 +218,11 @@ void trrojan::d3d12::environment::on_initialise(const cmd_line& cmdLine) {
                 this->_devices.push_back(std::make_shared<d3d12::device>(
                         factory, [adapter](void) {
                     ATL::CComPtr<ID3D12Device> retval;
-                    auto hr = ::D3D12CreateDevice(adapter, D3D_FEATURE_LEVEL_12_1,
+                    auto hr = ::D3D12CreateDevice(adapter, D3D_FEATURE_LEVEL_11_0,
                         ::IID_ID3D12Device, reinterpret_cast<void **>(&retval));
+                    if (FAILED(hr)) {
+                        throw ATL::CAtlException(hr);
+                    }
                     return retval;
                 }));
 #else /* !defined(TRROJAN_FOR_UWP) */

@@ -13,6 +13,7 @@
 #include <winrt/windows.foundation.collections.h>
 #include <winrt/windows.storage.accesscache.h>
 #include <winrt/windows.storage.pickers.h>
+#include <winrt/windows.ui.popups.h>
 
 // Does not work:
 //#include <WindowsStorageCOM.h>
@@ -30,17 +31,46 @@
  */
 void App::Run(void) {
     using namespace winrt::Windows::Foundation;
+    using namespace winrt::Windows::Foundation::Collections;
     using namespace winrt::Windows::Storage;
     using namespace winrt::Windows::Storage::AccessCache;
 
     auto local_folder = ApplicationData::Current().LocalFolder();
     std::string log_path;
     std::string output_path;
+    auto usb_devs = winrt::Windows::Storage::KnownFolders::RemovableDevices();
     std::atomic<State> state(State::PromptTrroll);
     auto window = CoreWindow::GetForCurrentThread();
     auto dispatcher = window.Dispatcher();
     StorageFile trroll_file(nullptr);
     std::string trroll_path;
+
+    // Handlers for copying/moving the benchmark results to a location 
+    // accessible by the user.
+    const auto on_output_succeeded = [&state](void) {
+        EraseBits(state, State::MovingOutput);
+    };
+    const auto on_output_failed = [&state](const AsyncStatus,
+            const winrt::hresult hr) {
+        trrojan::log::instance().write_line(trrojan::log_level::error,
+            "The file containing the benchmark results could not be moved "
+            "to a removable device ({0:x}). All subsequent operations are "
+            "aborted.", hr.value);
+        state = State::Done;
+    };
+    const auto on_log_succeeded = [&state](void) {
+        EraseBits(state, State::MovingLog);
+    };
+    const auto on_log_failed = [&state](const AsyncStatus,
+            const winrt::hresult hr) {
+        trrojan::log::instance().write_line(trrojan::log_level::warning,
+            "The log file could not be copied to a removable device ({0:x}).",
+            hr.value);
+        EraseBits(state, State::MovingLog);
+    };
+
+    winrt::Windows::UI::Popups::MessageDialog dlg(L"Giving fabric!");
+    dlg.ShowAsync();
 
     window.Activate();
 
@@ -111,21 +141,6 @@ void App::Run(void) {
 
                 // Run the test.
                 exe.trroll(trroll_file, *output, cool_down, power_collector);
-
-                // TODO: Prompt user to copy output and log.
-#if 0
-                auto csv_output{ localFolder.GetFileAsync(trrojan::from_utf8(device + "_" + current_time + ".csv")).get() };
-                winrt::Windows::Storage::StorageFolder removableFolder{ winrt::Windows::Storage::KnownFolders::RemovableDevices() };
-                auto folders{ removableFolder.GetFoldersAsync().get() };
-                //Windows::Foundation::Collections::IVectorView<Windows::Storage::StorageFolder> itemsInFolder{
-                // };
-                auto folder_cnt = folders.Size();
-
-                if (folder_cnt > 0) {
-                    auto folder = folders.GetAt(0);
-                    auto copy_csv_output = csv_output.CopyAsync(folder);
-                }
-#endif
                 } break;
 
             case State::PromptResult:
@@ -138,6 +153,58 @@ void App::Run(void) {
                     | static_cast<StateBits>(State::MovingLog)
                     | static_cast<StateBits>(State::PromptTrroll));
 
+                trrojan::log::instance().write_line(
+                    trrojan::log_level::information, "Searching for "
+                    "removable disk to extract the output files ...");
+
+                trrojan::on_completed(usb_devs.GetFoldersAsync(),
+                        [&](IVectorView<StorageFolder> folders) {
+                    if (folders.Size() < 1) {
+                        trrojan::log::instance().write_line(
+                            trrojan::log_level::error, "No output folders for "
+                            "the benchmark results were found on a removable "
+                            "device. All subsequent operations are aborted.");
+                        state = State::Done;
+
+                    } else {
+                        auto dst = folders.GetAt(0);
+                        auto output = winrt::to_hstring(output_path);
+                        auto log = winrt::to_hstring(log_path);
+
+                        trrojan::log::instance().write_line(
+                            trrojan::log_level::information, "Delivering the "
+                            "results {0} and the log{1} to {2} ...",
+                            output_path,
+                            log_path,
+                            winrt::to_string(dst.Path()));
+
+                        // Move the results to the first folder on the USB
+                        // device atomically erase the status bit for that on
+                        // completion.
+                        trrojan::on_completed(local_folder.GetFileAsync(output),
+                                [dst, &on_output_succeeded, &on_output_failed](
+                                StorageFile file) {
+                            trrojan::on_completed(
+                                file.MoveAsync(dst),
+                                on_output_succeeded,
+                                on_output_failed);
+                        }, on_output_failed);
+
+                        // Copy the log file and erase the bit. Note that we
+                        // cannot move the log, because it is still open.
+                        trrojan::on_completed(local_folder.GetFileAsync(log),
+                                [dst, &on_log_succeeded, &on_log_failed](
+                                StorageFile file) {
+                            trrojan::on_completed(
+                                file.MoveAsync(dst),
+                                on_log_succeeded,
+                                on_log_failed);
+                        }, on_log_failed);
+
+                    } /* if (folders.Size() < 1) */
+                }, on_output_failed);
+
+#if false
                 Pickers::FolderPicker picker;
                 // Note: for some weird reason, the *folder* picker does not
                 // work without setting a *file* filter.
@@ -199,6 +266,7 @@ void App::Run(void) {
                         state = State::Done;
                     }
                 });
+#endif
                 break;
         } /* switch (state.load(std::memory_order::memory_order_consume)) */
 

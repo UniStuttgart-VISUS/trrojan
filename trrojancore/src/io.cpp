@@ -169,6 +169,7 @@ std::string TRROJANCORE_API trrojan::read_text_file(const char *path) {
  */
 std::string trrojan::read_text_file(
         const winrt::Windows::Storage::StorageFile file) {
+    using namespace winrt::Windows::Foundation;
     using namespace winrt::Windows::Storage::Streams;
 
     auto evt = ::CreateEvent(nullptr, FALSE, FALSE, nullptr);
@@ -177,8 +178,20 @@ std::string trrojan::read_text_file(
     }
     on_exit([evt](void) { ::CloseHandle(evt); });
 
+    std::exception_ptr error;
     std::string retval;
-    on_completed(file.OpenReadAsync(), [&retval, evt](IRandomAccessStream s) {
+
+    auto on_error = [&error, evt](const AsyncStatus, const winrt::hresult hr) {
+        try {
+            winrt::throw_hresult(hr);
+        } catch (...) {
+            error = std::current_exception();
+        }
+        ::SetEvent(evt);
+    };
+
+    on_completed(file.OpenReadAsync(),
+            [&retval, evt, &on_error](IRandomAccessStream s) {
         try {
             auto size = static_cast<std::uint32_t>(s.Size());
             auto buffer = Buffer(size);
@@ -188,17 +201,22 @@ std::string trrojan::read_text_file(
                 on_exit([evt](void) { ::SetEvent(evt); });
                 auto d = reinterpret_cast<const char *>(b.data());
                 retval = std::string(d, d + b.Length());
-            });
+            }, on_error);
 
         } catch (...) {
             ::SetEvent(evt);
             throw;
         }
-    });
+    }, on_error);
 
     // F*#$%! you, STA thread ...
     ::WaitForSingleObject(evt, INFINITE);
-    return retval;
+
+    if (error) {
+        std::rethrow_exception(error);
+    } else {
+        return retval;
+    }
 }
 #endif /* defined(TRROJAN_FOR_UWP) */
 

@@ -170,6 +170,9 @@ void trrojan::d3d11::environment::on_initialise(const cmd_line& cmdLine) {
                 auto hr = ::D3D11CreateDevice(adapter, D3D_DRIVER_TYPE_UNKNOWN,
                     NULL, deviceFlags, NULL, 0, D3D11_SDK_VERSION, &retval,
                     &featureLevel, nullptr);
+                if (FAILED(hr)) {
+                    throw ATL::CAtlException(hr);
+                }
                 return retval;
             }));
 #else /* !defined(TRROJAN_FOR_UWP) */

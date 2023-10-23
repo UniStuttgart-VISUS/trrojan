@@ -172,18 +172,53 @@ namespace trrojan {
     /// operation completed.
     /// </summary>
     /// <typeparam name="TResult"></typeparam>
-    /// <typeparam name="TAction"></typeparam>
+    /// <typeparam name="TSuccess"></typeparam>
+    /// <typeparam name="TFailure"></typeparam>
     /// <param name="operation"></param>
-    /// <param name="action"></param>
-    template<class TResult, class TAction> void on_completed(
+    /// <param name="success_action"></param>
+    /// <param name="failure_action"></param>
+    template<class TResult, class TSuccess, class TFailure>
+    void on_completed(
             winrt::Windows::Foundation::IAsyncOperation<TResult> operation,
-            TAction&& action) {
+            TSuccess&& success_action,
+            TFailure&& failure_action) {
         using namespace winrt::Windows::Foundation;
         assert(operation);
-        operation.Completed([action](
+        operation.Completed([success_action, failure_action](
                 IAsyncOperation<TResult> operation,
                 const AsyncStatus status) {
-            action(operation.get());
+            if (status == AsyncStatus::Completed) {
+                success_action(operation.get());
+            } else {
+                failure_action(status, operation.ErrorCode());
+            }
+        });
+    }
+#endif /* defined(TRROJAN_FOR_UWP) */
+
+#if defined(TRROJAN_FOR_UWP)
+    /// <summary>
+    /// Passes the result of the given operation to the given callback once the
+    /// operation completed.
+    /// </summary>
+    /// <typeparam name="TSuccess"></typeparam>
+    /// <typeparam name="TFailure"></typeparam>
+    /// <param name="operation"></param>
+    /// <param name="success_action"></param>
+    /// <param name="failure_action"></param>
+    template<class TSuccess, class TFailure>
+    void on_completed(winrt::Windows::Foundation::IAsyncAction operation,
+            TSuccess&& success_action,
+            TFailure&& failure_action) {
+        using namespace winrt::Windows::Foundation;
+        assert(operation);
+        operation.Completed([success_action, failure_action](
+                IAsyncAction operation, const AsyncStatus status) {
+            if (status == AsyncStatus::Completed) {
+                success_action();
+            } else {
+                failure_action(status, operation.ErrorCode());
+            }
         });
     }
 #endif /* defined(TRROJAN_FOR_UWP) */
@@ -195,19 +230,25 @@ namespace trrojan {
     /// </summary>
     /// <typeparam name="TResult"></typeparam>
     /// <typeparam name="TProgress"></typeparam>
-    /// <typeparam name="TAction"></typeparam>
+    /// <typeparam name="TSuccess"></typeparam>
+    /// <typeparam name="TFailure"></typeparam>
     /// <param name="operation"></param>
     /// <param name="action"></param>
-    template<class TResult, class TProgress, class TAction> void on_completed(
-            winrt::Windows::Foundation::IAsyncOperationWithProgress<TResult,
-                TProgress> operation,
-            TAction&& action) {
+    template<class TResult, class TProgress, class TSuccess, class TFailure>
+    void on_completed(winrt::Windows::Foundation::IAsyncOperationWithProgress<
+            TResult, TProgress> operation,
+            TSuccess&& success_action,
+            TFailure&& failure_action) {
         using namespace winrt::Windows::Foundation;
         assert(operation);
-        operation.Completed([action](
+        operation.Completed([success_action, failure_action](
                 IAsyncOperationWithProgress<TResult, TProgress> operation,
                 const AsyncStatus status) {
-            action(operation.get());
+            if (status == AsyncStatus::Completed) {
+                success_action(operation.get());
+            } else {
+                failure_action(status, operation.ErrorCode());
+            }
         });
     }
 #endif /* defined(TRROJAN_FOR_UWP) */
