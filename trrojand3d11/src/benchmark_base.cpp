@@ -27,7 +27,6 @@
 #define _D3D_BENCH_DEFINE_FACTOR(f)                                         \
 const std::string trrojan::d3d11::benchmark_base::factor_##f(#f)
 
-_D3D_BENCH_DEFINE_FACTOR(data_folder);
 _D3D_BENCH_DEFINE_FACTOR(debug_view);
 _D3D_BENCH_DEFINE_FACTOR(save_view);
 _D3D_BENCH_DEFINE_FACTOR(sync_interval);

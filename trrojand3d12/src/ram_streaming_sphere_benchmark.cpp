@@ -32,7 +32,7 @@ UINT trrojan::d3d12::ram_streaming_sphere_benchmark::count_descriptor_tables(
         false);
 
     // All of the above is required for each batch that can run in parallel.
-    retval *= this->_stream.batch_count();
+    retval *= static_cast<UINT>(this->_stream.batch_count());
 
     if (include_root) {
         ++retval;

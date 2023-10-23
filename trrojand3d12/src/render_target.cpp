@@ -400,13 +400,14 @@ trrojan::d3d12::render_target_base::create_swap_chain(HWND hWnd) {
     return retval;
 }
 
-#ifdef _UWP
+
+#if defined(TRROJAN_FOR_UWP)
 /*
  * trrojan::d3d12::render_target_base::create_swap_chain
  */
 ATL::CComPtr<IDXGISwapChain3>
-trrojan::d3d12::render_target_base::create_swap_chain(UINT width, UINT height, 
-    winrt::agile_ref<winrt::Windows::UI::Core::CoreWindow> window) {
+trrojan::d3d12::render_target_base::create_swap_chain(UINT width, UINT height,
+        winrt::agile_ref<winrt::Windows::UI::Core::CoreWindow> window) {
     assert(this->_command_queue != nullptr);
     assert(this->_dxgi_factory != nullptr);
     assert(this->pipeline_depth() >= 1);
@@ -425,10 +426,10 @@ trrojan::d3d12::render_target_base::create_swap_chain(UINT width, UINT height,
         desc.SampleDesc.Count = 1;
 
         auto hr = this->_dxgi_factory->CreateSwapChainForCoreWindow(
-            this->_command_queue, 
+            this->_command_queue,
             winrt::get_unknown(window.get()),
             &desc,
-            nullptr, 
+            nullptr,
             &swapChain
         );
         if (FAILED(hr)) {
@@ -445,7 +446,7 @@ trrojan::d3d12::render_target_base::create_swap_chain(UINT width, UINT height,
 
     return retval;
 }
-#endif // _UWP
+#endif /* defined(TRROJAN_FOR_UWP) */
 
 
 /*

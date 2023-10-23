@@ -70,10 +70,13 @@ std::string trrojan::executive::executable_path(void) {
 #endif /* defined(_WIN32) */
 
 
-/*
- * trrojan::executive::factor_core_window
- */
-const char *trrojan::executive::factor_core_window = "core_window";
+#define _EXECUTIVE_DEFINE_FACTOR(f)                                            \
+const std::string trrojan::executive::factor_##f(#f)
+
+_EXECUTIVE_DEFINE_FACTOR(core_window);
+_EXECUTIVE_DEFINE_FACTOR(data_folder);
+
+#undef _EXECUTIVE_DEFINE_FACTOR
 
 
 #if defined(TRROJAN_FOR_UWP)
@@ -254,22 +257,11 @@ void trrojan::executive::load_plugins(const cmd_line& cmdLine) {
 void trrojan::executive::run(benchmark_base& benchmark,
         configuration_set configs,
         output_base& output,
-        const cool_down& cool_down,
-        power_collector::pointer power_collector) {
+        const cool_down& cool_down) {
     // Note: This method is called from the scripting interface and possibly
     // from other places we do not yet know. Therefore, we do not optimise
     // the order of the parameters, but keep them as they have been passed
     // to the method.
-
-    // Inject the power collector into all configurations.
-    configs.replace_factor(factor::from_manifestations(
-        power_collector::factor_name, power_collector));
-
-#if defined(TRROJAN_FOR_UWP)
-    // Inject the core window into all UWP configurations.
-    configs.replace_factor(factor::from_manifestations(
-        factor_core_window, this->window));
-#endif /* defined(TRROJAN_FOR_UWP) */
 
     auto eds = this->prepare_env_devs(configs);
     for (auto e : eds) {
@@ -321,13 +313,12 @@ void trrojan::executive::run(benchmark_base& benchmark,
 void trrojan::executive::run(const benchmark& benchmark,
         const configuration_set& configs,
         output_base& output,
-        const cool_down& cool_down,
-        power_collector::pointer power_collector) {
+        const cool_down& cool_down) {
     if (benchmark == nullptr) {
         throw std::runtime_error("The benchmark to run must not be nullptr.");
     }
 
-    this->run(*benchmark, configs, output, cool_down, power_collector);
+    this->run(*benchmark, configs, output, cool_down);
 }
 
 
@@ -354,6 +345,17 @@ void trrojan::executive::trroll(const troll_input_type& path,
     });
 
     for (auto& b : bcss) {
+        // Inject the power collector into all configurations.
+        b.configs.replace_factor(factor::from_manifestations(
+            power_collector::factor_name, power_collector));
+
+#if defined(TRROJAN_FOR_UWP)
+        // On UWP, inject the core window into all UWP configurations such that
+        // the benchmark can tie any visible swap chain to this window.
+        b.configs.replace_factor(factor::from_manifestations(
+            factor_core_window, this->window));
+#endif /* defined(TRROJAN_FOR_UWP) */
+
         // First, make sure to find the requested plugin and instantiate the
         // benchmarks requested from this plugin.
         if ((curPlugin == nullptr) || (curPlugin->name() != b.plugin)) {
@@ -383,7 +385,7 @@ void trrojan::executive::trroll(const troll_input_type& path,
                     b.benchmark.c_str(), b.plugin.c_str());
 
                 (**it).optimise_order(b.configs);
-                this->run(*it, b.configs, output, cool_down, power_collector);
+                this->run(*it, b.configs, output, cool_down);
 
             } else {
                 log::instance().write(log_level::warning, "No benchmark named "

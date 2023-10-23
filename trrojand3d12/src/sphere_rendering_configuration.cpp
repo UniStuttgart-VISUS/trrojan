@@ -6,9 +6,8 @@
 
 #include "trrojan/d3d12/sphere_rendering_configuration.h"
 
+#include "trrojan/executive.h"
 #include "trrojan/io.h"
-
-#include "trrojan/d3d12/benchmark_base.h"
 
 #include "sphere_techniques.h"
 #include "SpherePipeline.hlsli"
@@ -101,9 +100,12 @@ trrojan::d3d12::sphere_rendering_configuration::sphere_rendering_configuration(
         _SPHERE_BENCH_INIT_FACTOR(vs_raygen),
         _SPHERE_BENCH_INIT_FACTOR(vs_xfer_function) {
     try {
-        auto f = config.get<std::string>(benchmark_base::factor_data_folder);
-        this->_data_set = combine_path(f, this->_data_set);
-    } catch (...) { /* This is not fatal. */ }
+        auto it = config.find(executive::factor_data_folder);
+        if (it != config.end()) {
+            auto f = it->value().get<std::string>();
+            this->_data_set = combine_path(f, this->_data_set);
+        }
+    } catch (...) { /* This is not fatal (data folder has wrong type). */ }
 }
 
 #undef _SPHERE_BENCH_INIT_FACTOR

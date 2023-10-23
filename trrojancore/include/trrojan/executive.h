@@ -76,9 +76,28 @@ namespace trrojan {
 #endif /* defined(_WIN32) */
 
         /// <summary>
+        /// Creates a factor for the given <see cref="power_collector" />.
+        /// </summary>
+        /// <param name="c">The power collector to pass on as a factor. It is
+        /// safe to pass <c>nullptr</c>.</param>
+        /// <returns>A factor containing <paramref name="c" />.</returns>
+        static inline factor make_factor(const power_collector::pointer& c) {
+            return factor::from_manifestations(power_collector::factor_name, c);
+        }
+
+        /// <summary>
         /// The name of the factor passing the UWP core window in UWP builds.
         /// </summary>
-        static const char *factor_core_window;
+        static const std::string factor_core_window;
+
+        /// <summary>
+        /// A string factor that allows for specifying where to look for the
+        /// data sets, which might be useful when separating the benchmarking
+        /// scripts from the data set storage. If not set, the application will
+        /// usually assume that relative paths are relative to the working
+        /// directory of TRRojan.
+        /// </summary>
+        static const std::string factor_data_folder;
 
         /// <summary>
         /// Initialises a new instance.
@@ -152,17 +171,23 @@ namespace trrojan {
         /// names of <see cref="environment" /> and <see cref="device" />s need
         /// to be replaces with their actual instantiation.</param>
         void run(benchmark_base& benchmark, configuration_set configs,
-            output_base& output, const cool_down& coolDown,
-            power_collector::pointer powerCollector);
+            output_base& output, const cool_down& coolDown);
 
         void run(const benchmark& benchmark, const configuration_set& configs,
-            output_base& output, const cool_down& coolDown,
-            power_collector::pointer powerCollector);
+            output_base& output, const cool_down& coolDown);
 
         /// <summary>
         /// Runs the benchmarks in the given TRROLL script writing the results
         /// to the given <paramref name="output" />.
         /// </summary>
+        /// <param name="path">The path to the TRROLL script to be executed.
+        /// </param>
+        /// <param name="output">The output host where the benchmarks put their
+        /// results.</param>
+        /// <param name="cool_down">Controls regular cool-down periods between
+        /// benchmarks that are running over weeks.</param>
+        /// <param name="power_collector">If not <c>nullptr</c>, enables the
+        /// benchmark to measure the power consumption of its work.</param>
         void trroll(const troll_input_type& path,
             output_base& output,
             const cool_down& cool_down,

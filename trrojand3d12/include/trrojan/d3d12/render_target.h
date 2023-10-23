@@ -308,7 +308,7 @@ namespace d3d12 {
         /// <returns></returns>
         ATL::CComPtr<IDXGISwapChain3> create_swap_chain(HWND hWnd);
 
-#ifdef _UWP
+#if defined(TRROJAN_FOR_UWP)
         /// <summary>
         /// Allocate a swap chain for the pipeline depth of the render target
         /// and associated with the given window for UWP.
@@ -323,7 +323,7 @@ namespace d3d12 {
         /// <returns></returns>
         ATL::CComPtr<IDXGISwapChain3> create_swap_chain(UINT width, UINT height, 
             winrt::agile_ref<winrt::Windows::UI::Core::CoreWindow> window);
-#endif // _UWP
+#endif /* defined(TRROJAN_FOR_UWP) */
 
         /// <summary>
         /// Answer the current buffer.
