@@ -6,6 +6,9 @@
 
 #include "trrojan/log.h"
 
+#include <spdlog/sinks/msvc_sink.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
+
 
 /*
  * trrojan::log::~log
@@ -25,20 +28,26 @@ void trrojan::log::write(const log_level level, const char *str) {
  * trrojan::log::log
  */
 trrojan::log::log(const char *file) {
-    if (file != nullptr) {
-        this->_logger = spdlog::basic_logger_mt("file", file);
+    std::vector<spdlog::sink_ptr> sinks;
 
-    } else {
-#if defined(TRROJAN_FOR_UWP)
-        this->_buffer_sink = std::make_shared<ring_sink_type>(128);
-        this->_logger = std::make_shared<spdlog::logger>("console",
-            this->_buffer_sink);
-#else /* defined(TRROJAN_FOR_UWP) */
-        this->_logger = spdlog::stdout_color_mt("console");
-#endif /* defined(TRROJAN_FOR_UWP) */
+    if (file != nullptr) {
+        auto sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(file);
+        sinks.push_back(sink);
     }
 
-    //msvc_sink
+#if defined(TRROJAN_FOR_UWP)
+    this->_buffer_sink = std::make_shared<ring_sink_type>(128);
+    sinks.push_back(this->_buffer_sink);
+#else /* defined(TRROJAN_FOR_UWP) */
+    sinks.push_back(std::make_shared<spdlog::sinks::stderr_color_sink_mt>());
+#endif /* defined(TRROJAN_FOR_UWP) */
+
+#if (defined(_WIN32) && (defined(DEBUG) || defined(_DEBUG)))
+    sinks.push_back(std::make_shared<spdlog::sinks::msvc_sink_mt>());
+#endif /* (defined(_WIN32) && (defined(DEBUG) || defined(_DEBUG))) */
+
+    this->_logger = std::make_shared<spdlog::logger>("logger",
+        sinks.begin(), sinks.end());
 
 #if (defined(DEBUG) || defined(_DEBUG))
     this->_logger->set_level(spdlog::level::trace);

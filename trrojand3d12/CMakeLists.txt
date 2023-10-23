@@ -56,7 +56,7 @@ target_include_directories(${PROJECT_NAME}
         $<BUILD_INTERFACE:${SourceDirectory}>
         $<BUILD_INTERFACE:${ShaderOutputDirectory}>)
 target_link_libraries(${PROJECT_NAME} PRIVATE trrojancore)
-target_link_libraries(${PROJECT_NAME} PRIVATE d3d12 dxgi dxguid)
+target_link_libraries(${PROJECT_NAME} PRIVATE d3d12 dxgi dxguid d2d1 dwrite)
 target_link_libraries(${PROJECT_NAME} PRIVATE glm::glm)
 
 #if (TRROJAN_DEBUG_OVERLAY)

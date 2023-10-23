@@ -13,8 +13,6 @@
 #include <stdexcept>
 #include <vector>
 
-#include "trrojan/utilities.h"
-
 #include <atlbase.h>
 #include <Windows.h>
 #include <d3d11.h>

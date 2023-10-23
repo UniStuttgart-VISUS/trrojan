@@ -1,5 +1,5 @@
 ﻿// <copyright file="variant.h" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2016 - 2022 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+// Copyright © 2016 - 2023 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
 // <author>Christoph Müller</author>
@@ -191,7 +191,9 @@ namespace detail {
         variant_type::uint64, variant_type::float32, variant_type::float64,
         variant_type::string, variant_type::wstring, variant_type::device,
         variant_type::environment, variant_type::power_collector,
+#if defined(TRROJAN_FOR_UWP)
         variant_type::core_window,
+#endif /* defined(TRROJAN_FOR_UWP) */
         __TRROJAN_VARIANT_VECS(int8), __TRROJAN_VARIANT_VECS(int16),
         __TRROJAN_VARIANT_VECS(int32), __TRROJAN_VARIANT_VECS(int64),
         __TRROJAN_VARIANT_VECS(uint8), __TRROJAN_VARIANT_VECS(uint16),

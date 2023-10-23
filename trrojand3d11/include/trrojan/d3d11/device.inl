@@ -5,6 +5,7 @@
 // <author>Christoph Müller</author>
 
 
+#if defined(TRROJAN_FOR_UWP)
 /*
  * trrojan::d3d11::device::device
  */
@@ -20,3 +21,4 @@ trrojan::d3d11::device::device(TGenerator&& generator)
     // benchmark actually needs it.
     this->d3dDevice.reset(nullptr);
 }
+#endif /* defined(TRROJAN_FOR_UWP) */

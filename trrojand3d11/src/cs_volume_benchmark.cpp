@@ -316,9 +316,5 @@ trrojan::result trrojan::d3d11::cs_volume_benchmark::on_run(
         static_cast<double>(cpuTime) / cntCpuIterations
     });
 
-    std::ostringstream retval_log_output;
-    result_to_string(retval_log_output, *retval);
-    log::instance().write_line(log_level::information, retval_log_output.str());
-
     return retval;
 }

@@ -61,6 +61,10 @@ void App::Run(void) {
                         state = State::Benchmarking;
                     } else {
                         // If the user did not provide a test script, we exit.
+                        trrojan::log::instance().write_line(
+                            trrojan::log_level::information,
+                            "User chose to end benchmarking by not selecting a "
+                            "benchmarking script.");
                         state = State::Done;
                     }
                 });
@@ -80,10 +84,15 @@ void App::Run(void) {
                 const auto log_base = trrojan::combine_path(log_folder,
                     GetBaseLogName(trroll_path));
 
-                // Make sure tht the log is initialised in local storage.
+                // Make sure that the log is initialised in local storage.
                 log_path = log_base + ".log";
                 auto& log = trrojan::log::instance(log_path.c_str());
                 log_path = trrojan::get_file_name(log_path);
+
+                trrojan::log::instance().write_line(
+                    trrojan::log_level::information,
+                    "Running user-selected TRROLL script {}.",
+                    trroll_path);
 
                 // Build the command line.
                 trrojan::cmd_line cmd_line;
@@ -140,6 +149,12 @@ void App::Run(void) {
                     if (dst) {
                         // Open the application folder, where we have the stored
                         // the output files that are to be copied to 'f'.
+                        trrojan::log::instance().write_line(
+                            trrojan::log_level::information, "Delivering "
+                            "output files {0} and {1} to user-selected folder "
+                            "{2}.", output_path, log_path,
+                            winrt::to_string(dst.Path()));
+
                         auto output = winrt::to_hstring(output_path);
                         auto log = winrt::to_hstring(log_path);
 
@@ -155,6 +170,9 @@ void App::Run(void) {
                                 });
                             } catch (...) {
                                 EraseBits(state, State::MovingLog);
+                                trrojan::log::instance().write_line(
+                                    trrojan::log_level::error, "Moving the "
+                                    "output file failed.");
                             }
                         });
 
@@ -170,6 +188,9 @@ void App::Run(void) {
                                 });
                             } catch (...) {
                                 EraseBits(state, State::MovingLog);
+                                trrojan::log::instance().write_line(
+                                    trrojan::log_level::error, "Copying the "
+                                    "log file failed.");
                             }
                         });
 
@@ -183,6 +204,8 @@ void App::Run(void) {
 
         dispatcher.ProcessEvents(CoreProcessEventsOption::ProcessOneAndAllPending);
     } /* while (state.load(std::memory_order::memory_order_consume) ...  */
+
+    dispatcher.ProcessEvents(CoreProcessEventsOption::ProcessAllIfPresent);
 }
 
 

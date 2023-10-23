@@ -79,7 +79,7 @@ std::string trrojan::d3d11::plugin::get_location(void) {
 }
 
 
-#if !defined(_WIN32)
+#if !defined(TRROJAN_FOR_UWP)
 /*
  * trrojan::d3d11::plugin::load_resource
  */
@@ -114,7 +114,7 @@ std::vector<std::uint8_t> trrojan::d3d11::plugin::load_resource(LPCTSTR name,
 
     return retval;
 }
-#endif /* !defined(_WIN32) */
+#endif /* !defined(TRROJAN_FOR_UWP) */
 
 
 

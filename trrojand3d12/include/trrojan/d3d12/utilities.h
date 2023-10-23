@@ -18,7 +18,6 @@
 #include <Windows.h>
 #include <d3d12.h>
 
-#include "trrojan/utilities.h"
 #include "trrojan/log.h"
 
 #include "trrojan/d3d12/export.h"

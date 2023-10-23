@@ -103,7 +103,7 @@ trrojan::result trrojan::d3d12::benchmark_base::run(const configuration& c) {
 #else /* defined(TRROJAN_FOR_UWP) */
             log::instance().write_line(log_level::verbose, "Lazy creation of "
                 "D3D12 debug render target.");
-            this->_debug_target = std::make_shared<debug_render_target>();
+            this->_debug_target = std::make_shared<debug_render_target>(device);
             this->_debug_target->resize(1, 1);   // Force resource allocation.
 #endif /* defined(TRROJAN_FOR_UWP) */
         }

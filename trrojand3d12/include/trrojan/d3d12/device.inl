@@ -5,6 +5,7 @@
 // <author>Christoph Müller</author>
 
 
+#if defined(TRROJAN_FOR_UWP)
 /*
  * trrojan::d3d12::device::device
  */
@@ -24,3 +25,4 @@ trrojan::d3d12::device::device(const ATL::CComPtr<IDXGIFactory4>& dxgiFactory,
     assert(this->_command_queue == nullptr);
     assert(this->_fence == nullptr);
 }
+#endif /* defined(TRROJAN_FOR_UWP) */

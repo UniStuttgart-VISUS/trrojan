@@ -183,7 +183,6 @@ namespace trrojan {
         operation.Completed([action](
                 IAsyncOperation<TResult> operation,
                 const AsyncStatus status) {
-            assert(status == AsyncStatus::Completed);
             action(operation.get());
         });
     }
@@ -208,7 +207,6 @@ namespace trrojan {
         operation.Completed([action](
                 IAsyncOperationWithProgress<TResult, TProgress> operation,
                 const AsyncStatus status) {
-            assert(status == AsyncStatus::Completed);
             action(operation.get());
         });
     }

@@ -1,9 +1,10 @@
-/// <copyright file="uwp_debug_render_target.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Christoph Müller</author>
+// <copyright file="uwp_debug_render_target.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
+// Copyright © 2016 - 2023 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Michael Becher</author>
 
+#if defined(TRROJAN_FOR_UWP)
 #include <unknwn.h>
 
 #include "trrojan/d3d11/uwp_debug_render_target.h"
@@ -551,3 +552,5 @@ void trrojan::d3d11::uwp_debug_render_target::SetWindow(winrt::agile_ref<winrt::
 
     resize(m_outputSize.Width, m_outputSize.Height);
 }
+
+#endif /* defined(TRROJAN_FOR_UWP) */

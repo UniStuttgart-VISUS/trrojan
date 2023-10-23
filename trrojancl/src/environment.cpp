@@ -1,14 +1,19 @@
-/// <copyright file="environment.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Valentin Bruder</author>
-/// <author>Christoph Müller</author>
+// <copyright file="environment.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
+// Copyright © 2016 - 2023 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Valentin Bruder</author>
+// <author>Christoph Müller</author>
 
 #include "trrojan/opencl/environment.h"
 #include "trrojan/log.h"
 
+#if defined(_WIN32)
+#include <Windows.h>
+#endif /* defined(_WIN32) */
+
 #include <assert.h>
+
 
 /*
  * trrojan::opencl::environment::~environment
