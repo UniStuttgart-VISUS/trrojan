@@ -26,7 +26,9 @@ trrojan::d3d12::render_target_base::default_clear_colour
  * trrojan::d3d12::render_target_base::~render_target_base
  */
 trrojan::d3d12::render_target_base::~render_target_base(void) {
-    this->wait_for_gpu();
+    // Clearing the state (via our method) will implicitly wait for the GPU
+    // to finish all work.
+    this->clear_state();
 }
 
 
@@ -48,6 +50,55 @@ void trrojan::d3d12::render_target_base::clear(
         auto handle = this->rtv_handle(frame);
         cmd_list->ClearRenderTargetView(handle, clear_colour.data(), 0,
             nullptr);
+    }
+}
+
+
+/*
+ * trrojan::d3d12::render_target_base::clear_state
+ */
+void trrojan::d3d12::render_target_base::clear_state(
+        ID3D12PipelineState *state) {
+    if ((this->_device != nullptr) && (this->_command_queue != nullptr)) {
+        ATL::CComPtr<ID3D12CommandAllocator> allocator;
+        ATL::CComPtr<ID3D12CommandList> cmd_list;
+        ATL::CComPtr<ID3D12GraphicsCommandList> gfx_cmd_list;
+
+        {
+            auto hr = this->_device->CreateCommandAllocator(
+                D3D12_COMMAND_LIST_TYPE_DIRECT,
+                IID_ID3D12CommandAllocator,
+                reinterpret_cast<void **>(&allocator));
+            if (FAILED(hr)) {
+                throw ATL::CAtlException(hr);
+            }
+            set_debug_object_name(allocator, "clear_state allocator");
+        }
+
+        {
+            auto hr = this->_device->CreateCommandList(0,
+                D3D12_COMMAND_LIST_TYPE_DIRECT,
+                allocator,
+                nullptr,
+                IID_ID3D12CommandList,
+                reinterpret_cast<void **>(&cmd_list));
+            if (FAILED(hr)) {
+                throw ATL::CAtlException(hr);
+            }
+            set_debug_object_name(allocator, "clear state command list");
+        }
+
+        {
+            auto hr = cmd_list.QueryInterface(&gfx_cmd_list);
+            if (FAILED(hr)) {
+                throw ATL::CAtlException(hr);
+            }
+        }
+
+        gfx_cmd_list->ClearState(state);
+        close_command_list(gfx_cmd_list);
+        this->_command_queue->ExecuteCommandLists(1, &(cmd_list.p));
+        this->wait_for_gpu();
     }
 }
 
@@ -341,6 +392,7 @@ void trrojan::d3d12::render_target_base::create_rtv_heap(void) {
 }
 
 
+#if !defined(TRROJAN_FOR_UWP)
 /*
  * trrojan::d3d12::render_target_base::create_swap_chain
  */
@@ -354,7 +406,6 @@ trrojan::d3d12::render_target_base::create_swap_chain(HWND hWnd) {
     ATL::CComPtr<IDXGISwapChain1> swapChain;
     UINT width = 1;
 
-#ifndef _UWP
     {
         RECT clientRect;
         if (::GetClientRect(hWnd, &clientRect)) {
@@ -362,7 +413,6 @@ trrojan::d3d12::render_target_base::create_swap_chain(HWND hWnd) {
             width = std::abs(clientRect.right - clientRect.left);
         }
     }
-#endif // _UWP
 
     {
         DXGI_SWAP_CHAIN_DESC1 desc;
@@ -399,6 +449,7 @@ trrojan::d3d12::render_target_base::create_swap_chain(HWND hWnd) {
 
     return retval;
 }
+#endif /* !defined(TRROJAN_FOR_UWP) */
 
 
 #if defined(TRROJAN_FOR_UWP)
@@ -413,6 +464,11 @@ trrojan::d3d12::render_target_base::create_swap_chain(UINT width, UINT height,
     assert(this->pipeline_depth() >= 1);
     ATL::CComPtr<IDXGISwapChain3> retval;
     ATL::CComPtr<IDXGISwapChain1> swapChain;
+
+    // As we potentially swap an existing swap chain on 'window', we need to
+    // make sure that all existing references to the previous one have been
+    // discarded before we try to create the new one.
+    this->clear_state();
 
     {
         DXGI_SWAP_CHAIN_DESC1 desc;

@@ -207,6 +207,9 @@ void trrojan::executive::load_plugins(const cmd_line& cmdLine) {
             std::vector<environment> envs;
             p->create_environments(envs);
 
+            log::instance().write_line(log_level::verbose, "Plugin \"{0}\" "
+                "contains {1} environment(s)", p->name(), envs.size());
+
             for (auto e : envs) {
                 // First, handle potential violations of the contract with the
                 // plugin. If the plugin returns invalid stuff, just skip it.

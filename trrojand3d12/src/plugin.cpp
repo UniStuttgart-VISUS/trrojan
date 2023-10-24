@@ -158,7 +158,7 @@ size_t trrojan::d3d12::plugin::create_benchmarks(benchmark_list& dst) const {
  */
 size_t trrojan::d3d12::plugin::create_environments(
         environment_list& dst) const {
-    return 0;
+    //return 0;
     dst.emplace_back(std::make_shared<environment>());
     return 1;
 }

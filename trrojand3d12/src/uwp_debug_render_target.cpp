@@ -1,8 +1,9 @@
-// <copyright file="uwp_debug_render_target.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2022 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+ï»¿// <copyright file="uwp_debug_render_target.cpp" company="Visualisierungsinstitut der UniversitÃ¤t Stuttgart">
+// Copyright Â© 2022 - 2023 Visualisierungsinstitut der UniversitÃ¤t Stuttgart. Alle Rechte vorbehalten.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
-// <author>Christoph Müller</author>
+// <author>Michael Becher</author>
+// <author>Christoph MÃ¼ller</author>
 
 #include "trrojan/d3d12/uwp_debug_render_target.h"
 
@@ -13,11 +14,11 @@
 
 #include "trrojan/log.h"
 
+#include "trrojan/d3d12/device.h"
 #include "trrojan/d3d12/utilities.h"
 
-#ifdef _UWP
 
-
+#if defined(TRROJAN_FOR_UWP)
 /*
  * trrojan::d3d12::uwp_debug_render_target::uwp_debug_render_target
  */
@@ -43,6 +44,8 @@ trrojan::d3d12::uwp_debug_render_target::~uwp_debug_render_target(void) {
         this->msg_pump_.join();
     }*/
     // TODO: anything to clear here
+
+    this->clear_state();
 }
 
 
@@ -96,6 +99,7 @@ void trrojan::d3d12::uwp_debug_render_target::resize(const unsigned int width,
         // Initial call to resize, need to create the swap chain.
         assert(this->device() != nullptr);
 
+        this->clear_state();
         this->swap_chain_ = this->create_swap_chain(width, height, window_);
     }
     else {
@@ -235,5 +239,4 @@ void trrojan::d3d12::uwp_debug_render_target::SetWindow(winrt::agile_ref<winrt::
 
     resize(output_size_.Width, output_size_.Height);
 }
-
-#endif //_UWP
+#endif /* defined(TRROJAN_FOR_UWP) */

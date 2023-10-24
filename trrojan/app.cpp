@@ -35,7 +35,7 @@ void App::Run(void) {
     using namespace winrt::Windows::Storage;
     using namespace winrt::Windows::Storage::AccessCache;
 
-    auto local_folder = ApplicationData::Current().LocalFolder();
+    auto temp_folder = ApplicationData::Current().TemporaryFolder();
     std::string log_path;
     std::string output_path;
     auto usb_devs = winrt::Windows::Storage::KnownFolders::RemovableDevices();
@@ -56,7 +56,8 @@ void App::Run(void) {
             "The file containing the benchmark results could not be moved "
             "to a removable device ({0:x}). All subsequent operations are "
             "aborted.", hr.value);
-        state = State::Done;
+        EraseBits(state, State::MovingOutput);
+        //state = State::Done;
     };
     const auto on_log_succeeded = [&state](void) {
         EraseBits(state, State::MovingLog);
@@ -69,8 +70,8 @@ void App::Run(void) {
         EraseBits(state, State::MovingLog);
     };
 
-    winrt::Windows::UI::Popups::MessageDialog dlg(L"Giving fabric!");
-    dlg.ShowAsync();
+    //winrt::Windows::UI::Popups::MessageDialog dlg(L"Giving fabric!");
+    //dlg.ShowAsync();
 
     window.Activate();
 
@@ -110,7 +111,7 @@ void App::Run(void) {
                 // Note that we install a scope exit handler to make sure that
                 // the state is reset even in case of an exception.
                 on_exit([&state](void) { state = State::PromptResult; });
-                const auto log_folder = winrt::to_string(local_folder.Path());
+                const auto log_folder = winrt::to_string(temp_folder.Path());
                 const auto log_base = trrojan::combine_path(log_folder,
                     GetBaseLogName(trroll_path));
 
@@ -123,6 +124,10 @@ void App::Run(void) {
                     trrojan::log_level::information,
                     "Running user-selected TRROLL script {}.",
                     trroll_path);
+                trrojan::log::instance().write_line(
+                    trrojan::log_level::information,
+                    "Intermediate output and log files are written to {0}.",
+                    log_folder);
 
                 // Build the command line.
                 trrojan::cmd_line cmd_line;
@@ -148,6 +153,8 @@ void App::Run(void) {
                 // going to start and for the next prompt, too. Once the files
                 // are moved, both bits will be erased and only 'PromptTrroll'
                 // will remain.
+                state = State::PromptTrroll;
+#if false
                 state = static_cast<State>
                     (static_cast<StateBits>(State::MovingOutput)
                     | static_cast<StateBits>(State::MovingLog)
@@ -181,7 +188,7 @@ void App::Run(void) {
                         // Move the results to the first folder on the USB
                         // device atomically erase the status bit for that on
                         // completion.
-                        trrojan::on_completed(local_folder.GetFileAsync(output),
+                        trrojan::on_completed(temp_folder.GetFileAsync(output),
                                 [dst, &on_output_succeeded, &on_output_failed](
                                 StorageFile file) {
                             trrojan::on_completed(
@@ -192,7 +199,7 @@ void App::Run(void) {
 
                         // Copy the log file and erase the bit. Note that we
                         // cannot move the log, because it is still open.
-                        trrojan::on_completed(local_folder.GetFileAsync(log),
+                        trrojan::on_completed(temp_folder.GetFileAsync(log),
                                 [dst, &on_log_succeeded, &on_log_failed](
                                 StorageFile file) {
                             trrojan::on_completed(
@@ -203,6 +210,7 @@ void App::Run(void) {
 
                     } /* if (folders.Size() < 1) */
                 }, on_output_failed);
+#endif
 
 #if false
                 Pickers::FolderPicker picker;
@@ -211,7 +219,7 @@ void App::Run(void) {
                 picker.FileTypeFilter().Append(L"*");
 
                 trrojan::pick_folder_and_continue(picker,
-                        [&local_folder, &log_path, &output_path, &state](
+                        [&temp_folder, &log_path, &output_path, &state](
                         StorageFolder dst) {
                     if (dst) {
                         // Open the application folder, where we have the stored
@@ -228,7 +236,7 @@ void App::Run(void) {
                         // Move the results to the specified folder and
                         // atomically erase the status bit for that on
                         // completion.
-                        trrojan::on_completed(local_folder.GetFileAsync(output),
+                        trrojan::on_completed(temp_folder.GetFileAsync(output),
                                 [dst, &state](StorageFile file) {
                             try {
                                 file.MoveAsync(dst).Completed([&state](
@@ -245,7 +253,7 @@ void App::Run(void) {
 
                         // Copy the log file and erase the bit. Note that we
                         // cannot move the log, because it is still open.
-                        trrojan::on_completed(local_folder.GetFileAsync(log),
+                        trrojan::on_completed(temp_folder.GetFileAsync(log),
                                 [dst, &state](StorageFile file) {
                             try {
                                 file.CopyAsync(dst).Completed([&state](
