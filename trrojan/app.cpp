@@ -37,6 +37,8 @@ void App::Run(void) {
     this->_dispatcher = this->_window.get().Dispatcher();
     this->_workFolder = ApplicationData::Current().TemporaryFolder();
 
+    this->_window.get().Activate();
+
     // Make sure that the logging singleton is created first so that we
     // can register an output file in the given local storage folder.
     {

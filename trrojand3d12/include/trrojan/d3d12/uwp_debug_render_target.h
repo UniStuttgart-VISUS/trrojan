@@ -1,8 +1,9 @@
-//// <copyright file="uwp_debug_render_target.h" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2022 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+ï»¿// <copyright file="uwp_debug_render_target.h" company="Visualisierungsinstitut der UniversitÃ¤t Stuttgart">
+// Copyright Â© 2022 - 2023 Visualisierungsinstitut der UniversitÃ¤t Stuttgart. Alle Rechte vorbehalten.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
-// <author>Christoph Müller</author>
+// <author>Michael Becher</author>
+// <author>Christoph MÃ¼ller</author>
 
 #pragma once
 
@@ -25,94 +26,93 @@
 
 #include "trrojan/d3d12/render_target.h"
 
-#ifdef _UWP
-
 /* Forward declarations. */
 struct DebugConstants;
 
 
 namespace trrojan {
-    namespace d3d12 {
+namespace d3d12 {
+
+#if defined(TRROJAN_FOR_UWP)
+    /// <summary>
+    /// The debug view is a render target using a visible window.
+    /// </summary>
+    /// <remarks>
+    /// This debug render target works by copying the data from a UAV that is
+    /// used as the actual render target. This way, it is ensured that we
+    /// actually see what the real thing is doing rather than having a
+    /// completely different setup that might hide or induce undesired effects.
+    /// </remarks>
+    class TRROJAND3D12_API uwp_debug_render_target : public render_target_base {
+
+    public:
 
         /// <summary>
-        /// The debug view is a render target using a visible window.
+        /// Initialises a new instance.
         /// </summary>
-        /// <remarks>
-        /// This debug render target works by copying the data from a UAV that is
-        /// used as the actual render target. This way, it is ensured that we
-        /// actually see what the real thing is doing rather than having a
-        /// completely different setup that might hide or induce undesired effects.
-        /// </remarks>
-        class TRROJAND3D12_API uwp_debug_render_target : public render_target_base {
+        uwp_debug_render_target(const trrojan::device& device);
 
-        public:
+        /// <summary>
+        /// Finalises the instance.
+        /// </summary>
+        virtual ~uwp_debug_render_target(void);
 
-            /// <summary>
-            /// Initialises a new instance.
-            /// </summary>
-            uwp_debug_render_target(const trrojan::device& device);
+        /// <inheritdoc />
+        UINT present(void) override;
 
-            /// <summary>
-            /// Finalises the instance.
-            /// </summary>
-            virtual ~uwp_debug_render_target(void);
+        // <inheritdoc />
+        void resize(const unsigned int width,
+            const unsigned int height) override;
 
-            /// <inheritdoc />
-            UINT present(void) override;
+        ///// <inheritdoc />
+        //void to_uav(const D3D12_CPU_DESCRIPTOR_HANDLE dst,
+        //    ID3D12GraphicsCommandList *cmd_list) override;
 
-            // <inheritdoc />
-            void resize(const unsigned int width,
-                const unsigned int height) override;
+        /// <summary>
+        /// Interface to existing UWP window
+        /// </summary>
+        /// <param name="window"></param>
+        void SetWindow(winrt::agile_ref<winrt::Windows::UI::Core::CoreWindow> const& window);
 
-            ///// <inheritdoc />
-            //void to_uav(const D3D12_CPU_DESCRIPTOR_HANDLE dst,
-            //    ID3D12GraphicsCommandList *cmd_list) override;
+    protected:
 
-            /// <summary>
-            /// Interface to existing UWP window
-            /// </summary>
-            /// <param name="window"></param>
-            void SetWindow(winrt::agile_ref<winrt::Windows::UI::Core::CoreWindow> const& window);
+        /// <inheritdoc />
+        void reset_buffers(void) override;
 
-        protected:
+    private:
 
-            /// <inheritdoc />
-            void reset_buffers(void) override;
+        typedef render_target_base base;
 
-        private:
+        // Cached reference to the Window.
+        winrt::agile_ref<winrt::Windows::UI::Core::CoreWindow> window_;
 
-            typedef render_target_base base;
+        // Cached device properties.
+        winrt::Windows::Foundation::Size                       output_size_;
+        winrt::Windows::Foundation::Size                       logical_size_;
+        winrt::Windows::Graphics::Display::DisplayOrientations native_orientation_;
+        winrt::Windows::Graphics::Display::DisplayOrientations current_orientation_;
+        float                                                  dpi_;
 
-            // Cached reference to the Window.
-            winrt::agile_ref<winrt::Windows::UI::Core::CoreWindow> window_;
+        /// <summary>
+        /// The staging buffer used to back the UAV that we provide to external
+        /// users for writing to the debug render target. If the render target
+        /// is enabled, this staging buffer will actually become the target.
+        /// Before presenting the debug target, its content will be copied to
+        /// the back buffer of the swap chain.
+        /// </summary>
+        ATL::CComPtr<ID3D12Resource> staging_buffer_;
 
-            // Cached device properties.
-            winrt::Windows::Foundation::Size                       output_size_;
-            winrt::Windows::Foundation::Size                       logical_size_;
-            winrt::Windows::Graphics::Display::DisplayOrientations native_orientation_;
-            winrt::Windows::Graphics::Display::DisplayOrientations current_orientation_;
-            float                                                  dpi_;
+        /// <summary>
+        /// The swap chain for the window.
+        /// </summary>
+        ATL::CComPtr<IDXGISwapChain3> swap_chain_;
 
-            /// <summary>
-            /// The staging buffer used to back the UAV that we provide to external
-            /// users for writing to the debug render target. If the render target
-            /// is enabled, this staging buffer will actually become the target.
-            /// Before presenting the debug target, its content will be copied to
-            /// the back buffer of the swap chain.
-            /// </summary>
-            ATL::CComPtr<ID3D12Resource> staging_buffer_;
-
-            /// <summary>
-            /// The swap chain for the window.
-            /// </summary>
-            ATL::CComPtr<IDXGISwapChain3> swap_chain_;
-
-            /// Direct2D drawing components
+        /// Direct2D drawing components
 #if defined(CREATE_D2D_OVERLAY)
-            std::unique_ptr<d2d_overlay> d2d_overlay_;
+        std::unique_ptr<d2d_overlay> d2d_overlay_;
 #endif // defined(CREATE_D2D_OVERLAY)
-        };
-    }
-}
+    };
+#endif /* defined(TRROJAN_FOR_UWP) */
 
-#endif // _UWP
+} /* namespace d3d12 */
+} /* namespace trrojan */

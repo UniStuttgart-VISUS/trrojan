@@ -1,8 +1,8 @@
-// <copyright file="benchmark_base.h" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2016 - 2023 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+ï»¿// <copyright file="benchmark_base.h" company="Visualisierungsinstitut der UniversitÃ¤t Stuttgart">
+// Copyright Â© 2016 - 2023 Visualisierungsinstitut der UniversitÃ¤t Stuttgart. Alle Rechte vorbehalten.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
-// <author>Christoph Müller</author>
+// <author>Christoph MÃ¼ller</author>
 
 #pragma once
 
@@ -12,10 +12,6 @@
 #include <sstream>
 #include <stdexcept>
 #include <vector>
-
-#ifdef _UWP
-#include <winrt/windows.ui.core.h>
-#endif // _UWP
 
 #include <Windows.h>
 #include <d3d12.h>
@@ -40,11 +36,8 @@ namespace d3d12 {
 
         typedef trrojan::graphics_benchmark_base::manoeuvre_step_type
             manoeuvre_step_type;
-
         typedef trrojan::graphics_benchmark_base::manoeuvre_type manoeuvre_type;
-
         typedef trrojan::graphics_benchmark_base::point_type point_type;
-
         typedef trrojan::graphics_benchmark_base::viewport_type viewport_type;
 
         /// <summary>

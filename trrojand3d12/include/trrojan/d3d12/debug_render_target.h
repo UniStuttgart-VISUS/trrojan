@@ -1,8 +1,8 @@
-// <copyright file="debug_render_target.h" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2022 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+ï»¿// <copyright file="debug_render_target.h" company="Visualisierungsinstitut der UniversitÃ¤t Stuttgart">
+// Copyright Â© 2022 - 2023 Visualisierungsinstitut der UniversitÃ¤t Stuttgart. Alle Rechte vorbehalten.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
-// <author>Christoph Müller</author>
+// <author>Christoph MÃ¼ller</author>
 
 #pragma once
 
@@ -15,7 +15,6 @@
 
 #include "trrojan/d3d12/render_target.h"
 
-#ifndef _UWP
 
 /* Forward declarations. */
 struct DebugConstants;
@@ -24,6 +23,7 @@ struct DebugConstants;
 namespace trrojan {
 namespace d3d12 {
 
+#if !defined(TRROJAN_FOR_UWP)
     /// <summary>
     /// The debug view is a render target using a visible window.
     /// </summary>
@@ -108,7 +108,7 @@ namespace d3d12 {
         /// </summary>
         std::atomic<HWND> _wnd;
     };
-}
-}
+#endif /* !defined(TRROJAN_FOR_UWP) */
 
-#endif // _UWP
+} /* namespace d3d12 */
+} /* namespace trrojan */
