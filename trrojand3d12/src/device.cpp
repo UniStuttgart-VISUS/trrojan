@@ -15,7 +15,6 @@
 #include "trrojan/d3d12/utilities.h"
 
 
-
 /*
  * trrojan::d3d12::device::create_command_queue
  */

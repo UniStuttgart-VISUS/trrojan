@@ -105,6 +105,20 @@ namespace d3d12 {
         }
 
         /// <summary>
+        /// Creates a new command list, schedules
+        /// <see cref="ID3D12GraphicsCommandList::ClearState" />, executes the
+        /// command list and waits for it to complete.
+        /// </summary>
+        /// <remarks>
+        /// This method is extremely inefficient, not only because it stalls the
+        /// pipeline, but also, because it needs to create a new command list an
+        /// an allocator for it. Its only intended use it tearing down the
+        /// system and making sure that the state of the device does not keep
+        /// any resource alive.
+        /// </remarks>
+        void clear_state(ID3D12PipelineState *state = nullptr);
+
+        /// <summary>
         /// Copy the content of <paramref name="source" /> into the render
         /// target.
         /// </summary>
@@ -296,6 +310,7 @@ namespace d3d12 {
         /// </summary>
         void create_rtv_heap(void);
 
+#if !defined(TRROJAN_FOR_UWP)
         /// <summary>
         /// Allocate a swap chain for the pipeline depth of the render target
         /// and associated with the given window.
@@ -307,6 +322,7 @@ namespace d3d12 {
         /// <param name="hWnd"></param>
         /// <returns></returns>
         ATL::CComPtr<IDXGISwapChain3> create_swap_chain(HWND hWnd);
+#endif /* !defined(TRROJAN_FOR_UWP) */
 
 #if defined(TRROJAN_FOR_UWP)
         /// <summary>
