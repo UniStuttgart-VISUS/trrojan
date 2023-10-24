@@ -38,7 +38,7 @@ void App::Run(void) {
     auto local_folder = ApplicationData::Current().LocalFolder();
     std::string log_path;
     std::string output_path;
-    auto usb_devs = winrt::Windows::Storage::KnownFolders::RemovableDevices();
+    auto usb_devs = KnownFolders::RemovableDevices();
     std::atomic<State> state(State::PromptTrroll);
     auto window = CoreWindow::GetForCurrentThread();
     auto dispatcher = window.Dispatcher();
@@ -69,8 +69,8 @@ void App::Run(void) {
         EraseBits(state, State::MovingLog);
     };
 
-    winrt::Windows::UI::Popups::MessageDialog dlg(L"Giving fabric!");
-    dlg.ShowAsync();
+    //winrt::Windows::UI::Popups::MessageDialog dlg(L"Giving fabric!");
+    //dlg.ShowAsync();
 
     window.Activate();
 
