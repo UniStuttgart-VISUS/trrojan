@@ -130,7 +130,7 @@ namespace trrojan {
 
     private:
 
-        typedef spdlog::sinks::ringbuffer_sink<std::mutex> ring_sink_type;
+        typedef spdlog::sinks::ringbuffer_sink_mt ring_sink_type;
 
         /// <summary>
         /// Initialises a new instance.

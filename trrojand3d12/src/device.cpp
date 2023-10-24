@@ -114,11 +114,12 @@ void trrojan::d3d12::device::set_stable_power_state(const bool enabled) {
  * trrojan::d3d12::device::wait_for_gpu
  */
 void trrojan::d3d12::device::wait_for_gpu(void) {
+    auto fence = this->fence();
     auto value = this->_next_fence++;
 
     // Make the fence signal in the command queue with its current value.
     {
-        auto hr = this->command_queue()->Signal(this->fence(), value);
+        auto hr = this->command_queue()->Signal(fence, value);
         if (FAILED(hr)) {
             throw ATL::CAtlException(hr);
         }
@@ -127,7 +128,7 @@ void trrojan::d3d12::device::wait_for_gpu(void) {
     // Signal the event if the fence signalled with its current value.
     auto evt = create_event(false, false);
     {
-        auto hr = this->fence()->SetEventOnCompletion(value, evt);
+        auto hr = fence->SetEventOnCompletion(value, evt);
         if (FAILED(hr)) {
             throw ATL::CAtlException(hr);
         }
