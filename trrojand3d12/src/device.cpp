@@ -51,7 +51,7 @@ trrojan::d3d12::device::device(const ATL::CComPtr<ID3D12Device>& d3dDevice,
         _next_fence(0) {
     this->_command_queue = this->make_cmd_queue();
     this->_fence = this->make_fence();
-    this->set_desc();
+    this->set_desc_from_device();
     assert(this->_command_queue != nullptr);
     assert(this->_d3d_device != nullptr);
     assert(this->_fence != nullptr);
@@ -168,9 +168,9 @@ ATL::CComPtr<ID3D12Fence> trrojan::d3d12::device::make_fence(void) {
 
 
 /*
- * trrojan::d3d12::device::set_desc
+ * trrojan::d3d12::device::set_desc_from_device
  */
-void trrojan::d3d12::device::set_desc(void) {
+void trrojan::d3d12::device::set_desc_from_device(void) {
     assert(this->d3d_device() != nullptr);
     if (this->_dxgi_factory == nullptr) {
         throw std::invalid_argument("The DXGI factory passed to a TRRojan "

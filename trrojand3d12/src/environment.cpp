@@ -104,7 +104,10 @@ void trrojan::d3d12::environment::on_initialise(const cmd_line& cmdLine) {
     // Enable the debug layer in debug builds, which requires the debugging
     // layer being installed like for D3D11. Enabling the debug layer after
     // device creation will invalidate the active device.
-#if (defined(DEBUG) || defined(_DEBUG))
+    // Note: For unknown reason, enabling the debug layer on Xbox does not work,
+    // so we have an additional switch which allows us to force the debug layer
+    // turned off.
+#if !defined(TRROJAN_FORCE_NO_D3D_DEBUG) && (defined(DEBUG) || defined(_DEBUG))
     {
         ATL::CComPtr<ID3D12Debug> debug;
         ATL::CComPtr<ID3D12Debug1> debug1;
@@ -151,7 +154,7 @@ void trrojan::d3d12::environment::on_initialise(const cmd_line& cmdLine) {
     //        iq->AddStorageFilterEntries(DXGI_DEBUG_DXGI, &filter);
     //    }
     //}
-#endif /* (defined(DEBUG) || defined(_DEBUG)) */
+#endif /* !defined(TRROJAN_FORCE_NO_D3D_DEBUG) && (defined(DEBUG) ... */
 
     // Create DXGI factory.
     {

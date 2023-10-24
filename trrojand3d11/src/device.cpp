@@ -16,6 +16,18 @@
 /*
  * trrojan::d3d11::device::get_dxgi_adapter
  */
+ATL::CComPtr<ID3D11DeviceContext> trrojan::d3d11::device::get_context(
+        ATL::CComPtr<ID3D11Device> device) {
+    assert(device != nullptr);
+    ATL::CComPtr<ID3D11DeviceContext> retval;
+    device->GetImmediateContext(&retval);
+    return retval;
+}
+
+
+/*
+ * trrojan::d3d11::device::get_dxgi_adapter
+ */
 ATL::CComPtr<IDXGIAdapter> trrojan::d3d11::device::get_dxgi_adapter(
         ATL::CComPtr<ID3D11Device> device) {
     ATL::CComPtr<IDXGIAdapter> retval;
@@ -83,35 +95,18 @@ ATL::CComPtr<IDXGIFactory> trrojan::d3d11::device::get_dxgi_factory(
 /*
  * trrojan::d3d11::device::device
  */
-trrojan::d3d11::device::device(ATL::CComPtr<ID3D11Device> d3dDevice)
-        : d3dDevice(d3dDevice) {
-    this->set_desc();
-    this->d3dDevice->GetImmediateContext(&this->d3dContext);
+trrojan::d3d11::device::device(ATL::CComPtr<ID3D11Device> d3d_device)
+        : _d3d_context(get_context(d3d_device), _d3d_device(d3d_device) {
+    this->set_desc_from_device();
+    this->_d3d_device->GetImmediateContext(&this->_d3d_context);
 }
 #endif /* !defined(TRROJAN_FOR_UWP) */
 
 
-#if defined(TRROJAN_FOR_UWP)
 /*
- * trrojan::d3d11::device::make_context
+ * trrojan::d3d11::device::set_desc_from_device
  */
-ATL::CComPtr<ID3D11DeviceContext> trrojan::d3d11::device::make_context(
-        void) {
-    if (this->d3dDevice.get() == nullptr) {
-        return nullptr;
-    } else {
-        ATL::CComPtr<ID3D11DeviceContext> retval;
-        this->d3dDevice.get()->GetImmediateContext(&retval);
-        return retval;
-    }
-}
-#endif /* defined(TRROJAN_FOR_UWP) */
-
-
-/*
- * trrojan::d3d11::device::set_desc
- */
-void trrojan::d3d11::device::set_desc(void) {
+void trrojan::d3d11::device::set_desc_from_device(void) {
     assert(this->d3d_device() != nullptr);
     auto adapter = device::get_dxgi_adapter(this->d3d_device());
     if (adapter == nullptr) {

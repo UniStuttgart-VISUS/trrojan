@@ -18,6 +18,7 @@ endif ()
 # Customise TRRojan
 cmake_dependent_option(TRROJAN_WITH_CHAKRA "Enable JavaScript support." OFF "NOT TRROJAN_FOR_UWP" OFF)
 cmake_dependent_option(TRROJAN_WITH_DSTORAGE "Enable support for DirectStorage in Direct3D 12 plugin." ON WIN32 OFF)
+cmake_dependent_option(TRROJAN_FORCE_NO_D3D_DEBUG "Force the debug layer to be disabled." OFF WIN32 OFF)
 cmake_dependent_option(TRROJAN_WITH_POWER_OVERWHELMING "Enable power_overwhelming for measuring GPU power consumption." ON "NOT TRROJAN_FOR_UWP" OFF)
 option(TRROJAN_DEBUG_OVERLAY "Enable overlay in debug view." OFF)
 set(TRROJAN_UWP_PLATFORM_VERSION "10.0.19041.0" CACHE STRING "Specifies the minimum target platform version for UWP.")
@@ -75,6 +76,10 @@ if (TRROJAN_FOR_UWP)
     add_compile_definitions(MMPLD_WITHOUT_WIN32_IO)
     add_compile_definitions(TRROJAN_FOR_UWP)
 endif ()
+
+if (TRROJAN_FORCE_NO_D3D_DEBUG)
+    add_compile_definitions(TRROJAN_FORCE_NO_D3D_DEBUG)
+endif()
 
 
 # Build the system information library.

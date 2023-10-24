@@ -178,7 +178,7 @@ namespace d3d12 {
 
         ATL::CComPtr<ID3D12Fence> make_fence(void);
 
-        void set_desc(void);
+        void set_desc_from_device(void);
 
         ATL::CComPtr<ID3D12CommandQueue> _command_queue;
 #if defined(TRROJAN_FOR_UWP)

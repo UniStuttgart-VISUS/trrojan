@@ -31,6 +31,14 @@ namespace d3d11 {
         typedef std::shared_ptr<device> pointer;
 
         /// <summary>
+        /// Gets the immediate context of the given device.
+        /// </summary>
+        /// <param name="device"></param>
+        /// <returns></returns>
+        static ATL::CComPtr<ID3D11DeviceContext> get_context(
+            ATL::CComPtr<ID3D11Device> device);
+
+        /// <summary>
         /// Gets the DXGI adapter for the given D3D device.
         /// </summary>
         /// <param name="device">The D3D device to get the DXGI adapter for. It
@@ -61,9 +69,9 @@ namespace d3d11 {
         /// <summary>
         /// Initialises a new instance representing the given D3D device.
         /// </summary>
-        /// <param name="d3dDevice">The Direct3D device to be represented by
+        /// <param name="d3d_device">The Direct3D device to be represented by
         /// this instance. This must not be <c>nullptr</c>.</param>
-        explicit device(ATL::CComPtr<ID3D11Device> d3dDevice);
+        explicit device(ATL::CComPtr<ID3D11Device> d3d_device);
 #endif /* !defined(TRROJAN_FOR_UWP) */
 
 #if defined(TRROJAN_FOR_UWP)
@@ -93,14 +101,19 @@ namespace d3d11 {
         /// Answer the immediate context of the underlying Direct3D device.
         /// </summary>
         inline ATL::CComPtr<ID3D11DeviceContext>& d3d_context(void) {
-            return this->d3dContext;
+#if defined(TRROJAN_FOR_UWP)
+            if (this->_d3d_context == nullptr) {
+                this->_d3d_context = get_context(this->d3d_device());
+            }
+#endif /* defined(TRROJAN_FOR_UWP) */
+            return this->_d3d_context;
         }
 
         /// <summary>
         /// Answer the underlying Direct3D device.
         /// </summary>
         inline ATL::CComPtr<ID3D11Device>& d3d_device(void) {
-            return this->d3dDevice;
+            return this->_d3d_device;
         }
 
 #if defined(TRROJAN_FOR_UWP)
@@ -109,25 +122,20 @@ namespace d3d11 {
         /// if it is needed again.
         /// </summary>
         inline void reset(void) {
-            this->d3dContext.reset(nullptr);
-            this->d3dDevice.reset(nullptr);
+            this->_d3d_context = nullptr;
+            this->_d3d_device.reset(nullptr);
         }
 #endif /* defined(TRROJAN_FOR_UWP) */
 
     private:
 
-#if defined(TRROJAN_FOR_UWP)
-        ATL::CComPtr<ID3D11DeviceContext> make_context(void);
-#endif /* defined(TRROJAN_FOR_UWP) */
+        void set_desc_from_device(void);
 
-        void set_desc(void);
-
+        ATL::CComPtr<ID3D11DeviceContext> _d3d_context;
 #if defined(TRROJAN_FOR_UWP)
-        lazy<ATL::CComPtr<ID3D11DeviceContext>> d3dContext;
-        lazy<ATL::CComPtr<ID3D11Device>> d3dDevice;
+        lazy<ATL::CComPtr<ID3D11Device>> _d3d_device;
 #else /* defined(TRROJAN_FOR_UWP) */
-        ATL::CComPtr<ID3D11DeviceContext> d3dContext;
-        ATL::CComPtr<ID3D11Device> d3dDevice;
+        ATL::CComPtr<ID3D11Device> _d3d_device;
 #endif /* defined(TRROJAN_FOR_UWP) */
 
     };

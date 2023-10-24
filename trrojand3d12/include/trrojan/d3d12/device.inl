@@ -17,7 +17,7 @@ trrojan::d3d12::device::device(const ATL::CComPtr<IDXGIFactory4>& dxgiFactory,
             _next_fence(0) {
     // First of all, make sure that the generator is working and obtain the
     // metadata for the device.
-    this->set_desc();
+    this->set_desc_from_device();
 
     // Now, delete the device again such that it is not active unless a
     // benchmark actually needs it.
