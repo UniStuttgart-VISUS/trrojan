@@ -30,12 +30,34 @@
  * App::Run
  */
 void App::Run(void) {
-    using namespace winrt::Windows::Foundation;
-    using namespace winrt::Windows::Foundation::Collections;
+    using namespace winrt::Windows::ApplicationModel::Core;
     using namespace winrt::Windows::Storage;
-    using namespace winrt::Windows::Storage::AccessCache;
 
-    auto temp_folder = ApplicationData::Current().TemporaryFolder();
+    this->_window = CoreWindow::GetForCurrentThread();
+    this->_dispatcher = this->_window.get().Dispatcher();
+    this->_workFolder = ApplicationData::Current().TemporaryFolder();
+
+    // Make sure that the logging singleton is created first so that we
+    // can register an output file in the given local storage folder.
+    {
+        auto logPath = winrt::to_string(this->_workFolder.get().Path());
+        logPath = trrojan::combine_path(logPath, LogFile);
+        auto& log = trrojan::log::instance(logPath.c_str());
+    }
+
+    trrojan::log::instance().write_line(trrojan::log_level::verbose,
+        "Intermediate output and log files are written to {0}.",
+        winrt::to_string(this->_workFolder.get().Path()));
+
+    // Prompt for the first benchmarking script.
+    this->PromptTrroll();
+
+    // Enter the message loop.
+    this->_dispatcher.get().ProcessEvents(
+        CoreProcessEventsOption::ProcessUntilQuit);
+
+
+#if 0
     std::string log_path;
     std::string output_path;
     auto usb_devs = KnownFolders::RemovableDevices();
@@ -113,7 +135,7 @@ void App::Run(void) {
                 on_exit([&state](void) { state = State::PromptResult; });
                 const auto log_folder = winrt::to_string(temp_folder.Path());
                 const auto log_base = trrojan::combine_path(log_folder,
-                    GetBaseLogName(trroll_path));
+                    GetBaseName(trroll_path));
 
                 // Make sure that the log is initialised in local storage.
                 log_path = log_base + ".log";
@@ -164,7 +186,7 @@ void App::Run(void) {
                     trrojan::log_level::information, "Searching for "
                     "removable disk to extract the output files ...");
 
-                trrojan::on_completed(usb_devs.GetFoldersAsync(),
+                trrojan::on_completed(usbDevices.GetFoldersAsync(),
                         [&](IVectorView<StorageFolder> folders) {
                     if (folders.Size() < 1) {
                         trrojan::log::instance().write_line(
@@ -175,14 +197,14 @@ void App::Run(void) {
 
                     } else {
                         auto dst = folders.GetAt(0);
-                        auto output = winrt::to_hstring(output_path);
-                        auto log = winrt::to_hstring(log_path);
+                        auto output = winrt::to_hstring(outPath);
+                        auto log = winrt::to_hstring(logPath);
 
                         trrojan::log::instance().write_line(
                             trrojan::log_level::information, "Delivering the "
                             "results {0} and the log{1} to {2} ...",
-                            output_path,
-                            log_path,
+                            outPath,
+                            logPath,
                             winrt::to_string(dst.Path()));
 
                         // Move the results to the first folder on the USB
@@ -219,7 +241,7 @@ void App::Run(void) {
                 picker.FileTypeFilter().Append(L"*");
 
                 trrojan::pick_folder_and_continue(picker,
-                        [&temp_folder, &log_path, &output_path, &state](
+                        [&temp_folder, &logPath, &outPath, &state](
                         StorageFolder dst) {
                     if (dst) {
                         // Open the application folder, where we have the stored
@@ -227,11 +249,11 @@ void App::Run(void) {
                         trrojan::log::instance().write_line(
                             trrojan::log_level::information, "Delivering "
                             "output files {0} and {1} to user-selected folder "
-                            "{2}.", output_path, log_path,
+                            "{2}.", outPath, logPath,
                             winrt::to_string(dst.Path()));
 
-                        auto output = winrt::to_hstring(output_path);
-                        auto log = winrt::to_hstring(log_path);
+                        auto output = winrt::to_hstring(outPath);
+                        auto log = winrt::to_hstring(logPath);
 
                         // Move the results to the specified folder and
                         // atomically erase the status bit for that on
@@ -282,7 +304,14 @@ void App::Run(void) {
     } /* while (state.load(std::memory_order::memory_order_consume) ...  */
 
     dispatcher.ProcessEvents(CoreProcessEventsOption::ProcessAllIfPresent);
+#endif
 }
+
+
+/*
+ * App::SetWindow
+ */
+void App::SetWindow(const CoreWindow& window) { /* TODO: It seems this is never called. */ }
 
 
 //void App::SetWindow(CoreWindow const &window) {
@@ -390,20 +419,20 @@ void App::Run(void) {
  */
 void App::EraseBits(std::atomic<State>& state, const State erase) {
     auto expected = state.load();
-    auto desired = static_cast<State>(static_cast<StateBits>(expected)
-        & ~static_cast<StateBits>(erase));
+    auto desired = static_cast<State>(GetUnderlying(expected)
+        & ~GetUnderlying(erase));
 
     while (!state.compare_exchange_weak(expected, desired)) {
-        desired = static_cast<State>(static_cast<StateBits>(expected)
-            & ~static_cast<StateBits>(erase));
+        desired = static_cast<State>(GetUnderlying(expected)
+            & ~GetUnderlying(erase));
     }
 }
 
 
 /*
- * App::GetBaseLogName
+ * App::GetBaseName
  */
-std::string App::GetBaseLogName(const std::string& trroll) {
+std::string App::GetBaseName(const std::string& trroll) {
     const auto& factors = trrojan::system_factors::instance();
     const auto device = factors.gaming_device().get<std::string>();
     const auto now = std::chrono::system_clock::now();
@@ -411,5 +440,149 @@ std::string App::GetBaseLogName(const std::string& trroll) {
     const auto trroll_file = trrojan::get_file_name(trroll, false);
     const auto retval = trroll_file + "_" + device + "_" + timestamp;
     return retval;
+}
+
+
+/*
+ * App::LogFile
+ */
+const std::string App::LogFile("trrojan.log");
+
+
+
+/*
+ * App::CopyResultsToUsbAsync
+ */
+HANDLE App::CopyResultsToUsbAsync(const std::string& outFile,
+        const std::string& logFile) {
+    using namespace winrt::Windows::Foundation::Collections;
+    using namespace winrt::Windows::Storage;
+    using namespace winrt::Windows::UI::Core;
+
+    auto retval = ::CreateEvent(nullptr, FALSE, FALSE, nullptr);
+
+    // Note: This looks crazy, but we cannot enumerate the removable devices
+    // outside the STA thread, so we need to dispatch the initial call.
+    this->_dispatcher.get().RunAsync(CoreDispatcherPriority::Normal,
+            [this, outFile, logFile, retval](void) {
+        trrojan::log::instance().write_line(trrojan::log_level::information,
+            "Searching for removable disk to extract the output files ...");
+        auto usbDevices = KnownFolders::RemovableDevices();
+        trrojan::on_completed(usbDevices.GetFoldersAsync(),
+                [this, outFile, logFile, retval](
+                IVectorView<StorageFolder> folders) {
+            try {
+                auto dst = folders.GetAt(0);
+                auto src = this->_workFolder.get();
+
+                trrojan::log::instance().write_line(trrojan::log_level::information,
+                    "Delivering the results {0} and the log {1} from {2} to {3} ...",
+                    outFile, LogFile, winrt::to_string(src.Path()),
+                    winrt::to_string(dst.Path()));
+
+                auto opGetOutFile = src.GetFileAsync(winrt::to_hstring(outFile));
+                auto opGetLogFile = src.GetFileAsync(winrt::to_hstring(LogFile));
+
+                trrojan::log::instance().write_line(trrojan::log_level::verbose,
+                    "Start copying to removable drive ...");
+                auto opCpOutFile = opGetOutFile.get().CopyAsync(dst);
+                auto opCpLogFile = opGetLogFile.get().CopyAsync(dst,
+                    winrt::to_hstring(logFile));
+
+                trrojan::log::instance().write_line(trrojan::log_level::verbose,
+                    "Waiting for copies to complete ...");
+                opCpOutFile.get();
+                opCpLogFile.get();
+
+                trrojan::log::instance().write_line(trrojan::log_level::verbose,
+                    "Result files copied to removable device {0}.",
+                    winrt::to_string(dst.Path()));
+                ::SetEvent(retval);
+            } catch (winrt::hresult_error hr) {
+                trrojan::log::instance().write_line(trrojan::log_level::error,
+                    "The result files could not be delivered to a removable "
+                    "disk due to a failed API call: {0:x}",
+                    static_cast<unsigned int>(hr.code()));
+                ::SetEvent(retval);
+            } catch (std::exception& ex) {
+                trrojan::log::instance().write_line(ex);
+                ::SetEvent(retval);
+            } catch (...) {
+                trrojan::log::instance().write_line(trrojan::log_level::error,
+                    "An unexpected exception was raised while delivering the "
+                    "result files to a removable disk.");
+                ::SetEvent(retval);
+            }
+        }, [retval](const AsyncStatus, const winrt::hresult hr) {
+            trrojan::log::instance().write_line(trrojan::log_level::error,
+                "Failed to enumerate removable devices ({0:x}).", 
+                static_cast<unsigned int>(hr.value));
+            ::SetEvent(retval);
+        });
+    });
+
+    return retval;
+}
+
+
+/*
+ * App::PromptTrroll
+ */
+void App::PromptTrroll(void) {
+    trrojan::log::instance().write_line(trrojan::log_level::verbose,
+        "Prompting user for a TRROLL script.");
+    trrojan::pick_file_and_continue({ L".trroll" },
+        std::bind(&App::RunTrroll, this, std::placeholders::_1));
+}
+
+
+/*
+ * App::RunTrroll
+ */
+void App::RunTrroll(StorageFile file) {
+    using namespace winrt::Windows::UI::Core;
+
+    if (!file) {
+        // If the user did not provide a test script, we exit.
+        trrojan::log::instance().write_line(trrojan::log_level::information,
+            "User chose to end benchmarking by not selecting a "
+            "benchmarking script.");
+        CoreApplication::Exit();
+    }
+
+    const auto outFolder = winrt::to_string(this->_workFolder.get().Path());
+    const auto trrollPath = winrt::to_string(file.Path());
+    const auto outFile = GetBaseName(trrollPath) + ".csv";
+    const auto logFile = GetBaseName(trrollPath) + ".log";
+    const auto outPath = trrojan::combine_path(outFolder, outFile);
+
+    trrojan::log::instance().write_line(trrojan::log_level::information,
+        "Running user-selected TRROLL script \"{0}\".", trrollPath);
+
+    // Build the command line.
+    trrojan::cmd_line cmdLine;
+    cmdLine.push_back("--output");
+    cmdLine.push_back(outPath);
+
+    // Configure the executive.
+    trrojan::executive exe(this->_window);
+    exe.load_plugins(cmdLine);
+
+    // Prepare the global parameters for the test run.
+    auto output = trrojan::open_output(cmdLine);
+    trrojan::cool_down cool_down;
+    std::shared_ptr<trrojan::power_collector> power_collector;
+
+    // Run the test.
+    exe.trroll(file, *output, cool_down, power_collector);
+
+    // Deliver output to location accessibly by the user.
+    auto evt = this->CopyResultsToUsbAsync(outFile, logFile);
+    on_exit([evt](void) { ::CloseHandle(evt); });
+    ::WaitForSingleObject(evt, INFINITE);
+
+    // Ask for the next benchmark to run.
+    this->_dispatcher.get().RunAsync(CoreDispatcherPriority::Normal,
+        std::bind(&App::PromptTrroll, this));
 }
 #endif /* defined(TRROJAN_FOR_UWP) */

@@ -12,6 +12,10 @@
 #include <cassert>
 #include <sstream>
 
+#include <winrt/windows.foundation.h>
+#include <winrt/windows.graphics.display.h>
+#include <winrt/windows.ui.core.h>
+
 #include "trrojan/log.h"
 
 #include "trrojan/d3d12/device.h"
@@ -76,7 +80,7 @@ UINT trrojan::d3d12::uwp_debug_render_target::present(void) {
     }
 #endif // defined(CREATE_D2D_OVERLAY)
 
-    window_.get().Dispatcher().ProcessEvents(winrt::Windows::UI::Core::CoreProcessEventsOption::ProcessAllIfPresent);
+    //window_.get().Dispatcher().ProcessEvents(winrt::Windows::UI::Core::CoreProcessEventsOption::ProcessAllIfPresent);
 
     // Swap the buffers.
     this->swap_chain_->Present(1, 0);
@@ -215,28 +219,33 @@ void trrojan::d3d12::uwp_debug_render_target::reset_buffers(void) {
  */
 void trrojan::d3d12::uwp_debug_render_target::SetWindow(winrt::agile_ref<winrt::Windows::UI::Core::CoreWindow> const& window)
 {
-    winrt::Windows::Graphics::Display::DisplayInformation currentDisplayInformation
-        = winrt::Windows::Graphics::Display::DisplayInformation::GetForCurrentView();
+    auto op = window.get().Dispatcher().RunAsync(winrt::Windows::UI::Core::CoreDispatcherPriority::Normal,
+        [&](void) {
+        winrt::Windows::Graphics::Display::DisplayInformation currentDisplayInformation
+            = winrt::Windows::Graphics::Display::DisplayInformation::GetForCurrentView();
 
-    window_ = window;
-    logical_size_ = winrt::Windows::Foundation::Size(window.get().Bounds().Width, window.get().Bounds().Height);
-    native_orientation_ = currentDisplayInformation.NativeOrientation();
-    current_orientation_ = currentDisplayInformation.CurrentOrientation();
-    dpi_ = currentDisplayInformation.LogicalDpi();
+        window_ = window;
+        logical_size_ = winrt::Windows::Foundation::Size(window.get().Bounds().Width, window.get().Bounds().Height);
+        native_orientation_ = currentDisplayInformation.NativeOrientation();
+        current_orientation_ = currentDisplayInformation.CurrentOrientation();
+        dpi_ = currentDisplayInformation.LogicalDpi();
 
-    auto convertDipsToPixels = [](float dips, float dpi) {
-        static const float dipsPerInch = 96.0f;
-        return floorf(dips * dpi / dipsPerInch + 0.5f); // Round to nearest integer.
-    };
+        auto convertDipsToPixels = [](float dips, float dpi) {
+            static const float dipsPerInch = 96.0f;
+            return floorf(dips * dpi / dipsPerInch + 0.5f); // Round to nearest integer.
+        };
 
-    // Calculate the necessary swap chain and render target size in pixels.
-    output_size_.Width = convertDipsToPixels(logical_size_.Width, dpi_);
-    output_size_.Height = convertDipsToPixels(logical_size_.Height, dpi_);
+        // Calculate the necessary swap chain and render target size in pixels.
+        output_size_.Width = convertDipsToPixels(logical_size_.Width, dpi_);
+        output_size_.Height = convertDipsToPixels(logical_size_.Height, dpi_);
 
-    // Prevent zero size DirectX content from being created.
-    output_size_.Width = std::max(output_size_.Width, 1.0f);
-    output_size_.Height = std::max(output_size_.Height, 1.0f);
+        // Prevent zero size DirectX content from being created.
+        output_size_.Width = std::max(output_size_.Width, 1.0f);
+        output_size_.Height = std::max(output_size_.Height, 1.0f);
 
-    resize(output_size_.Width, output_size_.Height);
+        resize(output_size_.Width, output_size_.Height);
+    });
+
+    op.get();
 }
 #endif /* defined(TRROJAN_FOR_UWP) */

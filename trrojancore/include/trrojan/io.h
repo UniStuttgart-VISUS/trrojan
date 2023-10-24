@@ -303,8 +303,11 @@ namespace trrojan {
         picker.PickSingleFileAsync().Completed([action](
                 const IAsyncOperation<StorageFile> operation,
                 const AsyncStatus status) {
-            assert(status == AsyncStatus::Completed);
-            action(operation.get());
+            if (status == AsyncStatus::Completed) {
+                action(operation.get());
+            } else {
+                action(StorageFile(nullptr));
+            }
         });
     }
 #endif /* defined(TRROJAN_FOR_UWP) */
