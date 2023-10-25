@@ -80,8 +80,8 @@ namespace trrojan {
         size_type _output_size;
         winrt::agile_ref<core_window> _window;
     };
-#endif /* defined(TRROJAN_FOR_UWP) */
 
 } /* namespace trrojan */
 
 #include "trrojan/uwp_render_target_base.inl"
+#endif /* defined(TRROJAN_FOR_UWP) */
