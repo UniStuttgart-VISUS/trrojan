@@ -7,29 +7,19 @@
 
 #pragma once
 
+#include <atlbase.h>
 #include <d2d1_3.h>
 #include <dwrite_3.h>
 #include <wincodec.h>
-
-#include <winrt/windows.ui.core.h>
-#include <winrt/windows.graphics.display.h>
-
-#include <atomic>
-#include <memory>
-#include <thread>
-
-#include <atlbase.h>
 #include <Windows.h>
+
+#include "trrojan/uwp_render_target_base.h"
 
 #if defined(CREATE_D2D_OVERLAY)
 #include "trrojan/d3d11/d2d_overlay.h"
 #endif // defined(CREATE_D2D_OVERLAY)
 
 #include "trrojan/d3d11/render_target.h"
-
-
-/* Forward declatations. */
-struct DebugConstants;
 
 
 namespace trrojan {
@@ -40,14 +30,15 @@ namespace d3d11 {
     /// <summary>
     /// The debug view is a render target using a visible window.
     /// </summary>
-    class TRROJAND3D11_API uwp_debug_render_target : public render_target_base {
+    class TRROJAND3D11_API uwp_debug_render_target
+            : public uwp_render_target_base<render_target_base> {
 
     public:
 
         /// <summary>
         /// Initialises a new instance.
         /// </summary>
-        uwp_debug_render_target(void);
+        uwp_debug_render_target(void) = default;
 
         /// <summary>
         /// Finalises the instance.
@@ -69,25 +60,9 @@ namespace d3d11 {
         /// <inheritdoc />
         virtual ATL::CComPtr<ID3D11UnorderedAccessView> to_uav(void);
 
-        /// <summary>
-        /// Interface to existing UWP window
-        /// </summary>
-        /// <param name="window"></param>
-        void SetWindow(winrt::agile_ref<winrt::Windows::UI::Core::CoreWindow> const& window);
-
     private:
 
-        typedef render_target_base base;
-
-        // Cached reference to the Window.
-        winrt::agile_ref<winrt::Windows::UI::Core::CoreWindow> m_window{ nullptr };
-
-        // Cached device properties.
-        winrt::Windows::Foundation::Size                       m_outputSize;
-        winrt::Windows::Foundation::Size                       m_logicalSize;
-        winrt::Windows::Graphics::Display::DisplayOrientations m_nativeOrientation;
-        winrt::Windows::Graphics::Display::DisplayOrientations m_currentOrientation;
-        float                                                  m_dpi;
+        typedef uwp_render_target_base<render_target_base> base;
 
         /// <summary>
         /// The swap chain for the window.
@@ -109,7 +84,6 @@ namespace d3d11 {
 #if defined(CREATE_D2D_OVERLAY)
         std::unique_ptr<d2d_overlay> d2d_overlay_;
 #endif // defined(CREATE_D2D_OVERLAY)
-
 
         winrt::com_ptr<ID2D1Factory3>       m_d2dFactory;
         winrt::com_ptr<ID2D1Device2>        m_d2dDevice;

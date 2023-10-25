@@ -1,5 +1,5 @@
-d3d12::sphere-renderer {
-#d3d11::sphere-renderer {
+d3d11::sphere-renderer {
+#d3d12::sphere-renderer {
     string data_set =  pos_rad_intensity : 20000 : 0 : 10 10 10 : 0.01 0.3
     uint32 frame = 0
     boolean debug_view = true

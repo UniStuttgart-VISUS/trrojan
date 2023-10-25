@@ -97,7 +97,7 @@ trrojan::result trrojan::d3d12::benchmark_base::run(const configuration& c) {
             log::instance().write_line(log_level::verbose, "Lazy creation of "
                 "D3D12 debug render target on {}.", device->name());
             auto uwp_debug_target = std::make_shared<uwp_debug_render_target>(device);
-            uwp_debug_target->SetWindow(window);
+            uwp_debug_target->set_window(window);
             this->_debug_target = uwp_debug_target;
             changed.push_back(factor_viewport); // Force resize of target.
 #else /* defined(TRROJAN_FOR_UWP) */

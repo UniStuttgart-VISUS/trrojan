@@ -27,28 +27,13 @@
  * trrojan::d3d12::uwp_debug_render_target::uwp_debug_render_target
  */
 trrojan::d3d12::uwp_debug_render_target::uwp_debug_render_target(
-    const trrojan::device& device) : base(device, 2), window_(nullptr) {
-    /*this->msg_pump_ = std::thread(std::bind(&uwp_debug_render_target::do_msg,
-        std::ref(*this)));*/
-}
+    const trrojan::device& device) : base(device, 2){ }
 
 
 /*
  * trrojan::d3d12::uwp_debug_render_target::~uwp_debug_render_target
  */
 trrojan::d3d12::uwp_debug_render_target::~uwp_debug_render_target(void) {
-    //auto hWnd = this->hWnd.exchange(NULL);
-    //if (hWnd != NULL) {
-    //    ::SendMessage(hWnd, WM_CLOSE, 0, 0);
-    //}
-
-    /*if (this->msg_pump_.joinable()) {
-        log::instance().write_line(log_level::information, "Please close the "
-            "debug view to end the programme.");
-        this->msg_pump_.join();
-    }*/
-    // TODO: anything to clear here
-
     this->clear_state();
 }
 
@@ -99,12 +84,15 @@ UINT trrojan::d3d12::uwp_debug_render_target::present(void) {
 void trrojan::d3d12::uwp_debug_render_target::resize(const unsigned int width,
     const unsigned int height) {
 
+    this->try_resize_view(width, height);
+
     if (this->swap_chain_ == nullptr) {
         // Initial call to resize, need to create the swap chain.
         assert(this->device() != nullptr);
 
         this->clear_state();
-        this->swap_chain_ = this->create_swap_chain(width, height, window_);
+        this->swap_chain_ = this->create_swap_chain(width, height,
+            this->_window.get());
     }
     else {
         // Resize an existing swap chain.
@@ -212,40 +200,5 @@ void trrojan::d3d12::uwp_debug_render_target::reset_buffers(void) {
     // Make sure that the staging buffer is re-created when the target UAV
     // is requested the next time.
     this->staging_buffer_ = nullptr;
-}
-
-/*
- * trrojan::d3d12::uwp_debug_render_target::SetWindow
- */
-void trrojan::d3d12::uwp_debug_render_target::SetWindow(winrt::agile_ref<winrt::Windows::UI::Core::CoreWindow> const& window)
-{
-    auto op = window.get().Dispatcher().RunAsync(winrt::Windows::UI::Core::CoreDispatcherPriority::Normal,
-        [&](void) {
-        winrt::Windows::Graphics::Display::DisplayInformation currentDisplayInformation
-            = winrt::Windows::Graphics::Display::DisplayInformation::GetForCurrentView();
-
-        window_ = window;
-        logical_size_ = winrt::Windows::Foundation::Size(window.get().Bounds().Width, window.get().Bounds().Height);
-        native_orientation_ = currentDisplayInformation.NativeOrientation();
-        current_orientation_ = currentDisplayInformation.CurrentOrientation();
-        dpi_ = currentDisplayInformation.LogicalDpi();
-
-        auto convertDipsToPixels = [](float dips, float dpi) {
-            static const float dipsPerInch = 96.0f;
-            return floorf(dips * dpi / dipsPerInch + 0.5f); // Round to nearest integer.
-        };
-
-        // Calculate the necessary swap chain and render target size in pixels.
-        output_size_.Width = convertDipsToPixels(logical_size_.Width, dpi_);
-        output_size_.Height = convertDipsToPixels(logical_size_.Height, dpi_);
-
-        // Prevent zero size DirectX content from being created.
-        output_size_.Width = std::max(output_size_.Width, 1.0f);
-        output_size_.Height = std::max(output_size_.Height, 1.0f);
-
-        resize(output_size_.Width, output_size_.Height);
-    });
-
-    op.get();
 }
 #endif /* defined(TRROJAN_FOR_UWP) */

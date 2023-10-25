@@ -11,23 +11,16 @@
 #include <dwrite_3.h>
 #include <wincodec.h>
 
-#include <atomic>
-#include <memory>
-#include <thread>
-
-#include <winrt/windows.graphics.display.h>
-
 #include <atlbase.h>
 #include <Windows.h>
+
+#include "trrojan/uwp_render_target_base.h"
 
 #if defined(CREATE_D2D_OVERLAY)
 #include "trrojan/d3d12/d2d_overlay.h"
 #endif // defined(CREATE_D2D_OVERLAY)
 
 #include "trrojan/d3d12/render_target.h"
-
-/* Forward declarations. */
-struct DebugConstants;
 
 
 namespace trrojan {
@@ -43,7 +36,8 @@ namespace d3d12 {
     /// actually see what the real thing is doing rather than having a
     /// completely different setup that might hide or induce undesired effects.
     /// </remarks>
-    class TRROJAND3D12_API uwp_debug_render_target : public render_target_base {
+    class TRROJAND3D12_API uwp_debug_render_target
+            : public uwp_render_target_base<render_target_base> {
 
     public:
 
@@ -68,12 +62,6 @@ namespace d3d12 {
         //void to_uav(const D3D12_CPU_DESCRIPTOR_HANDLE dst,
         //    ID3D12GraphicsCommandList *cmd_list) override;
 
-        /// <summary>
-        /// Interface to existing UWP window
-        /// </summary>
-        /// <param name="window"></param>
-        void SetWindow(winrt::agile_ref<winrt::Windows::UI::Core::CoreWindow> const& window);
-
     protected:
 
         /// <inheritdoc />
@@ -81,17 +69,7 @@ namespace d3d12 {
 
     private:
 
-        typedef render_target_base base;
-
-        // Cached reference to the Window.
-        winrt::agile_ref<winrt::Windows::UI::Core::CoreWindow> window_;
-
-        // Cached device properties.
-        winrt::Windows::Foundation::Size                       output_size_;
-        winrt::Windows::Foundation::Size                       logical_size_;
-        winrt::Windows::Graphics::Display::DisplayOrientations native_orientation_;
-        winrt::Windows::Graphics::Display::DisplayOrientations current_orientation_;
-        float                                                  dpi_;
+        typedef uwp_render_target_base<render_target_base> base;
 
         /// <summary>
         /// The staging buffer used to back the UAV that we provide to external

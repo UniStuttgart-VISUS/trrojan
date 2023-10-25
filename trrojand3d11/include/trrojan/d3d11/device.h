@@ -112,7 +112,7 @@ namespace d3d11 {
         /// <summary>
         /// Answer the underlying Direct3D device.
         /// </summary>
-        inline ATL::CComPtr<ID3D11Device>& d3d_device(void) {
+        inline ATL::CComPtr<ID3D11Device> d3d_device(void) {
             return this->_d3d_device;
         }
 

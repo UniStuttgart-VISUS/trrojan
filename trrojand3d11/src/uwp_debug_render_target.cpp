@@ -21,15 +21,6 @@
 
 #include "trrojan/d3d11/utilities.h"
 
-/*
- * trrojan::d3d11::uwp_debug_render_target::uwp_debug_render_target
- */
-trrojan::d3d11::uwp_debug_render_target::uwp_debug_render_target(void) : 
-    base(nullptr)
-{
-
-}
-
 
 /*
  * trrojan::d3d11::uwp_debug_render_target::~uwp_debug_render_target
@@ -124,7 +115,7 @@ void trrojan::d3d11::uwp_debug_render_target::present(void) {
                 m_text.c_str(),
                 m_text.length(),
                 m_textFormat.get(),
-                m_logicalSize.Width * 0.9,//1500.0f, // Max width of the input text.
+                _logical_size.Width * 0.9,//1500.0f, // Max width of the input text.
                 600.0f, // Max height of the input text.
                 textLayout.put()
             )
@@ -260,7 +251,7 @@ void trrojan::d3d11::uwp_debug_render_target::resize(const unsigned int width,
             winrt::check_hresult(
                 dxgiFactory->CreateSwapChainForCoreWindow(
                     device,
-                    winrt::get_unknown(m_window.get()),
+                    winrt::get_unknown(_window.get()),
                     &desc,
                     nullptr,
                     &this->swapChain
@@ -405,27 +396,10 @@ void trrojan::d3d11::uwp_debug_render_target::resize(const unsigned int width,
     assert(this->_dsv == nullptr);
     assert(this->_rtv == nullptr);
 
-    /* Resize the window to match the requested client area. */
-    {
-        // TODO
-        //DWORD style = ::GetWindowLong(this->hWnd, GWL_STYLE);
-        //DWORD styleEx = ::GetWindowLong(this->hWnd, GWL_EXSTYLE);
-        //RECT wndRect;
-        //
-        //wndRect.left = 0;
-        //wndRect.top = 0;
-        //wndRect.right = width;
-        //wndRect.bottom = height;
-        //if (::AdjustWindowRectEx(&wndRect, style, FALSE, styleEx) == FALSE) {
-        //    auto hr = __HRESULT_FROM_WIN32(::GetLastError());
-        //    throw ATL::CAtlException(hr);
-        //}
-        //
-        //::SetWindowPos(this->hWnd, HWND_TOP, 0, 0,
-        //    wndRect.right - wndRect.left,
-        //    wndRect.bottom - wndRect.top,
-        //    SWP_NOMOVE | SWP_SHOWWINDOW);
-    }
+    // Try to resize the window to match the requested client area. This might
+    // not always work, for example on the Xbox, but the back buffer should
+    // still have the requested size.
+    this->try_resize_view(width, height);
 
     /* Re-create the RTV/DSV. */
     //hr = this->swapChain->GetBuffer(0, IID_ID3D11Texture2D,
@@ -469,8 +443,8 @@ void trrojan::d3d11::uwp_debug_render_target::resize(const unsigned int width,
         D2D1::BitmapProperties1(
             D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
             D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED),
-            m_dpi,
-            m_dpi
+            _dpi,
+            _dpi
         );
 
     winrt::com_ptr<IDXGISurface2> dxgiBackBuffer;
@@ -526,35 +500,5 @@ trrojan::d3d11::uwp_debug_render_target::to_uav(void) {
     }
 
     return this->_uav;
-}
-
-
-void trrojan::d3d11::uwp_debug_render_target::SetWindow(winrt::agile_ref<winrt::Windows::UI::Core::CoreWindow> const& window)
-{
-    window.get().Dispatcher().RunAsync(winrt::Windows::UI::Core::CoreDispatcherPriority::Normal,
-            [&](void) {
-        auto currentDisplayInformation = winrt::Windows::Graphics::Display::DisplayInformation::GetForCurrentView();
-
-        m_window = window;
-        m_logicalSize = winrt::Windows::Foundation::Size(window.get().Bounds().Width, window.get().Bounds().Height);
-        m_nativeOrientation = currentDisplayInformation.NativeOrientation();
-        m_currentOrientation = currentDisplayInformation.CurrentOrientation();
-        m_dpi = currentDisplayInformation.LogicalDpi();
-
-        auto convertDipsToPixels = [](float dips, float dpi) {
-            static const float dipsPerInch = 96.0f;
-            return floorf(dips * dpi / dipsPerInch + 0.5f); // Round to nearest integer.
-        };
-
-        // Calculate the necessary swap chain and render target size in pixels.
-        m_outputSize.Width = convertDipsToPixels(m_logicalSize.Width, m_dpi);
-        m_outputSize.Height = convertDipsToPixels(m_logicalSize.Height, m_dpi);
-
-        // Prevent zero size DirectX content from being created.
-        m_outputSize.Width = std::max(m_outputSize.Width, 1.0f);
-        m_outputSize.Height = std::max(m_outputSize.Height, 1.0f);
-
-        resize(m_outputSize.Width, m_outputSize.Height);
-    }).get();
 }
 #endif /* defined(TRROJAN_FOR_UWP) */

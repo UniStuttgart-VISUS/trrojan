@@ -1,8 +1,8 @@
-/// <copyright file="render_target.h" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Christoph Müller</author>
+ï»¿// <copyright file="render_target.h" company="Visualisierungsinstitut der UniversitÃ¤t Stuttgart">
+// Copyright Â© 2016 - 2018 Visualisierungsinstitut der UniversitÃ¤t Stuttgart. Alle Rechte vorbehalten.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Christoph MÃ¼ller</author>
 
 #pragma once
 
@@ -112,7 +112,7 @@ namespace d3d11 {
         /// Initialises a new instance.
         /// </summary>
         /// <param name="device">The device to create the target on.</param>
-        render_target_base(const trrojan::device& device);
+        render_target_base(const trrojan::device& device = nullptr);
 
         /// <summary>
         /// Set <paramref name="backBuffer" /> as back buffer and creates the
