@@ -33,6 +33,27 @@
 #include "Gamingdeviceinformation.h"
 #endif /* (defined(NTDDI_WIN10_RS3) && (NTDDI_VERSION >= NTDDI_WIN10_RS3)) */
 
+
+#if !defined(GAMING_DEVICE_DEVICE_ID_XBOX_ONE)
+#define GAMING_DEVICE_DEVICE_ID_XBOX_ONE \
+static_cast<GAMING_DEVICE_DEVICE_ID>(0x768BAE26)
+#endif /* !defined(GAMING_DEVICE_DEVICE_ID_XBOX_ONE) */
+
+#if !defined(GAMING_DEVICE_DEVICE_ID_XBOX_ONE_S)
+#define GAMING_DEVICE_DEVICE_ID_XBOX_ONE_S \
+static_cast<GAMING_DEVICE_DEVICE_ID>(0x2A7361D9)
+#endif /* !defined(GAMING_DEVICE_DEVICE_ID_XBOX_ONE_S) */
+
+#if !defined(GAMING_DEVICE_DEVICE_ID_XBOX_ONE_X)
+#define GAMING_DEVICE_DEVICE_ID_XBOX_ONE_X \
+static_cast<GAMING_DEVICE_DEVICE_ID>(0x5AD617C7)
+#endif /* !defined(GAMING_DEVICE_DEVICE_ID_XBOX_ONE_X) */
+
+#if !defined(GAMING_DEVICE_DEVICE_ID_XBOX_ONE_X_DEVKIT)
+#define GAMING_DEVICE_DEVICE_ID_XBOX_ONE_X_DEVKIT \
+static_cast<GAMING_DEVICE_DEVICE_ID>(0x10F7CDE3)
+#endif /* !defined(GAMING_DEVICE_DEVICE_ID_XBOX_ONE_X_DEVKIT) */
+
 #if !defined(GAMING_DEVICE_DEVICE_ID_XBOX_SERIES_S)
 #define GAMING_DEVICE_DEVICE_ID_XBOX_SERIES_S \
 static_cast<GAMING_DEVICE_DEVICE_ID>(0x1D27FABB)
@@ -298,6 +319,18 @@ trrojan::variant trrojan::system_factors::gaming_device(void) const {
     auto hr = ::GetGamingDeviceModelInformation(&info);
     if (SUCCEEDED(hr)) {
         switch (info.deviceId) {
+            case GAMING_DEVICE_DEVICE_ID_XBOX_ONE:
+                return std::string("Xbox One");
+
+            case GAMING_DEVICE_DEVICE_ID_XBOX_ONE_S:
+                return std::string("Xbox One S");
+
+            case GAMING_DEVICE_DEVICE_ID_XBOX_ONE_X:
+                return std::string("Xbox One X");
+
+            case GAMING_DEVICE_DEVICE_ID_XBOX_ONE_X_DEVKIT:
+                return std::string("Xbox One X dev kit");
+
             case GAMING_DEVICE_DEVICE_ID_XBOX_SERIES_S:
                 return std::string("Xbox Series S");
 
