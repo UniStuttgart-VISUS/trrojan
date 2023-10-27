@@ -15,28 +15,7 @@ endif ()
 
 # Files that are embedded as assets in the APPX package.
 if (TRROJAN_FOR_UWP)
-    set(AssetFiles
-        Assets/demo_d11.trroll
-        Assets/demo_d12.trroll
-        Assets/spheres.trroll
-        Assets/Logo.png
-        Assets/SmallLogo.png
-        Assets/SmallLogo44x44.png
-        Assets/SplashScreen.png
-        Assets/StoreLogo.png
-        Assets/mmpld.trroll
-        Assets/testspheres_old.mmpld
-        #Assets/coronadir_16_100.mmpld
-        #Assets/laser.charge.00104.mmpld
-        Assets/volume-tf_demo.trroll
-        #Assets/foot.dat
-        #Assets/foot.raw
-        Assets/bonsai.dat
-        Assets/bonsai.raw
-        Assets/trrojan_cham1.brudervn
-        Assets/trrojan_zeiss1.brudervn
-        Assets/trrojan_zeiss2.brudervn
-    )
+    file(GLOB_RECURSE AssetFiles "${CMAKE_CURRENT_SOURCE_DIR}/Assets" "*")
 endif()
 
 # Files that are packaged as content in the APPX package
