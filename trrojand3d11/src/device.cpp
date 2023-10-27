@@ -98,7 +98,6 @@ ATL::CComPtr<IDXGIFactory> trrojan::d3d11::device::get_dxgi_factory(
 trrojan::d3d11::device::device(ATL::CComPtr<ID3D11Device> d3d_device)
         : _d3d_context(get_context(d3d_device)), _d3d_device(d3d_device) {
     this->set_desc_from_device();
-    this->_d3d_device->GetImmediateContext(&this->_d3d_context);
 }
 #endif /* !defined(TRROJAN_FOR_UWP) */
 
