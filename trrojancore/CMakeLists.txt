@@ -43,7 +43,7 @@ if (TRROJAN_WITH_CHAKRA)
 
     if (WIN32)
         target_link_libraries(${PROJECT_NAME} PRIVATE "${ChakraCore_BINARY_DIR}/chakracore.lib")
-        add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy "${ChakraCore_BINARY_DIR}/chakracore${CMAKE_SHARED_LIBRARY_SUFFIX}" "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>")
+        add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different "${ChakraCore_BINARY_DIR}/chakracore${CMAKE_SHARED_LIBRARY_SUFFIX}" "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>")
     else ()
         target_link_libraries(${PROJECT_NAME} PRIVATE ChakraCore)
     endif ()
@@ -61,7 +61,7 @@ endif ()
 if (TRROJAN_WITH_DSTORAGE)
     target_link_libraries(${PROJECT_NAME} PRIVATE dstorage)
     #install(FILES "${DSTORAGE_DIR}/bin/${CMAKE_VS_PLATFORM_NAME}/dstorage.dll" DESTINATION bin)
-    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy "${DSTORAGE_DIR}/bin/${CMAKE_VS_PLATFORM_NAME}/dstorage.dll" "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/$<CONFIG>")
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different "${DSTORAGE_DIR}/bin/${CMAKE_VS_PLATFORM_NAME}/dstorage.dll" "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>")
 endif ()
 
 

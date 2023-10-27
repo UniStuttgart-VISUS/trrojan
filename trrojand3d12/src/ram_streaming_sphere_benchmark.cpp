@@ -81,8 +81,7 @@ trrojan::result trrojan::d3d12::ram_streaming_sphere_benchmark::on_run(
     if (this->_stream.rebuild_required(changed)) {
         log::instance().write_line(log_level::information, "Building GPU "
             "stream ...");
-        this->_stream.rebuild(device.d3d_device(), config,
-            this->pipeline_depth());
+        this->_stream.rebuild(device.d3d_device(), config);
     }
 
 
