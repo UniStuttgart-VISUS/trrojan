@@ -372,12 +372,9 @@ void trrojan::d3d12::benchmark_base::create_descriptor_heaps(
 
     this->_descriptor_heaps.clear();
     this->_descriptor_heaps.reserve(this->pipeline_depth());
-    std::string log_msg = "Allocating generic descriptor heap(s) with ";
-    log_msg += cnt;
-    log_msg += " entries for ";
-    log_msg += this->pipeline_depth();
-    log_msg += " frames(s) ...";
-    log::instance().write_line(log_level::debug, log_msg);
+    log::instance().write_line(log_level::debug, "Allocating generic "
+        "descriptor heaps with {0} entries for {1} frames.", cnt,
+        this->pipeline_depth());
 
     for (UINT f = 0; f < this->pipeline_depth(); ++f) {
         ATL::CComPtr<ID3D12DescriptorHeap> heap;
@@ -388,8 +385,8 @@ void trrojan::d3d12::benchmark_base::create_descriptor_heaps(
             throw ATL::CAtlException(hr);
         }
 
-        set_debug_object_name(heap, "CBV/SRV/UAV descriptor heap for frame #{}",
-            f);
+        set_debug_object_name(heap, "CBV/SRV/UAV descriptor heap for "
+            "frame #{0}", f);
         this->_descriptor_heaps.push_back(std::move(heap));
     }
 }

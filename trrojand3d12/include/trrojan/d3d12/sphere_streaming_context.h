@@ -7,8 +7,9 @@
 #pragma once
 
 #include <atomic>
-#include <memory>
+#include <cassert>
 #include <cstddef>
+#include <memory>
 #include <type_traits>
 #include <vector>
 
@@ -87,28 +88,62 @@ namespace d3d12 {
         ~sphere_streaming_context(void);
 
         /// <summary>
-        /// Gets the offset and length (in bytes) of the
-        /// <paramref name="batch" />th batch.
-        /// </summary>
-        /// <param name="batch"></param>
-        /// <param name="frame"></param>
-        /// <returns>The offset and size, both in bytes, of the batch.</returns>
-        std::pair<std::size_t, std::size_t> batch(
-            const std::size_t batch) const;
-
-        /// <summary>
         /// Answer the number of batches that run in parallel in the current
         /// configuration.
         /// </summary>
-        inline std::size_t batch_count(void) const {
+        inline std::size_t batch_count(void) const noexcept {
             return this->_batch_count;
         }
 
         /// <summary>
         /// Answer the number of spheres in each batch.
         /// </summary>
-        inline std::size_t batch_size(void) const {
+        /// <returns>The number of spheres in a batch, which might be more than
+        /// there is actually in the last batch.</returns>
+        inline std::size_t batch_elements(void) const noexcept {
             return this->_batch_size;
+        }
+
+        /// <summary>
+        /// Answer the number of spheres in a specific batch.
+        /// </summary>
+        /// <param name="batch">The (global) index of the batch, which must be
+        /// within [0, this->total_batches()[. Use the global index of the batch
+        /// here rather than the index within the ring of
+        /// [0, <see cref="batch_count" />[, because the latter does not allow
+        /// the method to determine whether this is the final batch.</param>
+        /// <returns></returns>
+        std::size_t batch_elements(const std::size_t batch) const;
+
+        /// <summary>
+        /// Answer the number of bytes in each batch.
+        /// </summary>
+        /// <returns>The allocated size of a batch in bytes, which might be more
+        /// than there is actually in the last batch.</returns>
+        inline std::size_t batch_size(void) const noexcept {
+            return this->_batch_size * this->_stride;
+        }
+
+        /// <summary>
+        /// Answer the size of spheres in a specific batch in bytes.
+        /// </summary>
+        /// <param name="batch">The (global) index of the batch, which must be
+        /// within [0, this->total_batches()[. Use the global index of the batch
+        /// here rather than the index within the ring of
+        /// [0, <see cref="batch_count" />[, because the latter does not allow
+        /// the method to determine whether this is the final batch.</param>
+        /// <returns></returns>
+        inline std::size_t batch_size(const std::size_t batch) const {
+            return this->batch_elements(batch) * this->_stride;
+        }
+
+        /// <summary>
+        /// Gets the buffer holding the batches on the GPU.
+        /// </summary>
+        /// <returns>The buffer holding the batches GPU. This pointer should
+        /// not be cached.</returns>
+        inline winrt::com_ptr<ID3D12Resource> buffer(void) const noexcept {
+            return this->_buffer;
         }
 
         /// <summary>
@@ -125,8 +160,9 @@ namespace d3d12 {
         /// <param name="batch"></param>
         /// <returns></returns>
         inline void *data(const std::size_t batch) {
-            return static_cast<std::uint8_t *>(this->_data)
-                + this->batch(batch).first;
+            assert(batch < this->_batch_count);
+            auto bytes = static_cast<std::uint8_t *>(this->_data);
+            return bytes + this->offset(batch);
         }
 
         /// <summary>
@@ -152,14 +188,6 @@ namespace d3d12 {
         std::size_t frame_size(void) const noexcept;
 
         /// <summary>
-        /// Answer the number of particles in the last batch, which might be
-        /// less than <see cref="batch_size" /> if the total number of particles
-        /// is not divisble by the requested batch size.
-        /// </summary>
-        /// <returns>The number of particles in the last batch.</returns>
-        std::size_t last_batch_size(void) const noexcept;
-
-        /// <summary>
         /// Returns the index of a batch that can be used to upload data to the
         /// GPU.
         /// </summary>
@@ -175,6 +203,24 @@ namespace d3d12 {
         /// </remarks>
         /// <returns>The index of the batch that can now be reused.</returns>
         std::size_t next_batch(void);
+
+        /// <summary>
+        /// Computes the offset of the given batch in bytes.
+        /// </summary>
+        /// <remarks>
+        /// This offset can be used to index into the source buffer or file.
+        /// Note that the method will not perform a bounds check, but happily
+        /// report offsets beyond the valid range of the data.
+        /// </remarks>
+        /// <param name="batch">The index of the batch to compute the offset
+        /// for, which must be within [0, <see cref="batch_count()" />[ for
+        /// indexing into the mapped GPU memory and within
+        /// [0, <see cref="total_batches" />[ for indexing into the source
+        /// buffer or file.</param>
+        /// <returns>The offset of the given batch.</returns>
+        inline std::size_t offset(const std::size_t batch) const noexcept {
+            return batch * this->_batch_size * this->_stride;
+        }
 
         /// <summary>
         /// Answer whether changing any of the given factors requires a rebuild
@@ -197,8 +243,9 @@ namespace d3d12 {
         /// must reshape before checking whether a rebuild is needed. The
         /// implementation tries to avoid the need to rebuild whenever possible.
         /// </remarks>
-        /// <param name="total_spheres"></param>
-        /// <param name="stride"></param>
+        /// <param name="total_spheres">The total number of particles in the
+        /// data set.</param>
+        /// <param name="stride">The size of one particle in bytes.</param>
         /// <returns><c>true</c> if the buffer needs to be rebuilt, <c>false</c>
         /// otherwise.</returns>
         bool reshape(const std::size_t total_spheres, const std::size_t stride);
@@ -233,12 +280,17 @@ namespace d3d12 {
         /// total spheres and batch size).
         /// </summary>
         /// <remarks>
-        /// The last frame might not hold the full <see cref="batch_size" /> of
-        /// particles.
+        /// <para>The last frame might not hold the full number of particles,
+        /// but a remainder. The <see cref="batch_size" /> method considers this
+        /// fact by adjusting the size accordingly.</para>
+        /// <para>The total number of batches is cached, because we need it
+        /// frequently during rendering.</para>
         /// </remarks>
         /// <returns>The total number of batches that need to be rendered for a
         /// frame.</returns>
-        std::size_t total_batches(void) const;
+        inline std::size_t total_batches(void) const noexcept {
+            return this->_total_batches;
+        }
 
         sphere_streaming_context& operator =(
             const sphere_streaming_context&) = delete;
@@ -252,9 +304,10 @@ namespace d3d12 {
         handle<> _event;
         winrt::com_ptr<ID3D12Fence> _fence;
         std::vector<UINT64> _fence_values;
-        UINT64 _next_fence_value;
+        std::atomic<UINT64> _next_fence_value;
         std::size_t _ready_count;
         std::size_t _stride;
+        std::size_t _total_batches;
         std::size_t _total_spheres;
     };
 

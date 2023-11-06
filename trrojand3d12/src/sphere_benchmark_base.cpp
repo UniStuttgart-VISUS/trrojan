@@ -58,6 +58,24 @@ std::vector<std::string> trrojan::d3d12::sphere_benchmark_base::required_factors
 
 
 /*
+ * trrojan::d3d12::sphere_benchmark_base::get_draw_count
+ */
+std::pair<UINT, UINT> trrojan::d3d12::sphere_benchmark_base::get_draw_count(
+        const shader_id_type shader_code, const std::size_t spheres) {
+    if (is_technique(shader_code, SPHERE_TECHNIQUE_QUAD_INST)) {
+        // Instancing of quads requires 4 vertices per particle.
+        log::instance().write_line(log_level::debug, "Drawing {0} "
+            "instance(s) of four vertices.", spheres);
+        return std::make_pair(4, static_cast<UINT>(spheres));
+    } else {
+        log::instance().write_line(log_level::debug, "Drawing 1 instance "
+            "of {0} vertices.", spheres);
+        return std::make_pair(static_cast<UINT>(spheres), 1);
+    }
+}
+
+
+/*
  * trrojan::d3d12::sphere_benchmark_base::get_primitive_topology
  */
 D3D12_PRIMITIVE_TOPOLOGY
@@ -573,8 +591,13 @@ void trrojan::d3d12::sphere_benchmark_base::on_device_switch(device& device) {
  */
 trrojan::d3d12::sphere_benchmark_base::descriptor_table_type
 trrojan::d3d12::sphere_benchmark_base::set_descriptors(
-        ID3D12Device *device, const shader_id_type shader_code,
-        const UINT frame) {
+        ID3D12Device *device,
+        const shader_id_type shader_code,
+        const UINT frame,
+        const UINT64 first_descriptor,
+        ID3D12Resource *data,
+        const UINT64 first_data_element,
+        const UINT cnt_data) {
     assert(device != nullptr);
     auto heap = this->_descriptor_heaps[frame];
     assert(heap->GetDesc().Type == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
@@ -583,6 +606,10 @@ trrojan::d3d12::sphere_benchmark_base::set_descriptors(
     const auto increment = device->GetDescriptorHandleIncrementSize(
         D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
     std::vector<D3D12_GPU_DESCRIPTOR_HANDLE> tables;
+
+    // Advance to the first descriptor we want to use.
+    cpu_handle.ptr += first_descriptor * increment;
+    gpu_handle.ptr += first_descriptor * increment;
 
     // Create VS resource descriptors.
     const auto pv_intensity = is_technique(shader_code,
@@ -604,8 +631,12 @@ trrojan::d3d12::sphere_benchmark_base::set_descriptors(
         if (use_instancing) {
             log::instance().write_line(log_level::debug, "Rendering technique "
                 "uses instancing. Setting structured buffer view ...");
-            this->create_buffer_resource_view(this->_data.data(), 0,
-                this->_data.spheres(), this->_data.stride(), cpu_handle);
+            this->create_buffer_resource_view(
+                (data != nullptr) ? data: this->_data.data(),
+                first_data_element,
+                (cnt_data > 0) ? cnt_data : this->_data.spheres(),
+                this->_data.stride(),
+                cpu_handle);
             cpu_handle.ptr += increment;
             gpu_handle.ptr += increment;
         }

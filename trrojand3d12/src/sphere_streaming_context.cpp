@@ -39,19 +39,21 @@ trrojan::d3d12::sphere_streaming_context::~sphere_streaming_context(void) { }
 
 
 /*
- * trrojan::d3d12::sphere_streaming_context::batch
+ * trrojan::d3d12::sphere_streaming_context::batch_elements
  */
-std::pair<std::size_t, std::size_t>
-trrojan::d3d12::sphere_streaming_context::batch(const std::size_t batch) const {
-    auto size = this->frame_size();
-    auto offset = batch * size;
+std::size_t trrojan::d3d12::sphere_streaming_context::batch_elements(
+        const std::size_t batch) const {
+    assert(batch < this->total_batches());
+    auto retval = this->_batch_size;
 
-    if (offset + size > this->frame_size()) {
-        size = this->frame_size() - offset;
+    if (batch == this->_total_batches - 1) {
+        auto remainder = this->_total_spheres % this->_batch_size;
+        if (remainder > 0) {
+            retval = remainder;
+        }
     }
-    assert(size % this->_stride == 0);
 
-    return std::make_pair(offset, size);
+    return retval;
 }
 
 
@@ -75,7 +77,7 @@ D3D12_GPU_VIRTUAL_ADDRESS trrojan::d3d12::sphere_streaming_context::descriptor(
 D3D12_GPU_VIRTUAL_ADDRESS trrojan::d3d12::sphere_streaming_context::descriptor(
         const std::size_t batch) const {
     auto retval = this->descriptor();
-    retval += this->batch(batch).first;
+    retval += this->offset(batch);
     return retval;
 }
 
@@ -87,17 +89,6 @@ std::size_t trrojan::d3d12::sphere_streaming_context::frame_size(
         void) const noexcept {
     return this->_batch_count * this->_batch_size * this->_stride;
 }
-
-
-/*
- * trrojan::d3d12::sphere_streaming_context::last_batch_size
- */
-std::size_t trrojan::d3d12::sphere_streaming_context::last_batch_size(
-        void) const noexcept {
-    auto retval = this->_total_spheres % this->_batch_size;
-    return (retval > 0) ? retval : this->_batch_size;
-}
-
 
 
 /*
@@ -162,10 +153,18 @@ void trrojan::d3d12::sphere_streaming_context::rebuild(ID3D12Device *device,
         throw std::invalid_argument("The Direct3D device must be valid.");
     }
 
+    // Retrieve and cache the number of parallel batches and the number of
+    // spheres they contain.
     this->_batch_count = config.get<decltype(this->_batch_count)>(
         factor_batch_count);
     this->_batch_size = config.get<decltype(this->_batch_size)>(
         factor_batch_size);
+
+    // Compute and cache the total number of batches.
+    this->_total_batches = this->_total_spheres / this->_batch_size;
+    if (this->_total_spheres % this->_batch_size != 0) {
+        ++this->_total_batches;
+    }
 
     const auto heap_size = this->frame_size();
     if (heap_size < 1) {
@@ -178,7 +177,7 @@ void trrojan::d3d12::sphere_streaming_context::rebuild(ID3D12Device *device,
         "bytes of streaming buffer for {1} batch(es) of {2} particle(s) of "
         "size {3} on device 0x{5:p} ...", heap_size, this->_batch_count,
         this->_batch_size, this->_stride, static_cast<void *>(device));
-    this->_buffer.attach(create_upload_buffer(device, heap_size).Detach());
+    this->_buffer = to_winrt(create_upload_buffer(device, heap_size));
 
     trrojan::log::instance().write_line(log_level::debug,
         "Persistently mapping data streaming buffer ...");
@@ -249,21 +248,16 @@ void trrojan::d3d12::sphere_streaming_context::signal_done(
     auto value = this->_fence_values[batch] = ++this->_next_fence_value;
 
     {
-        auto hr = this->_fence->SetEventOnCompletion(value, this->_fence.get());
+        auto hr = queue->Signal(this->_fence.get(), value);
         if (FAILED(hr)) {
             throw ATL::CAtlException(hr);
         }
     }
-}
 
-
-/*
- * trrojan::d3d12::sphere_streaming_context::total_batches
- */
-std::size_t trrojan::d3d12::sphere_streaming_context::total_batches(void) const {
-    auto retval = this->_total_spheres / this->_batch_size;
-    if (this->_total_spheres % this->_batch_size != 0) {
-        ++retval;
+    {
+        auto hr = this->_fence->SetEventOnCompletion(value, this->_event);
+        if (FAILED(hr)) {
+            throw ATL::CAtlException(hr);
+        }
     }
-    return retval;
 }
