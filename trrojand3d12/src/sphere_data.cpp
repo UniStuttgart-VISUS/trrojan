@@ -512,8 +512,8 @@ void trrojan::d3d12::sphere_data::set_max_radius(
             decltype(header.radius)>::lowest();
         for (std::size_t i = 0; i < header.particles; ++i, cur += stride) {
             const auto pos = reinterpret_cast<const float *>(cur);
-            if (pos[4] > this->_max_radius) {
-                this->_max_radius = pos[4];
+            if (pos[3] > this->_max_radius) {
+                this->_max_radius = pos[3];
             }
         }
     }

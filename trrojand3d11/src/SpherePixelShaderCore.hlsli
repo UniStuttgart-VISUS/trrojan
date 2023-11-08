@@ -150,9 +150,12 @@ PsOutput Main(PsInput input/*, bool isFront : SV_IsFrontFace*/) {
 #ifdef DEPTH
     // https://docs.microsoft.com/en-us/windows/win32/direct3dhlsl/dx-graphics-hlsl-per-component-math#matrix-ordering
     float4 intPos = float4(sphereintersection + objPos.xyz, 1.0);
-    float dz = dot(ViewProjMatrix[eye]._13_23_33_43, intPos);
-    //float dw = dot(ViewProjMatrix[eye]._14_24_34_44, intPos);
-    retval.Depth = dz;
+    float dz = dot(ViewProjMatrix[eye]._31_32_33_34, intPos);
+    float dw = dot(ViewProjMatrix[eye]._41_42_43_44, intPos);
+    retval.Depth = (dz/dw);
+    
+    //float4 proj_space = mul(ViewProjMatrix[eye], intPos);
+    //retval.Depth = (proj_space.z/proj_space.w);
 #else
     retval.Depth = input.Position.z;
 #endif // DEPTH
