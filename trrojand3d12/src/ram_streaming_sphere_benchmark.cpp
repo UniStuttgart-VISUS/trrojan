@@ -150,6 +150,7 @@ trrojan::result trrojan::d3d12::ram_streaming_sphere_benchmark::on_run(
     auto topology = get_primitive_topology(shader_code);
     auto buffer = this->_stream.buffer().get();
 
+#if 0
     // Record a command list for each batch, which we will repeatedly call until
     // all of the data have been streamed to the GPU. The index of the list
     // specifies the index of the index of the batch, ie if we filled the buffer
@@ -176,6 +177,7 @@ trrojan::result trrojan::d3d12::ram_streaming_sphere_benchmark::on_run(
         list->DrawInstanced(counts.first, counts.second, 0, 0);
         close_command_list(list.get());
     }
+#endif
 
     // Prepare the command lists for the first and last batch of each frame.
     // These need to be filled on the fly once we know which of the buffers
@@ -213,11 +215,13 @@ trrojan::result trrojan::d3d12::ram_streaming_sphere_benchmark::on_run(
                     if ((t > 0) && (t < last_batch)) {
                         // This is a "normal" batch, which we can just submit
                         // using the command lists we prepared before.
+#if 0
                         auto list = cmd_lists[b];
                         ::memcpy(this->_stream.data(b),
                             this->_buffer.data() + this->_stream.offset(t),
                             this->_stream.batch_size(t));
                         device.execute_command_list(list.get());
+#endif
 
                     } else {
                         // This is either the first batch, which needs to
