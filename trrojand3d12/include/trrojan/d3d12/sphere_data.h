@@ -313,8 +313,10 @@ namespace d3d12 {
         /// <summary>
         /// Persists the data properties of the given MMPLD particle list.
         /// </summary>
-        /// <param name="header"></param>
-        void set_properties(const mmpld::list_header& header);
+        /// <param name="file_header"></param>
+        /// <param name="list_header"></param>
+        void set_properties(const mmpld::file_header& file_header,
+            const mmpld::list_header& list_header);
 
         std::array<glm::vec3, 2> _bbox;
         UINT _cnt_spheres;
