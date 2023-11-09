@@ -137,12 +137,8 @@ trrojan::result trrojan::d3d12::benchmark_base::run(const configuration& c) {
     // Resize the render target if the viewport has changed.
     if (contains(changed, factor_viewport)) {
         auto vp = c.get<viewport_type>(factor_viewport);
-        std::string log_msg = "Resizing the benchmarking render target to ";
-        log_msg += vp[0];
-        log_msg += " x ";
-        log_msg += vp[1];
-        log_msg += " px ...";
-        log::instance().write_line(log_level::verbose, log_msg);
+        log::instance().write_line(log_level::verbose, "Resizing the "
+            "benchmarking render target to {0} x {1} px ...", vp[0], vp[1]);
         this->_render_target->resize(vp[0], vp[1]);
     }
 
@@ -372,8 +368,8 @@ void trrojan::d3d12::benchmark_base::create_descriptor_heaps(
 
     this->_descriptor_heaps.clear();
     this->_descriptor_heaps.reserve(this->pipeline_depth());
-    log::instance().write_line(log_level::debug, "Allocating generic "
-        "descriptor heaps with {0} entries for {1} frames.", cnt,
+    log::instance().write_line(log_level::debug, "Allocating generic descriptor "
+        "heap(s) with {0} entries for {1} frame(s) ...", cnt,
         this->pipeline_depth());
 
     for (UINT f = 0; f < this->pipeline_depth(); ++f) {

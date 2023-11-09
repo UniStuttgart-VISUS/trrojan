@@ -47,9 +47,8 @@ UINT trrojan::d3d12::uwp_debug_render_target::present(void) {
 
 #if defined(CREATE_D2D_OVERLAY)
     if (this->d2d_overlay_) {
-        auto log = log::instance().getFullLogString();
-        log = "";
-        auto log_entries = log::instance().getLogStrings(16);
+        std::string log;
+        auto log_entries = log::instance().last(16);
         for (const auto& ls : log_entries) {
             log += ls;
         }

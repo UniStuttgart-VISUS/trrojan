@@ -265,7 +265,7 @@ UINT64 trrojan::d3d12::sphere_data::load(
 #endif /* defined(TRROJAN_FOR_UWP) */
         file.open_frame(frame);
         file.read_particles(false, list_header, nullptr, 0);
-        this->set_properties(list_header);
+        this->set_properties(file.file_header(), list_header);
 
         const auto actual_colour = list_header.colour_type;
         const auto requested_colour
@@ -354,7 +354,7 @@ void trrojan::d3d12::sphere_data::load_properties(
             list_header.colour_type = mmpld::colour_type::rgba32;
         }
 
-        this->set_properties(list_header);
+        this->set_properties(file.file_header(), list_header);
     }
 }
 
@@ -512,8 +512,8 @@ void trrojan::d3d12::sphere_data::set_max_radius(
             decltype(header.radius)>::lowest();
         for (std::size_t i = 0; i < header.particles; ++i, cur += stride) {
             const auto pos = reinterpret_cast<const float *>(cur);
-            if (pos[4] > this->_max_radius) {
-                this->_max_radius = pos[4];
+            if (pos[3] > this->_max_radius) {
+                this->_max_radius = pos[3];
             }
         }
     }
@@ -558,23 +558,27 @@ void trrojan::d3d12::sphere_data::set_properties(
  * trrojan::d3d12::sphere_data::set_properties
  */
 void trrojan::d3d12::sphere_data::set_properties(
-        const mmpld::list_header& header) {
+        const mmpld::file_header& file_header,
+        const mmpld::list_header& list_header) {
     for (glm::length_t i = 0; i < this->_bbox[0].length(); ++i) {
-        this->_bbox[0][i] = header.bounding_box[i];
-        this->_bbox[1][i] = header.bounding_box[i + 3];
+        // TODO: list_header can theoretically override bbox.
+        this->_bbox[0][i] = file_header.bounding_box[i];
+        this->_bbox[1][i] = file_header.bounding_box[i + 3];
     }
 
-    this->_cnt_spheres = static_cast<UINT>(header.particles);
-    ::memcpy(this->_colour.data(), &header.colour, sizeof(header.colour));
-    this->_properties = mmpld::get_properties<properties_type>(header);
+    this->_cnt_spheres = static_cast<UINT>(list_header.particles);
+    ::memcpy(this->_colour.data(),
+        &list_header.colour,
+        sizeof(list_header.colour));
+    this->_properties = mmpld::get_properties<properties_type>(list_header);
     this->_input_layout = mmpld::get_input_layout<D3D12_INPUT_ELEMENT_DESC>(
-        header);
-    this->_intensity_range[0] = header.min_intensity;
-    this->_intensity_range[1] = header.max_intensity;
+        list_header);
+    this->_intensity_range[0] = list_header.min_intensity;
+    this->_intensity_range[1] = list_header.max_intensity;
 
     // The global radius from the list header might be wrong, but we cannot do
     // any better than this without the actual data.
-    this->_max_radius = header.radius;
+    this->_max_radius = list_header.radius;
 
-    this->_stride = mmpld::get_stride<UINT>(header);
+    this->_stride = mmpld::get_stride<UINT>(list_header);
 }

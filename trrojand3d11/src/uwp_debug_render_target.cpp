@@ -77,9 +77,8 @@ void trrojan::d3d11::uwp_debug_render_target::present(void) {
     {
 #if defined(CREATE_D2D_OVERLAY)
         if (this->d2d_overlay_) {
-            auto log = log::instance().getFullLogString();
-            log = "";
-            auto log_entries = log::instance().getLogStrings(16);
+            std::string log;
+            auto log_entries = log::instance().last(16);
             for (const auto& ls : log_entries) {
                 log += ls;
             }
@@ -92,76 +91,6 @@ void trrojan::d3d11::uwp_debug_render_target::present(void) {
             this->d2d_overlay_->draw_text(m_text.c_str(), L"Segoue UI", 14.f, D2D1::ColorF::White);
             this->d2d_overlay_->end_draw();
         }
-#else
-        // present log as text rendering on screen
-        // 
-        // update text
-        std::string log;
-        auto log_entries = log::instance().last(16);
-        for (auto ls : log_entries) {
-            log += ls;
-        }
-
-        int wchars_num = MultiByteToWideChar(CP_UTF8, 0, log.c_str(), -1, NULL, 0);
-        wchar_t* wstr = new wchar_t[wchars_num];
-        MultiByteToWideChar(CP_UTF8, 0, log.c_str(), -1, wstr, wchars_num);
-        // do whatever with wstr
-        m_text = std::wstring(&wstr[0], &wstr[0] + wchars_num);
-        delete[] wstr;
-
-        winrt::com_ptr<IDWriteTextLayout> textLayout;
-        winrt::check_hresult(
-            m_dwriteFactory->CreateTextLayout(
-                m_text.c_str(),
-                m_text.length(),
-                m_textFormat.get(),
-                _logical_size.Width * 0.9,//1500.0f, // Max width of the input text.
-                600.0f, // Max height of the input text.
-                textLayout.put()
-            )
-        );
-
-        //winrt::check_hresult(
-        textLayout.as(m_textLayout);
-        //);
-
-        winrt::check_hresult(
-            m_textLayout->GetMetrics(&m_textMetrics)
-        );
-
-        // start drawing
-        m_d2dContext->SaveDrawingState(m_stateBlock.get());
-        m_d2dContext->BeginDraw();
-
-        // Position on the bottom right corner
-        D2D1::Matrix3x2F screenTranslation = D2D1::Matrix3x2F::Translation(
-            0.0,//m_logicalSize.Width - m_textMetrics.layoutWidth,
-            0.0//m_logicalSize.Height - m_textMetrics.height
-        );
-
-        m_d2dContext->SetTransform(screenTranslation);// *m_deviceResources->GetOrientationTransform2D());
-
-        winrt::check_hresult(
-            m_textFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING)
-        );
-
-        m_d2dContext->DrawTextLayout(
-            D2D1::Point2F(0.f, 0.f),
-            m_textLayout.get(),
-            m_whiteBrush.get()
-        );
-
-        // Ignore D2DERR_RECREATE_TARGET here. This error indicates that the device
-        // is lost. It will be handled during the next call to Present.
-        HRESULT hr = m_d2dContext->EndDraw();
-        if (hr != D2DERR_RECREATE_TARGET)
-        {
-            if (FAILED(hr)) {
-                throw ATL::CAtlException(hr);
-            }
-        }
-
-        m_d2dContext->RestoreDrawingState(m_stateBlock.get());
 #endif // defined(CREATE_D2D_OVERLAY)
     }
 
@@ -379,7 +308,7 @@ void trrojan::d3d11::uwp_debug_render_target::resize(const unsigned int width,
         }
 
 #if defined(CREATE_D2D_OVERLAY)
-        this->d:d_overlay_->on_resize();
+        this->d2d_overlay_->on_resize();
 #endif // defined(CREATE_D2D_OVERLAY)
 
         hr = this->swapChain->ResizeBuffers(desc.BufferCount, width,

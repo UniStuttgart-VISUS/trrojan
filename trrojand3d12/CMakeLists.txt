@@ -59,10 +59,10 @@ target_link_libraries(${PROJECT_NAME} PRIVATE trrojancore)
 target_link_libraries(${PROJECT_NAME} PRIVATE d3d12 dxgi dxguid d2d1 dwrite)
 target_link_libraries(${PROJECT_NAME} PRIVATE glm::glm)
 
-#if (TRROJAN_DEBUG_OVERLAY)
-#    # Enable debug overlay on request.
-#    target_compile_definitions(${PROJECT_NAME} PRIVATE CREATE_D2D_OVERLAY)
-#endif ()
+if (TRROJAN_DEBUG_OVERLAY)
+    # Enable debug overlay on request.
+    target_compile_definitions(${PROJECT_NAME} PRIVATE CREATE_D2D_OVERLAY)
+endif ()
 
 
 # Group all HLSL into a new filter (cf. https://stackoverflow.com/questions/33808087/cmake-how-to-create-visual-studio-filters).
