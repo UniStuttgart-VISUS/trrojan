@@ -17,9 +17,9 @@
  * trrojan::datraw_base::calc_base_step_size
  */
 float trrojan::datraw_base::calc_base_step_size(const info_type& info) {
-    auto size = info.resolution();
-    auto longest = *(std::max_element)(size.begin(), size.end());
-    return (1.0f / longest);
+    auto size = info.slice_thickness();
+    auto shortest = *(std::min_element)(size.begin(), size.end());
+    return (shortest);
 }
 
 
