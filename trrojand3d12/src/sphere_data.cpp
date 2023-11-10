@@ -295,7 +295,7 @@ UINT64 trrojan::d3d12::sphere_data::load(
 
             } else {
                 // Read directly into the mapped buffer.
-                file.read_particles(list_header, data, list_header.particles);
+                file.read_particles(list_header, data, retval);
             }
 
             if (fit_bbox) {
