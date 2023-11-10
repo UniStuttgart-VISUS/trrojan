@@ -1,0 +1,22 @@
+d3d11::sphere-renderer {
+    string data_set = S:\Projekte\SFB 716\D3\Data\exp2mill_signed_distance_00030.mmpld;
+
+    string method = quad_inst
+
+    boolean vs_xfer_function = false; true
+    boolean conservative_depth = false; true
+    boolean vs_raygen = false
+    boolean force_float_colour = false; true
+
+
+    string manoeuvre = diagonal_x; diagonal_y; diagonal_z; orbit_x; orbit_y; path_x; path_y; path_z; path_sinx; path_siny; path_sinz
+    uint32 manoeuvre_steps = 100
+    uint32 manoeuvre_step = 0; 9; 19; 29; 39; 49; 59; 69; 79; 89; 99
+
+    uint32vec2 viewport = 1024 1024; 2048 2048
+    boolean debug_view = true
+
+    uint32 min_wall_time = 100
+    uint32 min_prewarms = 4
+    uint32 gpu_counter_iterations = 8
+}

@@ -14,15 +14,11 @@
 
 #if defined(PER_VERTEX_INTENSITY)
 Texture1D TransferFunction : register(t0);
+#endif /* defined(PER_VERTEX_INTENSITY) */
 
 #if defined(INSTANCING)
 StructuredBuffer<Particle> Particles : register(t1);
 #endif /* defined(INSTANCING) */
-
-#elif defined(INSTANCING)
-StructuredBuffer<Particle> Particles : register(t0);
-#endif /* defined(PER_VERTEX_INTENSITY) */
-
 
 #if defined(PER_VERTEX_INTENSITY)
 SamplerState LinearSampler : register(s0);

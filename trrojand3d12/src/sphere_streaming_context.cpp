@@ -103,21 +103,21 @@ std::size_t trrojan::d3d12::sphere_streaming_context::next_batch(void) {
     // If all batches are currently in flight on the GPU, ie used for rendering,
     // we must wait for the GPU to finish to provide the caller with a batch
     // that can be used for upload.
-    if (this->_ready_count == 0) {
+    while (this->_ready_count < 1) {
         // Wait for the event to signal.
         wait_for_event(this->_event);
-    }
 
-    // This loop performs two tasks: first, it finds a free slot that we can
-    // return, and second, it counts how many free slots there are in total,
-    // which we need to update the '_in_flight' member.
-    const auto finished_value = this->_fence->GetCompletedValue();
-    this->_ready_count = 0;
-    for (std::size_t i = 0; i < this->_fence_values.size(); ++i) {
-        if (this->_fence_values[i] <= finished_value) {
-            // We found a batch that has completed rendering.
-            ++this->_ready_count;
-            retval = i;
+        // This loop performs two tasks: first, it finds a free slot that we can
+        // return, and second, it counts how many free slots there are in total,
+        // which we need to update the '_in_flight' member.
+        const auto finished_value = this->_fence->GetCompletedValue();
+        this->_ready_count = 0;
+        for (std::size_t i = 0; i < this->_fence_values.size(); ++i) {
+            if (this->_fence_values[i] <= finished_value) {
+                // We found a batch that has completed rendering.
+                ++this->_ready_count;
+                retval = i;
+            }
         }
     }
     // At least one must be ready. Otherwise, something went really wrong when

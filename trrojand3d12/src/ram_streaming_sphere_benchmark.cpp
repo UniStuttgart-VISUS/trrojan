@@ -132,8 +132,8 @@ trrojan::result trrojan::d3d12::ram_streaming_sphere_benchmark::on_run(
     // the position of the command lists that start or end a frame.
     const auto total_batches = this->_stream.total_batches();
     const auto last_batch = total_batches - 1;
-    const auto begin_index = total_batches;
-    const auto end_index = total_batches + 1;
+    const auto begin_index = this->_stream.batch_count();
+    const auto end_index = begin_index + 1;
 
     // Get the number of descriptors we need for each batch. This information is
     // provided by the base class. Note that our implementation is overrridden
@@ -215,7 +215,7 @@ trrojan::result trrojan::d3d12::ram_streaming_sphere_benchmark::on_run(
                     log::instance().write_line(log_level::debug,
                         "Using batch {0} ...", b);
 
-                    if ((t > 0) && (t < last_batch)) {
+                    if (false&& (t > 0) && (t < last_batch)) {
                         // This is a "normal" batch, which we can just submit
                         // using the command lists we prepared before.
 #if false
@@ -235,7 +235,6 @@ trrojan::result trrojan::d3d12::ram_streaming_sphere_benchmark::on_run(
                         // and re-record it using the appropriate batch 'b'.
                         const auto first = (t == 0);
                         const auto last = (t == last_batch);
-                        assert(first || last);
                         auto alloc = first
                             ? this->_direct_cmd_allocators[begin_index]
                             : this->_direct_cmd_allocators[end_index];
@@ -271,7 +270,7 @@ trrojan::result trrojan::d3d12::ram_streaming_sphere_benchmark::on_run(
                             this->present_target();
                         }
 
-                        close_command_list(list.get());
+                        device.close_and_execute_command_list(list.get());
                     }
  
                     // Schedule a signal after we have submitted the command
