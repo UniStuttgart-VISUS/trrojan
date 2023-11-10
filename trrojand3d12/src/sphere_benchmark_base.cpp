@@ -620,8 +620,10 @@ trrojan::d3d12::sphere_benchmark_base::set_descriptors(
         tables.push_back(gpu_handle);
 
         if (pv_intensity) {
+#if (defined(DEBUG) || defined(_DEBUG))
             log::instance().write_line(log_level::debug, "Rendering technique "
                 "uses per-vertex-colouring. Setting transfer function ...");
+#endif /* (defined(DEBUG) || defined(_DEBUG)) */
             device->CreateShaderResourceView(this->_colour_map, nullptr,
                 cpu_handle);
             cpu_handle.ptr += increment;
@@ -629,8 +631,10 @@ trrojan::d3d12::sphere_benchmark_base::set_descriptors(
         }
 
         if (use_instancing) {
+#if (defined(DEBUG) || defined(_DEBUG))
             log::instance().write_line(log_level::debug, "Rendering technique "
                 "uses instancing. Setting structured buffer view ...");
+#endif /* (defined(DEBUG) || defined(_DEBUG)) */
             this->create_buffer_resource_view(
                 (data != nullptr) ? data: this->_data.data(),
                 first_data_element,
@@ -644,8 +648,10 @@ trrojan::d3d12::sphere_benchmark_base::set_descriptors(
 
     // Create PS resource descriptors.
     if (is_any_technique(shader_code, SPHERE_INPUT_PP_INTENSITY)) {
+#if (defined(DEBUG) || defined(_DEBUG))
         log::instance().write_line(log_level::debug, "Rendering technique uses "
             "per-pixel colouring. Setting transfer function as t0.");
+#endif /* (defined(DEBUG) || defined(_DEBUG)) */
         tables.push_back(gpu_handle);
 
         device->CreateShaderResourceView(this->_colour_map, nullptr,
@@ -658,8 +664,10 @@ trrojan::d3d12::sphere_benchmark_base::set_descriptors(
     // Bind the constant buffers. There are always the same independent from the
     // rendering technique used.
     {
+#if (defined(DEBUG) || defined(_DEBUG))
         log::instance().write_line(log_level::debug, "Setting constant "
             "buffers.");
+#endif /* (defined(DEBUG) || defined(_DEBUG)) */
         tables.push_back(gpu_handle);
 
         auto sphere_constants = cpu_handle;

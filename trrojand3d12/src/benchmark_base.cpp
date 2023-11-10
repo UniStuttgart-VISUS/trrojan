@@ -91,7 +91,7 @@ trrojan::result trrojan::d3d12::benchmark_base::run(const configuration& c) {
                 "changed.");
             this->_debug_target = nullptr;
         }
-        
+
         if (this->_debug_target == nullptr) {
 #if defined(TRROJAN_FOR_UWP)
             log::instance().write_line(log_level::verbose, "Lazy creation of "
@@ -476,10 +476,13 @@ trrojan::d3d12::benchmark_base::create_graphics_command_list(
 void trrojan::d3d12::benchmark_base::on_device_switch(device& device) {
     assert(device.d3d_device() != nullptr);
 
-    std::string log_msg = "(Re-) Allocating ";
-    log_msg += std::to_string(this->_descriptor_heaps.size());
-    log_msg += " descriptor heap(s).";
-    log::instance().write_line(log_level::verbose, log_msg);
+    log::instance().write_line(log_level::verbose, "Releasing debug target "
+        "0x{0:p}, because we are switching the device.",
+        static_cast<void *>(this->_debug_target.get()));
+    this->_debug_target = nullptr;
+
+    log::instance().write_line(log_level::verbose, "(Re-) Allocating {0} "
+        " descriptor heap(s).", this->_descriptor_heaps.size());
     for (auto& h : this->_descriptor_heaps) {
         if (h != nullptr) {
             auto desc = h->GetDesc();
@@ -500,11 +503,8 @@ void trrojan::d3d12::benchmark_base::on_device_switch(device& device) {
             static_cast<std::size_t>(this->pipeline_depth()));
         this->_direct_cmd_allocators.clear();
 
-        log_msg.clear();
-        log_msg = "(Re-) Allocating ";
-        log_msg += std::to_string(cnt);
-        log_msg += " direct command allocator(s).";
-        log::instance().write_line(log_level::verbose, log_msg);
+        log::instance().write_line(log_level::verbose, "(Re-) Allocating {0} "
+            " direct command allocator(s).", cnt);
         create_command_allocators(this->_direct_cmd_allocators,
             device.d3d_device(), D3D12_COMMAND_LIST_TYPE_DIRECT, cnt);
     }

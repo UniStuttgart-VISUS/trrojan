@@ -53,6 +53,17 @@ namespace trrojan {
     private:
 
         /// <summary>
+        /// Appends all elements in <paramref name="src" /> to
+        /// <paramref name="dst" />.
+        /// </summary>
+        template<class T, class A1, class A2>
+        static inline void append(std::vector<T, A1>& dst,
+                const std::vector<T, A2>& src) {
+            dst.reserve(dst.size() + src.size());
+            dst.insert(dst.end(), src.begin(), src.end());
+        }
+
+        /// <summary>
         /// Tries parsing <paramref name="str" /> as a
         /// <see cref="variant_type" /> using the name provided in the traits.
         /// </summary>
@@ -105,7 +116,6 @@ namespace trrojan {
         template<class Is, class It>
         static std::vector<Is> tokenise(Is begin, Is end,
             It sepBegin, It sepEnd);
-
     };
 }
 

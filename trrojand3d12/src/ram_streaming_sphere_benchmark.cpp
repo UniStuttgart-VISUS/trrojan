@@ -100,7 +100,8 @@ trrojan::result trrojan::d3d12::ram_streaming_sphere_benchmark::on_run(
     // Clear data that cannot be used any more.
     this->clear_stale_data(changed);
 
-    // Load the data if necessary.
+    // Load the data if necessary. Note that we redirect the data loaded into
+    // '_buffer' rather than letting '_data' upload it directly to the GPU.
     if (!this->_data) {
         log::instance().write_line(log_level::information, "Loading data set \""
             "{}\" into memory ...", cfg.data_set());
@@ -134,7 +135,9 @@ trrojan::result trrojan::d3d12::ram_streaming_sphere_benchmark::on_run(
     const auto begin_index = total_batches;
     const auto end_index = total_batches + 1;
 
-    // Get the number of descriptors we need for each batch.
+    // Get the number of descriptors we need for each batch. This information is
+    // provided by the base class. Note that our implementation is overrridden
+    // to yxield the total number of descriptors for all batches.
     const auto cnt_descs = sphere_benchmark_base::count_descriptor_tables(
         shader_code, false);
 
@@ -150,6 +153,7 @@ trrojan::result trrojan::d3d12::ram_streaming_sphere_benchmark::on_run(
     auto topology = get_primitive_topology(shader_code);
     auto buffer = this->_stream.buffer().get();
 
+#if false
     // Record a command list for each batch, which we will repeatedly call until
     // all of the data have been streamed to the GPU. The index of the list
     // specifies the index of the index of the batch, ie if we filled the buffer
@@ -176,6 +180,7 @@ trrojan::result trrojan::d3d12::ram_streaming_sphere_benchmark::on_run(
         list->DrawInstanced(counts.first, counts.second, 0, 0);
         close_command_list(list.get());
     }
+#endif
 
     // Prepare the command lists for the first and last batch of each frame.
     // These need to be filled on the fly once we know which of the buffers
@@ -213,11 +218,13 @@ trrojan::result trrojan::d3d12::ram_streaming_sphere_benchmark::on_run(
                     if ((t > 0) && (t < last_batch)) {
                         // This is a "normal" batch, which we can just submit
                         // using the command lists we prepared before.
+#if false
                         auto list = cmd_lists[b];
                         ::memcpy(this->_stream.data(b),
                             this->_buffer.data() + this->_stream.offset(t),
                             this->_stream.batch_size(t));
                         device.execute_command_list(list.get());
+#endif
 
                     } else {
                         // This is either the first batch, which needs to
@@ -243,8 +250,10 @@ trrojan::result trrojan::d3d12::ram_streaming_sphere_benchmark::on_run(
                         const auto spheres = this->_stream.batch_elements(t);
                         auto desc_tables = this->set_descriptors(
                             device.d3d_device(), shader_code, 0,
-                            b + cnt_descs, buffer,
-                            b * this->_stream.batch_elements(), spheres);
+                            b + cnt_descs,
+                            buffer,
+                            b * this->_stream.batch_elements(),
+                            spheres);
 
                         ::memcpy(this->_stream.data(b),
                             this->_buffer.data() + this->_stream.offset(t),
