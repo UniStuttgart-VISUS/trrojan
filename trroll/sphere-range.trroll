@@ -13,5 +13,5 @@ d3d11::sphere-renderer {
 
 	string manoeuvre = path_z
 	uint32 manoeuvre_steps = 100
-	uint32 manoeuvre_step = 0 -> 100 -> 30
+	uint32 manoeuvre_step = 0 -> 100
 }

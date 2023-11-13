@@ -5,38 +5,40 @@
 // <author>Christoph Müller</author>
 
 
+
 /*
  * trrojan::trroll_parser::parse_value
  */
-template<trrojan::variant_type T, trrojan::variant_type... Ts>
-trrojan::variant trrojan::trroll_parser::parse_value(
-        detail::variant_type_list_t<T, Ts...>, const std::string& str,
-        const variant_type type) {
-    if (type == variant_type::boolean) {
-        // Booleans require special handling because of multiple possible
-        // representations.
-        return trrojan::parse_bool(str);
+template<trrojan::variant_type T>
+typename std::enable_if<!trrojan::variant_type_traits<T>::parsable,
+    trrojan::variant>::type
+trrojan::trroll_parser::parse_value(const std::string& str) {
+    typedef typename variant_type_traits<T>::type type;
 
-    } else if ((type == variant_type::string)
-            || (type == variant_type::wstring)) {
-        // Strings can be returned directly.
-        return str;
+    switch (T) {
+        case variant_type::boolean:
+            // Booleans require special handling because of multiple possible
+            // representations.
+            return trrojan::parse_bool(str);
 
-    } else if ((type == variant_type::device)
-        || (type == variant_type::environment)) {
-        // Assume devices and environments are names.
-        // TODO: unsure whether this is clever ...
-        return str;
+        case variant_type::string:
+        case variant_type::wstring:
+            // Strings can be returned directly.
+            return str;
 
-    } else if (type == T) {
-        // Use generic parse method based on std::stringstream.
-        //return trrojan::parse<typename variant_type_traits<T>::type>(str);
-        return trroll_parser::parse_value<T>(str);
+        case variant_type::device:
+        case variant_type::environment:
+            // Assume devices and environments are names.
+            // TODO: unsure whether this is clever ...
+            return str;
 
-    } else {
-        // Try next T.
-        return trroll_parser::parse_value(detail::variant_type_list_t<Ts...>(),
-            str, type);
+        default: {
+            std::stringstream msg;
+            msg << "Unable to parse variant value \"" << str << "\" as "
+                << variant_type_traits<T>::name()
+                << "." << std::ends;
+            throw std::runtime_error(msg.str());
+            }
     }
 }
 
@@ -44,12 +46,12 @@ trrojan::variant trrojan::trroll_parser::parse_value(
 /*
  * trrojan::trroll_parser::parse_values
  */
-template<trrojan::variant_type T, trrojan::variant_type... Ts>
+template<trrojan::variant_type T>
 typename std::enable_if<trrojan::variant_type_traits<T>::has_ranges,
     std::vector<trrojan::variant>>::type
-trrojan::trroll_parser::parse_values(
-        detail::variant_type_list_t<T, Ts...> candidates,
-        const std::string& str, const variant_type type) {
+trrojan::trroll_parser::parse_values(const std::string& str) {
+    typedef typename variant_type_traits<T>::type type;
+
     // Split the value at the range delimiter "->" and parse both sides
     // individually. Afterwards, we have to generate all elements, because
     // the configuration set only supports individual expressions of
@@ -59,8 +61,8 @@ trrojan::trroll_parser::parse_values(
     if (tokens.size() == 2) {
         // This is a valid range if we have exactly a left and a right
         // token.
-        auto b = parse_value(candidates, tokens.front(), type);
-        auto e = parse_value(candidates, tokens.back(), type);
+        auto b = parse_value<T>(tokens.front()).get<type>();
+        auto e = parse_value<T>(tokens.back()).get<type>();
 
         if (e < b) {
             std::swap(b, e);
@@ -76,9 +78,25 @@ trrojan::trroll_parser::parse_values(
         return retval;
     } else {
         // this is not a valid range, so parse it as single value.
-        return std::vector<trrojan::variant> {
-            parse_value(candidates, str, type)
-        };
+        return std::vector<trrojan::variant> { parse_value<T>(str) };
+    }
+}
+
+
+/*
+ * trrojan::trroll_parser::parse_values
+ */
+template<trrojan::variant_type T, trrojan::variant_type... Ts>
+std::vector<trrojan::variant> trrojan::trroll_parser::parse_values(
+        detail::variant_type_list_t<T, Ts...>,
+        const std::string& str,
+        const variant_type type) {
+    if (type == T) {
+        return parse_values<T>(str);
+
+    } else {
+        // Try next T.
+        return parse_values(detail::variant_type_list_t<Ts...>(), str, type);
     }
 }
 

@@ -161,10 +161,11 @@ trrojan::variant_type trrojan::trroll_parser::parse_type(
 
 
 /*
- * trrojan::trroll_parser::parse_value
+ * trrojan::trroll_parser::parse_values
  */
-trrojan::variant trrojan::trroll_parser::parse_value(
-        detail::variant_type_list_t<>, const std::string& str,
+std::vector<trrojan::variant> trrojan::trroll_parser::parse_values(
+        detail::variant_type_list_t<>,
+        const std::string& str,
         const variant_type type) {
     std::stringstream msg;
     msg << "Unable to parse variant value \"" << str << "\" as "
