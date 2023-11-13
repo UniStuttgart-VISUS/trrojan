@@ -122,7 +122,7 @@ trrojan::trroll_parser::parse(const troll_input_type& path) {
                     std::replace(token.begin(), token.end(), NF[0], ' ');
                     token = trrojan::trim(token);
                     if (!token.empty()) {
-                        manifestations.push_back(trroll_parser::parse_value(
+                        append(manifestations, trroll_parser::parse_values(
                             detail::variant_type_list(), token, type));
                     }
                 }
@@ -161,14 +161,38 @@ trrojan::variant_type trrojan::trroll_parser::parse_type(
 
 
 /*
- * trrojan::trroll_parser::parse_value
+ * trrojan::trroll_parser::parse_values
  */
-trrojan::variant trrojan::trroll_parser::parse_value(
-        detail::variant_type_list_t<>, const std::string& str,
+std::vector<trrojan::variant> trrojan::trroll_parser::parse_values(
+        detail::variant_type_list_t<>,
+        const std::string& str,
         const variant_type type) {
     std::stringstream msg;
     msg << "Unable to parse variant value \"" << str << "\" as "
         << trroll_parser::to_string(detail::variant_type_list(), type)
         << "." << std::ends;
     throw std::runtime_error(msg.str());
+}
+
+
+/*
+ * trrojan::trroll_parser::tokenise
+ */
+std::vector<std::string> trrojan::trroll_parser::tokenise(
+        const std::string& str, const std::string& delimiter) {
+    std::size_t cur = 0;
+    std::vector<std::string> retval;
+
+    for (std::size_t cur = 0; cur + delimiter.size() < str.size();) {
+        auto next = str.find(delimiter, cur);
+
+        if (next == std::string::npos) {
+            next = str.size();
+        }
+
+        retval.push_back(str.substr(cur, next - cur));
+        cur = next + delimiter.size();
+    }
+
+    return retval;
 }

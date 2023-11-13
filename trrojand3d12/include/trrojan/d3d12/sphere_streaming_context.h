@@ -1,11 +1,23 @@
 // <copyright file="sphere_streaming_context.h" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2022 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+// Copyright © 2022 - 2023 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
 // <author>Christoph Müller</author>
 
 #pragma once
 
+#include <atomic>
+#include <cassert>
+#include <cstddef>
+#include <memory>
+#include <type_traits>
+#include <vector>
+
+#include <Windows.h>
+
+#include <winrt/base.h>
+
+#include "trrojan/d3d12/handle.h"
 #include "trrojan/d3d12/sphere_benchmark_base.h"
 
 
@@ -13,8 +25,29 @@ namespace trrojan {
 namespace d3d12 {
 
     /// <summary>
-    /// 
+    /// This streaming context manages splitting particle data sets into
+    /// multiple batches that are streamed to the GPU one after the other.
     /// </summary>
+    /// <remarks>
+    /// <para>The context manages the factors controlling batch sizes and
+    /// computes the number of required batches for the data set. It therefore
+    /// needs to be updated if any of the streaming parameters, but also the
+    /// data set itself change.</para>
+    /// <para>The context also manages the GPU memory used for streaming, which
+    /// a persistently mapped buffer that can be filled by means of
+    /// <see cref="memcpy" />. The context splits this buffer into the requested
+    /// number of batches and tracks which of them are currently used for
+    /// uploading and which of them are currently rendered. In order for the
+    /// latter to work, callers must invoke <see cref="signal_done" /> in the
+    /// command queue used for rendering after each batch has been submitted to
+    /// the GPU. This allows the context to potentially wait in case all of the
+    /// batches are being used by the renderer while at the same time, the I/O
+    /// thread requests a new buffer for upload.</para>
+    /// <para>The context does not track asynchronous loading operations, eg
+    /// requests submitted to DirectStorage. The application is responsible for
+    /// doing that by not submitting batches that are not ready for rendering.
+    /// </para>
+    /// </remarks>
     class TRROJAND3D12_API sphere_streaming_context final {
 
     public:
@@ -23,8 +56,13 @@ namespace d3d12 {
         /// The name of the factor &quot;batch_count&quot;
         /// </summary>
         /// <remarks>
-        /// The batch size is a <c>unsigned int</c> factor that determines how
-        /// many batches are used in parallel per frame.
+        /// <para>The batch size is a <c>unsigned int</c> factor that determines
+        /// how many batches are used in parallel on the GPU, ie the batch size
+        /// is the size of the ring buffer on the GPU.</para>
+        /// <para>Note that the context does not care about the depth of the
+        /// pipeline, so the ring buffer might wrap around frame borders. It is
+        /// the duty of the application to allocate enough batches to support
+        /// the number of in-flight frame it creates.</para>
         /// </remarks>
         static const char *factor_batch_count;
 
@@ -45,29 +83,67 @@ namespace d3d12 {
         sphere_streaming_context(const sphere_streaming_context&) = delete;
 
         /// <summary>
-        /// Gets the offset and length (in bytes) of the
-        /// <paramref name="batch" />th batch of the
-        /// <paramref name="frame" />th frame.
+        /// Finalises the instance.
         /// </summary>
-        /// <param name="batch"></param>
-        /// <param name="frame"></param>
-        /// <returns>The offset and size, both in bytes, of the batch.</returns>
-        std::pair<std::size_t, std::size_t> batch(const std::size_t batch,
-            const std::size_t frame) const;
+        ~sphere_streaming_context(void);
 
         /// <summary>
         /// Answer the number of batches that run in parallel in the current
         /// configuration.
         /// </summary>
-        inline std::size_t batch_count(void) const {
+        inline std::size_t batch_count(void) const noexcept {
             return this->_batch_count;
         }
 
         /// <summary>
         /// Answer the number of spheres in each batch.
         /// </summary>
-        inline std::size_t batch_size(void) const {
+        /// <returns>The number of spheres in a batch, which might be more than
+        /// there is actually in the last batch.</returns>
+        inline std::size_t batch_elements(void) const noexcept {
             return this->_batch_size;
+        }
+
+        /// <summary>
+        /// Answer the number of spheres in a specific batch.
+        /// </summary>
+        /// <param name="batch">The (global) index of the batch, which must be
+        /// within [0, this->total_batches()[. Use the global index of the batch
+        /// here rather than the index within the ring of
+        /// [0, <see cref="batch_count" />[, because the latter does not allow
+        /// the method to determine whether this is the final batch.</param>
+        /// <returns></returns>
+        std::size_t batch_elements(const std::size_t batch) const;
+
+        /// <summary>
+        /// Answer the number of bytes in each batch.
+        /// </summary>
+        /// <returns>The allocated size of a batch in bytes, which might be more
+        /// than there is actually in the last batch.</returns>
+        inline std::size_t batch_size(void) const noexcept {
+            return this->_batch_size * this->_stride;
+        }
+
+        /// <summary>
+        /// Answer the size of spheres in a specific batch in bytes.
+        /// </summary>
+        /// <param name="batch">The (global) index of the batch, which must be
+        /// within [0, this->total_batches()[. Use the global index of the batch
+        /// here rather than the index within the ring of
+        /// [0, <see cref="batch_count" />[, because the latter does not allow
+        /// the method to determine whether this is the final batch.</param>
+        /// <returns></returns>
+        inline std::size_t batch_size(const std::size_t batch) const {
+            return this->batch_elements(batch) * this->_stride;
+        }
+
+        /// <summary>
+        /// Gets the buffer holding the batches on the GPU.
+        /// </summary>
+        /// <returns>The buffer holding the batches GPU. This pointer should
+        /// not be cached.</returns>
+        inline winrt::com_ptr<ID3D12Resource> buffer(void) const noexcept {
+            return this->_buffer;
         }
 
         /// <summary>
@@ -78,15 +154,15 @@ namespace d3d12 {
         }
 
         /// <summary>
-        /// Gets the start of the <paramref name="batch" />th batch of the
-        /// <paramref name="frame" />th frame.
+        /// Gets the start of the <paramref name="batch" />th batch in the
+        /// persistently mapped buffer, ie the copy target for this batch.
         /// </summary>
         /// <param name="batch"></param>
-        /// <param name="frame"></param>
         /// <returns></returns>
-        inline void *data(const std::size_t batch, const std::size_t frame) {
-            return static_cast<std::uint8_t *>(this->_data)
-                + this->batch(batch, frame).first;
+        inline void *data(const std::size_t batch) {
+            assert(batch < this->_batch_count);
+            auto bytes = static_cast<std::uint8_t *>(this->_data);
+            return bytes + this->offset(batch);
         }
 
         /// <summary>
@@ -98,18 +174,53 @@ namespace d3d12 {
 
         /// <summary>
         /// Gets a descriptor for the start of the given
-        /// <paramref name="batch" /> of the given <paramref name="frame" />.
+        /// <paramref name="batch" />.
         /// </summary>
         /// <param name="batch"></param>
-        /// <param name="frame"></param>
         /// <returns></returns>
-        D3D12_GPU_VIRTUAL_ADDRESS descriptor(const std::size_t batch,
-            const std::size_t frame) const;
+        D3D12_GPU_VIRTUAL_ADDRESS descriptor(const std::size_t batch) const;
 
         /// <summary>
-        /// Answer the size in bytes of all batches of a single frame.
+        /// The total size of a single frame of the current configuration in
+        ///  bytes.
         /// </summary>
-        std::size_t frame_size(void) const;
+        /// <returns>The size of a frame in bytes.</returns>
+        std::size_t frame_size(void) const noexcept;
+
+        /// <summary>
+        /// Returns the index of a batch that can be used to upload data to the
+        /// GPU.
+        /// </summary>
+        /// <remarks>
+        /// <para>The method may block waiting for a fence injected into the
+        /// command queue via <see cref="signal_done" /> if all batches are
+        /// marked as in flight.</para>
+        /// <para>The caller must pass the index returned to
+        /// <see cref="signal_done" /> or it will never become available again.
+        /// Failing to signal the completion of rendering the batch will
+        /// therefore cause the system to hang up once all batches are marked
+        /// in flight and none is signalled at all.</para>
+        /// </remarks>
+        /// <returns>The index of the batch that can now be reused.</returns>
+        std::size_t next_batch(void);
+
+        /// <summary>
+        /// Computes the offset of the given batch in bytes.
+        /// </summary>
+        /// <remarks>
+        /// This offset can be used to index into the source buffer or file.
+        /// Note that the method will not perform a bounds check, but happily
+        /// report offsets beyond the valid range of the data.
+        /// </remarks>
+        /// <param name="batch">The index of the batch to compute the offset
+        /// for, which must be within [0, <see cref="batch_count()" />[ for
+        /// indexing into the mapped GPU memory and within
+        /// [0, <see cref="total_batches" />[ for indexing into the source
+        /// buffer or file.</param>
+        /// <returns>The offset of the given batch.</returns>
+        inline std::size_t offset(const std::size_t batch) const noexcept {
+            return batch * this->_batch_size * this->_stride;
+        }
 
         /// <summary>
         /// Answer whether changing any of the given factors requires a rebuild
@@ -122,9 +233,7 @@ namespace d3d12 {
         /// </summary>
         /// <param name="device"></param>
         /// <param name="config"></param>
-        /// <param name="pipeline_depth"></param>
-        void rebuild(ID3D12Device *device, const configuration& config,
-            const std::size_t pipeline_depth);
+        void rebuild(ID3D12Device *device, const configuration& config);
 
         /// <summary>
         /// Inform the context that the size of the data set has changed.
@@ -134,8 +243,9 @@ namespace d3d12 {
         /// must reshape before checking whether a rebuild is needed. The
         /// implementation tries to avoid the need to rebuild whenever possible.
         /// </remarks>
-        /// <param name="total_spheres"></param>
-        /// <param name="stride"></param>
+        /// <param name="total_spheres">The total number of particles in the
+        /// data set.</param>
+        /// <param name="stride">The size of one particle in bytes.</param>
         /// <returns><c>true</c> if the buffer needs to be rebuilt, <c>false</c>
         /// otherwise.</returns>
         bool reshape(const std::size_t total_spheres, const std::size_t stride);
@@ -151,10 +261,36 @@ namespace d3d12 {
         }
 
         /// <summary>
-        /// Answer the total number of batches that need to be rendered for
-        /// streaming a whole frame given the current configuration.
+        /// Signal that the GPU is done with rendering the
+        /// <paramref name="batch"/>th batch in the given command
+        /// <paramref name="queue" />.
         /// </summary>
-        std::size_t total_batches(void) const;
+        /// <remarks>
+        /// <para>This method injects a fence into the command queue. Once the
+        /// GPU is past that fence, the <see cref="next_batch" /> method is free
+        /// to return <paramref name="batch" /> for reuse.</para>
+        /// </remarks>
+        /// <param name="batch"></param>
+        /// <param name="queue"></param>
+        void signal_done(const std::size_t batch, ID3D12CommandQueue *queue);
+
+        /// <summary>
+        /// Answer the total number of batches that need to be rendered for
+        /// streaming a whole frame given the current configuration (number of
+        /// total spheres and batch size).
+        /// </summary>
+        /// <remarks>
+        /// <para>The last frame might not hold the full number of particles,
+        /// but a remainder. The <see cref="batch_size" /> method considers this
+        /// fact by adjusting the size accordingly.</para>
+        /// <para>The total number of batches is cached, because we need it
+        /// frequently during rendering.</para>
+        /// </remarks>
+        /// <returns>The total number of batches that need to be rendered for a
+        /// frame.</returns>
+        inline std::size_t total_batches(void) const noexcept {
+            return this->_total_batches;
+        }
 
         sphere_streaming_context& operator =(
             const sphere_streaming_context&) = delete;
@@ -163,11 +299,17 @@ namespace d3d12 {
 
         std::size_t _batch_count;
         std::size_t _batch_size;
-        ATL::CComPtr<ID3D12Resource> _buffer;
+        winrt::com_ptr<ID3D12Resource> _buffer;
         void *_data;
+        handle<> _event;
+        winrt::com_ptr<ID3D12Fence> _fence;
+        std::vector<UINT64> _fence_values;
+        std::atomic<UINT64> _next_fence_value;
+        std::size_t _ready_count;
         std::size_t _stride;
+        std::size_t _total_batches;
         std::size_t _total_spheres;
     };
 
-} /* end namespace d3d11 */
+} /* end namespace d3d12 */
 } /* end namespace trrojan */

@@ -1,8 +1,8 @@
-// <copyright file="sphere_benchmark_base.h" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2016 - 2022 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+ï»¿// <copyright file="sphere_benchmark_base.h" company="Visualisierungsinstitut der UniversitÃ¤t Stuttgart">
+// Copyright Â© 2016 - 2023 Visualisierungsinstitut der UniversitÃ¤t Stuttgart. Alle Rechte vorbehalten.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
-// <author>Christoph Müller</author>
+// <author>Christoph MÃ¼ller</author>
 
 #pragma once
 
@@ -63,6 +63,19 @@ namespace d3d12 {
         /// An identifier for a single shader variant.
         /// </summary>
         typedef std::uint64_t shader_id_type;
+
+        /// <summary>
+        /// Gets the number of vertices per instance and the number of instances
+        /// to emit for the given number of spheres and the given shader ID.
+        /// </summary>
+        /// <param name="shader_code">The code identifying the rendering
+        /// technique.</param>
+        /// <param name="spheres">The number of spheres to be rendered.</param>
+        /// <returns>The vertex count per instance in
+        /// <see cref="std::pair::first" /> and the number of instances in
+        /// <see cref="std::pair::second" />.</returns>
+        static std::pair<UINT, UINT> get_draw_count(
+            const shader_id_type shader_code, const std::size_t spheres);
 
         /// <summary>
         /// Gets the expected primitive toplogy for the given shader code.
@@ -271,10 +284,27 @@ namespace d3d12 {
         /// <param name="device"></param>
         /// <param name="shader_code"></param>
         /// <param name="frame"></param>
+        /// <param name="first_descriptor">An offset for the first descriptor to
+        /// be used. This can be used for application cases where there are
+        /// multiple descriptor tables per frame in the same heap.</param>
+        /// <param name="data">If non-<c>nullptr</c>, overwrites the data set in
+        /// <see cref="_data" />. This is typically used in combination with
+        /// <see cref="first_data_element" /> and <paramref name="cnt_data" />
+        /// in order to overwrite the default <see cref="_data" /> field
+        /// managing the data set in this base class.</param>
+        /// <param name="first_data_element">If non-zero, overwrites the offset
+        /// of the data to be used.</param>
+        /// <param name="cnt_data">If non-zero, overwrites the size of the data
+        /// being mapped.</param>
         /// <returns>The descriptor heap that was used to set the shader
         /// resource views and constant buffers.</returns>
         virtual descriptor_table_type set_descriptors(ID3D12Device *device,
-            const shader_id_type shader_code, const UINT frame);
+            const shader_id_type shader_code,
+            const UINT frame,
+            const UINT64 first_descriptor = 0,
+            ID3D12Resource *data = nullptr,
+            const UINT64 first_data_element = 0,
+            const UINT cnt_data = 0);
 
         /// <summary>
         /// Creates the host-memory description of the descriptors required for

@@ -18,6 +18,8 @@
 #include <Windows.h>
 #include <d3d12.h>
 
+#include <winrt/base.h>
+
 #include "trrojan/log.h"
 
 #include "trrojan/d3d12/export.h"
@@ -591,6 +593,18 @@ namespace d3d12 {
         ID3D12GraphicsCommandList *cmd_list, ID3D12Resource *resource,
         const UINT subresource, const D3D12_RESOURCE_STATES state_before,
         const D3D12_RESOURCE_STATES state_after);
+
+    /// <summary>
+    /// Move an ATL COM pointer to a WinRT COM pointer.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="ptr"></param>
+    /// <returns></returns>
+    template<class T> winrt::com_ptr<T> to_winrt(ATL::CComPtr<T>& ptr) {
+        winrt::com_ptr<T> retval;
+        retval.attach(ptr.Detach());
+        return retval;
+    }
 
     /// <summary>
     /// Update <paramref name="dst" /> with the specified

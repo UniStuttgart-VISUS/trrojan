@@ -171,6 +171,26 @@ namespace d3d12 {
         }
 
         /// <summary>
+        /// Retrieves the command queue of the currently active render target.
+        /// </summary>
+        /// <returns>The command queue, which should not be cached as it might
+        /// change when switching configurations.</returns>
+        inline ATL::CComPtr<ID3D12CommandQueue>& command_queue(void) {
+            assert(this->_render_target != nullptr);
+            return this->_render_target->command_queue();
+        }
+
+        /// <summary>
+        /// Retrieves the command queue of the currently active render target.
+        /// </summary>
+        /// <returns>The command queue, which should not be cached as it might
+        /// change when switching configurations.</returns>
+        inline ATL::CComPtr<ID3D12CommandQueue> command_queue(void) const {
+            assert(this->_render_target != nullptr);
+            return this->_render_target->command_queue();
+        }
+
+        /// <summary>
         /// Copy the contents of <paramref name="source" /> into the specified
         /// back buffer of the render target, which must have been enabled using
         /// <see cref="D3D12_RESOURCE_STATE_COPY_DEST" /> as rendering state.
