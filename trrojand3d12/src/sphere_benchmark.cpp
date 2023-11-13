@@ -129,7 +129,7 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
         cmd_list->SetGraphicsRootSignature(root_sig);
         cmd_list->SetPipelineState(pipeline);
         cmd_list->IASetPrimitiveTopology(get_primitive_topology(shader_code));
-        set_descriptors(cmd_list, desc_tables);
+        this->set_descriptors(cmd_list, desc_tables);
         this->set_vertex_buffer(cmd_list, shader_code);
 
         this->enable_target(cmd_list, i);

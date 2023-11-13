@@ -237,10 +237,11 @@ namespace detail {
     /// </remarks>
     template<class T> struct TRROJANCORE_API variant_reverse_traits { };
 
-#define __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(t, p)                           \
+#define __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(t, p, r)                        \
     template<> struct TRROJANCORE_API variant_type_traits<variant_type::t> {   \
         typedef decltype(trrojan::detail::variant::val_##t) type;              \
-        static const bool parsable = (p);                                      \
+        static constexpr bool has_ranges = (r);                                \
+        static constexpr bool parsable = (p);                                  \
         inline static type *get(detail::variant& v) {                          \
             return &v.val_##t;                                                 \
         }                                                                      \
@@ -255,7 +256,8 @@ namespace detail {
     template<> struct TRROJANCORE_API variant_reverse_traits<                  \
             decltype(trrojan::detail::variant::val_##t)> {                     \
         static const variant_type type = variant_type::t;                      \
-        static const bool parsable = (p);                                      \
+        static constexpr bool has_ranges = (r);                                \
+        static constexpr bool parsable = (p);                                  \
         inline static decltype(trrojan::detail::variant::val_##t) *get(        \
                 detail::variant& v) {                                          \
             return &v.val_##t;                                                 \
@@ -270,30 +272,30 @@ namespace detail {
         }                                                                      \
     }
 
-    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(boolean, false);
-    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(int8, true);
-    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(int16, true);
-    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(int32, true);
-    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(int64, true);
-    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(uint8, true);
-    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(uint16, true);
-    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(uint32, true);
-    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(uint64, true);
-    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(float32, true);
-    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(float64, true);
-    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(string, false);
-    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(wstring, false);
-    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(device, false);
-    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(environment, false);
-    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(power_collector, false);
+    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(boolean, false, false);
+    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(int8, true, true);
+    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(int16, true, true);
+    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(int32, true, true);
+    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(int64, true, true);
+    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(uint8, true, true);
+    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(uint16, true, true);
+    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(uint32, true, true);
+    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(uint64, true, true);
+    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(float32, true, false);
+    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(float64, true, false);
+    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(string, false, false);
+    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(wstring, false, false);
+    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(device, false, false);
+    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(environment, false, false);
+    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(power_collector, false, false);
 #if defined(TRROJAN_FOR_UWP)
-    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(core_window, false);
+    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(core_window, false, false);
 #endif /* defined(TRROJAN_FOR_UWP) */
 
 #define __TRROJANCORE_DECL_VARIANT_VEC_TYPE_TRAITS(type)                       \
-    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(type##vec##2, true);                \
-    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(type##vec##3, true);                \
-    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(type##vec##4, true)
+    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(type##vec##2, true, false);         \
+    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(type##vec##3, true, false);         \
+    __TRROJANCORE_DECL_VARIANT_TYPE_TRAITS(type##vec##4, true, false)
 
     __TRROJANCORE_DECL_VARIANT_VEC_TYPE_TRAITS(int8);
     __TRROJANCORE_DECL_VARIANT_VEC_TYPE_TRAITS(int16);

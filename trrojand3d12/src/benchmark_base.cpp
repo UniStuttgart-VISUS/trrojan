@@ -91,7 +91,7 @@ trrojan::result trrojan::d3d12::benchmark_base::run(const configuration& c) {
                 "changed.");
             this->_debug_target = nullptr;
         }
-        
+
         if (this->_debug_target == nullptr) {
 #if defined(TRROJAN_FOR_UWP)
             log::instance().write_line(log_level::verbose, "Lazy creation of "
@@ -186,10 +186,10 @@ void trrojan::d3d12::benchmark_base::create_command_allocators(
         command_allocator_list& dst, ID3D12Device *device,
         const D3D12_COMMAND_LIST_TYPE type, const std::size_t cnt) {
     assert(device != nullptr);
-    // TODO: calls deprecated forwarding spdlog function
-    std::string log_msg = "Appending " + cnt + std::string(" command allocator(s) of type ")
-        + std::to_string(type) + " to " + std::to_string(dst.size()) + " existing one(s).";
-    log::instance().write_line(log_level::debug, log_msg);
+    log::instance().write_line(log_level::debug, "Appending {0} command "
+        "allocator(s) of type {1} to {2} existing one(s).", cnt,
+        static_cast<std::underlying_type<D3D12_COMMAND_LIST_TYPE>::type>(type),
+        dst.size());
 
     dst.reserve(dst.size() + cnt);
     for (UINT i = 0; i < cnt; ++i) {
@@ -215,19 +215,14 @@ trrojan::d3d12::benchmark_base::create_command_list(
         const D3D12_COMMAND_LIST_TYPE type, const std::size_t frame,
         ID3D12PipelineState *initial_state) {
     if (frame >= allocators.size()) {
-        std::string log_msg = "The given list of command allocators only supports ";
-        log_msg += std::to_string(allocators.size());
-        log_msg += " frames, but frame ";
-        log_msg += std::to_string(frame);
-        log_msg += " was requested.";
-        log::instance().write_line(log_level::error, log_msg);
+        log::instance().write_line(log_level::error, "The given list of "
+            "command allocators only supports {0} frames, but frame #{1} "
+            "was requested.", allocators.size(), frame);
         throw ATL::CAtlException(E_INVALIDARG);
     }
     if (allocators[frame] == nullptr) {
-        std::string log_msg = "The command allocator at position ";
-        log_msg += std::to_string(frame);
-        log_msg = " is invalid.";
-        log::instance().write_line(log_level::error, log_msg);
+        log::instance().write_line(log_level::error, "The command allocator "
+            "at position {0} is invalid.", frame);
         throw ATL::CAtlException(E_INVALIDARG);
     }
 
@@ -250,13 +245,13 @@ trrojan::d3d12::benchmark_base::create_command_list(
  */
 std::string trrojan::d3d12::benchmark_base::resolve_shader_path(
         const std::string& file_name) {
-#if defined(_UWP)
+#if defined(TRROJAN_FOR_UWP)
 //#error "TODO: retrieve UWP app directory."
     return plugin::get_directory() + directory_separator_char + file_name;
     //return plugin::get_directory
-#else /* defined(_UWP) */
+#else /* defined(TRROJAN_FOR_UWP) */
     return plugin::get_directory() + directory_separator_char + file_name;
-#endif /* defined(_UWP) */
+#endif /* defined(TRROJAN_FOR_UWP) */
 }
 
 
@@ -381,8 +376,8 @@ void trrojan::d3d12::benchmark_base::create_descriptor_heaps(
             throw ATL::CAtlException(hr);
         }
 
-        set_debug_object_name(heap, "CBV/SRV/UAV descriptor heap for frame #{}",
-            f);
+        set_debug_object_name(heap, "CBV/SRV/UAV descriptor heap for "
+            "frame #{0}", f);
         this->_descriptor_heaps.push_back(std::move(heap));
     }
 }
@@ -472,10 +467,13 @@ trrojan::d3d12::benchmark_base::create_graphics_command_list(
 void trrojan::d3d12::benchmark_base::on_device_switch(device& device) {
     assert(device.d3d_device() != nullptr);
 
-    std::string log_msg = "(Re-) Allocating ";
-    log_msg += std::to_string(this->_descriptor_heaps.size());
-    log_msg += " descriptor heap(s).";
-    log::instance().write_line(log_level::verbose, log_msg);
+    log::instance().write_line(log_level::verbose, "Releasing debug target "
+        "0x{0:p}, because we are switching the device.",
+        static_cast<void *>(this->_debug_target.get()));
+    this->_debug_target = nullptr;
+
+    log::instance().write_line(log_level::verbose, "(Re-) Allocating {0} "
+        " descriptor heap(s).", this->_descriptor_heaps.size());
     for (auto& h : this->_descriptor_heaps) {
         if (h != nullptr) {
             auto desc = h->GetDesc();
@@ -496,11 +494,8 @@ void trrojan::d3d12::benchmark_base::on_device_switch(device& device) {
             static_cast<std::size_t>(this->pipeline_depth()));
         this->_direct_cmd_allocators.clear();
 
-        log_msg.clear();
-        log_msg = "(Re-) Allocating ";
-        log_msg += std::to_string(cnt);
-        log_msg += " direct command allocator(s).";
-        log::instance().write_line(log_level::verbose, log_msg);
+        log::instance().write_line(log_level::verbose, "(Re-) Allocating {0} "
+            " direct command allocator(s).", cnt);
         create_command_allocators(this->_direct_cmd_allocators,
             device.d3d_device(), D3D12_COMMAND_LIST_TYPE_DIRECT, cnt);
     }
