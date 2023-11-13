@@ -7,6 +7,7 @@
 #pragma once
 
 #include <algorithm>
+#include <cassert>
 #include <cctype>
 #include <string>
 #include <vector>
@@ -64,15 +65,32 @@ namespace trrojan {
         }
 
         /// <summary>
+        /// Appends <paramref name="src" /> at the end of
+        /// <paramref name="dst" />.
+        /// </summary>
+        template<class T, class A>
+        static inline void append(std::vector<T, A>& dst, T&& src) {
+            dst.push_back(std::forward<T>(src));
+        }
+
+        /// <summary>
         /// Tries parsing <paramref name="str" /> as a
         /// <see cref="variant_type" /> using the name provided in the traits.
         /// </summary>
         static variant_type parse_type(const std::string& str);
 
+        /// <summary>
+        /// Parses <paramref name="str" /> as <paramref name="type" /> if
+        /// <paramref name="type" /> is <typeparamref name="T" />.
+        /// </summary>
         template<variant_type T, variant_type... Ts>
         static variant parse_value(detail::variant_type_list_t<T, Ts...>,
             const std::string& str, const variant_type type);
 
+        /// <summary>
+        /// Recursion stop for <see cref="parse_value" /> if the specified
+        /// type is not supported. This method will always throw.
+        /// </summary>
         static variant parse_value(detail::variant_type_list_t<>,
             const std::string& str, const variant_type type);
 
@@ -82,19 +100,57 @@ namespace trrojan {
         template<variant_type T>
         static inline typename std::enable_if<variant_type_traits<T>::parsable,
                 variant>::type parse_value(const std::string& str) {
-            return trrojan::parse<typename variant_type_traits<T>::type>(str);
+            typedef typename variant_type_traits<T>::type type;
+            return trrojan::parse<type>(str);
         }
 
         /// <summary>
         /// Fails parsing <paramref name="str" /> as <typeparamref name="T" />
-        /// for all types not marked parsable.
+        /// for all types not marked parsable. This method will always throw.
         /// </summary>
         template<variant_type T>
         static inline typename std::enable_if<!variant_type_traits<T>::parsable,
                 variant>::type parse_value(const std::string& str) {
             // Instantly fail, because we hit a non-parsable type.
-            return trroll_parser::parse_value(detail::variant_type_list_t<>(),
-                str, T);
+            return parse_value(detail::variant_type_list_t<>(), str, T);
+        }
+
+        /// <summary>
+        /// Parses <paramref name="str" /> as a possible range of 
+        /// <paramref name="type" />s if <paramref name="type" /> is
+        ///  <typeparamref name="T" />.
+        /// </summary>
+        template<variant_type T, variant_type... Ts>
+        static typename std::enable_if<variant_type_traits<T>::has_ranges,
+                std::vector<variant>>::type parse_values(
+            detail::variant_type_list_t<T, Ts...>,
+            const std::string& str,
+            const variant_type type);
+
+        /// <summary>
+        /// Parses <paramref name="str" /> as <paramref name="type" />.
+        /// </summary>
+        template<variant_type T, variant_type... Ts>
+        static inline typename std::enable_if<
+            !variant_type_traits<T>::has_ranges, std::vector<variant>>::type
+        parse_values(detail::variant_type_list_t<T, Ts...> candidates,
+                const std::string& str, const variant_type type) {
+            static_assert(variant_type_traits<variant_type::uint32>::has_ranges, "bla");
+            return std::vector<trrojan::variant> {
+                parse_value(candidates, str, type)
+            };
+        }
+
+        /// <summary>
+        /// Recursion stop for <see cref="parse_values" /> if the specified
+        /// type is not supported. This method will always throw.
+        /// </summary>
+        static inline std::vector<variant> parse_values(
+                detail::variant_type_list_t<> candidates,
+                const std::string& str,
+                const variant_type type) {
+            parse_value(candidates, str, type);
+            return std::vector<variant>(0);
         }
 
         template<class I> static I skip_nonspaces(I it, I end);
@@ -116,6 +172,9 @@ namespace trrojan {
         template<class Is, class It>
         static std::vector<Is> tokenise(Is begin, Is end,
             It sepBegin, It sepEnd);
+
+        static std::vector<std::string> tokenise(const std::string& str,
+            const std::string& delimiter);
     };
 }
 

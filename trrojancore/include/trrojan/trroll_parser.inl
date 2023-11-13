@@ -33,10 +33,52 @@ trrojan::variant trrojan::trroll_parser::parse_value(
         //return trrojan::parse<typename variant_type_traits<T>::type>(str);
         return trroll_parser::parse_value<T>(str);
 
-    }  else {
+    } else {
         // Try next T.
         return trroll_parser::parse_value(detail::variant_type_list_t<Ts...>(),
             str, type);
+    }
+}
+
+
+/*
+ * trrojan::trroll_parser::parse_values
+ */
+template<trrojan::variant_type T, trrojan::variant_type... Ts>
+typename std::enable_if<trrojan::variant_type_traits<T>::has_ranges,
+    std::vector<trrojan::variant>>::type
+trrojan::trroll_parser::parse_values(
+        detail::variant_type_list_t<T, Ts...> candidates,
+        const std::string& str, const variant_type type) {
+    // Split the value at the range delimiter "->" and parse both sides
+    // individually. Afterwards, we have to generate all elements, because
+    // the configuration set only supports individual expressions of
+    // factors.
+    auto tokens = tokenise(str, "->");
+
+    if (tokens.size() == 2) {
+        // This is a valid range if we have exactly a left and a right
+        // token.
+        auto b = parse_value(candidates, tokens.front(), type);
+        auto e = parse_value(candidates, tokens.back(), type);
+
+        if (e < b) {
+            std::swap(b, e);
+        }
+
+        std::vector<trrojan::variant> retval;
+        retval.reserve(e - b);
+
+        for (auto i = b; i < e; ++i) {
+            retval.push_back(i);
+        }
+
+        return retval;
+    } else {
+        // this is not a valid range, so parse it as single value.
+        return std::vector<trrojan::variant> {
+            parse_value(candidates, str, type)
+        };
     }
 }
 
