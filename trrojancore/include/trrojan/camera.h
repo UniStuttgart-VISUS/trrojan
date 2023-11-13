@@ -39,30 +39,6 @@ namespace trrojan
     using glm::vec4;
     using glm::mat4;
 
-static int state = {42};    //< random seed
-
-/// <summary>
-/// Own rand() implementation for cross platform deterministc 'randomness'.
-/// </summary>
-static int rand()
-{
-    int const a = 1103515245;
-    int const c = 12345;
-    state = a * state + c;
-    return (state >> 16) & 0x7FFF;
-}
-
-/// <summary>
-/// Generate a pseudorandom number in range [0,1] using the Mersenne Twister.
-/// </summary>
-/// <return> A random number in range [0,1] from a uniform distribution. </return>
-static float get_rand()
-{
-    std::mt19937 mtGen(rand());
-    std::uniform_real_distribution<float> distribNorm(0.0f, 1.0f);
-    return distribNorm(mtGen);
-}
-
 /// <summary>
 /// Base class for a camera.
 /// </summary>

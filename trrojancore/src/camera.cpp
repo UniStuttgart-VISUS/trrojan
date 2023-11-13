@@ -267,16 +267,21 @@ void trrojan::camera::set_from_maneuver(const std::string &name, const glm::vec3
     }
     else if (name.find("random") != std::string::npos)
     {
+        // Create mersenne twister engine with iteration and samples as seed to
+        // generate reproducable random values
+        std::mt19937 mt_gen(iteration*samples);
+        std::uniform_real_distribution<float> uniform_dist(-1.0f, 1.0f);
+
         this->set_look_to(glm::vec3(bbox_min + (bbox_max - bbox_min)*0.5f));
         // fit view to bounding box x
         float bbox_length_x = bbox_max.x - bbox_min.x;
         bbox_length_x = data_max;
         float camera_dist = (bbox_length_x * 0.5f) / std::tan(fovy*0.5f*pi/180.f);
         // set random distance between center of bbox and 2x bbox fitted view
-        float r = get_rand()*2.f;
+        float r = abs(uniform_dist(mt_gen)) * 2.f;
         this->set_look_from(this->_look_to - glm::vec3(0, 0, (bbox_min.z - camera_dist)*r));
         // rotate uniform sampled distance on sphere
-        glm::quat q = {get_rand(), get_rand(), get_rand(), get_rand()};
+        glm::quat q = { uniform_dist(mt_gen), uniform_dist(mt_gen), uniform_dist(mt_gen), uniform_dist(mt_gen) };
         q = glm::normalize(q);
         this->rotate_fixed_to(q);
     }
