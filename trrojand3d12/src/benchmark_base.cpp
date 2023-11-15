@@ -467,11 +467,6 @@ trrojan::d3d12::benchmark_base::create_graphics_command_list(
 void trrojan::d3d12::benchmark_base::on_device_switch(device& device) {
     assert(device.d3d_device() != nullptr);
 
-    log::instance().write_line(log_level::verbose, "Releasing debug target "
-        "0x{0:p}, because we are switching the device.",
-        static_cast<void *>(this->_debug_target.get()));
-    this->_debug_target = nullptr;
-
     log::instance().write_line(log_level::verbose, "(Re-) Allocating {0} "
         " descriptor heap(s).", this->_descriptor_heaps.size());
     for (auto& h : this->_descriptor_heaps) {
