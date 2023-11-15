@@ -2,7 +2,7 @@ d3d12::cs-volume-renderer {
 	string data_set = Assets/veiled-chameleon.u8.dat
 	string xfer_func = Assets/veiled-chameleon_xbox-green.brudervn
 	uint32vec2 viewport = 1920 1080; 2560 1440; 3840 2160
-	boolean debug_view = true
+	boolean debug_view = false
 
 	float32 step_size = 0.5; 1; 2
 
@@ -12,6 +12,7 @@ d3d12::cs-volume-renderer {
 	uint32 manoeuvre_step = 0 -> 16
 
 	uint32 min_wall_time = 5000
-	uint32 min_prewarms = 16
+	uint32 min_prewarms = 8
+	float32 prewarm_precision = 0.4
     uint32 gpu_counter_iterations = 8
 }
