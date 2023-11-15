@@ -1,8 +1,8 @@
-// <copyright file="sphere_benchmark.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2016 - 2022 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+ï»¿// <copyright file="sphere_benchmark.cpp" company="Visualisierungsinstitut der UniversitÃ¤t Stuttgart">
+// Copyright Â© 2016 - 2023 Visualisierungsinstitut der UniversitÃ¤t Stuttgart. Alle Rechte vorbehalten.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
-// <author>Christoph Müller</author>
+// <author>Christoph MÃ¼ller</author>
 
 #include "trrojan/d3d11/sphere_benchmark.h"
 
@@ -16,6 +16,7 @@
 #include <glm/ext.hpp>
 
 #include "trrojan/constants.h"
+#include "trrojan/estimate_iterations.h"
 #include "trrojan/executive.h"
 #include "trrojan/factor_enum.h"
 #include "trrojan/factor_range.h"
@@ -54,6 +55,7 @@ _SPHERE_BENCH_DEFINE_FACTOR(method);
 _SPHERE_BENCH_DEFINE_FACTOR(min_prewarms);
 _SPHERE_BENCH_DEFINE_FACTOR(min_wall_time);
 _SPHERE_BENCH_DEFINE_FACTOR(poly_corners);
+_SPHERE_BENCH_DEFINE_FACTOR(prewarm_precision);
 _SPHERE_BENCH_DEFINE_FACTOR(vs_raygen);
 _SPHERE_BENCH_DEFINE_FACTOR(vs_xfer_function);
 
@@ -105,6 +107,8 @@ trrojan::d3d11::sphere_benchmark::sphere_benchmark(void)
         factor_min_wall_time, static_cast<unsigned int>(1000)));
     this->_default_configs.add_factor(factor::from_manifestations(
         factor_poly_corners, 4u));
+    this->_default_configs.add_factor(factor::from_manifestations(
+        factor_prewarm_precision, 1.0f));
     this->_default_configs.add_factor(factor::from_manifestations(
         factor_vs_raygen, false));
     this->_default_configs.add_factor(factor::from_manifestations(
@@ -474,6 +478,7 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
        auto batchTime = 0.0;
        auto cntPrewarms = (std::max)(1u,
            config.get<std::uint32_t>(factor_min_prewarms));
+       const auto precision = config.get<float>(factor_prewarm_precision);
 
         do {
             cntCpuIterations = 0;
@@ -499,15 +504,9 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
             wait_for_event_query(ctx, this->done_query);
             batchTime = cpuTimer.elapsed_millis();
 
-            if (batchTime < minWallTime) {
-                cntPrewarms = static_cast<std::uint32_t>(std::ceil(
-                    static_cast<double>(minWallTime) * cntCpuIterations
-                    / batchTime));
-                if (cntPrewarms < 1) {
-                    cntPrewarms = 1;
-                }
-            }
-        } while (batchTime < minWallTime);
+            cntPrewarms = trrojan::estimate_iterations(minWallTime, batchTime,
+                cntCpuIterations, precision);
+        } while (cntPrewarms > 0);
     }
 
     // Do the GPU counter measurements

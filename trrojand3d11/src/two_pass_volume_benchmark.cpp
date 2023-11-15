@@ -11,6 +11,7 @@
 
 #include <glm/ext.hpp>
 
+#include "trrojan/estimate_iterations.h"
 #include "trrojan/io.h"
 #include "trrojan/log.h"
 
@@ -354,6 +355,7 @@ trrojan::result trrojan::d3d11::two_pass_volume_benchmark::on_run(
         auto batchTime = 0.0;
         auto cntPrewarms = (std::max)(1u,
             config.get<std::uint32_t>(factor_min_prewarms));
+        const auto precision = config.get<float>(factor_prewarm_precision);
 
         do {
             cntCpuIterations = 0;
@@ -375,15 +377,9 @@ trrojan::result trrojan::d3d11::two_pass_volume_benchmark::on_run(
             wait_for_event_query(ctx, this->done_query);
             batchTime = cpuTimer.elapsed_millis();
 
-            if (batchTime < minWallTime) {
-                cntPrewarms = static_cast<std::uint32_t>(std::ceil(
-                    static_cast<double>(minWallTime) * cntCpuIterations
-                    / batchTime));
-                if (cntPrewarms < 1) {
-                    cntPrewarms = 1;
-                }
-            }
-        } while (batchTime < minWallTime);
+            cntPrewarms = trrojan::estimate_iterations(minWallTime, batchTime,
+                cntCpuIterations, precision);
+        } while (cntPrewarms > 0);
     }
 
     // Do the GPU counter measurements
