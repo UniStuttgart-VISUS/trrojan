@@ -1,8 +1,8 @@
-// <copyright file="sphere_benchmark.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2016 - 2022 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+ï»¿// <copyright file="sphere_benchmark.cpp" company="Visualisierungsinstitut der UniversitÃ¤t Stuttgart">
+// Copyright Â© 2016 - 2023 Visualisierungsinstitut der UniversitÃ¤t Stuttgart. Alle Rechte vorbehalten.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
-// <author>Christoph Müller</author>
+// <author>Christoph MÃ¼ller</author>
 
 #include "trrojan/d3d12/sphere_benchmark.h"
 
@@ -10,11 +10,12 @@
 #include "trrojan/timer.h"
 
 #include "trrojan/d3d12/gpu_timer.h"
+#include "trrojan/d3d12/measurement_context.h"
 #include "trrojan/d3d12/stats_query.h"
+#include "trrojan/d3d12/utilities.h"
 
 #include "sphere_techniques.h"
 
-#include "trrojan/d3d12/utilities.h"
 
 
 /*
@@ -48,11 +49,9 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
         const std::vector<std::string>& changed) {
     sphere_rendering_configuration cfg(config);
     std::vector<gpu_timer::millis_type> bundle_times, gpu_times;
-    std::uint32_t cpu_iterations = 1;
-    timer cpu_timer;
     const auto gpu_freq = gpu_timer::get_timestamp_frequency(
         device.command_queue());
-    gpu_timer gpu_timer(device.d3d_device(), 2, this->pipeline_depth());
+    measurement_context mctx(device, 2, this->pipeline_depth());
     stats_query::value_type pipeline_stats;
     auto shader_code = cfg.shader_id();
     stats_query stats_query(device.d3d_device(), 1, 1);
@@ -166,43 +165,33 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
         auto prewarms = (std::max)(1u, cfg.min_prewarms());
 
         do {
-            cpu_iterations = 0;
-            assert(prewarms >= 1);
-
-            cpu_timer.start();
-            for (; cpu_iterations < prewarms; ++cpu_iterations) {
+            mctx.cpu_timer.start();
+            for (mctx.cpu_iterations = 0; mctx.cpu_iterations < prewarms;
+                    ++mctx.cpu_iterations) {
                 auto cmd_list = cmd_lists[this->buffer_index()];
                 device.execute_command_list(cmd_list);
                 this->present_target();
             }
             device.wait_for_gpu();
 
-            batch_time = cpu_timer.elapsed_millis();
-
-            if (batch_time < cfg.min_wall_time()) {
-                prewarms = static_cast<std::uint32_t>(std::ceil(
-                    (static_cast<double>(cfg.min_wall_time()) * cpu_iterations)
-                    / batch_time));
-                if (prewarms < 1) {
-                    prewarms = 1;
-                }
-            }
-        } while (batch_time < cfg.min_wall_time());
+            prewarms = mctx.check_cpu_iterations(cfg.min_wall_time(),
+                cfg.prewarm_precision());
+        } while (prewarms > 0);
     }
 #endif
 
 #if 1
     // Do the wall clock measurement using the prepared command lists.
     log::instance().write_line(log_level::debug, "Measuring wall clock "
-        "timings over {} iterations ...", cpu_iterations);
-    cpu_timer.start();
-    for (std::uint32_t i = 0; i < cpu_iterations; ++i) {
+        "timings over {} iterations ...", mctx.cpu_iterations);
+    mctx.cpu_timer.start();
+    for (std::uint32_t i = 0; i < mctx.cpu_iterations; ++i) {
         auto cmd_list = cmd_lists[this->buffer_index()];
         device.execute_command_list(cmd_list);
         this->present_target();
     }
     device.wait_for_gpu();
-    const auto cpu_time = cpu_timer.elapsed_millis();
+    const auto cpu_time = mctx.cpu_timer.elapsed_millis();
 #endif
 
 #if 1
@@ -218,33 +207,33 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
         cmd_list->SetGraphicsRootSignature(root_sig);
         set_descriptors(cmd_list, desc_tables);
 
-        gpu_timer.start_frame();
-        gpu_timer.start(cmd_list, 0);
+        mctx.gpu_timer.start_frame();
+        mctx.gpu_timer.start(cmd_list, 0);
 
         this->enable_target(cmd_list);
         this->clear_target(cmd_list);
 
-        gpu_timer.start(cmd_list, 1);
+        mctx.gpu_timer.start(cmd_list, 1);
         cmd_list->ExecuteBundle(bundle);
-        gpu_timer.end(cmd_list, 1);
+        mctx.gpu_timer.end(cmd_list, 1);
 
 #if !defined(CREATE_D2D_OVERLAY)
         // when overlay active, target gets transitioned to PRESENT after overlay rendering
         // i.e. during this->present_target() call
         this->disable_target(cmd_list);
 #endif // defined(CREATE_D2D_OVERLAY)
-        gpu_timer.end(cmd_list, 0);
-        const auto timer_index = gpu_timer.end_frame(cmd_list);
+        mctx.gpu_timer.end(cmd_list, 0);
+        const auto timer_index = mctx.gpu_timer.end_frame(cmd_list);
 
         device.close_and_execute_command_list(cmd_list);
         this->present_target();
 
         device.wait_for_gpu();
         gpu_times[i] = gpu_timer::to_milliseconds(
-            gpu_timer.evaluate(timer_index, 0),
+            mctx.gpu_timer.evaluate(timer_index, 0),
             gpu_freq);
         bundle_times[i] = gpu_timer::to_milliseconds(
-            gpu_timer.evaluate(timer_index, 1),
+            mctx.gpu_timer.evaluate(timer_index, 1),
             gpu_freq);
     }
 #endif
@@ -338,9 +327,9 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
         gpu_times.front(),
         gpu_median,
         gpu_times.back(),
-        cpu_iterations,
+        mctx.cpu_iterations,
         cpu_time,
-        static_cast<double>(cpu_time) / cpu_iterations
+        static_cast<double>(cpu_time) / mctx.cpu_iterations
         });
 
     return retval;

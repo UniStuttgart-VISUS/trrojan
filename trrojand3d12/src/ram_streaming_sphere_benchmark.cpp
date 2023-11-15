@@ -239,7 +239,8 @@ trrojan::result trrojan::d3d12::ram_streaming_sphere_benchmark::on_run(
                 }
             }
             device.wait_for_gpu();
-            prewarms = mctx.check_cpu_iterations(cfg.min_wall_time());
+            prewarms = mctx.check_cpu_iterations(cfg.min_wall_time(),
+                cfg.prewarm_precision());
         } while (prewarms > 0);
     }
 

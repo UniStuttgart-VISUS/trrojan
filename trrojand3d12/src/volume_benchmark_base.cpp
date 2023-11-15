@@ -29,6 +29,7 @@ _VOLUME_BENCH_DEFINE_FACTOR(gpu_counter_iterations);
 _VOLUME_BENCH_DEFINE_FACTOR(max_steps);
 _VOLUME_BENCH_DEFINE_FACTOR(min_prewarms);
 _VOLUME_BENCH_DEFINE_FACTOR(min_wall_time);
+_VOLUME_BENCH_DEFINE_FACTOR(prewarm_precision);
 _VOLUME_BENCH_DEFINE_FACTOR(step_size);
 _VOLUME_BENCH_DEFINE_FACTOR(xfer_func);
 
@@ -327,6 +328,8 @@ trrojan::d3d12::volume_benchmark_base::volume_benchmark_base(
         factor_min_prewarms, static_cast<unsigned int>(4)));
     this->_default_configs.add_factor(factor::from_manifestations(
         factor_min_wall_time, static_cast<unsigned int>(1000)));
+    this->_default_configs.add_factor(factor::from_manifestations(
+        factor_prewarm_precision, 1.0f));
 
     this->add_default_manoeuvre();
 }
@@ -350,6 +353,11 @@ trrojan::result trrojan::d3d12::volume_benchmark_base::on_run(
         const configuration& config,
         power_collector::pointer& power_collector,
         const std::vector<std::string>& changed) {
+    static const auto res_target_state
+        = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE
+        | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+        //D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE
+
     // Clear all resource that have been invalidated by the change of factors.
     if (contains_any(changed, factor_device, factor_data_set, factor_frame)) {
         this->_tex_volume = nullptr;
@@ -370,20 +378,15 @@ trrojan::result trrojan::d3d12::volume_benchmark_base::on_run(
 
         if (this->_tex_volume == nullptr) {
             this->_tex_volume = this->load_volume(config, device,
-                cmd_list,
-                D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-                //D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE,
-                this->_volume_info, staging_buffers.front());
+                cmd_list, res_target_state, this->_volume_info,
+                staging_buffers.front());
             this->calc_bounding_box(this->_volume_bbox.front(),
                 this->_volume_bbox.back());
         }
 
         if (this->_tex_xfer_func == nullptr) {
             this->_tex_xfer_func = this->load_xfer_func(config, device,
-                cmd_list,
-                D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-                //D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE,
-                staging_buffers.back());
+                cmd_list, res_target_state, staging_buffers.back());
         }
 
         if (cmd_list != nullptr) {

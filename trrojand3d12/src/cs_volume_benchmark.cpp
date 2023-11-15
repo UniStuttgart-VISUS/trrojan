@@ -13,6 +13,7 @@
 #include "trrojan/log.h"
 
 #include "trrojan/d3d12/device.h"
+#include "trrojan/d3d12/measurement_context.h"
 #include "trrojan/d3d12/plugin.h"
 #include "trrojan/d3d12/stats_query.h"
 #include "trrojan/d3d12/utilities.h"
@@ -118,17 +119,16 @@ trrojan::result trrojan::d3d12::cs_volume_benchmark::on_run(
     // Prepare the data set, the volume meta data and the camera.
     volume_benchmark_base::on_run(device, config, power_collector, changed);
 
-    auto cpu_iterations = static_cast<std::uint32_t>(0);
-    trrojan::timer cpu_timer;
     auto dev = device.d3d_device();
     const auto gpu_freq = gpu_timer::get_timestamp_frequency(
         device.command_queue());
     const auto gpu_iterations = config.get<std::uint32_t>(
         factor_gpu_counter_iterations);
-    gpu_timer gpu_timer(device.d3d_device(), 1, this->pipeline_depth());
     std::vector<gpu_timer_type::millis_type> gpu_times;
     const auto min_wall_time = config.get<std::uint32_t>(factor_min_wall_time);
+    measurement_context mctx(device, 1, this->pipeline_depth());
     stats_query::value_type pipeline_stats;
+    const auto prewarm_precision = config.get<float>(factor_prewarm_precision);
     stats_query stats_query(device.d3d_device(), 1, 1);
     const auto volume_size = this->get_volume_resolution();
     const auto viewport = config.get<viewport_type>(factor_viewport);
@@ -352,50 +352,40 @@ trrojan::result trrojan::d3d12::cs_volume_benchmark::on_run(
     // Do prewarming and compute number of CPU iterations at the same time.
     log::instance().write_line(log_level::debug, "Prewarming ...");
     {
-        auto batch_time = 0.0;
         auto prewarms = (std::max)(1u, config.get<unsigned int>(
             factor_min_prewarms));
         const auto wall_time = config.get<unsigned int>(factor_min_wall_time);
 
         do {
-            cpu_iterations = 0;
             assert(prewarms >= 1);
-
-            cpu_timer.start();
-            for (; cpu_iterations < prewarms; ++cpu_iterations) {
+            mctx.cpu_timer.start();
+            for (mctx.cpu_iterations = 0; mctx.cpu_iterations < prewarms;
+                    ++mctx.cpu_iterations) {
                 auto cmd_list = cmd_lists[this->buffer_index()];
                 device.execute_command_list(cmd_list);
                 this->present_target();
             }
             device.wait_for_gpu();
 
-            batch_time = cpu_timer.elapsed_millis();
-
-            if (batch_time < wall_time) {
-                prewarms = static_cast<std::uint32_t>(std::ceil(
-                    (static_cast<double>(wall_time) * cpu_iterations)
-                    / batch_time));
-                if (prewarms < 1) {
-                    prewarms = 1;
-                }
-            }
-        } while (batch_time < wall_time);
+            prewarms = mctx.check_cpu_iterations(min_wall_time,
+                prewarm_precision);
+        } while (prewarms > 0);
     }
 #endif
 
 #if 1
     // Do the wall clock measurement using the prepared command lists.
     log::instance().write_line(log_level::debug, "Measuring wall clock "
-        "timings over {} iterations ...", cpu_iterations);
+        "timings over {} iterations ...", mctx.cpu_iterations);
     const auto power_uid = benchmark_base::enter_power_scope(power_collector);
-    cpu_timer.start();
-    for (std::uint32_t i = 0; i < cpu_iterations; ++i) {
+    mctx.cpu_timer.start();
+    for (std::uint32_t i = 0; i < mctx.cpu_iterations; ++i) {
         auto cmd_list = cmd_lists[this->buffer_index()];
         device.execute_command_list(cmd_list);
         this->present_target();
     }
     device.wait_for_gpu();
-    const auto cpu_time = cpu_timer.elapsed_millis();
+    const auto cpu_time = mctx.cpu_timer.elapsed_millis();
     benchmark_base::leave_power_scope(power_collector);
 #endif
 
@@ -413,8 +403,8 @@ trrojan::result trrojan::d3d12::cs_volume_benchmark::on_run(
         cmd_list->SetPipelineState(this->_compute_pipeline);
         this->set_descriptors(cmd_list, i);
 
-        gpu_timer.start_frame();
-        gpu_timer.start(cmd_list, 0);
+        mctx.gpu_timer.start_frame();
+        mctx.gpu_timer.start(cmd_list, 0);
         transition_resource(cmd_list, this->_uavs[i],
             D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
@@ -430,15 +420,15 @@ trrojan::result trrojan::d3d12::cs_volume_benchmark::on_run(
 
         transition_resource(cmd_list, this->_uavs[i],
             D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_COMMON);
-        gpu_timer.end(cmd_list, 0);
-        const auto timer_index = gpu_timer.end_frame(cmd_list);
+        mctx.gpu_timer.end(cmd_list, 0);
+        const auto timer_index = mctx.gpu_timer.end_frame(cmd_list);
 
         device.close_and_execute_command_list(cmd_list);
         this->present_target();
 
         device.wait_for_gpu();
         gpu_times[it] = gpu_timer::to_milliseconds(
-            gpu_timer.evaluate(timer_index, 0),
+            mctx.gpu_timer.evaluate(timer_index, 0),
             gpu_freq);
     }
 #endif
@@ -518,9 +508,9 @@ trrojan::result trrojan::d3d12::cs_volume_benchmark::on_run(
         gpu_times.front(),
         gpu_median,
         gpu_times.back(),
-        cpu_iterations,
+        mctx.cpu_iterations,
         cpu_time,
-        static_cast<double>(cpu_time) / cpu_iterations,
+        static_cast<double>(cpu_time) / mctx.cpu_iterations,
         pipeline_stats.CSInvocations
     });
 

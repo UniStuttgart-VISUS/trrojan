@@ -34,7 +34,8 @@ namespace d3d12 {
         /// a new suggestion for the number of iterations that might be
         /// sufficient to reach the given minimum.
         /// </summary>
-        std::uint32_t check_cpu_iterations(const double min_wall_time);
+        std::uint32_t check_cpu_iterations(const double min_wall_time,
+            const float precision);
 
         /// <summary>
         /// The number of iterations 

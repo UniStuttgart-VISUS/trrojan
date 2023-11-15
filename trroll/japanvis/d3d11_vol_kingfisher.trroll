@@ -1,0 +1,17 @@
+d3d11::cs-volume-renderer {
+	string data_set = Assets/malachite-kingfisher.u8.dat
+	string xfer_func = Assets/kingfisher.brudervn
+	uint32vec2 viewport = 1920 1080; 2560 1440; 3840 2160
+	boolean debug_view = true
+
+	float32 step_size = 0.5; 1; 2
+
+	string manoeuvre = random
+	uint32 manoeuvre_steps = 16
+	uint32 iterations = 1
+	uint32 manoeuvre_step = 0 -> 16
+
+	uint32 min_wall_time = 5000
+	uint32 min_prewarms = 16
+    uint32 gpu_counter_iterations = 8
+}
