@@ -4,6 +4,9 @@ d3d12::ram-stream-sphere-renderer {
 	uint32 frame = 0
     uint32 min_prewarms = 16
 
+    string device = NVIDIA GeForce GTX 1050
+    uint32 batch_size = 50
+
 	uint32vec2 viewport = 1920 1080
 	boolean debug_view = true
 
@@ -14,6 +17,6 @@ d3d12::ram-stream-sphere-renderer {
 
 	string manoeuvre = path_z
 	uint32 manoeuvre_steps = 100
-	uint32 manoeuvre_step = 50
+	uint32 manoeuvre_step = 0
 }
 

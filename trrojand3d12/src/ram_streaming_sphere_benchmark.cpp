@@ -153,48 +153,19 @@ trrojan::result trrojan::d3d12::ram_streaming_sphere_benchmark::on_run(
     auto topology = get_primitive_topology(shader_code);
     auto buffer = this->_stream.buffer().get();
 
-#if false
-    // Record a command list for each batch, which we will repeatedly call until
+    // Prepare a command list for each batch, which we will repeatedly call until
     // all of the data have been streamed to the GPU. The index of the list
     // specifies the index of the index of the batch, ie if we filled the buffer
     // for the first batch, we need to render the first command list afterwards.
-    std::vector<winrt::com_ptr<ID3D12GraphicsCommandList>> cmd_lists(
-        this->_stream.batch_count());
-    for (std::size_t b = 0; (b < this->_stream.batch_count())
-            && (b < this->_stream.total_batches()); ++b) {
-        auto list = cmd_lists[b] = to_winrt(
-            this->create_graphics_command_list(b, pipeline));
+    std::vector<winrt::com_ptr<ID3D12GraphicsCommandList>> cmd_lists;
+    cmd_lists.reserve(this->_stream.batch_count());
+    for (std::size_t b = 0; (b < this->_stream.batch_count()); ++b) {
+        auto list = to_winrt(this->create_graphics_command_list(b, pipeline));
         set_debug_object_name(list.get(), "Command list for batch {0}", b);
-
-        const auto spheres = this->_stream.batch_elements();
-        auto desc_tables = this->set_descriptors(device.d3d_device(),
-            shader_code, 0, b * cnt_descs, buffer, this->_stream.offset(b),
-            spheres);
-
-        list->SetGraphicsRootSignature(root_sig);
-        list->IASetPrimitiveTopology(topology);
-        this->set_descriptors(list.get(), desc_tables);
-        this->set_vertex_buffer(list.get(), shader_code, b);
-
-        const auto counts = get_draw_count(shader_code, spheres);
-        list->DrawInstanced(counts.first, counts.second, 0, 0);
-        close_command_list(list.get());
+        cmd_lists.push_back(list);
     }
-#endif
 
-    // Prepare the command lists for the first and last batch of each frame.
-    // These need to be filled on the fly once we know which of the buffers
-    // we need to bind.
-    auto begin_list = to_winrt(this->create_graphics_command_list(begin_index,
-        pipeline));
-    set_debug_object_name(begin_list.get(), "Begin frame command list");
-    close_command_list(begin_list.get());
-    auto end_list = to_winrt(this->create_graphics_command_list(end_index,
-        pipeline));
-    set_debug_object_name(end_list.get(), "End frame command list");
-    close_command_list(end_list.get());
-
-    // Update constant buffers.
+    // Update constant buffers. These will not change for this run.
     this->update_constants(cfg, 0);
 
     log::instance().write_line(log_level::debug, "Prewarming ...");
@@ -211,71 +182,60 @@ trrojan::result trrojan::d3d12::ram_streaming_sphere_benchmark::on_run(
                     // Within this loop, 't' is the global index of the batch,
                     // which is used to address the source data, whereas 'b' is
                     // the position in the ring buffer on the GPU.
-                    auto b = this->_stream.next_batch();
+                    const auto b = this->_stream.next_batch();
                     log::instance().write_line(log_level::debug,
-                        "Using batch {0} ...", b);
+                        "Using batch {0} for {1} of {2}...", b, t,
+                        total_batches);
+                    auto list = cmd_lists[b];
+                    const auto first = (t == 0);
+                    const auto last = (t == last_batch);
 
-                    if (false&& (t > 0) && (t < last_batch)) {
-                        // This is a "normal" batch, which we can just submit
-                        // using the command lists we prepared before.
-#if false
-                        auto list = cmd_lists[b];
-                        ::memcpy(this->_stream.data(b),
-                            this->_buffer.data() + this->_stream.offset(t),
-                            this->_stream.batch_size(t));
-                        device.execute_command_list(list.get());
-#endif
-
-                    } else {
-                        // This is either the first batch, which needs to
-                        // transition and clear the render target, or it is the
-                        // last one, which needs to present the render target
-                        // and as potentially less data in it. As the command
-                        // list may be different every time, we need to reset
-                        // and re-record it using the appropriate batch 'b'.
-                        const auto first = (t == 0);
-                        const auto last = (t == last_batch);
-                        auto alloc = first
-                            ? this->_direct_cmd_allocators[begin_index]
-                            : this->_direct_cmd_allocators[end_index];
-                        auto list = first ? begin_list : end_list;
-                        list->Reset(alloc, pipeline);
-
-                        if (first) {
-                            this->enable_target(list.get());
-                            this->clear_target(list.get());
-                        }
-
-                        const auto spheres = this->_stream.batch_elements(t);
-                        auto desc_tables = this->set_descriptors(
-                            device.d3d_device(), shader_code, 0,
-                            b + cnt_descs,
-                            buffer,
-                            b * this->_stream.batch_elements(),
-                            spheres);
-
-                        ::memcpy(this->_stream.data(b),
-                            this->_buffer.data() + this->_stream.offset(t),
-                            this->_stream.batch_size(t));
-
-                        list->SetGraphicsRootSignature(root_sig);
-                        list->IASetPrimitiveTopology(topology);
-                        this->set_descriptors(list.get(), desc_tables);
-                        this->set_vertex_buffer(list.get(), shader_code, b);
-
-                        const auto counts = get_draw_count(shader_code, spheres);
-                        list->DrawInstanced(counts.first, counts.second, 0, 0);
-
-                        if (last) {
-                            this->present_target();
-                        }
-
-                        device.close_and_execute_command_list(list.get());
+                    // If this is the first batch, we need to enable and clear
+                    // the target for the frame.
+                    if (first) {
+                        this->enable_target(list.get());
+                        this->clear_target(list.get());
                     }
- 
+
+                    const auto spheres = this->_stream.batch_elements(t);
+                    auto desc_tables = this->set_descriptors(
+                        device.d3d_device(),
+                        shader_code,
+                        0,
+                        b + cnt_descs,
+                        buffer,
+                        b * this->_stream.batch_elements(),
+                        spheres);
+
+                    auto xxx = this->_stream.offset(t);
+                    auto yyy = this->_stream.data(b);
+                    ::memcpy(this->_stream.data(b),
+                        this->_buffer.data() + this->_stream.offset(t),
+                        this->_stream.batch_size(t));
+
+                    list->SetGraphicsRootSignature(root_sig);
+                    list->IASetPrimitiveTopology(topology);
+                    this->set_descriptors(list.get(), desc_tables);
+                    this->set_vertex_buffer(list.get(), shader_code, b);
+
+                    const auto counts = get_draw_count(shader_code, spheres);
+                    list->DrawInstanced(counts.first, counts.second, 0, 0);
+
+                    device.close_and_execute_command_list(list.get());
+
                     // Schedule a signal after we have submitted the command
                     // list for batch 'b'.
                     this->_stream.signal_done(b, this->command_queue());
+
+                    // Immediately reset the list for the next loop. It is OK to
+                    // reset a command list once it has been submitted, which is
+                    // in contrast to the underlying allocator.
+                    list->Reset(this->_direct_cmd_allocators[b], pipeline);
+ 
+                    // If this was the last batch, we need to swap the buffer.
+                    if (last) {
+                        this->present_target();
+                    }
                 }
             }
             device.wait_for_gpu();
