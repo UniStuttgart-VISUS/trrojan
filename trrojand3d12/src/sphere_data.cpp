@@ -142,6 +142,30 @@ void trrojan::d3d12::sphere_data::clear(void) {
 
 
 /*
+ * trrojan::d3d12::sphere_data::copy_to
+ */
+winrt::file_handle trrojan::d3d12::sphere_data::copy_to(const std::string& path,
+        const shader_id_type shader_code,
+        const sphere_rendering_configuration& config) {
+    winrt::file_handle retval(::CreateFileA(path.c_str(),
+        GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ, nullptr, CREATE_ALWAYS,
+        FILE_ATTRIBUTE_NORMAL, NULL));
+    if (!retval) {
+        throw ATL::CAtlException(HRESULT_FROM_WIN32(::GetLastError()));
+    }
+
+    this->load([&](const UINT64 size) {
+        //this->_buffer.resize(size);
+        //return this->_buffer.data();
+        return nullptr;
+    }, shader_code, config);
+
+
+    return retval;
+}
+
+
+/*
  * trrojan::d3d12::sphere_data::extents
  */
 std::array<float, 3> trrojan::d3d12::sphere_data::extents(void) const {

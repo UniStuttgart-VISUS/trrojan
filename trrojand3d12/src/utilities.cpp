@@ -340,6 +340,27 @@ ATL::CComPtr<ID3D12Resource> trrojan::d3d12::create_resource(
 
 
 /*
+ * trrojan::d3d12::create_temp_file
+ */
+std::string trrojan::d3d12::create_temp_file(const char *prefix) {
+    std::array<char, MAX_PATH + 1> buffer;
+
+    // Note: The path can never exceed the constant length above according to
+    // https://learn.microsoft.com/de-de/windows/win32/api/fileapi/nf-fileapi-gettemppatha
+    if (!::GetTempPathA(static_cast<DWORD>(buffer.size()), buffer.data())) {
+        throw ATL::CAtlException(HRESULT_FROM_WIN32(::GetLastError()));
+    }
+
+    if (!::GetTempFileNameA(buffer.data(),
+            (prefix != nullptr) ? prefix : "trrojan", 0, buffer.data())) {
+        throw ATL::CAtlException(HRESULT_FROM_WIN32(::GetLastError()));
+    }
+
+    return buffer.data();
+}
+
+
+/*
  * trrojan::d3d12::create_texture
  */
 ATL::CComPtr<ID3D12Resource> trrojan::d3d12::create_texture(

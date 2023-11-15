@@ -102,8 +102,8 @@ std::size_t trrojan::d3d12::sphere_streaming_context::next_batch(void) {
 
     // Every batch up to this fence value is reusable.
     auto finished_value = this->_fence->GetCompletedValue();
-    log::instance().write_line(log_level::debug, "Fence is {0}.",
-        finished_value);
+    //log::instance().write_line(log_level::debug, "Fence is {0}.",
+    //    finished_value);
 
     // If all batches are currently in flight on the GPU, ie used for rendering,
     // we must wait for the GPU to finish to provide the caller with a batch
@@ -116,8 +116,8 @@ std::size_t trrojan::d3d12::sphere_streaming_context::next_batch(void) {
 
         // The latest finished fence has hopefully changed.
         finished_value = this->_fence->GetCompletedValue();
-        log::instance().write_line(log_level::debug, "Waited for fence to "
-            "become {0}.", finished_value);
+        //log::instance().write_line(log_level::debug, "Waited for fence to "
+        //    "become {0}.", finished_value);
 
         // This loop performs two tasks: first, it finds a free slot that we can
         // return, and second, it counts how many free slots there are in total,
@@ -151,7 +151,7 @@ std::size_t trrojan::d3d12::sphere_streaming_context::next_batch(void) {
     // Make sure that we do not hand out the batch index again until the fence
     // was injected and passed in the command queue using signal_done().
     this->_fence_values[retval] = (std::numeric_limits<UINT64>::max)();
-    -- this->_ready_count;
+    --this->_ready_count;
 
     return retval;
 }

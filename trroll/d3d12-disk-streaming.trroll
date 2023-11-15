@@ -1,4 +1,4 @@
-d3d12::ram-stream-sphere-renderer {
+d3d12::disk-stream-sphere-renderer {
 	string data_set =  pos_rad_intensity : 20000 : 0 : 10 10 10 : 0.01 0.1
 	float32 global_radius = 0.07
 	uint32 frame = 0

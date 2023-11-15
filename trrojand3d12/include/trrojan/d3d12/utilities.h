@@ -213,6 +213,13 @@ namespace d3d12 {
         const D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_COPY_DEST);
 
     /// <summary>
+    /// Create a temporary file name in the temporary folder.
+    /// </summary>
+    /// <param name="prefix"></param>
+    /// <returns></returns>
+    std::string create_temp_file(const char *prefix);
+
+    /// <summary>
     /// Create an uninitialised 1D texture which is in
     /// <paramref name="state" />.
     /// </summary>

@@ -1,21 +1,22 @@
-﻿// <copyright file="ram_streaming_sphere_benchmark.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2022 - 2023 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+﻿// <copyright file="disk_streaming_sphere_benchmark.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
+// Copyright © 2023 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
 // <author>Christoph Müller</author>
 
-#include "trrojan/d3d12/ram_streaming_sphere_benchmark.h"
+#include "trrojan/d3d12/disk_streaming_sphere_benchmark.h"
 
 #include "trrojan/d3d12/measurement_context.h"
+#include "trrojan/d3d12/utilities.h"
 
 #include "sphere_techniques.h"
 
 
 /*
- * ...::ram_streaming_sphere_benchmark::ram_streaming_sphere_benchmark
+ * ...::disk_streaming_sphere_benchmark::disk_streaming_sphere_benchmark
  */
-trrojan::d3d12::ram_streaming_sphere_benchmark::ram_streaming_sphere_benchmark(
-        void) : sphere_benchmark_base("ram-stream-sphere-renderer") {
+trrojan::d3d12::disk_streaming_sphere_benchmark::disk_streaming_sphere_benchmark(
+        void) : sphere_benchmark_base("disk-stream-sphere-renderer") {
     this->_default_configs.add_factor(factor::from_manifestations(
         sphere_streaming_context::factor_batch_count, 8u));
     this->_default_configs.add_factor(factor::from_manifestations(
@@ -24,9 +25,9 @@ trrojan::d3d12::ram_streaming_sphere_benchmark::ram_streaming_sphere_benchmark(
 
 
 /*
- * trrojan::d3d12::ram_streaming_sphere_benchmark::check_stream_changed
+ * trrojan::d3d12::disk_streaming_sphere_benchmark::check_stream_changed
  */
-bool trrojan::d3d12::ram_streaming_sphere_benchmark::check_stream_changed(
+bool trrojan::d3d12::disk_streaming_sphere_benchmark::check_stream_changed(
         d3d12::device& device, const configuration& config,
         const std::vector<std::string> &changed) {
     const auto retval = this->_stream.rebuild_required(changed);
@@ -59,9 +60,9 @@ bool trrojan::d3d12::ram_streaming_sphere_benchmark::check_stream_changed(
 
 
 /*
- * trrojan::d3d12::ram_streaming_sphere_benchmark::count_descriptor_tables
+ * trrojan::d3d12::disk_streaming_sphere_benchmark::count_descriptor_tables
  */
-UINT trrojan::d3d12::ram_streaming_sphere_benchmark::count_descriptor_tables(
+UINT trrojan::d3d12::disk_streaming_sphere_benchmark::count_descriptor_tables(
         const shader_id_type shader_code, const bool include_root) const {
     // Let the base class compute how many descriptors we need for emitting one
     // draw call.
@@ -76,9 +77,9 @@ UINT trrojan::d3d12::ram_streaming_sphere_benchmark::count_descriptor_tables(
 
 
 /*
- * trrojan::d3d12::ram_streaming_sphere_benchmark::on_device_switch
+ * trrojan::d3d12::disk_streaming_sphere_benchmark::on_device_switch
  */
-void trrojan::d3d12::ram_streaming_sphere_benchmark::on_device_switch(
+void trrojan::d3d12::disk_streaming_sphere_benchmark::on_device_switch(
         device& device) {
     assert(device.d3d_device() != nullptr);
     sphere_benchmark_base::on_device_switch(device);
@@ -86,15 +87,16 @@ void trrojan::d3d12::ram_streaming_sphere_benchmark::on_device_switch(
 
 
 /*
- * trrojan::d3d12::ram_streaming_sphere_benchmark::on_run
+ * trrojan::d3d12::disk_streaming_sphere_benchmark::on_run
  */
-trrojan::result trrojan::d3d12::ram_streaming_sphere_benchmark::on_run(
+trrojan::result trrojan::d3d12::disk_streaming_sphere_benchmark::on_run(
         d3d12::device& device,
         const configuration& config,
         power_collector::pointer& power_collector,
         const std::vector<std::string>& changed) {
     std::vector<gpu_timer::millis_type> batch_times, gpu_times;
     sphere_rendering_configuration cfg(config);
+    const auto file_path = create_temp_file("tdsb");
     const auto gpu_freq = gpu_timer::get_timestamp_frequency(
         device.command_queue());
     measurement_context mctx(device, 2, this->pipeline_depth());
@@ -110,14 +112,16 @@ trrojan::result trrojan::d3d12::ram_streaming_sphere_benchmark::on_run(
         log::instance().write_line(log_level::information, "Loading data set \""
             "{}\" into memory ...", cfg.data_set());
         this->_data.load([this](const UINT64 size) {
-            this->_buffer.resize(size);
-            return this->_buffer.data();
+            //this->_buffer.resize(size);
+            //return this->_buffer.data();
+            return nullptr;
         }, shader_code, cfg);
 
         log::instance().write_line(log_level::debug, "Reshaping GPU "
             "stream ...");
         this->_stream.reshape(this->_data);
     }
+
 
     // Now that we have the data, update the shader code to match it.
     shader_code = this->_data.adjust_shader_code(shader_code);
@@ -209,9 +213,9 @@ trrojan::result trrojan::d3d12::ram_streaming_sphere_benchmark::on_run(
                         b * this->_stream.batch_elements(),
                         spheres);
 
-                    ::memcpy(this->_stream.data(b),
-                        this->_buffer.data() + this->_stream.offset(t),
-                        this->_stream.batch_size(t));
+                    //::memcpy(this->_stream.data(b),
+                    //    this->_buffer.data() + this->_stream.offset(t),
+                    //    this->_stream.batch_size(t));
 
                     list->SetGraphicsRootSignature(root_sig);
                     list->IASetPrimitiveTopology(topology);
@@ -281,9 +285,9 @@ trrojan::result trrojan::d3d12::ram_streaming_sphere_benchmark::on_run(
                 b * this->_stream.batch_elements(),
                 spheres);
 
-            ::memcpy(this->_stream.data(b),
-                this->_buffer.data() + this->_stream.offset(t),
-                this->_stream.batch_size(t));
+            //::memcpy(this->_stream.data(b),
+            //    this->_buffer.data() + this->_stream.offset(t),
+            //    this->_stream.batch_size(t));
 
             list->SetGraphicsRootSignature(root_sig);
             list->IASetPrimitiveTopology(topology);
@@ -358,9 +362,9 @@ trrojan::result trrojan::d3d12::ram_streaming_sphere_benchmark::on_run(
                 b * this->_stream.batch_elements(),
                 spheres);
 
-            ::memcpy(this->_stream.data(b),
-                this->_buffer.data() + this->_stream.offset(t),
-                this->_stream.batch_size(t));
+            //::memcpy(this->_stream.data(b),
+            //    this->_buffer.data() + this->_stream.offset(t),
+            //    this->_stream.batch_size(t));
 
             list->SetGraphicsRootSignature(root_sig);
             list->IASetPrimitiveTopology(topology);
@@ -445,9 +449,9 @@ trrojan::result trrojan::d3d12::ram_streaming_sphere_benchmark::on_run(
                 b * this->_stream.batch_elements(),
                 spheres);
 
-            ::memcpy(this->_stream.data(b),
-                this->_buffer.data() + this->_stream.offset(t),
-                this->_stream.batch_size(t));
+            //::memcpy(this->_stream.data(b),
+            //    this->_buffer.data() + this->_stream.offset(t),
+            //    this->_stream.batch_size(t));
 
             list->SetGraphicsRootSignature(root_sig);
             list->IASetPrimitiveTopology(topology);
@@ -566,9 +570,9 @@ trrojan::result trrojan::d3d12::ram_streaming_sphere_benchmark::on_run(
 
 
 /*
- * trrojan::d3d12::ram_streaming_sphere_benchmark::set_vertex_buffer
+ * trrojan::d3d12::disk_streaming_sphere_benchmark::set_vertex_buffer
  */
-void trrojan::d3d12::ram_streaming_sphere_benchmark::set_vertex_buffer(
+void trrojan::d3d12::disk_streaming_sphere_benchmark::set_vertex_buffer(
         ID3D12GraphicsCommandList *cmd_list,
         const shader_id_type shader_code,
         const std::size_t batch) {
