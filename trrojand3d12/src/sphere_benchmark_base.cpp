@@ -214,6 +214,9 @@ trrojan::d3d12::sphere_benchmark_base::sphere_benchmark_base(
         sphere_rendering_configuration::factor_poly_corners,
         4u));
     this->_default_configs.add_factor(factor::from_manifestations(
+        sphere_rendering_configuration::factor_prewarm_precision,
+        1.0f));
+    this->_default_configs.add_factor(factor::from_manifestations(
         sphere_rendering_configuration::factor_vs_raygen,
         false));
     this->_default_configs.add_factor(factor::from_manifestations(
@@ -274,7 +277,7 @@ UINT trrojan::d3d12::sphere_benchmark_base::count_descriptor_tables(
     }
 
     if (include_root) {
-        // Add one slot for the root descriptor table.
+        // Add one slot for the descriptor table itself.
         ++retval;
     }
 
@@ -608,6 +611,11 @@ trrojan::d3d12::sphere_benchmark_base::set_descriptors(
     std::vector<D3D12_GPU_DESCRIPTOR_HANDLE> tables;
 
     // Advance to the first descriptor we want to use.
+#if (defined(DEBUG) || defined(_DEBUG))
+    log::instance().write_line(log_level::debug, "Advancing {0} steps "
+        "({1} Bytes) into the descriptor heap.", first_descriptor,
+        first_descriptor * increment);
+#endif /* (defined(DEBUG) || defined(_DEBUG)) */
     cpu_handle.ptr += first_descriptor * increment;
     gpu_handle.ptr += first_descriptor * increment;
 

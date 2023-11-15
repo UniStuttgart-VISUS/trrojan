@@ -26,10 +26,12 @@ trrojan::d3d12::ram_streaming_sphere_benchmark::ram_streaming_sphere_benchmark(
 /*
  * trrojan::d3d12::ram_streaming_sphere_benchmark::check_stream_changed
  */
-void trrojan::d3d12::ram_streaming_sphere_benchmark::check_stream_changed(
+bool trrojan::d3d12::ram_streaming_sphere_benchmark::check_stream_changed(
         d3d12::device& device, const configuration& config,
         const std::vector<std::string> &changed) {
-    if (this->_stream.rebuild_required(changed)) {
+    const auto retval = this->_stream.rebuild_required(changed);
+
+    if (retval) {
         log::instance().write_line(log_level::information, "(Re-) Building GPU "
             "stream on device 0x{0:p} ...",
             static_cast<void *>(device.d3d_device().p));
@@ -51,6 +53,8 @@ void trrojan::d3d12::ram_streaming_sphere_benchmark::check_stream_changed(
             D3D12_COMMAND_LIST_TYPE_DIRECT,
             this->_stream.batch_count() + 2);
     }
+
+    return retval;
 }
 
 
@@ -62,14 +66,10 @@ UINT trrojan::d3d12::ram_streaming_sphere_benchmark::count_descriptor_tables(
     // Let the base class compute how many descriptors we need for emitting one
     // draw call.
     auto retval = sphere_benchmark_base::count_descriptor_tables(shader_code,
-        false);
+        include_root);
 
     // All of the above is required for each batch that can run in parallel.
     retval *= static_cast<UINT>(this->_stream.batch_count());
-
-    if (include_root) {
-        ++retval;
-    }
 
     return retval;
 }
@@ -93,8 +93,12 @@ trrojan::result trrojan::d3d12::ram_streaming_sphere_benchmark::on_run(
         const configuration& config,
         power_collector::pointer& power_collector,
         const std::vector<std::string>& changed) {
+    std::vector<gpu_timer::millis_type> batch_times, gpu_times;
     sphere_rendering_configuration cfg(config);
-    measurement_context mctx(device, 1, this->pipeline_depth()); // TODO: needs to know # of batches
+    const auto gpu_freq = gpu_timer::get_timestamp_frequency(
+        device.command_queue());
+    measurement_context mctx(device, 2, this->pipeline_depth());
+    stats_query::value_type pipeline_stats;
     auto shader_code = cfg.shader_id();
 
     // Clear data that cannot be used any more.
@@ -126,20 +130,15 @@ trrojan::result trrojan::d3d12::ram_streaming_sphere_benchmark::on_run(
     this->check_stream_changed(device, config, changed);
 
     // Now that we have reshaped the stream, we can cache the total number
-    // of batches we need to render for each frame and the index of the
-    // last one, which is potentially smaller and needs to transition the
-    // render target into present state. 'begin_index' and 'end_index' are
-    // the position of the command lists that start or end a frame.
+    // of batches we need to render for each frame.
     const auto total_batches = this->_stream.total_batches();
     const auto last_batch = total_batches - 1;
-    const auto begin_index = this->_stream.batch_count();
-    const auto end_index = begin_index + 1;
 
     // Get the number of descriptors we need for each batch. This information is
     // provided by the base class. Note that our implementation is overrridden
     // to yxield the total number of descriptors for all batches.
     const auto cnt_descs = sphere_benchmark_base::count_descriptor_tables(
-        shader_code, false);
+        shader_code, true);
 
     // Prepare the descriptor heaps required for the requested technique and
     // data set. Note that create_descriptor_heap will access the data
@@ -168,6 +167,9 @@ trrojan::result trrojan::d3d12::ram_streaming_sphere_benchmark::on_run(
     // Update constant buffers. These will not change for this run.
     this->update_constants(cfg, 0);
 
+#if true
+    // Prewarm rendering such that shaders are ready. This also computes the
+    // number of iterations for the wall clock measurements.
     log::instance().write_line(log_level::debug, "Prewarming ...");
     {
         auto prewarms = (std::max)(1u, cfg.min_prewarms());
@@ -183,17 +185,17 @@ trrojan::result trrojan::d3d12::ram_streaming_sphere_benchmark::on_run(
                     // which is used to address the source data, whereas 'b' is
                     // the position in the ring buffer on the GPU.
                     const auto b = this->_stream.next_batch();
-                    log::instance().write_line(log_level::debug,
-                        "Using batch {0} for {1} of {2}...", b, t,
-                        total_batches);
+                    //log::instance().write_line(log_level::debug,
+                    //    "Using batch {0} for {1} of {2}...", b, t,
+                    //    total_batches);
                     auto list = cmd_lists[b];
                     const auto first = (t == 0);
                     const auto last = (t == last_batch);
 
-                    // If this is the first batch, we need to enable and clear
-                    // the target for the frame.
+                    this->enable_target(list.get());
+
+                    // If this is the first batch, we need to clear the target.
                     if (first) {
-                        this->enable_target(list.get());
                         this->clear_target(list.get());
                     }
 
@@ -202,13 +204,11 @@ trrojan::result trrojan::d3d12::ram_streaming_sphere_benchmark::on_run(
                         device.d3d_device(),
                         shader_code,
                         0,
-                        b + cnt_descs,
+                        b * cnt_descs,
                         buffer,
                         b * this->_stream.batch_elements(),
                         spheres);
 
-                    auto xxx = this->_stream.offset(t);
-                    auto yyy = this->_stream.data(b);
                     ::memcpy(this->_stream.data(b),
                         this->_buffer.data() + this->_stream.offset(t),
                         this->_stream.batch_size(t));
@@ -236,16 +236,332 @@ trrojan::result trrojan::d3d12::ram_streaming_sphere_benchmark::on_run(
                     if (last) {
                         this->present_target();
                     }
-                }
+                } /* for (std::size_t t = 0; t < total_batches; ++t) */
             }
             device.wait_for_gpu();
             prewarms = mctx.check_cpu_iterations(cfg.min_wall_time(),
                 cfg.prewarm_precision());
         } while (prewarms > 0);
     }
+#endif
 
+#if true
+    // Do the wall clock measurements.
+    log::instance().write_line(log_level::debug, "Measuring wall clock "
+        "timings over {} iterations ...", mctx.cpu_iterations);
+    this->_stream.reset_stalls();
+    mctx.cpu_timer.start();
+    for (std::uint32_t i = 0; i < mctx.cpu_iterations; ++i) {
+        for (std::size_t t = 0; t < total_batches; ++t) {
+            // Within this loop, 't' is the global index of the batch,
+            // which is used to address the source data, whereas 'b' is
+            // the position in the ring buffer on the GPU.
+            const auto b = this->_stream.next_batch();
+            //log::instance().write_line(log_level::debug,
+            //    "Using batch {0} for {1} of {2}...", b, t,
+            //    total_batches);
+            auto list = cmd_lists[b];
+            const auto first = (t == 0);
+            const auto last = (t == last_batch);
 
-    return trrojan::result();
+            this->enable_target(list.get());
+
+            // If this is the first batch, we need to clear the target.
+            if (first) {
+                this->clear_target(list.get());
+            }
+
+            const auto spheres = this->_stream.batch_elements(t);
+            auto desc_tables = this->set_descriptors(
+                device.d3d_device(),
+                shader_code,
+                0,
+                b * cnt_descs,
+                buffer,
+                b * this->_stream.batch_elements(),
+                spheres);
+
+            ::memcpy(this->_stream.data(b),
+                this->_buffer.data() + this->_stream.offset(t),
+                this->_stream.batch_size(t));
+
+            list->SetGraphicsRootSignature(root_sig);
+            list->IASetPrimitiveTopology(topology);
+            this->set_descriptors(list.get(), desc_tables);
+            this->set_vertex_buffer(list.get(), shader_code, b);
+
+            const auto counts = get_draw_count(shader_code, spheres);
+            list->DrawInstanced(counts.first, counts.second, 0, 0);
+
+            device.close_and_execute_command_list(list.get());
+
+            // Schedule a signal after we have submitted the command
+            // list for batch 'b'.
+            this->_stream.signal_done(b, this->command_queue());
+
+            // Immediately reset the list for the next loop. It is OK to
+            // reset a command list once it has been submitted, which is
+            // in contrast to the underlying allocator.
+            list->Reset(this->_direct_cmd_allocators[b], pipeline);
+
+            // If this was the last batch, we need to swap the buffer.
+            if (last) {
+                this->present_target();
+            }
+        } /* for (std::size_t t = 0; t < total_batches; ++t) */
+    }
+    device.wait_for_gpu();
+    const auto cpu_time = mctx.cpu_timer.elapsed_millis();
+    const auto cnt_stalls = this->_stream.reset_stalls();
+#endif
+
+#if true
+    // Do the GPU counter measurements.
+    batch_times.reserve(total_batches * cfg.gpu_counter_iterations());
+    gpu_times.resize(cfg.gpu_counter_iterations());
+    for (std::uint32_t i = 0; i < cfg.gpu_counter_iterations(); ++i) {
+        log::instance().write_line(log_level::debug, "GPU counter measurement "
+            "#{}.", i);
+
+        gpu_timer::size_type timer_index = 0;
+        mctx.gpu_timer.start_frame();
+
+        for (std::size_t t = 0; t < total_batches; ++t) {
+            // Within this loop, 't' is the global index of the batch,
+            // which is used to address the source data, whereas 'b' is
+            // the position in the ring buffer on the GPU.
+            const auto b = this->_stream.next_batch();
+            //log::instance().write_line(log_level::debug,
+            //    "Using batch {0} for {1} of {2}...", b, t,
+            //    total_batches);
+            auto list = cmd_lists[b];
+            const auto first = (t == 0);
+            const auto last = (t == last_batch);
+
+            this->enable_target(list.get());
+
+            // If this is the first batch, we need to clear the target.
+            if (first) {
+                mctx.gpu_timer.start(list.get(), 0);
+                this->clear_target(list.get());
+            }
+
+            mctx.gpu_timer.start(list.get(), 1);
+
+            const auto spheres = this->_stream.batch_elements(t);
+            auto desc_tables = this->set_descriptors(
+                device.d3d_device(),
+                shader_code,
+                0,
+                b * cnt_descs,
+                buffer,
+                b * this->_stream.batch_elements(),
+                spheres);
+
+            ::memcpy(this->_stream.data(b),
+                this->_buffer.data() + this->_stream.offset(t),
+                this->_stream.batch_size(t));
+
+            list->SetGraphicsRootSignature(root_sig);
+            list->IASetPrimitiveTopology(topology);
+            this->set_descriptors(list.get(), desc_tables);
+            this->set_vertex_buffer(list.get(), shader_code, b);
+
+            const auto counts = get_draw_count(shader_code, spheres);
+            list->DrawInstanced(counts.first, counts.second, 0, 0);
+
+            mctx.gpu_timer.end(list.get(), 1);
+            if (last) {
+                mctx.gpu_timer.end(list.get(), 0);
+                timer_index = mctx.gpu_timer.end_frame(list.get());
+            }
+
+            device.close_and_execute_command_list(list.get());
+
+            // Schedule a signal after we have submitted the command
+            // list for batch 'b'.
+            this->_stream.signal_done(b, this->command_queue());
+
+            // Immediately reset the list for the next loop. It is OK to
+            // reset a command list once it has been submitted, which is
+            // in contrast to the underlying allocator.
+            list->Reset(this->_direct_cmd_allocators[b], pipeline);
+
+            // If this was the last batch, we need to swap the buffer.
+            if (last) {
+                this->present_target();
+            }
+        } /* for (std::size_t t = 0; t < total_batches; ++t) */
+
+        device.wait_for_gpu();
+        gpu_times[i] = gpu_timer::to_milliseconds(
+            mctx.gpu_timer.evaluate(timer_index, 0),
+            gpu_freq);
+        batch_times.push_back(gpu_timer::to_milliseconds(
+            mctx.gpu_timer.evaluate(timer_index, 1),
+            gpu_freq));
+    } /* for (std::uint32_t i = 0; i < cfg.gpu_counter_iterations(); ++i) */
+#endif
+
+#if true
+    // Obtain pipeline statistics.
+    log::instance().write_line(log_level::debug, "Collecting pipeline "
+        "statistics ...");
+    {
+        // Allocate queries for each batch, because we cannot span the queries
+        // over multiple command lists.
+        stats_query stats_query(device.d3d_device(),
+            this->_stream.total_batches(), 1);
+
+        stats_query::size_type stats_index = 0;
+        stats_query.begin_frame();
+
+        for (std::size_t t = 0; t < total_batches; ++t) {
+            // Within this loop, 't' is the global index of the batch,
+            // which is used to address the source data, whereas 'b' is
+            // the position in the ring buffer on the GPU.
+            const auto b = this->_stream.next_batch();
+            //log::instance().write_line(log_level::debug,
+            //    "Using batch {0} for {1} of {2}...", b, t,
+            //    total_batches);
+            auto list = cmd_lists[b];
+            const auto first = (t == 0);
+            const auto last = (t == last_batch);
+
+            this->enable_target(list.get());
+
+            // If this is the first batch, we need to clear the target.
+            if (first) {
+                this->clear_target(list.get());
+            }
+
+            const auto spheres = this->_stream.batch_elements(t);
+            auto desc_tables = this->set_descriptors(
+                device.d3d_device(),
+                shader_code,
+                0,
+                b * cnt_descs,
+                buffer,
+                b * this->_stream.batch_elements(),
+                spheres);
+
+            ::memcpy(this->_stream.data(b),
+                this->_buffer.data() + this->_stream.offset(t),
+                this->_stream.batch_size(t));
+
+            list->SetGraphicsRootSignature(root_sig);
+            list->IASetPrimitiveTopology(topology);
+            this->set_descriptors(list.get(), desc_tables);
+            this->set_vertex_buffer(list.get(), shader_code, b);
+
+            const auto counts = get_draw_count(shader_code, spheres);
+            stats_query.begin(list.get(), t);
+            list->DrawInstanced(counts.first, counts.second, 0, 0);
+            stats_query.end(list.get(), t);
+
+            if (last) {
+                stats_index = stats_query.end_frame(list.get());
+            }
+
+            device.close_and_execute_command_list(list.get());
+
+            // Schedule a signal after we have submitted the command
+            // list for batch 'b'.
+            this->_stream.signal_done(b, this->command_queue());
+
+            // Immediately reset the list for the next loop. It is OK to
+            // reset a command list once it has been submitted, which is
+            // in contrast to the underlying allocator.
+            list->Reset(this->_direct_cmd_allocators[b], pipeline);
+
+            // If this was the last batch, we need to swap the buffer.
+            if (last) {
+                this->present_target();
+            }
+        } /* for (std::size_t t = 0; t < total_batches; ++t) */
+
+        // Wait until the results are here.
+        device.wait_for_gpu();
+
+        // Accummulate all stats of all batches.
+        ::ZeroMemory(&pipeline_stats, sizeof(pipeline_stats));
+        for (std::size_t i = 0; i < total_batches; ++i) {
+            auto s = stats_query.evaluate(stats_index, i);
+            pipeline_stats.IAVertices = s.IAVertices;
+            pipeline_stats.IAPrimitives = s.IAPrimitives;
+            pipeline_stats.VSInvocations = s.VSInvocations;
+            pipeline_stats.GSInvocations = s.GSInvocations;
+            pipeline_stats.GSPrimitives = s.GSPrimitives;
+            pipeline_stats.CInvocations = s.CInvocations;
+            pipeline_stats.CPrimitives = s.CPrimitives;
+            pipeline_stats.PSInvocations = s.PSInvocations;
+            pipeline_stats.HSInvocations = s.HSInvocations;
+            pipeline_stats.DSInvocations = s.DSInvocations;
+            pipeline_stats.CSInvocations = s.CSInvocations;
+        }
+    }
+#endif
+
+    // Compute derived statistics for GPU counters.
+    const auto batch_median = calc_median(batch_times);
+    const auto gpu_median = calc_median(gpu_times);
+
+    // Prepare the result set.
+    auto retval = std::make_shared<basic_result>(config,
+        std::initializer_list<std::string> {
+            "particles",
+            "data_extents",
+            "ia_vertices",
+            "ia_primitives",
+            "vs_invokes",
+            "gs_invokes",
+            "gs_primitives",
+            "c_invokes",
+            "c_primitives",
+            "ps_invokes",
+            "hs_invokes",
+            "ds_invokes",
+            "cs_invokes",
+            "upload_stalls",
+            "batch_time_min",
+            "batch_time_med",
+            "batch_time_max",
+            "gpu_time_min",
+            "gpu_time_med",
+            "gpu_time_max",
+            "wall_time_iterations",
+            "wall_time",
+            "wall_time_avg"
+    });
+
+    // Output the results.
+    retval->add({
+        this->_data.spheres(),
+        this->_data.extents(),
+        pipeline_stats.IAVertices,
+        pipeline_stats.IAPrimitives,
+        pipeline_stats.VSInvocations,
+        pipeline_stats.GSInvocations,
+        pipeline_stats.GSPrimitives,
+        pipeline_stats.CInvocations,
+        pipeline_stats.CPrimitives,
+        pipeline_stats.PSInvocations,
+        pipeline_stats.HSInvocations,
+        pipeline_stats.DSInvocations,
+        pipeline_stats.CSInvocations,
+        cnt_stalls,
+        batch_times.front(),
+        batch_median,
+        batch_times.back(),
+        gpu_times.front(),
+        gpu_median,
+        gpu_times.back(),
+        mctx.cpu_iterations,
+        cpu_time,
+        static_cast<double>(cpu_time) / mctx.cpu_iterations
+    });
+
+    return retval;
 }
 
 
