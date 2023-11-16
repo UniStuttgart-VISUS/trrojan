@@ -330,7 +330,7 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
         mctx.cpu_iterations,
         cpu_time,
         static_cast<double>(cpu_time) / mctx.cpu_iterations
-        });
+    });
 
     return retval;
 }

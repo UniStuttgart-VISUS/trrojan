@@ -27,9 +27,9 @@ _SPHERE_BENCH_DEFINE_FACTOR(batch_size);
  * trrojan::d3d12::sphere_streaming_context::sphere_streaming_context
  */
 trrojan::d3d12::sphere_streaming_context::sphere_streaming_context(void)
-        : _batch_count(0), _batch_size(0), _data(nullptr),
+        : _batch_count(0), _batch_size(0), _cnt_stalls(0), _data(nullptr),
         _event(create_event(false, false)), _next_fence_value(0),
-        _ready_count(0), _stride(0), _total_spheres(0) { }
+        _ready_count(0), _stride(0), _total_spheres(0), _total_batches(0) { }
 
 
 /*
@@ -98,19 +98,30 @@ std::size_t trrojan::d3d12::sphere_streaming_context::next_batch(void) {
     assert(this->_event != nullptr);
     assert(this->_fence != nullptr);
     std::size_t completed = 0;
-    std::size_t retval = 0;
+    auto retval = (std::numeric_limits<std::size_t>::max)();
+
+    // Every batch up to this fence value is reusable.
+    auto finished_value = this->_fence->GetCompletedValue();
+    //log::instance().write_line(log_level::debug, "Fence is {0}.",
+    //    finished_value);
 
     // If all batches are currently in flight on the GPU, ie used for rendering,
     // we must wait for the GPU to finish to provide the caller with a batch
     // that can be used for upload.
     while (this->_ready_count < 1) {
+        ++this->_cnt_stalls;
+
         // Wait for the event to signal.
         wait_for_event(this->_event);
 
+        // The latest finished fence has hopefully changed.
+        finished_value = this->_fence->GetCompletedValue();
+        //log::instance().write_line(log_level::debug, "Waited for fence to "
+        //    "become {0}.", finished_value);
+
         // This loop performs two tasks: first, it finds a free slot that we can
         // return, and second, it counts how many free slots there are in total,
-        // which we need to update the '_in_flight' member.
-        const auto finished_value = this->_fence->GetCompletedValue();
+        // which we need to update the '_ready_count' member.
         this->_ready_count = 0;
         for (std::size_t i = 0; i < this->_fence_values.size(); ++i) {
             if (this->_fence_values[i] <= finished_value) {
@@ -124,10 +135,23 @@ std::size_t trrojan::d3d12::sphere_streaming_context::next_batch(void) {
     // setting the fence values.
     assert(this->_ready_count > 0);
 
+    // If we came here without waiting, we need to search for the return value,
+    // because we never came through the same loop above.
+    if (retval > this->_fence_values.size()) {
+        this->_ready_count = 0;
+        for (std::size_t i = 0; i < this->_fence_values.size(); ++i) {
+            if (this->_fence_values[i] <= finished_value) {
+                // We found a batch that has completed rendering.
+                ++this->_ready_count;
+                retval = i;
+            }
+        }
+    }
+
     // Make sure that we do not hand out the batch index again until the fence
     // was injected and passed in the command queue using signal_done().
     this->_fence_values[retval] = (std::numeric_limits<UINT64>::max)();
-    -- this->_ready_count;
+    --this->_ready_count;
 
     return retval;
 }

@@ -236,6 +236,17 @@ namespace d3d12 {
         void rebuild(ID3D12Device *device, const configuration& config);
 
         /// <summary>
+        /// Resets the stall counter in <see cref="next_batch" /> and returns
+        /// the value accumulated until now.
+        /// </summary>
+        /// <returns></returns>
+        inline std::size_t reset_stalls(void) noexcept {
+            auto retval = this->_cnt_stalls;
+            this->_cnt_stalls = 0;
+            return retval;
+        }
+
+        /// <summary>
         /// Inform the context that the size of the data set has changed.
         /// </summary>
         /// <remarks>
@@ -300,6 +311,7 @@ namespace d3d12 {
         std::size_t _batch_count;
         std::size_t _batch_size;
         winrt::com_ptr<ID3D12Resource> _buffer;
+        std::size_t _cnt_stalls;
         void *_data;
         handle<> _event;
         winrt::com_ptr<ID3D12Fence> _fence;

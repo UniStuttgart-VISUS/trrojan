@@ -44,7 +44,6 @@ trrojan::d3d12::uwp_debug_render_target::~uwp_debug_render_target(void) {
 UINT trrojan::d3d12::uwp_debug_render_target::present(void) {
     assert(this->swap_chain_ != nullptr);
 
-
 #if defined(CREATE_D2D_OVERLAY)
     if (this->d2d_overlay_) {
         std::string log;

@@ -11,6 +11,8 @@
 
 #include <mmpld.h>
 
+#include <winrt/base.h>
+
 #include "trrojan/camera.h"
 #include "trrojan/random_sphere_generator.h"
 
@@ -120,6 +122,18 @@ namespace d3d12 {
         inline const std::array<float, 4>& colour(void) const noexcept {
             return this->_colour;
         }
+
+        /// <summary>
+        /// Copies the frame identified by the given configuration into the
+        /// specified file, overwriting all content.
+        /// </summary>
+        /// <param name="path"></param>
+        /// <param name="shader_code"></param>
+        /// <param name="config"></param>
+        /// <returns></returns>
+        winrt::file_handle copy_to(const std::string& path,
+            const shader_id_type shader_code,
+            const sphere_rendering_configuration& config);
 
         /// <summary>
         /// Answer the buffer holding the read-only data.

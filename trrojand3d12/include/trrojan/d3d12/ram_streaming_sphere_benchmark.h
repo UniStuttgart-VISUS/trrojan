@@ -39,7 +39,7 @@ namespace d3d12 {
         /// <param name"changed">The names of the factors that have changed,
         /// which removes the need for the method to check this by itself.
         /// </param>
-        void check_stream_changed(d3d12::device& device,
+        bool check_stream_changed(d3d12::device& device,
             const configuration& config,
             const std::vector<std::string>& changed);
 

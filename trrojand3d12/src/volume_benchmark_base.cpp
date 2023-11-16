@@ -241,7 +241,9 @@ trrojan::d3d12::volume_benchmark_base::load_xfer_func(
     auto src_loc = get_copy_location(out_staging);
     assert(src_loc.PlacedFootprint.Footprint.Format == DXGI_FORMAT_UNKNOWN);
     src_loc.PlacedFootprint.Footprint.Format = format;
-    src_loc.PlacedFootprint.Footprint.Width /= 4;
+    assert(src_loc.PlacedFootprint.Footprint.Width > data.size());
+    src_loc.PlacedFootprint.Footprint.Width
+        = static_cast<UINT>(data.size() / 4);
     auto dst_loc = get_copy_location(retval);
 
     cmd_list->CopyTextureRegion(&dst_loc, 0, 0, 0, &src_loc, nullptr);
