@@ -146,8 +146,9 @@ void trrojan::d3d12::render_target_base::disable(
  */
 void trrojan::d3d12::render_target_base::enable(
         ID3D12GraphicsCommandList *cmd_list,
-        const D3D12_RESOURCE_STATES render_state) {
-    this->enable(cmd_list, this->_buffer_index, render_state);
+        const D3D12_RESOURCE_STATES render_state,
+        const bool transition) {
+    this->enable(cmd_list, this->_buffer_index, render_state, transition);
 }
 
 
@@ -157,7 +158,8 @@ void trrojan::d3d12::render_target_base::enable(
 void trrojan::d3d12::render_target_base::enable(
         ID3D12GraphicsCommandList *cmd_list,
         const UINT frame,
-        const D3D12_RESOURCE_STATES render_state) {
+        const D3D12_RESOURCE_STATES render_state,
+        const bool transition) {
     assert(cmd_list != nullptr);
     assert(frame < this->_buffers.size());
     //log::instance().write_line(log_level::debug, "Queueing render target "
@@ -181,8 +183,10 @@ void trrojan::d3d12::render_target_base::enable(
         cmd_list->RSSetScissorRects(1, &rect);
     }
 
-    transition_subresource(cmd_list, this->_buffers[frame], 0,
-        D3D12_RESOURCE_STATE_PRESENT, render_state);
+    if (transition) {
+        transition_subresource(cmd_list, this->_buffers[frame], 0,
+            D3D12_RESOURCE_STATE_PRESENT, render_state);
+    }
 
     {
         auto hDsv = this->dsv_handle(frame);

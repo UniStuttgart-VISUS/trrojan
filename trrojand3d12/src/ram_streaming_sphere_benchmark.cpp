@@ -104,7 +104,7 @@ trrojan::result trrojan::d3d12::ram_streaming_sphere_benchmark::on_run(
     // Clear data that cannot be used any more.
     this->clear_stale_data(changed);
 
-    // Load the data if necessary. Note that we redirect the data loaded into
+    // Load the data if necessary. Note that we redi rect the data loaded into
     // '_buffer' rather than letting '_data' upload it directly to the GPU.
     if (!this->_data) {
         log::instance().write_line(log_level::information, "Loading data set \""
@@ -192,7 +192,9 @@ trrojan::result trrojan::d3d12::ram_streaming_sphere_benchmark::on_run(
                     const auto first = (t == 0);
                     const auto last = (t == last_batch);
 
-                    this->enable_target(list.get());
+                    // Set the render target, and if this is the first batch,
+                    // transition it as well.
+                    this->enable_target(list.get(), first);
 
                     // If this is the first batch, we need to clear the target.
                     if (first) {

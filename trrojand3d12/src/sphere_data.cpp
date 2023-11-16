@@ -1,10 +1,12 @@
-// <copyright file="sphere_data.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2022 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+ï»¿// <copyright file="sphere_data.cpp" company="Visualisierungsinstitut der UniversitÃ¤t Stuttgart">
+// Copyright Â© 2022 - 2023 Visualisierungsinstitut der UniversitÃ¤t Stuttgart. Alle Rechte vorbehalten.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
-// <author>Christoph Müller</author>
+// <author>Christoph MÃ¼ller</author>
 
 #include "trrojan/d3d12/sphere_data.h"
+
+#include <Windows.h>
 
 #include <fstream>
 
@@ -147,6 +149,9 @@ void trrojan::d3d12::sphere_data::clear(void) {
 winrt::file_handle trrojan::d3d12::sphere_data::copy_to(const std::string& path,
         const shader_id_type shader_code,
         const sphere_rendering_configuration& config) {
+#if defined(TRROJAN_FOR_UWP)
+    throw ATL::CAtlException(E_NOTIMPL);
+#else /* defined(TRROJAN_FOR_UWP */
     winrt::file_handle retval(::CreateFileA(path.c_str(),
         GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ, nullptr, CREATE_ALWAYS,
         FILE_ATTRIBUTE_NORMAL, NULL));
@@ -154,14 +159,22 @@ winrt::file_handle trrojan::d3d12::sphere_data::copy_to(const std::string& path,
         throw ATL::CAtlException(HRESULT_FROM_WIN32(::GetLastError()));
     }
 
+    // The file mapping, which must outlive the load callback as the copy
+    // happens afterwards. Once load() returns, we can end the mapping.
+    winrt::handle mapping;
+
     this->load([&](const UINT64 size) {
-        //this->_buffer.resize(size);
-        //return this->_buffer.data();
-        return nullptr;
+        mapping.attach(::CreateFileMappingA(retval.get(), nullptr,
+            PAGE_READWRITE, 0, static_cast<DWORD>(size), nullptr));
+        if (!retval) {
+            throw ATL::CAtlException(HRESULT_FROM_WIN32(::GetLastError()));
+        }
+
+        return ::MapViewOfFile(mapping.get(), FILE_MAP_WRITE, 0, 0, size);
     }, shader_code, config);
 
-
     return retval;
+#endif /* defined(TRROJAN_FOR_UWP */
 }
 
 

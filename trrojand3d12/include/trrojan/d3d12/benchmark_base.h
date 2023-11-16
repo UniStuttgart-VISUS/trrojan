@@ -41,6 +41,13 @@ namespace d3d12 {
         typedef trrojan::graphics_benchmark_base::viewport_type viewport_type;
 
         /// <summary>
+        /// The default render target state, which might need to be overridden
+        /// when using compute shaders.
+        /// </summary>
+        static constexpr auto dft_render_state
+            = D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_RENDER_TARGET;
+
+        /// <summary>
         /// Boolean factor enabling the debug view.
         /// </summary>
         static const std::string factor_debug_view;
@@ -325,8 +332,7 @@ namespace d3d12 {
         /// list.
         /// </summary>
         inline void disable_target(ID3D12GraphicsCommandList *cmd_list,
-                const D3D12_RESOURCE_STATES render_state
-                = D3D12_RESOURCE_STATE_RENDER_TARGET) {
+                const D3D12_RESOURCE_STATES render_state = dft_render_state) {
             assert(this->_render_target != nullptr);
             assert(cmd_list != nullptr);
             this->_render_target->disable(cmd_list, render_state);
@@ -337,8 +343,8 @@ namespace d3d12 {
         /// list.
         /// </summary>
         inline void disable_target(ID3D12GraphicsCommandList *cmd_list,
-                const UINT frame, const D3D12_RESOURCE_STATES render_state
-                = D3D12_RESOURCE_STATE_RENDER_TARGET) {
+                const UINT frame,
+                const D3D12_RESOURCE_STATES render_state = dft_render_state) {
             assert(this->_render_target != nullptr);
             assert(cmd_list != nullptr);
             this->_render_target->disable(cmd_list, frame, render_state);
@@ -354,11 +360,11 @@ namespace d3d12 {
         /// scissor rectangle to include the whole viewport.
         /// </remarks>
         inline void enable_target(ID3D12GraphicsCommandList *cmd_list,
-                const D3D12_RESOURCE_STATES render_state
-                = D3D12_RESOURCE_STATE_RENDER_TARGET) {
+                const D3D12_RESOURCE_STATES render_state = dft_render_state,
+                const bool transition = true) {
             assert(this->_render_target != nullptr);
             assert(cmd_list != nullptr);
-            this->_render_target->enable(cmd_list, render_state);
+            this->_render_target->enable(cmd_list, render_state, transition);
         }
 
         /// <summary>
@@ -371,11 +377,13 @@ namespace d3d12 {
         /// the draw calls do not change over time.
         /// </remarks>
         inline void enable_target(ID3D12GraphicsCommandList *cmd_list,
-                const UINT frame, const D3D12_RESOURCE_STATES render_state
-                = D3D12_RESOURCE_STATE_RENDER_TARGET) {
+                const UINT frame,
+                const D3D12_RESOURCE_STATES render_state = dft_render_state,
+                const bool transition = true) {
             assert(this->_render_target != nullptr);
             assert(cmd_list != nullptr);
-            this->_render_target->enable(cmd_list, frame, render_state);
+            this->_render_target->enable(cmd_list, frame, render_state,
+                transition);
         }
 
         /// <summary>

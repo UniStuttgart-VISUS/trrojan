@@ -192,8 +192,11 @@ namespace d3d12 {
         /// typically is <see cref="D3D12_RESOURCE_STATE_RENDER_TARGET" "/>, but
         /// also could be <see cref="D3D12_RESOURCE_STATE_COPY_DEST" /> if
         /// rendering happened to a different buffer.</param>
+        /// <param name="transition">If <c>false</c>, do not transition the
+        /// underlying resource. This parameter defaults to <c>true</c>.</param>
         void enable(ID3D12GraphicsCommandList *cmdList,
-            const D3D12_RESOURCE_STATES render_state);
+            const D3D12_RESOURCE_STATES render_state,
+            const bool transition = true);
 
         /// <summary>
         /// Queues the specified buffer/frame of the render target being enabled
@@ -211,8 +214,11 @@ namespace d3d12 {
         /// typically is <see cref="D3D12_RESOURCE_STATE_RENDER_TARGET" "/>, but
         /// also could be <see cref="D3D12_RESOURCE_STATE_COPY_DEST" /> if
         /// rendering happened to a different buffer.</param>
+        /// <param name="no_transition">If <c>false</c>, do not transition the
+        /// underlying resource. This parameter defaults to <c>true</c>.</param>
         void enable(ID3D12GraphicsCommandList *cmdList, const UINT frame,
-            const D3D12_RESOURCE_STATES render_state);
+            const D3D12_RESOURCE_STATES render_state,
+            const bool transition = true);
 
         /// <summary>
         /// Answer the number of buffers used by the render target.

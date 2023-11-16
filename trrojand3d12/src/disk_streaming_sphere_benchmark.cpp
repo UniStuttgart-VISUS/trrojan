@@ -109,14 +109,9 @@ trrojan::result trrojan::d3d12::disk_streaming_sphere_benchmark::on_run(
     // Load the data if necessary. Note that we redirect the data loaded into
     // '_buffer' rather than letting '_data' upload it directly to the GPU.
     if (!this->_data) {
-        log::instance().write_line(log_level::information, "Loading data set \""
-            "{}\" into memory ...", cfg.data_set());
-        this->_data.load([this](const UINT64 size) {
-            //this->_buffer.resize(size);
-            //return this->_buffer.data();
-            return nullptr;
-        }, shader_code, cfg);
-
+        log::instance().write_line(log_level::information, "Copying raw data \""
+            "{0}\" to \"{1}\" ...", cfg.data_set(), file_path);
+        this->_data.copy_to(file_path, shader_code, cfg);
         log::instance().write_line(log_level::debug, "Reshaping GPU "
             "stream ...");
         this->_stream.reshape(this->_data);
