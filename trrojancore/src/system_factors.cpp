@@ -127,6 +127,7 @@ const std::string trrojan::system_factors::factor_##n                          \
 __TRROJAN_DEFINE_FACTOR(bios);
 __TRROJAN_DEFINE_FACTOR(computer_name);
 __TRROJAN_DEFINE_FACTOR(cpu);
+__TRROJAN_DEFINE_FACTOR(debug_build);
 __TRROJAN_DEFINE_FACTOR(gaming_device);
 __TRROJAN_DEFINE_FACTOR(installed_memory);
 __TRROJAN_DEFINE_FACTOR(logical_cores);
@@ -306,6 +307,18 @@ trrojan::variant trrojan::system_factors::cpu(void) const {
         return variant(value.str());
     }
 #endif /* defined(TRROJAN_FOR_UWP) */
+}
+
+
+/*
+ * trrojan::system_factors::debug_build
+ */
+trrojan::variant trrojan::system_factors::debug_build(void) const {
+#if (defined(DEBUG) || defined(_DEBUG))
+    return true;
+#else /* (defined(DEBUG) || defined(_DEBUG)) */
+    return false;
+#endif /* (defined(DEBUG) || defined(_DEBUG)) */
 }
 
 

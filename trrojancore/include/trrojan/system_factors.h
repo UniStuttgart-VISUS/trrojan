@@ -66,6 +66,12 @@ namespace trrojan {
         static const std::string factor_cpu;
 
         /// <summary>
+        /// Name of the factor that indicates whether TRRojan was running as a
+        /// debug build.
+        /// </summary>
+        static const std::string factor_debug_build;
+
+        /// <summary>
         /// Gets the version of the XBox console provided the application is
         /// running on Xbox.
         /// </summary>
@@ -141,6 +147,8 @@ namespace trrojan {
         variant computer_name(void) const;
 
         variant cpu(void) const;
+
+        variant debug_build(void) const;
 
         variant gaming_device(void) const;
 
