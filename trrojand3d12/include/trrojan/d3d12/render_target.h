@@ -241,7 +241,7 @@ namespace d3d12 {
         /// switch to the buffer index reported by the swap chain.</para>
         /// </remarks>
         /// <returns>The buffer index of the next frame.</returns>
-        virtual UINT present(void);
+        virtual UINT present(const unsigned int sync_interval);
 
         /// <summary>
         /// Resizes the swap chain of the render target to the given dimension.

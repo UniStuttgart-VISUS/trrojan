@@ -46,12 +46,7 @@ namespace d3d11 {
         virtual ~uwp_debug_render_target(void);
 
         /// <inheritdoc />
-        virtual void present(void);
-
-        virtual void present(const UINT sync_interval) {
-            // TODO: massive hack.
-            this->present();
-        }
+        virtual void present(const UINT sync_interval = 1);
 
         /// <inheritdoc />
         virtual void resize(const unsigned int width,

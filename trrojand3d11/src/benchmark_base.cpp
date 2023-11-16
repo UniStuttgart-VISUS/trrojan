@@ -158,6 +158,8 @@ trrojan::d3d11::benchmark_base::benchmark_base(const std::string& name)
         factor_debug_view, false));
     this->_default_configs.add_factor(factor::from_manifestations(
         factor_save_view, false));
+    this->_default_configs.add_factor(factor::from_manifestations(
+        factor_sync_interval, static_cast<unsigned int>(0)));
 
     {
         auto dftViewport = std::array<unsigned int, 2> { 1024, 1024 };

@@ -57,6 +57,11 @@ namespace d3d12 {
         /// </summary>
         static const std::string factor_save_view;
 
+        /// <summary>
+        /// Integral factor to disable vsync or synchronise on the Nth vblank.
+        /// </summary>
+        static const std::string factor_sync_interval;
+
         virtual ~benchmark_base(void);
 
         virtual bool can_run(trrojan::environment env,
@@ -446,17 +451,34 @@ namespace d3d12 {
             ID3D12PipelineState *initial_state = nullptr) const;
 
         /// <summary>
-        /// Swap the presentation buffer and answer the next one to write to.
+        /// Present the target on the given synchronisation interval.
         /// </summary>
+        /// <param name="sync_interval"></param>
         /// <remarks>
         /// The render target will block the calling thread if the previous
         /// rendering on the new buffer index (the one being returned) has not
         /// yet completed.
         /// </remarks>
         /// <returns>The index of the next buffer/frame to write to.</returns>
-        inline UINT present_target(void) {
+        inline UINT present_target(const UINT sync_interval) {
             assert(this->_render_target != nullptr);
-            return this->_render_target->present();
+            return this->_render_target->present(sync_interval);
+        }
+
+        /// <summary>
+        /// Present the target on the synchronisation interval specified in the
+        /// given configuration.
+        /// </summary>
+        /// <param name="config"></param>
+        /// <remarks>
+        /// The render target will block the calling thread if the previous
+        /// rendering on the new buffer index (the one being returned) has not
+        /// yet completed.
+        /// </remarks>
+        /// <returns>The index of the next buffer/frame to write to.</returns>
+        inline UINT present_target(const configuration& config) {
+            return this->present_target(config.get<unsigned int>(
+                factor_sync_interval));
         }
 
         void save_target(const char *path = nullptr);

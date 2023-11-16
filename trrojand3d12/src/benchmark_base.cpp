@@ -29,6 +29,7 @@ const std::string trrojan::d3d12::benchmark_base::factor_##f(#f)
 
 _D3D_BENCH_DEFINE_FACTOR(debug_view);
 _D3D_BENCH_DEFINE_FACTOR(save_view);
+_D3D_BENCH_DEFINE_FACTOR(sync_interval);
 
 #undef _D3D_BENCH_DEFINE_FACTOR
 
@@ -264,6 +265,8 @@ trrojan::d3d12::benchmark_base::benchmark_base(const std::string& name)
         factor_debug_view, false));
     this->_default_configs.add_factor(factor::from_manifestations(
         factor_save_view, false));
+    this->_default_configs.add_factor(factor::from_manifestations(
+        factor_sync_interval, static_cast<unsigned int>(0)));
 
     {
         auto dftViewport = std::array<unsigned int, 2> { 1024, 1024 };

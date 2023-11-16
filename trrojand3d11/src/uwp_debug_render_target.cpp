@@ -48,7 +48,8 @@ trrojan::d3d11::uwp_debug_render_target::~uwp_debug_render_target(void) {
 /*
  * trrojan::d3d11::uwp_debug_render_target::present
  */
-void trrojan::d3d11::uwp_debug_render_target::present(void) {
+void trrojan::d3d11::uwp_debug_render_target::present(
+        const UINT sync_interval) {
     if (this->_uav != nullptr) {
         assert(this->swapChain != nullptr);
         ATL::CComPtr<ID3D11Texture2D> dst;
@@ -97,7 +98,7 @@ void trrojan::d3d11::uwp_debug_render_target::present(void) {
     //m_window.get().Dispatcher().ProcessEvents(winrt::Windows::UI::Core::CoreProcessEventsOption::ProcessAllIfPresent);
 
     if (this->swapChain != nullptr) {
-        this->swapChain->Present(1, 0);
+        this->swapChain->Present(sync_interval, 0);
     }
 
 }

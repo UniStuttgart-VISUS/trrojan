@@ -338,8 +338,6 @@ trrojan::d3d11::volume_benchmark_base::volume_benchmark_base(
         factor_min_wall_time, static_cast<unsigned int>(1000)));
     this->_default_configs.add_factor(factor::from_manifestations(
         factor_prewarm_precision, 1.0f));
-    this->_default_configs.add_factor(factor::from_manifestations(
-        factor_sync_interval, static_cast<unsigned int>(0)));
 
     this->add_default_manoeuvre();
 }

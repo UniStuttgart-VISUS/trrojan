@@ -233,7 +233,7 @@ trrojan::result trrojan::d3d12::disk_streaming_sphere_benchmark::on_run(
  
                     // If this was the last batch, we need to swap the buffer.
                     if (last) {
-                        this->present_target();
+                        this->present_target(config);
                     }
                 } /* for (std::size_t t = 0; t < total_batches; ++t) */
             }
@@ -305,7 +305,7 @@ trrojan::result trrojan::d3d12::disk_streaming_sphere_benchmark::on_run(
 
             // If this was the last batch, we need to swap the buffer.
             if (last) {
-                this->present_target();
+                this->present_target(config);
             }
         } /* for (std::size_t t = 0; t < total_batches; ++t) */
     }
@@ -388,7 +388,7 @@ trrojan::result trrojan::d3d12::disk_streaming_sphere_benchmark::on_run(
 
             // If this was the last batch, we need to swap the buffer.
             if (last) {
-                this->present_target();
+                this->present_target(config);
             }
         } /* for (std::size_t t = 0; t < total_batches; ++t) */
 
@@ -475,7 +475,7 @@ trrojan::result trrojan::d3d12::disk_streaming_sphere_benchmark::on_run(
 
             // If this was the last batch, we need to swap the buffer.
             if (last) {
-                this->present_target();
+                this->present_target(config);
             }
         } /* for (std::size_t t = 0; t < total_batches; ++t) */
 

@@ -46,10 +46,11 @@ trrojan::d3d12::debug_render_target::~debug_render_target(void) {
 /*
  * trrojan::d3d12::debug_render_target::present
  */
-UINT trrojan::d3d12::debug_render_target::present(void) {
+UINT trrojan::d3d12::debug_render_target::present(
+        const unsigned int sync_interval) {
     assert(this->_swap_chain != nullptr);
     // Swap the buffers.
-    this->_swap_chain->Present(0, 0);
+    this->_swap_chain->Present(sync_interval, 0);
 
     // Switch to the next buffer used by the swap chain.
     auto retval = this->_swap_chain->GetCurrentBackBufferIndex();

@@ -41,7 +41,8 @@ trrojan::d3d12::uwp_debug_render_target::~uwp_debug_render_target(void) {
 /*
  * trrojan::d3d12::uwp_debug_render_target::present
  */
-UINT trrojan::d3d12::uwp_debug_render_target::present(void) {
+UINT trrojan::d3d12::uwp_debug_render_target::present(
+        const unsigned int sync_interval) {
     assert(this->swap_chain_ != nullptr);
 
 #if defined(CREATE_D2D_OVERLAY)
@@ -66,7 +67,7 @@ UINT trrojan::d3d12::uwp_debug_render_target::present(void) {
     //window_.get().Dispatcher().ProcessEvents(winrt::Windows::UI::Core::CoreProcessEventsOption::ProcessAllIfPresent);
 
     // Swap the buffers.
-    this->swap_chain_->Present(1, 0);
+    this->swap_chain_->Present(sync_interval, 0);
 
     // Switch to the next buffer used by the swap chain.
     auto retval = this->swap_chain_->GetCurrentBackBufferIndex();

@@ -170,7 +170,7 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
                     ++mctx.cpu_iterations) {
                 auto cmd_list = cmd_lists[this->buffer_index()];
                 device.execute_command_list(cmd_list);
-                this->present_target();
+                this->present_target(config);
             }
             device.wait_for_gpu();
 
@@ -188,7 +188,7 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
     for (std::uint32_t i = 0; i < mctx.cpu_iterations; ++i) {
         auto cmd_list = cmd_lists[this->buffer_index()];
         device.execute_command_list(cmd_list);
-        this->present_target();
+        this->present_target(config);
     }
     device.wait_for_gpu();
     const auto cpu_time = mctx.cpu_timer.elapsed_millis();
@@ -226,7 +226,7 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
         const auto timer_index = mctx.gpu_timer.end_frame(cmd_list);
 
         device.close_and_execute_command_list(cmd_list);
-        this->present_target();
+        this->present_target(config);
 
         device.wait_for_gpu();
         gpu_times[i] = gpu_timer::to_milliseconds(
@@ -265,7 +265,7 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
         const auto stats_index = stats_query.end_frame(cmd_list);
 
         device.close_and_execute_command_list(cmd_list);
-        this->present_target();
+        this->present_target(config);
 
         // Wait until the results are here.
         device.wait_for_gpu();

@@ -113,8 +113,6 @@ trrojan::d3d11::sphere_benchmark::sphere_benchmark(void)
         factor_vs_raygen, false));
     this->_default_configs.add_factor(factor::from_manifestations(
         factor_vs_xfer_function, false));
-    this->_default_configs.add_factor(factor::from_manifestations(
-        factor_sync_interval, static_cast<unsigned int>(0)));
 
     this->add_default_manoeuvre();
 

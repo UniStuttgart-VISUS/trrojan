@@ -89,7 +89,7 @@ trrojan::result trrojan::d3d12::empty_benchmark::on_run(d3d12::device& device,
 
         auto result_index = gpu_timer.end_frame(cmd_list);
         device.close_and_execute_command_list(cmd_list);
-        this->present_target();
+        this->present_target(config);
 
         gpu_times[i] = gpu_timer::to_milliseconds(
             gpu_timer.evaluate(result_index, 0),
@@ -116,7 +116,7 @@ trrojan::result trrojan::d3d12::empty_benchmark::on_run(d3d12::device& device,
 
     for (std::uint32_t i = 0; i < cpu_iterations; ++i) {
         device.execute_command_list(cmd_lists[this->buffer_index()]);
-        this->present_target();
+        this->present_target(config);
     }
 
     const auto cpu_time = cpu_timer.elapsed_millis();
