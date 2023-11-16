@@ -91,7 +91,6 @@ namespace d3d12 {
         static const char *factor_min_prewarms;
         static const char *factor_min_wall_time;
         static const char *factor_poly_corners;
-        static const char *factor_prewarm_precision;
         static const char *factor_vs_raygen;
         static const char *factor_vs_xfer_function;
 
@@ -229,14 +228,6 @@ namespace d3d12 {
         }
 
         /// <summary>
-        /// Answer the precision for the prediction of the CPU passes based on
-        /// the prewarming.
-        /// </summary>
-        inline float prewarm_precision(void) const noexcept {
-            return this->_prewarm_precision;
-        }
-
-        /// <summary>
         /// Compute the shader ID for this configuration.
         /// </summary>
         /// <remarks>
@@ -282,7 +273,6 @@ namespace d3d12 {
         unsigned int _min_prewarms;
         unsigned int _min_wall_time;
         unsigned int _poly_corners;
-        float _prewarm_precision;
         bool _vs_raygen;
         bool _vs_xfer_function;
 

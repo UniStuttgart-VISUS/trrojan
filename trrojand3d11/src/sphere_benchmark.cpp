@@ -55,7 +55,6 @@ _SPHERE_BENCH_DEFINE_FACTOR(method);
 _SPHERE_BENCH_DEFINE_FACTOR(min_prewarms);
 _SPHERE_BENCH_DEFINE_FACTOR(min_wall_time);
 _SPHERE_BENCH_DEFINE_FACTOR(poly_corners);
-_SPHERE_BENCH_DEFINE_FACTOR(prewarm_precision);
 _SPHERE_BENCH_DEFINE_FACTOR(vs_raygen);
 _SPHERE_BENCH_DEFINE_FACTOR(vs_xfer_function);
 
@@ -107,8 +106,6 @@ trrojan::d3d11::sphere_benchmark::sphere_benchmark(void)
         factor_min_wall_time, static_cast<unsigned int>(1000)));
     this->_default_configs.add_factor(factor::from_manifestations(
         factor_poly_corners, 4u));
-    this->_default_configs.add_factor(factor::from_manifestations(
-        factor_prewarm_precision, 1.0f));
     this->_default_configs.add_factor(factor::from_manifestations(
         factor_vs_raygen, false));
     this->_default_configs.add_factor(factor::from_manifestations(
@@ -476,14 +473,13 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
        auto batchTime = 0.0;
        auto cntPrewarms = (std::max)(1u,
            config.get<std::uint32_t>(factor_min_prewarms));
-       const auto precision = config.get<float>(factor_prewarm_precision);
 
         do {
-            cntCpuIterations = 0;
             assert(cntPrewarms >= 1);
 
             cpuTimer.start();
-            for (; cntCpuIterations < cntPrewarms; ++cntCpuIterations) {
+            for (cntCpuIterations = 0; cntCpuIterations < cntPrewarms;
+                    ++cntCpuIterations) {
                 this->clear_target();
                 if (isInstanced) {
                     ctx->DrawInstanced(cntPrimitives, cntInstances, 0, 0);
@@ -503,8 +499,13 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
             batchTime = cpuTimer.elapsed_millis();
 
             cntPrewarms = trrojan::estimate_iterations(minWallTime, batchTime,
-                cntCpuIterations, precision);
-        } while (cntPrewarms > 0);
+                cntCpuIterations);
+            //log::instance().write_line(log_level::debug, "Performing {0} "
+            //    "additional prewarm loops after {1} iterations took {2}.",
+            //    cntPrewarms, cntCpuIterations, batchTime);
+        } while (cntPrewarms > cntCpuIterations);
+
+        cntCpuIterations = cntPrewarms;
     }
 
     // Do the GPU counter measurements

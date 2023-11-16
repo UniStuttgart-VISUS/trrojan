@@ -29,7 +29,6 @@ _VOLUME_BENCH_DEFINE_FACTOR(gpu_counter_iterations);
 _VOLUME_BENCH_DEFINE_FACTOR(max_steps);
 _VOLUME_BENCH_DEFINE_FACTOR(min_prewarms);
 _VOLUME_BENCH_DEFINE_FACTOR(min_wall_time);
-_VOLUME_BENCH_DEFINE_FACTOR(prewarm_precision);
 _VOLUME_BENCH_DEFINE_FACTOR(step_size);
 _VOLUME_BENCH_DEFINE_FACTOR(xfer_func);
 
@@ -330,8 +329,6 @@ trrojan::d3d12::volume_benchmark_base::volume_benchmark_base(
         factor_min_prewarms, static_cast<unsigned int>(4)));
     this->_default_configs.add_factor(factor::from_manifestations(
         factor_min_wall_time, static_cast<unsigned int>(1000)));
-    this->_default_configs.add_factor(factor::from_manifestations(
-        factor_prewarm_precision, 1.0f));
 
     this->add_default_manoeuvre();
 }

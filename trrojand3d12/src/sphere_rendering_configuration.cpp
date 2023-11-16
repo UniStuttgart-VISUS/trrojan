@@ -32,7 +32,6 @@ _SPHERE_BENCH_DEFINE_FACTOR(method);
 _SPHERE_BENCH_DEFINE_FACTOR(min_prewarms);
 _SPHERE_BENCH_DEFINE_FACTOR(min_wall_time);
 _SPHERE_BENCH_DEFINE_FACTOR(poly_corners);
-_SPHERE_BENCH_DEFINE_FACTOR(prewarm_precision);
 _SPHERE_BENCH_DEFINE_FACTOR(vs_raygen);
 _SPHERE_BENCH_DEFINE_FACTOR(vs_xfer_function);
 
@@ -98,7 +97,6 @@ trrojan::d3d12::sphere_rendering_configuration::sphere_rendering_configuration(
         _SPHERE_BENCH_INIT_FACTOR(min_prewarms),
         _SPHERE_BENCH_INIT_FACTOR(min_wall_time),
         _SPHERE_BENCH_INIT_FACTOR(poly_corners),
-        _SPHERE_BENCH_INIT_FACTOR(prewarm_precision),
         _SPHERE_BENCH_INIT_FACTOR(vs_raygen),
         _SPHERE_BENCH_INIT_FACTOR(vs_xfer_function) {
     try {
@@ -108,13 +106,6 @@ trrojan::d3d12::sphere_rendering_configuration::sphere_rendering_configuration(
             this->_data_set = combine_path(f, this->_data_set);
         }
     } catch (...) { /* This is not fatal (data folder has wrong type). */ }
-
-    // Clamp prewarm precision request to [0, 1].
-    if (this->_prewarm_precision < 0.0f) {
-        this->_prewarm_precision = 0.0f;
-    } else if (this->_prewarm_precision > 1.0f) {
-        this->_prewarm_precision = 1.0f;
-    }
 }
 
 #undef _SPHERE_BENCH_INIT_FACTOR

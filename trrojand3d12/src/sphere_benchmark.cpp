@@ -174,8 +174,7 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
             }
             device.wait_for_gpu();
 
-            prewarms = mctx.check_cpu_iterations(cfg.min_wall_time(),
-                cfg.prewarm_precision());
+            prewarms = mctx.check_cpu_iterations(cfg.min_wall_time());
         } while (prewarms > 0);
     }
 #endif

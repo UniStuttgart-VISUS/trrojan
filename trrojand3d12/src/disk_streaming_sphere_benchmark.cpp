@@ -238,8 +238,7 @@ trrojan::result trrojan::d3d12::disk_streaming_sphere_benchmark::on_run(
                 } /* for (std::size_t t = 0; t < total_batches; ++t) */
             }
             device.wait_for_gpu();
-            prewarms = mctx.check_cpu_iterations(cfg.min_wall_time(),
-                cfg.prewarm_precision());
+            prewarms = mctx.check_cpu_iterations(cfg.min_wall_time());
         } while (prewarms > 0);
     }
 #endif

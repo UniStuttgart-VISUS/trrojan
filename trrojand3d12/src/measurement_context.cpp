@@ -26,8 +26,15 @@ trrojan::d3d12::measurement_context::measurement_context(d3d12::device& device,
  * trrojan::d3d12::measurement_context::check_cpu_iterations
  */
 std::uint32_t  trrojan::d3d12::measurement_context::check_cpu_iterations(
-        const double min_wall_time, const float precision) {
+        const double min_wall_time) {
     const auto elapsed = cpu_timer.elapsed_millis();
-    return estimate_iterations(min_wall_time, elapsed, this->cpu_iterations,
-        precision);
+    auto retval = estimate_iterations(min_wall_time, elapsed,
+        this->cpu_iterations);
+
+    if (retval > this->cpu_iterations) {
+        return retval;
+    } else {
+        this->cpu_iterations = retval;
+        return 0;
+    }
 }

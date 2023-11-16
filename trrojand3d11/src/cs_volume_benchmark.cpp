@@ -236,7 +236,6 @@ trrojan::result trrojan::d3d11::cs_volume_benchmark::on_run(
         auto batchTime = 0.0;
         auto cntPrewarms = (std::max)(1u,
             config.get<std::uint32_t>(factor_min_prewarms));
-        const auto precision = config.get<float>(factor_prewarm_precision);
 
         do {
             cntCpuIterations = 0;
@@ -253,8 +252,10 @@ trrojan::result trrojan::d3d11::cs_volume_benchmark::on_run(
             batchTime = cpuTimer.elapsed_millis();
 
             cntPrewarms = trrojan::estimate_iterations(minWallTime, batchTime,
-                cntCpuIterations, precision);
-        } while (cntPrewarms > 0);
+                cntCpuIterations);
+        } while (cntPrewarms > cntCpuIterations);
+
+        cntCpuIterations = cntPrewarms;
     }
 
     // Do the GPU counter measurements

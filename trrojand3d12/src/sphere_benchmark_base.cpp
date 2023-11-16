@@ -214,9 +214,6 @@ trrojan::d3d12::sphere_benchmark_base::sphere_benchmark_base(
         sphere_rendering_configuration::factor_poly_corners,
         4u));
     this->_default_configs.add_factor(factor::from_manifestations(
-        sphere_rendering_configuration::factor_prewarm_precision,
-        1.0f));
-    this->_default_configs.add_factor(factor::from_manifestations(
         sphere_rendering_configuration::factor_vs_raygen,
         false));
     this->_default_configs.add_factor(factor::from_manifestations(

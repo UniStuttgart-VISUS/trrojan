@@ -128,7 +128,6 @@ trrojan::result trrojan::d3d12::cs_volume_benchmark::on_run(
     const auto min_wall_time = config.get<std::uint32_t>(factor_min_wall_time);
     measurement_context mctx(device, 1, this->pipeline_depth());
     stats_query::value_type pipeline_stats;
-    const auto prewarm_precision = config.get<float>(factor_prewarm_precision);
     stats_query stats_query(device.d3d_device(), 1, 1);
     const auto volume_size = this->get_volume_resolution();
     const auto viewport = config.get<viewport_type>(factor_viewport);
@@ -367,8 +366,7 @@ trrojan::result trrojan::d3d12::cs_volume_benchmark::on_run(
             }
             device.wait_for_gpu();
 
-            prewarms = mctx.check_cpu_iterations(min_wall_time,
-                prewarm_precision);
+            prewarms = mctx.check_cpu_iterations(min_wall_time);
         } while (prewarms > 0);
     }
 #endif

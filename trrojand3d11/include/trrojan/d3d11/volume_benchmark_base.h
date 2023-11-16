@@ -44,7 +44,6 @@ namespace d3d11 {
         static const char *factor_max_steps;
         static const char *factor_min_prewarms;
         static const char *factor_min_wall_time;
-        static const char *factor_prewarm_precision;
         static const char *factor_step_size;
         static const char *factor_xfer_func;
 

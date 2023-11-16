@@ -3,9 +3,9 @@ d3d12::sphere-renderer {
 	uint32 frame = 0
 	#uint32vec2 viewport = 1024 768; 1920 1080
     uint32vec2 viewport = 1920 1080
-	boolean debug_view = true
-	float32 global_radius = 0.07
+	boolean debug_view = false; true
     uint32 sync_interval = 0; 1
+	float32 global_radius = 0.07
 
 	boolean conservative_depth = false
 	boolean force_float_colour = false
