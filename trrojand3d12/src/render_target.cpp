@@ -162,9 +162,11 @@ void trrojan::d3d12::render_target_base::enable(
         const bool transition) {
     assert(cmd_list != nullptr);
     assert(frame < this->_buffers.size());
-    //log::instance().write_line(log_level::debug, "Queueing render target "
-    //    "{:p} to be enabled in command list {:p} ...",
-    //    static_cast<void *>(this), static_cast<void *>(cmd_list));
+#if (defined(DEBUG) || defined(_DEBUG))
+    log::instance().write_line(log_level::debug, "Queueing render target "
+        "{0:p} (frame {1}) to be enabled in command list {2:p} ...",
+        static_cast<void *>(this), frame, static_cast<void *>(cmd_list));
+#endif  /* (defined(DEBUG) || defined(_DEBUG)) */
 
     //log::instance().write_line(log_level::debug, "Set viewport from ({}, {}) "
     //    "with size [{}, {}] in command list {:p}.", this->_viewport.TopLeftX,
@@ -184,6 +186,12 @@ void trrojan::d3d12::render_target_base::enable(
     }
 
     if (transition) {
+#if (defined(DEBUG) || defined(_DEBUG))
+        log::instance().write_line(log_level::debug, "Transitioning buffer "
+            "{0} ({1:p}) from present state to {2:x} ...",
+            frame, static_cast<void *>(this->_buffers[frame].p),
+            static_cast<UINT>(render_state));
+#endif  /* (defined(DEBUG) || defined(_DEBUG)) */
         transition_subresource(cmd_list, this->_buffers[frame], 0,
             D3D12_RESOURCE_STATE_PRESENT, render_state);
     }

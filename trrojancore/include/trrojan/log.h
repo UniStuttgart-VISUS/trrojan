@@ -115,8 +115,7 @@ namespace trrojan {
         }
 
         inline void write_line(const log_level level, const char* fmt) {
-            std::string tmp = fmt + '\n';
-            this->write(level, tmp.c_str());
+            this->write(level, "{0}\n", fmt);
         }
 
         inline void write_line(const log_level level,

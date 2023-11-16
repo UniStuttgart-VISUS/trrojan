@@ -199,7 +199,7 @@ void trrojan::d3d12::sphere_streaming_context::rebuild(ID3D12Device *device,
 
     trrojan::log::instance().write_line(log_level::debug, "Allocating {0} "
         "bytes of streaming buffer for {1} batch(es) of {2} particle(s) of "
-        "size {3} on device 0x{5:p} ...", heap_size, this->_batch_count,
+        "size {3} on device 0x{4:p} ...", heap_size, this->_batch_count,
         this->_batch_size, this->_stride, static_cast<void *>(device));
     this->_buffer = to_winrt(create_upload_buffer(device, heap_size));
 

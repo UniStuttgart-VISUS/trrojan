@@ -162,6 +162,10 @@ trrojan::result trrojan::d3d12::ram_streaming_sphere_benchmark::on_run(
         auto list = to_winrt(this->create_graphics_command_list(b, pipeline));
         set_debug_object_name(list.get(), "Command list for batch {0}", b);
         cmd_lists.push_back(list);
+#if (defined(DEBUG) || defined(_DEBUG))
+        log::instance().write_line(log_level::debug, "Command list {0:p} is "
+            "used for batch {1}.", static_cast<void *>(list.get()), b);
+#endif  /* (defined(DEBUG) || defined(_DEBUG)) */
     }
 
     // Update constant buffers. These will not change for this run.
@@ -194,7 +198,9 @@ trrojan::result trrojan::d3d12::ram_streaming_sphere_benchmark::on_run(
 
                     // Set the render target, and if this is the first batch,
                     // transition it as well.
-                    this->enable_target(list.get(), first);
+                    this->enable_target(list.get(),
+                        D3D12_RESOURCE_STATE_RENDER_TARGET,
+                        first);
 
                     // If this is the first batch, we need to clear the target.
                     if (first) {
@@ -265,7 +271,11 @@ trrojan::result trrojan::d3d12::ram_streaming_sphere_benchmark::on_run(
             const auto first = (t == 0);
             const auto last = (t == last_batch);
 
-            this->enable_target(list.get());
+            // Set the render target, and if this is the first batch,
+            // transition it as well.
+            this->enable_target(list.get(),
+                D3D12_RESOURCE_STATE_RENDER_TARGET,
+                first);
 
             // If this is the first batch, we need to clear the target.
             if (first) {
@@ -339,7 +349,11 @@ trrojan::result trrojan::d3d12::ram_streaming_sphere_benchmark::on_run(
             const auto first = (t == 0);
             const auto last = (t == last_batch);
 
-            this->enable_target(list.get());
+            // Set the render target, and if this is the first batch,
+            // transition it as well.
+            this->enable_target(list.get(),
+                D3D12_RESOURCE_STATE_RENDER_TARGET,
+                first);
 
             // If this is the first batch, we need to clear the target.
             if (first) {
@@ -429,7 +443,11 @@ trrojan::result trrojan::d3d12::ram_streaming_sphere_benchmark::on_run(
             const auto first = (t == 0);
             const auto last = (t == last_batch);
 
-            this->enable_target(list.get());
+            // Set the render target, and if this is the first batch,
+            // transition it as well.
+            this->enable_target(list.get(),
+                D3D12_RESOURCE_STATE_RENDER_TARGET,
+                first);
 
             // If this is the first batch, we need to clear the target.
             if (first) {
