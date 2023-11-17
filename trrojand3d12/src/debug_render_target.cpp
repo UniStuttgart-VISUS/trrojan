@@ -49,6 +49,12 @@ trrojan::d3d12::debug_render_target::~debug_render_target(void) {
 UINT trrojan::d3d12::debug_render_target::present(
         const unsigned int sync_interval) {
     assert(this->_swap_chain != nullptr);
+//#if (defined(DEBUG) || defined(_DEBUG))
+//    log::instance().write_line(log_level::debug, "Debug render target is "
+//        "presenting current back buffer {0} ...",
+//        this->_swap_chain->GetCurrentBackBufferIndex());
+//#endif /* (defined(DEBUG) || defined(_DEBUG)) */
+
     // Swap the buffers.
     this->_swap_chain->Present(sync_interval, 0);
 

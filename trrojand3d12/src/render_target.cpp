@@ -136,6 +136,13 @@ void trrojan::d3d12::render_target_base::disable(
         const D3D12_RESOURCE_STATES render_state) {
     assert(cmd_list != nullptr);
     assert(frame < this->_buffers.size());
+//#if (defined(DEBUG) || defined(_DEBUG))
+//    log::instance().write_line(log_level::debug, "Queueing render target "
+//        "{0:p} (buffer {1:p}, frame {2}) to be disabled in command list "
+//        "{3:p} ...", static_cast<void *>(this),
+//        static_cast<void *>(this->_buffers[frame].p), frame,
+//        static_cast<void *>(cmd_list));
+//#endif  /* (defined(DEBUG) || defined(_DEBUG)) */
     transition_subresource(cmd_list, this->_buffers[frame], 0,
         render_state, D3D12_RESOURCE_STATE_PRESENT);
 }
@@ -162,11 +169,13 @@ void trrojan::d3d12::render_target_base::enable(
         const bool transition) {
     assert(cmd_list != nullptr);
     assert(frame < this->_buffers.size());
-#if (defined(DEBUG) || defined(_DEBUG))
-    log::instance().write_line(log_level::debug, "Queueing render target "
-        "{0:p} (frame {1}) to be enabled in command list {2:p} ...",
-        static_cast<void *>(this), frame, static_cast<void *>(cmd_list));
-#endif  /* (defined(DEBUG) || defined(_DEBUG)) */
+//#if (defined(DEBUG) || defined(_DEBUG))
+//    log::instance().write_line(log_level::debug, "Queueing render target "
+//        "{0:p} (buffer {1:p}, frame {2}) to be enabled in command list "
+//        "{3:p} ...", static_cast<void *>(this),
+//        static_cast<void *>(this->_buffers[frame].p), frame,
+//        static_cast<void *>(cmd_list));
+//#endif  /* (defined(DEBUG) || defined(_DEBUG)) */
 
     //log::instance().write_line(log_level::debug, "Set viewport from ({}, {}) "
     //    "with size [{}, {}] in command list {:p}.", this->_viewport.TopLeftX,
@@ -186,12 +195,12 @@ void trrojan::d3d12::render_target_base::enable(
     }
 
     if (transition) {
-#if (defined(DEBUG) || defined(_DEBUG))
-        log::instance().write_line(log_level::debug, "Transitioning buffer "
-            "{0} ({1:p}) from present state to {2:x} ...",
-            frame, static_cast<void *>(this->_buffers[frame].p),
-            static_cast<UINT>(render_state));
-#endif  /* (defined(DEBUG) || defined(_DEBUG)) */
+//#if (defined(DEBUG) || defined(_DEBUG))
+//        log::instance().write_line(log_level::debug, "Transitioning buffer "
+//            "{0} ({1:p}) from present state to rendering state {2:x} ...",
+//            frame, static_cast<void *>(this->_buffers[frame].p),
+//            static_cast<UINT>(render_state));
+//#endif  /* (defined(DEBUG) || defined(_DEBUG)) */
         transition_subresource(cmd_list, this->_buffers[frame], 0,
             D3D12_RESOURCE_STATE_PRESENT, render_state);
     }
@@ -677,6 +686,17 @@ void trrojan::d3d12::render_target_base::switch_buffer(
         const UINT next_buffer) {
     assert(next_buffer < this->_fence_values.size());
     const auto completing_value = this->_fence_values[this->_buffer_index];
+
+//#if (defined(DEBUG) || defined(_DEBUG))
+//    log::instance().write_line(log_level::debug, "Render target is switching "
+//        "from buffer {0} ({1:p}) to buffer {2} ({3:p}), using fence {4} to "
+//        "to wait ...",
+//        this->_buffer_index,
+//        static_cast<void *>(this->_buffers[this->_buffer_index]),
+//        next_buffer,
+//        static_cast<void *>(this->_buffers[next_buffer]),
+//        completing_value);
+//#endif /* (defined(DEBUG) || defined(_DEBUG)) */
 
     // Schedule a fence for the current frame in the command queue. We will
     // wait for this one to become signalled if we activate this buffer again.

@@ -149,6 +149,10 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
                     const auto counts = get_draw_count(shader_code, spheres);
                     list->DrawInstanced(counts.first, counts.second, 0, 0);
 
+                    if (last) {
+                        this->disable_target(list.get());
+                    }
+
                     device.close_and_execute_command_list(list.get());
 
                     // Schedule a signal after we have submitted the command
@@ -224,6 +228,10 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
             const auto counts = get_draw_count(shader_code, spheres);
             list->DrawInstanced(counts.first, counts.second, 0, 0);
 
+            if (last) {
+                this->disable_target(list.get());
+            }
+
             device.close_and_execute_command_list(list.get());
 
             // Schedule a signal after we have submitted the command
@@ -242,9 +250,9 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
         } /* for (std::size_t t = 0; t < total_batches; ++t) */
     }
     device.wait_for_gpu();
+#endif
     const auto cpu_time = mctx.cpu_timer.elapsed_millis();
     const auto cnt_stalls = this->_stream.reset_stalls();
-#endif
 
 #if true
     // Do the GPU counter measurements.
@@ -309,6 +317,10 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
             if (last) {
                 mctx.gpu_timer.end(list.get(), 0);
                 timer_index = mctx.gpu_timer.end_frame(list.get());
+            }
+
+            if (last) {
+                this->disable_target(list.get());
             }
 
             device.close_and_execute_command_list(list.get());
@@ -399,6 +411,7 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
             stats_query.end(list.get(), t);
 
             if (last) {
+                this->disable_target(list.get());
                 stats_index = stats_query.end_frame(list.get());
             }
 

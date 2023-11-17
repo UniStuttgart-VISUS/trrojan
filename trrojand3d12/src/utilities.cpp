@@ -986,6 +986,12 @@ void trrojan::d3d12::transition_subresource(ID3D12GraphicsCommandList *cmd_list,
         const D3D12_RESOURCE_STATES state_before,
         const D3D12_RESOURCE_STATES state_after) {
     assert(cmd_list != nullptr);
+#if (defined(DEBUG) || defined(_DEBUG))
+    log::instance().write_line(log_level::debug, "transition_subresource("
+        "{0:p}, {1}, {2}, {3})", static_cast<void *>(cmd_list), subresource,
+        static_cast<unsigned int>(state_before),
+        static_cast<unsigned int>(state_after));
+#endif  /* (defined(DEBUG) || defined(_DEBUG)) */
 
     D3D12_RESOURCE_BARRIER barrier;
     ::ZeroMemory(&barrier, sizeof(barrier));

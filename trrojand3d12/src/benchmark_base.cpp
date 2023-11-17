@@ -146,7 +146,7 @@ trrojan::result trrojan::d3d12::benchmark_base::run(const configuration& c) {
     // Run the bechmark.
     auto retval = this->on_run(*device, c, power_collector, changed);
 
-    // Save the resulting image if requested.
+    // Save the resulting image if reFsted.
     // TODO: ::save in ::save_target is missing implementation, just throws "TODO"
     if (false) {
         auto ts = c.get<std::string>(system_factors::factor_timestamp);
