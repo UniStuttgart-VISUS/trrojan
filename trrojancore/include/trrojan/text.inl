@@ -45,6 +45,58 @@ template<class T> bool trrojan::ends_with(const std::basic_string<T>& haystack,
 
 
 /*
+ *  trrojan::equals
+ */
+template<class T> bool trrojan::equals(const char *lhs, const char *rhs) {
+    if (lhs == rhs) {
+        return true;
+
+    } else if ((lhs == nullptr) || (rhs == nullptr)) {
+        return false;
+
+    } else {
+        assert(lhs != nullptr);
+        assert(rhs != nullptr);
+        const auto ll = std::char_traits<T>::length(lhs);
+        const auto lr = std::char_traits<T>::length(rhs);
+
+        if (ll != lr) {
+            return false;
+        } else {
+            return (std::char_traits<T>::compare(lhs, rhs, ll) == 0);
+        }
+    }
+}
+
+
+/*
+ * trrojan::iequals
+ */
+template<class T>
+bool trrojan::iequals(const char *lhs, const char *rhs) {
+    if (lhs == rhs) {
+        return true;
+
+    } else if ((lhs == nullptr) || (rhs == nullptr)) {
+        return false;
+
+    } else {
+        assert(lhs != nullptr);
+        assert(rhs != nullptr);
+        const auto ll = std::char_traits<T>::length(lhs);
+        const auto lr = std::char_traits<T>::length(rhs);
+
+        if (ll != lr) {
+            return false;
+        } else {
+            return std::equal(lhs, lhs + ll, rhs,
+                [](T l, T r) { return (std::tolower(l) == std::tolower(r)); });
+        }
+    }
+}
+
+
+/*
  * trrojan::join
  */
 template<class... P> std::string trrojan::join(const std::string& sep,

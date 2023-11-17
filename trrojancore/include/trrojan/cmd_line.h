@@ -1,8 +1,8 @@
-/// <copyright file="configuration.h" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Christoph Müller</author>
+ï»¿// <copyright file="cmd_line.h" company="Visualisierungsinstitut der UniversitÃ¤t Stuttgart">
+// Copyright Â© 2016 - 2023 Visualisierungsinstitut der UniversitÃ¤t Stuttgart. Alle Rechte vorbehalten.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Christoph MÃ¼ller</author>
 
 #pragma once
 
@@ -35,11 +35,9 @@ namespace trrojan {
             const bool matchCase = false) {
         return std::find_if(begin, end, [&](const std::basic_string<T>& s) {
             if (matchCase) {
-                return (name == s);
+                return equals(name, s);
             } else {
-                return ((name.length() == s.length())
-                    && std::equal(name.cbegin(), name.cend(), s.cbegin(),
-                    [](T l, T r) { return (std::tolower(l) == std::tolower(r)); }));
+                return iequals(name, s);
             }
         });
     }

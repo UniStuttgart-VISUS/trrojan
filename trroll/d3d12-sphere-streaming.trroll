@@ -1,8 +1,10 @@
-d3d12::disk-stream-sphere-renderer {
+d3d12::stream-sphere-renderer {
 	string data_set =  pos_rad_intensity : 20000 : 0 : 10 10 10 : 0.01 0.1
 	float32 global_radius = 0.07
 	uint32 frame = 0
     uint32 min_prewarms = 16
+
+    string streaming_method = memory_mapping
 
 
     #string device = NVIDIA GeForce GTX 1050

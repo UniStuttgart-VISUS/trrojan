@@ -1,5 +1,5 @@
 ﻿// <copyright file="factor.h" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+// Copyright © 2016 - 2023 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
 // <author>Christoph Müller</author>
@@ -42,9 +42,9 @@ namespace trrojan {
         /// <summary>
         /// Creates a new factor with a set of discrete manifestations.
         /// </summary>
-        /// <parama name="name">The name which uniquely identifies the factor.
+        /// <param name="name">The name which uniquely identifies the factor.
         /// </param>
-        /// <parama name="manifestations">The manifestations of the factor.
+        /// <param name="manifestations">The manifestations of the factor.
         /// </param>
         /// <returns>A new instance with the specified manifestations.</returns>
         /// <tparam name="T">The value type of the factor.</tparam>
@@ -59,11 +59,11 @@ namespace trrojan {
         /// <summary>
         /// Creates a new factor from a set of discrete manifestations.
         /// </summary>
-        /// <parama name="name">The name which uniquely identifies the factor.
+        /// <param name="name">The name which uniquely identifies the factor.
         /// </param>
-        /// <parama name="begin">The begin of the range of manifestations.
+        /// <param name="begin">The begin of the range of manifestations.
         /// </param>
-        /// <parama name="end">The end of the range of manifestations.</param>
+        /// <param name="end">The end of the range of manifestations.</param>
         /// <returns>A new instance with the specified manifestations.</returns>
         /// <tparam name="T">The value type of the factor.</tparam>
         template<class I> static inline factor from_manifestations(
@@ -74,9 +74,9 @@ namespace trrojan {
         /// <summary>
         /// Creates a new factor with a set of discrete manifestations.
         /// </summary>
-        /// <parama name="name">The name which uniquely identifies the factor.
+        /// <param name="name">The name which uniquely identifies the factor.
         /// </param>
-        /// <parama name="manifestations">The manifestations of the factor.
+        /// <param name="manifestations">The manifestations of the factor.
         /// </param>
         /// <returns>A new instance with the specified manifestations.</returns>
         /// <tparam name="T">The value type of the factor.</tparam>
@@ -92,7 +92,7 @@ namespace trrojan {
         /// </summary>
         /// <param name="name">The name which uniquely identifies the factor.
         /// </param>
-        /// <parama name="manifestation">The manifestation of the factor.
+        /// <param name="manifestation">The manifestation of the factor.
         /// </param>
         /// <returns>A new instance with the specified manifestation.</returns>
         /// <tparam name="T">The value type of the factor.</tparam>

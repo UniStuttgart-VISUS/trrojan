@@ -32,6 +32,29 @@ namespace trrojan {
         const std::basic_string<T>& needle);
 
     /// <summary>
+    /// Answer whether <paramref name="lhs" /> and <paramref name="rhs" /> are
+    /// the same strings.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="lhs"></param>
+    /// <param name="rhs"></param>
+    /// <returns></returns>
+    template<class T> inline bool equals(const std::basic_string<T>& lhs,
+            const std::basic_string<T>& rhs) {
+        return (lhs == rhs);
+    }
+
+    /// <summary>
+    /// Answer whether <paramref name="lhs" /> and <paramref name="rhs" /> are
+    /// the same strings.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="lhs">A string, which may be <c>nullptr</c>.</param>
+    /// <param name="rhs">A string, which may be <c>nullptr</c>.</param>
+    /// <returns></returns>
+    template<class T> bool equals(const char *lhs, const char *rhs);
+
+    /// <summary>
     /// Convert an UTF-8 string to a wide string.
     /// </summary>
     inline std::wstring from_utf8(const std::string& str) {
@@ -46,6 +69,31 @@ namespace trrojan {
         return retval;
 #endif /* (!defined(__GNUC__) || (__GNUC__ >= 5)) */
     }
+
+    /// <summary>
+    /// Answer whether <paramref name="lhs" /> and <paramref name="rhs" /> are
+    /// equal comparing without considering case.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="lhs"></param>
+    /// <param name="rhs"></param>
+    /// <returns></returns>
+    template<class T> inline bool iequals(const std::basic_string<T>& lhs,
+            const std::basic_string<T>& rhs) {
+        return ((lhs.length() == rhs.length())
+            && std::equal(lhs.cbegin(), lhs.cend(), rhs.cbegin(),
+                [](T l, T r) { return (std::tolower(l) == std::tolower(r)); }));
+    }
+
+    /// <summary>
+    /// Answer whether <paramref name="lhs" /> and <paramref name="rhs" /> are
+    /// the same strings  without considering case.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="lhs">A string, which may be <c>nullptr</c>.</param>
+    /// <param name="rhs">A string, which may be <c>nullptr</c>.</param>
+    /// <returns></returns>
+    template<class T> bool iequals(const char *lhs, const char *rhs);
 
     /// <summary>
     /// Joins a set of strings with the given separator between them.
