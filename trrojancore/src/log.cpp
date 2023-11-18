@@ -53,4 +53,6 @@ trrojan::log::log(const char *file) {
     this->_logger->set_level(spdlog::level::trace);
     spdlog::set_level(spdlog::level::trace);
 #endif /* (defined(DEBUG) || defined(_DEBUG)) */
+
+    spdlog::flush_every(std::chrono::seconds(10));
 }

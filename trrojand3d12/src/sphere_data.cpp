@@ -11,6 +11,7 @@
 #include <fstream>
 
 #include "trrojan/log.h"
+#include "trrojan/on_exit.h"
 #include "trrojan/timer.h"
 
 #include "trrojan/d3d12/sphere_rendering_configuration.h"
@@ -163,6 +164,13 @@ winrt::file_handle trrojan::d3d12::sphere_data::copy_to(const std::string& path,
     // happens afterwards. Once load() returns, we can end the mapping.
     winrt::handle mapping;
 
+    void *location = nullptr;
+    on_exit([&location](void) {
+        if (location != nullptr) {
+            ::UnmapViewOfFile(location);
+        }
+    });
+
     this->load([&](const UINT64 size) {
         mapping.attach(::CreateFileMappingA(retval.get(), nullptr,
             PAGE_READWRITE, 0, static_cast<DWORD>(size), nullptr));
@@ -170,7 +178,8 @@ winrt::file_handle trrojan::d3d12::sphere_data::copy_to(const std::string& path,
             throw ATL::CAtlException(HRESULT_FROM_WIN32(::GetLastError()));
         }
 
-        return ::MapViewOfFile(mapping.get(), FILE_MAP_WRITE, 0, 0, size);
+        location = ::MapViewOfFile(mapping.get(), FILE_MAP_WRITE, 0, 0, size);
+        return location;
     }, shader_code, config);
 
     return retval;

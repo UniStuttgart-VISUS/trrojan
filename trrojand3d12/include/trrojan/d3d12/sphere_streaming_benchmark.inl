@@ -28,11 +28,12 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
     // Clear data that cannot be used any more.
     this->clear_stale_data(changed);
 
-    // Load the data if necessary. Note that we redi rect the data loaded into
-    // '_buffer' rather than letting '_data' upload it directly to the GPU.
+    // Load the data if necessary. Note that we redirect the data loading
+    // to the user-provided callback such that it can process it in the
+    // appropriate format.
     if (!this->_data) {
         log::instance().write_line(log_level::information, "Loading data set \""
-            "{}\" into memory ...", cfg.data_set());
+            "{0}\" for streaming ...", cfg.data_set());
         load_cleanup(this->_data.load(allocate_data, shader_code, cfg));
 
         log::instance().write_line(log_level::debug, "Reshaping GPU "
@@ -82,6 +83,7 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
     for (std::size_t b = 0; (b < this->_stream.batch_count()); ++b) {
         auto list = to_winrt(this->create_graphics_command_list(b, pipeline));
         set_debug_object_name(list.get(), "Command list for batch {0}", b);
+        list->Close();
         cmd_lists.push_back(list);
 #if (defined(DEBUG) || defined(_DEBUG))
         log::instance().write_line(log_level::debug, "Command list {0:p} is "
@@ -113,9 +115,16 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
                     //log::instance().write_line(log_level::debug,
                     //    "Using batch {0} for {1} of {2}...", b, t,
                     //    total_batches);
-                    auto list = cmd_lists[b];
+                    auto& alloc = this->_direct_cmd_allocators[b];
+                    auto& list = cmd_lists[b];
                     const auto first = (t == 0);
                     const auto last = (t == last_batch);
+
+                    // List must have been completed at this point, so we can
+                    // reset now. Afterwards, reset the command list that used 
+                    // the allocator.
+                    alloc->Reset();
+                    list->Reset(alloc, pipeline);
 
                     // Set the render target, and if this is the first batch,
                     // transition it as well.
@@ -159,11 +168,6 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
                     // Schedule a signal after we have submitted the command
                     // list for batch 'b'.
                     this->_stream.signal_done(b, this->command_queue());
-
-                    // Immediately reset the list for the next loop. It is OK to
-                    // reset a command list once it has been submitted, which is
-                    // in contrast to the underlying allocator.
-                    list->Reset(this->_direct_cmd_allocators[b], pipeline);
  
                     // If this was the last batch, we need to swap the buffer.
                     if (last) {
@@ -192,9 +196,16 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
             //log::instance().write_line(log_level::debug,
             //    "Using batch {0} for {1} of {2}...", b, t,
             //    total_batches);
-            auto list = cmd_lists[b];
+            auto& alloc = this->_direct_cmd_allocators[b];
+            auto& list = cmd_lists[b];
             const auto first = (t == 0);
             const auto last = (t == last_batch);
+
+            // List must have been completed at this point, so we can
+            // reset now. Afterwards, reset the command list that used 
+            // the allocator.
+            alloc->Reset();
+            list->Reset(alloc, pipeline);
 
             // Set the render target, and if this is the first batch,
             // transition it as well.
@@ -239,11 +250,6 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
             // list for batch 'b'.
             this->_stream.signal_done(b, this->command_queue());
 
-            // Immediately reset the list for the next loop. It is OK to
-            // reset a command list once it has been submitted, which is
-            // in contrast to the underlying allocator.
-            list->Reset(this->_direct_cmd_allocators[b], pipeline);
-
             // If this was the last batch, we need to swap the buffer.
             if (last) {
                 this->present_target(config);
@@ -274,9 +280,16 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
             //log::instance().write_line(log_level::debug,
             //    "Using batch {0} for {1} of {2}...", b, t,
             //    total_batches);
-            auto list = cmd_lists[b];
+            auto& alloc = this->_direct_cmd_allocators[b];
+            auto& list = cmd_lists[b];
             const auto first = (t == 0);
             const auto last = (t == last_batch);
+
+            // List must have been completed at this point, so we can
+            // reset now. Afterwards, reset the command list that used 
+            // the allocator.
+            alloc->Reset();
+            list->Reset(alloc, pipeline);
 
             // Set the render target, and if this is the first batch,
             // transition it as well.
@@ -330,11 +343,6 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
             // list for batch 'b'.
             this->_stream.signal_done(b, this->command_queue());
 
-            // Immediately reset the list for the next loop. It is OK to
-            // reset a command list once it has been submitted, which is
-            // in contrast to the underlying allocator.
-            list->Reset(this->_direct_cmd_allocators[b], pipeline);
-
             // If this was the last batch, we need to swap the buffer.
             if (last) {
                 this->present_target(config);
@@ -372,9 +380,16 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
             //log::instance().write_line(log_level::debug,
             //    "Using batch {0} for {1} of {2}...", b, t,
             //    total_batches);
-            auto list = cmd_lists[b];
+            auto& alloc = this->_direct_cmd_allocators[b];
+            auto& list = cmd_lists[b];
             const auto first = (t == 0);
             const auto last = (t == last_batch);
+
+            // List must have been completed at this point, so we can
+            // reset now. Afterwards, reset the command list that used 
+            // the allocator.
+            alloc->Reset();
+            list->Reset(alloc, pipeline);
 
             // Set the render target, and if this is the first batch,
             // transition it as well.
@@ -421,11 +436,6 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
             // Schedule a signal after we have submitted the command
             // list for batch 'b'.
             this->_stream.signal_done(b, this->command_queue());
-
-            // Immediately reset the list for the next loop. It is OK to
-            // reset a command list once it has been submitted, which is
-            // in contrast to the underlying allocator.
-            list->Reset(this->_direct_cmd_allocators[b], pipeline);
 
             // If this was the last batch, we need to swap the buffer.
             if (last) {

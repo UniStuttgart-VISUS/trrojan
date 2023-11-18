@@ -14,46 +14,25 @@
 #include "sphere_techniques.h"
 
 
-/*
- * trrojan::d3d12::sphere_streaming_benchmark::factor_streaming_method
- */
-const std::string
-trrojan::d3d12::sphere_streaming_benchmark::factor_streaming_method
-    = "streaming_method";
+#define _STRM_BENCH_DEFINE_FACTOR(f)                                           \
+const char *trrojan::d3d12::sphere_streaming_benchmark::factor_##f = #f
+
+_STRM_BENCH_DEFINE_FACTOR(streaming_method);
+_STRM_BENCH_DEFINE_FACTOR(staging_directory);
+
+#undef _STRM_BENCH_DEFINE_FACTOR
 
 
-/*
- * trrojan::d3d12::sphere_streaming_benchmark::streaming_method_io_ring
- */
-const std::string
-trrojan::d3d12::sphere_streaming_benchmark::streaming_method_io_ring
-    = "io_ring";
+#define _STRM_BENCH_DEFINE_METHOD(m)                                           \
+const std::string trrojan::d3d12::sphere_streaming_benchmark::\
+streaming_method_##m(#m)
 
+_STRM_BENCH_DEFINE_METHOD(io_ring);
+_STRM_BENCH_DEFINE_METHOD(memory_mapping);
+_STRM_BENCH_DEFINE_METHOD(ram);
+_STRM_BENCH_DEFINE_METHOD(read_file);
 
-/*
- * trrojan::d3d12::sphere_streaming_benchmark::streaming_method_memory_mapping
- */
-const std::string
-trrojan::d3d12::sphere_streaming_benchmark::streaming_method_memory_mapping
-    = "memory_mapping";
-
-
-
-/*
- * trrojan::d3d12::sphere_streaming_benchmark::streaming_method_ram
- */
-const std::string
-trrojan::d3d12::sphere_streaming_benchmark::streaming_method_ram = "ram";
-
-
-
-/*
- * trrojan::d3d12::sphere_streaming_benchmark::streaming_method_read_file
- */
-const std::string
-trrojan::d3d12::sphere_streaming_benchmark::streaming_method_read_file
-    = "read_file";
-
+#undef _STRM_BENCH_DEFINE_METHOD
 
 
 /*
@@ -69,6 +48,8 @@ trrojan::d3d12::sphere_streaming_benchmark::sphere_streaming_benchmark(
     this->_default_configs.add_factor(factor::from_manifestations(
         factor_streaming_method, { streaming_method_ram,
         streaming_method_memory_mapping }));
+    this->_default_configs.add_factor(factor::from_manifestations(
+        factor_staging_directory, get_temp_folder()));
 }
 
 
@@ -143,6 +124,7 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
         power_collector::pointer& power_collector,
         const std::vector<std::string>& changed) {
     const auto method = config.get<std::string>(factor_streaming_method);
+    const auto folder = config.get<std::string>(factor_staging_directory);
 
     if (trrojan::iequals(method, streaming_method_ram)) {
         return this->on_run([this](const UINT64 size) {
@@ -156,12 +138,12 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
         }, device, config, power_collector, changed);
 
     } else if (trrojan::iequals(method, streaming_method_memory_mapping)) {
-        return this->on_run([this](const UINT64 size) {
+        return this->on_run([this, &folder](const UINT64 size) {
             // Copy the raw data to a memory-mapped file such that we can
             // seek like in the in-memory file. This is required as the
             // generated data do not come from a file and therefore must be
             // persisted for the benchmark.
-            auto path = create_temp_file("tssb");
+            auto path = create_temp_file(folder, "tssb");
             this->_file.attach(::CreateFileA(path.c_str(),
                 GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ, nullptr,
                 CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL));
@@ -183,6 +165,8 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
 
             return this->_file_view;
         }, [this](const UINT64 size) {
+            ::UnmapViewOfFile(this->_file_view);
+
             // Re-map the file readonly as this might be faster ...
             this->_file_mapping.attach(::CreateFileMappingA(this->_file.get(),
                 nullptr, PAGE_READONLY, 0, static_cast<DWORD>(size), nullptr));
@@ -202,13 +186,12 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
             ::memcpy(d, static_cast<std::uint8_t *>(this->_file_view) + o, l);
         }, device, config, power_collector, changed);
 
-
     } else if (trrojan::iequals(method, streaming_method_read_file)) {
-        return this->on_run([this](const UINT64 size) {
+        return this->on_run([this, &folder](const UINT64 size) {
             // As for the memory mapping technique, we must make sure that the
             // data are actually in a file, regardless of whether they come from
             // MMPLD or from the generator.
-            auto path = create_temp_file("tssb");
+            auto path = create_temp_file(folder, "tssb");
             this->_file.attach(::CreateFileA(path.c_str(),
                 GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ, nullptr,
                 CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL));
@@ -232,6 +215,7 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
         }, [this](const UINT64 size) {
             // Remove the file mapping as we do not know whether that would
             // impact other kinds of I/O.
+            ::UnmapViewOfFile(this->_file_view);
             this->_file_mapping.close();
 
         }, [this](void *d, const std::size_t o, const std::size_t l) {

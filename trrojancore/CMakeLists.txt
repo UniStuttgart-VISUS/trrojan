@@ -58,12 +58,6 @@ if (TRROJAN_WITH_POWER_OVERWHELMING)
     #add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy "${POWER_OVERWHELMING_DIR}/${CMAKE_VS_PLATFORM_NAME}/Release/power_overwhelming.dll" "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/$<CONFIG>")
 endif ()
 
-if (TRROJAN_WITH_DSTORAGE)
-    target_link_libraries(${PROJECT_NAME} PRIVATE dstorage)
-    #install(FILES "${DSTORAGE_DIR}/bin/${CMAKE_VS_PLATFORM_NAME}/dstorage.dll" DESTINATION bin)
-    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different "${DSTORAGE_DIR}/bin/${CMAKE_VS_PLATFORM_NAME}/dstorage.dll" "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>")
-endif ()
-
 
 # Installation
 install(TARGETS ${PROJECT_NAME}

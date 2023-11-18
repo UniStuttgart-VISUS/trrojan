@@ -62,14 +62,6 @@ if (OPENMP_FOUND)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 endif()
 
-if (TRROJAN_WITH_DSTORAGE)
-    # Include our downloaded version of DirectStorage, because VS_PACKAGE_REFERENCES
-    # is not working for CMAKE C++ projects.
-    include_directories("${DSTORAGE_DIR}/Include/DirectStorage")
-    add_definitions(-DTRROJAN_WITH_DSTORAGE)
-    link_directories("${DSTORAGE_DIR}/bin/${CMAKE_VS_PLATFORM_NAME}")
-endif ()
-
 if (TRROJAN_FOR_UWP)
     add_compile_definitions(_UWP)
     add_compile_definitions(__cplusplus_winrt)

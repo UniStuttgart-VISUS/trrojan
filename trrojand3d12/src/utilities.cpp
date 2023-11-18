@@ -361,6 +361,22 @@ std::string trrojan::d3d12::create_temp_file(const char *prefix) {
 
 
 /*
+ * trrojan::d3d12::create_temp_file
+ */
+std::string trrojan::d3d12::create_temp_file(const std::string& folder,
+        const char *prefix) {
+    std::vector<char> buffer(folder.size() + 14 + 1);
+
+    if (!::GetTempFileNameA(folder.c_str(),
+            (prefix != nullptr) ? prefix : "trrojan", 0, buffer.data())) {
+        throw ATL::CAtlException(HRESULT_FROM_WIN32(::GetLastError()));
+    }
+
+    return buffer.data();
+}
+
+
+/*
  * trrojan::d3d12::create_texture
  */
 ATL::CComPtr<ID3D12Resource> trrojan::d3d12::create_texture(
@@ -852,6 +868,20 @@ D3D12_TEXTURE_COPY_LOCATION trrojan::d3d12::get_copy_location(
     }
 
     return retval;
+}
+
+
+/*
+ * trrojan::d3d12::get_temp_folder
+ */
+std::string trrojan::d3d12::get_temp_folder(void) {
+    std::array<char, MAX_PATH + 1> retval;
+
+    if (!::GetTempPathA(static_cast<DWORD>(retval.size()), retval.data())) {
+        throw ATL::CAtlException(HRESULT_FROM_WIN32(::GetLastError()));
+    }
+
+    return retval.data();
 }
 
 
