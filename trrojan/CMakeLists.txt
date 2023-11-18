@@ -175,6 +175,12 @@ if (TRROJAN_WITH_CHAKRA)
     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different "${trrojancore_BINARY_DIR}/$<CONFIG>/chakracore${CMAKE_SHARED_LIBRARY_SUFFIX}" "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>")
 endif ()
 
+if (TRROJAN_WITH_DSTORAGE)
+    target_link_libraries(${PROJECT_NAME} PRIVATE dstorage)
+    foreach (TRROJAN_DSTORAGE_BINARY ${TRROJAN_DSTORAGE_BINARIES})
+        add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different "${TRROJAN_DSTORAGE_BINARY}" "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>")
+    endforeach ()
+endif ()
 
 # Installation
 install(TARGETS ${PROJECT_NAME}

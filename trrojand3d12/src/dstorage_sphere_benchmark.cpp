@@ -183,8 +183,6 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
 
             return this->_file_view;
         }, [this](const UINT64 size) {
-            ::UnmapViewOfFile(this->_file_view);
-
             // Re-map the file readonly as this might be faster ...
             this->_file_mapping.attach(::CreateFileMappingA(this->_file.get(),
                 nullptr, PAGE_READONLY, 0, static_cast<DWORD>(size), nullptr));
@@ -234,7 +232,6 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
         }, [this](const UINT64 size) {
             // Remove the file mapping as we do not know whether that would
             // impact other kinds of I/O.
-            ::UnmapViewOfFile(this->_file_view);
             this->_file_mapping.close();
 
         }, [this](void *d, const std::size_t o, const std::size_t l) {

@@ -66,7 +66,15 @@ mark_as_advanced(FORCE
 
 
 # DirectStorage
-set(DSTORAGE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Microsoft.Direct3D.DirectStorage.1.0.0" CACHE STRING "Directory holding the DirectStorage APIs.")
+set(TRROJAN_DSTORAGE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/microsoft.direct3d.directstorage.1.2.1/native" CACHE STRING "Location of the DirectStorage APIs.")
+add_library(dstorage INTERFACE IMPORTED GLOBAL)
+set_target_properties(dstorage PROPERTIES
+    IMPORTED_LOCATION "${TRROJAN_DSTORAGE_DIR}/bin/${CMAKE_VS_PLATFORM_NAME}/dstorage.dll"
+    IMPORTED_IMPLIB "${TRROJAN_DSTORAGE_DIR}/lib/${CMAKE_VS_PLATFORM_NAME}/dstorage.lib"
+    INTERFACE_INCLUDE_DIRECTORIES "${TRROJAN_DSTORAGE_DIR}/Include"
+    INTERFACE_COMPILE_DEFINITIONS TRROJAN_WITH_DSTORAGE
+    INTERFACE_LINK_LIBRARIES dstorage)
+file(GLOB_RECURSE TRROJAN_DSTORAGE_BINARIES "${TRROJAN_DSTORAGE_DIR}/bin/${CMAKE_VS_PLATFORM_NAME}/*.dll")
 
 
 # glm

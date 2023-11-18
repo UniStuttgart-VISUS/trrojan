@@ -64,6 +64,13 @@ if (TRROJAN_DEBUG_OVERLAY)
     target_compile_definitions(${PROJECT_NAME} PRIVATE CREATE_D2D_OVERLAY)
 endif ()
 
+if (TRROJAN_WITH_DSTORAGE)
+    target_link_libraries(${PROJECT_NAME} PRIVATE dstorage)
+#    foreach (TRROJAN_DSTORAGE_BINARY ${TRROJAN_DSTORAGE_BINARIES})
+#        add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different "${TRROJAN_DSTORAGE_BINARY}" "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>")
+#    endforeach ()
+endif ()
+
 
 # Group all HLSL into a new filter (cf. https://stackoverflow.com/questions/33808087/cmake-how-to-create-visual-studio-filters).
 source_group("Shader Files" FILES ${ShaderFiles})

@@ -5,7 +5,8 @@ d3d12::stream-sphere-renderer {
     uint32 min_prewarms = 16
 
     #string streaming_method = ram; memory_mapping; read_file
-    string streaming_method = read_file
+    #string streaming_method = read_file
+    string streaming_method = ram
 
 
     #string device = NVIDIA GeForce GTX 1050
