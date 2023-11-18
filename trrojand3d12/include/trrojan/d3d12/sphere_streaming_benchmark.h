@@ -82,8 +82,9 @@ namespace d3d12 {
         /// <paramref name="copy_data" /> to obtain the data for each
         /// batch.
         /// </summary>
-        template<class TAllocate, class TCopy>
+        template<class TAllocate, class TCleanup, class TCopy>
         trrojan::result on_run(TAllocate&& allocate_data,
+            TCleanup&& load_cleanup,
             TCopy&& copy_data,
             d3d12::device& device,
             const configuration& config,

@@ -146,14 +146,21 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
 
     if (trrojan::iequals(method, streaming_method_ram)) {
         return this->on_run([this](const UINT64 size) {
+            // Provide our own in-memory buffer to receive the data.
             this->_buffer.resize(size);
             return this->_buffer.data();
+        }, [](const UINT64 size) {
         }, [this](void *d, const std::size_t o, const std::size_t l) {
+            // Deliver from in-memory buffer.
             ::memcpy(d, this->_buffer.data() + o, l);
         }, device, config, power_collector, changed);
 
     } else if (trrojan::iequals(method, streaming_method_memory_mapping)) {
         return this->on_run([this](const UINT64 size) {
+            // Copy the raw data to a memory-mapped file such that we can
+            // seek like in the in-memory file. This is required as the
+            // generated data do not come from a file and therefore must be
+            // persisted for the benchmark.
             auto path = create_temp_file("tssb");
             this->_file.attach(::CreateFileA(path.c_str(),
                 GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ, nullptr,
@@ -169,15 +176,88 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
             }
 
             this->_file_view = ::MapViewOfFile(this->_file_mapping.get(),
-                FILE_MAP_READ | FILE_MAP_WRITE, 0, 0, size);
+                FILE_MAP_WRITE, 0, 0, size);
             if (this->_file_view == nullptr) {
                 throw ATL::CAtlException(HRESULT_FROM_WIN32(::GetLastError()));
             }
 
             return this->_file_view;
+        }, [this](const UINT64 size) {
+            // Re-map the file readonly as this might be faster ...
+            this->_file_mapping.attach(::CreateFileMappingA(this->_file.get(),
+                nullptr, PAGE_READONLY, 0, static_cast<DWORD>(size), nullptr));
+            if (!this->_file_mapping) {
+                throw ATL::CAtlException(HRESULT_FROM_WIN32(::GetLastError()));
+            }
+
+            this->_file_view = ::MapViewOfFile(this->_file_mapping.get(),
+                FILE_MAP_READ, 0, 0, size);
+            if (this->_file_view == nullptr) {
+                throw ATL::CAtlException(HRESULT_FROM_WIN32(::GetLastError()));
+            }
+
         }, [this](void *d, const std::size_t o, const std::size_t l) {
+            // Deliver from mapped file.
             assert(this->_file_view != nullptr);
             ::memcpy(d, static_cast<std::uint8_t *>(this->_file_view) + o, l);
+        }, device, config, power_collector, changed);
+
+
+    } else if (trrojan::iequals(method, streaming_method_read_file)) {
+        return this->on_run([this](const UINT64 size) {
+            // As for the memory mapping technique, we must make sure that the
+            // data are actually in a file, regardless of whether they come from
+            // MMPLD or from the generator.
+            auto path = create_temp_file("tssb");
+            this->_file.attach(::CreateFileA(path.c_str(),
+                GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ, nullptr,
+                CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL));
+            if (!this->_file) {
+                throw ATL::CAtlException(HRESULT_FROM_WIN32(::GetLastError()));
+            }
+
+            this->_file_mapping.attach(::CreateFileMappingA(this->_file.get(),
+                nullptr, PAGE_READWRITE, 0, static_cast<DWORD>(size), nullptr));
+            if (!this->_file_mapping) {
+                throw ATL::CAtlException(HRESULT_FROM_WIN32(::GetLastError()));
+            }
+
+            this->_file_view = ::MapViewOfFile(this->_file_mapping.get(),
+                FILE_MAP_WRITE, 0, 0, size);
+            if (this->_file_view == nullptr) {
+                throw ATL::CAtlException(HRESULT_FROM_WIN32(::GetLastError()));
+            }
+
+            return this->_file_view;
+        }, [this](const UINT64 size) {
+            // Remove the file mapping as we do not know whether that would
+            // impact other kinds of I/O.
+            this->_file_mapping.close();
+
+        }, [this](void *d, const std::size_t o, const std::size_t l) {
+            assert(this->_file_view != nullptr);
+            LARGE_INTEGER position;
+            position.QuadPart = o;
+
+            if (!::SetFilePointerEx(this->_file.get(), position, nullptr,
+                    FILE_BEGIN)) {
+                throw ATL::CAtlException(HRESULT_FROM_WIN32(::GetLastError()));
+            }
+
+            auto dst = static_cast<std::uint8_t *>(d);
+            auto rem = l;
+            DWORD read = 0;
+
+            while (rem > 0) {
+                if (!::ReadFile(this->_file.get(), dst, rem, &read, 0)) {
+                    throw ATL::CAtlException(HRESULT_FROM_WIN32(
+                        ::GetLastError()));
+                }
+
+                assert(read <= rem);
+                dst += read;
+                rem -= read;
+            }
         }, device, config, power_collector, changed);
 
     } else {

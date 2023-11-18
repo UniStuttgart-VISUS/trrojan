@@ -8,9 +8,10 @@
 /*
  * trrojan::d3d12::sphere_streaming_benchmark::on_run
  */
-template<class TAllocate, class TCopy>
+template<class TAllocate, class TCleanup, class TCopy>
 trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
         TAllocate&& allocate_data,
+        TCleanup&& load_cleanup,
         TCopy&& copy_data,
         d3d12::device& device,
         const configuration& config,
@@ -32,7 +33,7 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
     if (!this->_data) {
         log::instance().write_line(log_level::information, "Loading data set \""
             "{}\" into memory ...", cfg.data_set());
-        this->_data.load(allocate_data, shader_code, cfg);
+        load_cleanup(this->_data.load(allocate_data, shader_code, cfg));
 
         log::instance().write_line(log_level::debug, "Reshaping GPU "
             "stream ...");
