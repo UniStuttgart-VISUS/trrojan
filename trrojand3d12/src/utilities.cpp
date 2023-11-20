@@ -894,6 +894,7 @@ std::wstring trrojan::d3d12::get_file_path(HANDLE handle) {
 }
 
 
+#if !defined(TRROJAN_FOR_UWP)
 /*
  * trrojan::d3d12::get_mapped_file_path
  */
@@ -908,6 +909,7 @@ std::wstring trrojan::d3d12::get_mapped_file_path(void *address) {
 
     return std::wstring(retval.data(), retval.data() + cnt);
 }
+#endif /* !defined(TRROJAN_FOR_UWP) */
 
 
 /*

@@ -382,12 +382,14 @@ namespace d3d12 {
     /// <returns></returns>
     std::wstring TRROJAND3D12_API get_file_path(HANDLE handle);
 
+#if !defined(TRROJAN_FOR_UWP)
     /// <summary>
     /// Gets the name mapped to the specified address.
     /// </summary>
     /// <param name="address"></param>
     /// <returns></returns>
     std::wstring TRROJAND3D12_API get_mapped_file_path(void *address);
+#endif /* !defined(TRROJAN_FOR_UWP) */
 
     /// <summary>
     /// Gets the path of the temporary folder.
