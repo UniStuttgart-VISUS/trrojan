@@ -140,7 +140,9 @@ namespace d3d12 {
         /// Clear the data loaded if the given changes in parameters invalidate
         /// them.
         /// </summary>
-        void clear_stale_data(const std::vector<std::string>& changed);
+        /// <returns><c>true</c> if the data have been cleared, <c>false</c>
+        /// otherwise.</returns>
+        bool clear_stale_data(const std::vector<std::string>& changed);
 
         /// <summary>
         /// Updates the field of view and the aspect ratio of the current

@@ -6,6 +6,10 @@
 
 #pragma once
 
+#if defined(TRROJAN_WITH_DSTORAGE)
+#include <dstorage.h>
+#endif /* defined(TRROJAN_WITH_DSTORAGE) */
+
 #include <winrt/base.h>
 
 #include "trrojan/d3d12/sphere_benchmark_base.h"
@@ -24,6 +28,12 @@ namespace d3d12 {
     public:
 
         /// <summary>
+        /// Specifies the priority of the queue used to stream the data in case
+        /// DirectStorage is selected as streaming method.
+        /// </summary>
+        static const char *factor_queue_priority;
+
+        /// <summary>
         /// Determines how the data are streamed to the GPU.
         /// </summary>
         static const char *factor_streaming_method;
@@ -37,6 +47,11 @@ namespace d3d12 {
         /// disks.
         /// </remarks>
         static const char *factor_staging_directory;
+
+        /// <summary>
+        /// Identifies the method of streaming via memory using DirectStorage.
+        /// </summary>
+        static const std::string streaming_method_dstorage;
 
         /// <summary>
         /// Identifies the method of streaming from disk using an I/O ring.
@@ -110,6 +125,14 @@ namespace d3d12 {
     private:
 
         std::vector<std::uint8_t> _buffer;
+#if defined(TRROJAN_WITH_DSTORAGE)
+        winrt::com_ptr<IDStorageFactory> _dstorage_factory;
+        winrt::com_ptr<ID3D12Fence> _dstorage_fence;
+        UINT64 _dstorage_fence_value;
+        winrt::com_ptr<IDStorageFile> _dstorage_file;
+        winrt::handle _dstorage_event;
+        winrt::com_ptr<IDStorageQueue> _dstorage_queue;
+#endif /* defined(TRROJAN_WITH_DSTORAGE) */
         winrt::file_handle _file;
         winrt::handle _file_mapping;
         void *_file_view;

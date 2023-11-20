@@ -376,6 +376,20 @@ namespace d3d12 {
         ID3D12Resource *resource, const UINT subresource = 0);
 
     /// <summary>
+    /// Gets the path to the file designated by the given handle.
+    /// </summary>
+    /// <param name="handle"></param>
+    /// <returns></returns>
+    std::wstring TRROJAND3D12_API get_file_path(HANDLE handle);
+
+    /// <summary>
+    /// Gets the name mapped to the specified address.
+    /// </summary>
+    /// <param name="address"></param>
+    /// <returns></returns>
+    std::wstring TRROJAND3D12_API get_mapped_file_path(void *address);
+
+    /// <summary>
     /// Gets the path of the temporary folder.
     /// </summary>
     /// <returns></returns>

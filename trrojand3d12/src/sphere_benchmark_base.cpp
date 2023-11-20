@@ -227,15 +227,19 @@ trrojan::d3d12::sphere_benchmark_base::sphere_benchmark_base(
 /*
  * trrojan::d3d12::sphere_benchmark_base::clear_stale_data
  */
-void trrojan::d3d12::sphere_benchmark_base::clear_stale_data(
+bool trrojan::d3d12::sphere_benchmark_base::clear_stale_data(
         const std::vector<std::string>& changed) {
-    if (contains_any(changed,
-            sphere_rendering_configuration::factor_data_set,
-            sphere_rendering_configuration::factor_frame,
-            sphere_rendering_configuration::factor_force_float_colour,
-            sphere_rendering_configuration::factor_fit_bounding_box)) {
+    const auto retval = contains_any(changed,
+        sphere_rendering_configuration::factor_data_set,
+        sphere_rendering_configuration::factor_frame,
+        sphere_rendering_configuration::factor_force_float_colour,
+        sphere_rendering_configuration::factor_fit_bounding_box);
+
+    if (retval) {
         this->_data.clear();
     }
+
+    return retval;
 }
 
 

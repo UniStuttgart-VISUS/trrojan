@@ -126,7 +126,9 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::on_run(
     auto shader_code = cfg.shader_id();
 
     // Clear data that cannot be used any more.
-    this->clear_stale_data(changed);
+    if (this->clear_stale_data(changed)) {
+        ::DeleteFileW(this->_path.c_str());
+    }
 
     // Load the data if necessary and copy it to the staging location requested
     // by the configuration. Note that we need to preserver the path of the

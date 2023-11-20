@@ -221,7 +221,7 @@ void trrojan::d3d12::render_target_base::enable(
  * trrojan::d3d12::render_target_base::present
  */
 UINT trrojan::d3d12::render_target_base::present(
-    const unsigned int sync_interval) {
+        const unsigned int sync_interval) {
     this->switch_buffer((this->_buffer_index + 1) % this->pipeline_depth());
     return this->_buffer_index;
 }
@@ -685,7 +685,7 @@ void trrojan::d3d12::render_target_base::set_buffers(
 void trrojan::d3d12::render_target_base::switch_buffer(
         const UINT next_buffer) {
     assert(next_buffer < this->_fence_values.size());
-    const auto completing_value = this->_fence_values[this->_buffer_index];
+    const auto complete_value = this->_fence_values[this->_buffer_index];
 
 //#if (defined(DEBUG) || defined(_DEBUG))
 //    log::instance().write_line(log_level::debug, "Render target is switching "
@@ -695,14 +695,14 @@ void trrojan::d3d12::render_target_base::switch_buffer(
 //        static_cast<void *>(this->_buffers[this->_buffer_index]),
 //        next_buffer,
 //        static_cast<void *>(this->_buffers[next_buffer]),
-//        completing_value);
+//        complete_value);
 //#endif /* (defined(DEBUG) || defined(_DEBUG)) */
 
     // Schedule a fence for the current frame in the command queue. We will
     // wait for this one to become signalled if we activate this buffer again.
     assert(this->_fence != nullptr);
     {
-        auto hr = this->_command_queue->Signal(this->_fence, completing_value);
+        auto hr = this->_command_queue->Signal(this->_fence, complete_value);
         if (FAILED(hr)) {
             throw ATL::CAtlException(hr);
         }
@@ -710,13 +710,14 @@ void trrojan::d3d12::render_target_base::switch_buffer(
 
     // Move to next frame.
     this->_buffer_index = next_buffer;
-    auto& completed_value = this->_fence_values[this->_buffer_index];
+    auto& fence_value = this->_fence_values[this->_buffer_index];
 
     // If the next frame is not yet ready, ie the previously scheduled fence
     // was not signalled, wait for it.
-    if (this->_fence->GetCompletedValue() < completed_value) {
+    const auto completed_value = this->_fence->GetCompletedValue();
+    if (completed_value < fence_value) {
         assert(this->_fence_event != NULL);
-        auto hr = this->_fence->SetEventOnCompletion(completed_value,
+        auto hr = this->_fence->SetEventOnCompletion(fence_value,
             this->_fence_event);
         if (FAILED(hr)) {
             throw ATL::CAtlException(hr);
@@ -725,9 +726,9 @@ void trrojan::d3d12::render_target_base::switch_buffer(
         wait_for_event(this->_fence_event);
     }
 
-    // Set the value for the next frame ('completed_value' is ref!), which
+    // Set the value for the next frame ('fence_value' is ref!), which
     // must be after the frame we have just completed.
-    completed_value = completing_value + 1;
+    fence_value = complete_value + 1;
 }
 
 
@@ -748,19 +749,21 @@ void trrojan::d3d12::render_target_base::wait_for_gpu(void) {
         }
     }
 
-    assert(this->_fence_event != NULL);
-    {
+    // If the GPU has not reached this value, wait for it.
+    const auto completed_value = this->_fence->GetCompletedValue();
+    if (completed_value < fence_value) {
+        assert(this->_fence_event != NULL);
         auto hr = this->_fence->SetEventOnCompletion(fence_value,
             this->_fence_event);
         if (FAILED(hr)) {
             throw ATL::CAtlException(hr);
         }
+
+        // Wait for the event to signal.
+        wait_for_event(this->_fence_event);
+
+        // Increase the fence value for the current frame ('fenceValue'
+        // is a ref!), because the previous value was now consumed.
+        ++fence_value;
     }
-
-    // Wait for the event to signal.
-    wait_for_event(this->_fence_event);
-
-    // Increase the fence value for the current frame ('fenceValue' is a ref!),
-    // because the previous value was now consumed.
-    ++fence_value;
 }

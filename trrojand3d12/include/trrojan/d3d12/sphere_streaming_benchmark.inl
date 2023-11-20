@@ -26,7 +26,12 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
     auto shader_code = cfg.shader_id();
 
     // Clear data that cannot be used any more.
-    this->clear_stale_data(changed);
+    if (this->clear_stale_data(changed)) {
+        try {
+            auto tmp_file = get_file_path(this->_file.get());
+            ::DeleteFileW(tmp_file.c_str());
+        } catch (...) { /* This is irrelevant (file was not open). */ }
+    }
 
     // Load the data if necessary. Note that we redirect the data loading
     // to the user-provided callback such that it can process it in the

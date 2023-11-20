@@ -7,6 +7,7 @@
 #include "trrojan/d3d12/utilities.h"
 
 #include <DirectXMath.h>
+#include <Psapi.h>
 
 #include "trrojan/log.h"
 #include "trrojan/io.h"
@@ -868,6 +869,44 @@ D3D12_TEXTURE_COPY_LOCATION trrojan::d3d12::get_copy_location(
     }
 
     return retval;
+}
+
+
+/*
+ * trrojan::d3d12::get_file_path
+ */
+std::wstring trrojan::d3d12::get_file_path(HANDLE handle) {
+    std::vector<wchar_t> retval(MAX_PATH + 1);
+
+    auto cnt = ::GetFinalPathNameByHandleW(handle, retval.data(),
+        static_cast<DWORD>(retval.size()), FILE_NAME_NORMALIZED);
+    if (cnt > retval.size()) {
+        retval.resize(cnt);
+        cnt = ::GetFinalPathNameByHandleW(handle, retval.data(),
+            static_cast<DWORD>(retval.size()), FILE_NAME_NORMALIZED);
+    }
+
+    if (cnt == 0) {
+        throw ATL::CAtlException(HRESULT_FROM_WIN32(::GetLastError()));
+    }
+
+    return std::wstring(retval.data(), retval.data() + cnt);
+}
+
+
+/*
+ * trrojan::d3d12::get_mapped_file_path
+ */
+std::wstring trrojan::d3d12::get_mapped_file_path(void *address) {
+    std::vector<wchar_t> retval(MAX_PATH + 1);
+
+    auto cnt = ::GetMappedFileNameW(::GetCurrentProcess(), address,
+        retval.data(), static_cast<DWORD>(retval.size()));
+    if (cnt == 0) {
+        throw ATL::CAtlException(HRESULT_FROM_WIN32(::GetLastError()));
+    }
+
+    return std::wstring(retval.data(), retval.data() + cnt);
 }
 
 
