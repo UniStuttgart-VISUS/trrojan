@@ -303,6 +303,23 @@ namespace d3d12 {
             return this->_total_batches;
         }
 
+        /// <summary>
+        /// Returns the index of a batch that can be used to upload data to the
+        /// GPU or <c>std::numeric_limits&lt;std::size_t&gt;::max()</c> if no
+        /// slot is free at the moment.
+        /// </summary>
+        /// <remarks>
+        /// <para>The caller must pass the index returned to
+        /// <see cref="signal_done" /> or it will never become available again.
+        /// Failing to signal the completion of rendering the batch will
+        /// therefore cause the system to hang up once all batches are marked
+        /// in flight and none is signalled at all.</para>
+        /// </remarks>
+        /// <returns>The index of the batch that can now be reused or an invalid
+        /// index larger than the number of batches if no batch is free.
+        /// </returns>
+        std::size_t try_next_batch(void);
+
         sphere_streaming_context& operator =(
             const sphere_streaming_context&) = delete;
 

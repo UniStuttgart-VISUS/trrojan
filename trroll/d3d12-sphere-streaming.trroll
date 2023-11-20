@@ -10,7 +10,7 @@ d3d12::stream-sphere-renderer {
 
 
     #string device = NVIDIA GeForce GTX 1050
-    uint32 batch_size = 1000; 10000
+    uint32 batch_size = 32000
     uint32 batch_count = 4
 
 	uint32vec2 viewport = 1920 1080

@@ -285,3 +285,11 @@ void trrojan::d3d12::sphere_streaming_context::signal_done(
         }
     }
 }
+
+
+/*
+ * trrojan::d3d12::sphere_streaming_context::try_next_batch
+ */
+std::size_t trrojan::d3d12::sphere_streaming_context::try_next_batch(void) {
+    return std::size_t();
+}

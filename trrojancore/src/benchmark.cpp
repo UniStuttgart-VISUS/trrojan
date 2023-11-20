@@ -139,7 +139,7 @@ size_t trrojan::benchmark_base::run(const configuration_set& configs,
                 this->log_run(c);
                 auto r = resultCallback(std::move(this->run(c)));
                 ++retval;
-                return r;
+                return true;
             } else {
                 log::instance().write_line(log_level::information, "A "
                     "benchmark cannot run with the specified combination of "
@@ -149,6 +149,10 @@ size_t trrojan::benchmark_base::run(const configuration_set& configs,
 
         } catch (const std::exception& ex) {
             log::instance().write_line(ex);
+            return false;
+        } catch (...) {
+            log::instance().write_line(log_level::error, "An unexpected "
+                "exception was encountered while running a benchmark.");
             return false;
         }
     });
