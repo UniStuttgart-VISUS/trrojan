@@ -10,6 +10,7 @@
 #include <Windows.h>
 
 #include <winrt/windows.applicationmodel.core.h>
+#include <winrt/windows.foundation.collections.h>
 #include <winrt/windows.storage.h>
 
 
@@ -23,6 +24,7 @@ class App : public winrt::implements<App,
 public:
 
     template<class R> using IAsyncOperation = winrt::Windows::Foundation::IAsyncOperation<R>;
+    template<class T> using IVectorView = winrt::Windows::Foundation::Collections::IVectorView<T>;
     using AsyncStatus = winrt::Windows::Foundation::AsyncStatus;
     using CoreApplication = winrt::Windows::ApplicationModel::Core::CoreApplication;
     using CoreDispatcher = winrt::Windows::UI::Core::CoreDispatcher;
@@ -145,7 +147,12 @@ private:
     /// <summary>
     /// Runs the specified TRROLL file.
     /// </summary>
-    void RunTrroll(StorageFile file);
+    void RunTrroll(StorageFile file, const bool prompt_next = true);
+
+    /// <summary>
+    /// Runs the specified TRROLL files one after another.
+    /// </summary>
+    void RunTrrolls(IVectorView<StorageFile> files);
 
     //State _state;
 

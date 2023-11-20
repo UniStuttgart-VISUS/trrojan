@@ -28,6 +28,7 @@
 
 #if defined(TRROJAN_FOR_UWP)
 #include <winrt/windows.applicationmodel.core.h>
+#include <winrt/windows.foundation.collections.h>
 #include <winrt/windows.storage.h>
 #include <winrt/windows.storage.pickers.h>
 #endif /* defined(TRROJAN_FOR_UWP) */
@@ -314,8 +315,43 @@ namespace trrojan {
 
 #if defined(TRROJAN_FOR_UWP)
     /// <summary>
-    /// Picks a file using the given <paramref name="picker" /> and invokes the
-    /// given action with the
+    /// Picks one or more files using the given <paramref name="picker" /> and
+    /// invokes the given action with a
+    /// <see cref="winrt::Windows::Foundation::Collections::IVectorView" /> of
+    /// <see cref="winrt::Windows::Storage::StorageFile" />s.
+    /// </summary>
+    /// <typeparam name="TAction">The type of the functor to be invoked, which
+    /// must accept a vector of
+    /// <see cref="winrt::Windows::Storage::StorageFile" />s as
+    /// parameter.</typeparam>
+    /// <param name="picker">The file picker used to select the file. The picker
+    /// must have been fully configured according to the callers needs.</param>
+    /// <param name="action">The action to be invoked for the selected file.
+    /// </param>
+    template<class TAction> void pick_files_and_continue(
+            winrt::Windows::Storage::Pickers::FileOpenPicker picker,
+            TAction&& action) {
+        using namespace winrt::Windows::UI::Core;
+        using namespace winrt::Windows::Foundation;
+        using namespace winrt::Windows::Foundation::Collections;
+        using namespace winrt::Windows::Storage;
+        picker.PickMultipleFilesAsync().Completed([action](
+                const IAsyncOperation<IVectorView<StorageFile>> operation,
+                const AsyncStatus status) {
+            if (status == AsyncStatus::Completed) {
+                action(operation.get());
+            } else {
+                static auto none = winrt::single_threaded_vector<StorageFile>();
+                action(none.GetView());
+            }
+        });
+    }
+#endif /* defined(TRROJAN_FOR_UWP) */
+
+#if defined(TRROJAN_FOR_UWP)
+    /// <summary>
+    /// Picks a file using a file picker with the given
+    /// <paramref name="filter" /> and invokes the given action with the
     ///  <see cref="winrt::Windows::Storage::StorageFile" />.
     /// </summary>
     /// <typeparam name="TAction">The type of the functor to be invoked, which
@@ -331,6 +367,30 @@ namespace trrojan {
         winrt::Windows::Storage::Pickers::FileOpenPicker picker;
         picker.FileTypeFilter().ReplaceAll(filter);
         pick_file_and_continue(picker, std::forward<TAction>(action));
+    }
+#endif /* defined(TRROJAN_FOR_UWP) */
+
+#if defined(TRROJAN_FOR_UWP)
+    /// <summary>
+    /// Picks one or more files using a file picker with the given
+    /// <paramref name="filter" /> and invokes the given action with a
+    /// <see cref="winrt::Windows::Foundation::Collections::IVectorView" /> of
+    /// <see cref="winrt::Windows::Storage::StorageFile" />s.
+    /// </summary>
+    /// <typeparam name="TAction">The type of the functor to be invoked, which
+    /// must accept a vector of
+    /// <see cref="winrt::Windows::Storage::StorageFile" />s as
+    /// parameter.</typeparam>
+    /// <param name="filter">The file filter that is applied to the picker that
+    /// the function creates for selecting files.</param>
+    /// <param name="action">The action to be invoked for the selected file.
+    /// </param>
+    template<class TAction> void pick_files_and_continue(
+            const std::vector<winrt::hstring>& filter,
+            TAction&& action) {
+        winrt::Windows::Storage::Pickers::FileOpenPicker picker;
+        picker.FileTypeFilter().ReplaceAll(filter);
+        pick_files_and_continue(picker, std::forward<TAction>(action));
     }
 #endif /* defined(TRROJAN_FOR_UWP) */
 

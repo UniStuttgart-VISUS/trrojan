@@ -533,15 +533,15 @@ HANDLE App::CopyResultsToUsbAsync(const std::string& outFile,
 void App::PromptTrroll(void) {
     trrojan::log::instance().write_line(trrojan::log_level::verbose,
         "Prompting user for a TRROLL script.");
-    trrojan::pick_file_and_continue({ L".trroll" },
-        std::bind(&App::RunTrroll, this, std::placeholders::_1));
+    trrojan::pick_files_and_continue({ L".trroll" },
+        std::bind(&App::RunTrrolls, this, std::placeholders::_1));
 }
 
 
 /*
  * App::RunTrroll
  */
-void App::RunTrroll(StorageFile file) {
+void App::RunTrroll(StorageFile file, const bool prompt_next) {
     using namespace winrt::Windows::UI::Core;
 
     if (!file) {
@@ -582,6 +582,33 @@ void App::RunTrroll(StorageFile file) {
     auto evt = this->CopyResultsToUsbAsync(outFile, logFile);
     on_exit([evt](void) { ::CloseHandle(evt); });
     ::WaitForSingleObject(evt, INFINITE);
+
+    if (prompt_next) {
+        // Ask for the next benchmark to run.
+        this->_dispatcher.get().RunAsync(CoreDispatcherPriority::Normal,
+            std::bind(&App::PromptTrroll, this));
+    }
+}
+
+
+/*
+ * App::RunTrrolls
+ */
+void App::RunTrrolls(IVectorView<StorageFile> files) {
+    using namespace winrt::Windows::UI::Core;
+
+    if (files.Size() < 1) {
+        // If the user did not provide a test script, we exit.
+        trrojan::log::instance().write_line(trrojan::log_level::information,
+            "User chose to end benchmarking by not selecting a "
+            "benchmarking script.");
+        CoreApplication::Exit();
+    }
+
+    // Run all the specified scripts one after another.
+    for (auto f : files) {
+        this->RunTrroll(f, false);
+    }
 
     // Ask for the next benchmark to run.
     this->_dispatcher.get().RunAsync(CoreDispatcherPriority::Normal,
