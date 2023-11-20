@@ -6,6 +6,7 @@
 
 #pragma once
 
+#if defined(TRROJAN_WITH_DSTORAGE)
 #include <dstorage.h>
 
 #include <winrt/base.h>
@@ -89,3 +90,5 @@ namespace d3d12 {
 
 } /* end namespace d3d12 */
 } /* end namespace trrojan */
+
+#endif /* defined(TRROJAN_WITH_DSTORAGE) */

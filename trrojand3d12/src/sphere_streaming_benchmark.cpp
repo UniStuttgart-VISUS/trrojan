@@ -138,6 +138,10 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
         }, device, config, power_collector, changed);
 
     } else if (trrojan::iequals(method, streaming_method_memory_mapping)) {
+#if defined(TRROJAN_FOR_UWP)
+        throw std::logic_error("The requested streaming method is unsupported "
+            "on UWP.");
+#else /* defined(TRROJAN_FOR_UWP) */
         return this->on_run([this, &folder](const UINT64 size) {
             // Copy the raw data to a memory-mapped file such that we can
             // seek like in the in-memory file. This is required as the
@@ -185,8 +189,13 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
             assert(this->_file_view != nullptr);
             ::memcpy(d, static_cast<std::uint8_t *>(this->_file_view) + o, l);
         }, device, config, power_collector, changed);
+#endif /* defined(TRROJAN_FOR_UWP) */
 
     } else if (trrojan::iequals(method, streaming_method_read_file)) {
+#if defined(TRROJAN_FOR_UWP)
+        throw std::logic_error("The requested streaming method is unsupported "
+            "on UWP.");
+#else /* defined(TRROJAN_FOR_UWP) */
         return this->on_run([this, &folder](const UINT64 size) {
             // As for the memory mapping technique, we must make sure that the
             // data are actually in a file, regardless of whether they come from
@@ -243,6 +252,7 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
                 rem -= read;
             }
         }, device, config, power_collector, changed);
+#endif /* defined(TRROJAN_FOR_UWP) */
 
     } else {
         trrojan::log::instance().write_line(log_level::error, "The sphere "

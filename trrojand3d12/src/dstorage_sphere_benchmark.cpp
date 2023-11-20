@@ -4,6 +4,7 @@
 // </copyright>
 // <author>Christoph Müller</author>
 
+#if defined(TRROJAN_WITH_DSTORAGE)
 #include "trrojan/d3d12/dstorage_sphere_benchmark.h"
 
 #include "trrojan/text.h"
@@ -738,3 +739,4 @@ void trrojan::d3d12::dstorage_sphere_benchmark::set_vertex_buffer(
         cmd_list->IASetVertexBuffers(0, 1, &desc);
     }
 }
+#endif /* defined(TRROJAN_WITH_DSTORAGE) */

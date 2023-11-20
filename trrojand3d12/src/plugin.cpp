@@ -146,8 +146,10 @@ size_t trrojan::d3d12::plugin::create_benchmarks(benchmark_list& dst) const {
     dst.emplace_back(std::make_shared<sphere_benchmark>());
 #if !defined(TRROJAN_FOR_UWP)
     dst.emplace_back(std::make_shared<sphere_streaming_benchmark>());
-    dst.emplace_back(std::make_shared<dstorage_sphere_benchmark>());
 #endif /* !defined(TRROJAN_FOR_UWP) */
+#if defined(TRROJAN_WITH_DSTORAGE)
+    dst.emplace_back(std::make_shared<dstorage_sphere_benchmark>());
+#endif /* defined(TRROJAN_WITH_DSTORAGE) */
     dst.emplace_back(std::make_shared<cs_volume_benchmark>());
 
     retval = dst.size() - retval;
