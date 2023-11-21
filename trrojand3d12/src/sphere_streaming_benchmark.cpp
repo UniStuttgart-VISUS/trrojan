@@ -307,6 +307,11 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
             DSTORAGE_QUEUE_DESC desc;
             ::ZeroMemory(&desc, sizeof(desc));
             desc.Capacity = static_cast<UINT16>(this->pipeline_depth());
+            if (desc.Capacity > DSTORAGE_MAX_QUEUE_CAPACITY) {
+                desc.Capacity = DSTORAGE_MAX_QUEUE_CAPACITY;
+            } else if (desc.Capacity < DSTORAGE_MIN_QUEUE_CAPACITY) {
+                desc.Capacity = DSTORAGE_MIN_QUEUE_CAPACITY;
+            }
             desc.Priority = static_cast<DSTORAGE_PRIORITY>(priority);
             desc.SourceType = DSTORAGE_REQUEST_SOURCE_FILE;
             desc.Device = device.d3d_device();

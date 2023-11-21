@@ -131,10 +131,10 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::on_run(
     auto impl = config.get<std::string>(factor_implementation);
 
     if (iequals(impl, implementation_batches)) {
-        this->run_batches(device, config, power_collector, changed);
+        return this->run_batches(device, config, power_collector, changed);
 
     } else if (iequals(impl, implementation_naive)) {
-        this->run_naive(device, config, power_collector, changed);
+        return this->run_naive(device, config, power_collector, changed);
 
     } else {
         trrojan::log::instance().write_line(log_level::error, "\"{0}\" is "
@@ -292,7 +292,12 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_naive(
     }
 
     {
-        const auto capacity = config.get<std::uint16_t>(factor_queue_depth);
+        auto capacity = config.get<std::uint16_t>(factor_queue_depth);
+        if (capacity > DSTORAGE_MAX_QUEUE_CAPACITY) {
+            capacity = DSTORAGE_MAX_QUEUE_CAPACITY;
+        } else if (capacity < DSTORAGE_MIN_QUEUE_CAPACITY) {
+            capacity = DSTORAGE_MIN_QUEUE_CAPACITY;
+        }
         const auto priority = static_cast<DSTORAGE_PRIORITY>(
             config.get<std::uint32_t>(factor_queue_priority));
         DSTORAGE_QUEUE_DESC desc;
