@@ -291,5 +291,30 @@ void trrojan::d3d12::sphere_streaming_context::signal_done(
  * trrojan::d3d12::sphere_streaming_context::try_next_batch
  */
 std::size_t trrojan::d3d12::sphere_streaming_context::try_next_batch(void) {
-    return std::size_t();
+    assert(this->_fence != nullptr);
+    auto retval = (std::numeric_limits<std::size_t>::max)();
+
+    // Every batch up to this fence value is reusable.
+    const auto finished_value = this->_fence->GetCompletedValue();
+    //log::instance().write_line(log_level::debug, "Fence is {0}.",
+    //    finished_value);
+
+    /// Search all fence values for reusable ones.
+    this->_ready_count = 0;
+    for (std::size_t i = 0; i < this->_fence_values.size(); ++i) {
+        if (this->_fence_values[i] <= finished_value) {
+            // We found a batch that has completed rendering.
+            ++this->_ready_count;
+            retval = i;
+        }
+    }
+
+    // Make sure that we do not hand out the batch index again until the fence
+    // was injected and passed in the command queue using signal_done().
+    if (retval < this->_fence_values.size()) {
+        this->_fence_values[retval] = (std::numeric_limits<UINT64>::max)();
+        --this->_ready_count;
+    }
+
+    return retval;
 }
