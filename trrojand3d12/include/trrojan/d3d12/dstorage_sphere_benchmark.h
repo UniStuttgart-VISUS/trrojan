@@ -26,6 +26,20 @@ namespace d3d12 {
 
     public:
 
+        static const std::string implementation_batches;
+        static const std::string implementation_naive;
+
+        /// <summary>
+        /// Specifies the approach being implemented.
+        /// </summary>
+        static const char *factor_implementation;
+
+        /// <summary>
+        /// Specifies the factor that determines the capacity of the
+        /// DirectStorage queue.
+        /// </summary>
+        static const char *factor_queue_depth;
+
         /// <summary>
         /// Specifies the priority of the queue used to stream the data.
         /// </summary>
@@ -81,6 +95,16 @@ namespace d3d12 {
             const shader_id_type shader_code, const std::size_t batch);
 
     private:
+
+        trrojan::result run_batches(d3d12::device& device,
+            const configuration& config,
+            power_collector::pointer& power_collector,
+            const std::vector<std::string>& changed);
+
+        trrojan::result run_naive(d3d12::device& device,
+            const configuration& config,
+            power_collector::pointer& power_collector,
+            const std::vector<std::string>& changed);
 
         winrt::com_ptr<ID3D12Fence> _fence;
         UINT64 _next_fence_value;

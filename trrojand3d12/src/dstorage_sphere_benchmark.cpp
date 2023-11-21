@@ -15,9 +15,20 @@
 #include "sphere_techniques.h"
 
 
+#define _DSTOR_BENCH_DEFINE_IMPL(i)                                            \
+const std::string trrojan::d3d12::dstorage_sphere_benchmark::implementation_##i(#i)
+
+_DSTOR_BENCH_DEFINE_IMPL(batches);
+_DSTOR_BENCH_DEFINE_IMPL(naive);
+
+#undef _DSTOR_BENCH_DEFINE_IMPL
+
+
 #define _DSTOR_BENCH_DEFINE_FACTOR(f)                                          \
 const char *trrojan::d3d12::dstorage_sphere_benchmark::factor_##f = #f
 
+_DSTOR_BENCH_DEFINE_FACTOR(implementation);
+_DSTOR_BENCH_DEFINE_FACTOR(queue_depth);
 _DSTOR_BENCH_DEFINE_FACTOR(queue_priority);
 _DSTOR_BENCH_DEFINE_FACTOR(staging_directory);
 
@@ -34,6 +45,11 @@ trrojan::d3d12::dstorage_sphere_benchmark::dstorage_sphere_benchmark(
         sphere_streaming_context::factor_batch_count, 8u));
     this->_default_configs.add_factor(factor::from_manifestations(
         sphere_streaming_context::factor_batch_size, 1024u));
+    this->_default_configs.add_factor(factor::from_manifestations(
+        factor_implementation,
+        { implementation_batches, implementation_naive }));
+    this->_default_configs.add_factor(factor::from_manifestations(
+        factor_queue_depth, DSTORAGE_MAX_QUEUE_CAPACITY));
     this->_default_configs.add_factor(factor::from_manifestations(
         factor_queue_priority,
         static_cast<std::uint32_t>(DSTORAGE_PRIORITY_NORMAL)));
@@ -110,6 +126,66 @@ void trrojan::d3d12::dstorage_sphere_benchmark::on_device_switch(
 trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::on_run(
         d3d12::device& device,
         const configuration& config,
+        power_collector::pointer& power_collector,
+        const std::vector<std::string>& changed) {
+    auto impl = config.get<std::string>(factor_implementation);
+
+    if (iequals(impl, implementation_batches)) {
+        this->run_batches(device, config, power_collector, changed);
+
+    } else if (iequals(impl, implementation_naive)) {
+        this->run_naive(device, config, power_collector, changed);
+
+    } else {
+        trrojan::log::instance().write_line(log_level::error, "\"{0}\" is "
+            "not a valid implementation of the DirectStorage benchmark.", impl);
+        throw std::invalid_argument("The specified streaming implementation "
+            "does not exist.");
+    }
+}
+
+
+/*
+ * trrojan::d3d12::dstorage_sphere_benchmark::set_vertex_buffer
+ */
+void trrojan::d3d12::dstorage_sphere_benchmark::set_vertex_buffer(
+        ID3D12GraphicsCommandList *cmd_list,
+        const shader_id_type shader_code,
+        const std::size_t batch) {
+    assert(cmd_list != nullptr);
+    if (!is_technique(shader_code, SPHERE_TECHNIQUE_USE_SRV)) {
+        D3D12_VERTEX_BUFFER_VIEW desc;
+        desc.BufferLocation = this->_stream.descriptor(batch);
+        desc.SizeInBytes = this->_stream.batch_size(0);
+        desc.StrideInBytes = this->_data.stride();
+
+#if (defined(DEBUG) || defined(_DEBUG))
+        log::instance().write_line(log_level::debug, "Rendering technique uses "
+            "vertex buffer. Setting 0x{0:x} ...", desc.BufferLocation);
+#endif /* (defined(DEBUG) || defined(_DEBUG)) */
+        cmd_list->IASetVertexBuffers(0, 1, &desc);
+    }
+}
+
+
+/*
+ * trrojan::d3d12::dstorage_sphere_benchmark::run_batches
+ */
+trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_batches(
+        d3d12::device& device,
+        const configuration& config,
+        power_collector::pointer& power_collector,
+        const std::vector<std::string>& changed) {
+    return trrojan::result();
+}
+
+
+/*
+ * trrojan::d3d12::dstorage_sphere_benchmark::run_naive
+ */
+trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_naive(
+        d3d12::device& device,
+        const configuration &config,
         power_collector::pointer& power_collector,
         const std::vector<std::string>& changed) {
     std::vector<gpu_timer::millis_type> batch_times, gpu_times;
@@ -216,11 +292,12 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::on_run(
     }
 
     {
+        const auto capacity = config.get<std::uint16_t>(factor_queue_depth);
         const auto priority = static_cast<DSTORAGE_PRIORITY>(
             config.get<std::uint32_t>(factor_queue_priority));
         DSTORAGE_QUEUE_DESC desc;
         ::ZeroMemory(&desc, sizeof(desc));
-        desc.Capacity = DSTORAGE_MAX_QUEUE_CAPACITY;
+        desc.Capacity = capacity;
         desc.Priority = priority;
         desc.SourceType = DSTORAGE_REQUEST_SOURCE_FILE;
         desc.Device = device.d3d_device();
@@ -717,28 +794,5 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::on_run(
     });
 
     return retval;
-}
-
-
-/*
- * trrojan::d3d12::dstorage_sphere_benchmark::set_vertex_buffer
- */
-void trrojan::d3d12::dstorage_sphere_benchmark::set_vertex_buffer(
-        ID3D12GraphicsCommandList *cmd_list,
-        const shader_id_type shader_code,
-        const std::size_t batch) {
-    assert(cmd_list != nullptr);
-    if (!is_technique(shader_code, SPHERE_TECHNIQUE_USE_SRV)) {
-        D3D12_VERTEX_BUFFER_VIEW desc;
-        desc.BufferLocation = this->_stream.descriptor(batch);
-        desc.SizeInBytes = this->_stream.batch_size(0);
-        desc.StrideInBytes = this->_data.stride();
-
-#if (defined(DEBUG) || defined(_DEBUG))
-        log::instance().write_line(log_level::debug, "Rendering technique uses "
-            "vertex buffer. Setting 0x{0:x} ...", desc.BufferLocation);
-#endif /* (defined(DEBUG) || defined(_DEBUG)) */
-        cmd_list->IASetVertexBuffers(0, 1, &desc);
-    }
 }
 #endif /* defined(TRROJAN_WITH_DSTORAGE) */

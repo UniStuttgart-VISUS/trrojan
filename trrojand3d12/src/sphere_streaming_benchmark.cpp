@@ -25,8 +25,7 @@ _STRM_BENCH_DEFINE_FACTOR(staging_directory);
 
 
 #define _STRM_BENCH_DEFINE_METHOD(m)                                           \
-const std::string trrojan::d3d12::sphere_streaming_benchmark::\
-streaming_method_##m(#m)
+const std::string trrojan::d3d12::sphere_streaming_benchmark::streaming_method_##m(#m)
 
 _STRM_BENCH_DEFINE_METHOD(dstorage);
 _STRM_BENCH_DEFINE_METHOD(io_ring);
@@ -307,7 +306,7 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
         if (!this->_dstorage_queue) {
             DSTORAGE_QUEUE_DESC desc;
             ::ZeroMemory(&desc, sizeof(desc));
-            desc.Capacity = DSTORAGE_MAX_QUEUE_CAPACITY;
+            desc.Capacity = static_cast<UINT16>(this->pipeline_depth());
             desc.Priority = static_cast<DSTORAGE_PRIORITY>(priority);
             desc.SourceType = DSTORAGE_REQUEST_SOURCE_FILE;
             desc.Device = device.d3d_device();
