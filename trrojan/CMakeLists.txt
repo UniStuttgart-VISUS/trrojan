@@ -15,7 +15,7 @@ endif ()
 
 # Files that are embedded as assets in the APPX package.
 if (TRROJAN_FOR_UWP)
-    file(GLOB_RECURSE AssetFiles "${CMAKE_CURRENT_SOURCE_DIR}/Assets" "*")
+    file(GLOB_RECURSE AssetFiles RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "Assets/*")
 endif()
 
 # Files that are packaged as content in the APPX package
