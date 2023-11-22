@@ -197,6 +197,32 @@ namespace d3d12 {
         const std::size_t size);
 
     /// <summary>
+    /// Create a D3D12 heap on the given device.
+    /// </summary>
+    /// <param name="device"></param>
+    /// <param name="desc"></param>
+    /// <returns></returns>
+    ATL::CComPtr<ID3D12Heap> TRROJAND3D12_API create_heap(
+        ID3D12Device *device, const D3D12_HEAP_DESC& desc);
+
+    /// <summary>
+    /// Create a heap that can hold <paramref name="cnt" /> of the specified
+    /// resources.
+    /// </summary>
+    /// <param name="device"></param>
+    /// <param name="alloc_info"></param>
+    /// <param name="cnt"></param>
+    /// <param name="type"></param>
+    /// <param name="flags"></param>
+    /// <returns></returns>
+    ATL::CComPtr<ID3D12Heap> TRROJAND3D12_API create_heap(
+        ID3D12Device *device,
+        const D3D12_RESOURCE_ALLOCATION_INFO& alloc_info,
+        const std::size_t cnt = 1,
+        const D3D12_HEAP_TYPE type = D3D12_HEAP_TYPE_DEFAULT,
+        const D3D12_HEAP_FLAGS flags = D3D12_HEAP_FLAG_NONE);
+
+    /// <summary>
     /// Creates a 2D texture which is initially in the present state.
     /// </summary>
     /// <param name="device"></param>
@@ -423,6 +449,17 @@ namespace d3d12 {
         p += n * align_constant_buffer_size(sizeof(TPointer));
         return reinterpret_cast<TPointer *>(p);
     }
+
+    /// <summary>
+    /// Maps the given file mapping into the address space of the process.
+    /// </summary>
+    /// <param name="mapping"></param>
+    /// <param name="access"></param>
+    /// <param name="offset"></param>
+    /// <param name="size"></param>
+    /// <returns></returns>
+    TRROJAND3D12_API void *map_view_of_file(winrt::handle& mapping,
+        const DWORD access, const std::size_t offset, const std::size_t size);
 
     /// <summary>
     /// Offsets the given pointer by the given number of bytes.

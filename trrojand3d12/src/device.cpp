@@ -117,24 +117,35 @@ void trrojan::d3d12::device::wait_for_gpu(void) {
     auto fence = this->fence();
     auto value = this->_next_fence++;
 
-    // Make the fence signal in the command queue with its current value.
-    {
-        auto hr = this->command_queue()->Signal(fence, value);
-        if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
-        }
-    }
-
     // Signal the event if the fence signalled with its current value.
     auto evt = create_event(false, false);
     {
+        log::instance().write_line(log_level::debug, "Set event on {0}.",
+            value);
         auto hr = fence->SetEventOnCompletion(value, evt);
         if (FAILED(hr)) {
             throw ATL::CAtlException(hr);
         }
     }
 
+    // Make the fence signal in the command queue with its current value.
+    {
+        log::instance().write_line(log_level::debug, "Signal 0x{0:p} with {1}.",
+            static_cast<void *>(fence.p), value);
+        auto hr = this->command_queue()->Signal(fence, value);
+        if (FAILED(hr)) {
+            throw ATL::CAtlException(hr);
+        }
+    }
+
+#if (defined(DEBUG) || defined(_DEBUG))
+    log::instance().write_line(log_level::debug, "Current fence value is {0}.",
+        fence->GetCompletedValue());
+#endif /* (defined(DEBUG) || defined(_DEBUG)) */
+
     // Wait for the event to signal.
+    log::instance().write_line(log_level::debug, "Waiting for fence value {0}.",
+        value);
     wait_for_event(evt);
 }
 

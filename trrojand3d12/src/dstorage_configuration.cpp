@@ -4,7 +4,7 @@
 // </copyright>
 // <author>Christoph Müller</author>
 
-#if defined(TRROJAN_WITH_DSTORAGE)
+
 #include "trrojan/d3d12/dstorage_configuration.h"
 
 #include "trrojan/d3d12/utilities.h"
@@ -25,15 +25,23 @@ _DSTOR_DEFINE_FACTOR(staging_directory);
  */
 void trrojan::d3d12::dstorage_configuration::add_defaults(
         configuration_set& configs) {
+#if defined(TRROJAN_WITH_DSTORAGE)
     configs.add_factor(factor::from_manifestations(factor_queue_depth,
         DSTORAGE_MAX_QUEUE_CAPACITY));
     configs.add_factor(factor::from_manifestations(factor_queue_priority,
         static_cast<std::uint32_t>(DSTORAGE_PRIORITY_NORMAL)));
+#else /* defined(TRROJAN_WITH_DSTORAGE) */
+    configs.add_factor(factor::from_manifestations(factor_queue_depth,
+        static_cast<std::uint8_t>(0)));
+    configs.add_factor(factor::from_manifestations(factor_queue_priority, 0u));
+#endif /* defined(TRROJAN_WITH_DSTORAGE) */
+
     configs.add_factor(factor::from_manifestations(factor_staging_directory,
         get_temp_folder()));
 }
 
 
+#if defined(TRROJAN_WITH_DSTORAGE)
 #define _DSTOR_INIT_FACTOR(f) _##f(config.get<decltype(_##f)>(factor_##f))
 
 /*

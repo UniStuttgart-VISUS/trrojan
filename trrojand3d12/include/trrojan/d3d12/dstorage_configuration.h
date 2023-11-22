@@ -6,12 +6,13 @@
 
 #pragma once
 
-#if defined(TRROJAN_WITH_DSTORAGE)
 #include <cinttypes>
 #include <string>
 #include <type_traits>
 
+#if defined(TRROJAN_WITH_DSTORAGE)
 #include <dstorage.h>
+#endif /* defined(TRROJAN_WITH_DSTORAGE) */
 
 #include "trrojan/configuration_set.h"
 
@@ -61,6 +62,7 @@ namespace d3d12 {
         /// </remarks>
         static const char *factor_staging_directory;
 
+#if defined(TRROJAN_WITH_DSTORAGE)
         dstorage_configuration(const configuration& config);
 
         inline void apply(DSTORAGE_QUEUE_DESC& desc) const noexcept {
@@ -85,9 +87,11 @@ namespace d3d12 {
         std::uint16_t _queue_depth;
         std::underlying_type<DSTORAGE_PRIORITY>::type _queue_priority;
         std::string _staging_directory;
+
+#else /* defined(TRROJAN_WITH_DSTORAGE) */
+        dstorage_configuration(void) = delete;
+#endif /* defined(TRROJAN_WITH_DSTORAGE) */
     };
 
 } /* end namespace d3d12 */
 } /* end namespace trrojan */
-
-#endif /* defined(TRROJAN_WITH_DSTORAGE) */

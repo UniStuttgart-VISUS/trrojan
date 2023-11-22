@@ -59,9 +59,16 @@ namespace d3d12 {
         static const std::string streaming_method_io_ring;
 
         /// <summary>
-        /// Identifies the method of streaming from a memory-mapped file.
+        /// Identifies the method of streaming from a memory-mapped file for
+        /// which the view is created whenever we want to read.
         /// </summary>
         static const std::string streaming_method_memory_mapping;
+
+        /// <summary>
+        /// Identifies the method of streaming from a memory-mapped file that is
+        /// mapped as a whole.
+        /// </summary>
+        static const std::string streaming_method_persistent_memory_mapping;
 
         /// <summary>
         /// Identifies the method of loading the whole data set to RAM and
@@ -124,6 +131,12 @@ namespace d3d12 {
 
     private:
 
+        void finalise_temp_file(const UINT64 size, const std::uint32_t repeat);
+
+        void *map_temp_file(const UINT64 size, const std::string& folder,
+            const std::uint32_t repeat);
+
+        DWORD _allocation_granularity;
         std::vector<std::uint8_t> _buffer;
 #if defined(TRROJAN_WITH_DSTORAGE)
         winrt::com_ptr<IDStorageFactory> _dstorage_factory;
