@@ -185,6 +185,18 @@ namespace d3d12 {
         const UINT64 initial_value = 0);
 
     /// <summary>
+    /// Createa a file mapping object for the given file.
+    /// </summary>
+    /// <param name="handle"></param>
+    /// <param name="protect"></param>
+    /// <param name="size"></param>
+    /// <returns></returns>
+    winrt::handle TRROJAND3D12_API create_file_mapping(
+        winrt::file_handle& handle,
+        const DWORD protect,
+        const std::size_t size);
+
+    /// <summary>
     /// Creates a 2D texture which is initially in the present state.
     /// </summary>
     /// <param name="device"></param>

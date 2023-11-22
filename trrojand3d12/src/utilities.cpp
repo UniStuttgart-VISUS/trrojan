@@ -289,6 +289,24 @@ ATL::CComPtr<ID3D12Fence> trrojan::d3d12::create_fence(ID3D12Device *device,
 
 
 /*
+ * trrojan::d3d12::create_file_mapping
+ */
+winrt::handle trrojan::d3d12::create_file_mapping(winrt::file_handle& handle,
+        const DWORD protect, const std::size_t size) {
+    ULARGE_INTEGER s;
+    s.QuadPart = size;
+
+    winrt::handle retval(::CreateFileMappingW(handle.get(), nullptr, protect,
+        s.HighPart, s.LowPart, nullptr));
+    if (!retval) {
+        throw ATL::CAtlException(HRESULT_FROM_WIN32(::GetLastError()));
+    }
+
+    return retval;
+}
+
+
+/*
  * trrojan::d3d12::create_render_target
  */
 ATL::CComPtr<ID3D12Resource> trrojan::d3d12::create_render_target(
