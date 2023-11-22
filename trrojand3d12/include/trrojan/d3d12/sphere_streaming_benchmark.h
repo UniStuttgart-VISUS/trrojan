@@ -49,6 +49,12 @@ namespace d3d12 {
         static const char *factor_staging_directory;
 
         /// <summary>
+        /// Identifies the method of streaming from a memory-mapped file that is
+        /// re-mapped in batches.
+        /// </summary>
+        static const std::string streaming_method_batch_memory_mapping;
+
+        /// <summary>
         /// Identifies the method of streaming via memory using DirectStorage.
         /// </summary>
         static const std::string streaming_method_dstorage;
@@ -138,6 +144,7 @@ namespace d3d12 {
 
         DWORD _allocation_granularity;
         std::vector<std::uint8_t> _buffer;
+        std::size_t _cnt_remap;
 #if defined(TRROJAN_WITH_DSTORAGE)
         winrt::com_ptr<IDStorageFactory> _dstorage_factory;
         winrt::com_ptr<ID3D12Fence> _dstorage_fence;
@@ -149,6 +156,7 @@ namespace d3d12 {
         winrt::file_handle _file;
         winrt::handle _file_mapping;
         void *_file_view;
+        std::pair<std::size_t, std::size_t> _mapped_range;
         sphere_streaming_context _stream;
     };
 

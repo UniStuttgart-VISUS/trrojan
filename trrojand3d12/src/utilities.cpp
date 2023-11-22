@@ -995,7 +995,8 @@ void *trrojan::d3d12::map_view_of_file(winrt::handle& mapping,
     auto retval = ::MapViewOfFile(mapping.get(), access, o.HighPart, o.LowPart,
         size);
     if (retval == nullptr) {
-        throw ATL::CAtlException(HRESULT_FROM_WIN32(::GetLastError()));
+        const auto error = ::GetLastError();
+        throw ATL::CAtlException(HRESULT_FROM_WIN32(error));
     }
 
     return retval;

@@ -367,6 +367,7 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
     // Obtain pipeline statistics.
     log::instance().write_line(log_level::debug, "Collecting pipeline "
         "statistics ...");
+    this->_cnt_remap = 0;
     {
         // Allocate queries for each batch, because we cannot span the queries
         // over multiple command lists.
@@ -490,6 +491,7 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
             "ds_invokes",
             "cs_invokes",
             "upload_stalls",
+            "remaps",
             "batch_time_min",
             "batch_time_med",
             "batch_time_max",
@@ -517,6 +519,7 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
         pipeline_stats.DSInvocations,
         pipeline_stats.CSInvocations,
         cnt_stalls,
+        this->_cnt_remap,
         batch_times.front(),
         batch_median,
         batch_times.back(),

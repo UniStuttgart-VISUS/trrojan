@@ -29,6 +29,7 @@ _STRM_BENCH_DEFINE_FACTOR(staging_directory);
 #define _STRM_BENCH_DEFINE_METHOD(m)                                           \
 const std::string trrojan::d3d12::sphere_streaming_benchmark::streaming_method_##m(#m)
 
+_STRM_BENCH_DEFINE_METHOD(batch_memory_mapping);
 _STRM_BENCH_DEFINE_METHOD(dstorage);
 _STRM_BENCH_DEFINE_METHOD(io_ring);
 _STRM_BENCH_DEFINE_METHOD(memory_mapping);
@@ -45,15 +46,18 @@ _STRM_BENCH_DEFINE_METHOD(read_file);
 trrojan::d3d12::sphere_streaming_benchmark::sphere_streaming_benchmark(
         void)
     : sphere_benchmark_base("stream-sphere-renderer"),
-        _allocation_granularity(0), _file_view(nullptr) {
+        _allocation_granularity(0), _cnt_remap(0), _file_view(nullptr),
+        _mapped_range(std::make_pair(0, 0)) {
     dstorage_configuration::add_defaults(this->_default_configs);
     sphere_streaming_context::add_defaults(this->_default_configs);
     this->_default_configs.add_factor(factor::from_manifestations(
-        factor_streaming_method,
-        { streaming_method_ram,
-        streaming_method_memory_mapping,
-        streaming_method_persistent_memory_mapping,
-        streaming_method_dstorage }));
+        factor_streaming_method, {
+            streaming_method_batch_memory_mapping,
+            streaming_method_ram,
+            streaming_method_memory_mapping,
+            streaming_method_persistent_memory_mapping,
+            streaming_method_dstorage
+        }));
 
     // Determine the allocation granularity that we need to map the file.
     {
@@ -171,27 +175,20 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
         }, [this, repeat](const UINT64 size) {
             this->finalise_temp_file(size, repeat);
             assert(this->_file_view == nullptr);
-
-            // Re-create readonly as this might be faster ...
-            ULARGE_INTEGER s;
-            s.QuadPart = size * (1 + repeat);
-            this->_file_mapping.attach(::CreateFileMappingA(this->_file.get(),
-                nullptr, PAGE_READONLY, s.HighPart, s.LowPart, nullptr));
-            if (!this->_file_mapping) {
-                throw ATL::CAtlException(HRESULT_FROM_WIN32(::GetLastError()));
-            }
+            this->_file_mapping = create_file_mapping(this->_file,
+                PAGE_READONLY, size * (1 + repeat));
 
         }, [this](void *d, const std::size_t o, const std::size_t l) {
             // Deliver from mapped file. Note that 'o' can be an arbitrary
             // offset, so we must manually make sure that we align it properly
             // and increase the size of the mapping if the offset does not
             // start at the expected boundary.
-            const auto a = o - (o % this->_allocation_granularity);
-            const auto ao = (o - a);
-            auto s = map_view_of_file(this->_file_mapping, FILE_MAP_READ, a,
-                l + ao);
+            const auto pad = (o % this->_allocation_granularity);
+            auto s = map_view_of_file(this->_file_mapping, FILE_MAP_READ, 
+                o - pad, l + pad);
             on_exit([s](void) {::UnmapViewOfFile(s); });
-            ::memcpy(d, static_cast<std::uint8_t *>(s) + ao, l);
+            ::memcpy(d, static_cast<std::uint8_t *>(s) + pad, l);
+            ++this->_cnt_remap;
 
         }, device, config, power_collector, changed);
 #endif /* defined(TRROJAN_FOR_UWP) */
@@ -212,25 +209,66 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
         }, [this, repeat](const UINT64 size) {
             this->finalise_temp_file(size, repeat);
             assert(this->_file_view == nullptr);
-
-            // Re-create readonly as this might be faster ...
-            ULARGE_INTEGER s;
-            s.QuadPart = size * (1 + repeat);
-            this->_file_mapping.attach(::CreateFileMappingA(this->_file.get(),
-                nullptr, PAGE_READONLY, s.HighPart, s.LowPart, nullptr));
-            if (!this->_file_mapping) {
-                throw ATL::CAtlException(HRESULT_FROM_WIN32(::GetLastError()));
-            }
-
-            // Map the whole file as a single view.
+            this->_file_mapping = create_file_mapping(this->_file,
+                PAGE_READONLY, size * (1 + repeat));
             this->_file_view = map_view_of_file(this->_file_mapping,
                 FILE_MAP_READ, 0, size * (1 + repeat));
 
         }, [this](void *d, const std::size_t o, const std::size_t l) {
-            // Deliver from mapped file.
             assert(this->_file_view != nullptr);
             ::memcpy(d, static_cast<std::uint8_t *>(this->_file_view) + o, l);
 
+        }, device, config, power_collector, changed);
+#endif /* defined(TRROJAN_FOR_UWP) */
+
+    } else if (trrojan::iequals(method,
+            streaming_method_batch_memory_mapping)) {
+#if defined(TRROJAN_FOR_UWP)
+        throw std::logic_error("The requested streaming method is unsupported "
+            "on UWP.");
+#else /* defined(TRROJAN_FOR_UWP) */
+        return this->on_run([this, &folder, repeat](const UINT64 size) {
+            // Copy the raw data to a memory-mapped file such that we can
+            // seek like in the in-memory file. This is required as the
+            // generated data do not come from a file and therefore must be
+            // persisted for the benchmark.
+            return this->map_temp_file(size, folder, repeat);
+
+        }, [this, repeat](const UINT64 size) {
+            this->finalise_temp_file(size, repeat);
+            assert(this->_file_view == nullptr);
+            this->_file_mapping = create_file_mapping(this->_file,
+                PAGE_READONLY, size * (1 + repeat));
+
+        }, [this, repeat](void *d, const std::size_t o, const std::size_t l) {
+            // Find out whether the part we need is already mapped and if
+            // not, map it.
+            if ((this->_file_view == nullptr)
+                    || (o < this->_mapped_range.first)
+                    || (o + l > this->_mapped_range.second)) {
+                if (this->_file_view != nullptr) {
+                    ::UnmapViewOfFile(this->_file_view);
+                }
+
+                ULARGE_INTEGER end;
+                end.LowPart = ::GetFileSize(this->_file.get(), &end.HighPart);
+
+                const auto pad = o % this->_allocation_granularity;
+                this->_mapped_range.first = o - pad;
+                this->_mapped_range.second = this->_mapped_range.first
+                    + this->_stream.batch_count() * l + pad;
+                if (this->_mapped_range.second > end.QuadPart) {
+                    this->_mapped_range.second = end.QuadPart;
+                }
+
+                this->_file_view = map_view_of_file(this->_file_mapping,
+                    FILE_MAP_READ, this->_mapped_range.first,
+                    this->_mapped_range.second - this->_mapped_range.first);
+                ++this->_cnt_remap;
+            }
+
+            const auto ds = o - this->_mapped_range.first;
+            ::memcpy(d, static_cast<std::uint8_t *>(this->_file_view) + ds, l);
         }, device, config, power_collector, changed);
 #endif /* defined(TRROJAN_FOR_UWP) */
 
@@ -445,8 +483,6 @@ void trrojan::d3d12::sphere_streaming_benchmark::finalise_temp_file(
 void *trrojan::d3d12::sphere_streaming_benchmark::map_temp_file(
         const UINT64 size, const std::string& folder,
         const std::uint32_t repeat) {
-    ULARGE_INTEGER file_size;
-    file_size.QuadPart = size * (1 + repeat);
     const auto path = create_temp_file(folder, "tssb");
 
     this->_file.attach(::CreateFileA(path.c_str(),
@@ -456,11 +492,12 @@ void *trrojan::d3d12::sphere_streaming_benchmark::map_temp_file(
         throw ATL::CAtlException(HRESULT_FROM_WIN32(::GetLastError()));
     }
 
-    this->_file_mapping.attach(::CreateFileMappingA(this->_file.get(),
-        nullptr, PAGE_READWRITE, file_size.HighPart, file_size.LowPart,
-        nullptr));
-    if (!this->_file_mapping) {
-        throw ATL::CAtlException(HRESULT_FROM_WIN32(::GetLastError()));
+    this->_file_mapping = create_file_mapping(this->_file, PAGE_READWRITE,
+        size * (1 + repeat));
+
+    if (this->_file_view != nullptr) {
+        ::UnmapViewOfFile(this->_file_view);
+        this->_file_view = nullptr;
     }
 
     // Note that we only map the first frame here for the I/O worker, because
