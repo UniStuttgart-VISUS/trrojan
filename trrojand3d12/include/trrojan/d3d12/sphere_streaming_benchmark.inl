@@ -77,7 +77,6 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
     auto pipeline = this->get_pipeline_state(device.d3d_device(), shader_code);
     auto root_sig = this->get_root_signature(device.d3d_device(), shader_code);
     auto topology = get_primitive_topology(shader_code);
-    auto buffer = this->_stream.buffer().get();
 
     // Prepare a command list for each batch, which we will repeatedly call until
     // all of the data have been streamed to the GPU. The index of the list
@@ -148,8 +147,8 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
                         shader_code,
                         0,
                         b * cnt_descs,
-                        buffer,
-                        b * this->_stream.batch_elements(),
+                        this->_stream.buffer(b).get(),
+                        0,
                         spheres);
 
                     copy_data(this->_stream.data(b),
@@ -229,8 +228,8 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
                 shader_code,
                 0,
                 b * cnt_descs,
-                buffer,
-                b * this->_stream.batch_elements(),
+                this->_stream.buffer(b).get(),
+                0,
                 spheres);
 
             copy_data(this->_stream.data(b),
@@ -316,8 +315,8 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
                 shader_code,
                 0,
                 b * cnt_descs,
-                buffer,
-                b * this->_stream.batch_elements(),
+                this->_stream.buffer(b).get(),
+                0,
                 spheres);
 
             copy_data(this->_stream.data(b),
@@ -413,8 +412,8 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
                 shader_code,
                 0,
                 b * cnt_descs,
-                buffer,
-                b * this->_stream.batch_elements(),
+                this->_stream.buffer(b).get(),
+                0,
                 spheres);
 
             copy_data(this->_stream.data(b),

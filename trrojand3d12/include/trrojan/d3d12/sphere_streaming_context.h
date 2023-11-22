@@ -53,6 +53,14 @@ namespace d3d12 {
     public:
 
         /// <summary>
+        /// Adds the defatult configurations for streaming to the given
+        /// configuration set.
+        /// </summary>
+        /// <param name="configs">The default configuration set to add the
+        /// factors controlling streaming to.</param>
+        static void add_defaults(trrojan::configuration_set& configs);
+
+        /// <summary>
         /// The name of the factor &quot;batch_count&quot;
         /// </summary>
         /// <remarks>
@@ -76,6 +84,12 @@ namespace d3d12 {
         static const char *factor_batch_size;
 
         /// <summary>
+        /// The name of a factor that controls the simulation of multiple frames
+        /// from a single frame provided as input.
+        /// </summary>
+        static const char *factor_soft_frames;
+
+        /// <summary>
         /// Initialises a new instance.
         /// </summary>
         sphere_streaming_context(void);
@@ -92,7 +106,7 @@ namespace d3d12 {
         /// configuration.
         /// </summary>
         inline std::size_t batch_count(void) const noexcept {
-            return this->_batch_count;
+            return this->_buffers.size();
         }
 
         /// <summary>
@@ -138,39 +152,27 @@ namespace d3d12 {
         }
 
         /// <summary>
-        /// Gets the buffer holding the batches on the GPU.
+        /// Gets the buffer holding the given batch on the GPU.
         /// </summary>
-        /// <returns>The buffer holding the batches GPU. This pointer should
+        /// <param name="batch">The zero-based index of the batch.</param>
+        /// <returns>The buffer holding the data of the batch on the GPU. This
+        /// pointer should not be cached.</returns>
+        inline winrt::com_ptr<ID3D12Resource> buffer(
+                const std::size_t batch) const {
+            assert(batch < this->_buffers.size());
+            return this->_buffers[batch];
+        }
+
+        /// <summary>
+        /// Answer the pointer to the mapped data buffer for the given batch.
+        /// </summary>
+        /// <param name="batch">The zero-based index of the batch.</param>
+        /// <returns>The mapped memory of the given batch. This pointer should
         /// not be cached.</returns>
-        inline winrt::com_ptr<ID3D12Resource> buffer(void) const noexcept {
-            return this->_buffer;
-        }
-
-        /// <summary>
-        /// Answer the pointer to the mapped data buffer.
-        /// </summary>
-        inline void *data(void) noexcept {
-            return this->_data;
-        }
-
-        /// <summary>
-        /// Gets the start of the <paramref name="batch" />th batch in the
-        /// persistently mapped buffer, ie the copy target for this batch.
-        /// </summary>
-        /// <param name="batch"></param>
-        /// <returns></returns>
         inline void *data(const std::size_t batch) {
-            assert(batch < this->_batch_count);
-            auto bytes = static_cast<std::uint8_t *>(this->_data);
-            return bytes + this->offset(batch);
+            assert(batch < this->_buffers.size());
+            return this->_data[batch];
         }
-
-        /// <summary>
-        /// Gets a descriptor for the start of the data buffer.
-        /// </summary>
-        /// <param name=""></param>
-        /// <returns></returns>
-        D3D12_GPU_VIRTUAL_ADDRESS descriptor(void) const;
 
         /// <summary>
         /// Gets a descriptor for the start of the given
@@ -179,13 +181,6 @@ namespace d3d12 {
         /// <param name="batch"></param>
         /// <returns></returns>
         D3D12_GPU_VIRTUAL_ADDRESS descriptor(const std::size_t batch) const;
-
-        /// <summary>
-        /// The total size of a single frame of the current configuration in
-        ///  bytes.
-        /// </summary>
-        /// <returns>The size of a frame in bytes.</returns>
-        std::size_t frame_size(void) const noexcept;
 
         /// <summary>
         /// Returns the index of a batch that can be used to upload data to the
@@ -286,6 +281,61 @@ namespace d3d12 {
         void signal_done(const std::size_t batch, ID3D12CommandQueue *queue);
 
         /// <summary>
+        /// Gets the number of frames that the stream should emulate.
+        /// </summary>
+        /// <remarks>
+        /// <para>The streaming context does not consider this parameter in its
+        /// internal workings, but merely provides helpers for the caller to
+        /// simulate this behaviour. The rationale of integrating the factor
+        /// here is that it can be easily reused in multiple locations. The
+        /// default value is one, ie &quot;soft&quot; frames are disabled by
+        /// default.</para>
+        /// <para>If this factor is greater than one, the implementation assumes
+        /// that the actual number of spheres available to the caller is
+        /// <paramref name="soft_frames" /> times the number of
+        /// <see cref="_total_spheres" /> provided to <see cref="reshape" />.
+        /// Callers can use <see cref="soft_frame_offset" /> to compute where
+        /// the data for each &quot;soft&quot; frame should be located in the
+        /// input.</para>
+        /// </remarks>
+        /// <returns>The number of soft frames.</returns>
+        inline std::size_t soft_frames(void) const noexcept {
+            return this->_soft_frames;
+        }
+
+        /// <summary>
+        /// Gets the offset of the <paramref name="frame" />th &quot;soft&quot;
+        /// frame in bytes, assuming that a &quot;soft&quot; frame has the
+        /// total number of spheres provided to <see cref="reshape" />.
+        /// </summary>
+        /// <remarks>
+        /// Callers must offset the data source by this value if
+        /// &quot;soft&quot; frames are in use, ie if <see cref="soft_frames" />
+        /// returns a value greater than one.
+        /// </remarks>
+        /// <param name="frame"></param>
+        /// <returns></returns>
+        inline std::size_t soft_frame_offset(const std::size_t frame) {
+            assert(frame < this->_soft_frames);
+            return (frame * this->_total_spheres * this->_stride);
+        }
+
+        /// <summary>
+        /// Gets the number of spheres in a &quot;soft&quot; frame assuming the
+        /// given total number of spheres.
+        /// </summary>
+        /// <param name="total_spheres">The total number of spheres in the data
+        /// set, which should be split into <see cref="soft_frames" />
+        /// &quot;soft&quot; frames to simulate streaming of multiple frames on
+        /// a static frame.</param>
+        /// <returns>The total number of spheres to be considered one frame.
+        /// </returns>
+        inline std::size_t soft_frame_size(
+                const std::size_t total_spheres) const noexcept {
+            return (total_spheres / this->_soft_frames);
+        }
+
+        /// <summary>
         /// Answer the total number of batches that need to be rendered for
         /// streaming a whole frame given the current configuration (number of
         /// total spheres and batch size).
@@ -325,16 +375,17 @@ namespace d3d12 {
 
     private:
 
-        std::size_t _batch_count;
         std::size_t _batch_size;
-        winrt::com_ptr<ID3D12Resource> _buffer;
+        std::vector<winrt::com_ptr<ID3D12Resource>> _buffers;
         std::size_t _cnt_stalls;
-        void *_data;
+        std::vector<void *> _data;
         handle<> _event;
         winrt::com_ptr<ID3D12Fence> _fence;
         std::vector<UINT64> _fence_values;
+        winrt::com_ptr<ID3D12Heap> _heap;
         std::atomic<UINT64> _next_fence_value;
         std::size_t _ready_count;
+        std::size_t _soft_frames;
         std::size_t _stride;
         std::size_t _total_batches;
         std::size_t _total_spheres;

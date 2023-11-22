@@ -8,6 +8,7 @@
 
 #include "trrojan/text.h"
 
+#include "trrojan/d3d12/dstorage_configuration.h"
 #include "trrojan/d3d12/measurement_context.h"
 #include "trrojan/d3d12/utilities.h"
 
@@ -42,24 +43,14 @@ _STRM_BENCH_DEFINE_METHOD(read_file);
 trrojan::d3d12::sphere_streaming_benchmark::sphere_streaming_benchmark(
         void) : sphere_benchmark_base("stream-sphere-renderer"),
         _file_view(nullptr) {
-    this->_default_configs.add_factor(factor::from_manifestations(
-        sphere_streaming_context::factor_batch_count, 8u));
-    this->_default_configs.add_factor(factor::from_manifestations(
-        sphere_streaming_context::factor_batch_size, 1024u));
+    dstorage_configuration::add_defaults(this->_default_configs);
+    sphere_streaming_context::add_defaults(this->_default_configs);
     this->_default_configs.add_factor(factor::from_manifestations(
         factor_streaming_method, { streaming_method_ram,
         streaming_method_memory_mapping }));
-    this->_default_configs.add_factor(factor::from_manifestations(
-        factor_staging_directory, get_temp_folder()));
 
 #if defined(TRROJAN_WITH_DSTORAGE)
-    this->_default_configs.add_factor(factor::from_manifestations(
-        factor_queue_priority,
-        static_cast<std::uint32_t>(DSTORAGE_PRIORITY_NORMAL)));
     this->_dstorage_fence_value = 0;
-#else /* defined(TRROJAN_WITH_DSTORAGE) */
-    this->_default_configs.add_factor(factor::from_manifestations(
-        factor_queue_priority, 0u));
 #endif /* defined(TRROJAN_WITH_DSTORAGE) */
 }
 
@@ -307,6 +298,11 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
             DSTORAGE_QUEUE_DESC desc;
             ::ZeroMemory(&desc, sizeof(desc));
             desc.Capacity = static_cast<UINT16>(this->pipeline_depth());
+            if (desc.Capacity > DSTORAGE_MAX_QUEUE_CAPACITY) {
+                desc.Capacity = DSTORAGE_MAX_QUEUE_CAPACITY;
+            } else if (desc.Capacity < DSTORAGE_MIN_QUEUE_CAPACITY) {
+                desc.Capacity = DSTORAGE_MIN_QUEUE_CAPACITY;
+            }
             desc.Priority = static_cast<DSTORAGE_PRIORITY>(priority);
             desc.SourceType = DSTORAGE_REQUEST_SOURCE_FILE;
             desc.Device = device.d3d_device();

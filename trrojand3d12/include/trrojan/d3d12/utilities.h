@@ -185,6 +185,32 @@ namespace d3d12 {
         const UINT64 initial_value = 0);
 
     /// <summary>
+    /// Create a D3D12 heap on the given device.
+    /// </summary>
+    /// <param name="device"></param>
+    /// <param name="desc"></param>
+    /// <returns></returns>
+    ATL::CComPtr<ID3D12Heap> TRROJAND3D12_API create_heap(
+        ID3D12Device *device, const D3D12_HEAP_DESC& desc);
+
+    /// <summary>
+    /// Create a heap that can hold <paramref name="cnt" /> of the specified
+    /// resources.
+    /// </summary>
+    /// <param name="device"></param>
+    /// <param name="alloc_info"></param>
+    /// <param name="cnt"></param>
+    /// <param name="type"></param>
+    /// <param name="flags"></param>
+    /// <returns></returns>
+    ATL::CComPtr<ID3D12Heap> TRROJAND3D12_API create_heap(
+        ID3D12Device *device,
+        const D3D12_RESOURCE_ALLOCATION_INFO& alloc_info,
+        const std::size_t cnt = 1,
+        const D3D12_HEAP_TYPE type = D3D12_HEAP_TYPE_DEFAULT,
+        const D3D12_HEAP_FLAGS flags = D3D12_HEAP_FLAG_NONE);
+
+    /// <summary>
     /// Creates a 2D texture which is initially in the present state.
     /// </summary>
     /// <param name="device"></param>

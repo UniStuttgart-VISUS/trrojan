@@ -9,6 +9,7 @@
 
 #include "trrojan/text.h"
 
+#include "trrojan/d3d12/dstorage_configuration.h"
 #include "trrojan/d3d12/measurement_context.h"
 #include "trrojan/d3d12/utilities.h"
 
@@ -24,15 +25,11 @@ _DSTOR_BENCH_DEFINE_IMPL(naive);
 #undef _DSTOR_BENCH_DEFINE_IMPL
 
 
-#define _DSTOR_BENCH_DEFINE_FACTOR(f)                                          \
-const char *trrojan::d3d12::dstorage_sphere_benchmark::factor_##f = #f
-
-_DSTOR_BENCH_DEFINE_FACTOR(implementation);
-_DSTOR_BENCH_DEFINE_FACTOR(queue_depth);
-_DSTOR_BENCH_DEFINE_FACTOR(queue_priority);
-_DSTOR_BENCH_DEFINE_FACTOR(staging_directory);
-
-#undef _DSTOR_BENCH_DEFINE_FACTOR
+/*
+ * trrojan::d3d12::dstorage_sphere_benchmark::factor_implementation
+ */
+const char *trrojan::d3d12::dstorage_sphere_benchmark::factor_implementation
+    = "implementation";
 
 
 /*
@@ -41,20 +38,11 @@ _DSTOR_BENCH_DEFINE_FACTOR(staging_directory);
 trrojan::d3d12::dstorage_sphere_benchmark::dstorage_sphere_benchmark(
         void) : sphere_benchmark_base("dstorage-sphere-renderer"),
         _next_fence_value(0) {
-    this->_default_configs.add_factor(factor::from_manifestations(
-        sphere_streaming_context::factor_batch_count, 8u));
-    this->_default_configs.add_factor(factor::from_manifestations(
-        sphere_streaming_context::factor_batch_size, 1024u));
+    sphere_streaming_context::add_defaults(this->_default_configs);
+    dstorage_configuration::add_defaults(this->_default_configs);
     this->_default_configs.add_factor(factor::from_manifestations(
         factor_implementation,
         { implementation_batches, implementation_naive }));
-    this->_default_configs.add_factor(factor::from_manifestations(
-        factor_queue_depth, DSTORAGE_MAX_QUEUE_CAPACITY));
-    this->_default_configs.add_factor(factor::from_manifestations(
-        factor_queue_priority,
-        static_cast<std::uint32_t>(DSTORAGE_PRIORITY_NORMAL)));
-    this->_default_configs.add_factor(factor::from_manifestations(
-        factor_staging_directory, get_temp_folder()));
 }
 
 
@@ -195,8 +183,8 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_batches(
     sphere_rendering_configuration cfg(config);
     auto cmd_queue = device.command_queue();
     winrt::com_ptr<IDStorageFactory> dstorage;
+    dstorage_configuration dstorage_config(config);
     winrt::com_ptr<IDStorageFile> file;
-    const auto folder = config.get<std::string>(factor_staging_directory);
     const auto gpu_freq = gpu_timer::get_timestamp_frequency(cmd_queue.p);
     winrt::com_ptr<IDStorageQueue> io_queue;
     measurement_context mctx(device, 2, this->pipeline_depth());
@@ -214,7 +202,8 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_batches(
     // staged file, because we will not redo this until the data set changes
     // again.
     if (!this->_data) {
-        const auto path = create_temp_file(folder, "tds");
+        const auto path = create_temp_file(dstorage_config.staging_directory(),
+            "tds");
         log::instance().write_line(log_level::information, "Staging data set \""
             "{0}\" into \"{1}\" ...", cfg.data_set(), path);
         this->_data.copy_to(path, shader_code, cfg).close();
@@ -256,7 +245,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_batches(
     auto pipeline = this->get_pipeline_state(device.d3d_device(), shader_code);
     auto root_sig = this->get_root_signature(device.d3d_device(), shader_code);
     auto topology = get_primitive_topology(shader_code);
-    auto buffer = this->_stream.buffer().get();
+    //auto buffer = this->_stream.buffer().get();
 
     // Prepare a command list for each batch, which we will repeatedly call until
     // all of the data have been streamed to the GPU. The index of the list
@@ -295,13 +284,9 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_batches(
     }
 
     {
-        const auto capacity = config.get<std::uint16_t>(factor_queue_depth);
-        const auto priority = static_cast<DSTORAGE_PRIORITY>(
-            config.get<std::uint32_t>(factor_queue_priority));
         DSTORAGE_QUEUE_DESC desc;
         ::ZeroMemory(&desc, sizeof(desc));
-        desc.Capacity = capacity;
-        desc.Priority = priority;
+        dstorage_config.apply(desc);
         desc.SourceType = DSTORAGE_REQUEST_SOURCE_FILE;
         desc.Device = device.d3d_device();
 
@@ -328,7 +313,6 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_batches(
     request.Options.SourceType = DSTORAGE_REQUEST_SOURCE_FILE;
     request.Options.DestinationType = DSTORAGE_REQUEST_DESTINATION_BUFFER;
     request.Source.File.Source = file.get();
-    request.Destination.Buffer.Resource = this->_stream.buffer().get();
 
 #if true
     // Prewarm rendering such that shaders are ready. This also computes the
@@ -386,7 +370,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_batches(
                         shader_code,
                         0,
                         b * cnt_descs,
-                        buffer,
+                        this->_stream.buffer(b).get(),
                         b * this->_stream.batch_elements(),
                         spheres);
 
@@ -394,6 +378,8 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_batches(
                     // that the GPU can wait for.
                     request.Source.File.Offset = this->_stream.offset(t);
                     request.Source.File.Size = this->_stream.batch_size(t);
+                    request.Destination.Buffer.Resource
+                        = this->_stream.buffer(b).get();
                     request.Destination.Buffer.Offset = this->_stream.offset(b);
                     request.Destination.Buffer.Size = request.Source.File.Size;
                     io_queue->EnqueueRequest(&request);
@@ -481,15 +467,17 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_batches(
                 device.d3d_device(),
                 shader_code,
                 0,
-                b * cnt_descs,
-                buffer,
-                b * this->_stream.batch_elements(),
+                0,
+                this->_stream.buffer(b).get(),
+                0,
                 spheres);
 
             // Issue the I/O request and enqueue a signal in the stream
             // that the GPU can wait for.
             request.Source.File.Offset = this->_stream.offset(t);
             request.Source.File.Size = this->_stream.batch_size(t);
+            request.Destination.Buffer.Resource
+                = this->_stream.buffer(b).get();
             request.Destination.Buffer.Offset = this->_stream.offset(b);
             request.Destination.Buffer.Size = request.Source.File.Size;
             io_queue->EnqueueRequest(&request);
@@ -584,15 +572,17 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_batches(
                 device.d3d_device(),
                 shader_code,
                 0,
-                b * cnt_descs,
-                buffer,
-                b * this->_stream.batch_elements(),
+                0,
+                this->_stream.buffer(b).get(),
+                0,
                 spheres);
 
             // Issue the I/O request and enqueue a signal in the stream
             // that the GPU can wait for.
             request.Source.File.Offset = this->_stream.offset(t);
             request.Source.File.Size = this->_stream.batch_size(t);
+            request.Destination.Buffer.Resource
+                = this->_stream.buffer(b).get();
             request.Destination.Buffer.Offset = this->_stream.offset(b);
             request.Destination.Buffer.Size = request.Source.File.Size;
             io_queue->EnqueueRequest(&request);
@@ -697,15 +687,17 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_batches(
                 device.d3d_device(),
                 shader_code,
                 0,
-                b * cnt_descs,
-                buffer,
-                b * this->_stream.batch_elements(),
+                0,
+                this->_stream.buffer(b).get(),
+                0,
                 spheres);
 
             // Issue the I/O request and enqueue a signal in the stream
             // that the GPU can wait for.
             request.Source.File.Offset = this->_stream.offset(t);
             request.Source.File.Size = this->_stream.batch_size(t);
+            request.Destination.Buffer.Resource
+                = this->_stream.buffer(b).get();
             request.Destination.Buffer.Offset = this->_stream.offset(b);
             request.Destination.Buffer.Size = request.Source.File.Size;
             io_queue->EnqueueRequest(&request);
@@ -832,15 +824,15 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_batches(
  */
 trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_naive(
         d3d12::device& device,
-        const configuration &config,
+        const configuration& config,
         power_collector::pointer& power_collector,
         const std::vector<std::string>& changed) {
     std::vector<gpu_timer::millis_type> batch_times, gpu_times;
     sphere_rendering_configuration cfg(config);
     auto cmd_queue = device.command_queue();
     winrt::com_ptr<IDStorageFactory> dstorage;
+    dstorage_configuration dstorage_config(config);
     winrt::com_ptr<IDStorageFile> file;
-    const auto folder = config.get<std::string>(factor_staging_directory);
     const auto gpu_freq = gpu_timer::get_timestamp_frequency(cmd_queue.p);
     winrt::com_ptr<IDStorageQueue> io_queue;
     measurement_context mctx(device, 2, this->pipeline_depth());
@@ -858,7 +850,8 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_naive(
     // staged file, because we will not redo this until the data set changes
     // again.
     if (!this->_data) {
-        const auto path = create_temp_file(folder, "tds");
+        const auto path = create_temp_file(dstorage_config.staging_directory(),
+            "tds");
         log::instance().write_line(log_level::information, "Staging data set \""
             "{0}\" into \"{1}\" ...", cfg.data_set(), path);
         this->_data.copy_to(path, shader_code, cfg).close();
@@ -900,7 +893,6 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_naive(
     auto pipeline = this->get_pipeline_state(device.d3d_device(), shader_code);
     auto root_sig = this->get_root_signature(device.d3d_device(), shader_code);
     auto topology = get_primitive_topology(shader_code);
-    auto buffer = this->_stream.buffer().get();
 
     // Prepare a command list for each batch, which we will repeatedly call until
     // all of the data have been streamed to the GPU. The index of the list
@@ -939,13 +931,9 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_naive(
     }
 
     {
-        const auto capacity = config.get<std::uint16_t>(factor_queue_depth);
-        const auto priority = static_cast<DSTORAGE_PRIORITY>(
-            config.get<std::uint32_t>(factor_queue_priority));
         DSTORAGE_QUEUE_DESC desc;
         ::ZeroMemory(&desc, sizeof(desc));
-        desc.Capacity = capacity;
-        desc.Priority = priority;
+        dstorage_config.apply(desc);
         desc.SourceType = DSTORAGE_REQUEST_SOURCE_FILE;
         desc.Device = device.d3d_device();
 
@@ -972,7 +960,6 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_naive(
     request.Options.SourceType = DSTORAGE_REQUEST_SOURCE_FILE;
     request.Options.DestinationType = DSTORAGE_REQUEST_DESTINATION_BUFFER;
     request.Source.File.Source = file.get();
-    request.Destination.Buffer.Resource = this->_stream.buffer().get();
 
 #if true
     // Prewarm rendering such that shaders are ready. This also computes the
@@ -1022,15 +1009,17 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_naive(
                         device.d3d_device(),
                         shader_code,
                         0,
-                        b * cnt_descs,
-                        buffer,
-                        b * this->_stream.batch_elements(),
+                        0,
+                        this->_stream.buffer(b).get(),
+                        0,
                         spheres);
 
                     // Issue the I/O request and enqueue a signal in the stream
                     // that the GPU can wait for.
                     request.Source.File.Offset = this->_stream.offset(t);
                     request.Source.File.Size = this->_stream.batch_size(t);
+                    request.Destination.Buffer.Resource
+                        = this->_stream.buffer(b).get();
                     request.Destination.Buffer.Offset = this->_stream.offset(b);
                     request.Destination.Buffer.Size = request.Source.File.Size;
                     io_queue->EnqueueRequest(&request);
@@ -1112,15 +1101,17 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_naive(
                 device.d3d_device(),
                 shader_code,
                 0,
-                b * cnt_descs,
-                buffer,
-                b * this->_stream.batch_elements(),
+                0,
+                this->_stream.buffer(b).get(),
+                0,
                 spheres);
 
             // Issue the I/O request and enqueue a signal in the stream
             // that the GPU can wait for.
             request.Source.File.Offset = this->_stream.offset(t);
             request.Source.File.Size = this->_stream.batch_size(t);
+            request.Destination.Buffer.Resource
+                = this->_stream.buffer(b).get();
             request.Destination.Buffer.Offset = this->_stream.offset(b);
             request.Destination.Buffer.Size = request.Source.File.Size;
             io_queue->EnqueueRequest(&request);
@@ -1208,15 +1199,17 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_naive(
                 device.d3d_device(),
                 shader_code,
                 0,
-                b * cnt_descs,
-                buffer,
-                b * this->_stream.batch_elements(),
+                0,
+                this->_stream.buffer(b).get(),
+                0,
                 spheres);
 
             // Issue the I/O request and enqueue a signal in the stream
             // that the GPU can wait for.
             request.Source.File.Offset = this->_stream.offset(t);
             request.Source.File.Size = this->_stream.batch_size(t);
+            request.Destination.Buffer.Resource
+                = this->_stream.buffer(b).get();
             request.Destination.Buffer.Offset = this->_stream.offset(b);
             request.Destination.Buffer.Size = request.Source.File.Size;
             io_queue->EnqueueRequest(&request);
@@ -1314,15 +1307,17 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_naive(
                 device.d3d_device(),
                 shader_code,
                 0,
-                b * cnt_descs,
-                buffer,
-                b * this->_stream.batch_elements(),
+                0,
+                this->_stream.buffer(b).get(),
+                0,
                 spheres);
 
             // Issue the I/O request and enqueue a signal in the stream
             // that the GPU can wait for.
             request.Source.File.Offset = this->_stream.offset(t);
             request.Source.File.Size = this->_stream.batch_size(t);
+            request.Destination.Buffer.Resource
+                = this->_stream.buffer(b).get();
             request.Destination.Buffer.Offset = this->_stream.offset(b);
             request.Destination.Buffer.Size = request.Source.File.Size;
             io_queue->EnqueueRequest(&request);

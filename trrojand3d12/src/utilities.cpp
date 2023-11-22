@@ -289,6 +289,44 @@ ATL::CComPtr<ID3D12Fence> trrojan::d3d12::create_fence(ID3D12Device *device,
 
 
 /*
+ * trrojan::d3d12::create_heap
+ */
+ATL::CComPtr<ID3D12Heap> trrojan::d3d12::create_heap(ID3D12Device *device,
+        const D3D12_HEAP_DESC& desc) {
+    if (device == nullptr) {
+        throw ATL::CAtlException(E_POINTER);
+    }
+
+    ATL::CComPtr<ID3D12Heap> retval;
+    auto hr = device->CreateHeap(&desc, IID_PPV_ARGS(&retval));
+    if (FAILED(hr)) {
+        throw ATL::CAtlException(hr);
+    }
+
+    return retval;
+}
+
+
+/*
+ * trrojan::d3d12::create_heap
+ */
+ATL::CComPtr<ID3D12Heap> trrojan::d3d12::create_heap(ID3D12Device *device,
+        const D3D12_RESOURCE_ALLOCATION_INFO& alloc_info,
+        const std::size_t cnt,
+        const D3D12_HEAP_TYPE type,
+        const D3D12_HEAP_FLAGS flags) {
+    D3D12_HEAP_DESC desc;
+    ::ZeroMemory(&desc, sizeof(desc));
+    desc.Alignment = alloc_info.Alignment;
+    desc.Flags = flags;
+    desc.Properties.Type = type;
+    desc.SizeInBytes = cnt * alloc_info.SizeInBytes;
+
+    return create_heap(device, desc);
+}
+
+
+/*
  * trrojan::d3d12::create_render_target
  */
 ATL::CComPtr<ID3D12Resource> trrojan::d3d12::create_render_target(
