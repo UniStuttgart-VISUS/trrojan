@@ -65,6 +65,9 @@ namespace d3d12 {
         /// </summary>
         dstorage_sphere_benchmark(void);
 
+        /// <inheritdoc />
+        void optimise_order(configuration_set& configs) override;
+
     protected:
 
         /// <summary>
