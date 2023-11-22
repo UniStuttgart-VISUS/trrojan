@@ -19,8 +19,20 @@ const char *trrojan::d3d12::sphere_streaming_context::factor_##f = #f
 
 _SPHERE_BENCH_DEFINE_FACTOR(batch_count);
 _SPHERE_BENCH_DEFINE_FACTOR(batch_size);
+_SPHERE_BENCH_DEFINE_FACTOR(soft_frames);
 
 #undef _SPHERE_BENCH_DEFINE_FACTOR
+
+
+/*
+ * trrojan::d3d12::sphere_streaming_context::add_defaults
+ */
+void trrojan::d3d12::sphere_streaming_context::add_defaults(
+        trrojan::configuration_set& configs) {
+    configs.add_factor(factor::from_manifestations(factor_batch_count, 8u));
+    configs.add_factor(factor::from_manifestations(factor_batch_size, 1024u));
+    configs.add_factor(factor::from_manifestations(factor_soft_frames, 1u));
+}
 
 
 /*

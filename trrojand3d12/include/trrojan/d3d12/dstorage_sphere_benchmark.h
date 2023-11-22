@@ -35,32 +35,6 @@ namespace d3d12 {
         static const char *factor_implementation;
 
         /// <summary>
-        /// Specifies the factor that determines the capacity of the
-        /// DirectStorage queue.
-        /// </summary>
-        static const char *factor_queue_depth;
-
-        /// <summary>
-        /// Specifies the priority of the queue used to stream the data.
-        /// </summary>
-        /// <remarks>
-        /// This is a numeric factor that receives the values of the
-        /// <see cref="DSTORAGE_PRIORITY" /> enumeration. If not specified,
-        /// the default value is <see cref="DSTORAGE_PRIORITY_NORMAL" />.
-        /// </remarks>
-        static const char *factor_queue_priority;
-
-        /// <summary>
-        /// Determines the directory where the input data are staged.
-        /// </summary>
-        /// <remarks>
-        /// The benchmark will copy the raw data to this directory before
-        /// streaming from there, which allows us to test different kinds of
-        /// disks.
-        /// </remarks>
-        static const char *factor_staging_directory;
-
-        /// <summary>
         /// Initialises a new instance.
         /// </summary>
         dstorage_sphere_benchmark(void);

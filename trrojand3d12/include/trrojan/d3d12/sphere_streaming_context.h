@@ -53,6 +53,14 @@ namespace d3d12 {
     public:
 
         /// <summary>
+        /// Adds the defatult configurations for streaming to the given
+        /// configuration set.
+        /// </summary>
+        /// <param name="configs">The default configuration set to add the
+        /// factors controlling streaming to.</param>
+        static void add_defaults(trrojan::configuration_set& configs);
+
+        /// <summary>
         /// The name of the factor &quot;batch_count&quot;
         /// </summary>
         /// <remarks>
@@ -74,6 +82,12 @@ namespace d3d12 {
         /// many particles are rendered at once.
         /// </remarks>
         static const char *factor_batch_size;
+
+        /// <summary>
+        /// The name of a factor that controls the simulation of multiple frames
+        /// from a single frame provided as input.
+        /// </summary>
+        static const char *factor_soft_frames;
 
         /// <summary>
         /// Initialises a new instance.
