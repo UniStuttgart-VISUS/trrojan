@@ -97,14 +97,14 @@ std::size_t trrojan::d3d12::sphere_streaming_context::next_batch(void) {
 
     // Every batch up to this fence value is reusable.
     auto finished_value = this->_fence->GetCompletedValue();
-    log::instance().write_line(log_level::debug, "Fence value for completed "
-        "batches is {0}.", finished_value);
+    //log::instance().write_line(log_level::debug, "Fence value for completed "
+    //    "batches is {0}.", finished_value);
 
     // If all batches are currently in flight on the GPU, ie used for rendering,
     // we must wait for the GPU to finish to provide the caller with a batch
     // that can be used for upload.
     while (this->_ready_count < 1) {
-        log::instance().write_line(log_level::debug, "No batch is available.");
+        //log::instance().write_line(log_level::debug, "No batch is available.");
         ++this->_cnt_stalls;
 
         // Wait for the event to signal.
@@ -317,8 +317,8 @@ void trrojan::d3d12::sphere_streaming_context::signal_done(
     assert(this->_fence != nullptr);
 
     auto value = this->_fence_values[batch] = ++this->_next_fence_value;
-    log::instance().write_line(log_level::debug, "Signalling batch {0} with "
-        "fence value {1}.", batch, value);
+    //log::instance().write_line(log_level::debug, "Signalling batch {0} with "
+    //    "fence value {1}.", batch, value);
 
     {
         auto hr = queue->Signal(this->_fence.get(), value);

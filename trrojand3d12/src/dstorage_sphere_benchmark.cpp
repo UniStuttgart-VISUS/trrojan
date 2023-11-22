@@ -187,7 +187,6 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_batches(
         const configuration& config,
         power_collector::pointer& power_collector,
         const std::vector<std::string>& changed) {
-#if 0
     std::vector<gpu_timer::millis_type> batch_times, gpu_times;
     sphere_rendering_configuration cfg(config);
     auto cmd_queue = device.command_queue();
@@ -347,8 +346,8 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_batches(
                     const auto first = (t == 0);
                     const auto last = (t == last_batch);
 
-                    if ((b >= this->_stream.batch_count()) || last) {
-                        // The queue is now full, so submit it.
+                    if (b >= this->_stream.batch_count()) {
+                        // If the queue is full, submit it.
                         io_queue->Submit();
                         b = this->_stream.next_batch();
                     }
@@ -385,11 +384,8 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_batches(
 
                     // Issue the I/O request and enqueue a signal in the stream
                     // that the GPU can wait for.
-                    const auto fence_value = this->make_request(io_queue,
+                    const auto fence_value = this->enqueue_request(io_queue,
                         request, t, b);
-                    trrojan::log::instance().write_line(log_level::debug,
-                        "Fence value for upload of batch {0} (slot {1}) is "
-                        "{2}.", t, b, fence_value);
 
                     list->SetGraphicsRootSignature(root_sig);
                     list->IASetPrimitiveTopology(topology);
@@ -400,6 +396,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_batches(
                     list->DrawInstanced(counts.first, counts.second, 0, 0);
 
                     if (last) {
+                        io_queue->Submit();
                         this->disable_target(list.get());
                     }
 
@@ -441,8 +438,8 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_batches(
             const auto first = (t == 0);
             const auto last = (t == last_batch);
 
-            if ((b >= this->_stream.batch_count()) || last) {
-                // The queue is now full, so submit it.
+            if (b >= this->_stream.batch_count()) {
+                // If the queue is full, submit it.
                 io_queue->Submit();
                 b = this->_stream.next_batch();
             }
@@ -479,11 +476,8 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_batches(
 
             // Issue the I/O request and enqueue a signal in the stream
             // that the GPU can wait for.
-            const auto fence_value = this->make_request(io_queue,
+            const auto fence_value = this->enqueue_request(io_queue,
                 request, t, b);
-            trrojan::log::instance().write_line(log_level::debug,
-                "Fence value for upload of batch {0} (slot {1}) is "
-                "{2}.", t, b, fence_value);
 
             list->SetGraphicsRootSignature(root_sig);
             list->IASetPrimitiveTopology(topology);
@@ -507,6 +501,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_batches(
 
             // If this was the last batch, we need to swap the buffer.
             if (last) {
+                io_queue->Submit();
                 this->present_target(config);
             }
         } /* for (std::size_t t = 0; t < total_batches; ++t) */
@@ -538,8 +533,8 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_batches(
             const auto first = (t == 0);
             const auto last = (t == last_batch);
 
-            if ((b >= this->_stream.batch_count()) || last) {
-                // The queue is now full, so submit it.
+            if (b >= this->_stream.batch_count()) {
+                // If the queue is full, submit it.
                 io_queue->Submit();
                 b = this->_stream.next_batch();
             }
@@ -579,11 +574,8 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_batches(
 
             // Issue the I/O request and enqueue a signal in the stream
             // that the GPU can wait for.
-            const auto fence_value = this->make_request(io_queue,
+            const auto fence_value = this->enqueue_request(io_queue,
                 request, t, b);
-            trrojan::log::instance().write_line(log_level::debug,
-                "Fence value for upload of batch {0} (slot {1}) is "
-                "{2}.", t, b, fence_value);
 
             list->SetGraphicsRootSignature(root_sig);
             list->IASetPrimitiveTopology(topology);
@@ -600,6 +592,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_batches(
             }
 
             if (last) {
+                io_queue->Submit();
                 this->disable_target(list.get());
             }
 
@@ -651,8 +644,8 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_batches(
             const auto first = (t == 0);
             const auto last = (t == last_batch);
 
-            if ((b >= this->_stream.batch_count()) || last) {
-                // The queue is now full, so submit it.
+            if (b >= this->_stream.batch_count()) {
+                // If the queue is full, submit it.
                 io_queue->Submit();
                 b = this->_stream.next_batch();
             }
@@ -689,11 +682,8 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_batches(
 
             // Issue the I/O request and enqueue a signal in the stream
             // that the GPU can wait for.
-            const auto fence_value = this->make_request(io_queue,
+            const auto fence_value = this->enqueue_request(io_queue,
                 request, t, b);
-            trrojan::log::instance().write_line(log_level::debug,
-                "Fence value for upload of batch {0} (slot {1}) is "
-                "{2}.", t, b, fence_value);
 
             list->SetGraphicsRootSignature(root_sig);
             list->IASetPrimitiveTopology(topology);
@@ -720,6 +710,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_batches(
 
             // If this was the last batch, we need to swap the buffer.
             if (last) {
+                io_queue->Submit();
                 this->present_target(config);
             }
         } /* for (std::size_t t = 0; t < total_batches; ++t) */
@@ -806,8 +797,6 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_batches(
     });
 
     return retval;
-#endif
-    throw "TODO";
 }
 
 
@@ -1008,19 +997,9 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_naive(
 
                     // Issue the I/O request and enqueue a signal in the stream
                     // that the GPU can wait for.
-                    auto buffer = this->_stream.buffer(b);
-                    this->make_request(request, t);
-                    request.Destination.Buffer.Resource = buffer.get();
                     const auto fence_value = this->submit_request(io_queue,
-                        request);
-                    io_queue->Submit();
-                    trrojan::log::instance().write_line(log_level::debug,
-                        "Fence value for upload of batch {0} (slot {1}) is "
-                        "{2}.", t, b, fence_value);
+                        request, t, b);
 
-                    //transition_resource(list.get(), buffer.get(),
-                    //    D3D12_RESOURCE_STATE_COPY_DEST,
-                    //    D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
                     list->SetGraphicsRootSignature(root_sig);
                     list->IASetPrimitiveTopology(topology);
                     this->set_descriptors(list.get(), desc_tables);
@@ -1028,9 +1007,6 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_naive(
 
                     const auto counts = get_draw_count(shader_code, spheres);
                     list->DrawInstanced(counts.first, counts.second, 0, 0);
-                    //transition_resource(list.get(), buffer.get(),
-                    //    D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
-                    //    D3D12_RESOURCE_STATE_COPY_DEST);
 
                     if (last) {
                         this->disable_target(list.get());
@@ -1105,15 +1081,8 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_naive(
 
             // Issue the I/O request and enqueue a signal in the stream
             // that the GPU can wait for.
-            auto buffer = this->_stream.buffer(b);
-            this->make_request(request, t);
-            request.Destination.Buffer.Resource = buffer.get();
             const auto fence_value = this->submit_request(io_queue,
-                request);
-            io_queue->Submit();
-            trrojan::log::instance().write_line(log_level::debug,
-                "Fence value for upload of batch {0} (slot {1}) is "
-                "{2}.", t, b, fence_value);
+                request, t, b);
 
             list->SetGraphicsRootSignature(root_sig);
             list->IASetPrimitiveTopology(topology);
@@ -1202,15 +1171,8 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_naive(
 
             // Issue the I/O request and enqueue a signal in the stream
             // that the GPU can wait for.
-            auto buffer = this->_stream.buffer(b);
-            this->make_request(request, t);
-            request.Destination.Buffer.Resource = buffer.get();
             const auto fence_value = this->submit_request(io_queue,
-                request);
-            io_queue->Submit();
-            trrojan::log::instance().write_line(log_level::debug,
-                "Fence value for upload of batch {0} (slot {1}) is "
-                "{2}.", t, b, fence_value);
+                request, t, b);
 
             list->SetGraphicsRootSignature(root_sig);
             list->IASetPrimitiveTopology(topology);
@@ -1309,15 +1271,8 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_naive(
 
             // Issue the I/O request and enqueue a signal in the stream
             // that the GPU can wait for.
-            auto buffer = this->_stream.buffer(b);
-            this->make_request(request, t);
-            request.Destination.Buffer.Resource = buffer.get();
             const auto fence_value = this->submit_request(io_queue,
-                request);
-            io_queue->Submit();
-            trrojan::log::instance().write_line(log_level::debug,
-                "Fence value for upload of batch {0} (slot {1}) is "
-                "{2}.", t, b, fence_value);
+                request, t, b);
 
             list->SetGraphicsRootSignature(root_sig);
             list->IASetPrimitiveTopology(topology);

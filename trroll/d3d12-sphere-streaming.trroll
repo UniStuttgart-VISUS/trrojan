@@ -1,13 +1,13 @@
 d3d12::stream-sphere-renderer {
-    #string data_set =  pos_rad_intensity : 2000000 : 0 : 10 10 10 : 0.01 0.1
-    string data_set = T:\Programmcode\trrojan\trrojan\Assets\lasercross_frame112.mmpld
+    string data_set =  pos_rad_intensity : 2000000 : 0 : 10 10 10 : 0.01 0.1
+    #string data_set = T:\Programmcode\trrojan\trrojan\Assets\lasercross_frame112.mmpld
     float32 global_radius = 0.07
     uint32 frame = 0
     uint32 min_prewarms = 16
 
     #string device = NVIDIA GeForce GTX 1050
-    #string streaming_method = ram; memory_mapping; read_file; dstorage
-    string streaming_method = read_file
+    string streaming_method = ram; memory_mapping; read_file; dstorage
+    #string streaming_method = read_file
     #string streaming_method = ram
     #string streaming_method = memory_mapping
     #string streaming_method = dstorage

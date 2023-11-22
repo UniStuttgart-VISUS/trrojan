@@ -73,12 +73,51 @@ namespace d3d12 {
 
     private:
 
+        inline UINT64 enqueue_request(winrt::com_ptr<IDStorageQueue> queue,
+                DSTORAGE_REQUEST& request) noexcept {
+            queue->EnqueueRequest(&request);
+            const auto retval = ++this->_next_fence_value;
+            queue->EnqueueSignal(this->_fence.get(), retval);
+            //trrojan::log::instance().write_line(log_level::debug,
+            //    "Signalling DirectStorage completion with {0}.", retval);
+            return retval;
+        }
+
+        inline UINT64 enqueue_request(winrt::com_ptr<IDStorageQueue> queue,
+                DSTORAGE_REQUEST& request,
+                const std::size_t batch,
+                const std::size_t slot) noexcept {
+            this->make_request(request, batch, slot);
+            auto retval = this->enqueue_request(queue, request);
+            return retval;
+        }
+
         inline void make_request(DSTORAGE_REQUEST& request,
                 const std::size_t batch) const noexcept {
             request.Source.File.Offset = this->_stream.offset(batch);
             request.Source.File.Size = this->_stream.batch_size(batch);
             request.Destination.Buffer.Offset = 0;
             request.Destination.Buffer.Size = request.Source.File.Size;
+        }
+
+        inline winrt::com_ptr<ID3D12Resource> make_request(
+                DSTORAGE_REQUEST& request,
+                const std::size_t batch,
+                const std::size_t slot) const noexcept {
+            this->make_request(request, batch);
+            auto retval = this->_stream.buffer(slot);
+            request.Destination.Buffer.Resource = retval.get();
+            return retval;
+        }
+
+        inline UINT64 submit_request(winrt::com_ptr<IDStorageQueue> queue,
+                DSTORAGE_REQUEST& request,
+                const std::size_t batch,
+                const std::size_t slot) noexcept {
+            this->make_request(request, batch, slot);
+            auto retval = this->enqueue_request(queue, request);
+            queue->Submit();
+            return retval;
         }
 
         trrojan::result run_batches(d3d12::device& device,
@@ -90,16 +129,6 @@ namespace d3d12 {
             const configuration& config,
             power_collector::pointer& power_collector,
             const std::vector<std::string>& changed);
-
-        inline UINT64 submit_request(winrt::com_ptr<IDStorageQueue> queue,
-                DSTORAGE_REQUEST& request) noexcept {
-            queue->EnqueueRequest(&request);
-            const auto retval = ++this->_next_fence_value;
-            queue->EnqueueSignal(this->_fence.get(), retval);
-            trrojan::log::instance().write_line(log_level::debug,
-                "Signalling DirectStorage completion with {0}.", retval);
-            return retval;
-        }
 
         winrt::com_ptr<ID3D12Fence> _fence;
         UINT64 _next_fence_value;
