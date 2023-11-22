@@ -166,6 +166,11 @@ namespace d3d12 {
         /// <summary>
         /// Answer the pointer to the mapped data buffer for the given batch.
         /// </summary>
+        /// <remarks>
+        /// The data pointer might be <c>nullptr</c> if the heap backing the
+        /// resources is not of type <c>D3D12_HEAP_TYPE_UPLOAD</c>, because only
+        /// upload heaps can be persistently mapped.
+        /// </remarks>
         /// <param name="batch">The zero-based index of the batch.</param>
         /// <returns>The mapped memory of the given batch. This pointer should
         /// not be cached.</returns>
@@ -178,8 +183,8 @@ namespace d3d12 {
         /// Gets a descriptor for the start of the given
         /// <paramref name="batch" />.
         /// </summary>
-        /// <param name="batch"></param>
-        /// <returns></returns>
+        /// <param name="batch">The batch to get the GPU address for.</param>
+        /// <returns>The GPU address for the given batch.</returns>
         D3D12_GPU_VIRTUAL_ADDRESS descriptor(const std::size_t batch) const;
 
         /// <summary>
@@ -228,7 +233,12 @@ namespace d3d12 {
         /// </summary>
         /// <param name="device"></param>
         /// <param name="config"></param>
-        void rebuild(ID3D12Device *device, const configuration& config);
+        /// <param name="heap_type"></param>
+        /// <param name="initial_state"></param>
+        void rebuild(ID3D12Device *device,
+            const configuration& config,
+            const D3D12_HEAP_TYPE heap_type,
+            const D3D12_RESOURCE_STATES initial_state);
 
         /// <summary>
         /// Resets the stall counter in <see cref="next_batch" /> and returns

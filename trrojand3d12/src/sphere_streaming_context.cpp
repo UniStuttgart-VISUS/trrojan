@@ -97,14 +97,14 @@ std::size_t trrojan::d3d12::sphere_streaming_context::next_batch(void) {
 
     // Every batch up to this fence value is reusable.
     auto finished_value = this->_fence->GetCompletedValue();
-    //log::instance().write_line(log_level::debug, "Fence value for completed "
-    //    "batches is {0}.", finished_value);
+    log::instance().write_line(log_level::debug, "Fence value for completed "
+        "batches is {0}.", finished_value);
 
     // If all batches are currently in flight on the GPU, ie used for rendering,
     // we must wait for the GPU to finish to provide the caller with a batch
     // that can be used for upload.
     while (this->_ready_count < 1) {
-        //log::instance().write_line(log_level::debug, "No batch is available.");
+        log::instance().write_line(log_level::debug, "No batch is available.");
         ++this->_cnt_stalls;
 
         // Wait for the event to signal.
@@ -171,7 +171,9 @@ bool trrojan::d3d12::sphere_streaming_context::rebuild_required(
  * trrojan::d3d12::sphere_streaming_context::rebuild
  */
 void trrojan::d3d12::sphere_streaming_context::rebuild(ID3D12Device *device,
-        const configuration& config) {
+        const configuration& config,
+        const D3D12_HEAP_TYPE heap_type,
+        const D3D12_RESOURCE_STATES initial_state) {
     if (device == nullptr) {
         throw std::invalid_argument("The Direct3D device must be valid.");
     }
@@ -224,14 +226,14 @@ void trrojan::d3d12::sphere_streaming_context::rebuild(ID3D12Device *device,
             "0x{5:p} ...", info.SizeInBytes, batch_size, this->batch_count(),
             this->_batch_size, this->_stride, static_cast<void *>(device));
         this->_heap = to_winrt(create_heap(device, info, this->batch_count(),
-            D3D12_HEAP_TYPE_UPLOAD));
+            heap_type));
 
         for (std::size_t b = 0; b < this->batch_count(); ++b) {
             const auto offset = b * info.SizeInBytes;
             trrojan::log::instance().write_line(log_level::debug, "Creating a "
                 "placed resource at offset {0} for batch {1}... ", offset, b);
             auto hr = device->CreatePlacedResource(this->_heap.get(), offset,
-                &desc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
+                &desc, initial_state, nullptr,
                 IID_PPV_ARGS(this->_buffers[b].put()));
             if (FAILED(hr)) {
                 throw ATL::CAtlException(hr);
@@ -239,16 +241,23 @@ void trrojan::d3d12::sphere_streaming_context::rebuild(ID3D12Device *device,
         }
     }
 
-    trrojan::log::instance().write_line(log_level::debug,
-        "Persistently mapping data streaming buffers ...");
     this->_data.resize(this->_buffers.size());
-    for (std::size_t b = 0; b < this->batch_count(); ++b) {
-        auto hr = this->_buffers[b]->Map(0, nullptr, &this->_data[b]);
-        if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+    if (heap_type == D3D12_HEAP_TYPE_UPLOAD) {
+        trrojan::log::instance().write_line(log_level::debug,
+            "Persistently mapping data streaming buffers ...");
+        for (std::size_t b = 0; b < this->batch_count(); ++b) {
+            auto hr = this->_buffers[b]->Map(0, nullptr, &this->_data[b]);
+            if (FAILED(hr)) {
+                throw ATL::CAtlException(hr);
+            }
+            trrojan::log::instance().write_line(log_level::debug, "Streaming "
+                "buffer {0} mapped to 0x{1:p}.", b, this->_data[b]);
         }
-        trrojan::log::instance().write_line(log_level::debug, "Streaming "
-            "buffer {0} mapped to 0x{:1}.", b, this->_data[b]);
+    } else {
+        trrojan::log::instance().write_line(log_level::debug,
+            "Streaming buffers are not backed by an upload heap and therefore "
+            "cannot be mapped persistently.");
+        std::fill(this->_data.begin(), this->_data.end(), nullptr);
     }
 
     trrojan::log::instance().write_line(log_level::debug,
@@ -308,8 +317,8 @@ void trrojan::d3d12::sphere_streaming_context::signal_done(
     assert(this->_fence != nullptr);
 
     auto value = this->_fence_values[batch] = ++this->_next_fence_value;
-    //log::instance().write_line(log_level::debug, "Signalling batch {0} with "
-    //    "fence value {1}.", batch, value);
+    log::instance().write_line(log_level::debug, "Signalling batch {0} with "
+        "fence value {1}.", batch, value);
 
     {
         auto hr = queue->Signal(this->_fence.get(), value);

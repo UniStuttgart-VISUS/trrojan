@@ -67,7 +67,8 @@ bool trrojan::d3d12::sphere_streaming_benchmark::check_stream_changed(
         log::instance().write_line(log_level::information, "(Re-) Building GPU "
             "stream on device 0x{0:p} ...",
             static_cast<void *>(device.d3d_device().p));
-        this->_stream.rebuild(device.d3d_device(), config);
+        this->_stream.rebuild(device.d3d_device(), config,
+            D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ);
 
         // We need an allocator for each batch we are rendering. In contrast to
         // the base class, we do not create allocators on a per-frame basis, but
