@@ -87,7 +87,15 @@ namespace d3d12 {
         /// The name of a factor that controls the simulation of multiple frames
         /// from a single frame provided as input.
         /// </summary>
-        static const char *factor_soft_frames;
+        /// <remarks>
+        /// <para>If this value is larger than zero, the application should copy
+        /// the input frame this number of times to simulate seeking within a
+        /// filewith real frames.</para>
+        /// <para>The context object does not actually work with this factor, ie
+        /// it is completely independent from it. The factor is only defined
+        /// here for reusability in all streaming benchmarks.</para>
+        /// </remarks>
+        static const char *factor_repeat_frame;
 
         /// <summary>
         /// Initialises a new instance.
@@ -241,6 +249,35 @@ namespace d3d12 {
             const D3D12_RESOURCE_STATES initial_state);
 
         /// <summary>
+        /// Gets the offset of the <paramref name="frame" />th repeated frame
+        /// in bytes, based on the number of total spheres configured in
+        /// <see cref="reshape" />.
+        /// </summary>
+        /// <param name="frame"></param>
+        /// <returns></returns>
+        inline std::size_t repeated_frame_offset(const std::size_t frame) {
+            assert(frame <= this->_repeat_frame);
+            return (frame * this->_total_spheres * this->_stride);
+        }
+
+        /// <summary>
+        /// Gets the number of times the frame should be repeated when the
+        /// tempoary input file is being generated.
+        /// </summary>
+        /// <remarks>
+        /// <para>The streaming context does not consider this parameter in its
+        /// internal workings, but merely provides helpers for the caller to
+        /// simulate this behaviour. The rationale of integrating the factor
+        /// here is that it can be easily reused in multiple locations. The
+        /// default value is zero, so the benchmark is instructed to not copy
+        /// the frame.</para>
+        /// </remarks>
+        /// <returns>The number of repetitions of the input frame.</returns>
+        inline std::size_t repeat_frame(void) const noexcept {
+            return this->_repeat_frame;
+        }
+
+        /// <summary>
         /// Resets the stall counter in <see cref="next_batch" /> and returns
         /// the value accumulated until now.
         /// </summary>
@@ -289,61 +326,6 @@ namespace d3d12 {
         /// <param name="batch"></param>
         /// <param name="queue"></param>
         void signal_done(const std::size_t batch, ID3D12CommandQueue *queue);
-
-        /// <summary>
-        /// Gets the number of frames that the stream should emulate.
-        /// </summary>
-        /// <remarks>
-        /// <para>The streaming context does not consider this parameter in its
-        /// internal workings, but merely provides helpers for the caller to
-        /// simulate this behaviour. The rationale of integrating the factor
-        /// here is that it can be easily reused in multiple locations. The
-        /// default value is one, ie &quot;soft&quot; frames are disabled by
-        /// default.</para>
-        /// <para>If this factor is greater than one, the implementation assumes
-        /// that the actual number of spheres available to the caller is
-        /// <paramref name="soft_frames" /> times the number of
-        /// <see cref="_total_spheres" /> provided to <see cref="reshape" />.
-        /// Callers can use <see cref="soft_frame_offset" /> to compute where
-        /// the data for each &quot;soft&quot; frame should be located in the
-        /// input.</para>
-        /// </remarks>
-        /// <returns>The number of soft frames.</returns>
-        inline std::size_t soft_frames(void) const noexcept {
-            return this->_soft_frames;
-        }
-
-        /// <summary>
-        /// Gets the offset of the <paramref name="frame" />th &quot;soft&quot;
-        /// frame in bytes, assuming that a &quot;soft&quot; frame has the
-        /// total number of spheres provided to <see cref="reshape" />.
-        /// </summary>
-        /// <remarks>
-        /// Callers must offset the data source by this value if
-        /// &quot;soft&quot; frames are in use, ie if <see cref="soft_frames" />
-        /// returns a value greater than one.
-        /// </remarks>
-        /// <param name="frame"></param>
-        /// <returns></returns>
-        inline std::size_t soft_frame_offset(const std::size_t frame) {
-            assert(frame < this->_soft_frames);
-            return (frame * this->_total_spheres * this->_stride);
-        }
-
-        /// <summary>
-        /// Gets the number of spheres in a &quot;soft&quot; frame assuming the
-        /// given total number of spheres.
-        /// </summary>
-        /// <param name="total_spheres">The total number of spheres in the data
-        /// set, which should be split into <see cref="soft_frames" />
-        /// &quot;soft&quot; frames to simulate streaming of multiple frames on
-        /// a static frame.</param>
-        /// <returns>The total number of spheres to be considered one frame.
-        /// </returns>
-        inline std::size_t soft_frame_size(
-                const std::size_t total_spheres) const noexcept {
-            return (total_spheres / this->_soft_frames);
-        }
 
         /// <summary>
         /// Answer the total number of batches that need to be rendered for
@@ -395,7 +377,7 @@ namespace d3d12 {
         winrt::com_ptr<ID3D12Heap> _heap;
         std::atomic<UINT64> _next_fence_value;
         std::size_t _ready_count;
-        std::size_t _soft_frames;
+        std::size_t _repeat_frame;
         std::size_t _stride;
         std::size_t _total_batches;
         std::size_t _total_spheres;

@@ -439,6 +439,17 @@ namespace d3d12 {
     }
 
     /// <summary>
+    /// Maps the given file mapping into the address space of the process.
+    /// </summary>
+    /// <param name="mapping"></param>
+    /// <param name="access"></param>
+    /// <param name="offset"></param>
+    /// <param name="size"></param>
+    /// <returns></returns>
+    TRROJAND3D12_API void *map_view_of_file(winrt::handle& mapping,
+        const DWORD access, const std::size_t offset, const std::size_t size);
+
+    /// <summary>
     /// Offsets the given pointer by the given number of bytes.
     /// </summary>
     /// <typeparam name="TPointer"></typeparam>

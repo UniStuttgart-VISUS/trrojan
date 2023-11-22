@@ -19,7 +19,7 @@ const char *trrojan::d3d12::sphere_streaming_context::factor_##f = #f
 
 _SPHERE_BENCH_DEFINE_FACTOR(batch_count);
 _SPHERE_BENCH_DEFINE_FACTOR(batch_size);
-_SPHERE_BENCH_DEFINE_FACTOR(soft_frames);
+_SPHERE_BENCH_DEFINE_FACTOR(repeat_frame);
 
 #undef _SPHERE_BENCH_DEFINE_FACTOR
 
@@ -31,7 +31,7 @@ void trrojan::d3d12::sphere_streaming_context::add_defaults(
         trrojan::configuration_set& configs) {
     configs.add_factor(factor::from_manifestations(factor_batch_count, 8u));
     configs.add_factor(factor::from_manifestations(factor_batch_size, 1024u));
-    configs.add_factor(factor::from_manifestations(factor_soft_frames, 1u));
+    configs.add_factor(factor::from_manifestations(factor_repeat_frame, 0u));
 }
 
 
@@ -40,7 +40,7 @@ void trrojan::d3d12::sphere_streaming_context::add_defaults(
  */
 trrojan::d3d12::sphere_streaming_context::sphere_streaming_context(void)
     : _batch_size(0), _cnt_stalls(0), _event(create_event(false, false)),
-    _next_fence_value(0), _ready_count(0), _soft_frames(1), _stride(0),
+    _next_fence_value(0), _ready_count(0), _repeat_frame(1), _stride(0),
     _total_spheres(0), _total_batches(0) { }
 
 
@@ -162,7 +162,7 @@ std::size_t trrojan::d3d12::sphere_streaming_context::next_batch(void) {
 bool trrojan::d3d12::sphere_streaming_context::rebuild_required(
         const std::vector<std::string>& changed) const {
     return (contains_any(changed, factor_batch_count, factor_batch_size,
-        factor_soft_frames, benchmark_base::factor_device)
+        factor_repeat_frame, benchmark_base::factor_device)
         || (this->_heap == nullptr));
 }
 
@@ -183,12 +183,8 @@ void trrojan::d3d12::sphere_streaming_context::rebuild(ID3D12Device *device,
     this->_buffers.resize(config.get<std::uint32_t>(factor_batch_count));
     this->_batch_size = config.get<decltype(this->_batch_size)>(
         factor_batch_size);
-    this->_soft_frames = config.get<decltype(this->_soft_frames)>(
-        factor_soft_frames);
-    if (this->_soft_frames < 1) {
-        this->_soft_frames = 1;
-    }
-
+    this->_repeat_frame = config.get<decltype(this->_repeat_frame)>(
+        factor_repeat_frame);
     //this->_batch_count *this->_batch_size *this->_stride;
 
     // Compute and cache the total number of batches.

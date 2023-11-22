@@ -965,6 +965,26 @@ std::string trrojan::d3d12::get_temp_folder(void) {
 
 
 /*
+ * trrojan::d3d12::map_view_of_file
+ */
+void *trrojan::d3d12::map_view_of_file(winrt::handle& mapping,
+        const DWORD access,
+        const std::size_t offset,
+        const std::size_t size) {
+    ULARGE_INTEGER o;
+    o.QuadPart = offset;
+
+    auto retval = ::MapViewOfFile(mapping.get(), access, o.HighPart, o.LowPart,
+        size);
+    if (retval == nullptr) {
+        throw ATL::CAtlException(HRESULT_FROM_WIN32(::GetLastError()));
+    }
+
+    return retval;
+}
+
+
+/*
  * trrojan::d3d12::set_debug_object_name
  */
 void trrojan::d3d12::set_debug_object_name(ID3D12Object *obj,
