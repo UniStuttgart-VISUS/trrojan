@@ -196,6 +196,18 @@ namespace d3d12 {
         D3D12_GPU_VIRTUAL_ADDRESS descriptor(const std::size_t batch) const;
 
         /// <summary>
+        /// Gets the currently completed fence value and the next fence value
+        /// that will be enqueued.
+        /// </summary>
+        /// <remarks>
+        /// This method must only be called once the context has been
+        /// successfully <see cref="reshape" />d, ie if the fence is valid.
+        /// </remarks>
+        /// <returns>The latest completed fence value (<c>first</c>) and the
+        /// next fence value (<c>second</c>).</returns>
+        std::pair<UINT64, UINT64> fence_values(void) const;
+
+        /// <summary>
         /// Returns the index of a batch that can be used to upload data to the
         /// GPU.
         /// </summary>

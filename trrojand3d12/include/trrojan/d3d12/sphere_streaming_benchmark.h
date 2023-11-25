@@ -12,6 +12,8 @@
 
 #include <winrt/base.h>
 
+#include "trrojan/temp_file.h"
+
 #include "trrojan/d3d12/sphere_benchmark_base.h"
 #include "trrojan/d3d12/sphere_streaming_context.h"
 
@@ -157,6 +159,7 @@ namespace d3d12 {
         winrt::handle _file_mapping;
         void *_file_view;
         std::pair<std::size_t, std::size_t> _mapped_range;
+        temp_file _path;
         sphere_streaming_context _stream;
     };
 

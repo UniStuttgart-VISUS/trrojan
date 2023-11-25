@@ -16,6 +16,15 @@
 #include "sphere_techniques.h"
 
 
+#define _DSTOR_BENCH_DEFINE_FACTOR(f)                                          \
+const char *trrojan::d3d12::dstorage_sphere_benchmark::factor_##f = #f
+
+_DSTOR_BENCH_DEFINE_FACTOR(implementation);
+_DSTOR_BENCH_DEFINE_FACTOR(staging_buffer_size);
+
+#undef _DSTOR_BENCH_DEFINE_FACTOR
+
+
 #define _DSTOR_BENCH_DEFINE_IMPL(i)                                            \
 const std::string trrojan::d3d12::dstorage_sphere_benchmark::implementation_##i(#i)
 
@@ -23,13 +32,6 @@ _DSTOR_BENCH_DEFINE_IMPL(batches);
 _DSTOR_BENCH_DEFINE_IMPL(naive);
 
 #undef _DSTOR_BENCH_DEFINE_IMPL
-
-
-/*
- * trrojan::d3d12::dstorage_sphere_benchmark::factor_implementation
- */
-const char *trrojan::d3d12::dstorage_sphere_benchmark::factor_implementation
-    = "implementation";
 
 
 /*
@@ -43,6 +45,9 @@ trrojan::d3d12::dstorage_sphere_benchmark::dstorage_sphere_benchmark(
     this->_default_configs.add_factor(factor::from_manifestations(
         factor_implementation,
         { implementation_batches, implementation_naive }));
+    this->_default_configs.add_factor(factor::from_manifestations(
+        factor_staging_buffer_size,
+        static_cast<std::uint32_t>(16 * 1204 * 1024)));
 }
 
 
@@ -201,21 +206,19 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_batches(
     auto shader_code = cfg.shader_id();
 
     // Clear data that cannot be used any more.
-    if (this->clear_stale_data(changed)) {
-        ::DeleteFileW(this->_path.c_str());
-    }
+    this->clear_stale_data(changed);
 
     // Load the data if necessary and copy it to the staging location requested
     // by the configuration. Note that we need to preserver the path of the
     // staged file, because we will not redo this until the data set changes
     // again.
     if (!this->_data) {
-        const auto path = create_temp_file(dstorage_config.staging_directory(),
+        this->_path = temp_file::create(
+            dstorage_config.staging_directory().c_str(),
             "tds");
         log::instance().write_line(log_level::information, "Staging data set \""
-            "{0}\" into \"{1}\" ...", cfg.data_set(), path);
-        this->_data.copy_to(path, shader_code, cfg).close();
-        this->_path = from_utf8(path);
+            "{0}\" into \"{1}\" ...", cfg.data_set(), this->_path);
+        this->_data.copy_to(this->_path, shader_code, cfg).close();
 
         log::instance().write_line(log_level::debug, "Reshaping GPU "
             "stream ...");
@@ -283,9 +286,18 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_batches(
         }
     }
 
+    // Set the size of the staging buffer.
     {
-        auto hr = dstorage->OpenFile(this->_path.c_str(),
-            IID_PPV_ARGS(file.put()));
+        auto size = config.get<std::uint32_t>(factor_staging_buffer_size);
+        auto hr = dstorage->SetStagingBufferSize(size);
+        if (FAILED(hr)) {
+            throw ATL::CAtlException(hr);
+        }
+    }
+
+    {
+        std::wstring unshit = this->_path;
+        auto hr = dstorage->OpenFile(unshit.c_str(), IID_PPV_ARGS(file.put()));
         if (FAILED(hr)) {
             throw ATL::CAtlException(hr);
         }
@@ -822,21 +834,19 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_naive(
     auto shader_code = cfg.shader_id();
 
     // Clear data that cannot be used any more.
-    if (this->clear_stale_data(changed)) {
-        ::DeleteFileW(this->_path.c_str());
-    }
+    this->clear_stale_data(changed);
 
     // Load the data if necessary and copy it to the staging location requested
     // by the configuration. Note that we need to preserver the path of the
     // staged file, because we will not redo this until the data set changes
     // again.
     if (!this->_data) {
-        const auto path = create_temp_file(dstorage_config.staging_directory(),
+        this->_path = temp_file::create(
+            dstorage_config.staging_directory().c_str(),
             "tds");
         log::instance().write_line(log_level::information, "Staging data set \""
-            "{0}\" into \"{1}\" ...", cfg.data_set(), path);
-        this->_data.copy_to(path, shader_code, cfg).close();
-        this->_path = from_utf8(path);
+            "{0}\" into \"{1}\" ...", cfg.data_set(), this->_path);
+        this->_data.copy_to(this->_path, shader_code, cfg).close();
 
         log::instance().write_line(log_level::debug, "Reshaping GPU "
             "stream ...");
@@ -904,8 +914,8 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_naive(
     }
 
     {
-        auto hr = dstorage->OpenFile(this->_path.c_str(),
-            IID_PPV_ARGS(file.put()));
+        const std::wstring unshit = this->_path;
+        auto hr = dstorage->OpenFile(unshit.c_str(), IID_PPV_ARGS(file.put()));
         if (FAILED(hr)) {
             throw ATL::CAtlException(hr);
         }

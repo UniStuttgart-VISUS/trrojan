@@ -381,7 +381,7 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
             // Remove the file mapping as we cannot open DirectStorage if any
             // other file handle is open on the temporary file.
             this->finalise_temp_file(size, repeat);
-            assert(this->_file_view = nullptr);
+            assert(this->_file_view == nullptr);
             this->_file_mapping.close();
 
             const auto path = get_file_path(this->_file.get());
@@ -483,9 +483,20 @@ void trrojan::d3d12::sphere_streaming_benchmark::finalise_temp_file(
 void *trrojan::d3d12::sphere_streaming_benchmark::map_temp_file(
         const UINT64 size, const std::string& folder,
         const std::uint32_t repeat) {
-    const auto path = create_temp_file(folder, "tssb");
+    if (this->_file_view != nullptr) {
+        ::UnmapViewOfFile(this->_file_view);
+        this->_file_view = nullptr;
+    }
 
-    this->_file.attach(::CreateFileA(path.c_str(),
+    this->_file.close();
+    this->_file_mapping.close();
+
+    this->_path = temp_file::create(folder.c_str(), "tssb");
+
+    trrojan::log::instance().write_line(trrojan::log_level::information,
+        "Staging data to \"{0}\" ...", this->_path.get());
+
+    this->_file.attach(::CreateFileA(this->_path.get().c_str(),
         GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ, nullptr,
         CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL));
     if (!this->_file) {
@@ -495,13 +506,9 @@ void *trrojan::d3d12::sphere_streaming_benchmark::map_temp_file(
     this->_file_mapping = create_file_mapping(this->_file, PAGE_READWRITE,
         size * (1 + repeat));
 
-    if (this->_file_view != nullptr) {
-        ::UnmapViewOfFile(this->_file_view);
-        this->_file_view = nullptr;
-    }
-
     // Note that we only map the first frame here for the I/O worker, because
     // the overall number of frames could exceed what we can map.
+    assert(this->_file_view == nullptr);
     this->_file_view = map_view_of_file(this->_file_mapping,FILE_MAP_WRITE,
         0, size);
 

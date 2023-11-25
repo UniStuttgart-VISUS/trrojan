@@ -87,6 +87,17 @@ D3D12_GPU_VIRTUAL_ADDRESS trrojan::d3d12::sphere_streaming_context::descriptor(
 
 
 /*
+ * trrojan::d3d12::sphere_streaming_context::fence_values
+ */
+std::pair<UINT64, UINT64>
+trrojan::d3d12::sphere_streaming_context::fence_values(void) const {
+    assert(this->_fence);
+    return std::make_pair(this->_fence->GetCompletedValue(),
+        this->_next_fence_value.load());
+}
+
+
+/*
  * trrojan::d3d12::sphere_streaming_context::next_batch
  */
 std::size_t trrojan::d3d12::sphere_streaming_context::next_batch(void) {
@@ -177,6 +188,11 @@ void trrojan::d3d12::sphere_streaming_context::rebuild(ID3D12Device *device,
     if (device == nullptr) {
         throw std::invalid_argument("The Direct3D device must be valid.");
     }
+
+    // Make sure to release existing resource before allocation such that we do
+    // not run out of GPU memory prematurely.
+    this->_buffers.clear();
+    this->_heap.attach(nullptr);
 
     // Retrieve and cache the number of parallel batches and the number of
     // spheres they contain.

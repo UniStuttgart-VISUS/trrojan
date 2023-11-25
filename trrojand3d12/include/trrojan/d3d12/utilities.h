@@ -251,21 +251,6 @@ namespace d3d12 {
         const D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_COPY_DEST);
 
     /// <summary>
-    /// Create a temporary file name in the temporary folder.
-    /// </summary>
-    /// <param name="prefix"></param>
-    /// <returns></returns>
-    std::string create_temp_file(const char *prefix);
-
-    /// <summary>
-    /// Create a temporary file in the given folder.
-    /// </summary>
-    /// <param name="folder"></param>
-    /// <param name="prefix"></param>
-    /// <returns></returns>
-    std::string create_temp_file(const std::string& folder, const char *prefix);
-
-    /// <summary>
     /// Create an uninitialised 1D texture which is in
     /// <paramref name="state" />.
     /// </summary>
@@ -428,12 +413,6 @@ namespace d3d12 {
     /// <returns></returns>
     std::wstring TRROJAND3D12_API get_mapped_file_path(void *address);
 #endif /* !defined(TRROJAN_FOR_UWP) */
-
-    /// <summary>
-    /// Gets the path of the temporary folder.
-    /// </summary>
-    /// <returns></returns>
-    std::string get_temp_folder(void);
 
     /// <summary>
     /// Index into an array aligned according to constant buffer alignment

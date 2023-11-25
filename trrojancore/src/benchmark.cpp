@@ -12,6 +12,10 @@
 #include <sstream>
 #include <stdexcept>
 
+#if defined(_WIN32)
+#include <atlexcept.h>
+#endif /* defined(_WIN32) */
+
 #include "trrojan/log.h"
 #include "trrojan/system_factors.h"
 
@@ -150,6 +154,14 @@ size_t trrojan::benchmark_base::run(const configuration_set& configs,
         } catch (const std::exception& ex) {
             log::instance().write_line(ex);
             return false;
+
+#if defined(_WIN32)
+        } catch (const ATL::CAtlException ex) {
+            log::instance().write_line(log_level::error, "An unexpected COM "
+                "error 0x{0:x} was encountered while running a benchmark.",
+                static_cast<std::uint32_t>(ex.m_hr));
+            return false;
+#endif /* defined(_WIN32) */
         } catch (...) {
             log::instance().write_line(log_level::error, "An unexpected "
                 "exception was encountered while running a benchmark.");

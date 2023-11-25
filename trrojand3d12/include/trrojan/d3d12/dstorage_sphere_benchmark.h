@@ -11,6 +11,8 @@
 
 #include <winrt/base.h>
 
+#include "trrojan/temp_file.h"
+
 #include "trrojan/d3d12/sphere_benchmark_base.h"
 #include "trrojan/d3d12/sphere_streaming_context.h"
 
@@ -33,6 +35,11 @@ namespace d3d12 {
         /// Specifies the approach being implemented.
         /// </summary>
         static const char *factor_implementation;
+
+        /// <summary>
+        /// Specifies the size of the staging buffer in bytes.
+        /// </summary>
+        static const char *factor_staging_buffer_size;
 
         /// <summary>
         /// Initialises a new instance.
@@ -132,7 +139,7 @@ namespace d3d12 {
 
         winrt::com_ptr<ID3D12Fence> _fence;
         UINT64 _next_fence_value;
-        std::wstring _path;
+        temp_file _path;
         sphere_streaming_context _stream;
     };
 

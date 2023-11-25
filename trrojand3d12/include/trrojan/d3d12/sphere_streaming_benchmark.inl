@@ -27,10 +27,9 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
 
     // Clear data that cannot be used any more.
     if (this->clear_stale_data(changed)) {
-        try {
-            auto tmp_file = get_file_path(this->_file.get());
-            ::DeleteFileW(tmp_file.c_str());
-        } catch (...) { /* This is irrelevant (file was not open). */ }
+        assert(this->_file_view == nullptr);
+        this->_file_mapping.close();
+        this->_file.close();
     }
 
     // Load the data if necessary. Note that we redirect the data loading

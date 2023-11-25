@@ -7,7 +7,7 @@
 
 #include "trrojan/d3d12/dstorage_configuration.h"
 
-#include "trrojan/d3d12/utilities.h"
+#include "trrojan/io.h"
 
 
 #define _DSTOR_DEFINE_FACTOR(f)                                                \
