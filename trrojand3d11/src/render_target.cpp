@@ -94,9 +94,14 @@ void trrojan::d3d11::render_target_base::save(const std::string& path) {
             throw ATL::CAtlException(hr);
         }
 
+        auto wic_pixel_format = GUID_WICPixelFormat32bppRGBA;
+        if (desc.Format == DXGI_FORMAT_B8G8R8A8_UNORM){
+            wic_pixel_format = GUID_WICPixelFormat32bppBGRA;
+        }
+
         try {
             trrojan::wic_save(trrojan::get_wic_factory(), map.pData, desc.Width,
-                desc.Height, map.RowPitch, GUID_WICPixelFormat32bppRGBA, path,
+                desc.Height, map.RowPitch, wic_pixel_format, path,
                 GUID_NULL);
             this->_device_context->Unmap(this->_staging_texture, 0);
         } catch (...) {

@@ -142,7 +142,17 @@ trrojan::result trrojan::d3d11::benchmark_base::run(const configuration& c) {
         auto ts = c.get<std::string>(system_factors::factor_timestamp);
         std::replace(ts.begin(), ts.end(), ':', '-');
         std::replace(ts.begin(), ts.end(), '.', '-');
-        this->save_target(ts.c_str());
+
+        std::string save_path;
+
+#ifdef _UWP
+        auto prefix = winrt::to_string(winrt::Windows::Storage::ApplicationData::Current().TemporaryFolder().Path());
+        save_path.append(prefix);
+        save_path.append("/");
+#endif // _UWP
+
+        save_path.append(ts);
+        this->save_target(save_path.c_str());
     }
 
     return retval;
