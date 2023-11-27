@@ -41,16 +41,6 @@ namespace d3d12 {
         static const char *factor_streaming_method;
 
         /// <summary>
-        /// Determines the directory where the input data are staged.
-        /// </summary>
-        /// <remarks>
-        /// The benchmark will copy the raw data to this directory before
-        /// streaming from there, which allows us to test different kinds of
-        /// disks.
-        /// </remarks>
-        static const char *factor_staging_directory;
-
-        /// <summary>
         /// Identifies the method of streaming from a memory-mapped file that is
         /// re-mapped in batches.
         /// </summary>

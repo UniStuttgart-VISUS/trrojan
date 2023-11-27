@@ -6,6 +6,7 @@
 
 #include "trrojan/d3d12/sphere_streaming_context.h"
 
+#include <algorithm>
 #include <limits>
 
 #include "trrojan/contains.h"
@@ -19,6 +20,7 @@ const char *trrojan::d3d12::sphere_streaming_context::factor_##f = #f
 
 _SPHERE_BENCH_DEFINE_FACTOR(batch_count);
 _SPHERE_BENCH_DEFINE_FACTOR(batch_size);
+_SPHERE_BENCH_DEFINE_FACTOR(max_heap_size);
 _SPHERE_BENCH_DEFINE_FACTOR(repeat_frame);
 
 #undef _SPHERE_BENCH_DEFINE_FACTOR
@@ -31,6 +33,8 @@ void trrojan::d3d12::sphere_streaming_context::add_defaults(
         trrojan::configuration_set& configs) {
     configs.add_factor(factor::from_manifestations(factor_batch_count, 8u));
     configs.add_factor(factor::from_manifestations(factor_batch_size, 1024u));
+    configs.add_factor(factor::from_manifestations(factor_max_heap_size,
+        static_cast<std::uint64_t>(1024 * 1024 * 1024)));
     configs.add_factor(factor::from_manifestations(factor_repeat_frame, 0u));
 }
 
@@ -174,7 +178,9 @@ bool trrojan::d3d12::sphere_streaming_context::rebuild_required(
         const std::vector<std::string>& changed) const {
     return (contains_any(changed, factor_batch_count, factor_batch_size,
         factor_repeat_frame, benchmark_base::factor_device)
-        || (this->_heap == nullptr));
+        || this->_heaps.empty()
+        || std::any_of(this->_heaps.begin(), this->_heaps.end(),
+            [](winrt::com_ptr<ID3D12Heap> h) { return !h; }));
 }
 
 
@@ -189,13 +195,11 @@ void trrojan::d3d12::sphere_streaming_context::rebuild(ID3D12Device *device,
         throw std::invalid_argument("The Direct3D device must be valid.");
     }
 
-    // Make sure to release existing resource before allocation such that we do
-    // not run out of GPU memory prematurely.
-    this->_buffers.clear();
-    this->_heap.attach(nullptr);
+    const auto max_heap_size = config.get<std::uint64_t>(factor_max_heap_size);
 
     // Retrieve and cache the number of parallel batches and the number of
     // spheres they contain.
+    assert(this->_buffers.empty());
     this->_buffers.resize(config.get<std::uint32_t>(factor_batch_count));
     this->_batch_size = config.get<decltype(this->_batch_size)>(
         factor_batch_size);
@@ -232,21 +236,43 @@ void trrojan::d3d12::sphere_streaming_context::rebuild(ID3D12Device *device,
 
         auto info = device->GetResourceAllocationInfo(0, 1, &desc);
 
-        trrojan::log::instance().write_line(log_level::debug, "Allocating a "
-            "heap of {0} bytes ({1} minimum required) of streaming buffer for "
-            "each of {2} batch(es) of {3} particle(s) of size {4} on device "
-            "0x{5:p} ...", info.SizeInBytes, batch_size, this->batch_count(),
-            this->_batch_size, this->_stride, static_cast<void *>(device));
-        this->_heap = to_winrt(create_heap(device, info, this->batch_count(),
-            heap_type));
+        assert(this->_heaps.empty());
+        if (desc.Width > max_heap_size) {
+            trrojan::log::instance().write_line(log_level::debug, "Allocating "
+                "a heap of {0} bytes ({1} minimum required) of streaming "
+                "buffer for each of {2} batch(es) of {3} particle(s) of size "
+                "{4} on device 0x{5:p} ...", info.SizeInBytes, batch_size,
+                this->batch_count(), this->_batch_size, this->_stride,
+                static_cast<void *>(device));
+            this->_heaps.push_back(to_winrt(create_heap(device, info,
+                this->batch_count(), heap_type)));
+        } else {
+            trrojan::log::instance().write_line(log_level::debug, "Allocating "
+                "{2} heap(s() of {0} bytes ({1} minimum required) for streaming "
+                "buffer(s) for batch(es) of {3} particle(s) of size {4} on "
+                "device 0x{5:p} ...", info.SizeInBytes, batch_size,
+                this->batch_count(), this->_batch_size, this->_stride,
+                static_cast<void *>(device));
+            for (std::size_t b = 0; b < this->batch_count(); ++b) {
+                this->_heaps.push_back(to_winrt(create_heap(device, info, 1,
+                    heap_type)));
+            }
+        }
 
         for (std::size_t b = 0; b < this->batch_count(); ++b) {
-            const auto offset = b * info.SizeInBytes;
+            auto offset = b * info.SizeInBytes;
+            auto heap = this->_heaps.front();
+
+            if (this->_heaps.size() >= this->batch_count()) {
+                offset = 0;
+                heap = this->_heaps[b];
+            }
+
             trrojan::log::instance().write_line(log_level::debug, "Creating a "
-                "placed resource at offset {0} for batch {1}... ", offset, b);
-            auto hr = device->CreatePlacedResource(this->_heap.get(), offset,
-                &desc, initial_state, nullptr,
-                IID_PPV_ARGS(this->_buffers[b].put()));
+                "placed resource at offset {0} for batch {1} in heap "
+                "0x{2:p}... ", offset, b, static_cast<void *>(heap.get()));
+            auto hr = device->CreatePlacedResource(heap.get(), offset, &desc,
+                initial_state, nullptr, IID_PPV_ARGS(this->_buffers[b].put()));
             if (FAILED(hr)) {
                 throw ATL::CAtlException(hr);
             }
@@ -306,7 +332,7 @@ bool trrojan::d3d12::sphere_streaming_context::reshape(
     if (retval) {
         // Force rebuild. The total number of spheres is irrelevant, because it
         // only affects the last batch, which we compute on the fly.
-        this->_heap = nullptr;
+        this->_heaps.clear();
         this->_buffers.clear();
         this->_data.clear();
     }

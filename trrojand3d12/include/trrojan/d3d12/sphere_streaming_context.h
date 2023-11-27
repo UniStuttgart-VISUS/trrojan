@@ -84,6 +84,12 @@ namespace d3d12 {
         static const char *factor_batch_size;
 
         /// <summary>
+        /// The name of the factor determining the maximum heap size, in bytes,
+        /// that can be allocated at once to place batches in.
+        /// </summary>
+        static const char *factor_max_heap_size;
+
+        /// <summary>
         /// The name of a factor that controls the simulation of multiple frames
         /// from a single frame provided as input.
         /// </summary>
@@ -386,7 +392,7 @@ namespace d3d12 {
         handle<> _event;
         winrt::com_ptr<ID3D12Fence> _fence;
         std::vector<UINT64> _fence_values;
-        winrt::com_ptr<ID3D12Heap> _heap;
+        std::vector<winrt::com_ptr<ID3D12Heap>> _heaps;
         std::atomic<UINT64> _next_fence_value;
         std::size_t _ready_count;
         std::size_t _repeat_frame;

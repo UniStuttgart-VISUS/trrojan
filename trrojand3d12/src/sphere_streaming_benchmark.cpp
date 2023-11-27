@@ -21,7 +21,6 @@ const char *trrojan::d3d12::sphere_streaming_benchmark::factor_##f = #f
 
 _STRM_BENCH_DEFINE_FACTOR(queue_priority);
 _STRM_BENCH_DEFINE_FACTOR(streaming_method);
-_STRM_BENCH_DEFINE_FACTOR(staging_directory);
 
 #undef _STRM_BENCH_DEFINE_FACTOR
 
@@ -143,7 +142,8 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
         const configuration& config,
         power_collector::pointer& power_collector,
         const std::vector<std::string>& changed) {
-    const auto folder = config.get<std::string>(factor_staging_directory);
+    const auto folder = config.get<std::string>(
+        dstorage_configuration::factor_staging_directory);
     const auto method = config.get<std::string>(factor_streaming_method);
     const auto priority = config.get<std::uint32_t>(factor_queue_priority);
     const auto repeat = config.get<std::uint32_t>(
@@ -337,13 +337,16 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
             }
         }
 
-        // Lazily create the factory.
-        if (!this->_dstorage_factory) {
-            auto hr = ::DStorageGetFactory(
-                IID_PPV_ARGS(this->_dstorage_factory.put()));
-            if (FAILED(hr)) {
-                throw ATL::CAtlException(hr);
+        {
+            dstorage_configuration c(config);
+
+            // Lazily create the factory.
+            if (!this->_dstorage_factory) {
+                this->_dstorage_factory = c.create_factory();
             }
+
+            // Apply the configuration.
+            c.apply(this->_dstorage_factory, changed);
         }
 
         // Lazily create the queue.

@@ -315,6 +315,9 @@ ATL::CComPtr<ID3D12Heap> trrojan::d3d12::create_heap(ID3D12Device *device,
         throw ATL::CAtlException(E_POINTER);
     }
 
+    log::instance().write_line(log_level::debug, "Creating heap of {0} Bytes "
+        "with an alignment of {1} ...", desc.SizeInBytes, desc.Alignment);
+
     ATL::CComPtr<ID3D12Heap> retval;
     auto hr = device->CreateHeap(&desc, IID_PPV_ARGS(&retval));
     if (FAILED(hr)) {

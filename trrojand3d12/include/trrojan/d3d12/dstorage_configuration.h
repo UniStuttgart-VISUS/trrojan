@@ -9,10 +9,13 @@
 #include <cinttypes>
 #include <string>
 #include <type_traits>
+#include <vector>
 
 #if defined(TRROJAN_WITH_DSTORAGE)
 #include <dstorage.h>
 #endif /* defined(TRROJAN_WITH_DSTORAGE) */
+
+#include <winrt/base.h>
 
 #include "trrojan/configuration_set.h"
 
@@ -53,6 +56,11 @@ namespace d3d12 {
         static const char *factor_queue_priority;
 
         /// <summary>
+        /// Specifies the size of the staging buffer in bytes.
+        /// </summary>
+        static const char *factor_staging_buffer_size;
+
+        /// <summary>
         /// Determines the directory where the input data are staged.
         /// </summary>
         /// <remarks>
@@ -70,6 +78,17 @@ namespace d3d12 {
             desc.Priority = this->queue_priority();
         }
 
+        void apply(winrt::com_ptr<IDStorageFactory> factory,
+            const std::vector<std::string>& changed) const;
+
+        /// <summary>
+        /// Creates a DirectStorage factory and applies all configuration that
+        /// is applicable to the factory itself.
+        /// </summary>
+        /// <returns></returns>
+        /// <exception cref="ATL::CAtlException"></exception>
+        winrt::com_ptr<IDStorageFactory> create_factory(void);
+
         inline std::uint16_t queue_depth(void) const noexcept {
             return this->_queue_depth;
         }
@@ -86,6 +105,7 @@ namespace d3d12 {
 
         std::uint16_t _queue_depth;
         std::underlying_type<DSTORAGE_PRIORITY>::type _queue_priority;
+        std::uint32_t _staging_buffer_size;
         std::string _staging_directory;
 
 #else /* defined(TRROJAN_WITH_DSTORAGE) */

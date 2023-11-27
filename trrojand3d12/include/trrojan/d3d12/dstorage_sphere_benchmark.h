@@ -37,11 +37,6 @@ namespace d3d12 {
         static const char *factor_implementation;
 
         /// <summary>
-        /// Specifies the size of the staging buffer in bytes.
-        /// </summary>
-        static const char *factor_staging_buffer_size;
-
-        /// <summary>
         /// Initialises a new instance.
         /// </summary>
         dstorage_sphere_benchmark(void);

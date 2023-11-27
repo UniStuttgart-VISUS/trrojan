@@ -4,9 +4,11 @@
 // </copyright>
 // <author>Christoph Müller</author>
 
-
 #include "trrojan/d3d12/dstorage_configuration.h"
 
+#include <atlexcept.h>
+
+#include "trrojan/contains.h"
 #include "trrojan/io.h"
 
 
@@ -15,6 +17,7 @@ const char *trrojan::d3d12::dstorage_configuration::factor_##f = #f
 
 _DSTOR_DEFINE_FACTOR(queue_depth);
 _DSTOR_DEFINE_FACTOR(queue_priority);
+_DSTOR_DEFINE_FACTOR(staging_buffer_size);
 _DSTOR_DEFINE_FACTOR(staging_directory);
 
 #undef _DSTOR_DEFINE_FACTOR
@@ -36,6 +39,8 @@ void trrojan::d3d12::dstorage_configuration::add_defaults(
     configs.add_factor(factor::from_manifestations(factor_queue_priority, 0u));
 #endif /* defined(TRROJAN_WITH_DSTORAGE) */
 
+    configs.add_factor(factor::from_manifestations(factor_staging_buffer_size,
+        static_cast<std::uint32_t>(32 * 1204 * 1024)));
     configs.add_factor(factor::from_manifestations(factor_staging_directory,
         get_temp_folder()));
 }
@@ -51,12 +56,53 @@ trrojan::d3d12::dstorage_configuration::dstorage_configuration(
         const configuration& config)
     : _DSTOR_INIT_FACTOR(queue_depth),
         _DSTOR_INIT_FACTOR(queue_priority),
+        _DSTOR_INIT_FACTOR(staging_buffer_size),
         _DSTOR_INIT_FACTOR(staging_directory) {
     if (this->_queue_depth < DSTORAGE_MIN_QUEUE_CAPACITY) {
         this->_queue_depth = DSTORAGE_MIN_QUEUE_CAPACITY;
     } else if (this->_queue_depth >= DSTORAGE_MAX_QUEUE_CAPACITY) {
         this->_queue_depth = DSTORAGE_MAX_QUEUE_CAPACITY;
     }
+}
+
+
+/*
+ * trrojan::d3d12::dstorage_configuration::apply
+ */
+void trrojan::d3d12::dstorage_configuration::apply(
+        winrt::com_ptr<IDStorageFactory> factory,
+        const std::vector<std::string>& changed) const {
+    if (factory == nullptr) {
+        throw ATL::CAtlException(E_POINTER);
+    }
+
+    // Set the size of the staging buffer.
+    if (changed.empty() || contains(changed, factor_staging_buffer_size)) {
+        auto hr = factory->SetStagingBufferSize(this->_staging_buffer_size);
+        if (FAILED(hr)) {
+            throw ATL::CAtlException(hr);
+        }
+    }
+}
+
+
+/*
+ * trrojan::d3d12::dstorage_configuration::create_factory
+ */
+winrt::com_ptr<IDStorageFactory>
+trrojan::d3d12::dstorage_configuration::create_factory(void) {
+    winrt::com_ptr<IDStorageFactory> retval;
+
+    {
+        auto hr = ::DStorageGetFactory(IID_PPV_ARGS(retval.put()));
+        if (FAILED(hr)) {
+            throw ATL::CAtlException(hr);
+        }
+    }
+
+    this->apply(retval, { });
+
+    return retval;
 }
 
 #undef _DSTOR_INIT_FACTOR

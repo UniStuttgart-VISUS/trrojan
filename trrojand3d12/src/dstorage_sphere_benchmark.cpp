@@ -20,7 +20,6 @@
 const char *trrojan::d3d12::dstorage_sphere_benchmark::factor_##f = #f
 
 _DSTOR_BENCH_DEFINE_FACTOR(implementation);
-_DSTOR_BENCH_DEFINE_FACTOR(staging_buffer_size);
 
 #undef _DSTOR_BENCH_DEFINE_FACTOR
 
@@ -45,9 +44,6 @@ trrojan::d3d12::dstorage_sphere_benchmark::dstorage_sphere_benchmark(
     this->_default_configs.add_factor(factor::from_manifestations(
         factor_implementation,
         { implementation_batches, implementation_naive }));
-    this->_default_configs.add_factor(factor::from_manifestations(
-        factor_staging_buffer_size,
-        static_cast<std::uint32_t>(16 * 1204 * 1024)));
 }
 
 
@@ -195,7 +191,6 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_batches(
     std::vector<gpu_timer::millis_type> batch_times, gpu_times;
     sphere_rendering_configuration cfg(config);
     auto cmd_queue = device.command_queue();
-    winrt::com_ptr<IDStorageFactory> dstorage;
     dstorage_configuration dstorage_config(config);
     winrt::com_ptr<IDStorageFile> file;
     const auto gpu_freq = gpu_timer::get_timestamp_frequency(cmd_queue.p);
@@ -279,22 +274,8 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_batches(
     this->update_constants(cfg, 0);
 
     // Prepare DirectStorage and open the staged file with DirectStorage.
-    {
-        auto hr = ::DStorageGetFactory(IID_PPV_ARGS(dstorage.put()));
-        if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
-        }
-    }
-
-    // Set the size of the staging buffer.
-    {
-        auto size = config.get<std::uint32_t>(factor_staging_buffer_size);
-        auto hr = dstorage->SetStagingBufferSize(size);
-        if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
-        }
-    }
-
+    auto dstorage = dstorage_config.create_factory();
+ 
     {
         std::wstring unshit = this->_path;
         auto hr = dstorage->OpenFile(unshit.c_str(), IID_PPV_ARGS(file.put()));
