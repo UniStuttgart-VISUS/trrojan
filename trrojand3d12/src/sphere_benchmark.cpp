@@ -291,6 +291,7 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
     // Prepare the result set.
     auto retval = std::make_shared<basic_result>(config,
         std::initializer_list<std::string> {
+        "benchmark",
         "particles",
         "data_extents",
         "ia_vertices",
@@ -317,6 +318,7 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
 
     // Output the results.
     retval->add({
+        this->name(),
         this->_data.spheres(),
         this->_data.extents(),
         pipeline_stats.IAVertices,

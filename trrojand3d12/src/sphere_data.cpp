@@ -15,6 +15,7 @@
 #include "trrojan/timer.h"
 
 #include "trrojan/d3d12/sphere_rendering_configuration.h"
+#include "trrojan/d3d12/utilities.h"
 
 #include "sphere_techniques.h"
 #include "SpherePipeline.hlsli"

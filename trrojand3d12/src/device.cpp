@@ -75,17 +75,7 @@ void trrojan::d3d12::device::close_and_execute_command_list(
 ATL::CComPtr<IDXGIAdapter> trrojan::d3d12::device::dxgi_adapter(void) {
     assert(this->d3d_device() != nullptr);
     assert(this->_dxgi_factory != nullptr);
-    ATL::CComPtr<IDXGIAdapter> retval;
-
-    auto hr = this->_dxgi_factory->EnumAdapterByLuid(
-        this->d3d_device()->GetAdapterLuid(),
-        IID_IDXGIAdapter,
-        reinterpret_cast<void **>(&retval));
-    if (FAILED(hr)) {
-        throw CAtlException(hr);
-    }
-
-    return retval;
+    return get_adapter(this->_d3d_device, this->_dxgi_factory);
 }
 
 
@@ -117,24 +107,35 @@ void trrojan::d3d12::device::wait_for_gpu(void) {
     auto fence = this->fence();
     auto value = this->_next_fence++;
 
-    // Make the fence signal in the command queue with its current value.
-    {
-        auto hr = this->command_queue()->Signal(fence, value);
-        if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
-        }
-    }
-
     // Signal the event if the fence signalled with its current value.
     auto evt = create_event(false, false);
     {
+        log::instance().write_line(log_level::debug, "Set event on {0}.",
+            value);
         auto hr = fence->SetEventOnCompletion(value, evt);
         if (FAILED(hr)) {
             throw ATL::CAtlException(hr);
         }
     }
 
+    // Make the fence signal in the command queue with its current value.
+    {
+        log::instance().write_line(log_level::debug, "Signal 0x{0:p} with {1}.",
+            static_cast<void *>(fence.p), value);
+        auto hr = this->command_queue()->Signal(fence, value);
+        if (FAILED(hr)) {
+            throw ATL::CAtlException(hr);
+        }
+    }
+
+#if (defined(DEBUG) || defined(_DEBUG))
+    log::instance().write_line(log_level::debug, "Current fence value is {0}.",
+        fence->GetCompletedValue());
+#endif /* (defined(DEBUG) || defined(_DEBUG)) */
+
     // Wait for the event to signal.
+    log::instance().write_line(log_level::debug, "Waiting for fence value {0}.",
+        value);
     wait_for_event(evt);
 }
 

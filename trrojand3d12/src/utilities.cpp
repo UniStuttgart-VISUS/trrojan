@@ -289,6 +289,65 @@ ATL::CComPtr<ID3D12Fence> trrojan::d3d12::create_fence(ID3D12Device *device,
 
 
 /*
+ * trrojan::d3d12::create_file_mapping
+ */
+winrt::handle trrojan::d3d12::create_file_mapping(winrt::file_handle& handle,
+        const DWORD protect, const std::size_t size) {
+    ULARGE_INTEGER s;
+    s.QuadPart = size;
+
+    winrt::handle retval(::CreateFileMappingW(handle.get(), nullptr, protect,
+        s.HighPart, s.LowPart, nullptr));
+    if (!retval) {
+        throw ATL::CAtlException(HRESULT_FROM_WIN32(::GetLastError()));
+    }
+
+    return retval;
+}
+
+
+/*
+ * trrojan::d3d12::create_heap
+ */
+ATL::CComPtr<ID3D12Heap> trrojan::d3d12::create_heap(ID3D12Device *device,
+        const D3D12_HEAP_DESC& desc) {
+    if (device == nullptr) {
+        throw ATL::CAtlException(E_POINTER);
+    }
+
+    log::instance().write_line(log_level::debug, "Creating heap of {0} Bytes "
+        "with an alignment of {1} ...", desc.SizeInBytes, desc.Alignment);
+
+    ATL::CComPtr<ID3D12Heap> retval;
+    auto hr = device->CreateHeap(&desc, IID_PPV_ARGS(&retval));
+    if (FAILED(hr)) {
+        throw ATL::CAtlException(hr);
+    }
+
+    return retval;
+}
+
+
+/*
+ * trrojan::d3d12::create_heap
+ */
+ATL::CComPtr<ID3D12Heap> trrojan::d3d12::create_heap(ID3D12Device *device,
+        const D3D12_RESOURCE_ALLOCATION_INFO& alloc_info,
+        const std::size_t cnt,
+        const D3D12_HEAP_TYPE type,
+        const D3D12_HEAP_FLAGS flags) {
+    D3D12_HEAP_DESC desc;
+    ::ZeroMemory(&desc, sizeof(desc));
+    desc.Alignment = alloc_info.Alignment;
+    desc.Flags = flags;
+    desc.Properties.Type = type;
+    desc.SizeInBytes = cnt * alloc_info.SizeInBytes;
+
+    return create_heap(device, desc);
+}
+
+
+/*
  * trrojan::d3d12::create_render_target
  */
 ATL::CComPtr<ID3D12Resource> trrojan::d3d12::create_render_target(
@@ -337,43 +396,6 @@ ATL::CComPtr<ID3D12Resource> trrojan::d3d12::create_resource(
     }
 
     return retval;
-}
-
-
-/*
- * trrojan::d3d12::create_temp_file
- */
-std::string trrojan::d3d12::create_temp_file(const char *prefix) {
-    std::array<char, MAX_PATH + 1> buffer;
-
-    // Note: The path can never exceed the constant length above according to
-    // https://learn.microsoft.com/de-de/windows/win32/api/fileapi/nf-fileapi-gettemppatha
-    if (!::GetTempPathA(static_cast<DWORD>(buffer.size()), buffer.data())) {
-        throw ATL::CAtlException(HRESULT_FROM_WIN32(::GetLastError()));
-    }
-
-    if (!::GetTempFileNameA(buffer.data(),
-            (prefix != nullptr) ? prefix : "trrojan", 0, buffer.data())) {
-        throw ATL::CAtlException(HRESULT_FROM_WIN32(::GetLastError()));
-    }
-
-    return buffer.data();
-}
-
-
-/*
- * trrojan::d3d12::create_temp_file
- */
-std::string trrojan::d3d12::create_temp_file(const std::string& folder,
-        const char *prefix) {
-    std::vector<char> buffer(folder.size() + 14 + 1);
-
-    if (!::GetTempFileNameA(folder.c_str(),
-            (prefix != nullptr) ? prefix : "trrojan", 0, buffer.data())) {
-        throw ATL::CAtlException(HRESULT_FROM_WIN32(::GetLastError()));
-    }
-
-    return buffer.data();
 }
 
 
@@ -828,6 +850,33 @@ ATL::CComPtr<ID3D12Resource> trrojan::d3d12::create_viridis_colour_map(
 
 
 /*
+ * trrojan::d3d12::get_adapter
+ */
+ATL::CComPtr<IDXGIAdapter> trrojan::d3d12::get_adapter(ID3D12Device *device,
+        IDXGIFactory4 *factory) {
+    check_not_null(device);
+    ATL::CComPtr<IDXGIFactory4> f(factory);
+    ATL::CComPtr<IDXGIAdapter> retval;
+
+    if (f == nullptr) {
+        auto hr = ::CreateDXGIFactory2(0, IID_IDXGIFactory4,
+            reinterpret_cast<void **>(&f));
+        if (FAILED(hr)) {
+            throw ATL::CAtlException(hr);
+        }
+    }
+
+    auto hr = f->EnumAdapterByLuid(device->GetAdapterLuid(),
+        IID_IDXGIAdapter, reinterpret_cast<void **>(&retval));
+    if (FAILED(hr)) {
+        throw CAtlException(hr);
+    }
+
+    return retval;
+}
+
+
+/*
  * trrojan::d3d12::get_device
  */
 ATL::CComPtr<ID3D12Device> trrojan::d3d12::get_device(
@@ -913,16 +962,52 @@ std::wstring trrojan::d3d12::get_mapped_file_path(void *address) {
 
 
 /*
- * trrojan::d3d12::get_temp_folder
+ * trrojan::d3d12::get_video_memory_info
  */
-std::string trrojan::d3d12::get_temp_folder(void) {
-    std::array<char, MAX_PATH + 1> retval;
+DXGI_QUERY_VIDEO_MEMORY_INFO trrojan::d3d12::get_video_memory_info(
+        ID3D12Device *device, IDXGIFactory4 *factory, const UINT node_index,
+        const DXGI_MEMORY_SEGMENT_GROUP segment_group) {
+    ATL::CComPtr<IDXGIAdapter3> adapter3;
+    DXGI_QUERY_VIDEO_MEMORY_INFO retval;
 
-    if (!::GetTempPathA(static_cast<DWORD>(retval.size()), retval.data())) {
-        throw ATL::CAtlException(HRESULT_FROM_WIN32(::GetLastError()));
+    {
+        auto adapter = get_adapter(device, factory);
+        auto hr = adapter.QueryInterface(&adapter3);
+        if (FAILED(hr)) {
+            throw ATL::CAtlException(hr);
+        }
     }
 
-    return retval.data();
+    {
+        auto hr = adapter3->QueryVideoMemoryInfo(node_index, segment_group,
+            &retval);
+        if (FAILED(hr)) {
+            throw ATL::CAtlException(hr);
+        }
+    }
+
+    return retval;
+}
+
+
+/*
+ * trrojan::d3d12::map_view_of_file
+ */
+void *trrojan::d3d12::map_view_of_file(winrt::handle& mapping,
+        const DWORD access,
+        const std::size_t offset,
+        const std::size_t size) {
+    ULARGE_INTEGER o;
+    o.QuadPart = offset;
+
+    auto retval = ::MapViewOfFile(mapping.get(), access, o.HighPart, o.LowPart,
+        size);
+    if (retval == nullptr) {
+        const auto error = ::GetLastError();
+        throw ATL::CAtlException(HRESULT_FROM_WIN32(error));
+    }
+
+    return retval;
 }
 
 

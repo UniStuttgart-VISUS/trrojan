@@ -17,7 +17,7 @@
  */
 std::size_t trrojan::random_sphere_generator::create(void *dst,
         const std::size_t cnt_bytes, float& out_max_radius,
-        const description &description) {
+        const description& description) {
     //static const create_flags VALID_INPUT_FLAGS // Flags directly copied from user input.
         //= sphere_data_set_base::property_structured_resource;
     const auto stride = get_stride(description.type);

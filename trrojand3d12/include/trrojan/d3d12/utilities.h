@@ -185,6 +185,44 @@ namespace d3d12 {
         const UINT64 initial_value = 0);
 
     /// <summary>
+    /// Createa a file mapping object for the given file.
+    /// </summary>
+    /// <param name="handle"></param>
+    /// <param name="protect"></param>
+    /// <param name="size"></param>
+    /// <returns></returns>
+    winrt::handle TRROJAND3D12_API create_file_mapping(
+        winrt::file_handle& handle,
+        const DWORD protect,
+        const std::size_t size);
+
+    /// <summary>
+    /// Create a D3D12 heap on the given device.
+    /// </summary>
+    /// <param name="device"></param>
+    /// <param name="desc"></param>
+    /// <returns></returns>
+    ATL::CComPtr<ID3D12Heap> TRROJAND3D12_API create_heap(
+        ID3D12Device *device, const D3D12_HEAP_DESC& desc);
+
+    /// <summary>
+    /// Create a heap that can hold <paramref name="cnt" /> of the specified
+    /// resources.
+    /// </summary>
+    /// <param name="device"></param>
+    /// <param name="alloc_info"></param>
+    /// <param name="cnt"></param>
+    /// <param name="type"></param>
+    /// <param name="flags"></param>
+    /// <returns></returns>
+    ATL::CComPtr<ID3D12Heap> TRROJAND3D12_API create_heap(
+        ID3D12Device *device,
+        const D3D12_RESOURCE_ALLOCATION_INFO& alloc_info,
+        const std::size_t cnt = 1,
+        const D3D12_HEAP_TYPE type = D3D12_HEAP_TYPE_DEFAULT,
+        const D3D12_HEAP_FLAGS flags = D3D12_HEAP_FLAG_NONE);
+
+    /// <summary>
     /// Creates a 2D texture which is initially in the present state.
     /// </summary>
     /// <param name="device"></param>
@@ -211,21 +249,6 @@ namespace d3d12 {
         ID3D12Device *device, const D3D12_RESOURCE_DESC& desc,
         const D3D12_HEAP_TYPE heap_type = D3D12_HEAP_TYPE_DEFAULT,
         const D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_COPY_DEST);
-
-    /// <summary>
-    /// Create a temporary file name in the temporary folder.
-    /// </summary>
-    /// <param name="prefix"></param>
-    /// <returns></returns>
-    std::string create_temp_file(const char *prefix);
-
-    /// <summary>
-    /// Create a temporary file in the given folder.
-    /// </summary>
-    /// <param name="folder"></param>
-    /// <param name="prefix"></param>
-    /// <returns></returns>
-    std::string create_temp_file(const std::string& folder, const char *prefix);
 
     /// <summary>
     /// Create an uninitialised 1D texture which is in
@@ -358,6 +381,15 @@ namespace d3d12 {
         = static_cast<D3D12_RESOURCE_STATES>(0x40 | 0x80));
 
     /// <summary>
+    /// Gets the DXGI adapter the given device was created on.
+    /// </summary>
+    /// <param name="device"></param>
+    /// <param name="factory"></param>
+    /// <returns></returns>
+    ATL::CComPtr<IDXGIAdapter> TRROJAND3D12_API get_adapter(
+        ID3D12Device *device, IDXGIFactory4 *factory);
+
+    /// <summary>
     /// Gets the device the child belongs to.
     /// </summary>
     /// <param name="child"></param>
@@ -392,10 +424,17 @@ namespace d3d12 {
 #endif /* !defined(TRROJAN_FOR_UWP) */
 
     /// <summary>
-    /// Gets the path of the temporary folder.
+    /// Gets the <see cref="DXGI_QUERY_VIDEO_MEMORY_INFO" /> of the adapter
+    /// backing the given <paramref name="device" />.
     /// </summary>
+    /// <param name="device"></param>
+    /// <param name="factory"></param>
+    /// <param name="node_index"></param>
+    /// <param name="segment_group"></param>
     /// <returns></returns>
-    std::string get_temp_folder(void);
+    DXGI_QUERY_VIDEO_MEMORY_INFO get_video_memory_info(ID3D12Device *device,
+        IDXGIFactory4 *factory, const UINT node_index,
+        const DXGI_MEMORY_SEGMENT_GROUP segment_group);
 
     /// <summary>
     /// Index into an array aligned according to constant buffer alignment
@@ -411,6 +450,17 @@ namespace d3d12 {
         p += n * align_constant_buffer_size(sizeof(TPointer));
         return reinterpret_cast<TPointer *>(p);
     }
+
+    /// <summary>
+    /// Maps the given file mapping into the address space of the process.
+    /// </summary>
+    /// <param name="mapping"></param>
+    /// <param name="access"></param>
+    /// <param name="offset"></param>
+    /// <param name="size"></param>
+    /// <returns></returns>
+    TRROJAND3D12_API void *map_view_of_file(winrt::handle& mapping,
+        const DWORD access, const std::size_t offset, const std::size_t size);
 
     /// <summary>
     /// Offsets the given pointer by the given number of bytes.

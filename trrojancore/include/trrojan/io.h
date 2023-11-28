@@ -1,4 +1,4 @@
-// <copyright file="io.h" company="Visualisierungsinstitut der Universität Stuttgart">
+﻿// <copyright file="io.h" company="Visualisierungsinstitut der Universität Stuttgart">
 // Copyright © 2016 - 2023 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
@@ -34,6 +34,7 @@
 #endif /* defined(TRROJAN_FOR_UWP) */
 
 #include "trrojan/export.h"
+#include "trrojan/temp_file.h"
 #include "trrojan/text.h"
 
 
@@ -166,6 +167,13 @@ namespace trrojan {
     /// <param name="file_path">The file path to extract the path from.</param>
     /// <retruns>The extracted path.</retruns>
     std::string TRROJANCORE_API get_path(const std::string& file_path);
+
+    /// <summary>
+    /// Gets the path of the temporary folder.
+    /// </summary>
+    /// <returns>Get the path of the temporary folder as configured on the
+    /// system or a fallback path.</returns>
+    std::string TRROJANCORE_API get_temp_folder(void);
 
 #if defined(TRROJAN_FOR_UWP)
     /// <summary>
@@ -470,6 +478,17 @@ namespace trrojan {
     inline std::string TRROJANCORE_API read_text_file(const std::string& path) {
         return read_text_file(path.c_str());
     }
+
+#if defined(_WIN32)
+    /// <summary>
+    /// Write all of the given bytes to the given file.
+    /// </summary>
+    /// <param name="handle"></param>
+    /// <param name="data"></param>
+    /// <param name="cnt"></param>
+    void TRROJANCORE_API write_all_bytes(HANDLE handle, const void *data,
+        const std::size_t cnt);
+#endif defined(_WIN32)
 
     /// <summary>
     /// Specifies the alternative directory separator character if the

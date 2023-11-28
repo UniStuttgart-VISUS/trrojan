@@ -12,6 +12,8 @@
 
 #include <winrt/base.h>
 
+#include "trrojan/temp_file.h"
+
 #include "trrojan/d3d12/sphere_benchmark_base.h"
 #include "trrojan/d3d12/sphere_streaming_context.h"
 
@@ -39,19 +41,21 @@ namespace d3d12 {
         static const char *factor_streaming_method;
 
         /// <summary>
-        /// Determines the directory where the input data are staged.
+        /// Identifies the method of streaming from a memory-mapped file that is
+        /// re-mapped in batches.
         /// </summary>
-        /// <remarks>
-        /// The benchmark will copy the raw data to this directory before
-        /// streaming from there, which allows us to test different kinds of
-        /// disks.
-        /// </remarks>
-        static const char *factor_staging_directory;
+        static const std::string streaming_method_batch_memory_mapping;
+
+        /// <summary>
+        /// Identifies the method of streaming via DirectStorage into the
+        /// memory-mapped buffer.
+        /// </summary>
+        static const std::string streaming_method_dstorage;
 
         /// <summary>
         /// Identifies the method of streaming via memory using DirectStorage.
         /// </summary>
-        static const std::string streaming_method_dstorage;
+        static const std::string streaming_method_dstorage_memcpy;
 
         /// <summary>
         /// Identifies the method of streaming from disk using an I/O ring.
@@ -59,9 +63,16 @@ namespace d3d12 {
         static const std::string streaming_method_io_ring;
 
         /// <summary>
-        /// Identifies the method of streaming from a memory-mapped file.
+        /// Identifies the method of streaming from a memory-mapped file for
+        /// which the view is created whenever we want to read.
         /// </summary>
         static const std::string streaming_method_memory_mapping;
+
+        /// <summary>
+        /// Identifies the method of streaming from a memory-mapped file that is
+        /// mapped as a whole.
+        /// </summary>
+        static const std::string streaming_method_persistent_memory_mapping;
 
         /// <summary>
         /// Identifies the method of loading the whole data set to RAM and
@@ -124,7 +135,14 @@ namespace d3d12 {
 
     private:
 
+        void finalise_temp_file(const UINT64 size, const std::uint32_t repeat);
+
+        void *map_temp_file(const UINT64 size, const std::string& folder,
+            const std::uint32_t repeat);
+
+        DWORD _allocation_granularity;
         std::vector<std::uint8_t> _buffer;
+        std::size_t _cnt_remap;
 #if defined(TRROJAN_WITH_DSTORAGE)
         winrt::com_ptr<IDStorageFactory> _dstorage_factory;
         winrt::com_ptr<ID3D12Fence> _dstorage_fence;
@@ -136,6 +154,8 @@ namespace d3d12 {
         winrt::file_handle _file;
         winrt::handle _file_mapping;
         void *_file_view;
+        std::pair<std::size_t, std::size_t> _mapped_range;
+        temp_file _path;
         sphere_streaming_context _stream;
     };
 

@@ -1,4 +1,4 @@
-﻿// <copyright file="dstorage_sphere_benchmark.h" company="Visualisierungsinstitut der Universität Stuttgart">
+﻿// <copyright file="gdeflate_sphere_benchmark.h" company="Visualisierungsinstitut der Universität Stuttgart">
 // Copyright © 2023 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
@@ -21,25 +21,17 @@ namespace trrojan {
 namespace d3d12 {
 
     /// <summary>
-    /// Streams spheres using DirectStorage.
+    /// Streams spheres using DirectStorage and GDeflate.
     /// </summary>
-    class TRROJAND3D12_API dstorage_sphere_benchmark final
+    class TRROJAND3D12_API gdeflate_sphere_benchmark final
             : public sphere_benchmark_base {
 
     public:
 
-        static const std::string implementation_batches;
-        static const std::string implementation_naive;
-
-        /// <summary>
-        /// Specifies the approach being implemented.
-        /// </summary>
-        static const char *factor_implementation;
-
         /// <summary>
         /// Initialises a new instance.
         /// </summary>
-        dstorage_sphere_benchmark(void);
+        gdeflate_sphere_benchmark(void);
 
         /// <inheritdoc />
         void optimise_order(configuration_set& configs) override;
@@ -96,10 +88,13 @@ namespace d3d12 {
 
         inline void make_request(DSTORAGE_REQUEST& request,
                 const std::size_t batch) const noexcept {
-            request.Source.File.Offset = this->_stream.offset(batch);
-            request.Source.File.Size = this->_stream.batch_size(batch);
+            request.Source.File.Offset = (batch == 0)
+                ? 0
+                : this->_batches[batch - 1];
+            request.Source.File.Size = this->_batches[batch];
+            request.UncompressedSize = this->_stream.batch_size(batch);
             request.Destination.Buffer.Offset = 0;
-            request.Destination.Buffer.Size = request.Source.File.Size;
+            request.Destination.Buffer.Size = request.UncompressedSize;
         }
 
         inline winrt::com_ptr<ID3D12Resource> make_request(
@@ -122,16 +117,8 @@ namespace d3d12 {
             return retval;
         }
 
-        trrojan::result run_batches(d3d12::device& device,
-            const configuration& config,
-            power_collector::pointer& power_collector,
-            const std::vector<std::string>& changed);
-
-        trrojan::result run_naive(d3d12::device& device,
-            const configuration& config,
-            power_collector::pointer& power_collector,
-            const std::vector<std::string>& changed);
-
+        std::vector<std::size_t> _batches;
+        std::vector<std::uint8_t> _buffer;
         winrt::com_ptr<ID3D12Fence> _fence;
         UINT64 _next_fence_value;
         temp_file _path;

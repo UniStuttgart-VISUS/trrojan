@@ -1,30 +1,37 @@
 d3d12::stream-sphere-renderer {
-    string data_set =  pos_rad_intensity : 2000000 : 0 : 10 10 10 : 0.01 0.1
+    #string data_set = pos_rad_intensity : 2000000 : 0 : 10 10 10 : 0.01 0.1
+    string data_set = pos_rad_intensity : 1000000 : 0 : 1 1 1 : 0.001 0.002; pos_rad_intensity : 10000000 : 0 : 1 1 1 : 0.0001 0.0002; pos_rad_intensity : 100000000 : 0 : 1 1 1 : 0.00005 0.00010
+    #string data_set = T:\Programmcode\trrojan\trrojan\Assets\lasercross_frame112.mmpld
     float32 global_radius = 0.07
     uint32 frame = 0
-    uint32 min_prewarms = 16
 
-    #string streaming_method = ram; memory_mapping; read_file; dstorage
+    uint32 min_prewarms = 8
+    uint32 min_wall_time = 1000
+
+    string streaming_method = ram; memory_mapping; batch_memory_mapping; persistent_memory_mapping; read_file; dstorage
     #string streaming_method = read_file
     #string streaming_method = ram
     #string streaming_method = memory_mapping
-    string streaming_method = dstorage
+    #string streaming_method = dstorage
+    #string streaming_method = read_file; dstorage
+    #string streaming_method = batch_memory_mapping
+    #string streaming_method = persistent_memory_mapping; batch_memory_mapping; memory_mapping
 
 
     #string device = NVIDIA GeForce GTX 1050
-    uint32 batch_size = 32000
-    uint32 batch_count = 4
+    uint32 batch_size = 128; 256; 512; 1024; 2048; 4096
+    uint32 batch_count = 4; 8; 16; 32; 64; 128
 
-    uint32vec2 viewport = 1920 1080; 2150 1440
-    boolean debug_view = true
+    uint32vec2 viewport = 1920 1080
+    boolean debug_view = false
 
     boolean vs_raygen = false
-    boolean vs_xfer_function = true
+    boolean vs_xfer_function = false
 
     string method = quad_inst
 
-    string manoeuvre = path_z
-    uint32 manoeuvre_steps = 100
-    uint32 manoeuvre_step = 0
+    string manoeuvre = random
+    uint32 manoeuvre_steps = 16
+    uint32 manoeuvre_step = 0 -> 16
 }
 

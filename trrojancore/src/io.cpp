@@ -107,6 +107,44 @@ std::string TRROJANCORE_API trrojan::get_path(const std::string& file_path) {
 
 
 /*
+ * trrojan::get_temp_folder
+ */
+std::string trrojan::get_temp_folder(void) {
+#if defined(_WIN32)
+    std::array<char, MAX_PATH + 1> retval;
+
+    if (!::GetTempPathA(static_cast<DWORD>(retval.size()), retval.data())) {
+        throw ATL::CAtlException(HRESULT_FROM_WIN32(::GetLastError()));
+    }
+
+    return retval.data();
+
+#else /* defined(_WIN32) */
+    auto retval = std::getenv("TMPDIR");
+
+    if (retval == nullptr) {
+        retval = std::getenv("TEMPDIR");
+    }
+
+    if (retval == nullptr) {
+        retval = std::getenv("TMP");
+    }
+
+    if (retval == nullptr) {
+        retval = std::getenv("TEMP");
+    }
+
+    if (retval == nullptr) {
+        retval = "/tmp";
+    }
+
+    return retval;
+#endif /* defined(_WIN32) */
+}
+
+
+
+/*
  * trrojan::read_binary_file
  */
 std::vector<std::uint8_t> TRROJANCORE_API trrojan::read_binary_file(
@@ -219,6 +257,29 @@ std::string trrojan::read_text_file(
     }
 }
 #endif /* defined(TRROJAN_FOR_UWP) */
+
+
+#if defined(_WIN32)
+/*
+ * trrojan::write_all_bytes
+ */
+void trrojan::write_all_bytes(HANDLE handle, const void *data,
+        const std::size_t cnt) {
+    auto cur = static_cast<const std::uint8_t *>(data);
+    auto rem = cnt;
+
+    while (rem > 0) {
+        DWORD written = 0;
+        if (!::WriteFile(handle, cur, rem, &written, nullptr)) {
+            throw std::system_error(::GetLastError(), std::system_category());
+        }
+
+        assert(written <= rem);
+        cur += written;
+        rem -= written;
+    }
+}
+#endif defined(_WIN32)
 
 
 /*

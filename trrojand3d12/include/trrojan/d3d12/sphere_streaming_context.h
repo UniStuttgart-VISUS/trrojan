@@ -53,6 +53,14 @@ namespace d3d12 {
     public:
 
         /// <summary>
+        /// Adds the defatult configurations for streaming to the given
+        /// configuration set.
+        /// </summary>
+        /// <param name="configs">The default configuration set to add the
+        /// factors controlling streaming to.</param>
+        static void add_defaults(trrojan::configuration_set& configs);
+
+        /// <summary>
         /// The name of the factor &quot;batch_count&quot;
         /// </summary>
         /// <remarks>
@@ -76,6 +84,26 @@ namespace d3d12 {
         static const char *factor_batch_size;
 
         /// <summary>
+        /// The name of the factor determining the maximum heap size, in bytes,
+        /// that can be allocated at once to place batches in.
+        /// </summary>
+        static const char *factor_max_heap_size;
+
+        /// <summary>
+        /// The name of a factor that controls the simulation of multiple frames
+        /// from a single frame provided as input.
+        /// </summary>
+        /// <remarks>
+        /// <para>If this value is larger than zero, the application should copy
+        /// the input frame this number of times to simulate seeking within a
+        /// filewith real frames.</para>
+        /// <para>The context object does not actually work with this factor, ie
+        /// it is completely independent from it. The factor is only defined
+        /// here for reusability in all streaming benchmarks.</para>
+        /// </remarks>
+        static const char *factor_repeat_frame;
+
+        /// <summary>
         /// Initialises a new instance.
         /// </summary>
         sphere_streaming_context(void);
@@ -92,7 +120,7 @@ namespace d3d12 {
         /// configuration.
         /// </summary>
         inline std::size_t batch_count(void) const noexcept {
-            return this->_batch_count;
+            return this->_buffers.size();
         }
 
         /// <summary>
@@ -138,54 +166,52 @@ namespace d3d12 {
         }
 
         /// <summary>
-        /// Gets the buffer holding the batches on the GPU.
+        /// Gets the buffer holding the given batch on the GPU.
         /// </summary>
-        /// <returns>The buffer holding the batches GPU. This pointer should
+        /// <param name="batch">The zero-based index of the batch.</param>
+        /// <returns>The buffer holding the data of the batch on the GPU. This
+        /// pointer should not be cached.</returns>
+        inline winrt::com_ptr<ID3D12Resource> buffer(
+                const std::size_t batch) const {
+            assert(batch < this->_buffers.size());
+            return this->_buffers[batch];
+        }
+
+        /// <summary>
+        /// Answer the pointer to the mapped data buffer for the given batch.
+        /// </summary>
+        /// <remarks>
+        /// The data pointer might be <c>nullptr</c> if the heap backing the
+        /// resources is not of type <c>D3D12_HEAP_TYPE_UPLOAD</c>, because only
+        /// upload heaps can be persistently mapped.
+        /// </remarks>
+        /// <param name="batch">The zero-based index of the batch.</param>
+        /// <returns>The mapped memory of the given batch. This pointer should
         /// not be cached.</returns>
-        inline winrt::com_ptr<ID3D12Resource> buffer(void) const noexcept {
-            return this->_buffer;
-        }
-
-        /// <summary>
-        /// Answer the pointer to the mapped data buffer.
-        /// </summary>
-        inline void *data(void) noexcept {
-            return this->_data;
-        }
-
-        /// <summary>
-        /// Gets the start of the <paramref name="batch" />th batch in the
-        /// persistently mapped buffer, ie the copy target for this batch.
-        /// </summary>
-        /// <param name="batch"></param>
-        /// <returns></returns>
         inline void *data(const std::size_t batch) {
-            assert(batch < this->_batch_count);
-            auto bytes = static_cast<std::uint8_t *>(this->_data);
-            return bytes + this->offset(batch);
+            assert(batch < this->_buffers.size());
+            return this->_data[batch];
         }
-
-        /// <summary>
-        /// Gets a descriptor for the start of the data buffer.
-        /// </summary>
-        /// <param name=""></param>
-        /// <returns></returns>
-        D3D12_GPU_VIRTUAL_ADDRESS descriptor(void) const;
 
         /// <summary>
         /// Gets a descriptor for the start of the given
         /// <paramref name="batch" />.
         /// </summary>
-        /// <param name="batch"></param>
-        /// <returns></returns>
+        /// <param name="batch">The batch to get the GPU address for.</param>
+        /// <returns>The GPU address for the given batch.</returns>
         D3D12_GPU_VIRTUAL_ADDRESS descriptor(const std::size_t batch) const;
 
         /// <summary>
-        /// The total size of a single frame of the current configuration in
-        ///  bytes.
+        /// Gets the currently completed fence value and the next fence value
+        /// that will be enqueued.
         /// </summary>
-        /// <returns>The size of a frame in bytes.</returns>
-        std::size_t frame_size(void) const noexcept;
+        /// <remarks>
+        /// This method must only be called once the context has been
+        /// successfully <see cref="reshape" />d, ie if the fence is valid.
+        /// </remarks>
+        /// <returns>The latest completed fence value (<c>first</c>) and the
+        /// next fence value (<c>second</c>).</returns>
+        std::pair<UINT64, UINT64> fence_values(void) const;
 
         /// <summary>
         /// Returns the index of a batch that can be used to upload data to the
@@ -233,7 +259,41 @@ namespace d3d12 {
         /// </summary>
         /// <param name="device"></param>
         /// <param name="config"></param>
-        void rebuild(ID3D12Device *device, const configuration& config);
+        /// <param name="heap_type"></param>
+        /// <param name="initial_state"></param>
+        void rebuild(ID3D12Device *device,
+            const configuration& config,
+            const D3D12_HEAP_TYPE heap_type,
+            const D3D12_RESOURCE_STATES initial_state);
+
+        /// <summary>
+        /// Gets the offset of the <paramref name="frame" />th repeated frame
+        /// in bytes, based on the number of total spheres configured in
+        /// <see cref="reshape" />.
+        /// </summary>
+        /// <param name="frame"></param>
+        /// <returns></returns>
+        inline std::size_t repeated_frame_offset(const std::size_t frame) {
+            assert(frame <= this->_repeat_frame);
+            return (frame * this->_total_spheres * this->_stride);
+        }
+
+        /// <summary>
+        /// Gets the number of times the frame should be repeated when the
+        /// tempoary input file is being generated.
+        /// </summary>
+        /// <remarks>
+        /// <para>The streaming context does not consider this parameter in its
+        /// internal workings, but merely provides helpers for the caller to
+        /// simulate this behaviour. The rationale of integrating the factor
+        /// here is that it can be easily reused in multiple locations. The
+        /// default value is zero, so the benchmark is instructed to not copy
+        /// the frame.</para>
+        /// </remarks>
+        /// <returns>The number of repetitions of the input frame.</returns>
+        inline std::size_t repeat_frame(void) const noexcept {
+            return this->_repeat_frame;
+        }
 
         /// <summary>
         /// Resets the stall counter in <see cref="next_batch" /> and returns
@@ -325,16 +385,17 @@ namespace d3d12 {
 
     private:
 
-        std::size_t _batch_count;
         std::size_t _batch_size;
-        winrt::com_ptr<ID3D12Resource> _buffer;
+        std::vector<winrt::com_ptr<ID3D12Resource>> _buffers;
         std::size_t _cnt_stalls;
-        void *_data;
+        std::vector<void *> _data;
         handle<> _event;
         winrt::com_ptr<ID3D12Fence> _fence;
         std::vector<UINT64> _fence_values;
+        std::vector<winrt::com_ptr<ID3D12Heap>> _heaps;
         std::atomic<UINT64> _next_fence_value;
         std::size_t _ready_count;
+        std::size_t _repeat_frame;
         std::size_t _stride;
         std::size_t _total_batches;
         std::size_t _total_spheres;
