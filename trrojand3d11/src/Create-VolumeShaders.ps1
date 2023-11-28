@@ -20,7 +20,7 @@ Get-ChildItem -Filter "*Volume*Shader.hlsl" | ForEach-Object {
     $variable = ($_.BaseName -csplit "(?<!^)(?=[A-Z])" -join "_").ToUpperInvariant()
     $resource = $ResourceStart + $cnt
     $includes += "#define $variable ($resource)"
-    $resources += "$resource $ResourceType $(Join-Path $ResourcePath "$($_.BaseName).cso")"
+    $resources += "$resource $ResourceType $((Join-Path $ResourcePath "$($_.BaseName).cso") -replace "\\", "\\")"
     ++$cnt
 }
 

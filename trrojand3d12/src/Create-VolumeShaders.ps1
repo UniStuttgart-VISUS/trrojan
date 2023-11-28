@@ -18,7 +18,7 @@ $includes += "// This file was auto-generated using $($MyInvocation.Line) on $(G
 $cnt = 0
 Get-ChildItem -Filter "*Volume*Shader.hlsl" | ForEach-Object {
     $variable = ($_.BaseName -csplit "(?<!^)(?=[A-Z])" -join "_").ToUpperInvariant()
-    $objectFile = Join-Path $ResourcePath "$($_.BaseName).cso"
+    $objectFile = (Join-Path $ResourcePath "$($_.BaseName).cso") -replace "\\", "\\"
     $resource = $ResourceStart + $cnt
     $includes += "#define $variable ($resource)"
     $includes += "#define $($variable)_PATH `"$objectFile`""

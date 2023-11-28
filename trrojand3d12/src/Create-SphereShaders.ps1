@@ -273,35 +273,35 @@ process {
         if ($vs) {
             $resources += "$resID $ResourceType $(Join-Path $ResourcePath "$vs.cso")"
             $resLookup += "        builder.set_vertex_shader_from_resource(MAKEINTRESOURCE($resID), _T(`"$ResourceType`"));\"
-            $fileLookup += "        builder.set_vertex_shader_from_file(resolve_path(`"$(Join-Path $ResourcePath "$vs.cso")`"));\"
+            $fileLookup += "        builder.set_vertex_shader_from_file(resolve_path(`"$((Join-Path $ResourcePath "$vs.cso") -replace "\\", "\\")`"));\"
             ++$resID
         }
 
         if ($hs) {
             $resources += "$resID $ResourceType $(Join-Path $ResourcePath "$hs.cso")"
             $resLookup += "        builder.set_hull_shader_from_resource(MAKEINTRESOURCE($resID), _T(`"$ResourceType`"));\"
-            $fileLookup += "        builder.set_hull_shader_from_file(resolve_path(`"$(Join-Path $ResourcePath "$hs.cso")`"));\"
+            $fileLookup += "        builder.set_hull_shader_from_file(resolve_path(`"$((Join-Path $ResourcePath "$hs.cso") -replace "\\", "\\")`"));\"
             ++$resID
         }
 
         if ($ds) {
             $resources += "$resID $ResourceType $(Join-Path $ResourcePath "$ds.cso")"
             $resLookup += "        builder.set_domain_shader_from_resource(MAKEINTRESOURCE($resID), _T(`"$ResourceType`"));\"
-            $fileLookup += "        builder.set_domain_shader_from_file(resolve_path(`"$(Join-Path $ResourcePath "$ds.cso")`"));\"
+            $fileLookup += "        builder.set_domain_shader_from_file(resolve_path(`"$((Join-Path $ResourcePath "$ds.cso") -replace "\\", "\\")`"));\"
             ++$resID
         }
 
         if ($gs) {
             $resources += "$resID $ResourceType $(Join-Path $ResourcePath "$gs.cso")"
             $resLookup += "        builder.set_geometry_shader_from_resource(MAKEINTRESOURCE($resID), _T(`"$ResourceType`"));\"
-            $fileLookup += "        builder.set_geometry_shader_from_file(resolve_path(`"$(Join-Path $ResourcePath "$gs.cso")`"));\"
+            $fileLookup += "        builder.set_geometry_shader_from_file(resolve_path(`"$((Join-Path $ResourcePath "$gs.cso") -replace "\\", "\\")`"));\"
             ++$resID
         }
 
         if ($ps) {
             $resources += "$resID $ResourceType $(Join-Path $ResourcePath "$ps.cso")"
             $resLookup += "        builder.set_pixel_shader_from_resource(MAKEINTRESOURCE($resID), _T(`"$ResourceType`"));\"
-            $fileLookup += "        builder.set_pixel_shader_from_file(resolve_path(`"$(Join-Path $ResourcePath "$ps.cso")`"));\"
+            $fileLookup += "        builder.set_pixel_shader_from_file(resolve_path(`"$((Join-Path $ResourcePath "$ps.cso") -replace "\\", "\\")`"));\"
             ++$resID
         }
 
