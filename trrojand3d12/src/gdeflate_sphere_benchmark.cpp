@@ -152,7 +152,7 @@ trrojan::result trrojan::d3d12::gdeflate_sphere_benchmark::on_run(
     if (data_new || batch_new) {
         this->_path = temp_file::create(
             dstorage_config.staging_directory().c_str(),
-            "tds");
+            "tgds");
         log::instance().write_line(log_level::information, "Compressing data "
             "set \"{0}\" into \"{1}\" ...", cfg.data_set(), this->_path);
         this->_batches = gdeflate_compress(this->_buffer.data(),
@@ -248,6 +248,7 @@ trrojan::result trrojan::d3d12::gdeflate_sphere_benchmark::on_run(
     ::ZeroMemory(&request, sizeof(request));
     request.Options.SourceType = DSTORAGE_REQUEST_SOURCE_FILE;
     request.Options.DestinationType = DSTORAGE_REQUEST_DESTINATION_BUFFER;
+    request.Options.CompressionFormat = DSTORAGE_COMPRESSION_FORMAT_GDEFLATE;
     request.Source.File.Source = file.get();
 
 #if true
