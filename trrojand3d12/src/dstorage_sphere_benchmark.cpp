@@ -93,12 +93,6 @@ bool trrojan::d3d12::dstorage_sphere_benchmark::check_stream_changed(
             device.d3d_device(),
             D3D12_COMMAND_LIST_TYPE_DIRECT,
             this->_stream.batch_count() + 2);
-
-
-        // As DirectStorage requires the resources in copy state, we first
-        // transition all of the buffers such that we do not have to handle
-        // special cases later on.
-
     }
 
     return retval;
@@ -737,6 +731,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_batches(
     // Prepare the result set.
     auto retval = std::make_shared<basic_result>(config,
         std::initializer_list<std::string> {
+            "benchmark",
             "particles",
             "data_extents",
             "ia_vertices",
@@ -764,6 +759,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_batches(
 
     // Output the results.
     retval->add({
+        this->name(),
         this->_data.spheres(),
         this->_data.extents(),
         pipeline_stats.IAVertices,
@@ -1321,6 +1317,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_naive(
     // Prepare the result set.
     auto retval = std::make_shared<basic_result>(config,
         std::initializer_list<std::string> {
+            "benchmark",
             "particles",
             "data_extents",
             "ia_vertices",
@@ -1348,6 +1345,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_naive(
 
     // Output the results.
     retval->add({
+        this->name(),
         this->_data.spheres(),
         this->_data.extents(),
         pipeline_stats.IAVertices,

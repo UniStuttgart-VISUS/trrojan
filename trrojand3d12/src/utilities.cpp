@@ -850,6 +850,33 @@ ATL::CComPtr<ID3D12Resource> trrojan::d3d12::create_viridis_colour_map(
 
 
 /*
+ * trrojan::d3d12::get_adapter
+ */
+ATL::CComPtr<IDXGIAdapter> trrojan::d3d12::get_adapter(ID3D12Device *device,
+        IDXGIFactory4 *factory) {
+    check_not_null(device);
+    ATL::CComPtr<IDXGIFactory4> f(factory);
+    ATL::CComPtr<IDXGIAdapter> retval;
+
+    if (f == nullptr) {
+        auto hr = ::CreateDXGIFactory2(0, IID_IDXGIFactory4,
+            reinterpret_cast<void **>(&f));
+        if (FAILED(hr)) {
+            throw ATL::CAtlException(hr);
+        }
+    }
+
+    auto hr = f->EnumAdapterByLuid(device->GetAdapterLuid(),
+        IID_IDXGIAdapter, reinterpret_cast<void **>(&retval));
+    if (FAILED(hr)) {
+        throw CAtlException(hr);
+    }
+
+    return retval;
+}
+
+
+/*
  * trrojan::d3d12::get_device
  */
 ATL::CComPtr<ID3D12Device> trrojan::d3d12::get_device(
@@ -932,6 +959,35 @@ std::wstring trrojan::d3d12::get_mapped_file_path(void *address) {
     return std::wstring(retval.data(), retval.data() + cnt);
 }
 #endif /* !defined(TRROJAN_FOR_UWP) */
+
+
+/*
+ * trrojan::d3d12::get_video_memory_info
+ */
+DXGI_QUERY_VIDEO_MEMORY_INFO trrojan::d3d12::get_video_memory_info(
+        ID3D12Device *device, IDXGIFactory4 *factory, const UINT node_index,
+        const DXGI_MEMORY_SEGMENT_GROUP segment_group) {
+    ATL::CComPtr<IDXGIAdapter3> adapter3;
+    DXGI_QUERY_VIDEO_MEMORY_INFO retval;
+
+    {
+        auto adapter = get_adapter(device, factory);
+        auto hr = adapter.QueryInterface(&adapter3);
+        if (FAILED(hr)) {
+            throw ATL::CAtlException(hr);
+        }
+    }
+
+    {
+        auto hr = adapter3->QueryVideoMemoryInfo(node_index, segment_group,
+            &retval);
+        if (FAILED(hr)) {
+            throw ATL::CAtlException(hr);
+        }
+    }
+
+    return retval;
+}
 
 
 /*

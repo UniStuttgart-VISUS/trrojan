@@ -195,11 +195,15 @@ void trrojan::d3d12::sphere_streaming_context::rebuild(ID3D12Device *device,
         throw std::invalid_argument("The Direct3D device must be valid.");
     }
 
+    // Make sure to release all GPU memory before we try to reallocate to avoid
+    // unnecessarily running out of memory.
+    this->_buffers.clear();
+    this->_heaps.clear();
+
     const auto max_heap_size = config.get<std::uint64_t>(factor_max_heap_size);
 
     // Retrieve and cache the number of parallel batches and the number of
     // spheres they contain.
-    assert(this->_buffers.empty());
     this->_buffers.resize(config.get<std::uint32_t>(factor_batch_count));
     this->_batch_size = config.get<decltype(this->_batch_size)>(
         factor_batch_size);

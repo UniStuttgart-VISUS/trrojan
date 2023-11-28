@@ -47,9 +47,15 @@ namespace d3d12 {
         static const std::string streaming_method_batch_memory_mapping;
 
         /// <summary>
-        /// Identifies the method of streaming via memory using DirectStorage.
+        /// Identifies the method of streaming via DirectStorage into the
+        /// memory-mapped buffer.
         /// </summary>
         static const std::string streaming_method_dstorage;
+
+        /// <summary>
+        /// Identifies the method of streaming via memory using DirectStorage.
+        /// </summary>
+        static const std::string streaming_method_dstorage_memcpy;
 
         /// <summary>
         /// Identifies the method of streaming from disk using an I/O ring.

@@ -419,6 +419,17 @@ namespace trrojan {
         return read_text_file(path.c_str());
     }
 
+#if defined(_WIN32)
+    /// <summary>
+    /// Write all of the given bytes to the given file.
+    /// </summary>
+    /// <param name="handle"></param>
+    /// <param name="data"></param>
+    /// <param name="cnt"></param>
+    void TRROJANCORE_API write_all_bytes(HANDLE handle, const void *data,
+        const std::size_t cnt);
+#endif defined(_WIN32)
+
     /// <summary>
     /// Specifies the alternative directory separator character if the
     /// platform uses one. Otherwise, this value is equivalent to

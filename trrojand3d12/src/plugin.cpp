@@ -14,6 +14,7 @@
 #include "trrojan/d3d12/dstorage_sphere_benchmark.h"
 #include "trrojan/d3d12/empty_benchmark.h"
 #include "trrojan/d3d12/environment.h"
+#include "trrojan/d3d12/gdeflate_sphere_benchmark.h"
 #include "trrojan/d3d12/sphere_benchmark.h"
 #include "trrojan/d3d12/sphere_streaming_benchmark.h"
 
@@ -149,6 +150,7 @@ size_t trrojan::d3d12::plugin::create_benchmarks(benchmark_list& dst) const {
 #endif /* !defined(TRROJAN_FOR_UWP) */
 #if defined(TRROJAN_WITH_DSTORAGE)
     dst.emplace_back(std::make_shared<dstorage_sphere_benchmark>());
+    dst.emplace_back(std::make_shared<gdeflate_sphere_benchmark>());
 #endif /* defined(TRROJAN_WITH_DSTORAGE) */
     dst.emplace_back(std::make_shared<cs_volume_benchmark>());
 

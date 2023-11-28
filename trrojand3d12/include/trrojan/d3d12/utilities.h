@@ -381,6 +381,15 @@ namespace d3d12 {
         = static_cast<D3D12_RESOURCE_STATES>(0x40 | 0x80));
 
     /// <summary>
+    /// Gets the DXGI adapter the given device was created on.
+    /// </summary>
+    /// <param name="device"></param>
+    /// <param name="factory"></param>
+    /// <returns></returns>
+    ATL::CComPtr<IDXGIAdapter> TRROJAND3D12_API get_adapter(
+        ID3D12Device *device, IDXGIFactory4 *factory);
+
+    /// <summary>
     /// Gets the device the child belongs to.
     /// </summary>
     /// <param name="child"></param>
@@ -413,6 +422,19 @@ namespace d3d12 {
     /// <returns></returns>
     std::wstring TRROJAND3D12_API get_mapped_file_path(void *address);
 #endif /* !defined(TRROJAN_FOR_UWP) */
+
+    /// <summary>
+    /// Gets the <see cref="DXGI_QUERY_VIDEO_MEMORY_INFO" /> of the adapter
+    /// backing the given <paramref name="device" />.
+    /// </summary>
+    /// <param name="device"></param>
+    /// <param name="factory"></param>
+    /// <param name="node_index"></param>
+    /// <param name="segment_group"></param>
+    /// <returns></returns>
+    DXGI_QUERY_VIDEO_MEMORY_INFO get_video_memory_info(ID3D12Device *device,
+        IDXGIFactory4 *factory, const UINT node_index,
+        const DXGI_MEMORY_SEGMENT_GROUP segment_group);
 
     /// <summary>
     /// Index into an array aligned according to constant buffer alignment

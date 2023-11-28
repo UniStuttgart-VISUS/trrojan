@@ -75,17 +75,7 @@ void trrojan::d3d12::device::close_and_execute_command_list(
 ATL::CComPtr<IDXGIAdapter> trrojan::d3d12::device::dxgi_adapter(void) {
     assert(this->d3d_device() != nullptr);
     assert(this->_dxgi_factory != nullptr);
-    ATL::CComPtr<IDXGIAdapter> retval;
-
-    auto hr = this->_dxgi_factory->EnumAdapterByLuid(
-        this->d3d_device()->GetAdapterLuid(),
-        IID_IDXGIAdapter,
-        reinterpret_cast<void **>(&retval));
-    if (FAILED(hr)) {
-        throw CAtlException(hr);
-    }
-
-    return retval;
+    return get_adapter(this->_d3d_device, this->_dxgi_factory);
 }
 
 

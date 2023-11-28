@@ -30,6 +30,7 @@ const std::string trrojan::d3d12::sphere_streaming_benchmark::streaming_method_#
 
 _STRM_BENCH_DEFINE_METHOD(batch_memory_mapping);
 _STRM_BENCH_DEFINE_METHOD(dstorage);
+_STRM_BENCH_DEFINE_METHOD(dstorage_memcpy);
 _STRM_BENCH_DEFINE_METHOD(io_ring);
 _STRM_BENCH_DEFINE_METHOD(memory_mapping);
 _STRM_BENCH_DEFINE_METHOD(persistent_memory_mapping);
@@ -55,7 +56,8 @@ trrojan::d3d12::sphere_streaming_benchmark::sphere_streaming_benchmark(
             streaming_method_ram,
             streaming_method_memory_mapping,
             streaming_method_persistent_memory_mapping,
-            streaming_method_dstorage
+            streaming_method_dstorage,
+            streaming_method_dstorage_memcpy
         }));
 
     // Determine the allocation granularity that we need to map the file.
@@ -351,7 +353,7 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
 
         // Lazily create the queue.
         if (contains(changed, factor_queue_priority)) {
-            this->_dstorage_queue.attach(nullptr);
+            this->_dstorage_queue = nullptr;
         }
 
         if (!this->_dstorage_queue) {
@@ -416,6 +418,115 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
             this->_dstorage_queue->Submit();
 
             ::WaitForSingleObject(this->_dstorage_event.get(), INFINITE);
+        }, device, config, power_collector, changed);
+
+#else /* defined(TRROJAN_WITH_DSTORAGE) */
+        throw std::logic_error("This build of TRRojan does not support "
+            "DirectStorage.");
+#endif /* defined(TRROJAN_WITH_DSTORAGE) */
+
+    } else if (trrojan::iequals(method, streaming_method_dstorage_memcpy)) {
+#if defined(TRROJAN_WITH_DSTORAGE)
+        // Lazily create the event for waiting on the I/O to complete.
+        if (!this->_dstorage_event) {
+            this->_dstorage_event.attach(::CreateEvent(nullptr, FALSE, FALSE,
+                nullptr));
+        }
+        if (!this->_dstorage_event) {
+            throw ATL::CAtlException(HRESULT_FROM_WIN32(::GetLastError()));
+        }
+
+        // Lazily create the fence to wait for the operation to complete.
+        if (!this->_dstorage_fence) {
+            this->_dstorage_fence_value = 0;
+            auto hr = device.d3d_device()->CreateFence(
+                this->_dstorage_fence_value, D3D12_FENCE_FLAG_NONE,
+                IID_PPV_ARGS(this->_dstorage_fence.put()));
+            if (FAILED(hr)) {
+                throw ATL::CAtlException(hr);
+            }
+        }
+
+        {
+            dstorage_configuration c(config);
+
+            // Lazily create the factory.
+            if (!this->_dstorage_factory) {
+                this->_dstorage_factory = c.create_factory();
+            }
+
+            // Apply the configuration.
+            c.apply(this->_dstorage_factory, changed);
+        }
+
+        // Lazily create the queue.
+        if (contains(changed, factor_queue_priority)) {
+            this->_dstorage_queue = nullptr;
+        }
+
+        if (!this->_dstorage_queue) {
+            DSTORAGE_QUEUE_DESC desc;
+            ::ZeroMemory(&desc, sizeof(desc));
+            desc.Capacity = static_cast<UINT16>(this->pipeline_depth());
+            if (desc.Capacity > DSTORAGE_MAX_QUEUE_CAPACITY) {
+                desc.Capacity = DSTORAGE_MAX_QUEUE_CAPACITY;
+            } else if (desc.Capacity < DSTORAGE_MIN_QUEUE_CAPACITY) {
+                desc.Capacity = DSTORAGE_MIN_QUEUE_CAPACITY;
+            }
+            desc.Priority = static_cast<DSTORAGE_PRIORITY>(priority);
+            desc.SourceType = DSTORAGE_REQUEST_SOURCE_FILE;
+            desc.Device = device.d3d_device();
+
+            auto hr = this->_dstorage_factory->CreateQueue(&desc,
+                IID_PPV_ARGS(this->_dstorage_queue.put()));
+            if (FAILED(hr)) {
+                throw ATL::CAtlException(hr);
+            }
+        }
+
+        return this->on_run([this, &folder, repeat](const UINT64 size) {
+            this->_buffer.resize(size);
+            return this->map_temp_file(size, folder, repeat);
+
+        }, [this, repeat](const UINT64 size) {
+            // Remove the file mapping as we cannot open DirectStorage if any
+            // other file handle is open on the temporary file.
+            this->finalise_temp_file(size, repeat);
+            assert(this->_file_view == nullptr);
+            this->_file_mapping.close();
+
+            const auto path = get_file_path(this->_file.get());
+            this->_file.close();
+
+            auto hr = this->_dstorage_factory->OpenFile(path.c_str(),
+                IID_PPV_ARGS(this->_dstorage_file.put()));
+            if (FAILED(hr)) {
+                throw ATL::CAtlException(hr);
+            }
+
+        }, [this](void *d, const std::size_t o, const std::size_t l) {
+            DSTORAGE_REQUEST request;
+            ::ZeroMemory(&request, sizeof(request));
+            request.Options.SourceType = DSTORAGE_REQUEST_SOURCE_FILE;
+            request.Options.DestinationType = DSTORAGE_REQUEST_DESTINATION_MEMORY;
+            request.Source.File.Source = this->_dstorage_file.get();
+            request.Source.File.Offset = o;
+            request.Source.File.Size = l;
+            request.Destination.Memory.Buffer = this->_buffer.data();
+            request.Destination.Memory.Size = l;
+
+            this->_dstorage_queue->EnqueueRequest(&request);
+            const auto fence_value = ++this->_dstorage_fence_value;
+            this->_dstorage_fence->SetEventOnCompletion(fence_value,
+                this->_dstorage_event.get());
+            this->_dstorage_queue->EnqueueSignal(this->_dstorage_fence.get(),
+                fence_value);
+            this->_dstorage_queue->Submit();
+
+            ::WaitForSingleObject(this->_dstorage_event.get(), INFINITE);
+
+            ::memcpy(d, this->_buffer.data(), l);
+
         }, device, config, power_collector, changed);
 
 #else /* defined(TRROJAN_WITH_DSTORAGE) */
@@ -493,6 +604,9 @@ void *trrojan::d3d12::sphere_streaming_benchmark::map_temp_file(
 
     this->_file.close();
     this->_file_mapping.close();
+#if defined(TRROJAN_WITH_DSTORAGE)
+    this->_dstorage_file = nullptr;
+#endif /* defined(TRROJAN_WITH_DSTORAGE) */
 
     this->_path = temp_file::create(folder.c_str(), "tssb");
 

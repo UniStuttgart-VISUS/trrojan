@@ -259,6 +259,29 @@ std::string trrojan::read_text_file(
 #endif /* defined(TRROJAN_FOR_UWP) */
 
 
+#if defined(_WIN32)
+/*
+ * trrojan::write_all_bytes
+ */
+void trrojan::write_all_bytes(HANDLE handle, const void *data,
+        const std::size_t cnt) {
+    auto cur = static_cast<const std::uint8_t *>(data);
+    auto rem = cnt;
+
+    while (rem > 0) {
+        DWORD written = 0;
+        if (!::WriteFile(handle, cur, rem, &written, nullptr)) {
+            throw std::system_error(::GetLastError(), std::system_category());
+        }
+
+        assert(written <= rem);
+        cur += written;
+        rem -= written;
+    }
+}
+#endif defined(_WIN32)
+
+
 /*
  * trrojan::alt_directory_separator_char
  */
