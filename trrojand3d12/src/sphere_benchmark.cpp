@@ -108,6 +108,11 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
         log::instance().write_line(log_level::debug, "Drawing {0} instances of "
             "four vertices.", this->_data.spheres());
         bundle->DrawInstanced(4, this->_data.spheres(), 0, 0);
+    } else if (is_technique(shader_code, SPHERE_TECHNIQUE_TRI_INST)) {
+        // Instancing of quads requires 3 vertices per particle.
+        log::instance().write_line(log_level::debug, "Drawing {0} instances of "
+            "four vertices.", this->_data.spheres());
+        bundle->DrawInstanced(3, this->_data.spheres(), 0, 0);
     } else {
         log::instance().write_line(log_level::debug, "Drawing 1 instance of "
             "{0} vertices.", this->_data.spheres());
@@ -140,6 +145,11 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
             log::instance().write_line(log_level::debug, "Drawing {0} instances of "
                 "four vertices.", this->_data.spheres());
             cmd_list->DrawInstanced(4, this->_data.spheres(), 0, 0);
+        } else if (is_technique(shader_code, SPHERE_TECHNIQUE_TRI_INST)) {
+            // Instancing of quads requires 3 vertices per particle.
+            log::instance().write_line(log_level::debug, "Drawing {0} instances of "
+                "three vertices.", this->_data.spheres());
+            cmd_list->DrawInstanced(3, this->_data.spheres(), 0, 0);
         } else {
             log::instance().write_line(log_level::debug, "Drawing 1 instance of "
                 "{0} vertices.", this->_data.spheres());

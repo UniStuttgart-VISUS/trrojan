@@ -67,6 +67,11 @@ std::pair<UINT, UINT> trrojan::d3d12::sphere_benchmark_base::get_draw_count(
         log::instance().write_line(log_level::debug, "Drawing {0} "
             "instance(s) of four vertices.", spheres);
         return std::make_pair(4, static_cast<UINT>(spheres));
+    } else if (is_technique(shader_code, SPHERE_TECHNIQUE_TRI_INST)) {
+        // Instancing of quads requires 3 vertices per particle.
+        log::instance().write_line(log_level::debug, "Drawing {0} "
+            "instance(s) of three vertices.", spheres);
+        return std::make_pair(3, static_cast<UINT>(spheres));
     } else {
         log::instance().write_line(log_level::debug, "Drawing 1 instance "
             "of {0} vertices.", spheres);
@@ -92,7 +97,8 @@ trrojan::d3d12::sphere_benchmark_base::get_primitive_topology(
         return D3D_PRIMITIVE_TOPOLOGY_1_CONTROL_POINT_PATCHLIST;
     }
 
-    if (is_technique(shader_code, SPHERE_TECHNIQUE_QUAD_INST)) {
+    if (is_technique(shader_code, SPHERE_TECHNIQUE_TRI_INST) ||
+        is_technique(shader_code, SPHERE_TECHNIQUE_QUAD_INST)) {
         return D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP;
     }
 
@@ -117,7 +123,8 @@ trrojan::d3d12::sphere_benchmark_base::get_primitive_topology_type(
         return D3D12_PRIMITIVE_TOPOLOGY_TYPE_PATCH;
     }
 
-    if (is_technique(shader_code, SPHERE_TECHNIQUE_QUAD_INST)) {
+    if (is_technique(shader_code, SPHERE_TECHNIQUE_TRI_INST) ||
+        is_technique(shader_code, SPHERE_TECHNIQUE_QUAD_INST)) {
         return D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
     }
 

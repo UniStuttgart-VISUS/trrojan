@@ -457,6 +457,12 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
         cntPrimitives = 4;
         isInstanced = true;
     }
+    else if(is_technique(shaderCode, SPHERE_TECHNIQUE_TRI_INST)) {
+        // Instancing of quads requires 3 vertices per particle.
+        cntInstances = cntPrimitives;
+        cntPrimitives = 3;
+        isInstanced = true;
+    }
 
 #if 0
     {
@@ -862,7 +868,8 @@ trrojan::d3d11::sphere_benchmark::get_technique(ID3D11Device *device,
         }
 #endif /* defined(TRROJAN_FOR_UWP) */
 
-        if (is_technique(shaderCode, SPHERE_TECHNIQUE_QUAD_INST)) {
+        if (is_technique(shaderCode, SPHERE_TECHNIQUE_TRI_INST) ||
+            is_technique(shaderCode, SPHERE_TECHNIQUE_QUAD_INST)) {
             assert(isRay);
             pt = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP;
             vsRes.constant_buffers.push_back(this->sphere_constants);

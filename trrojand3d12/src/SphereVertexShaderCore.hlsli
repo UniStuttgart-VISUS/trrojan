@@ -125,6 +125,15 @@ VsOutput Main(VsInput input) {
     retval.Position.xy = 2.0f * FLIP_Y * (retval.Position.xy - 0.5f.xx);
     retval.Position.xyz *= rad;
 
+#elif defined(TRI_INST)
+    const float3x3 vertex_positions = {
+        -1.7321f, -1.0f, 0.0f, // row 1
+        0.0f, 2.0f, 0.0f, // row 2
+        1.7321f, -1.0f, 0.0f // row 3
+    };
+    retval.Position = float4(vertex_positions[input.VertexID], 1.0f);
+    retval.Position.xyz *= rad;
+
 #elif defined(POLY_INST)
 #error "POLY_INST is not yet implemented: Compute polar coordinates from input.VertexID here."
 #endif /* defined(QUAD_INST) */
