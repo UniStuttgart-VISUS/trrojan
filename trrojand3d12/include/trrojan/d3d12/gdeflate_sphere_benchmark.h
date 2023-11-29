@@ -86,16 +86,8 @@ namespace d3d12 {
             return retval;
         }
 
-        inline void make_request(DSTORAGE_REQUEST& request,
-                const std::size_t batch) const noexcept {
-            request.Source.File.Offset = (batch == 0)
-                ? 0
-                : this->_batches[batch - 1];
-            request.Source.File.Size = this->_batches[batch];
-            request.UncompressedSize = this->_stream.batch_size(batch);
-            request.Destination.Buffer.Offset = 0;
-            request.Destination.Buffer.Size = request.UncompressedSize;
-        }
+        void make_request(DSTORAGE_REQUEST &request,
+            const std::size_t batch) const noexcept;
 
         inline winrt::com_ptr<ID3D12Resource> make_request(
                 DSTORAGE_REQUEST& request,

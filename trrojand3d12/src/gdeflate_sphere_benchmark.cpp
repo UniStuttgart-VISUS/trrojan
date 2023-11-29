@@ -154,7 +154,8 @@ trrojan::result trrojan::d3d12::gdeflate_sphere_benchmark::on_run(
             dstorage_config.staging_directory().c_str(),
             "tgds");
         log::instance().write_line(log_level::information, "Compressing data "
-            "set \"{0}\" into \"{1}\" ...", cfg.data_set(), this->_path);
+            "set \"{0}\" ({1} Bytes) into \"{2}\" ...", cfg.data_set(),
+            this->_buffer.size(), this->_path.get());
         this->_batches = gdeflate_compress(this->_buffer.data(),
             this->_buffer.size(), this->_stream.batch_size(), this->_path);
     }
@@ -751,5 +752,24 @@ void trrojan::d3d12::gdeflate_sphere_benchmark::set_vertex_buffer(
 #endif /* (defined(DEBUG) || defined(_DEBUG)) */
         cmd_list->IASetVertexBuffers(0, 1, &desc);
     }
+}
+
+
+/*
+ * trrojan::d3d12::gdeflate_sphere_benchmark::make_request
+ */
+void trrojan::d3d12::gdeflate_sphere_benchmark::make_request(
+        DSTORAGE_REQUEST& request, const std::size_t batch) const noexcept {
+    request.Source.File.Offset = 0;
+    request.Source.File.Size = this->_batches[batch];
+
+    if (batch > 0) {
+        request.Source.File.Offset = this->_batches[batch - 1];
+        request.Source.File.Size -= request.Source.File.Offset;
+    }
+
+    request.UncompressedSize = this->_stream.batch_size(batch);
+    request.Destination.Buffer.Offset = 0;
+    request.Destination.Buffer.Size = request.UncompressedSize;
 }
 #endif /* defined(TRROJAN_WITH_DSTORAGE) */
