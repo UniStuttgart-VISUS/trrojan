@@ -75,7 +75,11 @@ void trrojan::d3d12::device::close_and_execute_command_list(
 ATL::CComPtr<IDXGIAdapter> trrojan::d3d12::device::dxgi_adapter(void) {
     assert(this->d3d_device() != nullptr);
     assert(this->_dxgi_factory != nullptr);
-    return get_adapter(this->_d3d_device, this->_dxgi_factory);
+#if defined(TRROJAN_FOR_UWP)
+    return get_adapter(this->_d3d_device.get(), this->_dxgi_factory);
+#else /* defined(TRROJAN_FOR_UWP) */
+    return get_adapter(this->_d3d_device.get(), this->_dxgi_factory);
+#endif /* defined(TRROJAN_FOR_UWP) */
 }
 
 

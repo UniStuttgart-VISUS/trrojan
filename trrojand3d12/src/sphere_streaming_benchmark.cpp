@@ -595,8 +595,8 @@ void trrojan::d3d12::sphere_streaming_benchmark::finalise_temp_file(
  * trrojan::d3d12::sphere_streaming_benchmark::map_temp_file
  */
 void *trrojan::d3d12::sphere_streaming_benchmark::map_temp_file(
-        const UINT64 size, const std::string& folder,
-        const std::uint32_t repeat) {
+    const UINT64 size, const std::string &folder,
+    const std::uint32_t repeat) {
     if (this->_file_view != nullptr) {
         ::UnmapViewOfFile(this->_file_view);
         this->_file_view = nullptr;
@@ -613,9 +613,18 @@ void *trrojan::d3d12::sphere_streaming_benchmark::map_temp_file(
     trrojan::log::instance().write_line(trrojan::log_level::information,
         "Staging data to \"{0}\" ...", this->_path.get());
 
+#if defined(TRROJAN_FOR_UWP)
+    {
+        auto p = from_utf8(this->_path);
+        this->_file.attach(::CreateFile2(p.c_str(),
+            GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ, CREATE_ALWAYS,
+            nullptr));
+    }
+#else /* defined(TRROJAN_FOR_UWP) */
     this->_file.attach(::CreateFileA(this->_path.get().c_str(),
         GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ, nullptr,
         CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL));
+#endif /* defined(TRROJAN_FOR_UWP) */
     if (!this->_file) {
         throw ATL::CAtlException(HRESULT_FROM_WIN32(::GetLastError()));
     }

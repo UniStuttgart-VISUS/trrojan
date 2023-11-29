@@ -41,7 +41,7 @@ trrojan::temp_file trrojan::temp_file::create(const char *folder,
     std::array<char, MAX_PATH + 1> buffer;
 
     if (folder != nullptr) {
-        ::strncpy(buffer.data(), folder, buffer.size());
+        ::strncpy_s(buffer.data(), buffer.size(), folder, buffer.size());
     } else {
         // Note: The path can never exceed the constant length above 
         // according to
