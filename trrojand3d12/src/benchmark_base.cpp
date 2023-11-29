@@ -247,9 +247,8 @@ trrojan::d3d12::benchmark_base::create_command_list(
 std::string trrojan::d3d12::benchmark_base::resolve_shader_path(
         const std::string& file_name) {
 #if defined(TRROJAN_FOR_UWP)
-//#error "TODO: retrieve UWP app directory."
-    return plugin::get_directory() + directory_separator_char + file_name;
-    //return plugin::get_directory
+    return plugin::get_directory() + directory_separator_char + "trrojand3d12"
+        + directory_separator_char + file_name;
 #else /* defined(TRROJAN_FOR_UWP) */
     return plugin::get_directory() + directory_separator_char + file_name;
 #endif /* defined(TRROJAN_FOR_UWP) */
