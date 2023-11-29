@@ -51,7 +51,8 @@ std::vector<std::size_t> trrojan::d3d12::gdeflate_compress(
         const std::uint8_t *data,
         const std::size_t cnt_data,
         const std::size_t block_size,
-        const std::string& path) {
+        const std::string& path,
+        const std::size_t copies) {
     // Adapted from https://github.com/microsoft/DirectStorage/blob/main/Samples/GpuDecompressionBenchmark/GpuDecompressionBenchmark.cpp
     if (data == nullptr) {
         throw ATL::CAtlException(E_POINTER);
@@ -123,6 +124,13 @@ std::vector<std::size_t> trrojan::d3d12::gdeflate_compress(
 
         retval.push_back(sum + b.size());
         write_all_bytes(file.get(), b.data(), b.size());
+    }
+
+    // If requested, add additional copies of the same frame.
+    for (std::size_t c = 0; c < copies; ++c) {
+        for (auto &b : blocks) {
+            write_all_bytes(file.get(), b.data(), b.size());
+        }
     }
 
     return retval;
