@@ -1,5 +1,8 @@
 d3d12::sphere-renderer {
-    string data_set = pos_rad_intensity : 10000 : 42 : 10 10 10 : 0.045 0.135; pos_rad_intensity : 1000000 : 42 : 10 10 10 : 0.01 0.03; pos_rad_intensity : 10000000 : 42 : 10 10 10 : 0.001 0.003; pos_rad_intensity : 100000 : 42 : 10 10 10 : 0.001 0.003; pos_rad_intensity : 100000 : 42 : 10 10 10 : 0.01 0.03; pos_rad_intensity : 100000 : 42 : 10 10 10 : 0.1 0.3; Assets/lasercross_frame112.mmpld; Assets/exp2mill_frame42.mmpld
+    # r(D,N)=((3*D)/(4*pi*N))^(1/3); fill a third of the volume: D=34
+	# r(34,10000) = 0.0933; r(34,100000) = 0.0433; r(34,1000000) = 0.0201; r(34,10000000) = 0.00933; r(300,100000) = 0.0895; r(3000,100000) = 0.1928
+    string data_set = pos_rad_intensity : 10000 : 42 : 10 10 10 : 0.046 0.134; pos_rad_intensity : 1000000 : 42 : 10 10 10 : 0.01 0.03; pos_rad_intensity : 10000000 : 42 : 10 10 10 : 0.0047 0.014; pos_rad_intensity : 100000 : 42 : 10 10 10 : 0.022 0.065; pos_rad_intensity : 100000 : 42 : 10 10 10 : 0.045 0.134; pos_rad_intensity : 100000 : 42 : 10 10 10 : 0.096 0.29; Assets/lasercross_frame112.mmpld; Assets/exp2mill_frame42.mmpld
+	
 	uint32 frame = 0
 	uint32vec2 viewport = 1920 1080; 2560 1440; 3840 2160
 	boolean debug_view = false
@@ -10,14 +13,14 @@ d3d12::sphere-renderer {
 	boolean vs_raygen = false
 	boolean vs_xfer_function = true
 
-    string method = quad_inst; geo_quad; geo_poly
+    string method = tri_inst; quad_inst; geo_quad; geo_poly
 
 	string manoeuvre = random
 	uint32 manoeuvre_steps = 16
 	uint32 iterations = 1
 	uint32 manoeuvre_step = 0 -> 16
 
-	uint32 min_wall_time = 5000
+	uint32 min_wall_time = 1000
 	uint32 min_prewarms = 8
 	float32 prewarm_precision = 0.4
     uint32 gpu_counter_iterations = 8
