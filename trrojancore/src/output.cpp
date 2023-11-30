@@ -1,8 +1,8 @@
-/// <copyright file="output.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Christoph Müller</author>
+ï»¿// <copyright file="output.cpp" company="Visualisierungsinstitut der UniversitÃ¤t Stuttgart">
+// Copyright Â© 2016 - 2023 Visualisierungsinstitut der UniversitÃ¤t Stuttgart. Alle Rechte vorbehalten.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Christoph MÃ¼ller</author>
 
 #include "trrojan/output.h"
 
@@ -51,13 +51,14 @@ trrojan::output TRROJANCORE_API trrojan::make_output(const std::string& path) {
     auto idx = path.rfind('.');
     auto ext = tolower(path.substr(idx));
 
-    if ((ext == ".csv") || (ext == ".txt")) {
+    if (iequals(ext, std::string(".csv"))
+            || iequals(ext, std::string(".txt"))) {
         return std::make_shared<csv_output>();
 #if defined(_WIN32) && !defined(_UWP)
-    } else if (ext == ".xslx") {
+    } else if (iequals(ext, std::string(".xlsx"))) {
         return std::make_shared<excel_output>();
 #endif /* defined(_WIN32) && !defined(_UWP) */
-    } else if (ext == ".r") {
+    } else if (iequals(ext, std::string(".r"))) {
         return std::make_shared<r_output>();
     } else {
         log::instance().write_line(log_level::warning, "The file name "

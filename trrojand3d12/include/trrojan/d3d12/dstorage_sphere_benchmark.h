@@ -29,6 +29,7 @@ namespace d3d12 {
     public:
 
         static const std::string implementation_batches;
+        static const std::string implementation_gdeflate;
         static const std::string implementation_naive;
 
         /// <summary>
@@ -75,6 +76,8 @@ namespace d3d12 {
 
     private:
 
+        static result make_result(const configuration& config);
+
         inline UINT64 enqueue_request(winrt::com_ptr<IDStorageQueue> queue,
                 DSTORAGE_REQUEST& request) noexcept {
             queue->EnqueueRequest(&request);
@@ -85,16 +88,44 @@ namespace d3d12 {
             return retval;
         }
 
-        inline UINT64 enqueue_request(winrt::com_ptr<IDStorageQueue> queue,
+        inline UINT64 enqueue_gdeflate_request(
+                winrt::com_ptr<IDStorageQueue> queue,
                 DSTORAGE_REQUEST& request,
+                const std::size_t frame,
                 const std::size_t batch,
                 const std::size_t slot) noexcept {
-            this->make_request(request, batch, slot);
+            this->make_gdeflate_request(request, frame, batch, slot);
             auto retval = this->enqueue_request(queue, request);
             return retval;
         }
 
+        inline UINT64 enqueue_request(winrt::com_ptr<IDStorageQueue> queue,
+                DSTORAGE_REQUEST& request,
+                const std::size_t frame,
+                const std::size_t batch,
+                const std::size_t slot) noexcept {
+            this->make_request(request, frame, batch, slot);
+            auto retval = this->enqueue_request(queue, request);
+            return retval;
+        }
+
+        void make_gdeflate_request(DSTORAGE_REQUEST& request,
+            const std::size_t frame,
+            const std::size_t batch) const noexcept;
+
+        inline winrt::com_ptr<ID3D12Resource> make_gdeflate_request(
+                DSTORAGE_REQUEST& request,
+                const std::size_t frame,
+                const std::size_t batch,
+                const std::size_t slot) const noexcept {
+            this->make_gdeflate_request(request, frame, batch);
+            auto retval = this->_stream.buffer(slot);
+            request.Destination.Buffer.Resource = retval.get();
+            return retval;
+        }
+
         inline void make_request(DSTORAGE_REQUEST& request,
+                const std::size_t frame,
                 const std::size_t batch) const noexcept {
             request.Source.File.Offset = this->_stream.offset(batch);
             request.Source.File.Size = this->_stream.batch_size(batch);
@@ -104,25 +135,21 @@ namespace d3d12 {
 
         inline winrt::com_ptr<ID3D12Resource> make_request(
                 DSTORAGE_REQUEST& request,
+                const std::size_t frame,
                 const std::size_t batch,
                 const std::size_t slot) const noexcept {
-            this->make_request(request, batch);
+            this->make_request(request, frame, batch);
             auto retval = this->_stream.buffer(slot);
             request.Destination.Buffer.Resource = retval.get();
             return retval;
         }
 
-        inline UINT64 submit_request(winrt::com_ptr<IDStorageQueue> queue,
-                DSTORAGE_REQUEST& request,
-                const std::size_t batch,
-                const std::size_t slot) noexcept {
-            this->make_request(request, batch, slot);
-            auto retval = this->enqueue_request(queue, request);
-            queue->Submit();
-            return retval;
-        }
-
         trrojan::result run_batches(d3d12::device& device,
+            const configuration& config,
+            power_collector::pointer& power_collector,
+            const std::vector<std::string>& changed);
+
+        trrojan::result run_gdeflate(d3d12::device& device,
             const configuration& config,
             power_collector::pointer& power_collector,
             const std::vector<std::string>& changed);
@@ -132,6 +159,19 @@ namespace d3d12 {
             power_collector::pointer& power_collector,
             const std::vector<std::string>& changed);
 
+        inline UINT64 submit_request(winrt::com_ptr<IDStorageQueue> queue,
+                DSTORAGE_REQUEST& request,
+                const std::size_t frame,
+                const std::size_t batch,
+                const std::size_t slot) noexcept {
+            this->make_request(request, frame, batch, slot);
+            auto retval = this->enqueue_request(queue, request);
+            queue->Submit();
+            return retval;
+        }
+
+        std::vector<std::size_t> _batches;
+        std::vector<std::uint8_t> _buffer;
         winrt::com_ptr<ID3D12Fence> _fence;
         UINT64 _next_fence_value;
         temp_file _path;

@@ -6,7 +6,7 @@ d3d12::sphere-renderer {
     uint32 frame = 0
 
     uint32 min_prewarms = 8
-    uint32 min_wall_time = 1000
+    uint32 min_wall_time = 1000; 2999
 
     string method = quad_inst
     boolean vs_raygen = false

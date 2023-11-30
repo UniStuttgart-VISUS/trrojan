@@ -33,14 +33,12 @@ namespace d3d12 {
     /// <param name="cnt_data"></param>
     /// <param name="block_size"></param>
     /// <param name="path"></param>
-    /// <param name="copies"></param>
     /// <returns></returns>
     std::vector<std::size_t> gdeflate_compress(
         const std::uint8_t *data,
         const std::size_t cnt_data,
         const std::size_t block_size,
-        const std::string& path,
-        const std::size_t copies = 0);
+        const std::string& path);
 
 } /* end namespace d3d12 */
 } /* end namespace trrojan */

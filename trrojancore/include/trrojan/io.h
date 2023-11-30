@@ -86,6 +86,16 @@ namespace trrojan {
     };
 
     /// <summary>
+    /// Appends <paraemref name="cnt" /> copies of the current content of
+    /// the file at <paramref name="path" /> to the file.
+    /// </summary>
+    /// <param name="path"></param>
+    /// <param name="cnt"></param>
+    /// <returns></returns>
+    void TRROJANCORE_API append_copies_to_file(const std::string& path,
+        const std::size_t cnt);
+
+    /// <summary>
     /// Combines <paramref name="paths" /> with
     /// <see cref="trrojan::directory_separator_char" />.
     /// </summary>

@@ -1,4 +1,4 @@
-d3d12::gdeflate-sphere-renderer {
+d3d12::dstorage-sphere-renderer {
     # V = 4/3 * pi * r^3 * N = D => r = (3 * D / 4 * pi * N)^(1/3)
     # Particle size = 3 * float + 1 * float + 4 * float = 8 * float = 32 B
     string data_set = pos_rad_rgba32: 10000000 : 0 : 1 1 1 : 0.002 0.004
@@ -9,6 +9,7 @@ d3d12::gdeflate-sphere-renderer {
     uint32 min_prewarms = 8
     uint32 min_wall_time = 1000
 
+    string implementation = gdeflate
     string method = quad_inst
     boolean vs_raygen = false
     boolean vs_xfer_function = false
