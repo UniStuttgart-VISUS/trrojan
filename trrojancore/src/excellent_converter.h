@@ -162,8 +162,10 @@ namespace trrojan {
     /// <summary>
     /// Recursion stop for <see cref="convert" />.
     /// </summary>
-    inline void convert_variant(detail::variant_type_list_t<>, VARIANT&,
-        const variant&) { }
+    inline void convert_variant(detail::variant_type_list_t<>, VARIANT& dst,
+            const variant&) {
+        ::VariantClear(&dst);
+    }
 
 } /* namespace trrojan */
 

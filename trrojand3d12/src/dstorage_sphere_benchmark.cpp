@@ -73,7 +73,7 @@ bool trrojan::d3d12::dstorage_sphere_benchmark::check_stream_changed(
     const auto retval = this->_stream.rebuild_required(changed);
 
     if (retval) {
-        log::instance().write_line(log_level::information, "(Re-) Building GPU "
+        log::instance().write_line(log_level::debug, "(Re-) Building GPU "
             "stream on device 0x{0:p} ...",
             static_cast<void *>(device.d3d_device().p));
         this->_stream.rebuild(device.d3d_device(), config,

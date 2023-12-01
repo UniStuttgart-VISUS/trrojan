@@ -19,6 +19,9 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
         const std::vector<std::string>& changed) {
     std::vector<gpu_timer::millis_type> batch_times, gpu_times;
     sphere_rendering_configuration cfg(config);
+    std::uint32_t frame = 0;
+    const auto frames = 1u + config.get<std::uint32_t>(
+        sphere_streaming_context::factor_repeat_frame);
     const auto gpu_freq = gpu_timer::get_timestamp_frequency(
         device.command_queue());
     measurement_context mctx(device, 2, this->pipeline_depth());
@@ -105,6 +108,7 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
         auto prewarms = (std::max)(1u, cfg.min_prewarms());
 
         do {
+            frame = 0;
             mctx.cpu_timer.start();
             for (mctx.cpu_iterations = 0; mctx.cpu_iterations < prewarms;
                     ++mctx.cpu_iterations) {
@@ -151,6 +155,7 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
                         spheres);
 
                     copy_data(this->_stream.data(b),
+                        frame,
                         this->_stream.offset(t),
                         this->_stream.batch_size(t));
 
@@ -177,6 +182,8 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
                         this->present_target(config);
                     }
                 } /* for (std::size_t t = 0; t < total_batches; ++t) */
+
+                frame = (frame + 1) % frames;
             }
             device.wait_for_gpu();
             prewarms = mctx.check_cpu_iterations(cfg.min_wall_time());
@@ -191,6 +198,7 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
     this->_stream.reset_stalls();
     mctx.cpu_timer.start();
     for (std::uint32_t i = 0; i < mctx.cpu_iterations; ++i) {
+        frame = 0;
         for (std::size_t t = 0; t < total_batches; ++t) {
             // Within this loop, 't' is the global index of the batch,
             // which is used to address the source data, whereas 'b' is
@@ -232,6 +240,7 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
                 spheres);
 
             copy_data(this->_stream.data(b),
+                frame,
                 this->_stream.offset(t),
                 this->_stream.batch_size(t));
 
@@ -258,6 +267,8 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
                 this->present_target(config);
             }
         } /* for (std::size_t t = 0; t < total_batches; ++t) */
+
+        frame = (frame + 1) % frames;
     }
     device.wait_for_gpu();
 #endif
@@ -267,6 +278,7 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
 #if true
     // Do the GPU counter measurements.
     batch_times.reserve(total_batches * cfg.gpu_counter_iterations());
+    frame = 0;
     gpu_times.resize(cfg.gpu_counter_iterations());
     for (std::uint32_t i = 0; i < cfg.gpu_counter_iterations(); ++i) {
         log::instance().write_line(log_level::debug, "GPU counter measurement "
@@ -319,6 +331,7 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
                 spheres);
 
             copy_data(this->_stream.data(b),
+                frame,
                 this->_stream.offset(t),
                 this->_stream.batch_size(t));
 
@@ -359,6 +372,8 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
         batch_times.push_back(gpu_timer::to_milliseconds(
             mctx.gpu_timer.evaluate(timer_index, 1),
             gpu_freq));
+
+        frame = (frame + 1) % frames;
     } /* for (std::uint32_t i = 0; i < cfg.gpu_counter_iterations(); ++i) */
 #endif
 
@@ -417,6 +432,7 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
                 spheres);
 
             copy_data(this->_stream.data(b),
+                0,
                 this->_stream.offset(t),
                 this->_stream.batch_size(t));
 
