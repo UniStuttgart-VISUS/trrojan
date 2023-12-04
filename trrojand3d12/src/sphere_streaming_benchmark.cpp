@@ -125,6 +125,27 @@ bool trrojan::d3d12::sphere_streaming_benchmark::check_stream_changed(
 
 
 /*
+ * trrojan::d3d12::sphere_streaming_benchmark::clear_stale_data
+ */
+bool trrojan::d3d12::sphere_streaming_benchmark::clear_stale_data(
+        const std::vector<std::string>& changed) {
+    auto retval = sphere_benchmark_base::clear_stale_data(changed);
+
+    if (!retval) {
+        retval = contains_any(changed,
+            dstorage_configuration::factor_staging_directory,
+            sphere_streaming_benchmark::factor_streaming_method);
+    }
+
+    if (retval) {
+        this->_data.clear();
+    }
+
+    return retval;
+}
+
+
+/*
  * trrojan::d3d12::sphere_streaming_benchmark::count_descriptor_tables
  */
 UINT trrojan::d3d12::sphere_streaming_benchmark::count_descriptor_tables(

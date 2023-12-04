@@ -107,6 +107,9 @@ namespace d3d12 {
             const std::vector<std::string>& changed);
 
         /// <inheritdoc />
+        bool clear_stale_data(const std::vector<std::string>& changed) override;
+
+        /// <inheritdoc />
         UINT count_descriptor_tables(const shader_id_type shader_code,
             const bool include_root) const override;
 
