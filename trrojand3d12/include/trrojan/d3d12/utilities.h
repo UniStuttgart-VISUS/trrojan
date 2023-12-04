@@ -143,7 +143,7 @@ namespace d3d12 {
         ID3D12RootSignature *signature);
 
     /// <summary>
-    /// Creates a compute pipeline state for teh given compute shader using the
+    /// Creates a compute pipeline state for the given compute shader using the
     /// root signature embedded in the byte code of the shader.
     /// </summary>
     /// <param name="signature"></param>

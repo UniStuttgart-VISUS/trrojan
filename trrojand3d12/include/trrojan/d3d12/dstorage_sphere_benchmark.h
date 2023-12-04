@@ -14,6 +14,7 @@
 #include "trrojan/temp_file.h"
 
 #include "trrojan/d3d12/sphere_benchmark_base.h"
+#include "trrojan/d3d12/sphere_rendering_configuration.h"
 #include "trrojan/d3d12/sphere_streaming_context.h"
 
 
@@ -54,6 +55,9 @@ namespace d3d12 {
         bool check_stream_changed(d3d12::device& device,
             const configuration& config,
             const std::vector<std::string>& changed);
+
+        /// <inheritdoc />
+        bool clear_stale_data(const std::vector<std::string>& changed) override;
 
         /// <inheritdoc />
         UINT count_descriptor_tables(const shader_id_type shader_code,
@@ -146,16 +150,19 @@ namespace d3d12 {
 
         trrojan::result run_batches(d3d12::device& device,
             const configuration& config,
+            const sphere_rendering_configuration& sphere_config,
             power_collector::pointer& power_collector,
             const std::vector<std::string>& changed);
 
         trrojan::result run_gdeflate(d3d12::device& device,
             const configuration& config,
+            const sphere_rendering_configuration& sphere_config,
             power_collector::pointer& power_collector,
             const std::vector<std::string>& changed);
 
         trrojan::result run_naive(d3d12::device& device,
             const configuration& config,
+            const sphere_rendering_configuration& sphere_config,
             power_collector::pointer& power_collector,
             const std::vector<std::string>& changed);
 

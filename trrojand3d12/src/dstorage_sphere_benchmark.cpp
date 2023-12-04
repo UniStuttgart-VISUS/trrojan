@@ -7,6 +7,7 @@
 #if defined(TRROJAN_WITH_DSTORAGE)
 #include "trrojan/d3d12/dstorage_sphere_benchmark.h"
 
+#include "trrojan/contains.h"
 #include "trrojan/text.h"
 
 #include "trrojan/d3d12/dstorage_configuration.h"
@@ -44,8 +45,7 @@ trrojan::d3d12::dstorage_sphere_benchmark::dstorage_sphere_benchmark(
     sphere_streaming_context::add_defaults(this->_default_configs);
     dstorage_configuration::add_defaults(this->_default_configs);
     this->_default_configs.add_factor(factor::from_manifestations(
-        factor_implementation,
-        { implementation_batches, implementation_naive }));
+        factor_implementation, { implementation_batches }));
 }
 
 
@@ -56,6 +56,7 @@ void trrojan::d3d12::dstorage_sphere_benchmark::optimise_order(
         configuration_set& configs) {
     configs.optimise_order({
         sphere_rendering_configuration::factor_data_set,
+        dstorage_configuration::factor_staging_directory,
         sphere_rendering_configuration::factor_frame,
         sphere_streaming_context::factor_batch_count,
         sphere_streaming_context::factor_batch_size,
@@ -68,8 +69,8 @@ void trrojan::d3d12::dstorage_sphere_benchmark::optimise_order(
  * trrojan::d3d12::dstorage_sphere_benchmark::check_stream_changed
  */
 bool trrojan::d3d12::dstorage_sphere_benchmark::check_stream_changed(
-        d3d12::device& device, const configuration& config,
-        const std::vector<std::string>& changed) {
+    d3d12::device &device, const configuration &config,
+    const std::vector<std::string> &changed) {
     const auto retval = this->_stream.rebuild_required(changed);
 
     if (retval) {
@@ -95,6 +96,27 @@ bool trrojan::d3d12::dstorage_sphere_benchmark::check_stream_changed(
             device.d3d_device(),
             D3D12_COMMAND_LIST_TYPE_DIRECT,
             this->_stream.batch_count() + 2);
+    }
+
+    return retval;
+}
+
+
+/*
+ * trrojan::d3d12::dstorage_sphere_benchmark::clear_stale_data
+ */
+bool trrojan::d3d12::dstorage_sphere_benchmark::clear_stale_data(
+        const std::vector<std::string>& changed) {
+    auto retval = sphere_benchmark_base::clear_stale_data(changed);
+
+    if (!retval) {
+        retval = contains_any(changed,
+            dstorage_configuration::factor_staging_directory,
+            dstorage_sphere_benchmark::factor_implementation);
+    }
+
+    if (retval) {
+        this->_data.clear();
     }
 
     return retval;
@@ -136,16 +158,20 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::on_run(
         const configuration& config,
         power_collector::pointer& power_collector,
         const std::vector<std::string>& changed) {
-    auto impl = config.get<std::string>(factor_implementation);
+    const sphere_rendering_configuration sphere_config(config);
+    const auto impl = config.get<std::string>(factor_implementation);
 
     if (iequals(impl, implementation_batches)) {
-        return this->run_batches(device, config, power_collector, changed);
+        return this->run_batches(device, config, sphere_config,
+            power_collector, changed);
 
     } else if (iequals(impl, implementation_gdeflate)) {
-        return this->run_gdeflate(device, config, power_collector, changed);
+        return this->run_gdeflate(device, config, sphere_config,
+            power_collector, changed);
 
     } else if (iequals(impl, implementation_naive)) {
-        return this->run_naive(device, config, power_collector, changed);
+        return this->run_naive(device, config, sphere_config,
+            power_collector, changed);
 
     } else {
         trrojan::log::instance().write_line(log_level::error, "\"{0}\" is "
@@ -243,6 +269,7 @@ void trrojan::d3d12::dstorage_sphere_benchmark::make_gdeflate_request(
 trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_batches(
         d3d12::device& device,
         const configuration& config,
+        const sphere_rendering_configuration& sphere_config,
         power_collector::pointer& power_collector,
         const std::vector<std::string>& changed) {
     std::vector<gpu_timer::millis_type> batch_times, gpu_times;
@@ -850,6 +877,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_batches(
 trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_gdeflate(
         d3d12::device& device,
         const configuration& config,
+        const sphere_rendering_configuration& sphere_config,
         power_collector::pointer& power_collector,
         const std::vector<std::string>& changed) {
     std::vector<gpu_timer::millis_type> batch_times, gpu_times;
@@ -1471,10 +1499,10 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_gdeflate(
 trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_naive(
         d3d12::device& device,
         const configuration& config,
+        const sphere_rendering_configuration& sphere_config,
         power_collector::pointer& power_collector,
         const std::vector<std::string>& changed) {
     std::vector<gpu_timer::millis_type> batch_times, gpu_times;
-    sphere_rendering_configuration cfg(config);
     auto cmd_queue = device.command_queue();
     winrt::com_ptr<IDStorageFactory> dstorage;
     dstorage_configuration dstorage_config(config);
@@ -1487,7 +1515,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_naive(
     measurement_context mctx(device, 2, this->pipeline_depth());
     stats_query::value_type pipeline_stats;
     DSTORAGE_REQUEST request;
-    auto shader_code = cfg.shader_id();
+    auto shader_code = sphere_config.shader_id();
 
     // Clear data that cannot be used any more.
     this->clear_stale_data(changed);
@@ -1501,8 +1529,9 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_naive(
             dstorage_config.staging_directory().c_str(),
             "tds");
         log::instance().write_line(log_level::information, "Staging data set \""
-            "{0}\" into \"{1}\" ...", cfg.data_set(), this->_path.get());
-        this->_data.copy_to(this->_path, shader_code, cfg).close();
+            "{0}\" into \"{1}\" ...", sphere_config.data_set(),
+            this->_path.get());
+        this->_data.copy_to(this->_path, shader_code, sphere_config).close();
 
         assert(frames > 0);
         const auto copies = frames - 1;
@@ -1565,7 +1594,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_naive(
     }
 
     // Update constant buffers. These will not change for this run.
-    this->update_constants(cfg, 0);
+    this->update_constants(sphere_config, 0);
 
     // Prepare DirectStorage and open the staged file with DirectStorage.
     {
@@ -1619,7 +1648,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_naive(
     // number of iterations for the wall clock measurements.
     log::instance().write_line(log_level::debug, "Prewarming ...");
     {
-        auto prewarms = (std::max)(1u, cfg.min_prewarms());
+        auto prewarms = (std::max)(1u, sphere_config.min_prewarms());
 
         do {
             frame = 0;
@@ -1700,7 +1729,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_naive(
                 frame = (frame + 1) % frames;
             }
             device.wait_for_gpu();
-            prewarms = mctx.check_cpu_iterations(cfg.min_wall_time());
+            prewarms = mctx.check_cpu_iterations(sphere_config.min_wall_time());
         } while (prewarms > 0);
     }
 #endif
@@ -1794,10 +1823,10 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_naive(
 
 #if true
     // Do the GPU counter measurements.
-    batch_times.reserve(total_batches * cfg.gpu_counter_iterations());
+    batch_times.reserve(total_batches * sphere_config.gpu_counter_iterations());
     frame = 0;
-    gpu_times.resize(cfg.gpu_counter_iterations());
-    for (std::uint32_t i = 0; i < cfg.gpu_counter_iterations(); ++i) {
+    gpu_times.resize(sphere_config.gpu_counter_iterations());
+    for (std::uint32_t i = 0; i < sphere_config.gpu_counter_iterations(); ++i) {
         log::instance().write_line(log_level::debug, "GPU counter measurement "
             "#{}.", i);
 
