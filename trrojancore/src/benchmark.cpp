@@ -143,6 +143,8 @@ size_t trrojan::benchmark_base::run(const configuration_set& configs,
                 this->log_run(c);
                 auto r = resultCallback(std::move(this->run(c)));
                 ++retval;
+                log::instance().write_line(log_level::information, "Completed "
+                    "configuration #{0}. ", retval);
                 return true;
             } else {
                 log::instance().write_line(log_level::information, "A "
