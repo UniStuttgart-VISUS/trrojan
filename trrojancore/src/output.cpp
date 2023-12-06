@@ -52,6 +52,7 @@ trrojan::output TRROJANCORE_API trrojan::make_output(const std::string& path) {
     auto ext = tolower(path.substr(idx));
 
     if (iequals(ext, std::string(".csv"))
+            || iequals(ext, std::string(".tsv"))
             || iequals(ext, std::string(".txt"))) {
         return std::make_shared<csv_output>();
 #if defined(_WIN32) && !defined(_UWP)
@@ -62,8 +63,8 @@ trrojan::output TRROJANCORE_API trrojan::make_output(const std::string& path) {
         return std::make_shared<r_output>();
     } else {
         log::instance().write_line(log_level::warning, "The file name "
-            "extension \"{}\" of path \"{}\" cannot be use to determine "
-            "the output type.", path);
+            "extension \"{0}\" of path \"{1}\" cannot be use to determine "
+            "the output type.", ext, path);
         return nullptr;
     }
 }
