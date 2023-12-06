@@ -214,6 +214,14 @@ namespace d3d12 {
         std::pair<UINT64, UINT64> fence_values(void) const;
 
         /// <summary>
+        /// Answer the total size of a frame in bytes.
+        /// </summary>
+        /// <returns></returns>
+        std::size_t frame_size(void) const noexcept {
+            return this->_total_spheres * this->_stride;
+        }
+
+        /// <summary>
         /// Returns the index of a batch that can be used to upload data to the
         /// GPU.
         /// </summary>

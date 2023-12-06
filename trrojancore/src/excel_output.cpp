@@ -1,19 +1,20 @@
-/// <copyright file="excel_output.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Christoph Müller</author>
+ï»¿// <copyright file="excel_output.cpp" company="Visualisierungsinstitut der UniversitÃ¤t Stuttgart">
+// Copyright Â© 2016 - 2023 Visualisierungsinstitut der UniversitÃ¤t Stuttgart. Alle Rechte vorbehalten.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Christoph MÃ¼ller</author>
 
 #include "trrojan/excel_output.h"
 
 
-//#ifdef _WIN32
 #if defined(_WIN32) && !defined(_UWP)
 #include <codecvt>
 #include <locale>
 #include <memory>
 
 #include "trrojan/log.h"
+
+#include "excellent_converter.h"
 
 
 /*
@@ -166,8 +167,9 @@ trrojan::output_base& trrojan::excel_output::operator <<(
         for (auto& n : result.result_names()) {
             this->write_value(n, row, col++);
         }
-        ++row;
     }
+
+    ++row;
 
     for (size_t i = 0; i < result.measurements(); ++i, ++row) {
         col = 0;
@@ -366,96 +368,11 @@ void trrojan::excel_output::write_formula(const std::wstring formula,
  */
 void trrojan::excel_output::write_value(const variant& value, const long row,
         const long col) {
-    VARIANT inputCell;
-    std::stringstream ss;
+    VARIANT cell;
 
     /* Prepare input. */
-    ::VariantInit(&inputCell);
-    // TODO: this is suboptimal. Find a way to template VARIANT, too.
-    switch (value.type()) {
-        case variant_type::boolean:
-            inputCell.vt = VT_BOOL;
-            inputCell.boolVal = value.get<variant_type::boolean>();
-            break;
-
-        case variant_type::int8:
-            inputCell.vt = VT_I1;
-            inputCell.cVal = value.get<variant_type::int8>();
-            break;
-
-        case variant_type::int16:
-            inputCell.vt = VT_I2;
-            inputCell.iVal = value.get<variant_type::int16>();
-            break;
-
-        case variant_type::int32:
-            inputCell.vt = VT_I4;
-            inputCell.intVal = value.get<variant_type::int32>();
-            break;
-
-        case variant_type::int64:
-            inputCell.vt = VT_I8;
-            inputCell.llVal = value.get<variant_type::int64>();
-            break;
-
-        case variant_type::uint8:
-            inputCell.vt = VT_UI1;
-            inputCell.bVal = value.get<variant_type::uint8>();
-            break;
-
-        case variant_type::uint16:
-            inputCell.vt = VT_UI2;
-            inputCell.uiVal = value.get<variant_type::uint16>();
-            break;
-
-        case variant_type::uint32:
-            inputCell.vt = VT_UI4;
-            inputCell.uintVal = value.get<variant_type::uint32>();
-            break;
-
-        case variant_type::uint64:
-            inputCell.vt = VT_UI8;
-            inputCell.ullVal = value.get<variant_type::uint64>();
-            break;
-
-        case variant_type::float32:
-            inputCell.vt = VT_R4;
-            inputCell.fltVal = value.get<variant_type::float32>();
-            break;
-
-        case variant_type::float64:
-            inputCell.vt = VT_R8;
-            inputCell.dblVal = value.get<variant_type::float64>();
-            break;
-
-        case variant_type::string:
-            inputCell.vt = VT_BSTR;
-            inputCell.bstrVal = ::SysAllocString(excel_output::convert(
-                value.get<variant_type::string>()).c_str());
-            break;
-
-        case variant_type::wstring:
-            inputCell.vt = VT_BSTR;
-            inputCell.bstrVal = ::SysAllocString(
-                value.get<variant_type::wstring>().c_str());
-            break;
-
-        case variant_type::device:
-            inputCell.vt = VT_BSTR;
-            ss.clear();
-            ss << value.get<variant_type::device>() << std::ends;
-            inputCell.bstrVal = ::SysAllocString(excel_output::convert(
-                ss.str()).c_str());
-            break;
-
-        case variant_type::environment:
-            inputCell.vt = VT_BSTR;
-            ss.clear();
-            ss << value.get<variant_type::environment>() << std::ends;
-            inputCell.bstrVal = ::SysAllocString(excel_output::convert(
-                ss.str()).c_str());
-            break;
-    }
+    ::VariantInit(&cell);
+    convert_variant(detail::variant_type_list(), cell, value);
 
     /* Get the range we write to. */
     auto range = this->get_range(row, col);
@@ -464,10 +381,10 @@ void trrojan::excel_output::write_value(const variant& value, const long row,
     /* Set range to 'inputRow'. */
     try {
         excel_output::invoke(nullptr, DISPATCH_PROPERTYPUT, range, L"Value",
-            inputCell);
-        ::VariantClear(&inputCell);
+            cell);
+        ::VariantClear(&cell);
     } catch (...) {
-        ::VariantClear(&inputCell);
+        ::VariantClear(&cell);
         throw;
     }
 }
@@ -499,4 +416,4 @@ void trrojan::excel_output::write_value(const std::string& value,
         throw;
     }
 }
-#endif /* _WIN32 */
+#endif /* defined(_WIN32) && !defined(_UWP) */

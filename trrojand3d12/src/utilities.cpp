@@ -993,15 +993,14 @@ DXGI_QUERY_VIDEO_MEMORY_INFO trrojan::d3d12::get_video_memory_info(
 /*
  * trrojan::d3d12::map_view_of_file
  */
-void *trrojan::d3d12::map_view_of_file(winrt::handle& mapping,
-        const DWORD access,
-        const std::size_t offset,
-        const std::size_t size) {
+std::unique_ptr<void, trrojan::memory_unmapper>
+trrojan::d3d12::map_view_of_file(winrt::handle& mapping, const DWORD access,
+        const std::size_t offset, const std::size_t size) {
     ULARGE_INTEGER o;
     o.QuadPart = offset;
 
-    auto retval = ::MapViewOfFile(mapping.get(), access, o.HighPart, o.LowPart,
-        size);
+    std::unique_ptr<void, trrojan::memory_unmapper> retval(::MapViewOfFile(
+        mapping.get(), access, o.HighPart, o.LowPart, size));
     if (retval == nullptr) {
         const auto error = ::GetLastError();
         throw ATL::CAtlException(HRESULT_FROM_WIN32(error));

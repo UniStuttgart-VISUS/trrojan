@@ -1,8 +1,8 @@
-/// <copyright file="constants.h" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Christoph Müller</author>
+ï»¿// <copyright file="constants.h" company="Visualisierungsinstitut der UniversitÃ¤t Stuttgart">
+// Copyright Â© 2016 - 2023 Visualisierungsinstitut der UniversitÃ¤t Stuttgart. Alle Rechte vorbehalten.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Christoph MÃ¼ller</author>
 
 #pragma once
 
@@ -29,47 +29,46 @@ namespace trrojan {
         /// <summary>
         /// Specifies the number of bits in a byte.
         /// </summary>
-        static const type bits_per_byte;
+        static constexpr type bits_per_byte = static_cast<T>(CHAR_BIT);
 
         /// <summary>
         /// Specifies the number of bytes in a Gigabyte.
         /// </summary>
-        static const type bytes_per_gigabyte;
+        static constexpr type bytes_per_gigabyte
+            = static_cast<T>(1024 * 1024 * 1024);
 
         /// <summary>
         /// Specifies the number of bytes in a kilobyte.
         /// </summary>
-        static const type bytes_per_kilobyte;
+        static constexpr type bytes_per_kilobyte = static_cast<T>(1024);
 
         /// <summary>
         /// Specifies the number of bytes in a Megabyte.
         /// <summary>
-        static const type bytes_per_megabyte;
+        static constexpr type bytes_per_megabyte = static_cast<T>(1024 * 1024);
 
         /// <summary>
         /// Specifies the number milliseconds per second.
         /// </summary>
-        static const type millis_per_second;
+        static constexpr type millis_per_second = static_cast<T>(1000);
 
         /// <summary>
         // The PI constant.
         /// </summary>
-        static const type pi;
+        static constexpr type pi = static_cast<T>(3.14159265358979323846);
 
         /// <summary>
         /// Specifies the number seconds per hour.
         /// </summary>
-        static const type seconds_per_hour;
+        static constexpr type seconds_per_hour = static_cast<T>(60 * 60);
 
         /// <summary>
         /// Specifies the number seconds per minute.
         /// </summary>
-        static const type seconds_per_minute;
+        static constexpr type seconds_per_minute = static_cast<T>(60);
 
         constants(void) = delete;
 
         ~constants(void) = delete;
     };
 }
-
-#include "trrojan/constants.inl"

@@ -180,10 +180,10 @@ std::vector<trrojan::variant> trrojan::trroll_parser::parse_values(
  */
 std::vector<std::string> trrojan::trroll_parser::tokenise(
         const std::string& str, const std::string& delimiter) {
-    std::size_t cur = 0;
     std::vector<std::string> retval;
 
-    for (std::size_t cur = 0; cur + delimiter.size() < str.size();) {
+    std::size_t cur = 0;
+    for (; cur + delimiter.size() < str.size();) {
         auto next = str.find(delimiter, cur);
 
         if (next == std::string::npos) {
@@ -192,6 +192,10 @@ std::vector<std::string> trrojan::trroll_parser::tokenise(
 
         retval.push_back(str.substr(cur, next - cur));
         cur = next + delimiter.size();
+    }
+
+    if (cur + 1 < str.size()) {
+        retval.push_back(str.substr(cur, str.size() - cur));
     }
 
     return retval;

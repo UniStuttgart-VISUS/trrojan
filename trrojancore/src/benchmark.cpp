@@ -162,6 +162,7 @@ size_t trrojan::benchmark_base::run(const configuration_set& configs,
                 static_cast<std::uint32_t>(ex.m_hr));
             return false;
 #endif /* defined(_WIN32) */
+
         } catch (...) {
             log::instance().write_line(log_level::error, "An unexpected "
                 "exception was encountered while running a benchmark.");
@@ -169,6 +170,8 @@ size_t trrojan::benchmark_base::run(const configuration_set& configs,
         }
     });
 
+    log::instance().write_line(log_level::information, "Completed benchmarking "
+        "of {0} individual configuration(s). ", retval);
     return retval;
 }
 

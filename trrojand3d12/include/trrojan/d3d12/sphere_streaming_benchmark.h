@@ -12,6 +12,7 @@
 
 #include <winrt/base.h>
 
+#include "trrojan/memory_unmapper.h"
 #include "trrojan/temp_file.h"
 
 #include "trrojan/d3d12/sphere_benchmark_base.h"
@@ -90,6 +91,11 @@ namespace d3d12 {
         /// </summary>
         sphere_streaming_benchmark(void);
 
+        /// <summary>
+        /// Fonalises the instance.
+        /// </summary>
+        virtual ~sphere_streaming_benchmark(void);
+
     protected:
 
         /// <summary>
@@ -99,6 +105,9 @@ namespace d3d12 {
         bool check_stream_changed(d3d12::device& device,
             const configuration& config,
             const std::vector<std::string>& changed);
+
+        /// <inheritdoc />
+        bool clear_stale_data(const std::vector<std::string>& changed) override;
 
         /// <inheritdoc />
         UINT count_descriptor_tables(const shader_id_type shader_code,
@@ -135,10 +144,19 @@ namespace d3d12 {
 
     private:
 
+        typedef std::unique_ptr<void, memory_unmapper> mapping_type;
+
         void finalise_temp_file(const UINT64 size, const std::uint32_t repeat);
 
-        void *map_temp_file(const UINT64 size, const std::string& folder,
-            const std::uint32_t repeat);
+        std::unique_ptr<void, memory_unmapper>& map_temp_file(const UINT64 size,
+            const std::string& folder, const std::uint32_t repeat);
+
+        std::pair<mapping_type, std::size_t> map_view_of_file(
+            const DWORD access, const std::size_t offset,
+            const std::size_t size);
+
+        void prepare_dstorage(ID3D12Device *device, const configuration& config,
+            const std::vector<std::string>& changed);
 
         DWORD _allocation_granularity;
         std::vector<std::uint8_t> _buffer;
@@ -153,7 +171,7 @@ namespace d3d12 {
 #endif /* defined(TRROJAN_WITH_DSTORAGE) */
         winrt::file_handle _file;
         winrt::handle _file_mapping;
-        void *_file_view;
+        mapping_type _file_view;
         std::pair<std::size_t, std::size_t> _mapped_range;
         temp_file _path;
         sphere_streaming_context _stream;

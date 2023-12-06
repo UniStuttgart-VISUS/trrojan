@@ -1,8 +1,8 @@
-// <copyright file="d2d_overlay.cpp" company="Visualisierungsinstitut der Universit�t Stuttgart">
-// Copyright � 2022 Visualisierungsinstitut der Universit�t Stuttgart. Alle Rechte vorbehalten.
+﻿// <copyright file="d2d_overlay.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
+// Copyright © 2022 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
-// <author>Christoph M�ller</author>
+// <author>Christoph Müller</author>
 
 #include "trrojan/d3d12/d2d_overlay.h"
 

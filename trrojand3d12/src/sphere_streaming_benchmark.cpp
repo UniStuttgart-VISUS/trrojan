@@ -74,6 +74,21 @@ trrojan::d3d12::sphere_streaming_benchmark::sphere_streaming_benchmark(
 
 
 /*
+ * trrojan::d3d12::sphere_streaming_benchmark::~sphere_streaming_benchmark
+ */
+trrojan::d3d12::sphere_streaming_benchmark::~sphere_streaming_benchmark(void) {
+    // We need to clear some resources in a distict order here for all temporary
+    // data being cleaned up in case of an error.
+#if defined(TRROJAN_WITH_DSTORAGE)
+    this->_dstorage_file = nullptr;
+#endif /* defined(TRROJAN_WITH_DSTORAGE) */
+    this->_file_view.reset();
+    this->_file_mapping.close();
+    this->_file.close();
+}
+
+
+/*
  * trrojan::d3d12::sphere_streaming_benchmark::check_stream_changed
  */
 bool trrojan::d3d12::sphere_streaming_benchmark::check_stream_changed(
@@ -82,7 +97,7 @@ bool trrojan::d3d12::sphere_streaming_benchmark::check_stream_changed(
     const auto retval = this->_stream.rebuild_required(changed);
 
     if (retval) {
-        log::instance().write_line(log_level::information, "(Re-) Building GPU "
+        log::instance().write_line(log_level::debug, "(Re-) Building GPU "
             "stream on device 0x{0:p} ...",
             static_cast<void *>(device.d3d_device().p));
         this->_stream.rebuild(device.d3d_device(), config,
@@ -103,6 +118,27 @@ bool trrojan::d3d12::sphere_streaming_benchmark::check_stream_changed(
             device.d3d_device(),
             D3D12_COMMAND_LIST_TYPE_DIRECT,
             this->_stream.batch_count() + 2);
+    }
+
+    return retval;
+}
+
+
+/*
+ * trrojan::d3d12::sphere_streaming_benchmark::clear_stale_data
+ */
+bool trrojan::d3d12::sphere_streaming_benchmark::clear_stale_data(
+        const std::vector<std::string>& changed) {
+    auto retval = sphere_benchmark_base::clear_stale_data(changed);
+
+    if (!retval) {
+        retval = contains_any(changed,
+            dstorage_configuration::factor_staging_directory,
+            sphere_streaming_benchmark::factor_streaming_method);
+    }
+
+    if (retval) {
+        this->_data.clear();
     }
 
     return retval;
@@ -147,9 +183,12 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
     const auto folder = config.get<std::string>(
         dstorage_configuration::factor_staging_directory);
     const auto method = config.get<std::string>(factor_streaming_method);
-    const auto priority = config.get<std::uint32_t>(factor_queue_priority);
     const auto repeat = config.get<std::uint32_t>(
         sphere_streaming_context::factor_repeat_frame);
+
+#if defined(TRROJAN_WITH_DSTORAGE)
+    this->_dstorage_file = nullptr;
+#endif /* defined(TRROJAN_WITH_DSTORAGE) */
 
     if (trrojan::iequals(method, streaming_method_ram)) {
         return this->on_run([this](const UINT64 size) {
@@ -157,7 +196,8 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
             this->_buffer.resize(size);
             return this->_buffer.data();
         }, [](const UINT64 size) {
-        }, [this](void *d, const std::size_t o, const std::size_t l) {
+        }, [this](void *d, const std::size_t, const std::size_t o,
+                const std::size_t l) {
             // Deliver from in-memory buffer.
             ::memcpy(d, this->_buffer.data() + o, l);
         }, device, config, power_collector, changed);
@@ -172,7 +212,7 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
             // seek like in the in-memory file. This is required as the
             // generated data do not come from a file and therefore must be
             // persisted for the benchmark.
-            return this->map_temp_file(size, folder, repeat);
+            return this->map_temp_file(size, folder, repeat).get();
 
         }, [this, repeat](const UINT64 size) {
             this->finalise_temp_file(size, repeat);
@@ -180,16 +220,17 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
             this->_file_mapping = create_file_mapping(this->_file,
                 PAGE_READONLY, size * (1 + repeat));
 
-        }, [this](void *d, const std::size_t o, const std::size_t l) {
+        }, [this](void *d, const std::size_t f, std::size_t o,
+                const std::size_t l) {
             // Deliver from mapped file. Note that 'o' can be an arbitrary
             // offset, so we must manually make sure that we align it properly
             // and increase the size of the mapping if the offset does not
             // start at the expected boundary.
-            const auto pad = (o % this->_allocation_granularity);
-            auto s = map_view_of_file(this->_file_mapping, FILE_MAP_READ, 
-                o - pad, l + pad);
-            on_exit([s](void) {::UnmapViewOfFile(s); });
-            ::memcpy(d, static_cast<std::uint8_t *>(s) + pad, l);
+            o += f * this->_stream.frame_size();
+            auto s = this->map_view_of_file(FILE_MAP_READ, o, l);
+            ::memcpy(d,
+                static_cast<std::uint8_t *>(s.first.get()) + s.second,
+                l);
             ++this->_cnt_remap;
 
         }, device, config, power_collector, changed);
@@ -206,19 +247,23 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
             // seek like in the in-memory file. This is required as the
             // generated data do not come from a file and therefore must be
             // persisted for the benchmark.
-            return this->map_temp_file(size, folder, repeat);
+            return this->map_temp_file(size, folder, repeat).get();
 
         }, [this, repeat](const UINT64 size) {
             this->finalise_temp_file(size, repeat);
             assert(this->_file_view == nullptr);
             this->_file_mapping = create_file_mapping(this->_file,
                 PAGE_READONLY, size * (1 + repeat));
-            this->_file_view = map_view_of_file(this->_file_mapping,
+            this->_file_view = d3d12::map_view_of_file(this->_file_mapping,
                 FILE_MAP_READ, 0, size * (1 + repeat));
 
-        }, [this](void *d, const std::size_t o, const std::size_t l) {
+        }, [this](void *d, const std::size_t f, std::size_t o,
+                const std::size_t l) {
+            o += f * this->_stream.frame_size();
             assert(this->_file_view != nullptr);
-            ::memcpy(d, static_cast<std::uint8_t *>(this->_file_view) + o, l);
+            ::memcpy(d,
+                static_cast<std::uint8_t *>(this->_file_view.get()) + o,
+                l);
 
         }, device, config, power_collector, changed);
 #endif /* defined(TRROJAN_FOR_UWP) */
@@ -234,7 +279,7 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
             // seek like in the in-memory file. This is required as the
             // generated data do not come from a file and therefore must be
             // persisted for the benchmark.
-            return this->map_temp_file(size, folder, repeat);
+            return this->map_temp_file(size, folder, repeat).get();
 
         }, [this, repeat](const UINT64 size) {
             this->finalise_temp_file(size, repeat);
@@ -242,15 +287,16 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
             this->_file_mapping = create_file_mapping(this->_file,
                 PAGE_READONLY, size * (1 + repeat));
 
-        }, [this, repeat](void *d, const std::size_t o, const std::size_t l) {
+        }, [this, repeat](void *d, const std::size_t f, std::size_t o,
+                const std::size_t l) {
             // Find out whether the part we need is already mapped and if
             // not, map it.
+            o += f * this->_stream.frame_size();
+
             if ((this->_file_view == nullptr)
                     || (o < this->_mapped_range.first)
                     || (o + l > this->_mapped_range.second)) {
-                if (this->_file_view != nullptr) {
-                    ::UnmapViewOfFile(this->_file_view);
-                }
+                this->_file_view.reset();   // Makure sure we are unmapped.
 
                 ULARGE_INTEGER end;
                 end.LowPart = ::GetFileSize(this->_file.get(), &end.HighPart);
@@ -263,14 +309,16 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
                     this->_mapped_range.second = end.QuadPart;
                 }
 
-                this->_file_view = map_view_of_file(this->_file_mapping,
+                this->_file_view = d3d12::map_view_of_file(this->_file_mapping,
                     FILE_MAP_READ, this->_mapped_range.first,
                     this->_mapped_range.second - this->_mapped_range.first);
                 ++this->_cnt_remap;
             }
 
             const auto ds = o - this->_mapped_range.first;
-            ::memcpy(d, static_cast<std::uint8_t *>(this->_file_view) + ds, l);
+            ::memcpy(d,
+                static_cast<std::uint8_t *>(this->_file_view.get()) + ds,
+                l);
         }, device, config, power_collector, changed);
 #endif /* defined(TRROJAN_FOR_UWP) */
 
@@ -283,7 +331,7 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
             // As for the memory mapping technique, we must make sure that the
             // data are actually in a file, regardless of whether they come from
             // MMPLD or from the generator.
-            return this->map_temp_file(size, folder, repeat);
+            return this->map_temp_file(size, folder, repeat).get();
 
         }, [this, repeat](const UINT64 size) {
             // Remove the file mapping as we do not know whether that would
@@ -291,9 +339,10 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
             this->finalise_temp_file(size, repeat);
             assert(this->_file_view == nullptr);
 
-        }, [this](void *d, const std::size_t o, const std::size_t l) {
+        }, [this](void *d, const std::size_t f, const std::size_t o,
+                const std::size_t l) {
             LARGE_INTEGER position;
-            position.QuadPart = o;
+            position.QuadPart = f * this->_stream.frame_size() + o;
 
             if (!::SetFilePointerEx(this->_file.get(), position, nullptr,
                     FILE_BEGIN)) {
@@ -319,68 +368,12 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
 
     } else if (trrojan::iequals(method, streaming_method_dstorage)) {
 #if defined(TRROJAN_WITH_DSTORAGE)
-        // Lazily create the event for waiting on the I/O to complete.
-        if (!this->_dstorage_event) {
-            this->_dstorage_event.attach(::CreateEvent(nullptr, FALSE, FALSE,
-                nullptr));
-        }
-        if (!this->_dstorage_event) {
-            throw ATL::CAtlException(HRESULT_FROM_WIN32(::GetLastError()));
-        }
-
-        // Lazily create the fence to wait for the operation to complete.
-        if (!this->_dstorage_fence) {
-            this->_dstorage_fence_value = 0;
-            auto hr = device.d3d_device()->CreateFence(
-                this->_dstorage_fence_value, D3D12_FENCE_FLAG_NONE,
-                IID_PPV_ARGS(this->_dstorage_fence.put()));
-            if (FAILED(hr)) {
-                throw ATL::CAtlException(hr);
-            }
-        }
-
-        {
-            dstorage_configuration c(config);
-
-            // Lazily create the factory.
-            if (!this->_dstorage_factory) {
-                this->_dstorage_factory = c.create_factory();
-            }
-
-            // Apply the configuration.
-            c.apply(this->_dstorage_factory, changed);
-        }
-
-        // Lazily create the queue.
-        if (contains(changed, factor_queue_priority)) {
-            this->_dstorage_queue = nullptr;
-        }
-
-        if (!this->_dstorage_queue) {
-            DSTORAGE_QUEUE_DESC desc;
-            ::ZeroMemory(&desc, sizeof(desc));
-            desc.Capacity = static_cast<UINT16>(this->pipeline_depth());
-            if (desc.Capacity > DSTORAGE_MAX_QUEUE_CAPACITY) {
-                desc.Capacity = DSTORAGE_MAX_QUEUE_CAPACITY;
-            } else if (desc.Capacity < DSTORAGE_MIN_QUEUE_CAPACITY) {
-                desc.Capacity = DSTORAGE_MIN_QUEUE_CAPACITY;
-            }
-            desc.Priority = static_cast<DSTORAGE_PRIORITY>(priority);
-            desc.SourceType = DSTORAGE_REQUEST_SOURCE_FILE;
-            desc.Device = device.d3d_device();
-
-            auto hr = this->_dstorage_factory->CreateQueue(&desc,
-                IID_PPV_ARGS(this->_dstorage_queue.put()));
-            if (FAILED(hr)) {
-                throw ATL::CAtlException(hr);
-            }
-        }
-
+        this->prepare_dstorage(device.d3d_device(), config, changed);
         return this->on_run([this, &folder, repeat](const UINT64 size) {
             // As for the memory mapping technique, we must make sure that the
             // data are actually in a file, regardless of whether they come from
             // MMPLD or from the generator.
-            return this->map_temp_file(size, folder, repeat);
+            return this->map_temp_file(size, folder, repeat).get();
 
         }, [this, repeat](const UINT64 size) {
             // Remove the file mapping as we cannot open DirectStorage if any
@@ -398,13 +391,14 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
                 throw ATL::CAtlException(hr);
             }
 
-        }, [this](void *d, const std::size_t o, const std::size_t l) {
+        }, [this](void *d, const std::size_t f, const std::size_t o,
+                const std::size_t l) {
             DSTORAGE_REQUEST request;
             ::ZeroMemory(&request, sizeof(request));
             request.Options.SourceType = DSTORAGE_REQUEST_SOURCE_FILE;
             request.Options.DestinationType = DSTORAGE_REQUEST_DESTINATION_MEMORY;
             request.Source.File.Source = this->_dstorage_file.get();
-            request.Source.File.Offset = o;
+            request.Source.File.Offset = f * this->_stream.frame_size() + o;
             request.Source.File.Size = l;
             request.Destination.Memory.Buffer = d;
             request.Destination.Memory.Size = l;
@@ -427,66 +421,10 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
 
     } else if (trrojan::iequals(method, streaming_method_dstorage_memcpy)) {
 #if defined(TRROJAN_WITH_DSTORAGE)
-        // Lazily create the event for waiting on the I/O to complete.
-        if (!this->_dstorage_event) {
-            this->_dstorage_event.attach(::CreateEvent(nullptr, FALSE, FALSE,
-                nullptr));
-        }
-        if (!this->_dstorage_event) {
-            throw ATL::CAtlException(HRESULT_FROM_WIN32(::GetLastError()));
-        }
-
-        // Lazily create the fence to wait for the operation to complete.
-        if (!this->_dstorage_fence) {
-            this->_dstorage_fence_value = 0;
-            auto hr = device.d3d_device()->CreateFence(
-                this->_dstorage_fence_value, D3D12_FENCE_FLAG_NONE,
-                IID_PPV_ARGS(this->_dstorage_fence.put()));
-            if (FAILED(hr)) {
-                throw ATL::CAtlException(hr);
-            }
-        }
-
-        {
-            dstorage_configuration c(config);
-
-            // Lazily create the factory.
-            if (!this->_dstorage_factory) {
-                this->_dstorage_factory = c.create_factory();
-            }
-
-            // Apply the configuration.
-            c.apply(this->_dstorage_factory, changed);
-        }
-
-        // Lazily create the queue.
-        if (contains(changed, factor_queue_priority)) {
-            this->_dstorage_queue = nullptr;
-        }
-
-        if (!this->_dstorage_queue) {
-            DSTORAGE_QUEUE_DESC desc;
-            ::ZeroMemory(&desc, sizeof(desc));
-            desc.Capacity = static_cast<UINT16>(this->pipeline_depth());
-            if (desc.Capacity > DSTORAGE_MAX_QUEUE_CAPACITY) {
-                desc.Capacity = DSTORAGE_MAX_QUEUE_CAPACITY;
-            } else if (desc.Capacity < DSTORAGE_MIN_QUEUE_CAPACITY) {
-                desc.Capacity = DSTORAGE_MIN_QUEUE_CAPACITY;
-            }
-            desc.Priority = static_cast<DSTORAGE_PRIORITY>(priority);
-            desc.SourceType = DSTORAGE_REQUEST_SOURCE_FILE;
-            desc.Device = device.d3d_device();
-
-            auto hr = this->_dstorage_factory->CreateQueue(&desc,
-                IID_PPV_ARGS(this->_dstorage_queue.put()));
-            if (FAILED(hr)) {
-                throw ATL::CAtlException(hr);
-            }
-        }
-
+        this->prepare_dstorage(device.d3d_device(), config, changed);
         return this->on_run([this, &folder, repeat](const UINT64 size) {
             this->_buffer.resize(size);
-            return this->map_temp_file(size, folder, repeat);
+            return this->map_temp_file(size, folder, repeat).get();
 
         }, [this, repeat](const UINT64 size) {
             // Remove the file mapping as we cannot open DirectStorage if any
@@ -504,13 +442,14 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
                 throw ATL::CAtlException(hr);
             }
 
-        }, [this](void *d, const std::size_t o, const std::size_t l) {
+        }, [this](void *d, const std::size_t f, const std::size_t o,
+                const std::size_t l) {
             DSTORAGE_REQUEST request;
             ::ZeroMemory(&request, sizeof(request));
             request.Options.SourceType = DSTORAGE_REQUEST_SOURCE_FILE;
             request.Options.DestinationType = DSTORAGE_REQUEST_DESTINATION_MEMORY;
             request.Source.File.Source = this->_dstorage_file.get();
-            request.Source.File.Offset = o;
+            request.Source.File.Offset = f * this->_stream.frame_size() + o;
             request.Source.File.Size = l;
             request.Destination.Memory.Buffer = this->_buffer.data();
             request.Destination.Memory.Size = l;
@@ -575,18 +514,17 @@ void trrojan::d3d12::sphere_streaming_benchmark::finalise_temp_file(
     // Make sure that the initial mapping for receiving the data is removed as
     // we will leak otherwise.
     on_exit([this](void) {
-        ::UnmapViewOfFile(this->_file_view);
-        this->_file_view = nullptr;
+        this->_file_view.reset();
     });
 
     // Spread out copies as requested.
     for (std::uint32_t i = 0; i < repeat; ++i) {
         ULARGE_INTEGER offset;
         offset.QuadPart = (i + 1) * size;
-        auto dst = map_view_of_file(this->_file_mapping, FILE_MAP_WRITE,
-            (i + 1) * size, size);
-        ::memcpy(this->_file_view, dst, size);
-        ::UnmapViewOfFile(dst);
+        auto dst = this->map_view_of_file(FILE_MAP_WRITE, (i + 1) * size, size);
+        ::memcpy(static_cast<std::uint8_t *>(dst.first.get()) + dst.second,
+            this->_file_view.get(),
+            size);
     }
 }
 
@@ -594,19 +532,16 @@ void trrojan::d3d12::sphere_streaming_benchmark::finalise_temp_file(
 /*
  * trrojan::d3d12::sphere_streaming_benchmark::map_temp_file
  */
-void *trrojan::d3d12::sphere_streaming_benchmark::map_temp_file(
-    const UINT64 size, const std::string &folder,
-    const std::uint32_t repeat) {
-    if (this->_file_view != nullptr) {
-        ::UnmapViewOfFile(this->_file_view);
-        this->_file_view = nullptr;
-    }
-
-    this->_file.close();
-    this->_file_mapping.close();
+std::unique_ptr<void, trrojan::memory_unmapper>&
+trrojan::d3d12::sphere_streaming_benchmark::map_temp_file(
+        const UINT64 size, const std::string &folder,
+        const std::uint32_t repeat) {
 #if defined(TRROJAN_WITH_DSTORAGE)
     this->_dstorage_file = nullptr;
 #endif /* defined(TRROJAN_WITH_DSTORAGE) */
+    this->_file_view.reset();
+    this->_file.close();
+    this->_file_mapping.close();
 
     this->_path = temp_file::create(folder.c_str(), "tssb");
 
@@ -635,8 +570,87 @@ void *trrojan::d3d12::sphere_streaming_benchmark::map_temp_file(
     // Note that we only map the first frame here for the I/O worker, because
     // the overall number of frames could exceed what we can map.
     assert(this->_file_view == nullptr);
-    this->_file_view = map_view_of_file(this->_file_mapping,FILE_MAP_WRITE,
-        0, size);
+    this->_file_view = d3d12::map_view_of_file(this->_file_mapping,
+        FILE_MAP_WRITE, 0, size);
 
     return this->_file_view;
+}
+
+
+/*
+ * trrojan::d3d12::sphere_streaming_benchmark::map_view_of_file
+ */
+std::pair<trrojan::d3d12::sphere_streaming_benchmark::mapping_type, std::size_t>
+trrojan::d3d12::sphere_streaming_benchmark::map_view_of_file(const DWORD access,
+        const std::size_t offset, const std::size_t size) {
+    const auto pad = (offset % this->_allocation_granularity);
+    assert(pad <= offset);
+    auto view = d3d12::map_view_of_file(this->_file_mapping, access,
+        offset - pad, size + pad);
+    return std::make_pair(std::move(view), pad);
+}
+
+
+/*
+ * trrojan::d3d12::sphere_streaming_benchmark::prepare_dstorage
+ */
+void trrojan::d3d12::sphere_streaming_benchmark::prepare_dstorage(
+        ID3D12Device *device,
+        const configuration& config,
+        const std::vector<std::string>& changed) {
+#if defined(TRROJAN_WITH_DSTORAGE)
+    dstorage_configuration dstorage_config(config);
+
+    // Lazily create the event for waiting on the I/O to complete.
+    if (!this->_dstorage_event) {
+        this->_dstorage_event.attach(::CreateEvent(nullptr, FALSE, FALSE,
+            nullptr));
+    }
+    if (!this->_dstorage_event) {
+        throw ATL::CAtlException(HRESULT_FROM_WIN32(::GetLastError()));
+    }
+
+    // Lazily create the fence to wait for the operation to complete.
+    if (!this->_dstorage_fence) {
+        this->_dstorage_fence_value = 0;
+        auto hr = device->CreateFence(this->_dstorage_fence_value,
+            D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(this->_dstorage_fence.put()));
+        if (FAILED(hr)) {
+            throw ATL::CAtlException(hr);
+        }
+    }
+
+    // Lazily create the factory.
+    if (!this->_dstorage_factory) {
+        this->_dstorage_factory = dstorage_config.create_factory();
+    }
+
+    // Apply the configuration.
+    dstorage_config.apply(this->_dstorage_factory, changed);
+
+    // Lazily create the queue.
+    if (contains(changed, factor_queue_priority)) {
+        this->_dstorage_queue = nullptr;
+    }
+
+    if (!this->_dstorage_queue) {
+        DSTORAGE_QUEUE_DESC desc;
+        ::ZeroMemory(&desc, sizeof(desc));
+        desc.Capacity = static_cast<UINT16>(this->pipeline_depth());
+        if (desc.Capacity > DSTORAGE_MAX_QUEUE_CAPACITY) {
+            desc.Capacity = DSTORAGE_MAX_QUEUE_CAPACITY;
+        } else if (desc.Capacity < DSTORAGE_MIN_QUEUE_CAPACITY) {
+            desc.Capacity = DSTORAGE_MIN_QUEUE_CAPACITY;
+        }
+        desc.Priority = dstorage_config.queue_priority();
+        desc.SourceType = DSTORAGE_REQUEST_SOURCE_FILE;
+        desc.Device = device;
+
+        auto hr = this->_dstorage_factory->CreateQueue(&desc,
+            IID_PPV_ARGS(this->_dstorage_queue.put()));
+        if (FAILED(hr)) {
+            throw ATL::CAtlException(hr);
+        }
+    }
+#endif /* defined(TRROJAN_WITH_DSTORAGE) */
 }

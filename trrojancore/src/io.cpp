@@ -26,6 +26,40 @@
 
 
 /*
+ * trrojan::append_copies_to_file
+ */
+void trrojan::append_copies_to_file(const std::string& path,
+        const std::size_t cnt) {
+    std::fstream file(path, std::ios::in | std::ios::out | std::ios::binary
+        | std::ios::ate);
+    if (!file) {
+        std::stringstream msg;
+        msg << "Failed to open \"" << path << "\"" << std::ends;
+        throw std::runtime_error(msg.str());
+    }
+
+    std::vector<char> buffer(file.tellg());
+    file.seekg(0, std::ios::beg);
+
+    if (!file.read(buffer.data(), buffer.size())) {
+        std::stringstream msg;
+        msg << "Failed to read the current content from \""
+            << path << "\"." << std::ends;
+        throw std::runtime_error(msg.str());
+    }
+
+    for (std::size_t i = 0; i < cnt; ++i) {
+        if (!file.write(buffer.data(), buffer.size())) {
+            std::stringstream msg;
+            msg << "Failed to append a copy of the data to \""
+                << path << "\"." << std::ends;
+            throw std::runtime_error(msg.str());
+        }
+    }
+}
+
+
+/*
  * trrojan::ensure_directory_end
  */
 std::string trrojan::ensure_directory_end(const char *path) {

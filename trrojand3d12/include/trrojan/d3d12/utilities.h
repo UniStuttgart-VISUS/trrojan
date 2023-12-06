@@ -21,6 +21,7 @@
 #include <winrt/base.h>
 
 #include "trrojan/log.h"
+#include "trrojan/memory_unmapper.h"
 
 #include "trrojan/d3d12/export.h"
 #include "trrojan/d3d12/d3dx12.h"
@@ -142,7 +143,7 @@ namespace d3d12 {
         ID3D12RootSignature *signature);
 
     /// <summary>
-    /// Creates a compute pipeline state for teh given compute shader using the
+    /// Creates a compute pipeline state for the given compute shader using the
     /// root signature embedded in the byte code of the shader.
     /// </summary>
     /// <param name="signature"></param>
@@ -459,8 +460,9 @@ namespace d3d12 {
     /// <param name="offset"></param>
     /// <param name="size"></param>
     /// <returns></returns>
-    TRROJAND3D12_API void *map_view_of_file(winrt::handle& mapping,
-        const DWORD access, const std::size_t offset, const std::size_t size);
+    TRROJAND3D12_API std::unique_ptr<void, memory_unmapper> map_view_of_file(
+        winrt::handle& mapping, const DWORD access, const std::size_t offset,
+        const std::size_t size);
 
     /// <summary>
     /// Offsets the given pointer by the given number of bytes.

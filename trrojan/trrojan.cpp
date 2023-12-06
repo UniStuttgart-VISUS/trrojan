@@ -72,7 +72,6 @@ int main(const int argc, const char **argv) {
             std::cout << "TRRojan" << std::endl;
             std::cout << "Copyright (C) 2016 - 2023 Visualisierungsinstitut "
                 "der Universität Stuttgart."
-                << std::endl << "All rights reserved."
                 << std::endl << std::endl;
             std::cout << "The way you're meant to be trrolled." 
                 << std::endl << std::endl;
