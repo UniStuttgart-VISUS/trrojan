@@ -148,6 +148,20 @@ namespace trrojan {
     }
 
     /// <summary>
+    /// In-place replaces all occurrences of <paramref name="search" /> with
+    /// <paramref name="replace" />.
+    /// </summary>
+    template<class C, class T, class A>
+    void replace_all(std::basic_string<C, T, A>& str, const C search,
+            const C replace) {
+        for (auto& c : str) {
+            if (c == search) {
+                c = replace;
+            }
+        }
+    }
+
+    /// <summary>
     /// Answer whether <paramref name="haystack" /> starts with
     /// <see cref="needle" />.
     /// </summary>

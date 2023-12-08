@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include <functional>
+
 #if defined(TRROJAN_WITH_DSTORAGE)
 #include <dstorage.h>
 #endif /* defined(TRROJAN_WITH_DSTORAGE) */
@@ -13,10 +15,11 @@
 #include <winrt/base.h>
 
 #include "trrojan/memory_unmapper.h"
-#include "trrojan/temp_file.h"
+#include "trrojan/random_sphere_cache.h"
 
 #include "trrojan/d3d12/sphere_benchmark_base.h"
 #include "trrojan/d3d12/sphere_streaming_context.h"
+#include "trrojan/d3d12/staging_key.h"
 
 
 namespace trrojan {
@@ -107,9 +110,6 @@ namespace d3d12 {
             const std::vector<std::string>& changed);
 
         /// <inheritdoc />
-        bool clear_stale_data(const std::vector<std::string>& changed) override;
-
-        /// <inheritdoc />
         UINT count_descriptor_tables(const shader_id_type shader_code,
             const bool include_root) const override;
 
@@ -127,9 +127,8 @@ namespace d3d12 {
         /// <paramref name="copy_data" /> to obtain the data for each
         /// batch.
         /// </summary>
-        template<class TAllocate, class TCleanup, class TCopy>
-        trrojan::result on_run(TAllocate&& allocate_data,
-            TCleanup&& load_cleanup,
+        template<class TPrepare, class TCopy>
+        trrojan::result on_run(TPrepare&& prepare,
             TCopy&& copy_data,
             d3d12::device& device,
             const configuration& config,
@@ -146,17 +145,17 @@ namespace d3d12 {
 
         typedef std::unique_ptr<void, memory_unmapper> mapping_type;
 
-        void finalise_temp_file(const UINT64 size, const std::uint32_t repeat);
+        void map_staged_file(void);
 
-        std::unique_ptr<void, memory_unmapper>& map_temp_file(const UINT64 size,
-            const std::string& folder, const std::uint32_t repeat);
+        void open_staged_file(void);
 
-        std::pair<mapping_type, std::size_t> map_view_of_file(
-            const DWORD access, const std::size_t offset,
-            const std::size_t size);
+        void open_staged_file_dstorage(void);
 
         void prepare_dstorage(ID3D12Device *device, const configuration& config,
             const std::vector<std::string>& changed);
+
+        void stage_data(const configuration& config,
+            const shader_id_type shader_code);
 
         DWORD _allocation_granularity;
         std::vector<std::uint8_t> _buffer;
@@ -173,7 +172,8 @@ namespace d3d12 {
         winrt::handle _file_mapping;
         mapping_type _file_view;
         std::pair<std::size_t, std::size_t> _mapped_range;
-        temp_file _path;
+        std::string _path;
+        random_sphere_cache<staging_key, sphere_data> _staged_data;
         sphere_streaming_context _stream;
     };
 

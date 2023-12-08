@@ -41,6 +41,16 @@ namespace trrojan {
         static temp_file create(const char *folder, const char *prefix);
 
         /// <summary>
+        /// Make the existing path a temporary file that is automatically being
+        /// deleted.
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
+        static temp_file from_path(const std::string& path) {
+            return temp_file(path);
+        }
+
+        /// <summary>
         /// Initialises an invalid temporary file.
         /// </summary>
         inline temp_file(void) noexcept { }

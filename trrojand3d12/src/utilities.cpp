@@ -299,7 +299,8 @@ winrt::handle trrojan::d3d12::create_file_mapping(winrt::file_handle& handle,
     winrt::handle retval(::CreateFileMappingW(handle.get(), nullptr, protect,
         s.HighPart, s.LowPart, nullptr));
     if (!retval) {
-        throw ATL::CAtlException(HRESULT_FROM_WIN32(::GetLastError()));
+        const auto error = ::GetLastError();
+        throw ATL::CAtlException(HRESULT_FROM_WIN32(error));
     }
 
     return retval;
@@ -996,6 +997,7 @@ DXGI_QUERY_VIDEO_MEMORY_INFO trrojan::d3d12::get_video_memory_info(
 std::unique_ptr<void, trrojan::memory_unmapper>
 trrojan::d3d12::map_view_of_file(winrt::handle& mapping, const DWORD access,
         const std::size_t offset, const std::size_t size) {
+    assert(mapping);
     ULARGE_INTEGER o;
     o.QuadPart = offset;
 
@@ -1007,6 +1009,24 @@ trrojan::d3d12::map_view_of_file(winrt::handle& mapping, const DWORD access,
     }
 
     return retval;
+}
+
+
+/*
+ * trrojan::d3d12::map_view_of_file
+ */
+std::pair<std::unique_ptr<void, trrojan::memory_unmapper>, void *>
+trrojan::d3d12::map_view_of_file(winrt::handle& mapping,
+        const std::size_t allocation_granularity,
+        const DWORD access,
+        const std::size_t offset,
+        const std::size_t size) {
+    const auto pad = (offset % allocation_granularity);
+    assert(pad <= offset);
+    auto view = d3d12::map_view_of_file(mapping, access, offset - pad,
+        size + pad);
+    auto pos = static_cast<std::uint8_t *>(view.get()) + pad;
+    return std::make_pair(std::move(view), pos);
 }
 
 

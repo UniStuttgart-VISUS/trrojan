@@ -8,10 +8,9 @@
 /*
  * trrojan::d3d12::sphere_streaming_benchmark::on_run
  */
-template<class TAllocate, class TCleanup, class TCopy>
+template<class TPrepare, class TCopy>
 trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
-        TAllocate&& allocate_data,
-        TCleanup&& load_cleanup,
+        TPrepare&& prepare,
         TCopy&& copy_data,
         d3d12::device& device,
         const configuration& config,
@@ -28,25 +27,11 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
     stats_query::value_type pipeline_stats;
     auto shader_code = cfg.shader_id();
 
-    // Clear data that cannot be used any more.
-    if (this->clear_stale_data(changed)) {
-        assert(this->_file_view == nullptr);
-        this->_file_mapping.close();
-        this->_file.close();
-    }
-
-    // Load the data if necessary. Note that we redirect the data loading
-    // to the user-provided callback such that it can process it in the
-    // appropriate format.
-    if (!this->_data) {
-        log::instance().write_line(log_level::information, "Loading data set \""
-            "{0}\" for streaming ...", cfg.data_set());
-        load_cleanup(this->_data.load(allocate_data, shader_code, cfg));
-
-        log::instance().write_line(log_level::debug, "Reshaping GPU "
-            "stream ...");
-        this->_stream.reshape(this->_data);
-    }
+    // Load the data either from cache or from the original source.
+    this->stage_data(config, shader_code);
+    prepare();
+    log::instance().write_line(log_level::debug, "Reshaping GPU stream ...");
+    this->_stream.reshape(this->_data);
 
     // Now that we have the data, update the shader code to match it.
     shader_code = this->_data.adjust_shader_code(shader_code);

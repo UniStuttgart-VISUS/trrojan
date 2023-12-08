@@ -130,10 +130,12 @@ namespace d3d12 {
         /// <param name="path"></param>
         /// <param name="shader_code"></param>
         /// <param name="config"></param>
+        /// <param name="append_copies"></param>
         /// <returns></returns>
         winrt::file_handle copy_to(const std::string& path,
             const shader_id_type shader_code,
-            const sphere_rendering_configuration& config);
+            const sphere_rendering_configuration& config,
+            const std::size_t append_copies = 0);
 
         /// <summary>
         /// Answer the buffer holding the read-only data.

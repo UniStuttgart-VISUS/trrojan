@@ -460,9 +460,27 @@ namespace d3d12 {
     /// <param name="offset"></param>
     /// <param name="size"></param>
     /// <returns></returns>
-    TRROJAND3D12_API std::unique_ptr<void, memory_unmapper> map_view_of_file(
+    std::unique_ptr<void, memory_unmapper> TRROJAND3D12_API map_view_of_file(
         winrt::handle& mapping, const DWORD access, const std::size_t offset,
         const std::size_t size);
+
+    /// <summary>
+    /// Maps the given file mapping into the address space of the process,
+    /// honouring the alignment requirements of the given allocation
+    /// granularity.
+    /// </summary>
+    /// <param name="mapping"></param>
+    /// <param name="allocation_granularity"></param>
+    /// <param name="access"></param>
+    /// <param name="offset"></param>
+    /// <param name="size"></param>
+    /// <returns>The pointer to a self-cleaning mapping (the first component,
+    /// which is aligned and might not be what the caller requested) and the
+    /// pointer to the requested position within this mapping.</returns>
+    std::pair<std::unique_ptr<void, memory_unmapper>, void *>
+    TRROJAND3D12_API map_view_of_file(winrt::handle& mapping,
+        const std::size_t allocation_granularity, const DWORD access,
+        const std::size_t offset, const std::size_t size);
 
     /// <summary>
     /// Offsets the given pointer by the given number of bytes.
