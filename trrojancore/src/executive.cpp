@@ -273,6 +273,8 @@ void trrojan::executive::run(benchmark_base& benchmark,
             environment_base::factor_name, e.environment));
 
         for (auto d : e.devices) {
+            log::instance().write_line(log_level::information, "Using device "
+                "\"{0}\" ...", d ? d->name().c_str() : "");
             configs.replace_factor(factor::from_manifestations(
                 device_base::factor_name, d));
 

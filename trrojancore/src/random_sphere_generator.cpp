@@ -1,15 +1,40 @@
-// <copyright file="random_sphere_generator.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2022 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+ï»¿// <copyright file="random_sphere_generator.cpp" company="Visualisierungsinstitut der UniversitÃ¤t Stuttgart">
+// Copyright Â© 2022 - 2023 Visualisierungsinstitut der UniversitÃ¤t Stuttgart. Alle Rechte vorbehalten.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
-// <author>Christoph Müller</author>
+// <author>Christoph MÃ¼ller</author>
 
 #include "trrojan/random_sphere_generator.h"
 
+#include <algorithm>
+#include <cctype>
 #include <random>
+#include <type_traits>
 
+#include "trrojan/io.h"
 #include "trrojan/log.h"
 #include "trrojan/text.h"
+
+
+#define _ADD_SPHERE_TYPE(n) \
+    { #n, trrojan::random_sphere_generator::sphere_type::n }
+
+/// <summary>
+/// A lookup table for parsing the sphere types.
+/// </summary>
+static const struct {
+    const char *name;
+    trrojan::random_sphere_generator::sphere_type type;
+} SPHERE_TYPES[] = {
+    _ADD_SPHERE_TYPE(pos_intensity),
+    _ADD_SPHERE_TYPE(pos_rgba32),
+    _ADD_SPHERE_TYPE(pos_rgba8),
+    _ADD_SPHERE_TYPE(pos_rad_intensity),
+    _ADD_SPHERE_TYPE(pos_rad_rgba32),
+    _ADD_SPHERE_TYPE(pos_rad_rgba8)
+};
+
+#undef _ADD_SPHERE_TYPE
 
 
 /*
@@ -158,6 +183,49 @@ std::vector<std::uint8_t> trrojan::random_sphere_generator::create(
 
 
 /*
+ * trrojan::random_sphere_generator::get_file_name
+ */
+std::string trrojan::random_sphere_generator::get_file_name(
+        const description& description,
+        const std::string& folder,
+        const std::string& prefix,
+        const std::string& suffix,
+        const std::string& extension) {
+    typedef std::underlying_type<create_flags>::type f_type;
+    typedef std::underlying_type<sphere_type>::type s_type;
+
+    auto retval = prefix;
+
+    retval += std::to_string(description.domain_size[0]) + "-";
+    retval += std::to_string(description.domain_size[1]) + "-";
+    retval += std::to_string(description.domain_size[2]) + "-";
+    retval += std::to_string(static_cast<f_type>(description.flags)) + "-";
+    retval += std::to_string(description.number) + "-";
+    retval += std::to_string(description.seed) + "-";
+    retval += std::to_string(description.sphere_size[0]) + "-";
+    retval += std::to_string(description.sphere_size[1]) + "-";
+
+    for (auto &t : SPHERE_TYPES) {
+        if (description.type == t.type) {
+            retval += t.name;
+            break;
+        }
+    }
+
+    retval += suffix;
+
+    if (!extension.empty() && (extension[0] != extension_separator_char)) {
+        retval += '.';
+    }
+
+    retval += extension;
+    retval = combine_path(folder, retval);
+
+    return retval;
+}
+
+
+/*
  * trrojan::random_sphere_generator::get_properties
  */
 trrojan::random_sphere_generator::properties_type
@@ -253,20 +321,6 @@ trrojan::random_sphere_generator::parse_description(
         "following format: \"<sphere type> : <number of spheres> : <random "
         "seed or \"-\"> : <domain size> : <sphere size range>\"");
     static const char SEPARATOR = ':';
-#define _ADD_SPHERE_TYPE(n) { #n, sphere_type::n }
-    static const struct {
-        const char *name;
-        sphere_type type;
-    } SPHERE_TYPES[] = {
-        _ADD_SPHERE_TYPE(pos_intensity),
-        _ADD_SPHERE_TYPE(pos_rgba32),
-        _ADD_SPHERE_TYPE(pos_rgba8),
-        _ADD_SPHERE_TYPE(pos_rad_intensity),
-        _ADD_SPHERE_TYPE(pos_rad_rgba32),
-        _ADD_SPHERE_TYPE(pos_rad_rgba8)
-    };
-#undef _ADD_SPHERE_TYPE
-
     random_sphere_generator::description retval;
 
     /* Parse the type of spheres to generate. */
@@ -343,6 +397,46 @@ trrojan::random_sphere_generator::parse_description(
     tok_end = description.end();
     retval.sphere_size = parse<decltype(retval.sphere_size)>(
         std::string(tok_begin, tok_end));
+
+    return retval;
+}
+
+
+/*
+ * trrojan::random_sphere_generator::to_string
+ */
+std::string trrojan::random_sphere_generator::to_string(
+        const description& description) {
+    std::string retval;
+
+    for (auto& t : SPHERE_TYPES) {
+        if (description.type == t.type) {
+            retval += t.name;
+            break;
+        }
+    }
+
+    retval += " : ";
+    retval += std::to_string(description.number);
+
+    retval += " : ";
+    retval += std::to_string(description.seed);
+
+    retval += " : ";
+    for (std::size_t i = 0; i < description.domain_size.size(); ++i) {
+        if (i > 0) {
+            retval += " ";
+        }
+        retval += std::to_string(description.domain_size[i]);
+    }
+
+    retval += ": ";
+    for (std::size_t i = 0; i < description.sphere_size.size(); ++i) {
+        if (i > 0) {
+            retval += " ";
+        }
+        retval += std::to_string(description.sphere_size[i]);
+    }
 
     return retval;
 }

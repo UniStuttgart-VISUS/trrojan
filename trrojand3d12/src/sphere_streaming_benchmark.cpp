@@ -6,7 +6,9 @@
 
 #include "trrojan/d3d12/sphere_streaming_benchmark.h"
 
+#include "trrojan/io.h"
 #include "trrojan/on_exit.h"
+#include "trrojan/random_sphere_generator.h"
 #include "trrojan/text.h"
 
 #include "trrojan/d3d12/dstorage_configuration.h"
@@ -125,27 +127,6 @@ bool trrojan::d3d12::sphere_streaming_benchmark::check_stream_changed(
 
 
 /*
- * trrojan::d3d12::sphere_streaming_benchmark::clear_stale_data
- */
-bool trrojan::d3d12::sphere_streaming_benchmark::clear_stale_data(
-        const std::vector<std::string>& changed) {
-    auto retval = sphere_benchmark_base::clear_stale_data(changed);
-
-    if (!retval) {
-        retval = contains_any(changed,
-            dstorage_configuration::factor_staging_directory,
-            sphere_streaming_benchmark::factor_streaming_method);
-    }
-
-    if (retval) {
-        this->_data.clear();
-    }
-
-    return retval;
-}
-
-
-/*
  * trrojan::d3d12::sphere_streaming_benchmark::count_descriptor_tables
  */
 UINT trrojan::d3d12::sphere_streaming_benchmark::count_descriptor_tables(
@@ -191,11 +172,9 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
 #endif /* defined(TRROJAN_WITH_DSTORAGE) */
 
     if (trrojan::iequals(method, streaming_method_ram)) {
-        return this->on_run([this](const UINT64 size) {
-            // Provide our own in-memory buffer to receive the data.
-            this->_buffer.resize(size);
-            return this->_buffer.data();
-        }, [](const UINT64 size) {
+        return this->on_run([this](void) {
+            // Read the staged data into the memory buffer for streaming.
+            this->_buffer = read_binary_file(this->_path);
         }, [this](void *d, const std::size_t, const std::size_t o,
                 const std::size_t l) {
             // Deliver from in-memory buffer.
@@ -203,22 +182,9 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
         }, device, config, power_collector, changed);
 
     } else if (trrojan::iequals(method, streaming_method_memory_mapping)) {
-#if defined(TRROJAN_FOR_UWP)
-        throw std::logic_error("The requested streaming method is unsupported "
-            "on UWP.");
-#else /* defined(TRROJAN_FOR_UWP) */
-        return this->on_run([this, &folder, repeat](const UINT64 size) {
-            // Copy the raw data to a memory-mapped file such that we can
-            // seek like in the in-memory file. This is required as the
-            // generated data do not come from a file and therefore must be
-            // persisted for the benchmark.
-            return this->map_temp_file(size, folder, repeat).get();
-
-        }, [this, repeat](const UINT64 size) {
-            this->finalise_temp_file(size, repeat);
-            assert(this->_file_view == nullptr);
-            this->_file_mapping = create_file_mapping(this->_file,
-                PAGE_READONLY, size * (1 + repeat));
+        return this->on_run([this](void) {
+            // Create a memory mapping of the staged file.
+            this->map_staged_file();
 
         }, [this](void *d, const std::size_t f, std::size_t o,
                 const std::size_t l) {
@@ -227,35 +193,22 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
             // and increase the size of the mapping if the offset does not
             // start at the expected boundary.
             o += f * this->_stream.frame_size();
-            auto s = this->map_view_of_file(FILE_MAP_READ, o, l);
-            ::memcpy(d,
-                static_cast<std::uint8_t *>(s.first.get()) + s.second,
-                l);
+            auto view = map_view_of_file(this->_file_mapping,
+                this->_allocation_granularity, FILE_MAP_READ, o, l);
+            ::memcpy(d, view.second, l);
             ++this->_cnt_remap;
 
         }, device, config, power_collector, changed);
-#endif /* defined(TRROJAN_FOR_UWP) */
 
     } else if (trrojan::iequals(method,
             streaming_method_persistent_memory_mapping)) {
-#if defined(TRROJAN_FOR_UWP)
-        throw std::logic_error("The requested streaming method is unsupported "
-            "on UWP.");
-#else /* defined(TRROJAN_FOR_UWP) */
-        return this->on_run([this, &folder, repeat](const UINT64 size) {
-            // Copy the raw data to a memory-mapped file such that we can
-            // seek like in the in-memory file. This is required as the
-            // generated data do not come from a file and therefore must be
-            // persisted for the benchmark.
-            return this->map_temp_file(size, folder, repeat).get();
-
-        }, [this, repeat](const UINT64 size) {
-            this->finalise_temp_file(size, repeat);
-            assert(this->_file_view == nullptr);
-            this->_file_mapping = create_file_mapping(this->_file,
-                PAGE_READONLY, size * (1 + repeat));
+        return this->on_run([this, repeat](void) {
+            // Create a memory mapping of the staged file and map all of it.
+            this->map_staged_file();
+            const auto size = (1 + repeat) * this->_data.stride()
+                * this->_data.spheres();
             this->_file_view = d3d12::map_view_of_file(this->_file_mapping,
-                FILE_MAP_READ, 0, size * (1 + repeat));
+                FILE_MAP_READ, 0, size);
 
         }, [this](void *d, const std::size_t f, std::size_t o,
                 const std::size_t l) {
@@ -266,26 +219,12 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
                 l);
 
         }, device, config, power_collector, changed);
-#endif /* defined(TRROJAN_FOR_UWP) */
 
     } else if (trrojan::iequals(method,
             streaming_method_batch_memory_mapping)) {
-#if defined(TRROJAN_FOR_UWP)
-        throw std::logic_error("The requested streaming method is unsupported "
-            "on UWP.");
-#else /* defined(TRROJAN_FOR_UWP) */
-        return this->on_run([this, &folder, repeat](const UINT64 size) {
-            // Copy the raw data to a memory-mapped file such that we can
-            // seek like in the in-memory file. This is required as the
-            // generated data do not come from a file and therefore must be
-            // persisted for the benchmark.
-            return this->map_temp_file(size, folder, repeat).get();
-
-        }, [this, repeat](const UINT64 size) {
-            this->finalise_temp_file(size, repeat);
-            assert(this->_file_view == nullptr);
-            this->_file_mapping = create_file_mapping(this->_file,
-                PAGE_READONLY, size * (1 + repeat));
+        return this->on_run([this](void) {
+            // Create a memory mapping of the staged file.
+            this->map_staged_file();
 
         }, [this, repeat](void *d, const std::size_t f, std::size_t o,
                 const std::size_t l) {
@@ -298,8 +237,11 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
                     || (o + l > this->_mapped_range.second)) {
                 this->_file_view.reset();   // Makure sure we are unmapped.
 
-                ULARGE_INTEGER end;
-                end.LowPart = ::GetFileSize(this->_file.get(), &end.HighPart);
+                LARGE_INTEGER end;
+                if (!::GetFileSizeEx(this->_file.get(), &end)) {
+                    throw ATL::CAtlException(
+                        HRESULT_FROM_WIN32(::GetLastError()));
+                }
 
                 const auto pad = o % this->_allocation_granularity;
                 this->_mapped_range.first = o - pad;
@@ -320,24 +262,11 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
                 static_cast<std::uint8_t *>(this->_file_view.get()) + ds,
                 l);
         }, device, config, power_collector, changed);
-#endif /* defined(TRROJAN_FOR_UWP) */
 
     } else if (trrojan::iequals(method, streaming_method_read_file)) {
-#if defined(TRROJAN_FOR_UWP)
-        throw std::logic_error("The requested streaming method is unsupported "
-            "on UWP.");
-#else /* defined(TRROJAN_FOR_UWP) */
-        return this->on_run([this, &folder, repeat](const UINT64 size) {
-            // As for the memory mapping technique, we must make sure that the
-            // data are actually in a file, regardless of whether they come from
-            // MMPLD or from the generator.
-            return this->map_temp_file(size, folder, repeat).get();
-
-        }, [this, repeat](const UINT64 size) {
-            // Remove the file mapping as we do not know whether that would
-            // impact other kinds of I/O.
-            this->finalise_temp_file(size, repeat);
-            assert(this->_file_view == nullptr);
+        return this->on_run([this](void) {
+            // Open the staged file for seek and read.
+            this->open_staged_file();
 
         }, [this](void *d, const std::size_t f, const std::size_t o,
                 const std::size_t l) {
@@ -364,32 +293,13 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
                 rem -= read;
             }
         }, device, config, power_collector, changed);
-#endif /* defined(TRROJAN_FOR_UWP) */
 
     } else if (trrojan::iequals(method, streaming_method_dstorage)) {
 #if defined(TRROJAN_WITH_DSTORAGE)
         this->prepare_dstorage(device.d3d_device(), config, changed);
-        return this->on_run([this, &folder, repeat](const UINT64 size) {
-            // As for the memory mapping technique, we must make sure that the
-            // data are actually in a file, regardless of whether they come from
-            // MMPLD or from the generator.
-            return this->map_temp_file(size, folder, repeat).get();
-
-        }, [this, repeat](const UINT64 size) {
-            // Remove the file mapping as we cannot open DirectStorage if any
-            // other file handle is open on the temporary file.
-            this->finalise_temp_file(size, repeat);
-            assert(this->_file_view == nullptr);
-            this->_file_mapping.close();
-
-            const auto path = get_file_path(this->_file.get());
-            this->_file.close();
-
-            auto hr = this->_dstorage_factory->OpenFile(path.c_str(),
-                IID_PPV_ARGS(this->_dstorage_file.put()));
-            if (FAILED(hr)) {
-                throw ATL::CAtlException(hr);
-            }
+        return this->on_run([this](void) {
+            // Open the staged file using Direct Storage.
+            this->open_staged_file_dstorage();
 
         }, [this](void *d, const std::size_t f, const std::size_t o,
                 const std::size_t l) {
@@ -422,25 +332,9 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
     } else if (trrojan::iequals(method, streaming_method_dstorage_memcpy)) {
 #if defined(TRROJAN_WITH_DSTORAGE)
         this->prepare_dstorage(device.d3d_device(), config, changed);
-        return this->on_run([this, &folder, repeat](const UINT64 size) {
-            this->_buffer.resize(size);
-            return this->map_temp_file(size, folder, repeat).get();
-
-        }, [this, repeat](const UINT64 size) {
-            // Remove the file mapping as we cannot open DirectStorage if any
-            // other file handle is open on the temporary file.
-            this->finalise_temp_file(size, repeat);
-            assert(this->_file_view == nullptr);
-            this->_file_mapping.close();
-
-            const auto path = get_file_path(this->_file.get());
-            this->_file.close();
-
-            auto hr = this->_dstorage_factory->OpenFile(path.c_str(),
-                IID_PPV_ARGS(this->_dstorage_file.put()));
-            if (FAILED(hr)) {
-                throw ATL::CAtlException(hr);
-            }
+        return this->on_run([this](void) {
+            // Open the staged file using Direct Storage.
+            this->open_staged_file_dstorage();
 
         }, [this](void *d, const std::size_t f, const std::size_t o,
                 const std::size_t l) {
@@ -507,87 +401,62 @@ void trrojan::d3d12::sphere_streaming_benchmark::set_vertex_buffer(
 
 
 /*
- * trrojan::d3d12::sphere_streaming_benchmark::finalise_temp_file
+ * trrojan::d3d12::sphere_streaming_benchmark::map_staged_file
  */
-void trrojan::d3d12::sphere_streaming_benchmark::finalise_temp_file(
-        const UINT64 size, const std::uint32_t repeat) {
-    // Make sure that the initial mapping for receiving the data is removed as
-    // we will leak otherwise.
-    on_exit([this](void) {
-        this->_file_view.reset();
-    });
-
-    // Spread out copies as requested.
-    for (std::uint32_t i = 0; i < repeat; ++i) {
-        ULARGE_INTEGER offset;
-        offset.QuadPart = (i + 1) * size;
-        auto dst = this->map_view_of_file(FILE_MAP_WRITE, (i + 1) * size, size);
-        ::memcpy(static_cast<std::uint8_t *>(dst.first.get()) + dst.second,
-            this->_file_view.get(),
-            size);
-    }
+void trrojan::d3d12::sphere_streaming_benchmark::map_staged_file(void) {
+    this->open_staged_file();
+    assert(this->_file);
+    this->_file_mapping = create_file_mapping(this->_file, PAGE_READONLY, 0);
+    assert(this->_file_mapping);
 }
 
 
 /*
- * trrojan::d3d12::sphere_streaming_benchmark::map_temp_file
+ * trrojan::d3d12::sphere_streaming_benchmark::open_staged_file
  */
-std::unique_ptr<void, trrojan::memory_unmapper>&
-trrojan::d3d12::sphere_streaming_benchmark::map_temp_file(
-        const UINT64 size, const std::string &folder,
-        const std::uint32_t repeat) {
-#if defined(TRROJAN_WITH_DSTORAGE)
-    this->_dstorage_file = nullptr;
-#endif /* defined(TRROJAN_WITH_DSTORAGE) */
-    this->_file_view.reset();
-    this->_file.close();
+void trrojan::d3d12::sphere_streaming_benchmark::open_staged_file(void) {
     this->_file_mapping.close();
-
-    this->_path = temp_file::create(folder.c_str(), "tssb");
-
-    trrojan::log::instance().write_line(trrojan::log_level::information,
-        "Staging data to \"{0}\" ...", this->_path.get());
+    this->_file.close();
 
 #if defined(TRROJAN_FOR_UWP)
-    {
-        auto p = from_utf8(this->_path);
-        this->_file.attach(::CreateFile2(p.c_str(),
-            GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ, CREATE_ALWAYS,
-            nullptr));
-    }
+    auto p = from_utf8(this->_path);
+    this->_file.attach(::CreateFile2(p.c_str(),
+        GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ, OPEN_EXISTING,
+        nullptr));
 #else /* defined(TRROJAN_FOR_UWP) */
-    this->_file.attach(::CreateFileA(this->_path.get().c_str(),
+    this->_file.attach(::CreateFileA(this->_path.c_str(),
         GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ, nullptr,
-        CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL));
+        OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL));
 #endif /* defined(TRROJAN_FOR_UWP) */
+
     if (!this->_file) {
-        throw ATL::CAtlException(HRESULT_FROM_WIN32(::GetLastError()));
+        const auto error = ::GetLastError();
+        throw ATL::CAtlException(HRESULT_FROM_WIN32(error));
     }
-
-    this->_file_mapping = create_file_mapping(this->_file, PAGE_READWRITE,
-        size * (1 + repeat));
-
-    // Note that we only map the first frame here for the I/O worker, because
-    // the overall number of frames could exceed what we can map.
-    assert(this->_file_view == nullptr);
-    this->_file_view = d3d12::map_view_of_file(this->_file_mapping,
-        FILE_MAP_WRITE, 0, size);
-
-    return this->_file_view;
 }
 
 
 /*
- * trrojan::d3d12::sphere_streaming_benchmark::map_view_of_file
+ * trrojan::d3d12::sphere_streaming_benchmark::open_staged_file_dstorage
  */
-std::pair<trrojan::d3d12::sphere_streaming_benchmark::mapping_type, std::size_t>
-trrojan::d3d12::sphere_streaming_benchmark::map_view_of_file(const DWORD access,
-        const std::size_t offset, const std::size_t size) {
-    const auto pad = (offset % this->_allocation_granularity);
-    assert(pad <= offset);
-    auto view = d3d12::map_view_of_file(this->_file_mapping, access,
-        offset - pad, size + pad);
-    return std::make_pair(std::move(view), pad);
+void trrojan::d3d12::sphere_streaming_benchmark::open_staged_file_dstorage(
+        void) {
+#if defined(TRROJAN_WITH_DSTORAGE)
+    // Make sure that we have closed the "normal" file handle or Direct Storage
+    // will fail opening the file.
+    this->_file_mapping.close();
+    this->_file.close();
+
+    auto path = from_utf8(this->_path);
+    auto hr = this->_dstorage_factory->OpenFile(path.c_str(),
+        IID_PPV_ARGS(this->_dstorage_file.put()));
+    if (FAILED(hr)) {
+        throw ATL::CAtlException(hr);
+    }
+#else /* defined(TRROJAN_WITH_DSTORAGE) */
+    throw std::logic_error("This build of TRRojan does not support "
+        "DirectStorage.");
+#endif /* defined(TRROJAN_WITH_DSTORAGE) */
 }
 
 
@@ -653,4 +522,56 @@ void trrojan::d3d12::sphere_streaming_benchmark::prepare_dstorage(
         }
     }
 #endif /* defined(TRROJAN_WITH_DSTORAGE) */
+}
+
+
+/*
+ * trrojan::d3d12::sphere_streaming_benchmark::stage_data
+ */
+void trrojan::d3d12::sphere_streaming_benchmark::stage_data(
+        const configuration& config, const shader_id_type shader_code) {
+    typedef sphere_rendering_configuration conf_type;
+    typedef sphere_streaming_context ctx_type;
+    typedef dstorage_configuration ds_type;
+    typedef random_sphere_generator gen_type;
+
+    const sphere_rendering_configuration cfg(config);
+
+    staging_key key;
+    key.data_set = cfg.data_set();
+    key.copies = config.get<std::uint32_t>(ctx_type::factor_repeat_frame);
+    key.folder = config.get<std::string>(ds_type::factor_staging_directory);
+    key.force_float = cfg.force_float_colour();
+
+    const auto prefix = std::to_string(key.copies) + "cpy-"
+        + std::to_string(key.force_float) + "fflt-";
+
+    std::string path;
+    try {
+        const auto desc = gen_type::parse_description(key.data_set,
+            static_cast<gen_type::create_flags>(shader_code));
+        path = gen_type::get_file_name(desc, key.folder, prefix);
+    } catch (...) {
+        path = combine_path(key.folder, prefix + get_file_name(key.data_set));
+    }
+
+    auto retval = this->_staged_data.get(key);
+    if (retval != nullptr) {
+        this->_path = retval->file.get();
+        trrojan::log::instance().write_line(trrojan::log_level::information,
+            "Using staged data from \"{0}\" ...", this->_path);
+        this->_data = retval->user_data;
+        assert(this->_data.data() == nullptr);
+
+    } else {
+        retval = this->_staged_data.put(key, path);
+        assert(retval != nullptr);
+        this->_path = retval->file.get();
+
+        trrojan::log::instance().write_line(trrojan::log_level::information,
+            "Staging data to \"{0}\" ...", this->_path);
+        this->_data.copy_to(this->_path, shader_code, cfg, key.copies);
+        assert(this->_data.data() == nullptr);
+        retval->user_data = this->_data;
+    }
 }

@@ -3,7 +3,7 @@
     <Identity
       Name="9daa24f4-7804-446d-ad9c-42cf67757a8f"
       Publisher="CN=Christoph Müller, OU=VISUS, OU=Wissenschaftliche Mitarbeiter, OU=VIS(US), DC=visus, DC=uni-stuttgart, DC=de"
-      Version="1.0.15.0" />
+      Version="1.0.16.0" />
     <mp:PhoneIdentity PhoneProductId="9daa24f4-7804-446d-ad9c-42cf67757a8f" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
     <Properties>
         <DisplayName>trrojanuwp</DisplayName>
