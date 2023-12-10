@@ -38,7 +38,7 @@ namespace d3d12 {
         const std::uint8_t *data,
         const std::size_t cnt_data,
         const std::size_t block_size,
-        const std::string& path);
+        const std::wstring& path);
 
 } /* end namespace d3d12 */
 } /* end namespace trrojan */

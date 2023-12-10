@@ -290,28 +290,10 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_batches(
     // Clear data that cannot be used any more.
     this->clear_stale_data(changed);
 
-    // Load the data if necessary and copy it to the staging location requested
-    // by the configuration. Note that we need to preserver the path of the
-    // staged file, because we will not redo this until the data set changes
-    // again.
-    if (!this->_data) {
-        this->_path = temp_file::create(
-            dstorage_config.staging_directory().c_str(),
-            "tds");
-        log::instance().write_line(log_level::information, "Staging data set \""
-            "{0}\" into \"{1}\" ...", cfg.data_set(), this->_path);
-        this->_data.copy_to(this->_path, shader_code, cfg).close();
-
-        assert(frames > 0);
-        const auto copies = frames - 1;
-        log::instance().write_line(log_level::information, "Appending {0} "
-            "copies of the data to \"{0}\" ...", copies, this->_path.get());
-        append_copies_to_file(this->_path, copies);
-
-        log::instance().write_line(log_level::debug, "Reshaping GPU "
-            "stream ...");
-        this->_stream.reshape(this->_data);
-    }
+    // Load the data either from cache or from the original source.
+    this->stage_data(config, shader_code);
+    log::instance().write_line(log_level::debug, "Reshaping GPU stream ...");
+    this->_stream.reshape(this->_data);
 
     // Now that we have the data, update the shader code to match it.
     shader_code = this->_data.adjust_shader_code(shader_code);
@@ -370,8 +352,8 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_batches(
     auto dstorage = dstorage_config.create_factory();
  
     {
-        std::wstring unshit = this->_path;
-        auto hr = dstorage->OpenFile(unshit.c_str(), IID_PPV_ARGS(file.put()));
+        auto hr = dstorage->OpenFile(this->_path.c_str(),
+            IID_PPV_ARGS(file.put()));
         if (FAILED(hr)) {
             throw ATL::CAtlException(hr);
         }
@@ -501,7 +483,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_batches(
                 } /* for (std::size_t t = 0; t < total_batches; ++t) */
 
                 frame = (frame + 1) % frames;
-            }
+            } /* for (mctx.cpu_iterations = 0; ... */
             device.wait_for_gpu();
             prewarms = mctx.check_cpu_iterations(cfg.min_wall_time());
         } while (prewarms > 0);
@@ -835,10 +817,8 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_batches(
     const auto batch_median = calc_median(batch_times);
     const auto gpu_median = calc_median(gpu_times);
 
-    // Prepare the result set.
-    auto retval = make_result(config);
-
     // Output the results.
+    auto retval = make_result(config);
     retval->add({
         this->name(),
         this->_data.spheres(),
@@ -895,53 +875,23 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_gdeflate(
     DSTORAGE_REQUEST request;
     auto shader_code = cfg.shader_id();
 
-
     // Clear data that cannot be used any more.
-    const auto data_new = this->clear_stale_data(changed);
+    this->clear_stale_data(changed);
 
-    // Load the data if necessary and copy it to the staging location requested
-    // by the configuration. Note that we need to preserver the path of the
-    // staged file, because we will not redo this until the data set changes
-    // again.
-    if (data_new) {
-        this->_data.load([this](const UINT64 size) {
-            this->_buffer.resize(size);
-            return this->_buffer.data();
-        }, shader_code, cfg);
-
-        log::instance().write_line(log_level::debug, "Reshaping GPU "
-            "stream ...");
-        this->_stream.reshape(this->_data);
-    }
-
-    // If necessary, (re-) build the GPU heap and command allocators for
-    // streaming the data.
-    const auto batch_new = this->check_stream_changed(device, config, changed);
-
-    if (data_new || batch_new) {
-        this->_path = temp_file::create(
-            dstorage_config.staging_directory().c_str(),
-            "tgds");
-        log::instance().write_line(log_level::information, "Compressing data "
-            "set \"{0}\" ({1} Bytes) into \"{2}\" ...", cfg.data_set(),
-            this->_buffer.size(), this->_path.get());
-        this->_batches = gdeflate_compress(this->_buffer.data(),
-            this->_buffer.size(),
-            this->_stream.batch_size(),
-            this->_path);
-
-        assert(frames > 0);
-        const auto copies = frames - 1;
-        log::instance().write_line(log_level::information, "Appending {0} "
-            "copies of the data to \"{1}\" ...", copies, this->_path.get());
-        append_copies_to_file(this->_path, copies);
-    }
+    // Load the data either from cache or from the original source.
+    this->stage_data(config, shader_code);
+    log::instance().write_line(log_level::debug, "Reshaping GPU stream ...");
+    this->_stream.reshape(this->_data);
 
     // Now that we have the data, update the shader code to match it.
     shader_code = this->_data.adjust_shader_code(shader_code);
 
     // As we have the data, we can also configure the camera now.
     this->configure_camera(config);
+
+    // If necessary, (re-) build the GPU heap and command allocators for
+    // streaming the data.
+    this->check_stream_changed(device, config, changed);
 
     // Now that we have reshaped the stream, we can cache the total number
     // of batches we need to render for each frame.
@@ -990,8 +940,8 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_gdeflate(
     auto dstorage = dstorage_config.create_factory();
  
     {
-        std::wstring unshit = this->_path;
-        auto hr = dstorage->OpenFile(unshit.c_str(), IID_PPV_ARGS(file.put()));
+        auto hr = dstorage->OpenFile(this->_path.c_str(),
+            IID_PPV_ARGS(file.put()));
         if (FAILED(hr)) {
             throw ATL::CAtlException(hr);
         }
@@ -1039,6 +989,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_gdeflate(
         do {
             frame = 0;
             mctx.cpu_timer.start();
+
             for (mctx.cpu_iterations = 0; mctx.cpu_iterations < prewarms;
                     ++mctx.cpu_iterations) {
                 for (std::size_t t = 0; t < total_batches; ++t) {
@@ -1119,9 +1070,10 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_gdeflate(
                         this->present_target(config);
                     }
 
-                    frame = (frame + 1) % frames;
                 } /* for (std::size_t t = 0; t < total_batches; ++t) */
-            }
+
+                frame = (frame + 1) % frames;
+            } /* for (mctx.cpu_iterations = 0; ... */
             device.wait_for_gpu();
             prewarms = mctx.check_cpu_iterations(cfg.min_wall_time());
         } while (prewarms > 0);
@@ -1520,29 +1472,10 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_naive(
     // Clear data that cannot be used any more.
     this->clear_stale_data(changed);
 
-    // Load the data if necessary and copy it to the staging location requested
-    // by the configuration. Note that we need to preserver the path of the
-    // staged file, because we will not redo this until the data set changes
-    // again.
-    if (!this->_data) {
-        this->_path = temp_file::create(
-            dstorage_config.staging_directory().c_str(),
-            "tds");
-        log::instance().write_line(log_level::information, "Staging data set \""
-            "{0}\" into \"{1}\" ...", sphere_config.data_set(),
-            this->_path.get());
-        this->_data.copy_to(this->_path, shader_code, sphere_config).close();
-
-        assert(frames > 0);
-        const auto copies = frames - 1;
-        log::instance().write_line(log_level::information, "Appending {0} "
-            "copies of the data to \"{1}\" ...", copies, this->_path.get());
-        append_copies_to_file(this->_path, copies);
-
-        log::instance().write_line(log_level::debug, "Reshaping GPU "
-            "stream ...");
-        this->_stream.reshape(this->_data);
-    }
+    // Load the data either from cache or from the original source.
+    this->stage_data(config, shader_code);
+    log::instance().write_line(log_level::debug, "Reshaping GPU stream ...");
+    this->_stream.reshape(this->_data);
 
     // Now that we have the data, update the shader code to match it.
     shader_code = this->_data.adjust_shader_code(shader_code);
@@ -1605,8 +1538,8 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_naive(
     }
 
     {
-        const std::wstring unshit = this->_path;
-        auto hr = dstorage->OpenFile(unshit.c_str(), IID_PPV_ARGS(file.put()));
+        auto hr = dstorage->OpenFile(this->_path.c_str(),
+            IID_PPV_ARGS(file.put()));
         if (FAILED(hr)) {
             throw ATL::CAtlException(hr);
         }
@@ -2069,5 +2002,96 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_naive(
     });
 
     return retval;
+}
+
+
+/*
+ * trrojan::d3d12::dstorage_sphere_benchmark::stage_data
+ */
+void trrojan::d3d12::dstorage_sphere_benchmark::stage_data(
+        const configuration& config, const shader_id_type shader_code) {
+    typedef sphere_rendering_configuration conf_type;
+    typedef sphere_streaming_context ctx_type;
+    typedef dstorage_configuration ds_type;
+    typedef random_sphere_generator gen_type;
+
+    const sphere_rendering_configuration cfg(config);
+    const auto impl = config.get<std::string>(factor_implementation);
+    const auto is_gdeflate = (impl == implementation_gdeflate);
+
+    staging_key key;
+    key.data_set = cfg.data_set();
+    key.copies = config.get<std::uint32_t>(ctx_type::factor_repeat_frame);
+    key.folder = config.get<std::string>(ds_type::factor_staging_directory);
+    key.force_float = cfg.force_float_colour();
+
+    auto prefix = std::to_string(key.copies) + "cpy-"
+        + std::to_string(key.force_float) + "fflt-";
+
+    if (is_gdeflate) {
+        // If we use GDeflate, the number of batches becomes relevant, so we add
+        // it to the key (but only then such that the other tests can reuse the
+        // file as long as possible).
+        key.batch_size = config.get<std::uint32_t>(ctx_type::factor_batch_size);
+        prefix += std::to_string(key.batch_size) + "gdfl-";
+    }
+    assert((key.batch_size == 0) || is_gdeflate);
+
+    std::string path;
+    try {
+        const auto desc = gen_type::parse_description(key.data_set,
+            static_cast<gen_type::create_flags>(shader_code));
+        path = gen_type::get_file_name(desc, key.folder, prefix);
+    } catch (...) {
+        path = combine_path(key.folder, prefix + get_file_name(key.data_set));
+    }
+
+    auto retval = this->_staged_data.get(key);
+    if (retval != nullptr) {
+        path = retval->file.get();
+        trrojan::log::instance().write_line(trrojan::log_level::information,
+            "Using staged data from \"{0}\" ...", path);
+        this->_batches = retval->user_data.batches;
+        this->_data = retval->user_data.data;
+        assert(this->_data.data() == nullptr);
+        this->_path = from_utf8(path);
+
+    } else {
+        retval = this->_staged_data.put(key, path);
+        assert(retval != nullptr);
+        this->_path = from_utf8(path = retval->file.get());
+
+        if (is_gdeflate) {
+            std::vector<std::uint8_t> buffer;
+            this->_data.load([&buffer](const UINT64 s) {
+                buffer.resize(s);
+                return buffer.data();
+            }, shader_code, cfg);
+            assert(this->_data.data() == nullptr);
+
+            log::instance().write_line(log_level::information, "Compressing "
+                "data set \"{0}\" ({1} Bytes) into \"{2}\" ...", cfg.data_set(),
+                buffer.size(), path);
+            this->_batches = gdeflate_compress(buffer.data(),
+                buffer.size(),
+                key.batch_size * this->_data.stride(),
+                this->_path);
+
+            log::instance().write_line(log_level::information, "Appending {0} "
+                "copies of the compressed data to \"{1}\" ...", key.copies,
+                path);
+            append_copies_to_file(path, key.copies);
+
+        } else {
+            trrojan::log::instance().write_line(trrojan::log_level::information,
+                "Staging data to \"{0}\" ...", path);
+            this->_batches.clear();
+            this->_data.copy_to(path, shader_code, cfg, key.copies);
+            assert(this->_data.data() == nullptr);
+        }
+
+        retval->user_data.batches = this->_batches;
+        retval->user_data.data = this->_data;
+    }
 }
 #endif /* defined(TRROJAN_WITH_DSTORAGE) */

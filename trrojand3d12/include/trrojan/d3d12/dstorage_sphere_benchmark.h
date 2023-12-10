@@ -11,11 +11,12 @@
 
 #include <winrt/base.h>
 
-#include "trrojan/temp_file.h"
+#include "trrojan/random_sphere_cache.h"
 
 #include "trrojan/d3d12/sphere_benchmark_base.h"
 #include "trrojan/d3d12/sphere_rendering_configuration.h"
 #include "trrojan/d3d12/sphere_streaming_context.h"
+#include "trrojan/d3d12/staging_key.h"
 
 
 namespace trrojan {
@@ -80,6 +81,11 @@ namespace d3d12 {
 
     private:
 
+        struct cache_context {
+            std::vector<std::size_t> batches;
+            sphere_data data;
+        };
+
         static result make_result(const configuration& config);
 
         inline UINT64 enqueue_request(winrt::com_ptr<IDStorageQueue> queue,
@@ -131,7 +137,8 @@ namespace d3d12 {
         inline void make_request(DSTORAGE_REQUEST& request,
                 const std::size_t frame,
                 const std::size_t batch) const noexcept {
-            request.Source.File.Offset = this->_stream.offset(batch);
+            request.Source.File.Offset = frame * this->_stream.frame_size();
+            request.Source.File.Offset += this->_stream.offset(batch);
             request.Source.File.Size = this->_stream.batch_size(batch);
             request.Destination.Buffer.Offset = 0;
             request.Destination.Buffer.Size = request.Source.File.Size;
@@ -166,6 +173,9 @@ namespace d3d12 {
             power_collector::pointer& power_collector,
             const std::vector<std::string>& changed);
 
+        void stage_data(const configuration& config,
+            const shader_id_type shader_code);
+
         inline UINT64 submit_request(winrt::com_ptr<IDStorageQueue> queue,
                 DSTORAGE_REQUEST& request,
                 const std::size_t frame,
@@ -178,10 +188,11 @@ namespace d3d12 {
         }
 
         std::vector<std::size_t> _batches;
-        std::vector<std::uint8_t> _buffer;
+        //std::vector<std::uint8_t> _buffer;
         winrt::com_ptr<ID3D12Fence> _fence;
         UINT64 _next_fence_value;
-        temp_file _path;
+        std::wstring _path;
+        random_sphere_cache<staging_key, cache_context> _staged_data;
         sphere_streaming_context _stream;
     };
 
