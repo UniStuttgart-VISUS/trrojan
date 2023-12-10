@@ -21,7 +21,7 @@ d3d12::dstorage-sphere-renderer {
     uint32 batch_count = 256
     #string streaming_method =  memory_mapping; ram; read_file; batch_memory_mapping; persistent_memory_mapping; dstorage; dstorage_memcpy
     #string implementation = batches; gdeflate; naive
-    string implementation = gdeflate
+    string implementation = naive
     uint32 staging_buffer_size = 33554432
 
     uint32vec2 viewport = 1920 1080

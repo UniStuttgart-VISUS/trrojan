@@ -1922,7 +1922,9 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_naive(
             this->set_vertex_buffer(list.get(), shader_code, b);
 
             const auto counts = get_draw_count(shader_code, spheres);
+            stats_query.begin(list.get(), t);
             list->DrawInstanced(counts.first, counts.second, 0, 0);
+            stats_query.end(list.get(), t);
 
             if (last) {
                 this->disable_target(list.get());
