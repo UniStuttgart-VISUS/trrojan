@@ -171,10 +171,12 @@ namespace trrojan {
         /// names of <see cref="environment" /> and <see cref="device" />s need
         /// to be replaces with their actual instantiation.</param>
         void run(benchmark_base& benchmark, configuration_set configs,
-            output_base& output, const cool_down& coolDown);
+            output_base& output, const cool_down& coolDown,
+            const std::size_t continue_at);
 
         void run(const benchmark& benchmark, const configuration_set& configs,
-            output_base& output, const cool_down& coolDown);
+            output_base& output, const cool_down& coolDown,
+            const std::size_t continue_at);
 
         /// <summary>
         /// Runs the benchmarks in the given TRROLL script writing the results
@@ -186,11 +188,14 @@ namespace trrojan {
         /// results.</param>
         /// <param name="cool_down">Controls regular cool-down periods between
         /// benchmarks that are running over weeks.</param>
+        /// <param name="continue_at">Instructs the benchmark to skip all
+        /// configurations until the given one.</param>
         /// <param name="power_collector">If not <c>nullptr</c>, enables the
         /// benchmark to measure the power consumption of its work.</param>
         void trroll(const troll_input_type& path,
             output_base& output,
             const cool_down& cool_down,
+            const std::size_t continue_at,
             power_collector::pointer power_collector);
 
         executive operator =(const executive&) = delete;

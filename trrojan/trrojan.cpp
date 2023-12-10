@@ -119,6 +119,16 @@ int main(const int argc, const char **argv) {
             }
         }
 
+        /* Configure skipping. */
+        std::size_t continue_at = 0;
+        {
+            auto it = trrojan::find_argument("--continue-at",
+                cmdLine.begin(), cmdLine.end());
+            if (it != cmdLine.end()) {
+                continue_at = trrojan::parse<std::size_t>(it->c_str());
+            }
+        }
+
         /* Configure the executive. */
         trrojan::executive exe;
         exe.load_plugins(cmdLine);
@@ -131,7 +141,8 @@ int main(const int argc, const char **argv) {
                 trrojan::log::instance().write_line(
                     trrojan::log_level::information, "Running benchmarks "
                     "configured in TRROLL script \"{}\" ...", *it);
-                exe.trroll(*it, *output, coolDown, power_collector);
+                exe.trroll(*it, *output, coolDown, continue_at,
+                    power_collector);
             }
         }
 

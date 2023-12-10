@@ -260,7 +260,8 @@ void trrojan::executive::load_plugins(const cmd_line& cmdLine) {
 void trrojan::executive::run(benchmark_base& benchmark,
         configuration_set configs,
         output_base& output,
-        const cool_down& cool_down) {
+        const cool_down& cool_down,
+        const std::size_t continue_at) {
     // Note: This method is called from the scripting interface and possibly
     // from other places we do not yet know. Therefore, we do not optimise
     // the order of the parameters, but keep them as they have been passed
@@ -281,7 +282,7 @@ void trrojan::executive::run(benchmark_base& benchmark,
             benchmark.run(configs, [&output](result&& r) {
                 output << r;
                 return true;
-            }, cool_down);
+            }, cool_down, continue_at);
         }
     }
 
@@ -318,12 +319,13 @@ void trrojan::executive::run(benchmark_base& benchmark,
 void trrojan::executive::run(const benchmark& benchmark,
         const configuration_set& configs,
         output_base& output,
-        const cool_down& cool_down) {
+        const cool_down& cool_down,
+        const std::size_t continue_at) {
     if (benchmark == nullptr) {
         throw std::runtime_error("The benchmark to run must not be nullptr.");
     }
 
-    this->run(*benchmark, configs, output, cool_down);
+    this->run(*benchmark, configs, output, cool_down, continue_at);
 }
 
 
@@ -333,6 +335,7 @@ void trrojan::executive::run(const benchmark& benchmark,
 void trrojan::executive::trroll(const troll_input_type& path,
         output_base& output,
         const cool_down& cool_down,
+        const std::size_t continue_at,
         power_collector::pointer power_collector) {
     typedef trroll_parser::benchmark_configs bcs;
     auto bcss = trroll_parser::parse(path);
@@ -390,7 +393,7 @@ void trrojan::executive::trroll(const troll_input_type& path,
                     b.benchmark.c_str(), b.plugin.c_str());
 
                 (**it).optimise_order(b.configs);
-                this->run(*it, b.configs, output, cool_down);
+                this->run(*it, b.configs, output, cool_down, continue_at);
 
             } else {
                 log::instance().write(log_level::warning, "No benchmark named "

@@ -165,7 +165,8 @@ namespace trrojan {
         /// are specified in the configuration set.</exception>
         virtual size_t run(const configuration_set& configs,
             const on_result_callback& resultCallback,
-            const cool_down& coolDown);
+            const cool_down& coolDown,
+            const std::size_t continue_at);
 
         virtual result run(const configuration& config) = 0;
 

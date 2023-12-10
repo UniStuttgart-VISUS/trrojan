@@ -120,7 +120,8 @@ std::vector<std::string> trrojan::benchmark_base::required_factors(void) const {
  */
 size_t trrojan::benchmark_base::run(const configuration_set& configs,
         const on_result_callback& resultCallback,
-        const cool_down& coolDown) {
+        const cool_down& coolDown,
+        const std::size_t continue_at) {
     // Check that caller has provided all required factors.
     this->check_required_factors(configs);
 
@@ -139,9 +140,11 @@ size_t trrojan::benchmark_base::run(const configuration_set& configs,
             cde.check();
 
             if (this->can_run(e, d)) {
-                c.add_system_factors();
-                this->log_run(c);
-                auto r = resultCallback(std::move(this->run(c)));
+                if (retval >= continue_at) {
+                    c.add_system_factors();
+                    this->log_run(c);
+                    auto r = resultCallback(std::move(this->run(c)));
+                }
                 ++retval;
                 log::instance().write_line(log_level::information, "Completed "
                     "configuration #{0}. ", retval);
