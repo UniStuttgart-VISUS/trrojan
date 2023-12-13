@@ -13,7 +13,7 @@ $scripts = @((Join-Path $trrollroot "stream.trroll"), (Join-Path $trrollroot "st
 $scripts | %{
     $script = $_
     $outdir = Split-Path -Parent $trrojanexe
-    $output = Join-Path $outdir [System.IO.Path]::ChangeExtension((Split-Path $script -Leaf), ".xlsx")
-    $log = Join-Path $outdir [System.IO.Path]::ChangeExtension((Split-Path $script -Leaf), ".log")
+    $output = Join-Path $outdir ([System.IO.Path]::ChangeExtension((Split-Path $script -Leaf), ".xlsx"))
+    $log = Join-Path $outdir ([System.IO.Path]::ChangeExtension((Split-Path $script -Leaf), ".log"))
     Start-Process -FilePath $trrojanexe -ArgumentList "--trroll", $script, "--output", $output, "--log", $log, "--visible", "--unique-devices" -Wait
 }
