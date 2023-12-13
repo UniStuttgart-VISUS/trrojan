@@ -205,8 +205,8 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
         return this->on_run([this, repeat](void) {
             // Create a memory mapping of the staged file and map all of it.
             this->map_staged_file();
-            const auto size = (1 + repeat) * this->_data.stride()
-                * this->_data.spheres();
+            const std::size_t fs = this->_data.stride() * this->_data.spheres();
+            const auto size = (1 + repeat) * fs;
             this->_file_view = d3d12::map_view_of_file(this->_file_mapping,
                 FILE_MAP_READ, 0, size);
 
