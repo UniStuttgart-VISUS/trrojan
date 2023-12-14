@@ -179,7 +179,7 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
                 const std::size_t l) {
             // Deliver from in-memory buffer.
             ::memcpy(d, this->_buffer.data() + o, l);
-        }, device, config, power_collector, changed);
+        }, [](void) { }, device, config, power_collector, changed);
 
     } else if (trrojan::iequals(method, streaming_method_memory_mapping)) {
         return this->on_run([this](void) {
@@ -197,8 +197,7 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
                 this->_allocation_granularity, FILE_MAP_READ, o, l);
             ::memcpy(d, view.second, l);
             ++this->_cnt_remap;
-
-        }, device, config, power_collector, changed);
+        }, [](void) { }, device, config, power_collector, changed);
 
     } else if (trrojan::iequals(method,
             streaming_method_persistent_memory_mapping)) {
@@ -217,8 +216,7 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
             ::memcpy(d,
                 static_cast<std::uint8_t *>(this->_file_view.get()) + o,
                 l);
-
-        }, device, config, power_collector, changed);
+        }, [](void) { }, device, config, power_collector, changed);
 
     } else if (trrojan::iequals(method,
             streaming_method_batch_memory_mapping)) {
@@ -261,7 +259,7 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
             ::memcpy(d,
                 static_cast<std::uint8_t *>(this->_file_view.get()) + ds,
                 l);
-        }, device, config, power_collector, changed);
+        }, [](void) { }, device, config, power_collector, changed);
 
     } else if (trrojan::iequals(method, streaming_method_read_file)) {
         return this->on_run([this](void) {
@@ -292,7 +290,7 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
                 dst += read;
                 rem -= read;
             }
-        }, device, config, power_collector, changed);
+        }, [](void) { }, device, config, power_collector, changed);
 
     } else if (trrojan::iequals(method, streaming_method_dstorage)) {
 #if defined(TRROJAN_WITH_DSTORAGE)
@@ -303,6 +301,10 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
 
         }, [this](void *d, const std::size_t f, const std::size_t o,
                 const std::size_t l) {
+            if (this->_buffer.size() < l) {
+                this->_buffer.resize(l);
+            }
+
             DSTORAGE_REQUEST request;
             ::ZeroMemory(&request, sizeof(request));
             request.Options.SourceType = DSTORAGE_REQUEST_SOURCE_FILE;
@@ -322,8 +324,12 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
             this->_dstorage_queue->Submit();
 
             ::WaitForSingleObject(this->_dstorage_event.get(), INFINITE);
+        }, [this](void) {
+            this->_dstorage_factory.attach(nullptr);
+            this->_dstorage_file.attach(nullptr);
+            this->_dstorage_queue.attach(nullptr);
         }, device, config, power_collector, changed);
-
+        
 #else /* defined(TRROJAN_WITH_DSTORAGE) */
         throw std::logic_error("This build of TRRojan does not support "
             "DirectStorage.");
@@ -338,6 +344,10 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
 
         }, [this](void *d, const std::size_t f, const std::size_t o,
                 const std::size_t l) {
+            if (this->_buffer.size() < l) {
+                this->_buffer.resize(l);
+            }
+
             DSTORAGE_REQUEST request;
             ::ZeroMemory(&request, sizeof(request));
             request.Options.SourceType = DSTORAGE_REQUEST_SOURCE_FILE;
@@ -359,7 +369,10 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
             ::WaitForSingleObject(this->_dstorage_event.get(), INFINITE);
 
             ::memcpy(d, this->_buffer.data(), l);
-
+        }, [this](void) {
+            this->_dstorage_factory.attach(nullptr);
+            this->_dstorage_file.attach(nullptr);
+            this->_dstorage_queue.attach(nullptr);
         }, device, config, power_collector, changed);
 
 #else /* defined(TRROJAN_WITH_DSTORAGE) */

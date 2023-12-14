@@ -8,10 +8,11 @@
 /*
  * trrojan::d3d12::sphere_streaming_benchmark::on_run
  */
-template<class TPrepare, class TCopy>
+template<class TPrepare, class TCopy, class TCleanup>
 trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
         TPrepare&& prepare,
         TCopy&& copy_data,
+        TCleanup&& cleanup,
         d3d12::device& device,
         const configuration& config,
         power_collector::pointer& power_collector,
@@ -469,6 +470,10 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
         }
     }
 #endif
+
+    try {
+        cleanup();
+    } catch (...) { /* Ignore a cleanup failued. */ }
 
     // Compute derived statistics for GPU counters.
     const auto batch_median = calc_median(batch_times);

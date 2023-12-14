@@ -127,9 +127,10 @@ namespace d3d12 {
         /// <paramref name="copy_data" /> to obtain the data for each
         /// batch.
         /// </summary>
-        template<class TPrepare, class TCopy>
+        template<class TPrepare, class TCopy, class TCleanup>
         trrojan::result on_run(TPrepare&& prepare,
             TCopy&& copy_data,
+            TCleanup&& cleanup,
             d3d12::device& device,
             const configuration& config,
             power_collector::pointer& power_collector,
