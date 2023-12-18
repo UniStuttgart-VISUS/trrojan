@@ -25,8 +25,6 @@
 #include "trrojan/log.h"
 #include "trrojan/text.h"
 
-#include "scripting_host.h"
-
 
 #if defined(_WIN32)
 /*
@@ -125,16 +123,6 @@ trrojan::plugin trrojan::executive::find_plugin(const std::string& name) {
             "does not exist or was not loaded.\n", name.c_str());
         return nullptr;
     }
-}
-
-
-/*
- * trrojan::executive::javascript
- */
-void trrojan::executive::javascript(const std::string& path,
-        output_base& output, const cool_down& cool_down) {
-    scripting_host host(output, cool_down);
-    host.run_script(*this, path);
 }
 
 

@@ -12,45 +12,6 @@ mark_as_advanced(FORCE
     FETCHCONTENT_UPDATES_DISCONNECTED)
 
 
-# Chakra Core
-if (NOT WIN32)
-    # On Linux, we can use Cmake ... I think.
-    FetchContent_Declare(ChakraCore
-        URL "https://github.com/chakra-core/ChakraCore/archive/refs/tags/v1.11.24.zip"
-        DOWNLOAD_EXTRACT_TIMESTAMP ON
-    )
-    FetchContent_MakeAvailable(ChakraCore)
-    mark_as_advanced(FORCE
-        FETCHCONTENT_SOURCE_DIR_CHAKRACORE
-        FETCHCONTENT_UPDATES_DISCONNECTED_CHAKRACORE)
-
-elseif (NOT TRROJAN_FOR_UWP)
-    set(CHAKRA_CONFIGURATION "Release")
-
-    # On Windows, we need to determine whether we are cross-compiling or
-    # building for the native platform.
-    if ("${CMAKE_SIZEOF_VOID_P}" STREQUAL "4")
-        set(CHAKRA_PLATFORM "x86")
-    else ()
-        set (CHAKRA_PLATFORM "x64")
-    endif ()
-
-    ExternalProject_Add(ChakraCore
-        URL "https://github.com/chakra-core/ChakraCore/archive/refs/tags/v1.11.24.zip"
-        DOWNLOAD_EXTRACT_TIMESTAMP ON
-        PREFIX _deps/ChakraCore
-        CMAKE_COMMAND ""
-        CONFIGURE_COMMAND ""
-        BUILD_COMMAND msbuild /m /p:Platform=${CHAKRA_PLATFORM} /p:Configuration=${CHAKRA_CONFIGURATION} /p:RuntimeLib=static_library "Build/Chakra.Core.sln"
-        INSTALL_COMMAND ""  
-        BUILD_IN_SOURCE ON)
-
-    ExternalProject_Get_Property(ChakraCore SOURCE_DIR)
-    set(ChakraCore_SOURCE_DIR ${SOURCE_DIR})
-    set(ChakraCore_BINARY_DIR "${ChakraCore_SOURCE_DIR}/Build/VcBuild/bin/${CHAKRA_PLATFORM}_${CHAKRA_CONFIGURATION}")
-endif ()
-
-
 # datraw
 FetchContent_Declare(datraw
     URL "https://github.com/UniStuttgart-VISUS/datraw/archive/refs/tags/v1.0.8.zip"

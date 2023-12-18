@@ -37,18 +37,6 @@ target_link_libraries(${PROJECT_NAME} PUBLIC mmpld)
 target_link_libraries(${PROJECT_NAME} PUBLIC spdlog)
 target_link_libraries(${PROJECT_NAME} PRIVATE glm::glm)
 
-if (TRROJAN_WITH_CHAKRA)
-    target_compile_definitions(${PROJECT_NAME} PRIVATE WITH_CHAKRA)
-    target_include_directories(${PROJECT_NAME} PRIVATE "${ChakraCore_SOURCE_DIR}/lib/Jsrt")
-
-    if (WIN32)
-        target_link_libraries(${PROJECT_NAME} PRIVATE "${ChakraCore_BINARY_DIR}/chakracore.lib")
-        add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different "${ChakraCore_BINARY_DIR}/chakracore${CMAKE_SHARED_LIBRARY_SUFFIX}" "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>")
-    else ()
-        target_link_libraries(${PROJECT_NAME} PRIVATE ChakraCore)
-    endif ()
-endif ()
-
 if (CMAKE_COMPILER_IS_GNUCXX)
     target_link_libraries(${PROJECT_NAME} PRIVATE dl)
 endif ()
