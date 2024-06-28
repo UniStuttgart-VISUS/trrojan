@@ -576,7 +576,7 @@ void App::RunTrroll(StorageFile file, const bool prompt_next) {
     std::shared_ptr<trrojan::power_collector> power_collector;
 
     // Run the test.
-    exe.trroll(file, *output, cool_down, power_collector);
+    exe.trroll(file, *output, cool_down, 0, power_collector);
 
     // Deliver output to location accessibly by the user.
     auto evt = this->CopyResultsToUsbAsync(outFile, logFile);

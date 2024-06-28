@@ -34,6 +34,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION 19043)
 
 add_compile_definitions(_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING)
+add_compile_definitions(_SILENCE_STDEXT_ARR_ITERS_DEPRECATION_WARNING)
 
 # Global compiler configuration for all of TRRojan.
 if (WIN32)
