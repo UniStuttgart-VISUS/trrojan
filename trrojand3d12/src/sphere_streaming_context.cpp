@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <limits>
 
+#include "trrojan/com_error_category.h"
 #include "trrojan/contains.h"
 #include "trrojan/log.h"
 
@@ -248,8 +249,8 @@ void trrojan::d3d12::sphere_streaming_context::rebuild(ID3D12Device *device,
                 "{4} on device 0x{5:p} ...", info.SizeInBytes, batch_size,
                 this->batch_count(), this->_batch_size, this->_stride,
                 static_cast<void *>(device));
-            this->_heaps.push_back(to_winrt(create_heap(device, info,
-                this->batch_count(), heap_type)));
+            this->_heaps.push_back(create_heap(device, info,
+                this->batch_count(), heap_type));
         } else {
             trrojan::log::instance().write_line(log_level::debug, "Allocating "
                 "{2} heap(s() of {0} bytes ({1} minimum required) for streaming "
@@ -258,8 +259,8 @@ void trrojan::d3d12::sphere_streaming_context::rebuild(ID3D12Device *device,
                 this->batch_count(), this->_batch_size, this->_stride,
                 static_cast<void *>(device));
             for (std::size_t b = 0; b < this->batch_count(); ++b) {
-                this->_heaps.push_back(to_winrt(create_heap(device, info, 1,
-                    heap_type)));
+                this->_heaps.push_back(create_heap(device, info, 1,
+                    heap_type));
             }
         }
 
@@ -278,7 +279,7 @@ void trrojan::d3d12::sphere_streaming_context::rebuild(ID3D12Device *device,
             auto hr = device->CreatePlacedResource(heap.get(), offset, &desc,
                 initial_state, nullptr, IID_PPV_ARGS(this->_buffers[b].put()));
             if (FAILED(hr)) {
-                throw ATL::CAtlException(hr);
+                throw std::system_error(hr, com_category());
             }
         }
     }
@@ -290,7 +291,7 @@ void trrojan::d3d12::sphere_streaming_context::rebuild(ID3D12Device *device,
         for (std::size_t b = 0; b < this->batch_count(); ++b) {
             auto hr = this->_buffers[b]->Map(0, nullptr, &this->_data[b]);
             if (FAILED(hr)) {
-                throw ATL::CAtlException(hr);
+                throw std::system_error(hr, com_category());
             }
             trrojan::log::instance().write_line(log_level::debug, "Streaming "
                 "buffer {0} mapped to 0x{1:p}.", b, this->_data[b]);
@@ -309,7 +310,7 @@ void trrojan::d3d12::sphere_streaming_context::rebuild(ID3D12Device *device,
         auto hr = device->CreateFence(0, D3D12_FENCE_FLAG_NONE,
             ::IID_ID3D12Fence, this->_fence.put_void());
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
         }
     }
 
@@ -365,14 +366,14 @@ void trrojan::d3d12::sphere_streaming_context::signal_done(
     {
         auto hr = queue->Signal(this->_fence.get(), value);
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
         }
     }
 
     {
         auto hr = this->_fence->SetEventOnCompletion(value, this->_event);
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
         }
     }
 }

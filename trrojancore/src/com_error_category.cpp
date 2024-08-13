@@ -7,7 +7,7 @@
 #include "trrojan/com_error_category.h"
 
 #if defined(_WIN32)
-#include <comdef.h>
+#include <winrt/base.h>
 
 #include "trrojan/text.h"
 
@@ -34,13 +34,8 @@ trrojan::detail::com_error_category::default_error_condition(
  * trrojan::detail::com_error_category::message
  */
 std::string trrojan::detail::com_error_category::message(_In_ int error) const {
-    _com_error e(error);
-
-#if (defined(UNICODE) || defined(_UNICODE))
-    return to_utf8(std::wstring(e.ErrorMessage()));
-#else /* (defined(UNICODE) || defined(_UNICODE)) */
-    return e.ErrorMessage();
-#endif /* (defined(UNICODE) || defined(_UNICODE)) */
+    winrt::hresult_error e(error);
+    return winrt::to_string(e.message());
 }
 
 

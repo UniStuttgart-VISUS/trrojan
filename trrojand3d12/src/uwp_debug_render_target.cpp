@@ -1,5 +1,5 @@
 ﻿// <copyright file="uwp_debug_render_target.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2022 - 2023 Visualisierungsinstitut der Universität Stuttgart.
+// Copyright © 2022 - 2024 Visualisierungsinstitut der Universität Stuttgart.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
 // <author>Michael Becher</author>
@@ -16,6 +16,7 @@
 #include <winrt/windows.graphics.display.h>
 #include <winrt/windows.ui.core.h>
 
+#include "trrojan/com_error_category.h"
 #include "trrojan/log.h"
 
 #include "trrojan/d3d12/device.h"
@@ -101,7 +102,7 @@ void trrojan::d3d12::uwp_debug_render_target::resize(const unsigned int width,
         {
             auto hr = this->swap_chain_->GetDesc1(&desc);
             if (FAILED(hr)) {
-                throw ATL::CAtlException(hr);
+                throw std::system_error(hr, com_category());
             }
         }
 
@@ -121,26 +122,26 @@ void trrojan::d3d12::uwp_debug_render_target::resize(const unsigned int width,
                 0
             );
             if (FAILED(hr)) {
-                throw ATL::CAtlException(hr);
+                throw std::system_error(hr, com_category());
             }
         }
     } /* end if (this->swap_chain_ == nullptr) */
 
     // Re-create the RTV/DSV.
     {
-        std::vector<ATL::CComPtr<ID3D12Resource>> buffers(
+        std::vector<winrt::com_ptr<ID3D12Resource>> buffers(
             this->pipeline_depth());
 
         for (UINT i = 0; i < this->pipeline_depth(); ++i) {
             auto hr = this->swap_chain_->GetBuffer(i, ::IID_ID3D12Resource,
                 reinterpret_cast<void**>(&buffers[i]));
             if (FAILED(hr)) {
-                throw ATL::CAtlException(hr);
+                throw std::system_error(hr, com_category());
             }
 
             std::stringstream name;
             name << "uwp_debug_render_target (colour buffer " << i << ")";
-            set_debug_object_name(buffers[i].p, name.str().c_str());
+            set_debug_object_name(buffers[i], name.str().c_str());
         }
 
         this->set_buffers(std::move(buffers),
@@ -172,13 +173,13 @@ void trrojan::d3d12::uwp_debug_render_target::resize(const unsigned int width,
  //        const D3D12_CPU_DESCRIPTOR_HANDLE dst,
  //        ID3D12GraphicsCommandList *cmd_list) {
  //    if (this->_staging_buffer == nullptr) {
- //        ATL::CComPtr<ID3D12Resource> texture;
+ //        winrt::com_ptr<ID3D12Resource> texture;
  //
  //        {
  //            auto hr = this->_swap_chain->GetBuffer(0, ::IID_ID3D12Resource,
  //                reinterpret_cast<void **>(&texture));
  //            if (FAILED(hr)) {
- //                throw ATL::CAtlException(hr);
+ //                throw std::system_error(hr, com_category());
  //            }
  //        }
  //

@@ -1,5 +1,5 @@
 // <copyright file="stats_query.h" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2022 Visualisierungsinstitut der Universität Stuttgart.
+// Copyright © 2022 - 2024 Visualisierungsinstitut der Universität Stuttgart.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
 // <author>Christoph Müller</author>
@@ -11,9 +11,10 @@
 #include <stdexcept>
 #include <vector>
 
-#include <atlbase.h>
 #include <Windows.h>
 #include <d3d12.h>
+
+#include <winrt/base.h>
 
 #include "trrojan/constants.h"
 #include "trrojan/timer.h"
@@ -124,9 +125,9 @@ namespace d3d12 {
 
     private:
 
-        typedef ATL::CComPtr<ID3D12Device> device_type;
-        typedef ATL::CComPtr<ID3D12QueryHeap> heap_type;
-        typedef ATL::CComPtr<ID3D12Resource> result_buffer_type;
+        typedef winrt::com_ptr<ID3D12Device> device_type;
+        typedef winrt::com_ptr<ID3D12QueryHeap> heap_type;
+        typedef winrt::com_ptr<ID3D12Resource> result_buffer_type;
 
         inline size_type result_index(const size_type buffer,
                 const UINT query) const {

@@ -1,5 +1,5 @@
 ﻿// <copyright file="benchmark_base.h" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2016 - 2023 Visualisierungsinstitut der Universität Stuttgart.
+// Copyright © 2016 - 2024 Visualisierungsinstitut der Universität Stuttgart.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
 // <author>Christoph Müller</author>
@@ -77,10 +77,10 @@ namespace d3d12 {
 
     protected:
 
-        typedef std::vector<ATL::CComPtr<ID3D12CommandAllocator>>
+        typedef std::vector<winrt::com_ptr<ID3D12CommandAllocator>>
             command_allocator_list;
 
-        typedef ATL::CComPtr<ID3D12GraphicsCommandList> graphics_command_list;
+        typedef winrt::com_ptr<ID3D12GraphicsCommandList> graphics_command_list;
 
         /// <summary>
         /// In-place sorts <paramref name="times" /> and computes the median.
@@ -104,6 +104,23 @@ namespace d3d12 {
             const std::size_t cnt);
 
         /// <summary>
+        /// Appends <paramref name="cnt" /> command allocators of the specified
+        /// <paramref name="type" /> on the given <paramref name="device" /> to
+        /// the given list.
+        /// </summary>
+        /// <param name="dst"></param>
+        /// <param name="device"></param>
+        /// <param name="type"></param>
+        /// <param name="cnt"></param>
+        static inline void create_command_allocators(
+                command_allocator_list& dst,
+                winrt::com_ptr<ID3D12Device> device,
+                const D3D12_COMMAND_LIST_TYPE type,
+                const std::size_t cnt) {
+            create_command_allocators(dst, device.get(), type, cnt);
+        }
+
+        /// <summary>
         /// Create a command list using the <paramref name="frame" />th
         /// allocator in <paramref name="allocators" />.
         /// </summary>
@@ -112,7 +129,7 @@ namespace d3d12 {
         /// <param name="frame"></param>
         /// <param name="initial_state"></param>
         /// <returns></returns>
-        static ATL::CComPtr<ID3D12CommandList> create_command_list(
+        static winrt::com_ptr<ID3D12CommandList> create_command_list(
             const command_allocator_list& allocators,
             const D3D12_COMMAND_LIST_TYPE type,
             const std::size_t frame,
@@ -156,11 +173,38 @@ namespace d3d12 {
             this->_render_target->clear(cmd_list);
         }
 
+        /// <summary>
+        /// Schedules clearing the render target to the given command list.
+        /// </summary>
+        /// <param name="cmd_list"></param>
+        inline void clear_target(
+                winrt::com_ptr<ID3D12GraphicsCommandList> cmd_list) {
+            this->clear_target(cmd_list.get());
+        }
+
+        /// <summary>
+        /// Schedules clearing of the given <paramref name="frame" /> to the
+        /// given command list.
+        /// </summary>
+        /// <param name="cmd_list"></param>
+        /// <param name="frame"></param>
         inline void clear_target(ID3D12GraphicsCommandList *cmd_list,
                 const UINT frame) {
             assert(this->_render_target != nullptr);
             assert(cmd_list != nullptr);
             this->_render_target->clear(cmd_list, frame);
+        }
+
+        /// <summary>
+        /// Schedules clearing of the given <paramref name="frame" /> to the
+        /// given command list.
+        /// </summary>
+        /// <param name="cmd_list"></param>
+        /// <param name="frame"></param>
+        inline void clear_target(
+                winrt::com_ptr<ID3D12GraphicsCommandList> cmd_list,
+                const UINT frame) {
+            this->clear_target(cmd_list.get(), frame);
         }
 
         /// <summary>
@@ -175,6 +219,23 @@ namespace d3d12 {
             this->_render_target->clear(clear_colour, cmd_list);
         }
 
+        /// <summary>
+        /// Schedules clearing the render target to the given command list.
+        /// </summary>
+        /// <param name="clear_colour"></param>
+        /// <param name="cmd_list"></param>
+        inline void clear_target(const std::array<float, 4>& clear_colour,
+                winrt::com_ptr<ID3D12GraphicsCommandList> cmd_list) {
+            this->clear_target(clear_colour, cmd_list.get());
+        }
+
+        /// <summary>
+        /// Schedules clearing the given <paramref name="frame" /> in the given
+        /// command list.
+        /// </summary>
+        /// <param name="clear_colour"></param>
+        /// <param name="cmd_list"></param>
+        /// <param name="frame"></param>
         inline void clear_target(const std::array<float, 4>& clear_colour,
                 ID3D12GraphicsCommandList *cmd_list, const UINT frame) {
             assert(this->_render_target != nullptr);
@@ -183,11 +244,25 @@ namespace d3d12 {
         }
 
         /// <summary>
+        /// Schedules clearing the given <paramref name="frame" /> in the given
+        /// command list.
+        /// </summary>
+        /// <param name="clear_colour"></param>
+        /// <param name="cmd_list"></param>
+        /// <param name="frame"></param>
+        inline void clear_target(const std::array<float, 4>& clear_colour,
+                winrt::com_ptr<ID3D12GraphicsCommandList> cmd_list,
+                const UINT frame) {
+            this->clear_target(clear_colour, cmd_list.get(), frame);
+        }
+
+
+        /// <summary>
         /// Retrieves the command queue of the currently active render target.
         /// </summary>
         /// <returns>The command queue, which should not be cached as it might
         /// change when switching configurations.</returns>
-        inline ATL::CComPtr<ID3D12CommandQueue>& command_queue(void) {
+        inline winrt::com_ptr<ID3D12CommandQueue>& command_queue(void) {
             assert(this->_render_target != nullptr);
             return this->_render_target->command_queue();
         }
@@ -197,7 +272,7 @@ namespace d3d12 {
         /// </summary>
         /// <returns>The command queue, which should not be cached as it might
         /// change when switching configurations.</returns>
-        inline ATL::CComPtr<ID3D12CommandQueue> command_queue(void) const {
+        inline winrt::com_ptr<ID3D12CommandQueue> command_queue(void) const {
             assert(this->_render_target != nullptr);
             return this->_render_target->command_queue();
         }
@@ -219,6 +294,21 @@ namespace d3d12 {
         }
 
         /// <summary>
+        /// Copy the contents of <paramref name="source" /> into the specified
+        /// back buffer of the render target, which must have been enabled using
+        /// <see cref="D3D12_RESOURCE_STATE_COPY_DEST" /> as rendering state.
+        /// </summary>
+        /// <param name="cmd_list"></param>
+        /// <param name="source"></param>
+        /// <param name="frame"></param>
+        inline void copy_to_target(
+                winrt::com_ptr<ID3D12GraphicsCommandList> cmd_list,
+                winrt::com_ptr<ID3D12Resource> source,
+                const UINT frame) {
+            this->copy_to_target(cmd_list.get(), source.get(), frame);
+        }
+
+        /// <summary>
         /// Creates a shader resource view for a buffer.
         /// </summary>
         /// <param name="resource"></param>
@@ -236,9 +326,22 @@ namespace d3d12 {
         /// <param name="allocator"></param>
         /// <param name="initial_state"></param>
         /// <returns></returns>
-        ATL::CComPtr<ID3D12GraphicsCommandList> create_command_bundle(
+        winrt::com_ptr<ID3D12GraphicsCommandList> create_command_bundle(
             const std::size_t allocator,
             ID3D12PipelineState *initial_state = nullptr);
+
+
+        /// <summary>
+        /// Create a new command bundle using the specified allocator.
+        /// </summary>
+        /// <param name="allocator"></param>
+        /// <param name="initial_state"></param>
+        /// <returns></returns>
+        winrt::com_ptr<ID3D12GraphicsCommandList> create_command_bundle(
+                const std::size_t allocator,
+                winrt::com_ptr<ID3D12PipelineState> initial_state) {
+            return this->create_command_bundle(allocator, initial_state.get());
+        }
 
         /// <summary>
         /// Creates a new command list of the specified type.
@@ -247,7 +350,7 @@ namespace d3d12 {
         /// <param name="frame"></param>
         /// <param name="initial_state"></param>
         /// <returns></returns>
-        ATL::CComPtr<ID3D12CommandList> create_command_list(
+        winrt::com_ptr<ID3D12CommandList> create_command_list(
             const D3D12_COMMAND_LIST_TYPE type, const std::size_t frame,
             ID3D12PipelineState *initial_state = nullptr);
 
@@ -271,6 +374,28 @@ namespace d3d12 {
         void create_descriptor_heaps(ID3D12Device *device, const UINT cnt);
 
         /// <summary>
+        /// Allocate generic descriptor heaps (one for each frame) into the
+        /// <see cref="_descriptor_heaps" /> member that can be used for constant
+        /// buffers, shader resource views and all other kinds of resource
+        /// views.
+        /// </summary>
+        /// <remarks>
+        /// <para>If <see cref="_descriptor_heaps" /> is set,
+        /// <see cref="on_device_switch" /> will automatically reallocate a
+        /// similar heaps on the new device.</para>
+        /// <para>Subclasses can use this method for convenience of allocate the
+        /// required descriptor heaps by themselves. If these are stored in
+        /// <see cref="_descriptor_heaps" />, they will also be transferred to
+        /// new devices in <see cref="on_device_switch" />.</para>
+        /// </remarks>
+        /// <param name="device">The device to create the heap on.</param>
+        /// <param name="cnt">The number of descriptors in the heap.</param>
+        inline void create_descriptor_heaps(winrt::com_ptr<ID3D12Device> device,
+                const UINT cnt) {
+            this->create_descriptor_heaps(device.get(), cnt);
+        }
+
+        /// <summary>
         /// Allocate specific descriptor heaps (one of the specified type of
         /// each frame) into the <see cref="_descriptor_heaps" /> member.
         /// </summary>
@@ -289,6 +414,26 @@ namespace d3d12 {
             const std::vector<D3D12_DESCRIPTOR_HEAP_DESC>& descs);
 
         /// <summary>
+        /// Allocate specific descriptor heaps (one of the specified type of
+        /// each frame) into the <see cref="_descriptor_heaps" /> member.
+        /// </summary>
+        /// <remarks>
+        /// <para>The heaps for each frame are stored contiguously, ie for
+        /// each description in <paramref name="descs" />, all heaps for
+        /// the first frame are stored in <see cref="_descriptor_heaps" />,
+        /// then all for the second frame, etc.</para>
+        /// <para>If <see cref="_descriptor_heaps" /> is set,
+        /// <see cref="on_device_switch" /> will automatically reallocate a
+        /// similar heaps on the new device.</para>
+        /// </remarks>
+        /// <param name="device"></param>
+        /// <param name="descs"></param>
+        inline void create_descriptor_heaps(winrt::com_ptr<ID3D12Device> device,
+                const std::vector<D3D12_DESCRIPTOR_HEAP_DESC>& descs) {
+            this->create_descriptor_heaps(device.get(), descs);
+        }
+
+        /// <summary>
         /// Creates a new command list of the specified type and casts it to a
         /// <see cref="ID3D12GraphicsCommandList" />.
         /// </summary>
@@ -297,8 +442,25 @@ namespace d3d12 {
         /// <param name="initial_state"></param>
         /// <returns></returns>
         graphics_command_list create_graphics_command_list(
-            const D3D12_COMMAND_LIST_TYPE type, const std::size_t frame,
+            const D3D12_COMMAND_LIST_TYPE type,
+            const std::size_t frame,
             ID3D12PipelineState *initial_state = nullptr);
+
+        /// <summary>
+        /// Creates a new command list of the specified type and casts it to a
+        /// <see cref="ID3D12GraphicsCommandList" />.
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="frame"></param>
+        /// <param name="initial_state"></param>
+        /// <returns></returns>
+        inline graphics_command_list create_graphics_command_list(
+                const D3D12_COMMAND_LIST_TYPE type,
+                const std::size_t frame,
+                winrt::com_ptr<ID3D12PipelineState> initial_state) {
+            return this->create_graphics_command_list(type, frame,
+                initial_state.get());
+        }
 
         /// <summary>
         /// Creates a new direct graphics command list using the allocator for
@@ -312,6 +474,20 @@ namespace d3d12 {
             ID3D12PipelineState *initial_state = nullptr);
 
         /// <summary>
+        /// Creates a new direct graphics command list using the allocator for
+        /// the specified frame.
+        /// </summary>
+        /// <param name="frame"></param>
+        /// <param name="initial_state"></param>
+        /// <returns></returns>
+        inline graphics_command_list create_graphics_command_list(
+                const std::size_t frame,
+                winrt::com_ptr<ID3D12PipelineState> initial_state) {
+            return this->create_graphics_command_list(frame,
+                initial_state.get());
+        }
+
+        /// <summary>
         /// Creates a new direct graphics command list for the currently active
         /// buffer/frame.
         /// </summary>
@@ -319,6 +495,17 @@ namespace d3d12 {
         /// <returns></returns>
         graphics_command_list create_graphics_command_list(
             ID3D12PipelineState *initial_state = nullptr);
+
+        /// <summary>
+        /// Creates a new direct graphics command list for the currently active
+        /// buffer/frame.
+        /// </summary>
+        /// <param name="initial_state"></param>
+        /// <returns></returns>
+        inline graphics_command_list create_graphics_command_list(
+                winrt::com_ptr<ID3D12PipelineState> initial_state) {
+            return this->create_graphics_command_list(initial_state.get());
+        }
 
         /// <summary>
         /// Creates a new direct graphics command list for the currently active
@@ -347,12 +534,33 @@ namespace d3d12 {
         /// Queues the current render target to be disabled in the given command
         /// list.
         /// </summary>
+        inline void disable_target(
+                winrt::com_ptr<ID3D12GraphicsCommandList> cmd_list,
+                const D3D12_RESOURCE_STATES render_state = dft_render_state) {
+            this->disable_target(cmd_list.get(), render_state);
+        }
+
+        /// <summary>
+        /// Queues the current render target to be disabled in the given command
+        /// list.
+        /// </summary>
         inline void disable_target(ID3D12GraphicsCommandList *cmd_list,
                 const UINT frame,
                 const D3D12_RESOURCE_STATES render_state = dft_render_state) {
             assert(this->_render_target != nullptr);
             assert(cmd_list != nullptr);
             this->_render_target->disable(cmd_list, frame, render_state);
+        }
+
+        /// <summary>
+        /// Queues the current render target to be disabled in the given command
+        /// list.
+        /// </summary>
+        inline void disable_target(
+                winrt::com_ptr<ID3D12GraphicsCommandList> cmd_list,
+                const UINT frame,
+                const D3D12_RESOURCE_STATES render_state = dft_render_state) {
+            this->disable_target(cmd_list.get(), frame, render_state);
         }
 
         /// <summary>
@@ -373,6 +581,22 @@ namespace d3d12 {
         }
 
         /// <summary>
+        /// Schedule enabling the current render target to the given command
+        /// list.
+        /// </summary>
+        /// <remarks>
+        /// This operation will (i) set the render target view, (ii) set the
+        /// viewport to the dimension of the render target and (iii) set the
+        /// scissor rectangle to include the whole viewport.
+        /// </remarks>
+        inline void enable_target(
+                winrt::com_ptr<ID3D12GraphicsCommandList> cmd_list,
+                const D3D12_RESOURCE_STATES render_state = dft_render_state,
+                const bool transition = true) {
+            this->enable_target(cmd_list.get(), render_state, transition);
+        }
+
+        /// <summary>
         /// Schedule enabling the specified frame of the current render target
         /// to the given command list.
         /// </summary>
@@ -389,6 +613,23 @@ namespace d3d12 {
             assert(cmd_list != nullptr);
             this->_render_target->enable(cmd_list, frame, render_state,
                 transition);
+        }
+
+        /// <summary>
+        /// Schedule enabling the specified frame of the current render target
+        /// to the given command list.
+        /// </summary>
+        /// <remarks>
+        /// This method behaves as the other overload of <see cref="enable" />,
+        /// but it enables to preparing command lists for all frames in case
+        /// the draw calls do not change over time.
+        /// </remarks>
+        inline void enable_target(
+                winrt::com_ptr<ID3D12GraphicsCommandList> cmd_list,
+                const UINT frame,
+                const D3D12_RESOURCE_STATES render_state = dft_render_state,
+                const bool transition = true) {
+            this->enable_target(cmd_list.get(), frame, render_state, transition);
         }
 
         /// <summary>
@@ -447,8 +688,33 @@ namespace d3d12 {
             const UINT frame,
             ID3D12PipelineState *initial_state = nullptr) const;
 
+        /// <summary>
+        /// Reset the direct command allocator at <paramref name="frame" /> and
+        /// the given command list.
+        /// </summary>
+        /// <remarks>
+        /// Command allocators and command lists can only be reset if the GPU
+        /// finished executing the list. Callers must make sure using a fence
+        /// that this is the case for <paramref name="cmd_list" />.
+        /// </remarks>
+        /// <param name="cmd_list"></param>
+        /// <param name="frame"></param>
+        /// <param name="initial_state"></param>
+        inline void reset_command_list(
+                winrt::com_ptr<ID3D12GraphicsCommandList> cmd_list,
+                const UINT frame,
+                winrt::com_ptr<ID3D12PipelineState> initial_state = nullptr) const {
+            this->reset_command_list(cmd_list.get(), frame, initial_state.get());
+        }
+
         void reset_command_list(ID3D12GraphicsCommandList *cmd_list,
             ID3D12PipelineState *initial_state = nullptr) const;
+
+        inline void reset_command_list(
+                winrt::com_ptr<ID3D12GraphicsCommandList> cmd_list,
+                winrt::com_ptr<ID3D12PipelineState> initial_state = nullptr) const {
+            this->reset_command_list(cmd_list.get(), initial_state.get());
+        }
 
         /// <summary>
         /// Present the target on the given synchronisation interval.
@@ -520,7 +786,7 @@ namespace d3d12 {
         /// <see cref="create_descriptor_heap" /> can be used to fill this
         /// field conveniently.
         /// </remarks>
-        std::vector<ATL::CComPtr<ID3D12DescriptorHeap>> _descriptor_heaps;
+        std::vector<winrt::com_ptr<ID3D12DescriptorHeap>> _descriptor_heaps;
 
         /// <summary>
         /// Stores a command allocator for each frame in the pipeline.

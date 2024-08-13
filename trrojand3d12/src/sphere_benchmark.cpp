@@ -50,11 +50,11 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
     sphere_rendering_configuration cfg(config);
     std::vector<gpu_timer::millis_type> bundle_times, gpu_times;
     const auto gpu_freq = gpu_timer::get_timestamp_frequency(
-        device.command_queue());
+        device.command_queue().get());
     measurement_context mctx(device, 2, this->pipeline_depth());
     stats_query::value_type pipeline_stats;
     auto shader_code = cfg.shader_id();
-    stats_query stats_query(device.d3d_device(), 1, 1);
+    stats_query stats_query(device.d3d_device().get(), 1, 1);
 
     // If the data or any factor influencing their representation on the GPU
     // have changed, clear them.
@@ -65,7 +65,7 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
         log::instance().write_line(log_level::information, "Loading data set \""
             "{}\" ...", cfg.data_set());
         auto cmd_list = this->create_graphics_command_list();
-        auto upload = this->_data.load(cmd_list, shader_code, cfg,
+        auto upload = this->_data.load(cmd_list.get(), shader_code, cfg,
             D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER
             | D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
         device.close_and_execute_command_list(cmd_list);
@@ -97,11 +97,11 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
     auto desc_tables = this->set_descriptors(device.d3d_device(), shader_code,
         0);
 
-    bundle->SetGraphicsRootSignature(root_sig);
-    bundle->SetPipelineState(pipeline);
+    bundle->SetGraphicsRootSignature(root_sig.get());
+    bundle->SetPipelineState(pipeline.get());
     bundle->IASetPrimitiveTopology(get_primitive_topology(shader_code));
-    set_descriptors(bundle, desc_tables);
-    this->set_vertex_buffer(bundle, shader_code);
+    set_descriptors(bundle.get(), desc_tables);
+    this->set_vertex_buffer(bundle.get(), shader_code);
 
     if (is_technique(shader_code, SPHERE_TECHNIQUE_QUAD_INST)) {
         // Instancing of quads requires 4 vertices per particle.
@@ -124,17 +124,17 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
     this->update_constants(cfg, 0);
 
     // Record a command list for each frame for the CPU measurements.
-    std::vector<ATL::CComPtr<ID3D12GraphicsCommandList>> cmd_lists(
+    std::vector<winrt::com_ptr<ID3D12GraphicsCommandList>> cmd_lists(
         this->pipeline_depth());
     for (UINT i = 0; i < this->pipeline_depth(); ++i) {
         auto cmd_list = cmd_lists[i] = this->create_graphics_command_list(i);
         set_debug_object_name(cmd_list, "CPU command list #{}", i);
 
-        cmd_list->SetGraphicsRootSignature(root_sig);
-        cmd_list->SetPipelineState(pipeline);
+        cmd_list->SetGraphicsRootSignature(root_sig.get());
+        cmd_list->SetPipelineState(pipeline.get());
         cmd_list->IASetPrimitiveTopology(get_primitive_topology(shader_code));
-        this->set_descriptors(cmd_list, desc_tables);
-        this->set_vertex_buffer(cmd_list, shader_code);
+        set_descriptors(cmd_list, desc_tables);
+        this->set_vertex_buffer(cmd_list.get(), shader_code);
 
         this->enable_target(cmd_list, i);
         this->clear_target(cmd_list, i);
@@ -213,26 +213,26 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
         auto cmd_list = cmd_lists[this->buffer_index()];
         this->reset_command_list(cmd_list);
 
-        cmd_list->SetGraphicsRootSignature(root_sig);
+        cmd_list->SetGraphicsRootSignature(root_sig.get());
         set_descriptors(cmd_list, desc_tables);
 
         mctx.gpu_timer.start_frame();
-        mctx.gpu_timer.start(cmd_list, 0);
+        mctx.gpu_timer.start(cmd_list.get(), 0);
 
         this->enable_target(cmd_list);
         this->clear_target(cmd_list);
 
-        mctx.gpu_timer.start(cmd_list, 1);
-        cmd_list->ExecuteBundle(bundle);
-        mctx.gpu_timer.end(cmd_list, 1);
+        mctx.gpu_timer.start(cmd_list.get(), 1);
+        cmd_list->ExecuteBundle(bundle.get());
+        mctx.gpu_timer.end(cmd_list.get(), 1);
 
 #if !defined(CREATE_D2D_OVERLAY)
         // when overlay active, target gets transitioned to PRESENT after overlay rendering
         // i.e. during this->present_target() call
         this->disable_target(cmd_list);
 #endif // defined(CREATE_D2D_OVERLAY)
-        mctx.gpu_timer.end(cmd_list, 0);
-        const auto timer_index = mctx.gpu_timer.end_frame(cmd_list);
+        mctx.gpu_timer.end(cmd_list.get(), 0);
+        const auto timer_index = mctx.gpu_timer.end_frame(cmd_list.get());
 
         device.close_and_execute_command_list(cmd_list);
         this->present_target(config);
@@ -254,7 +254,7 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
         auto cmd_list = cmd_lists[this->buffer_index()];
         this->reset_command_list(cmd_list);
 
-        cmd_list->SetGraphicsRootSignature(root_sig);
+        cmd_list->SetGraphicsRootSignature(root_sig.get());
         set_descriptors(cmd_list, desc_tables);
 
         stats_query.begin_frame();
@@ -262,16 +262,16 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
         this->enable_target(cmd_list);
         this->clear_target(cmd_list);
 
-        stats_query.begin(cmd_list, 0);
-        cmd_list->ExecuteBundle(bundle);
-        stats_query.end(cmd_list, 0);
+        stats_query.begin(cmd_list.get(), 0);
+        cmd_list->ExecuteBundle(bundle.get());
+        stats_query.end(cmd_list.get(), 0);
 
 #if !defined(CREATE_D2D_OVERLAY)
         // when overlay active, target gets transitioned to PRESENT after overlay rendering
         // i.e. during this->present_target() call
         this->disable_target(cmd_list);
 #endif // defined(CREATE_D2D_OVERLAY)
-        const auto stats_index = stats_query.end_frame(cmd_list);
+        const auto stats_index = stats_query.end_frame(cmd_list.get());
 
         device.close_and_execute_command_list(cmd_list);
         this->present_target(config);

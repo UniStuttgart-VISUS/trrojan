@@ -168,11 +168,18 @@ void trrojan::d3d11::environment::on_initialise(const cmd_line& cmdLine) {
                     [adapter, deviceFlags](void) {
                 D3D_FEATURE_LEVEL featureLevel;
                 winrt::com_ptr<ID3D11Device> retval;
-                auto hr = ::D3D11CreateDevice(adapter, D3D_DRIVER_TYPE_UNKNOWN,
-                    NULL, deviceFlags, NULL, 0, D3D11_SDK_VERSION, retval.put(),
-                    &featureLevel, nullptr);
+                auto hr = ::D3D11CreateDevice(adapter.get(),
+                    D3D_DRIVER_TYPE_UNKNOWN,
+                    NULL,
+                    deviceFlags,
+                    NULL,
+                    0,
+                    D3D11_SDK_VERSION,
+                    retval.put(),
+                    &featureLevel,
+                    nullptr);
                 if (FAILED(hr)) {
-                    throw ATL::CAtlException(hr);
+                    throw std::system_error(hr, com_category());
                 }
                 return retval;
             }));

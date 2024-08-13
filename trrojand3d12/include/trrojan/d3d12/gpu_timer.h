@@ -1,8 +1,8 @@
-// <copyright file="gpu_timer.h" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2022 Visualisierungsinstitut der Universität Stuttgart.
+ï»¿// <copyright file="gpu_timer.h" company="Visualisierungsinstitut der UniversitÃ¤t Stuttgart">
+// Copyright Â© 2022 - 2024 Visualisierungsinstitut der UniversitÃ¤t Stuttgart.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
-// <author>Christoph Müller</author>
+// <author>Christoph MÃ¼ller</author>
 
 #pragma once
 
@@ -11,9 +11,10 @@
 #include <stdexcept>
 #include <vector>
 
-#include <atlbase.h>
 #include <Windows.h>
 #include <d3d12.h>
+
+#include <winrt/base.h>
 
 #include "trrojan/constants.h"
 #include "trrojan/timer.h"
@@ -92,11 +93,37 @@ namespace d3d12 {
         /// performance counter.</param>
         /// <exception cref="std::argument_exception">If
         /// <paramref name="queue" /> is <c>nullptr</c>.</exception>
-        /// <exception cref="ATL::CAtlException">If the operation failed, eg
+        /// <exception cref="std::system_error">If the operation failed, eg
         /// because the queue does not support timestamp queries.</exception>
         static void get_clock_calibration(ID3D12CommandQueue *queue,
             value_type& gpu_timestamp,
             value_type& cpu_timestamp);
+
+        /// <summary>
+        /// Samples the CPU clock and the GPU timestamp counter of the given
+        /// <paramref name="queue" /> at the same time.
+        /// </summary>
+        /// <remarks>
+        /// This method can be used to correlate the result of the CPU
+        /// performance counter with GPU timestamps as described on
+        /// https://docs.microsoft.com/en-us/windows/win32/direct3d12/timing.
+        /// </remarks>
+        /// <param name="queue">The direct/compute/copy queue to obtain the
+        /// correlated timestamps for.</param>
+        /// <param name="gpu_timestamp">Receives the value of the GPU timestamp
+        /// counter.</param>
+        /// <param name="cpu_timestamp">Receives the value of the CPU
+        /// performance counter.</param>
+        /// <exception cref="std::argument_exception">If
+        /// <paramref name="queue" /> is <c>nullptr</c>.</exception>
+        /// <exception cref="std::system_error">If the operation failed, eg
+        /// because the queue does not support timestamp queries.</exception>
+        static inline void get_clock_calibration(
+                winrt::com_ptr<ID3D12CommandQueue> queue,
+                value_type& gpu_timestamp,
+                value_type& cpu_timestamp) {
+            get_clock_calibration(queue.get(), gpu_timestamp, cpu_timestamp);
+        }
 
         /// <summary>
         /// Gets the timestamp frequency in Hertz for the given command
@@ -106,9 +133,24 @@ namespace d3d12 {
         /// <returns>The timestamp frequency in Hertz.</returns>
         /// <exception cref="std::argument_exception">If
         /// <paramref name="queue" /> is <c>nullptr</c>.</exception>
-        /// <exception cref="ATL::CAtlException">If the operation failed, eg
+        /// <exception cref="std::system_error">If the operation failed, eg
         /// because the queue does not support timestamp queries.</exception>
         static value_type get_timestamp_frequency(ID3D12CommandQueue *queue);
+
+        /// <summary>
+        /// Gets the timestamp frequency in Hertz for the given command
+        /// <paramref name="queue" />.
+        /// </summary>
+        /// <param name="queue">The queue to get the frequency for.</param>
+        /// <returns>The timestamp frequency in Hertz.</returns>
+        /// <exception cref="std::argument_exception">If
+        /// <paramref name="queue" /> is <c>nullptr</c>.</exception>
+        /// <exception cref="std::system_error">If the operation failed, eg
+        /// because the queue does not support timestamp queries.</exception>
+        static inline value_type get_timestamp_frequency(
+                winrt::com_ptr<ID3D12CommandQueue> queue) {
+            return get_timestamp_frequency(queue.get());
+        }
 
         /// <summary>
         /// Convert a full resolution performance counter difference to
@@ -145,7 +187,8 @@ namespace d3d12 {
         /// <param name="queries"></param>
         /// <param name="buffers"></param>
         /// <param name="heap"></param>
-        gpu_timer(ID3D12Device *device, const size_type queries = 1,
+        gpu_timer(winrt::com_ptr<ID3D12Device> device,
+            const size_type queries = 1,
             const size_type buffers = 2,
             const D3D12_QUERY_HEAP_TYPE heap = D3D12_QUERY_HEAP_TYPE_TIMESTAMP);
 
@@ -187,6 +230,29 @@ namespace d3d12 {
         /// the query results afterwards.</returns>
         size_type end_frame(ID3D12GraphicsCommandList *cmd_list);
 
+        /// <summary>
+        /// End a frame by resolving the query results of all queries into
+        /// the query heap for readback.
+        /// </summary>
+        /// <remarks>
+        /// <para>The query results must be resolved into the buffer in this
+        /// timer object before it can be downloaded to the CPU. The recommended
+        /// way is downloading everything at once after this method returned.
+        /// The data remains available until the next frame is started on the
+        /// same slot.</para>
+        /// <para>This method does not perform a <c>nullptr</c> check of
+        /// <paramref name="cmd_list" /> for performance reasons. Please make
+        /// sure to pass only valid command lists.</para>
+        /// </remarks>
+        /// <param name="cmd_list">The command list to perform the operation
+        /// on.</param>
+        /// <returns>The frame index that can be used to evaluate (download)
+        /// the query results afterwards.</returns>
+        inline size_type end_frame(
+                winrt::com_ptr<ID3D12GraphicsCommandList> cmd_list) {
+            return this->end_frame(cmd_list.get());
+        }
+
         //template<class TContainer>
         //typename std::enable_if<std::is_same<
         //    typename TContainer::value_type, millis_type>::value>::type
@@ -221,6 +287,36 @@ namespace d3d12 {
         void end(ID3D12GraphicsCommandList *cmd_list, const size_type query);
 
         /// <summary>
+        /// End the <paramref name="query" />th performance query by issuing
+        /// the timestamp query for the end.
+        /// </summary>
+        /// <remarks>
+        /// <para><see cref="start" /> must have been called before for the same
+        /// query in the same frame.The method does, however, not check this.
+        /// </para>
+        /// <para>This method does not perform a <c>nullptr</c> check of
+        /// <paramref name="cmd_list" /> for performance reasons. Please make
+        /// sure to pass only valid command lists.</para>
+        /// <para> Please make also sure to end the performance query on the
+        /// same command list that it has been started, because D3D12 guranatees
+        /// that two timestamp queries are not disjoint if and only if they are
+        /// in the same command list.</para>
+        /// <para>This method does not perform a range check of
+        /// <paramref name="query" /> for performance reasons. Make sure to pass
+        /// only valid indices.</para>
+        /// </remarks>
+        /// <param name="cmd_list">The command list in which the timestamp
+        /// query is being queued. The same command list should be used for
+        /// <see cref="start" /> and <see cref="end" />. This parameter must
+        /// not be <c>nullptr</c>.</param>
+        /// <param name="query">The index of the query, which must be within
+        /// *[0, <see cref="size" />[.</param>
+        inline void end(winrt::com_ptr<ID3D12GraphicsCommandList> cmd_list,
+                const size_type query) {
+            this->end(cmd_list.get(), query);
+        }
+
+        /// <summary>
         /// Evaluates the <paramref name="query" />th timestamp query.
         /// </summary>
         /// <remarks>
@@ -245,7 +341,7 @@ namespace d3d12 {
         /// <exception cref="std::invalid_argument">If either
         /// <paramref name="buffer" /> or <paramref name="query" /> are out of
         /// range.</exception>
-        /// <exception cref="ATL::CAtlException">If the buffer holding the
+        /// <exception cref="std::system_error">If the buffer holding the
         /// results could not be mapped.</exception>
         void evaluate(value_type& outStart, value_type& outEnd,
             const size_type buffer, const size_type query) const;
@@ -273,7 +369,7 @@ namespace d3d12 {
         /// <exception cref="std::invalid_argument">If either
         /// <paramref name="buffer" /> or <paramref name="query" /> are out of
         /// range.</exception>
-        /// <exception cref="ATL::CAtlException">If the buffer holding the
+        /// <exception cref="std::system_error">If the buffer holding the
         /// results could not be mapped.</exception>
         difference_type evaluate(const size_type buffer,
             const size_type query) const;
@@ -290,7 +386,7 @@ namespace d3d12 {
         /// differences should be returned.</param>
         /// <exception cref="std::invalid_argument">If
         /// <paramref name="buffer" /> is out of range.</exception>
-        /// <exception cref="ATL::CAtlException">If the buffer holding the
+        /// <exception cref="std::system_error">If the buffer holding the
         /// results could not be mapped.</exception>
         template<class TIterator>
         void evaluate(TIterator oit, const size_type buffer) const;
@@ -302,8 +398,8 @@ namespace d3d12 {
         /// </summary>
         /// <param name="queries"></param>
         /// <param name="buffers"></param>
-        /// <exception cref="CAtlException">If the result buffer could not be
-        /// allocated.</exception>
+        /// <exception cref="std::system_error">If the result buffer could not
+        /// be allocated.</exception>
         void resize(const size_type queries, const size_type buffers = 2);
 
         /// <summary>
@@ -346,6 +442,33 @@ namespace d3d12 {
         void start(ID3D12GraphicsCommandList *cmd_list, const size_type query);
 
         /// <summary>
+        /// Start the <paramref name="query" />th performance query on the given
+        /// command list.
+        /// </summary>
+        /// <remarks>
+        /// <para>This method does not perform a <c>nullptr</c> check of
+        /// <paramref name="cmd_list" /> for performance reasons. Please make
+        /// sure to pass only valid command lists.</para>
+        /// <para> Please make also sure to end the performance query on the
+        /// same command list that it has been started, because D3D12 guranatees
+        /// that two timestamp queries are not disjoint if and only if they are
+        /// in the same command list.</para>
+        /// <para>This method does not perform a range check of
+        /// <paramref name="query" /> for performance reasons. Make sure to pass
+        /// only valid indices.</para>
+        /// </remarks>
+        /// <param name="cmd_list">The command list in which the timestamp
+        /// query is being queued. The same command list should be used for
+        /// <see cref="start" /> and <see cref="end" />. This parameter must
+        /// not be <c>nullptr</c>.</param>
+        /// <param name="query">The index of the query, which must be within
+        /// *[0, <see cref="size" />.</param>
+        inline void start(winrt::com_ptr<ID3D12GraphicsCommandList> cmd_list,
+                const size_type query) {
+            this->start(cmd_list.get(), query);
+        }
+
+        /// <summary>
         /// Starts a new frame by advancing the buffer index.
         /// </summary>
         void start_frame(void);
@@ -365,9 +488,9 @@ namespace d3d12 {
             end = 1
         };
 
-        typedef ATL::CComPtr<ID3D12Device> device_type;
-        typedef ATL::CComPtr<ID3D12QueryHeap> heap_type;
-        typedef ATL::CComPtr<ID3D12Resource> result_buffer_type;
+        typedef winrt::com_ptr<ID3D12Device> device_type;
+        typedef winrt::com_ptr<ID3D12QueryHeap> heap_type;
+        typedef winrt::com_ptr<ID3D12Resource> result_buffer_type;
 
         /// <summary>
         /// Compute the location of the query result.

@@ -1,5 +1,5 @@
 ﻿// <copyright file="gdeflate.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2023 Visualisierungsinstitut der Universität Stuttgart.
+// Copyright © 2023 - 2024 Visualisierungsinstitut der Universität Stuttgart.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
 // <author>Christoph Müller</author>
@@ -12,9 +12,11 @@
 #include <algorithm>
 #include <atomic>
 #include <thread>
+#include <system_error>
 #include <vector>
 
-#include <atlexcept.h>
+#include "trrojan/com_error_category.h"
+
 
 
 /*
@@ -37,7 +39,7 @@ winrt::com_ptr<IDStorageCompressionCodec> trrojan::d3d12::create_dstorage_codec(
     }
 
     if (FAILED(hr)) {
-        throw ATL::CAtlException(hr);
+        throw std::system_error(hr, com_category());
     }
 
     return retval;
@@ -54,7 +56,7 @@ std::vector<std::size_t> trrojan::d3d12::gdeflate_compress(
         const std::wstring& path) {
     // Adapted from https://github.com/microsoft/DirectStorage/blob/main/Samples/GpuDecompressionBenchmark/GpuDecompressionBenchmark.cpp
     if (data == nullptr) {
-        throw ATL::CAtlException(E_POINTER);
+        throw std::system_error(E_POINTER, com_category());
     }
 
     const auto cnt_blocks = (cnt_data + block_size - 1) / block_size;
@@ -89,7 +91,7 @@ std::vector<std::size_t> trrojan::d3d12::gdeflate_compress(
                     DSTORAGE_COMPRESSION_BEST_RATIO, blocks[b].data(),
                     blocks[b].size(), &compressed);
                 if (FAILED(hr)) {
-                    throw ATL::CAtlException(hr);
+                    throw std::system_error(hr, com_category());
                 }
 
                 // Resize above was to upper bound, we need to make sure that we
@@ -109,7 +111,7 @@ std::vector<std::size_t> trrojan::d3d12::gdeflate_compress(
     winrt::file_handle file(::CreateFileW(path.c_str(), GENERIC_WRITE,
         FILE_SHARE_READ, nullptr, CREATE_ALWAYS, 0, NULL));
     if (!file) {
-        throw ATL::CAtlException(HRESULT_FROM_WIN32(::GetLastError()));
+        throw std::system_error(::GetLastError(), std::system_category());
     }
 
     std::vector<std::size_t> retval;

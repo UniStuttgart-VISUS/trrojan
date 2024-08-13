@@ -86,7 +86,7 @@ namespace d3d12 {
         /// is applicable to the factory itself.
         /// </summary>
         /// <returns></returns>
-        /// <exception cref="ATL::CAtlException"></exception>
+        /// <exception cref="std::system_error"></exception>
         winrt::com_ptr<IDStorageFactory> create_factory(void);
 
         inline std::uint16_t queue_depth(void) const noexcept {

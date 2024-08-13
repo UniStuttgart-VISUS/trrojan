@@ -1,5 +1,5 @@
 ﻿// <copyright file="volume_benchmark_base.h" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2016 - 2023 Visualisierungsinstitut der Universität Stuttgart.
+// Copyright © 2016 - 2024 Visualisierungsinstitut der Universität Stuttgart.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
 // <author>Christoph Müller</author>
@@ -53,54 +53,54 @@ namespace d3d12 {
 
     protected:
 
-        static ATL::CComPtr<ID3D12Resource> load_brudervn_xfer_func(
+        static winrt::com_ptr<ID3D12Resource> load_brudervn_xfer_func(
             const std::string& path,
             d3d12::device& device,
             ID3D12GraphicsCommandList *cmd_list,
             const D3D12_RESOURCE_STATES state,
-            ATL::CComPtr<ID3D12Resource>& out_staging);
+            winrt::com_ptr<ID3D12Resource>& out_staging);
 
-        static ATL::CComPtr<ID3D12Resource> load_volume(
+        static winrt::com_ptr<ID3D12Resource> load_volume(
             const std::string& path,
             const frame_type frame,
             d3d12::device& device,
             ID3D12GraphicsCommandList *cmd_list,
             const D3D12_RESOURCE_STATES state,
             info_type& out_info,
-            ATL::CComPtr<ID3D12Resource>& out_staging);
+            winrt::com_ptr<ID3D12Resource>& out_staging);
 
-        static inline ATL::CComPtr<ID3D12Resource> load_volume(
+        static inline winrt::com_ptr<ID3D12Resource> load_volume(
                 const configuration& config,
                 d3d12::device& device,
                 ID3D12GraphicsCommandList *cmd_list,
                 const D3D12_RESOURCE_STATES state,
                 info_type&out_info,
-                ATL::CComPtr<ID3D12Resource>& out_staging) {
+                winrt::com_ptr<ID3D12Resource>& out_staging) {
             return load_volume(config.get<std::string>(factor_data_set),
                 config.get<unsigned int>(factor_frame),
                 device, cmd_list, state, out_info, out_staging);
         }
 
-        static ATL::CComPtr<ID3D12Resource> load_xfer_func(
+        static winrt::com_ptr<ID3D12Resource> load_xfer_func(
             const std::vector<std::uint8_t>& data,
             d3d12::device& device,
             ID3D12GraphicsCommandList *cmd_list,
             const D3D12_RESOURCE_STATES state,
-            ATL::CComPtr<ID3D12Resource>& out_staging);
+            winrt::com_ptr<ID3D12Resource>& out_staging);
 
-        static ATL::CComPtr<ID3D12Resource> load_xfer_func(
+        static winrt::com_ptr<ID3D12Resource> load_xfer_func(
             const std::string& path,
             d3d12::device& device,
             ID3D12GraphicsCommandList *cmd_list,
             const D3D12_RESOURCE_STATES state,
-            ATL::CComPtr<ID3D12Resource>& out_staging);
+            winrt::com_ptr<ID3D12Resource>& out_staging);
 
-        static ATL::CComPtr<ID3D12Resource> load_xfer_func(
+        static winrt::com_ptr<ID3D12Resource> load_xfer_func(
             const configuration& config,
             d3d12::device& device,
             ID3D12GraphicsCommandList *cmd_list,
             const D3D12_RESOURCE_STATES state,
-            ATL::CComPtr<ID3D12Resource>& out_staging);
+            winrt::com_ptr<ID3D12Resource>& out_staging);
 
         template<class TValue>
         static inline TValue zero_is_max(TValue& value) noexcept {
@@ -170,8 +170,8 @@ namespace d3d12 {
 
     private:
 
-        ATL::CComPtr<ID3D12Resource> _tex_volume;
-        ATL::CComPtr<ID3D12Resource> _tex_xfer_func;
+        winrt::com_ptr<ID3D12Resource> _tex_volume;
+        winrt::com_ptr<ID3D12Resource> _tex_xfer_func;
     };
 
 } /* end namespace d3d11 */

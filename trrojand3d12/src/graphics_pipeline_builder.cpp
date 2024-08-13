@@ -1,32 +1,33 @@
-// <copyright file="graphics_pipeline_builder.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2022 Visualisierungsinstitut der Universität Stuttgart.
+ï»¿// <copyright file="graphics_pipeline_builder.cpp" company="Visualisierungsinstitut der UniversitÃ¤t Stuttgart">
+// Copyright Â© 2022 Visualisierungsinstitut der UniversitÃ¤t Stuttgart.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
-// <author>Christoph Müller</author>
+// <author>Christoph MÃ¼ller</author>
 
 #include "trrojan/d3d12/graphics_pipeline_builder.h"
 
+#include "trrojan/com_error_category.h"
 #include "trrojan/log.h"
 
 
 /*
  * trrojan::d3d12::graphics_pipeline_builder::root_signature_from_shader
  */
-ATL::CComPtr<ID3D12RootSignature>
+winrt::com_ptr<ID3D12RootSignature>
 trrojan::d3d12::graphics_pipeline_builder::root_signature_from_shader(
         ID3D12Device *device, const BYTE *byte_code, const SIZE_T length) {
     if (device == nullptr) {
-        throw ATL::CAtlException(E_POINTER);
+        throw std::system_error(E_POINTER, com_category());
     }
     if (byte_code == nullptr) {
-        throw ATL::CAtlException(E_POINTER);
+        throw std::system_error(E_POINTER, com_category());
     }
 
-    ATL::CComPtr<ID3D12RootSignature> retval;
+    winrt::com_ptr<ID3D12RootSignature> retval;
     auto hr = device->CreateRootSignature(0, byte_code, length,
         IID_PPV_ARGS(&retval));
     if (FAILED(hr)) {
-        throw ATL::CAtlException(hr);
+        throw std::system_error(hr, com_category());
     }
 
     return retval;
@@ -36,7 +37,7 @@ trrojan::d3d12::graphics_pipeline_builder::root_signature_from_shader(
 /*
  * trrojan::d3d12::graphics_pipeline_builder::root_signature_from_shader
  */
-ATL::CComPtr<ID3D12RootSignature>
+winrt::com_ptr<ID3D12RootSignature>
 trrojan::d3d12::graphics_pipeline_builder::root_signature_from_shader(
         ID3D12Device *device, const std::vector<BYTE>& byte_code) {
     return root_signature_from_shader(device, byte_code.data(),
@@ -47,7 +48,7 @@ trrojan::d3d12::graphics_pipeline_builder::root_signature_from_shader(
 /*
  * trrojan::d3d12::graphics_pipeline_builder::root_signature_from_shader
  */
-ATL::CComPtr<ID3D12RootSignature>
+winrt::com_ptr<ID3D12RootSignature>
 trrojan::d3d12::graphics_pipeline_builder::root_signature_from_shader(
         ID3D12Device *device, const graphics_pipeline_builder& builder) {
     try {
@@ -100,10 +101,10 @@ trrojan::d3d12::graphics_pipeline_builder::graphics_pipeline_builder(void)
 /*
  * trrojan::d3d12::graphics_pipeline_builder::build
  */
-ATL::CComPtr<ID3D12PipelineState>
+winrt::com_ptr<ID3D12PipelineState>
 trrojan::d3d12::graphics_pipeline_builder::build(ID3D12Device2 *device) {
     if (device == nullptr) {
-        throw ATL::CAtlException(E_POINTER);
+        throw std::system_error(E_POINTER, com_category());
     }
 
     D3D12_PIPELINE_STATE_STREAM_DESC desc;
@@ -116,15 +117,15 @@ trrojan::d3d12::graphics_pipeline_builder::build(ID3D12Device2 *device) {
         CD3DX12_PIPELINE_STATE_STREAM_PARSE_HELPER helper;
         auto hr = D3DX12ParsePipelineStream(desc, &helper);
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
         }
     }
 #endif /* (defined(DEBUG) || defined(_DEBUG)) */
 
-    ATL::CComPtr<ID3D12PipelineState> retval;
+    winrt::com_ptr<ID3D12PipelineState> retval;
     auto hr = device->CreatePipelineState(&desc, IID_PPV_ARGS(&retval));
     if (FAILED(hr)) {
-        throw ATL::CAtlException(hr);
+        throw std::system_error(hr, com_category());
     }
 
     return retval;
@@ -134,20 +135,20 @@ trrojan::d3d12::graphics_pipeline_builder::build(ID3D12Device2 *device) {
 /*
  * trrojan::d3d12::graphics_pipeline_builder::build
  */
-ATL::CComPtr<ID3D12PipelineState>
+winrt::com_ptr<ID3D12PipelineState>
 trrojan::d3d12::graphics_pipeline_builder::build(ID3D12Device *device) {
     if (device == nullptr) {
-        throw ATL::CAtlException(E_POINTER);
+        throw std::system_error(E_POINTER, com_category());
     }
 
-    ATL::CComPtr<ID3D12Device2> dev;
+    winrt::com_ptr<ID3D12Device2> dev;
     auto hr = device->QueryInterface(::IID_ID3D12Device2,
         reinterpret_cast<void **>(&dev));
     if (FAILED(hr)) {
-        throw ATL::CAtlException(hr);
+        throw std::system_error(hr, com_category());
     }
 
-    return this->build(dev);
+    return this->build(dev.get());
 }
 
 
@@ -218,7 +219,7 @@ trrojan::d3d12::graphics_pipeline_builder::set_root_signature(
     // reference in the form of '_root_sig' instead of manually managing the
     // reference count of the pointer in '_desc', which would require custom
     // copy ctors and assignment operators.
-    this->_root_sig = root_signature;
-    so = this->_root_sig;
+    this->_root_sig.copy_from(root_signature);
+    so = this->_root_sig.get();
     return *this;
 }

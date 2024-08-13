@@ -1,5 +1,5 @@
 ﻿// <copyright file="uwp_debug_render_target.h" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2022 - 2023 Visualisierungsinstitut der Universität Stuttgart.
+// Copyright © 2022 - 2024 Visualisierungsinstitut der Universität Stuttgart.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
 // <author>Michael Becher</author>
@@ -11,7 +11,6 @@
 #include <dwrite_3.h>
 #include <wincodec.h>
 
-#include <atlbase.h>
 #include <Windows.h>
 
 #include "trrojan/uwp_render_target_base.h"
@@ -78,12 +77,12 @@ namespace d3d12 {
         /// Before presenting the debug target, its content will be copied to
         /// the back buffer of the swap chain.
         /// </summary>
-        ATL::CComPtr<ID3D12Resource> staging_buffer_;
+        winrt::com_ptr<ID3D12Resource> staging_buffer_;
 
         /// <summary>
         /// The swap chain for the window.
         /// </summary>
-        ATL::CComPtr<IDXGISwapChain3> swap_chain_;
+        winrt::com_ptr<IDXGISwapChain3> swap_chain_;
 
         /// Direct2D drawing components
 #if defined(CREATE_D2D_OVERLAY)

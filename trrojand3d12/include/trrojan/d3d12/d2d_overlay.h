@@ -1,8 +1,8 @@
-// <copyright file="d2d_overlay.h" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2022 Visualisierungsinstitut der Universität Stuttgart.
+ï»¿// <copyright file="d2d_overlay.h" company="Visualisierungsinstitut der UniversitÃ¤t Stuttgart">
+// Copyright Â© 2022 - 2024 Visualisierungsinstitut der UniversitÃ¤t Stuttgart.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
-// <author>Christoph Müller</author>
+// <author>Christoph MÃ¼ller</author>
 
 #pragma once
 
@@ -11,11 +11,12 @@
 #include <vector>
 
 #include <Windows.h>
-#include <atlbase.h>
 #include <d2d1_3.h>
 #include <d3d11on12.h>
 #include <dxgi1_4.h>
 #include <dwrite.h>
+
+#include <winrt/base.h>
 
 #include "trrojan/device.h"
 
@@ -53,7 +54,7 @@ namespace d3d12 {
         /// </remarks>
         /// <param name="format"></param>
         /// <returns></returns>
-        static ATL::CComPtr<IDWriteFont> get_font(IDWriteTextFormat *format);
+        static winrt::com_ptr<IDWriteFont> get_font(IDWriteTextFormat *format);
 
         /// <summary>
         /// Initialises an overlay for the given swap chain.
@@ -61,9 +62,9 @@ namespace d3d12 {
         /// <param name="device"></param>
         /// <param name="swap_chain"></param>
         d2d_overlay(
-            ID3D12Device *device,
-            ID3D12CommandQueue* command_queue,
-            IDXGISwapChain3 *swap_chain, 
+            winrt::com_ptr<ID3D12Device> device,
+            winrt::com_ptr<ID3D12CommandQueue> command_queue,
+            winrt::com_ptr<IDXGISwapChain3> swap_chain,
             UINT frame_count
         );
 
@@ -91,7 +92,7 @@ namespace d3d12 {
         /// </summary>
         /// <param name="colour"></param>
         /// <returns></returns>
-        ATL::CComPtr<ID2D1Brush> create_brush(const D2D1::ColorF& colour);
+        winrt::com_ptr<ID2D1Brush> create_brush(const D2D1::ColorF& colour);
 
         /// <summary>
         /// Creates a text format.
@@ -103,7 +104,7 @@ namespace d3d12 {
         /// <param name="font_stretch"></param>
         /// <param name="locale_name"></param>
         /// <returns></returns>
-        ATL::CComPtr<IDWriteTextFormat> create_text_format(
+        winrt::com_ptr<IDWriteTextFormat> create_text_format(
             const wchar_t *font_family, const float font_size,
             const DWRITE_FONT_WEIGHT font_weight = DWRITE_FONT_WEIGHT_NORMAL,
             const DWRITE_FONT_STYLE font_style = DWRITE_FONT_STYLE_NORMAL,
@@ -139,7 +140,8 @@ namespace d3d12 {
         /// <param name="layout_rect"></param>
         /// <param name="locale_name"></param>
         inline void draw_text(const wchar_t *text, const wchar_t *font_family,
-                const float font_size, ID2D1Brush *brush,
+                const float font_size,
+                ID2D1Brush *brush,
                 const DWRITE_FONT_WEIGHT font_weight = DWRITE_FONT_WEIGHT_NORMAL,
                 const DWRITE_FONT_STYLE font_style = DWRITE_FONT_STYLE_NORMAL,
                 const DWRITE_FONT_STRETCH font_stretch = DWRITE_FONT_STRETCH_NORMAL,
@@ -147,7 +149,7 @@ namespace d3d12 {
                 const wchar_t *locale_name = nullptr) {
             auto format = this->create_text_format(font_family, font_size,
                 font_weight, font_style, font_stretch, locale_name);
-            this->draw_text(text, format, brush, layout_rect);
+            this->draw_text(text, format.get(), brush, layout_rect);
         }
 
         /// <summary>
@@ -178,7 +180,7 @@ namespace d3d12 {
             auto format = this->create_text_format(font_family, font_size,
                 font_weight, font_style, font_stretch, locale_name);
             auto brush = this->create_brush(colour);
-            this->draw_text(text, format, brush, layout_rect);
+            this->draw_text(text, format.get(), brush.get(), layout_rect);
         }
 
         /// <summary>
@@ -190,7 +192,7 @@ namespace d3d12 {
         /// Gets the Direct2D factory used to create the overlay.
         /// </summary>
         /// <returns></returns>
-        inline ATL::CComPtr<ID2D1Factory3> get_d2d_factory(void) const {
+        inline winrt::com_ptr<ID2D1Factory3> get_d2d_factory(void) const {
             return this->_d2d_factory;
         }
 
@@ -198,7 +200,7 @@ namespace d3d12 {
         /// Gets the DirectWrite factory used to render text on the overlay.
         /// </summary>
         /// <returns></returns>
-        inline ATL::CComPtr<IDWriteFactory> get_dwrite_factory(void) const {
+        inline winrt::com_ptr<IDWriteFactory> get_dwrite_factory(void) const {
             return this->_dwrite_factory;
         }
 
@@ -237,7 +239,7 @@ namespace d3d12 {
         /// <summary>
         /// Gets the Direct2D context.
         /// </summary>
-        inline operator ATL::CComPtr<ID2D1DeviceContext2>(void) {
+        inline operator winrt::com_ptr<ID2D1DeviceContext2>(void) {
             return this->_d2d_context;
         }
 
@@ -251,24 +253,24 @@ namespace d3d12 {
 
         void release_target_dependent_resources(void);
 
-        ATL::CComPtr<ID2D1DeviceContext2> _d2d_context;
-        ATL::CComPtr<ID2D1Device2> _d2d_device;
-        ATL::CComPtr<ID2D1Factory3> _d2d_factory;
-        std::vector<ATL::CComPtr<ID2D1Bitmap1>> _d2d_render_targets;
+        winrt::com_ptr<ID2D1DeviceContext2> _d2d_context;
+        winrt::com_ptr<ID2D1Device2> _d2d_device;
+        winrt::com_ptr<ID2D1Factory3> _d2d_factory;
+        std::vector<winrt::com_ptr<ID2D1Bitmap1>> _d2d_render_targets;
 
-        ATL::CComPtr<ID3D12Device> _d3d12_device;
-        ATL::CComPtr<ID3D12CommandQueue> _d3d12_command_queue;
-        ATL::CComPtr<ID3D11On12Device> _d3d11on12_device;
-        ATL::CComPtr<ID3D11DeviceContext> _d3d11_device_context;
+        winrt::com_ptr<ID3D12Device> _d3d12_device;
+        winrt::com_ptr<ID3D12CommandQueue> _d3d12_command_queue;
+        winrt::com_ptr<ID3D11On12Device> _d3d11on12_device;
+        winrt::com_ptr<ID3D11DeviceContext> _d3d11_device_context;
 
         // currently removed since it is not used anyway
-        // ATL::CComPtr<ID3D12DepthStencilState> _depth_stencil_state;
-        ATL::CComPtr<ID2D1DrawingStateBlock1> _drawing_state_block;
-        ATL::CComPtr<IDWriteFactory> _dwrite_factory;
+        // winrt::com_ptr<ID3D12DepthStencilState> _depth_stencil_state;
+        winrt::com_ptr<ID2D1DrawingStateBlock1> _drawing_state_block;
+        winrt::com_ptr<IDWriteFactory> _dwrite_factory;
 
-        ATL::CComPtr<IDXGISwapChain3> _swap_chain;
-        std::vector<ATL::CComPtr<ID3D12Resource>> _render_targets;
-        std::vector<ATL::CComPtr<ID3D11Resource>> _wrapped_back_buffers;
+        winrt::com_ptr<IDXGISwapChain3> _swap_chain;
+        std::vector<winrt::com_ptr<ID3D12Resource>> _render_targets;
+        std::vector<winrt::com_ptr<ID3D11Resource>> _wrapped_back_buffers;
         UINT _frame_count;
         UINT _current_frame;
     };

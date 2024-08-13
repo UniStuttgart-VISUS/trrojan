@@ -1,8 +1,8 @@
-// <copyright file="render_target.h" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2022 Visualisierungsinstitut der Universität Stuttgart.
+ï»¿// <copyright file="render_target.h" company="Visualisierungsinstitut der UniversitÃ¤t Stuttgart">
+// Copyright Â© 2022 - 2024 Visualisierungsinstitut der UniversitÃ¤t Stuttgart.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
-// <author>Christoph Müller</author>
+// <author>Christoph MÃ¼ller</author>
 
 #pragma once
 
@@ -11,9 +11,9 @@
 #include <vector>
 
 #include <Windows.h>
-#include <atlbase.h>
 #include <d3d12.h>
 
+#include <winrt/base.h>
 #include <winrt/windows.ui.core.h>
 
 #include "trrojan/d3d12/device.h"
@@ -136,7 +136,7 @@ namespace d3d12 {
         /// Answer the device the render target belongs to.
         /// </summary>
         /// <returns></returns>
-        inline ATL::CComPtr<ID3D12Device>& device(void) {
+        inline winrt::com_ptr<ID3D12Device>& device(void) {
             return this->_device;
         }
 
@@ -144,7 +144,7 @@ namespace d3d12 {
         /// Answer the dxgi factory the render target belongs to.
         /// </summary>
         /// <returns></returns>
-        inline ATL::CComPtr<IDXGIFactory4>& factory(void) {
+        inline winrt::com_ptr<IDXGIFactory4>& factory(void) {
             return this->_dxgi_factory;
         }
 
@@ -152,7 +152,7 @@ namespace d3d12 {
         /// Answer the command queue the render target belongs to.
         /// </summary>
         /// <returns></returns>
-        inline ATL::CComPtr<ID3D12CommandQueue>& command_queue(void) {
+        inline winrt::com_ptr<ID3D12CommandQueue>& command_queue(void) {
             return this->_command_queue;
         }
 
@@ -302,7 +302,7 @@ namespace d3d12 {
         /// <param name="type"></param>
         /// <param name="cnt"></param>
         /// <returns></returns>
-        ATL::CComPtr<ID3D12DescriptorHeap> create_descriptor_heap(
+        winrt::com_ptr<ID3D12DescriptorHeap> create_descriptor_heap(
             const D3D12_DESCRIPTOR_HEAP_TYPE type, const UINT cnt);
 
         /// <summary>
@@ -327,7 +327,7 @@ namespace d3d12 {
         /// </remarks>
         /// <param name="hWnd"></param>
         /// <returns></returns>
-        ATL::CComPtr<IDXGISwapChain3> create_swap_chain(HWND hWnd);
+        winrt::com_ptr<IDXGISwapChain3> create_swap_chain(HWND hWnd);
 #endif /* !defined(TRROJAN_FOR_UWP) */
 
 #if defined(TRROJAN_FOR_UWP)
@@ -343,7 +343,7 @@ namespace d3d12 {
         /// <param name="height"></param>
         /// <param name="window"></param>
         /// <returns></returns>
-        ATL::CComPtr<IDXGISwapChain3> create_swap_chain(UINT width, UINT height, 
+        winrt::com_ptr<IDXGISwapChain3> create_swap_chain(UINT width, UINT height, 
             winrt::agile_ref<winrt::Windows::UI::Core::CoreWindow> window);
 #endif /* defined(TRROJAN_FOR_UWP) */
 
@@ -351,7 +351,7 @@ namespace d3d12 {
         /// Answer the current buffer.
         /// </summary>
         /// <returns></returns>
-        ATL::CComPtr<ID3D12Resource> current_buffer(void);
+        winrt::com_ptr<ID3D12Resource> current_buffer(void);
 
         /// <summary>
         /// Answer the CPU handle of the DSV of the current frame.
@@ -399,7 +399,7 @@ namespace d3d12 {
         /// views.
         /// </summary>
         void set_buffers(
-            const std::vector<ATL::CComPtr<ID3D12Resource>>& buffers,
+            const std::vector<winrt::com_ptr<ID3D12Resource>>& buffers,
             const UINT buffer_index = 0);
 
         /// <summary>
@@ -427,7 +427,7 @@ namespace d3d12 {
         /// <summary>
         /// A depth-stencil state that is being activated with the target.
         /// </summary>
-        //ATL::CComPtr<ID3D11DepthStencilState> _dss;
+        //winrt::com_ptr<ID3D11DepthStencilState> _dss;
 
         /// <summary>
         /// The viewport matching the size of the render target.
@@ -444,12 +444,12 @@ namespace d3d12 {
         /// <summary>
         /// Holds the resources of the render target buffers.
         /// </summary>
-        std::vector<ATL::CComPtr<ID3D12Resource>> _buffers;
+        std::vector<winrt::com_ptr<ID3D12Resource>> _buffers;
 
         /// <summary>
         /// The direct command queue assoicated with <see cref="_device" />.
         /// </summary>
-        ATL::CComPtr<ID3D12CommandQueue> _command_queue;
+        winrt::com_ptr<ID3D12CommandQueue> _command_queue;
 
         /// <summary>
         /// The depth buffer of the render target.
@@ -459,27 +459,27 @@ namespace d3d12 {
         /// that keeps the resource alive. Therefore, the render target must
         /// keep a reference to the depth buffer.
         /// </remarks>
-        ATL::CComPtr<ID3D12Resource> _depth_buffer;
+        winrt::com_ptr<ID3D12Resource> _depth_buffer;
 
         /// <summary>
         /// The device the render target lives on.
         /// </summary>
-        ATL::CComPtr<ID3D12Device> _device;
+        winrt::com_ptr<ID3D12Device> _device;
 
         /// <summary>
         /// The heap holding the depth-stencil views.
         /// </summary>
-        ATL::CComPtr<ID3D12DescriptorHeap> _dsv_heap;
+        winrt::com_ptr<ID3D12DescriptorHeap> _dsv_heap;
 
         /// <summary>
         /// The DXGI factory from which the underlying device was obtained.
         /// </summary>
-        ATL::CComPtr<IDXGIFactory4> _dxgi_factory;
+        winrt::com_ptr<IDXGIFactory4> _dxgi_factory;
 
         /// <summary>
         /// A fence for waiting on the GPU to complete a task.
         /// </summary>
-        ATL::CComPtr<ID3D12Fence> _fence;
+        winrt::com_ptr<ID3D12Fence> _fence;
 
         /// <summary>
         /// An event for blocking the calling thread until a fence in the GPU
@@ -500,12 +500,12 @@ namespace d3d12 {
         /// <summary>
         /// The heap holding the render target views.
         /// </summary>
-        ATL::CComPtr<ID3D12DescriptorHeap> _rtv_heap;
+        winrt::com_ptr<ID3D12DescriptorHeap> _rtv_heap;
 
         /// <summary>
         /// A staging texture for saving the back buffer to disk.
         /// </summary>
-        ATL::CComPtr<ID3D12Resource> _staging_texture;
+        winrt::com_ptr<ID3D12Resource> _staging_texture;
     };
 
 

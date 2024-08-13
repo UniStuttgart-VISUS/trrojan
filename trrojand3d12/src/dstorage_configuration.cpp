@@ -73,14 +73,14 @@ void trrojan::d3d12::dstorage_configuration::apply(
         winrt::com_ptr<IDStorageFactory> factory,
         const std::vector<std::string>& changed) const {
     if (factory == nullptr) {
-        throw ATL::CAtlException(E_POINTER);
+        throw std::system_error(E_POINTER, com_category());
     }
 
     // Set the size of the staging buffer.
     if (changed.empty() || contains(changed, factor_staging_buffer_size)) {
         auto hr = factory->SetStagingBufferSize(this->_staging_buffer_size);
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
         }
     }
 }
@@ -96,7 +96,7 @@ trrojan::d3d12::dstorage_configuration::create_factory(void) {
     {
         auto hr = ::DStorageGetFactory(IID_PPV_ARGS(retval.put()));
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
         }
     }
 

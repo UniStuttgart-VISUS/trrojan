@@ -7,7 +7,9 @@
 #include "trrojan/d3d12/render_target.h"
 
 #include <cassert>
+#include <system_error>
 
+#include "trrojan/com_error_category.h"
 #include "trrojan/image_helper.h"
 #include "trrojan/log.h"
 
@@ -60,9 +62,9 @@ void trrojan::d3d12::render_target_base::clear(
 void trrojan::d3d12::render_target_base::clear_state(
         ID3D12PipelineState *state) {
     if ((this->_device != nullptr) && (this->_command_queue != nullptr)) {
-        ATL::CComPtr<ID3D12CommandAllocator> allocator;
-        ATL::CComPtr<ID3D12CommandList> cmd_list;
-        ATL::CComPtr<ID3D12GraphicsCommandList> gfx_cmd_list;
+        winrt::com_ptr<ID3D12CommandAllocator> allocator;
+        winrt::com_ptr<ID3D12CommandList> cmd_list;
+        winrt::com_ptr<ID3D12GraphicsCommandList> gfx_cmd_list;
 
         {
             auto hr = this->_device->CreateCommandAllocator(
@@ -70,7 +72,7 @@ void trrojan::d3d12::render_target_base::clear_state(
                 IID_ID3D12CommandAllocator,
                 reinterpret_cast<void **>(&allocator));
             if (FAILED(hr)) {
-                throw ATL::CAtlException(hr);
+                throw std::system_error(hr, com_category());
             }
             set_debug_object_name(allocator, "clear_state allocator");
         }
@@ -78,26 +80,26 @@ void trrojan::d3d12::render_target_base::clear_state(
         {
             auto hr = this->_device->CreateCommandList(0,
                 D3D12_COMMAND_LIST_TYPE_DIRECT,
-                allocator,
+                allocator.get(),
                 nullptr,
                 IID_ID3D12CommandList,
                 reinterpret_cast<void **>(&cmd_list));
             if (FAILED(hr)) {
-                throw ATL::CAtlException(hr);
+                throw std::system_error(hr, com_category());
             }
             set_debug_object_name(allocator, "clear state command list");
         }
 
-        {
-            auto hr = cmd_list.QueryInterface(&gfx_cmd_list);
-            if (FAILED(hr)) {
-                throw ATL::CAtlException(hr);
-            }
+        if (!cmd_list.try_as(gfx_cmd_list)) {
+            throw std::system_error(E_NOINTERFACE, com_category());
         }
 
         gfx_cmd_list->ClearState(state);
         close_command_list(gfx_cmd_list);
-        this->_command_queue->ExecuteCommandLists(1, &(cmd_list.p));
+        {
+            auto l = cmd_list.get();
+            this->_command_queue->ExecuteCommandLists(1, &l);
+        }
         this->wait_for_gpu();
     }
 }
@@ -113,7 +115,7 @@ void trrojan::d3d12::render_target_base::copy_from(
     assert(cmd_list != nullptr);
     assert(source != nullptr);
     assert(frame < this->_buffers.size());
-    cmd_list->CopyResource(this->_buffers[frame], source);
+    cmd_list->CopyResource(this->_buffers[frame].get(), source);
 }
 
 
@@ -243,7 +245,7 @@ void trrojan::d3d12::render_target_base::save(const std::string& path) {
         //    hr = this->device()->CreateTexture2D(&desc, nullptr,
         //        &this->_staging_texture);
         //    if (FAILED(hr)) {
-        //        throw ATL::CAtlException(hr);
+        //        throw std::system_error(hr, com_category());
         //    }
         //}
         //assert(this->_staging_texture != nullptr);
@@ -253,7 +255,7 @@ void trrojan::d3d12::render_target_base::save(const std::string& path) {
         //hr = this->_device_context->Map(this->_staging_texture, 0,
         //    D3D12_MAP_READ, 0, &map);
         //if (FAILED(hr)) {
-        //    throw ATL::CAtlException(hr);
+        //    throw std::system_error(hr, com_category());
         //}
 
         //try {
@@ -307,7 +309,7 @@ void trrojan::d3d12::render_target_base::use_reversed_depth_buffer(
 
     //    auto hr = this->_device->CreateDepthStencilState(&desc, &this->_dss);
     //    if (FAILED(hr)) {
-    //        throw ATL::CAtlException(hr);
+    //        throw std::system_error(hr, com_category());
     //    }
 
     //    this->_depth_clear = 0.0f;
@@ -349,7 +351,7 @@ trrojan::d3d12::render_target_base::render_target_base(
             ::IID_ID3D12Fence,
             reinterpret_cast<void **>(&this->_fence));
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
         }
 
         set_debug_object_name(this->_fence, "render_target fence");
@@ -365,11 +367,11 @@ trrojan::d3d12::render_target_base::render_target_base(
 /*
  * trrojan::d3d12::render_target_base::create_descriptor_heap
  */
-ATL::CComPtr<ID3D12DescriptorHeap>
+winrt::com_ptr<ID3D12DescriptorHeap>
 trrojan::d3d12::render_target_base::create_descriptor_heap(
         const D3D12_DESCRIPTOR_HEAP_TYPE type, const UINT cnt) {
     assert(this->_device != nullptr);
-    ATL::CComPtr<ID3D12DescriptorHeap> retval;
+    winrt::com_ptr<ID3D12DescriptorHeap> retval;
 
     D3D12_DESCRIPTOR_HEAP_DESC desc;
     ::ZeroMemory(&desc, sizeof(desc));
@@ -380,7 +382,7 @@ trrojan::d3d12::render_target_base::create_descriptor_heap(
         ::IID_ID3D12DescriptorHeap,
         reinterpret_cast<void **>(&retval));
     if (FAILED(hr)) {
-        throw ATL::CAtlException(hr);
+        throw std::system_error(hr, com_category());
     }
 
     return retval;
@@ -395,7 +397,7 @@ void trrojan::d3d12::render_target_base::create_dsv_heap(void) {
         D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 1);
     log::instance().write_line(log_level::debug, "Render target {:p} allocated "
         "DSV descriptor heap {:p}.", static_cast<void *>(this),
-        static_cast<void *>(this->_dsv_heap.p));
+        static_cast<void *>(this->_dsv_heap.get()));
 }
 
 
@@ -409,7 +411,7 @@ void trrojan::d3d12::render_target_base::create_rtv_heap(void) {
         D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
     log::instance().write_line(log_level::debug, "Render target {:p} allocated "
         "RTV descriptor heap {:p} with descriptor size {}.", 
-        static_cast<void *>(this), static_cast<void *>(this->_rtv_heap.p),
+        static_cast<void *>(this), static_cast<void *>(this->_rtv_heap.get()),
         this->_rtv_descriptor_size);
 }
 
@@ -418,14 +420,14 @@ void trrojan::d3d12::render_target_base::create_rtv_heap(void) {
 /*
  * trrojan::d3d12::render_target_base::create_swap_chain
  */
-ATL::CComPtr<IDXGISwapChain3>
+winrt::com_ptr<IDXGISwapChain3>
 trrojan::d3d12::render_target_base::create_swap_chain(HWND hWnd) {
     assert(this->_command_queue != nullptr);
     assert(this->_dxgi_factory != nullptr);
     assert(this->pipeline_depth() >= 1);
-    ATL::CComPtr<IDXGISwapChain3> retval;
+    winrt::com_ptr<IDXGISwapChain3> retval;
     UINT height = 1;
-    ATL::CComPtr<IDXGISwapChain1> swapChain;
+    winrt::com_ptr<IDXGISwapChain1> swapChain;
     UINT width = 1;
 
     {
@@ -448,9 +450,10 @@ trrojan::d3d12::render_target_base::create_swap_chain(HWND hWnd) {
         desc.SampleDesc.Count = 1;
 
         auto hr = this->_dxgi_factory->CreateSwapChainForHwnd(
-            this->_command_queue, hWnd, &desc, nullptr, nullptr, &swapChain);
+            this->_command_queue.get(), hWnd, &desc, nullptr, nullptr,
+            swapChain.put());
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
         }
     }
 
@@ -458,15 +461,12 @@ trrojan::d3d12::render_target_base::create_swap_chain(HWND hWnd) {
         auto hr = this->_dxgi_factory->MakeWindowAssociation(hWnd,
             DXGI_MWA_NO_ALT_ENTER);
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
         }
     }
 
-    {
-        auto hr = swapChain.QueryInterface(&retval);
-        if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
-        }
+    if (!swapChain.try_as(retval)) {
+        throw std::system_error(E_NOINTERFACE, com_category());
     }
 
     return retval;
@@ -478,14 +478,14 @@ trrojan::d3d12::render_target_base::create_swap_chain(HWND hWnd) {
 /*
  * trrojan::d3d12::render_target_base::create_swap_chain
  */
-ATL::CComPtr<IDXGISwapChain3>
+winrt::com_ptr<IDXGISwapChain3>
 trrojan::d3d12::render_target_base::create_swap_chain(UINT width, UINT height,
         winrt::agile_ref<winrt::Windows::UI::Core::CoreWindow> window) {
     assert(this->_command_queue != nullptr);
     assert(this->_dxgi_factory != nullptr);
     assert(this->pipeline_depth() >= 1);
-    ATL::CComPtr<IDXGISwapChain3> retval;
-    ATL::CComPtr<IDXGISwapChain1> swapChain;
+    winrt::com_ptr<IDXGISwapChain3> retval;
+    winrt::com_ptr<IDXGISwapChain1> swapChain;
 
     // As we potentially swap an existing swap chain on 'window', we need to
     // make sure that all existing references to the previous one have been
@@ -504,22 +504,18 @@ trrojan::d3d12::render_target_base::create_swap_chain(UINT width, UINT height,
         desc.SampleDesc.Count = 1;
 
         auto hr = this->_dxgi_factory->CreateSwapChainForCoreWindow(
-            this->_command_queue,
+            this->_command_queue.get(),
             winrt::get_unknown(window.get()),
             &desc,
             nullptr,
-            &swapChain
-        );
+            swapChain.put());
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
         }
     }
 
-    {
-        auto hr = swapChain.QueryInterface(&retval);
-        if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
-        }
+    if (!swapChain.try_as(retval)) {
+        throw std::system_error(E_NOINTERFACE, com_category());
     }
 
     return retval;
@@ -530,7 +526,7 @@ trrojan::d3d12::render_target_base::create_swap_chain(UINT width, UINT height,
 /*
  * trrojan::d3d12::render_target_base::current_buffer
  */
-ATL::CComPtr<ID3D12Resource> trrojan::d3d12::render_target_base::current_buffer(
+winrt::com_ptr<ID3D12Resource> trrojan::d3d12::render_target_base::current_buffer(
         void) {
     return this->_buffers[this->_buffer_index];
 }
@@ -566,7 +562,7 @@ D3D12_CPU_DESCRIPTOR_HANDLE trrojan::d3d12::render_target_base::rtv_handle(
  * trrojan::d3d12::render_target_base::set_buffers
  */
 void trrojan::d3d12::render_target_base::set_buffers(
-        const std::vector<ATL::CComPtr<ID3D12Resource>>& buffers,
+        const std::vector<winrt::com_ptr<ID3D12Resource>>& buffers,
         const UINT buffer_index) {
     if (buffers.size() < this->_buffers.size()) {
         throw std::invalid_argument("A buffer must be provided for each stage "
@@ -602,8 +598,8 @@ void trrojan::d3d12::render_target_base::set_buffers(
         for (auto& b : this->_buffers) {
             log::instance().write_line(log_level::debug, "Colour buffer "
                 "{0:p} is render target view 0x{1:x}.",
-                static_cast<void *>(b.p), handle.ptr);
-            this->_device->CreateRenderTargetView(b, nullptr, handle);
+                static_cast<void *>(b.get()), handle.ptr);
+            this->_device->CreateRenderTargetView(b.get(), nullptr, handle);
             handle.ptr += this->_rtv_descriptor_size;
         }
     }
@@ -642,7 +638,7 @@ void trrojan::d3d12::render_target_base::set_buffers(
             ::IID_ID3D12Resource,
             reinterpret_cast<void **>(&this->_depth_buffer));
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
         }
 
         set_debug_object_name(this->_depth_buffer, "depth_buffer");
@@ -657,8 +653,8 @@ void trrojan::d3d12::render_target_base::set_buffers(
         auto handle = this->_dsv_heap->GetCPUDescriptorHandleForHeapStart();
         log::instance().write_line(log_level::debug, "Depth buffer {0:p} "
             "is depth/stencil view 0x{1:x}.",
-            static_cast<void *>(this->_depth_buffer.p), handle.ptr);
-        this->_device->CreateDepthStencilView(this->_depth_buffer, &desc,
+            static_cast<void *>(this->_depth_buffer.get()), handle.ptr);
+        this->_device->CreateDepthStencilView(this->_depth_buffer.get(), &desc,
             handle);
     }
 
@@ -702,9 +698,10 @@ void trrojan::d3d12::render_target_base::switch_buffer(
     // wait for this one to become signalled if we activate this buffer again.
     assert(this->_fence != nullptr);
     {
-        auto hr = this->_command_queue->Signal(this->_fence, complete_value);
+        auto hr = this->_command_queue->Signal(this->_fence.get(),
+            complete_value);
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
         }
     }
 
@@ -720,7 +717,7 @@ void trrojan::d3d12::render_target_base::switch_buffer(
         auto hr = this->_fence->SetEventOnCompletion(fence_value,
             this->_fence_event);
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
         }
 
         wait_for_event(this->_fence_event);
@@ -743,9 +740,9 @@ void trrojan::d3d12::render_target_base::wait_for_gpu(void) {
     // currently in-flight frame.
     assert(this->_fence != nullptr);
     {
-        auto hr = this->_command_queue->Signal(this->_fence, fence_value);
+        auto hr = this->_command_queue->Signal(this->_fence.get(), fence_value);
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
         }
     }
 
@@ -756,7 +753,7 @@ void trrojan::d3d12::render_target_base::wait_for_gpu(void) {
         auto hr = this->_fence->SetEventOnCompletion(fence_value,
             this->_fence_event);
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
         }
 
         // Wait for the event to signal.

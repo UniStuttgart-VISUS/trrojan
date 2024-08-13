@@ -1,8 +1,8 @@
-// <copyright file="utilities.h" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2016 - 2022 Visualisierungsinstitut der Universität Stuttgart.
+ï»¿// <copyright file="utilities.h" company="Visualisierungsinstitut der UniversitÃ¤t Stuttgart">
+// Copyright Â© 2016 - 2024 Visualisierungsinstitut der UniversitÃ¤t Stuttgart.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
-// <author>Christoph Müller</author>
+// <author>Christoph MÃ¼ller</author>
 
 #pragma once
 
@@ -14,7 +14,6 @@
 #include <stdexcept>
 #include <vector>
 
-#include <atlbase.h>
 #include <Windows.h>
 #include <d3d12.h>
 
@@ -78,10 +77,10 @@ namespace d3d12 {
     //    ID3D12Buffer **outVertices, ID3D12Buffer **outIndices,
     //    const float size = 1.0f);
 
-    //ATL::CComPtr<ID3D12SamplerState> create_linear_sampler(
+    //winrt::com_ptr<ID3D12SamplerState> create_linear_sampler(
     //    ID3D12Device *device);
 
-    //ATL::CComPtr<ID3D12UnorderedAccessView> create_uav(ID3D12Device *device,
+    //winrt::com_ptr<ID3D12UnorderedAccessView> create_uav(ID3D12Device *device,
     //    const UINT width, const UINT height, const UINT elementSize);
 
     /// <summary>
@@ -112,6 +111,14 @@ namespace d3d12 {
     void close_command_list(ID3D12GraphicsCommandList *cmd_list);
 
     /// <summary>
+    /// Close the given command list.
+    /// </summary>
+    inline void close_command_list(
+            winrt::com_ptr<ID3D12GraphicsCommandList> cmd_list) {
+        close_command_list(cmd_list.get());
+    }
+
+    /// <summary>
     /// Create a row-major committed buffer of the given size on the
     /// given device.
     /// </summary>
@@ -122,12 +129,35 @@ namespace d3d12 {
     /// <param name="heap_type"></param>
     /// <param name="state"></param>
     /// <returns></returns>
-    ATL::CComPtr<ID3D12Resource> TRROJAND3D12_API create_buffer(
+    winrt::com_ptr<ID3D12Resource> TRROJAND3D12_API create_buffer(
         ID3D12Device *device,
-        const UINT64 size, const UINT64 alignment = 0,
+        const UINT64 size,
+        const UINT64 alignment = 0,
         const D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE,
         const D3D12_HEAP_TYPE heap_type = D3D12_HEAP_TYPE_DEFAULT,
         const D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_COPY_DEST);
+
+    /// <summary>
+    /// Create a row-major committed buffer of the given size on the
+    /// given device.
+    /// </summary>
+    /// <param name="device"></param>
+    /// <param name="size"></param>
+    /// <param name="alignment"></param>
+    /// <param name="flags"></param>
+    /// <param name="heap_type"></param>
+    /// <param name="state"></param>
+    /// <returns></returns>
+    inline winrt::com_ptr<ID3D12Resource> create_buffer(
+            winrt::com_ptr<ID3D12Device> device,
+            const UINT64 size,
+            const UINT64 alignment = 0,
+            const D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE,
+            const D3D12_HEAP_TYPE heap_type = D3D12_HEAP_TYPE_DEFAULT,
+            const D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_COPY_DEST) {
+        return create_buffer(device.get(), size, alignment, flags, heap_type,
+            state);
+    }
 
     /// <summary>
     /// Creates a compute pipeline state for the given compute shader and root
@@ -138,7 +168,7 @@ namespace d3d12 {
     /// <param name="size"></param>
     /// <param name="signature"></param>
     /// <returns></returns>
-    ATL::CComPtr<ID3D12PipelineState> TRROJAND3D12_API create_compute_pipeline(
+    winrt::com_ptr<ID3D12PipelineState> TRROJAND3D12_API create_compute_pipeline(
         ID3D12Device *device, const BYTE *shader, const SIZE_T size,
         ID3D12RootSignature *signature);
 
@@ -151,20 +181,53 @@ namespace d3d12 {
     /// <param name="shader"></param>
     /// <param name="size"></param>
     /// <returns></returns>
-    ATL::CComPtr<ID3D12PipelineState> TRROJAND3D12_API create_compute_pipeline(
-        ATL::CComPtr<ID3D12RootSignature>& signature, ID3D12Device *device,
-        const BYTE *shader, const SIZE_T size);
+    winrt::com_ptr<ID3D12PipelineState> TRROJAND3D12_API create_compute_pipeline(
+        winrt::com_ptr<ID3D12RootSignature>& signature,
+        ID3D12Device *device,
+        const BYTE *shader,
+        const SIZE_T size);
+
+    /// <summary>
+    /// Creates a compute pipeline state for the given compute shader using the
+    /// root signature embedded in the byte code of the shader.
+    /// </summary>
+    /// <param name="signature"></param>
+    /// <param name="device"></param>
+    /// <param name="shader"></param>
+    /// <param name="size"></param>
+    /// <returns></returns>
+    inline winrt::com_ptr<ID3D12PipelineState> create_compute_pipeline(
+            winrt::com_ptr<ID3D12RootSignature>& signature,
+            winrt::com_ptr<ID3D12Device> device,
+            const BYTE *shader,
+            const SIZE_T size) {
+        return create_compute_pipeline(signature, device.get(), shader, size);
+    }
 
     /// <summary>
     /// Create a row-major committed buffer of the given size satisfying the
     /// alignment requirements of a constant buffer.
     /// </summary>
-    ATL::CComPtr<ID3D12Resource> TRROJAND3D12_API create_constant_buffer(
+    winrt::com_ptr<ID3D12Resource> TRROJAND3D12_API create_constant_buffer(
         ID3D12Device *device,
         const UINT64 size,
         const D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE,
         const D3D12_HEAP_TYPE heap_type = D3D12_HEAP_TYPE_UPLOAD,
         const D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_GENERIC_READ);
+
+    /// <summary>
+    /// Create a row-major committed buffer of the given size satisfying the
+    /// alignment requirements of a constant buffer.
+    /// </summary>
+    inline winrt::com_ptr<ID3D12Resource> create_constant_buffer(
+            winrt::com_ptr<ID3D12Device> device,
+            const UINT64 size,
+            const D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE,
+            const D3D12_HEAP_TYPE heap_type = D3D12_HEAP_TYPE_UPLOAD,
+            const D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_GENERIC_READ) {
+        return create_constant_buffer(device.get(), size, flags, heap_type,
+            state);
+    }
 
     /// <summary>
     /// Creates an event kernel object.
@@ -181,7 +244,7 @@ namespace d3d12 {
     /// <param name="device"></param>
     /// <param name="initial_value"></param>
     /// <returns></returns>
-    ATL::CComPtr<ID3D12Fence> TRROJAND3D12_API create_fence(
+    winrt::com_ptr<ID3D12Fence> TRROJAND3D12_API create_fence(
         ID3D12Device *device,
         const UINT64 initial_value = 0);
 
@@ -203,7 +266,7 @@ namespace d3d12 {
     /// <param name="device"></param>
     /// <param name="desc"></param>
     /// <returns></returns>
-    ATL::CComPtr<ID3D12Heap> TRROJAND3D12_API create_heap(
+    winrt::com_ptr<ID3D12Heap> TRROJAND3D12_API create_heap(
         ID3D12Device *device, const D3D12_HEAP_DESC& desc);
 
     /// <summary>
@@ -216,7 +279,7 @@ namespace d3d12 {
     /// <param name="type"></param>
     /// <param name="flags"></param>
     /// <returns></returns>
-    ATL::CComPtr<ID3D12Heap> TRROJAND3D12_API create_heap(
+    winrt::com_ptr<ID3D12Heap> TRROJAND3D12_API create_heap(
         ID3D12Device *device,
         const D3D12_RESOURCE_ALLOCATION_INFO& alloc_info,
         const std::size_t cnt = 1,
@@ -232,7 +295,7 @@ namespace d3d12 {
     /// <param name="format"></param>
     /// <param name="flags"></param>
     /// <returns></returns>
-    ATL::CComPtr<ID3D12Resource> TRROJAND3D12_API create_render_target(
+    winrt::com_ptr<ID3D12Resource> TRROJAND3D12_API create_render_target(
         ID3D12Device *device, const UINT width, const UINT height,
         const DXGI_FORMAT format,
         const D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE);
@@ -246,7 +309,7 @@ namespace d3d12 {
     /// <param name="heap_type"></param>
     /// <param name="state"></param>
     /// <returns></returns>
-    ATL::CComPtr<ID3D12Resource> TRROJAND3D12_API create_resource(
+    winrt::com_ptr<ID3D12Resource> TRROJAND3D12_API create_resource(
         ID3D12Device *device, const D3D12_RESOURCE_DESC& desc,
         const D3D12_HEAP_TYPE heap_type = D3D12_HEAP_TYPE_DEFAULT,
         const D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_COPY_DEST);
@@ -260,8 +323,47 @@ namespace d3d12 {
     /// <param name="format"></param>
     /// <param name="state"></param>
     /// <returns></returns>
-    ATL::CComPtr<ID3D12Resource> TRROJAND3D12_API create_texture(
-        ID3D12Device *device, const UINT64 width, const DXGI_FORMAT format,
+    winrt::com_ptr<ID3D12Resource> TRROJAND3D12_API create_texture(
+        ID3D12Device *device,
+        const UINT64 width,
+        const DXGI_FORMAT format,
+        const D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE,
+        const D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_COPY_DEST);
+
+    /// <summary>
+    /// Create an uninitialised 1D texture which is in
+    /// <paramref name="state" />.
+    /// </summary>
+    /// <param name="device"></param>
+    /// <param name="width"></param>
+    /// <param name="format"></param>
+    /// <param name="state"></param>
+    /// <returns></returns>
+    inline winrt::com_ptr<ID3D12Resource> TRROJAND3D12_API create_texture(
+            winrt::com_ptr<ID3D12Device> device,
+            const UINT64 width,
+            const DXGI_FORMAT format,
+            const D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE,
+            const D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_COPY_DEST) {
+        return create_texture(device.get(), width, format, flags, state);
+    }
+
+    /// <summary>
+    /// Create an uninitialised 2D texture which is in
+    /// <paramref name="state" />.
+    /// </summary>
+    /// <param name="device"></param>
+    /// <param name="width"></param>
+    /// <param name="height"></param>
+    /// <param name="format"></param>
+    /// <param name="flags"></param>
+    /// <param name="state"></param>
+    /// <returns></returns>
+    winrt::com_ptr<ID3D12Resource> TRROJAND3D12_API create_texture(
+        ID3D12Device *device,
+        const UINT64 width,
+        const UINT height,
+        const DXGI_FORMAT format,
         const D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE,
         const D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_COPY_DEST);
 
@@ -276,14 +378,18 @@ namespace d3d12 {
     /// <param name="flags"></param>
     /// <param name="state"></param>
     /// <returns></returns>
-    ATL::CComPtr<ID3D12Resource> TRROJAND3D12_API create_texture(
-        ID3D12Device *device, const UINT64 width, const UINT height,
-        const DXGI_FORMAT format,
-        const D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE,
-        const D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_COPY_DEST);
+    inline winrt::com_ptr<ID3D12Resource> create_texture(
+            winrt::com_ptr<ID3D12Device> device,
+            const UINT64 width,
+            const UINT height,
+            const DXGI_FORMAT format,
+            const D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE,
+            const D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_COPY_DEST) {
+        return create_texture(device.get(), width, height, format, flags, state);
+    }
 
     /// <summary>
-    /// Create an uninitailisd 3D texture which is in state
+    /// Create an uninitialised 3D texture which is in state
     /// <paramref name="state" />.
     /// </summary>
     /// <param name="device"></param>
@@ -294,11 +400,38 @@ namespace d3d12 {
     /// <param name="flags"></param>
     /// <param name="state"></param>
     /// <returns></returns>
-    ATL::CComPtr<ID3D12Resource> TRROJAND3D12_API create_texture(
-        ID3D12Device *device, const UINT64 width, const UINT height,
-        const UINT16 depth, const DXGI_FORMAT format,
+    winrt::com_ptr<ID3D12Resource> TRROJAND3D12_API create_texture(
+        ID3D12Device *device,
+        const UINT64 width,
+        const UINT height,
+        const UINT16 depth,
+        const DXGI_FORMAT format,
         const D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE,
         const D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_COPY_DEST);
+
+    /// <summary>
+    /// Create an uninitialised 3D texture which is in state
+    /// <paramref name="state" />.
+    /// </summary>
+    /// <param name="device"></param>
+    /// <param name="width"></param>
+    /// <param name="height"></param>
+    /// <param name="depth"></param>
+    /// <param name="format"></param>
+    /// <param name="flags"></param>
+    /// <param name="state"></param>
+    /// <returns></returns>
+    inline winrt::com_ptr<ID3D12Resource> create_texture(
+            winrt::com_ptr<ID3D12Device> device,
+            const UINT64 width,
+            const UINT height,
+            const UINT16 depth,
+            const DXGI_FORMAT format,
+            const D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE,
+            const D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_COPY_DEST) {
+        return create_texture(device.get(), width, height, depth, format,
+            flags, state);
+    }
 
     /// <summary>
     /// Create an upload buffer of the specified size.
@@ -312,7 +445,7 @@ namespace d3d12 {
     /// <param name="size"></param>
     /// <param name="alignment"></param>
     /// <returns></returns>
-    ATL::CComPtr<ID3D12Resource> TRROJAND3D12_API create_upload_buffer(
+    winrt::com_ptr<ID3D12Resource> TRROJAND3D12_API create_upload_buffer(
         ID3D12Device *device,
         const UINT64 size,
         const UINT64 alignment = 0);
@@ -331,7 +464,7 @@ namespace d3d12 {
     /// <param name="size"></param>
     /// <param name="alignment"></param>
     /// <returns></returns>
-    ATL::CComPtr<ID3D12Resource> TRROJAND3D12_API create_upload_buffer(
+    winrt::com_ptr<ID3D12Resource> TRROJAND3D12_API create_upload_buffer(
         ID3D12Device *device, const void *data, const UINT64 size,
         const UINT64 alignment = 0);
 
@@ -349,18 +482,50 @@ namespace d3d12 {
     /// <param name="first_subresource"></param>
     /// <param name="cnt_subresources"></param>
     /// <returns></returns>
-    ATL::CComPtr<ID3D12Resource> TRROJAND3D12_API create_upload_buffer_for(
+    winrt::com_ptr<ID3D12Resource> TRROJAND3D12_API create_upload_buffer_for(
         ID3D12Resource *resource,
         const UINT first_subresource = 0,
         const UINT cnt_subresources = 1);
+
+    /// <summary>
+    /// Create an upload buffer for the specified subresource of the given
+    /// GPU resource.
+    /// </summary>
+    /// <remarks>
+    /// The function determines the copyable footprints of the given
+    /// <paramref name="resource" /> and creates an upload buffer with this
+    /// size, thus fulfilling implicitly all alignment requirements for upload
+    /// buffers.
+    /// </remarks>
+    /// <param name="resource"></param>
+    /// <param name="first_subresource"></param>
+    /// <param name="cnt_subresources"></param>
+    /// <returns></returns>
+    inline winrt::com_ptr<ID3D12Resource> create_upload_buffer_for(
+            winrt::com_ptr<ID3D12Resource> resource,
+            const UINT first_subresource = 0,
+            const UINT cnt_subresources = 1) {
+        return create_upload_buffer_for(resource.get(), first_subresource,
+            cnt_subresources);
+    }
 
     /// <summary>
     /// Create a 1D upload buffer containing the Viridis colour map.
     /// </summary>
     /// <param name="device"></param>
     /// <returns></returns>
-    ATL::CComPtr<ID3D12Resource> TRROJAND3D12_API create_viridis_colour_map(
+    winrt::com_ptr<ID3D12Resource> TRROJAND3D12_API create_viridis_colour_map(
         ID3D12Device *device);
+
+    /// <summary>
+    /// Create a 1D upload buffer containing the Viridis colour map.
+    /// </summary>
+    /// <param name="device"></param>
+    /// <returns></returns>
+    inline winrt::com_ptr<ID3D12Resource> create_viridis_colour_map(
+            winrt::com_ptr<ID3D12Device> device) {
+        return create_viridis_colour_map(device.get());
+    }
 
     /// <summary>
     /// Create a 1D GPU-only texture containing the Viridis colour map and
@@ -376,10 +541,32 @@ namespace d3d12 {
     /// parameter defaults to<
     /// <c>D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE</c>.</param>
     /// <returns></returns>
-    ATL::CComPtr<ID3D12Resource> TRROJAND3D12_API create_viridis_colour_map(
+    winrt::com_ptr<ID3D12Resource> TRROJAND3D12_API create_viridis_colour_map(
         device& device, ID3D12GraphicsCommandList *cmd_list,
         const D3D12_RESOURCE_STATES state
         = static_cast<D3D12_RESOURCE_STATES>(0x40 | 0x80));
+
+    /// <summary>
+    /// Create a 1D GPU-only texture containing the Viridis colour map and
+    /// transition it to the requested <paramref name="state" />.
+    /// </summary>
+    /// <param name="device">The device to create the colour map on. The device
+    /// must have a valid graphics command queue to perform the on-device copy
+    /// and transitioning of the resource.</param>
+    /// <param name="cmd_list">A command list used to perform the transition.
+    /// The command list must be in a recordable state and will be closed and
+    /// executed by the function.</param>
+    /// <param name="state">The state to transition the resource to. This
+    /// parameter defaults to<
+    /// <c>D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE</c>.</param>
+    /// <returns></returns>
+    inline winrt::com_ptr<ID3D12Resource> create_viridis_colour_map(
+            device& device,
+            winrt::com_ptr<ID3D12GraphicsCommandList> cmd_list,
+            const D3D12_RESOURCE_STATES state
+            = static_cast<D3D12_RESOURCE_STATES>(0x40 | 0x80)) {
+        return create_viridis_colour_map(device, cmd_list.get(), state);
+    }
 
     /// <summary>
     /// Gets the DXGI adapter the given device was created on.
@@ -387,7 +574,7 @@ namespace d3d12 {
     /// <param name="device"></param>
     /// <param name="factory"></param>
     /// <returns></returns>
-    ATL::CComPtr<IDXGIAdapter> TRROJAND3D12_API get_adapter(
+    winrt::com_ptr<IDXGIAdapter> TRROJAND3D12_API get_adapter(
         ID3D12Device *device, IDXGIFactory4 *factory);
 
     /// <summary>
@@ -395,8 +582,18 @@ namespace d3d12 {
     /// </summary>
     /// <param name="child"></param>
     /// <returns></returns>
-    ATL::CComPtr<ID3D12Device> TRROJAND3D12_API get_device(
+    winrt::com_ptr<ID3D12Device> TRROJAND3D12_API get_device(
         ID3D12DeviceChild *child);
+
+    /// <summary>
+    /// Gets the device the child belongs to.
+    /// </summary>
+    /// <param name="child"></param>
+    /// <returns></returns>
+    inline winrt::com_ptr<ID3D12Device> TRROJAND3D12_API get_device(
+            winrt::com_ptr<ID3D12DeviceChild> child) {
+        return get_device(child.get());
+    }
 
     /// <summary>
     /// Gets a <see cref="D3D12_TEXTURE_COPY_LOCATION" /> for the given
@@ -642,6 +839,18 @@ namespace d3d12 {
     /// Applies the given debug name to the given object for use in the graphics
     /// debugger.
     /// </summary>
+    /// <param name="obj"></param>
+    /// <param name="name"></param>
+    inline void TRROJAND3D12_API set_debug_object_name(
+            winrt::com_ptr<ID3D12Object> obj,
+            const char *name) {
+        set_debug_object_name(obj.get(), name);
+    }
+
+    /// <summary>
+    /// Applies the given debug name to the given object for use in the graphics
+    /// debugger.
+    /// </summary>
     /// <typeparam name="Args"></typeparam>
     /// <param name="obj"></param>
     /// <param name="fmt"></param>
@@ -651,6 +860,20 @@ namespace d3d12 {
             Args&&... args) {
         auto name = fmt::format(fmt, std::forward<Args>(args)...);
         set_debug_object_name(obj, name.c_str());
+    }
+
+    /// <summary>
+    /// Applies the given debug name to the given object for use in the graphics
+    /// debugger.
+    /// </summary>
+    /// <typeparam name="Args"></typeparam>
+    /// <param name="obj"></param>
+    /// <param name="fmt"></param>
+    /// <param name="...args"></param>
+    template<class... Args>
+    inline void set_debug_object_name(winrt::com_ptr<ID3D12Object> obj, const char *fmt,
+            Args&&... args) {
+        set_debug_object_name(obj.get(), fmt, std::forward<Args>(args)...);
     }
 
     /// <summary>
@@ -685,32 +908,62 @@ namespace d3d12 {
         const UINT64 cnt_cols, const UINT cnt_rows, UINT64 row_pitch = 0);
 
     /// <summary>
+    /// Converts a smart pointer into dumb pointers without increasing the
+    /// reference count.
+    /// </summary>
+    template<class T>
+    inline std::array<T *, 1> unsmart(winrt::com_ptr<T> input) {
+        std::array<T *, 1> retval { input.get() };
+        return retval;
+    }
+
+    /// <summary>
     /// Converts a vector of smart pointers into dumb pointers without
     /// increasing the reference count.
     /// </summary>
     template<class T>
-    std::vector<T *> unsmart(std::vector<ATL::CComPtr<T>>& input);
+    std::vector<T *> unsmart(std::vector<winrt::com_ptr<T>>& input);
 
     void TRROJAND3D12_API transition_resource(
-        ID3D12GraphicsCommandList *cmd_list, ID3D12Resource *resource,
+        ID3D12GraphicsCommandList *cmd_list,
+        ID3D12Resource *resource,
         const D3D12_RESOURCE_STATES state_before,
         const D3D12_RESOURCE_STATES state_after);
 
+    inline void TRROJAND3D12_API transition_resource(
+            winrt::com_ptr<ID3D12GraphicsCommandList> cmd_list,
+            winrt::com_ptr<ID3D12Resource> resource,
+            const D3D12_RESOURCE_STATES state_before,
+            const D3D12_RESOURCE_STATES state_after) {
+        transition_resource(cmd_list.get(), resource.get(), state_before,
+            state_after);
+    }
+
     void TRROJAND3D12_API transition_subresource(
-        ID3D12GraphicsCommandList *cmd_list, ID3D12Resource *resource,
-        const UINT subresource, const D3D12_RESOURCE_STATES state_before,
+        ID3D12GraphicsCommandList *cmd_list,
+        ID3D12Resource *resource,
+        const UINT subresource,
+        const D3D12_RESOURCE_STATES state_before,
         const D3D12_RESOURCE_STATES state_after);
 
-    /// <summary>
-    /// Move an ATL COM pointer to a WinRT COM pointer.
-    /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="ptr"></param>
-    /// <returns></returns>
-    template<class T> winrt::com_ptr<T> to_winrt(ATL::CComPtr<T>& ptr) {
-        winrt::com_ptr<T> retval;
-        retval.attach(ptr.Detach());
-        return retval;
+    inline void TRROJAND3D12_API transition_subresource(
+            winrt::com_ptr<ID3D12GraphicsCommandList> cmd_list,
+            winrt::com_ptr<ID3D12Resource> resource,
+            const UINT subresource,
+            const D3D12_RESOURCE_STATES state_before,
+            const D3D12_RESOURCE_STATES state_after) {
+        transition_subresource(cmd_list.get(), resource.get(),
+            subresource, state_before, state_after);
+    }
+
+    inline void TRROJAND3D12_API transition_subresource(
+            ID3D12GraphicsCommandList *cmd_list,
+            winrt::com_ptr<ID3D12Resource> resource,
+            const UINT subresource,
+            const D3D12_RESOURCE_STATES state_before,
+            const D3D12_RESOURCE_STATES state_after) {
+        transition_subresource(cmd_list, resource.get(),
+            subresource, state_before, state_after);
     }
 
     /// <summary>

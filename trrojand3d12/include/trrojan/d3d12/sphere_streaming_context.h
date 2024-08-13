@@ -1,8 +1,8 @@
-// <copyright file="sphere_streaming_context.h" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2022 - 2023 Visualisierungsinstitut der Universität Stuttgart.
+ï»¿// <copyright file="sphere_streaming_context.h" company="Visualisierungsinstitut der UniversitÃ¤t Stuttgart">
+// Copyright Â© 2022 - 2024 Visualisierungsinstitut der UniversitÃ¤t Stuttgart.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
-// <author>Christoph Müller</author>
+// <author>Christoph MÃ¼ller</author>
 
 #pragma once
 
@@ -275,6 +275,20 @@ namespace d3d12 {
             const D3D12_RESOURCE_STATES initial_state);
 
         /// <summary>
+        /// Rebuilds the streaming buffer on the given device.
+        /// </summary>
+        /// <param name="device"></param>
+        /// <param name="config"></param>
+        /// <param name="heap_type"></param>
+        /// <param name="initial_state"></param>
+        inline void rebuild(winrt::com_ptr<ID3D12Device> device,
+                const configuration& config,
+                const D3D12_HEAP_TYPE heap_type,
+                const D3D12_RESOURCE_STATES initial_state) {
+            this->rebuild(device.get(), config, heap_type, initial_state);
+        }
+
+        /// <summary>
         /// Gets the offset of the <paramref name="frame" />th repeated frame
         /// in bytes, based on the number of total spheres configured in
         /// <see cref="reshape" />.
@@ -352,6 +366,23 @@ namespace d3d12 {
         /// <param name="batch"></param>
         /// <param name="queue"></param>
         void signal_done(const std::size_t batch, ID3D12CommandQueue *queue);
+
+        /// <summary>
+        /// Signal that the GPU is done with rendering the
+        /// <paramref name="batch"/>th batch in the given command
+        /// <paramref name="queue" />.
+        /// </summary>
+        /// <remarks>
+        /// <para>This method injects a fence into the command queue. Once the
+        /// GPU is past that fence, the <see cref="next_batch" /> method is free
+        /// to return <paramref name="batch" /> for reuse.</para>
+        /// </remarks>
+        /// <param name="batch"></param>
+        /// <param name="queue"></param>
+        inline void signal_done(const std::size_t batch,
+                winrt::com_ptr<ID3D12CommandQueue> queue) {
+            this->signal_done(batch, queue.get());
+        }
 
         /// <summary>
         /// Answer the total number of batches that need to be rendered for

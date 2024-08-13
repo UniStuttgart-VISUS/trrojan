@@ -234,7 +234,7 @@ namespace d3d11 {
     /// <param name="byteCode"></param>
     /// <param name="cntByteCode"></param>
     /// <returns></returns>
-    /// <exception cref="ATL::CAtlException">In case the shader creation failed.
+    /// <exception cref="std::system_error">In case the shader creation failed.
     /// </exception>
     winrt::com_ptr<ID3D11VertexShader> create_vertex_shader(ID3D11Device *device,
         const BYTE *byteCode, const size_t cntByteCode);
@@ -246,7 +246,7 @@ namespace d3d11 {
     /// <param name="byteCode"></param>
     /// <tparam name="N"></tparam>
     /// <returns></returns>
-    /// <exception cref="ATL::CAtlException">In case the shader creation failed.
+    /// <exception cref="std::system_error">In case the shader creation failed.
     /// </exception>
     template<size_t N>
     inline winrt::com_ptr<ID3D11VertexShader> create_vertex_shader(
@@ -260,7 +260,7 @@ namespace d3d11 {
     /// <param name="device"></param>
     /// <param name="byteCode"></param>
     /// <returns></returns>
-    /// <exception cref="ATL::CAtlException">In case the shader creation failed.
+    /// <exception cref="std::system_error">In case the shader creation failed.
     /// </exception>
     inline winrt::com_ptr<ID3D11VertexShader> create_vertex_shader(
             ID3D11Device *device, const std::vector<std::uint8_t>& byteCode) {
@@ -273,7 +273,7 @@ namespace d3d11 {
     /// <param name="device"></param>
     /// <param name=""></param>
     /// <returns></returns>
-    /// <exception cref="ATL::CAtlException">In case the shader creation failed.
+    /// <exception cref="std::system_error">In case the shader creation failed.
     /// </exception>
     inline winrt::com_ptr<ID3D11VertexShader> create_vertex_shader(
             ID3D11Device *device, std::nullptr_t) {
@@ -287,7 +287,7 @@ namespace d3d11 {
     /// <param name="outOptSrv">If not <c>nullptr</c>, create a shader resource
     /// view for the texture and return it to this variable.</param>
     /// <returns></returns>
-    /// <exception cref="ATL::CAtlException">In case the texture could not be
+    /// <exception cref="std::system_error">In case the texture could not be
     /// created.</exception>
     winrt::com_ptr<ID3D11Texture1D> create_viridis_colour_map(
         ID3D11Device *device, ID3D11ShaderResourceView **outOptSrv = nullptr);

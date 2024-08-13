@@ -1,5 +1,5 @@
 ﻿// <copyright file="sphere_streaming_benchmark.h" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2023 Visualisierungsinstitut der Universität Stuttgart.
+// Copyright © 2023 - 2024 Visualisierungsinstitut der Universität Stuttgart.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
 // <author>Christoph Müller</author>
@@ -142,6 +142,16 @@ namespace d3d12 {
         void set_vertex_buffer(ID3D12GraphicsCommandList *cmd_list,
             const shader_id_type shader_code, const std::size_t batch);
 
+        /// <summary>
+        /// Sets the vertext buffer for the specified technique and batch.
+        /// </summary>
+        inline void set_vertex_buffer(
+                winrt::com_ptr<ID3D12GraphicsCommandList> cmd_list,
+                const shader_id_type shader_code,
+                const std::size_t batch) {
+            this->set_vertex_buffer(cmd_list.get(), shader_code, batch);
+        }
+
     private:
 
         typedef std::unique_ptr<void, memory_unmapper> mapping_type;
@@ -154,6 +164,12 @@ namespace d3d12 {
 
         void prepare_dstorage(ID3D12Device *device, const configuration& config,
             const std::vector<std::string>& changed);
+
+        inline void prepare_dstorage(winrt::com_ptr<ID3D12Device> device,
+                const configuration& config,
+                const std::vector<std::string>& changed) {
+            this->prepare_dstorage(device.get(), config, changed);
+        }
 
         void stage_data(const configuration& config,
             const shader_id_type shader_code);

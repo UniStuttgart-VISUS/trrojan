@@ -73,7 +73,7 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
     std::vector<winrt::com_ptr<ID3D12GraphicsCommandList>> cmd_lists;
     cmd_lists.reserve(this->_stream.batch_count());
     for (std::size_t b = 0; (b < this->_stream.batch_count()); ++b) {
-        auto list = to_winrt(this->create_graphics_command_list(b, pipeline));
+        auto list = this->create_graphics_command_list(b, pipeline);
         set_debug_object_name(list.get(), "Command list for batch {0}", b);
         list->Close();
         cmd_lists.push_back(list);
@@ -117,7 +117,7 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
                     // reset now. Afterwards, reset the command list that used 
                     // the allocator.
                     alloc->Reset();
-                    list->Reset(alloc, pipeline);
+                    list->Reset(alloc.get(), pipeline.get());
 
                     // Set the render target, and if this is the first batch,
                     // transition it as well.
@@ -136,7 +136,7 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
                         shader_code,
                         0,
                         b * cnt_descs,
-                        this->_stream.buffer(b).get(),
+                        this->_stream.buffer(b),
                         0,
                         spheres);
 
@@ -145,7 +145,7 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
                         this->_stream.offset(t),
                         this->_stream.batch_size(t));
 
-                    list->SetGraphicsRootSignature(root_sig);
+                    list->SetGraphicsRootSignature(root_sig.get());
                     list->IASetPrimitiveTopology(topology);
                     this->set_descriptors(list.get(), desc_tables);
                     this->set_vertex_buffer(list.get(), shader_code, b);
@@ -202,7 +202,7 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
             // reset now. Afterwards, reset the command list that used 
             // the allocator.
             alloc->Reset();
-            list->Reset(alloc, pipeline);
+            list->Reset(alloc.get(), pipeline.get());
 
             // Set the render target, and if this is the first batch,
             // transition it as well.
@@ -221,7 +221,7 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
                 shader_code,
                 0,
                 b * cnt_descs,
-                this->_stream.buffer(b).get(),
+                this->_stream.buffer(b),
                 0,
                 spheres);
 
@@ -230,7 +230,7 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
                 this->_stream.offset(t),
                 this->_stream.batch_size(t));
 
-            list->SetGraphicsRootSignature(root_sig);
+            list->SetGraphicsRootSignature(root_sig.get());
             list->IASetPrimitiveTopology(topology);
             this->set_descriptors(list.get(), desc_tables);
             this->set_vertex_buffer(list.get(), shader_code, b);
@@ -290,7 +290,7 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
             // reset now. Afterwards, reset the command list that used 
             // the allocator.
             alloc->Reset();
-            list->Reset(alloc, pipeline);
+            list->Reset(alloc.get(), pipeline.get());
 
             // Set the render target, and if this is the first batch,
             // transition it as well.
@@ -312,7 +312,7 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
                 shader_code,
                 0,
                 b * cnt_descs,
-                this->_stream.buffer(b).get(),
+                this->_stream.buffer(b),
                 0,
                 spheres);
 
@@ -321,7 +321,7 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
                 this->_stream.offset(t),
                 this->_stream.batch_size(t));
 
-            list->SetGraphicsRootSignature(root_sig);
+            list->SetGraphicsRootSignature(root_sig.get());
             list->IASetPrimitiveTopology(topology);
             this->set_descriptors(list.get(), desc_tables);
             this->set_vertex_buffer(list.get(), shader_code, b);
@@ -371,7 +371,7 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
     {
         // Allocate queries for each batch, because we cannot span the queries
         // over multiple command lists.
-        stats_query stats_query(device.d3d_device(),
+        stats_query stats_query(device.d3d_device().get(),
             this->_stream.total_batches(), 1);
 
         stats_query::size_type stats_index = 0;
@@ -394,7 +394,7 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
             // reset now. Afterwards, reset the command list that used 
             // the allocator.
             alloc->Reset();
-            list->Reset(alloc, pipeline);
+            list->Reset(alloc.get(), pipeline.get());
 
             // Set the render target, and if this is the first batch,
             // transition it as well.
@@ -413,7 +413,7 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
                 shader_code,
                 0,
                 b * cnt_descs,
-                this->_stream.buffer(b).get(),
+                this->_stream.buffer(b),
                 0,
                 spheres);
 
@@ -422,7 +422,7 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
                 this->_stream.offset(t),
                 this->_stream.batch_size(t));
 
-            list->SetGraphicsRootSignature(root_sig);
+            list->SetGraphicsRootSignature(root_sig.get());
             list->IASetPrimitiveTopology(topology);
             this->set_descriptors(list.get(), desc_tables);
             this->set_vertex_buffer(list.get(), shader_code, b);

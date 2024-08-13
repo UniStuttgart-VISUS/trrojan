@@ -6,6 +6,7 @@
 
 #include "trrojan/d3d12/sphere_streaming_benchmark.h"
 
+#include "trrojan/com_error_category.h"
 #include "trrojan/io.h"
 #include "trrojan/on_exit.h"
 #include "trrojan/random_sphere_generator.h"
@@ -101,7 +102,7 @@ bool trrojan::d3d12::sphere_streaming_benchmark::check_stream_changed(
     if (retval) {
         log::instance().write_line(log_level::debug, "(Re-) Building GPU "
             "stream on device 0x{0:p} ...",
-            static_cast<void *>(device.d3d_device().p));
+            static_cast<void *>(device.d3d_device().get()));
         this->_stream.rebuild(device.d3d_device(), config,
             D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ);
 
@@ -237,8 +238,8 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
 
                 LARGE_INTEGER end;
                 if (!::GetFileSizeEx(this->_file.get(), &end)) {
-                    throw ATL::CAtlException(
-                        HRESULT_FROM_WIN32(::GetLastError()));
+                    throw std::system_error(::GetLastError(),
+                        std::system_category());
                 }
 
                 const auto pad = o % this->_allocation_granularity;
@@ -273,7 +274,7 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
 
             if (!::SetFilePointerEx(this->_file.get(), position, nullptr,
                     FILE_BEGIN)) {
-                throw ATL::CAtlException(HRESULT_FROM_WIN32(::GetLastError()));
+                throw std::system_error(::GetLastError(), std::system_category());
             }
 
             auto dst = static_cast<std::uint8_t *>(d);
@@ -282,8 +283,8 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
 
             while (rem > 0) {
                 if (!::ReadFile(this->_file.get(), dst, rem, &read, 0)) {
-                    throw ATL::CAtlException(HRESULT_FROM_WIN32(
-                        ::GetLastError()));
+                    throw std::system_error(::GetLastError(),
+                        std::system_category());
                 }
 
                 assert(read <= rem);
@@ -443,8 +444,7 @@ void trrojan::d3d12::sphere_streaming_benchmark::open_staged_file(void) {
 #endif /* defined(TRROJAN_FOR_UWP) */
 
     if (!this->_file) {
-        const auto error = ::GetLastError();
-        throw ATL::CAtlException(HRESULT_FROM_WIN32(error));
+        throw std::system_error(::GetLastError(), std::system_category());
     }
 }
 
@@ -464,7 +464,7 @@ void trrojan::d3d12::sphere_streaming_benchmark::open_staged_file_dstorage(
     auto hr = this->_dstorage_factory->OpenFile(path.c_str(),
         IID_PPV_ARGS(this->_dstorage_file.put()));
     if (FAILED(hr)) {
-        throw ATL::CAtlException(hr);
+        throw std::system_error(hr, com_category());
     }
 #else /* defined(TRROJAN_WITH_DSTORAGE) */
     throw std::logic_error("This build of TRRojan does not support "
@@ -489,7 +489,7 @@ void trrojan::d3d12::sphere_streaming_benchmark::prepare_dstorage(
             nullptr));
     }
     if (!this->_dstorage_event) {
-        throw ATL::CAtlException(HRESULT_FROM_WIN32(::GetLastError()));
+        throw std::system_error(::GetLastError(), std::system_category());
     }
 
     // Lazily create the fence to wait for the operation to complete.
@@ -498,7 +498,7 @@ void trrojan::d3d12::sphere_streaming_benchmark::prepare_dstorage(
         auto hr = device->CreateFence(this->_dstorage_fence_value,
             D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(this->_dstorage_fence.put()));
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
         }
     }
 
@@ -531,7 +531,7 @@ void trrojan::d3d12::sphere_streaming_benchmark::prepare_dstorage(
         auto hr = this->_dstorage_factory->CreateQueue(&desc,
             IID_PPV_ARGS(this->_dstorage_queue.put()));
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
         }
     }
 #endif /* defined(TRROJAN_WITH_DSTORAGE) */

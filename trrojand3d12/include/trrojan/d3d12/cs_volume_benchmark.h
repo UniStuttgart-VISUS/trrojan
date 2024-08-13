@@ -1,5 +1,5 @@
 ﻿// <copyright file="cs_volume_benchmark.h" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2016 - 2023 Visualisierungsinstitut der Universität Stuttgart.
+// Copyright © 2016 - 2024 Visualisierungsinstitut der Universität Stuttgart.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
 // <author>Christoph Müller</author>
@@ -58,17 +58,23 @@ namespace d3d12 {
         void set_descriptors(ID3D12GraphicsCommandList *cmd_list,
             const UINT frame) const;
 
-        ATL::CComPtr<ID3D12Resource> _cb_ray;
-        ATL::CComPtr<ID3D12PipelineState> _compute_pipeline;
-        ATL::CComPtr<ID3D12RootSignature> _compute_signature;
+        inline void set_descriptors(
+                winrt::com_ptr<ID3D12GraphicsCommandList> cmd_list,
+                const UINT frame) const {
+            this->set_descriptors(cmd_list.get(), frame);
+        }
+
+        winrt::com_ptr<ID3D12Resource> _cb_ray;
+        winrt::com_ptr<ID3D12PipelineState> _compute_pipeline;
+        winrt::com_ptr<ID3D12RootSignature> _compute_signature;
         std::vector<std::vector<D3D12_GPU_DESCRIPTOR_HANDLE>> _descriptors;
         RaycastingConstants *_ray_constants;
-        ATL::CComPtr<ID3D12Resource> _cb_view;
-        std::vector<ATL::CComPtr<ID3D12Resource>> _uavs;
+        winrt::com_ptr<ID3D12Resource> _cb_view;
+        std::vector<winrt::com_ptr<ID3D12Resource>> _uavs;
         ViewConstants *_view_constants;
 
         //rendering_technique::uav_type compute_target;
-        //ATL::CComPtr<ID3D11Query> done_query;
+        //winrt::com_ptr<ID3D11Query> done_query;
         //rendering_technique::buffer_type raycasting_constants;
         //rendering_technique technique;
         //rendering_technique::buffer_type view_constants;

@@ -9,6 +9,7 @@
 #include <limits>
 #include <memory>
 
+#include "trrojan/com_error_category.h"
 #include "trrojan/io.h"
 #include "trrojan/log.h"
 
@@ -42,13 +43,13 @@ void trrojan::d3d12::cs_volume_benchmark::on_device_switch(device& device) {
     // change throughout the benchmark run.
     this->_cb_ray = create_constant_buffer(device.d3d_device(),
         sizeof(RaycastingConstants));
-    set_debug_object_name(this->_cb_ray.p, "ray_constants");
+    set_debug_object_name(this->_cb_ray, "ray_constants");
 
     {
         void *p;
         auto hr = this->_cb_ray->Map(0, nullptr, &p);
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
         }
 
         this->_ray_constants = static_cast<RaycastingConstants *>(p);
@@ -59,13 +60,13 @@ void trrojan::d3d12::cs_volume_benchmark::on_device_switch(device& device) {
     // change throughout the benchmark run.
     this->_cb_view = create_constant_buffer(device.d3d_device(),
         sizeof(ViewConstants));
-    set_debug_object_name(this->_cb_view.p, "view_constants");
+    set_debug_object_name(this->_cb_view, "view_constants");
 
     {
         void *p;
         auto hr = this->_cb_view->Map(0, nullptr, &p);
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
         }
 
         this->_view_constants = static_cast<ViewConstants *>(p);
@@ -121,14 +122,14 @@ trrojan::result trrojan::d3d12::cs_volume_benchmark::on_run(
 
     auto dev = device.d3d_device();
     const auto gpu_freq = gpu_timer::get_timestamp_frequency(
-        device.command_queue());
+        device.command_queue().get());
     const auto gpu_iterations = config.get<std::uint32_t>(
         factor_gpu_counter_iterations);
     std::vector<gpu_timer_type::millis_type> gpu_times;
     const auto min_wall_time = config.get<std::uint32_t>(factor_min_wall_time);
     measurement_context mctx(device, 1, this->pipeline_depth());
     stats_query::value_type pipeline_stats;
-    stats_query stats_query(device.d3d_device(), 1, 1);
+    stats_query stats_query(device.d3d_device().get(), 1, 1);
     const auto volume_size = this->get_volume_resolution();
     const auto viewport = config.get<viewport_type>(factor_viewport);
 
@@ -244,7 +245,7 @@ trrojan::result trrojan::d3d12::cs_volume_benchmark::on_run(
     this->_descriptors.clear();
 
     for (std::size_t f = 0; f < this->pipeline_depth(); ++f) {
-        auto heap = this->_descriptor_heaps[f].p;
+        auto heap = this->_descriptor_heaps[f].get();
         assert(heap != nullptr);
         assert(heap->GetDesc().Type == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
         auto cpu_handle = heap->GetCPUDescriptorHandleForHeapStart();
@@ -294,7 +295,7 @@ trrojan::result trrojan::d3d12::cs_volume_benchmark::on_run(
             desc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
 
             descriptors.push_back(gpu_handle);
-            device.d3d_device()->CreateUnorderedAccessView(this->_uavs[f],
+            device.d3d_device()->CreateUnorderedAccessView(this->_uavs[f].get(),
                 nullptr, &desc, cpu_handle);
 
             cpu_handle.ptr += increment;
@@ -311,14 +312,14 @@ trrojan::result trrojan::d3d12::cs_volume_benchmark::on_run(
 
 #if 1
     // Record a command list for each frame for the CPU measurements.
-    std::vector<ATL::CComPtr<ID3D12GraphicsCommandList>> cmd_lists(
+    std::vector<winrt::com_ptr<ID3D12GraphicsCommandList>> cmd_lists(
         this->pipeline_depth());
     for (UINT i = 0; i < this->pipeline_depth(); ++i) {
         auto cmd_list = cmd_lists[i] = this->create_graphics_command_list(i);
         set_debug_object_name(cmd_list, "CPU command list #{}", i);
 
-        cmd_list->SetComputeRootSignature(this->_compute_signature);
-        cmd_list->SetPipelineState(this->_compute_pipeline);
+        cmd_list->SetComputeRootSignature(this->_compute_signature.get());
+        cmd_list->SetPipelineState(this->_compute_pipeline.get());
         this->set_descriptors(cmd_list, i);
 
         // Enable the UAV to write to.
@@ -397,12 +398,12 @@ trrojan::result trrojan::d3d12::cs_volume_benchmark::on_run(
         auto cmd_list = cmd_lists[i];
         this->reset_command_list(cmd_list);
 
-        cmd_list->SetComputeRootSignature(this->_compute_signature);
-        cmd_list->SetPipelineState(this->_compute_pipeline);
+        cmd_list->SetComputeRootSignature(this->_compute_signature.get());
+        cmd_list->SetPipelineState(this->_compute_pipeline.get());
         this->set_descriptors(cmd_list, i);
 
         mctx.gpu_timer.start_frame();
-        mctx.gpu_timer.start(cmd_list, 0);
+        mctx.gpu_timer.start(cmd_list.get(), 0);
         transition_resource(cmd_list, this->_uavs[i],
             D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
@@ -418,8 +419,8 @@ trrojan::result trrojan::d3d12::cs_volume_benchmark::on_run(
 
         transition_resource(cmd_list, this->_uavs[i],
             D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_COMMON);
-        mctx.gpu_timer.end(cmd_list, 0);
-        const auto timer_index = mctx.gpu_timer.end_frame(cmd_list);
+        mctx.gpu_timer.end(cmd_list.get(), 0);
+        const auto timer_index = mctx.gpu_timer.end_frame(cmd_list.get());
 
         device.close_and_execute_command_list(cmd_list);
         this->present_target(config);
@@ -440,8 +441,8 @@ trrojan::result trrojan::d3d12::cs_volume_benchmark::on_run(
         auto cmd_list = cmd_lists[i];
         this->reset_command_list(cmd_list);
 
-        cmd_list->SetComputeRootSignature(this->_compute_signature);
-        cmd_list->SetPipelineState(this->_compute_pipeline);
+        cmd_list->SetComputeRootSignature(this->_compute_signature.get());
+        cmd_list->SetPipelineState(this->_compute_pipeline.get());
         this->set_descriptors(cmd_list, i);
 
         // Enable the UAV to write to.
@@ -449,9 +450,9 @@ trrojan::result trrojan::d3d12::cs_volume_benchmark::on_run(
             D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
         // Dispatch the compute call.
-        stats_query.begin(cmd_list, 0);
+        stats_query.begin(cmd_list.get(), 0);
         cmd_list->Dispatch(groupX, groupY, 1u);
-        stats_query.end(cmd_list, 0);
+        stats_query.end(cmd_list.get(), 0);
 
         // Transition UAV to copy source.
         transition_resource(cmd_list, this->_uavs[i],
@@ -468,7 +469,7 @@ trrojan::result trrojan::d3d12::cs_volume_benchmark::on_run(
         transition_resource(cmd_list, this->_uavs[i],
             D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_COMMON);
 
-        const auto stats_index = stats_query.end_frame(cmd_list);
+        const auto stats_index = stats_query.end_frame(cmd_list.get());
         device.close_and_execute_command_list(cmd_list);
 
         // Wait until the results are here.
@@ -524,7 +525,7 @@ void trrojan::d3d12::cs_volume_benchmark::set_constants(
         const D3D12_CPU_DESCRIPTOR_HANDLE handle_ray) const {
     assert(this->_cb_ray != nullptr);
     assert(this->_cb_view != nullptr);
-    auto device = get_device(this->_cb_ray.p);
+    auto device = get_device(this->_cb_ray.get());
 
     {
         D3D12_CONSTANT_BUFFER_VIEW_DESC desc;
@@ -553,6 +554,7 @@ void trrojan::d3d12::cs_volume_benchmark::set_descriptors(
         ID3D12GraphicsCommandList *cmd_list, const UINT frame) const {
     assert(cmd_list != nullptr);
     assert(this->_descriptor_heaps.size() > frame);
-    cmd_list->SetDescriptorHeaps(1, &this->_descriptor_heaps[frame].p);
+    auto heaps = unsmart(this->_descriptor_heaps[frame]);
+    cmd_list->SetDescriptorHeaps(1, heaps.data());
     cmd_list->SetComputeRootDescriptorTable(0, this->_descriptors[frame].front());
 }

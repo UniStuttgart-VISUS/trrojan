@@ -1,5 +1,5 @@
 ﻿// <copyright file="debug_render_target.h" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2022 - 2023 Visualisierungsinstitut der Universität Stuttgart.
+// Copyright © 2022 - 2024 Visualisierungsinstitut der Universität Stuttgart.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
 // <author>Christoph Müller</author>
@@ -10,8 +10,9 @@
 #include <memory>
 #include <thread>
 
-#include <atlbase.h>
 #include <Windows.h>
+
+#include <winrt/base.h>
 
 #include "trrojan/d3d12/render_target.h"
 
@@ -96,12 +97,12 @@ namespace d3d12 {
         /// Before presenting the debug target, its content will be copied to
         /// the back buffer of the swap chain.
         /// </summary>
-        ATL::CComPtr<ID3D12Resource> _staging_buffer;
+        winrt::com_ptr<ID3D12Resource> _staging_buffer;
 
         /// <summary>
         /// The swap chain for the window.
         /// </summary>
-        ATL::CComPtr<IDXGISwapChain3> _swap_chain;
+        winrt::com_ptr<IDXGISwapChain3> _swap_chain;
 
         /// <summary>
         /// The handle of the debug window.

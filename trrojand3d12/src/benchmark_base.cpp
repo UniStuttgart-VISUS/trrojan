@@ -1,5 +1,5 @@
 ﻿// <copyright file="benchmark_base.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2016 - 2023 Visualisierungsinstitut der Universität Stuttgart.
+// Copyright © 2016 - 2024 Visualisierungsinstitut der Universität Stuttgart.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
 // <author>Christoph Müller</author>
@@ -9,6 +9,7 @@
 #include <chrono>
 #include <ctime>
 
+#include "trrojan/com_error_category.h"
 #include "trrojan/executive.h"
 #include "trrojan/factor.h"
 #include "trrojan/io.h"
@@ -199,7 +200,7 @@ void trrojan::d3d12::benchmark_base::create_command_allocators(
             IID_ID3D12CommandAllocator,
             reinterpret_cast<void **>(&dst.back()));
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
         }
         set_debug_object_name(dst.back(), "benchmark_base command allocator "
             "#{}", dst.size() - 1);
@@ -210,7 +211,7 @@ void trrojan::d3d12::benchmark_base::create_command_allocators(
 /*
  * trrojan::d3d12::benchmark_base::create_command_list
  */
-ATL::CComPtr<ID3D12CommandList>
+winrt::com_ptr<ID3D12CommandList>
 trrojan::d3d12::benchmark_base::create_command_list(
         const command_allocator_list& allocators,
         const D3D12_COMMAND_LIST_TYPE type, const std::size_t frame,
@@ -219,22 +220,22 @@ trrojan::d3d12::benchmark_base::create_command_list(
         log::instance().write_line(log_level::error, "The given list of "
             "command allocators only supports {0} frames, but frame #{1} "
             "was requested.", allocators.size(), frame);
-        throw ATL::CAtlException(E_INVALIDARG);
+        throw std::system_error(E_INVALIDARG, com_category());
     }
     if (allocators[frame] == nullptr) {
         log::instance().write_line(log_level::error, "The command allocator "
             "at position {0} is invalid.", frame);
-        throw ATL::CAtlException(E_INVALIDARG);
+        throw std::system_error(E_INVALIDARG, com_category());
     }
 
-    ATL::CComPtr<ID3D12CommandList> retval;
+    winrt::com_ptr<ID3D12CommandList> retval;
     {
-        auto device = get_device(allocators[frame]);
-        auto hr = device->CreateCommandList(0, type, allocators[frame],
+        auto device = get_device(allocators[frame].get());
+        auto hr = device->CreateCommandList(0, type, allocators[frame].get(),
             initial_state, ::IID_ID3D12CommandList,
             reinterpret_cast<void **>(&retval));
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
         }
     }
 
@@ -300,16 +301,15 @@ void trrojan::d3d12::benchmark_base::create_buffer_resource_view(
 /*
  * trrojan::d3d12::benchmark_base::create_command_bundle
  */
-ATL::CComPtr<ID3D12GraphicsCommandList>
+winrt::com_ptr<ID3D12GraphicsCommandList>
 trrojan::d3d12::benchmark_base::create_command_bundle(
         const std::size_t allocator, ID3D12PipelineState *initial_state) {
     auto bundle = this->create_command_list(D3D12_COMMAND_LIST_TYPE_BUNDLE,
         allocator, initial_state);
 
-    ATL::CComPtr<ID3D12GraphicsCommandList> retval;
-    auto hr = bundle.QueryInterface(&retval);
-    if (FAILED(hr)) {
-        throw ATL::CAtlException(hr);
+    winrt::com_ptr<ID3D12GraphicsCommandList> retval;
+    if (!bundle.try_as(retval)) {
+        throw std::system_error(E_NOINTERFACE, com_category());
     }
 
     return retval;
@@ -319,7 +319,7 @@ trrojan::d3d12::benchmark_base::create_command_bundle(
 /*
  * trrojan::d3d12::benchmark_base::create_command_list
  */
-ATL::CComPtr<ID3D12CommandList>
+winrt::com_ptr<ID3D12CommandList>
 trrojan::d3d12::benchmark_base::create_command_list(
         const D3D12_COMMAND_LIST_TYPE type,
         const std::size_t frame,
@@ -346,7 +346,7 @@ trrojan::d3d12::benchmark_base::create_command_list(
             log_msg += type;
             log_msg += " is not supported.";
             log::instance().write_line(log_level::error, log_msg);
-            throw ATL::CAtlException(E_INVALIDARG);
+            throw std::system_error(E_INVALIDARG, com_category());
     }
 }
 
@@ -370,12 +370,12 @@ void trrojan::d3d12::benchmark_base::create_descriptor_heaps(
         this->pipeline_depth());
 
     for (UINT f = 0; f < this->pipeline_depth(); ++f) {
-        ATL::CComPtr<ID3D12DescriptorHeap> heap;
+        winrt::com_ptr<ID3D12DescriptorHeap> heap;
 
         auto hr = device->CreateDescriptorHeap(&desc,
             ::IID_ID3D12DescriptorHeap, reinterpret_cast<void **>(&heap));
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
         }
 
         set_debug_object_name(heap, "CBV/SRV/UAV descriptor heap for "
@@ -403,13 +403,13 @@ void trrojan::d3d12::benchmark_base::create_descriptor_heaps(
 
     for (UINT b = 0; b < this->pipeline_depth(); ++b) {
         for (auto& d : descs) {
-            ATL::CComPtr<ID3D12DescriptorHeap> heap;
+            winrt::com_ptr<ID3D12DescriptorHeap> heap;
 
             auto hr = device->CreateDescriptorHeap(&d,
                 ::IID_ID3D12DescriptorHeap,
                 reinterpret_cast<void **>(&heap));
             if (FAILED(hr)) {
-                throw ATL::CAtlException(hr);
+                throw std::system_error(hr, com_category());
             }
 
             set_debug_object_name(heap, "Type {:x} descriptor heap for frame "
@@ -430,10 +430,9 @@ trrojan::d3d12::benchmark_base::create_graphics_command_list(
         ID3D12PipelineState *initial_state) {
     auto cmd_list = this->create_command_list(type, frame, initial_state);
 
-    ATL::CComPtr<ID3D12GraphicsCommandList> retval;
-    auto hr = cmd_list.QueryInterface(&retval);
-    if (FAILED(hr)) {
-        throw ATL::CAtlException(hr);
+    winrt::com_ptr<ID3D12GraphicsCommandList> retval;
+    if (!cmd_list.try_as(retval)) {
+        throw std::system_error(E_NOINTERFACE, com_category());
     }
 
     return retval;
@@ -478,7 +477,7 @@ void trrojan::d3d12::benchmark_base::on_device_switch(device& device) {
             auto hr = device.d3d_device()->CreateDescriptorHeap(&desc,
                 ::IID_ID3D12DescriptorHeap, reinterpret_cast<void **>(&h));
             if (FAILED(hr)) {
-                throw ATL::CAtlException(hr);
+                throw std::system_error(hr, com_category());
             }
         }
     }
@@ -494,7 +493,7 @@ void trrojan::d3d12::benchmark_base::on_device_switch(device& device) {
         log::instance().write_line(log_level::verbose, "(Re-) Allocating {0} "
             " direct command allocator(s).", cnt);
         create_command_allocators(this->_direct_cmd_allocators,
-            device.d3d_device(), D3D12_COMMAND_LIST_TYPE_DIRECT, cnt);
+            device.d3d_device().get(), D3D12_COMMAND_LIST_TYPE_DIRECT, cnt);
     }
 }
 
@@ -510,15 +509,15 @@ void trrojan::d3d12::benchmark_base::reset_command_list(
     {
         auto hr = this->_direct_cmd_allocators[frame]->Reset();
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
         }
     }
 
     {
-        auto hr = cmd_list->Reset(this->_direct_cmd_allocators[frame],
+        auto hr = cmd_list->Reset(this->_direct_cmd_allocators[frame].get(),
             initial_state);
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
         }
     }
 }
@@ -574,7 +573,7 @@ void trrojan::d3d12::benchmark_base::set_aspect_from_viewport(
 /*
  * trrojan::d3d12::benchmark_base::switch_to_uav_target
  */
-ATL::CComPtr<Id3d12UnorderedAccessView>
+winrt::com_ptr<Id3d12UnorderedAccessView>
 trrojan::d3d12::benchmark_base::switch_to_uav_target(void) {
     assert(this->render_target != nullptr);
     auto ctx = this->render_target->device_context();

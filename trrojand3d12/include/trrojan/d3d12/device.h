@@ -1,5 +1,5 @@
 ﻿// <copyright file="device.h" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2016 - 2023 Visualisierungsinstitut der Universität Stuttgart.
+// Copyright © 2016 - 2024 Visualisierungsinstitut der Universität Stuttgart.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
 // <author>Christoph Müller</author>
@@ -10,9 +10,10 @@
 #include <memory>
 
 #include <Windows.h>
-#include <atlbase.h>
 #include <d3d12.h>
 #include <dxgi1_4.h>
+
+#include <winrt/base.h>
 
 #include "trrojan/device.h"
 #include "trrojan/lazy.h"
@@ -39,11 +40,27 @@ namespace d3d12 {
         /// <param name="type"></param>
         /// <returns></returns>
         /// <paramref name="device" /> is <c>nullptr</c>.</exception>
-        /// <exception cref="ATL::CAtlException">If the object could not
+        /// <exception cref="std::system_error">If the object could not
         /// be created.</exception>
-        static ATL::CComPtr<ID3D12CommandQueue> create_command_queue(
+        static winrt::com_ptr<ID3D12CommandQueue> create_command_queue(
             ID3D12Device *device, const D3D12_COMMAND_LIST_TYPE type
             = D3D12_COMMAND_LIST_TYPE_DIRECT);
+
+        /// <summary>
+        /// Allocate a command queue for the given device.
+        /// </summary>
+        /// <param name="device"></param>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        /// <paramref name="device" /> is <c>nullptr</c>.</exception>
+        /// <exception cref="std::system_error">If the object could not
+        /// be created.</exception>
+        static inline winrt::com_ptr<ID3D12CommandQueue> create_command_queue(
+                winrt::com_ptr<ID3D12Device> device,
+                const D3D12_COMMAND_LIST_TYPE type
+                = D3D12_COMMAND_LIST_TYPE_DIRECT) {
+            return create_command_queue(device.get(), type);
+        }
 
 #if !defined(TRROJAN_FOR_UWP)
         /// <summary>
@@ -55,8 +72,8 @@ namespace d3d12 {
         /// underlying adapter. This is required due to the changes described
         /// on https://docs.microsoft.com/en-us/windows/win32/direct3ddxgi/dxgi-1-4-improvements
         /// </param>
-        device(const ATL::CComPtr<ID3D12Device>& d3dDevice,
-            const ATL::CComPtr<IDXGIFactory4>& dxgiFactory);
+        device(const winrt::com_ptr<ID3D12Device>& d3dDevice,
+            const winrt::com_ptr<IDXGIFactory4>& dxgiFactory);
 #endif /* !defined(TRROJAN_FOR_UWP) */
 
 #if defined(TRROJAN_FOR_UWP)
@@ -68,7 +85,7 @@ namespace d3d12 {
         /// the generator.</param>
         /// <param name="d3dDevice">The generator for the D3D device.</param>
         template<class TGenerator>
-        device(const ATL::CComPtr<IDXGIFactory4>& dxgiFactory,
+        device(const winrt::com_ptr<IDXGIFactory4>& dxgiFactory,
             TGenerator&& d3dDevice);
 #endif /* defined(TRROJAN_FOR_UWP) */
 
@@ -84,10 +101,18 @@ namespace d3d12 {
             ID3D12GraphicsCommandList *cmd_list);
 
         /// <summary>
+        /// Close the given command list and execute it immediately.
+        /// </summary>
+        inline void close_and_execute_command_list(
+                winrt::com_ptr<ID3D12GraphicsCommandList> cmd_list) {
+            this->close_and_execute_command_list(cmd_list.get());
+        }
+
+        /// <summary>
         /// Answer the direct command queue of the device.
         /// </summary>
         /// <returns></returns>
-        inline ATL::CComPtr<ID3D12CommandQueue> command_queue(void) {
+        inline winrt::com_ptr<ID3D12CommandQueue> command_queue(void) {
 #if defined(TRROJAN_FOR_UWP)
             if (this->_command_queue == nullptr) {
                 this->_command_queue = this->make_cmd_queue();
@@ -99,7 +124,7 @@ namespace d3d12 {
         /// <summary>
         /// Answer the underlying Direct3D device.
         /// </summary>
-        inline ATL::CComPtr<ID3D12Device>& d3d_device(void) {
+        inline winrt::com_ptr<ID3D12Device>& d3d_device(void) {
             return this->_d3d_device;
         }
 
@@ -107,13 +132,13 @@ namespace d3d12 {
         /// Answer the underlying DXGI adapter on which the device was created.
         /// </summary>
         /// <returns></returns>
-        ATL::CComPtr<IDXGIAdapter> dxgi_adapter(void);
+        winrt::com_ptr<IDXGIAdapter> dxgi_adapter(void);
 
         /// <summary>
         /// Answer the DXGI factory that was used to create the device.
         /// </summary>
         /// <returns></returns>
-        inline ATL::CComPtr<IDXGIFactory4>& dxgi_factory(void) {
+        inline winrt::com_ptr<IDXGIFactory4>& dxgi_factory(void) {
             return this->_dxgi_factory;
         }
 
@@ -123,6 +148,16 @@ namespace d3d12 {
         /// </summary>
         /// <param name="cmd_list"></param>
         void execute_command_list(ID3D12CommandList *cmd_list);
+
+        /// <summary>
+        /// Execute the given command list on the direct command queue of the
+        ///  device.
+        /// </summary>
+        /// <param name="cmd_list"></param>
+        inline void execute_command_list(
+                winrt::com_ptr<ID3D12CommandList> cmd_list) {
+            this->execute_command_list(cmd_list.get());
+        }
 
 #if defined(TRROJAN_FOR_UWP)
         /// <summary>
@@ -165,7 +200,7 @@ namespace d3d12 {
 
     private:
 
-        inline ATL::CComPtr<ID3D12Fence>& fence(void) {
+        inline winrt::com_ptr<ID3D12Fence>& fence(void) {
 #if defined(TRROJAN_FOR_UWP)
             if (this->_fence == nullptr) {
                 this->_fence = this->make_fence();
@@ -174,20 +209,20 @@ namespace d3d12 {
             return this->_fence;
         }
 
-        ATL::CComPtr<ID3D12CommandQueue> make_cmd_queue(void);
+        winrt::com_ptr<ID3D12CommandQueue> make_cmd_queue(void);
 
-        ATL::CComPtr<ID3D12Fence> make_fence(void);
+        winrt::com_ptr<ID3D12Fence> make_fence(void);
 
         void set_desc_from_device(void);
 
-        ATL::CComPtr<ID3D12CommandQueue> _command_queue;
+        winrt::com_ptr<ID3D12CommandQueue> _command_queue;
 #if defined(TRROJAN_FOR_UWP)
-        lazy<ATL::CComPtr<ID3D12Device>> _d3d_device;
+        lazy<winrt::com_ptr<ID3D12Device>> _d3d_device;
 #else /* defined(TRROJAN_FOR_UWP) */
-        ATL::CComPtr<ID3D12Device> _d3d_device;
+        winrt::com_ptr<ID3D12Device> _d3d_device;
 #endif /* defined(TRROJAN_FOR_UWP) */
-        ATL::CComPtr<IDXGIFactory4> _dxgi_factory;
-        ATL::CComPtr<ID3D12Fence> _fence;
+        winrt::com_ptr<IDXGIFactory4> _dxgi_factory;
+        winrt::com_ptr<ID3D12Fence> _fence;
         std::atomic<UINT64> _next_fence;
     };
 

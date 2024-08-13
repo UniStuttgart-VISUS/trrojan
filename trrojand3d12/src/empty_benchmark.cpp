@@ -100,7 +100,7 @@ trrojan::result trrojan::d3d12::empty_benchmark::on_run(d3d12::device& device,
     }
 
     // Record command lists for CPU measurement.
-    std::vector<ATL::CComPtr<ID3D12GraphicsCommandList>> cmd_lists(
+    std::vector<winrt::com_ptr<ID3D12GraphicsCommandList>> cmd_lists(
         this->pipeline_depth());
     for (UINT i = 0; i < this->pipeline_depth(); ++i) {
         cmd_lists[i] = this->create_graphics_command_list(i);

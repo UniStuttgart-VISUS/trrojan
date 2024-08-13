@@ -10,6 +10,7 @@
 
 #include <fstream>
 
+#include "trrojan/com_error_category.h"
 #include "trrojan/log.h"
 #include "trrojan/on_exit.h"
 #include "trrojan/text.h"
@@ -163,7 +164,7 @@ winrt::file_handle trrojan::d3d12::sphere_data::copy_to(const std::string& path,
         FILE_ATTRIBUTE_NORMAL, NULL));
 #endif /* defined(TRROJAN_FOR_UWP */
     if (!retval) {
-        throw ATL::CAtlException(HRESULT_FROM_WIN32(::GetLastError()));
+        throw std::system_error(::GetLastError(), std::system_category());
     }
 
     // The file mapping, which must outlive the load callback as the copy
@@ -235,14 +236,14 @@ void trrojan::d3d12::sphere_data::get_sphere_constants(
 /*
  * trrojan::d3d12::sphere_data::load
  */
-ATL::CComPtr<ID3D12Resource> trrojan::d3d12::sphere_data::load(
+winrt::com_ptr<ID3D12Resource> trrojan::d3d12::sphere_data::load(
         ID3D12GraphicsCommandList *cmd_list,
         const shader_id_type shader_code,
         const sphere_rendering_configuration& config,
         const D3D12_RESOURCE_STATES state) {
     assert(cmd_list != nullptr);
     auto device = get_device(cmd_list);
-    ATL::CComPtr<ID3D12Resource> retval;
+    winrt::com_ptr<ID3D12Resource> retval;
 
     auto size = this->load([this, &device, &retval](const UINT64 size) {
         this->_data = create_buffer(device, size);
@@ -254,7 +255,7 @@ ATL::CComPtr<ID3D12Resource> trrojan::d3d12::sphere_data::load(
             // Note that we do not catch this outside, because if this throws,
             // load_data will exit with an exception and 'retval' will be
             // destroyed and thus unmapped implicitly.
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
         }
 
         return data;
@@ -268,9 +269,9 @@ ATL::CComPtr<ID3D12Resource> trrojan::d3d12::sphere_data::load(
     assert(this->_data != nullptr);
     set_debug_object_name(this->_data, config.data_set().c_str());
 
-    cmd_list->CopyBufferRegion(this->_data, 0, retval, 0, size);
-    transition_resource(cmd_list, this->_data, D3D12_RESOURCE_STATE_COPY_DEST,
-        state);
+    cmd_list->CopyBufferRegion(this->_data.get(), 0, retval.get(), 0, size);
+    transition_resource(cmd_list, this->_data.get(),
+        D3D12_RESOURCE_STATE_COPY_DEST, state);
 
     return retval;
 }

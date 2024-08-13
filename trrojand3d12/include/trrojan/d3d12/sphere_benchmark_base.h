@@ -123,6 +123,18 @@ namespace d3d12 {
             const descriptor_table_type& descriptors);
 
         /// <summary>
+        /// Apply the given descriptor table as root descriptors in the given
+        /// command list.
+        /// </summary>
+        /// <param name="cmd_list"></param>
+        /// <param name="descriptors"></param>
+        static inline void set_descriptors(
+                winrt::com_ptr<ID3D12GraphicsCommandList> cmd_list,
+                const descriptor_table_type& descriptors) {
+            set_descriptors(cmd_list.get(), descriptors);
+        }
+
+        /// <summary>
         /// Sets the necessary shaders for the given
         /// <see cref="shader_id_type" /> in the given pipeline state builder.
         /// </summary>
@@ -221,7 +233,27 @@ namespace d3d12 {
         /// </summary>
         /// <param name="shader_code"></param>
         /// <returns></returns>
-        ATL::CComPtr<ID3D12PipelineState> get_pipeline_state(
+        winrt::com_ptr<ID3D12PipelineState> get_pipeline_state(
+            ID3D12Device *device, const shader_id_type shader_code);
+
+        /// <summary>
+        /// Gets the pipeline state for the given shading technique.
+        /// </summary>
+        /// <param name="shader_code"></param>
+        /// <returns></returns>
+        winrt::com_ptr<ID3D12PipelineState> get_pipeline_state(
+                winrt::com_ptr<ID3D12Device> device,
+                const shader_id_type shader_code) {
+            return this->get_pipeline_state(device.get(), shader_code);
+        }
+
+        /// <summary>
+        /// Get the root signature for the given shading technique.
+        /// </summary>
+        /// <param name="device"></param>
+        /// <param name="shader_code"></param>
+        /// <returns></returns>
+        winrt::com_ptr<ID3D12RootSignature> get_root_signature(
             ID3D12Device *device, const shader_id_type shader_code);
 
         /// <summary>
@@ -230,8 +262,11 @@ namespace d3d12 {
         /// <param name="device"></param>
         /// <param name="shader_code"></param>
         /// <returns></returns>
-        ATL::CComPtr<ID3D12RootSignature> get_root_signature(
-            ID3D12Device *device, const shader_id_type shader_code);
+        inline winrt::com_ptr<ID3D12RootSignature> get_root_signature(
+                winrt::com_ptr<ID3D12Device> device,
+                const shader_id_type shader_code) {
+            return this->get_root_signature(device.get(), shader_code);
+        }
 
         /// <summary>
         /// Gets the GPU-virtual address for the sphere constants of the given
@@ -309,6 +344,48 @@ namespace d3d12 {
             const UINT cnt_data = 0);
 
         /// <summary>
+        /// Creates a host-memory description holding all descriptors that need
+        /// to be set for the given shader.
+        /// </summary>
+        /// <remarks>
+        /// <para>This method will check all potential shader resource views
+        /// that are available for sphere renderers and add them to the returned
+        /// descriptor table if necessary. The return value holds only the
+        /// descriptors that are expected by the shaders described by
+        /// <paramref name="shader_code" />.</para>
+        /// <para>The descriptors created are not applied on the device, but
+        /// must be passed to a command list before issuing draw calls.</para>
+        /// </remarks>
+        /// <param name="device"></param>
+        /// <param name="shader_code"></param>
+        /// <param name="frame"></param>
+        /// <param name="first_descriptor">An offset for the first descriptor to
+        /// be used. This can be used for application cases where there are
+        /// multiple descriptor tables per frame in the same heap.</param>
+        /// <param name="data">If non-<c>nullptr</c>, overwrites the data set in
+        /// <see cref="_data" />. This is typically used in combination with
+        /// <see cref="first_data_element" /> and <paramref name="cnt_data" />
+        /// in order to overwrite the default <see cref="_data" /> field
+        /// managing the data set in this base class.</param>
+        /// <param name="first_data_element">If non-zero, overwrites the offset
+        /// of the data to be used.</param>
+        /// <param name="cnt_data">If non-zero, overwrites the size of the data
+        /// being mapped.</param>
+        /// <returns>The descriptor heap that was used to set the shader
+        /// resource views and constant buffers.</returns>
+        inline descriptor_table_type set_descriptors(
+                winrt::com_ptr<ID3D12Device> device,
+                const shader_id_type shader_code,
+                const UINT frame,
+                const UINT64 first_descriptor = 0,
+                winrt::com_ptr<ID3D12Resource> data = nullptr,
+                const UINT64 first_data_element = 0,
+                const UINT cnt_data = 0) {
+            return this->set_descriptors(device.get(), shader_code, frame,
+                first_descriptor, data.get(), first_data_element, cnt_data);
+        }
+
+        /// <summary>
         /// Creates the host-memory description of the descriptors required for
         /// the given shader using the descriptor table of the current frame.
         /// </summary>
@@ -325,6 +402,25 @@ namespace d3d12 {
                 const shader_id_type shader_code) {
             return this->set_descriptors(device, shader_code,
                 this->buffer_index());
+        }
+
+        /// <summary>
+        /// Creates the host-memory description of the descriptors required for
+        /// the given shader using the descriptor table of the current frame.
+        /// </summary>
+        /// <remarks>
+        /// <para>As descriptor tables are allocated on a descriptor heap and
+        /// there are separate descriptor heaps for each frame in the pipeline,
+        /// the descriptors must be set for every frame individually. This
+        /// overload does this for the currently active frame rather than for
+        /// a user-specified one.</para>
+        /// </remarks>
+        /// <param name="device"></param>
+        /// <param name="shader_code"></param>
+        inline descriptor_table_type set_descriptors(
+                winrt::com_ptr<ID3D12Device> device,
+                const shader_id_type shader_code) {
+            return this->set_descriptors(device.get(), shader_code);
         }
 
           /// <summary>
@@ -412,13 +508,13 @@ namespace d3d12 {
     private:
 
         typedef std::unordered_map<shader_id_type,
-            ATL::CComPtr<ID3D12PipelineState>> pipline_state_map_type;
+            winrt::com_ptr<ID3D12PipelineState>> pipline_state_map_type;
         typedef std::unordered_map<shader_id_type,
-            ATL::CComPtr<ID3D12RootSignature>> root_signature_map_type;
+            winrt::com_ptr<ID3D12RootSignature>> root_signature_map_type;
 
         UINT _cnt_descriptor_tables;
-        ATL::CComPtr<ID3D12Resource> _colour_map;
-        ATL::CComPtr<ID3D12Resource> _constant_buffer;
+        winrt::com_ptr<ID3D12Resource> _colour_map;
+        winrt::com_ptr<ID3D12Resource> _constant_buffer;
         pipline_state_map_type _pipeline_cache;
         root_signature_map_type _root_sig_cache;
     };

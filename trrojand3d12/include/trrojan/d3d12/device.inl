@@ -10,7 +10,7 @@
  * trrojan::d3d12::device::device
  */
 template<class TGenerator>
-trrojan::d3d12::device::device(const ATL::CComPtr<IDXGIFactory4>& dxgiFactory,
+trrojan::d3d12::device::device(const winrt::com_ptr<IDXGIFactory4>& dxgiFactory,
             TGenerator&& d3dDevice)
         : _d3d_device(std::forward<TGenerator>(d3dDevice)),
             _dxgi_factory(dxgiFactory),

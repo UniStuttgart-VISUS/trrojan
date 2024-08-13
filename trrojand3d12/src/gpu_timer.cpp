@@ -1,10 +1,12 @@
-// <copyright file="gpu_timer.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2022 Visualisierungsinstitut der Universität Stuttgart.
+ï»¿// <copyright file="gpu_timer.cpp" company="Visualisierungsinstitut der UniversitÃ¤t Stuttgart">
+// Copyright Â© 2022 - 2024 Visualisierungsinstitut der UniversitÃ¤t Stuttgart.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
-// <author>Christoph Müller</author>
+// <author>Christoph MÃ¼ller</author>
 
 #include "trrojan/d3d12/gpu_timer.h"
+
+#include "trrojan/com_error_category.h"
 
 #include "trrojan/d3d12/utilities.h"
 
@@ -25,7 +27,7 @@ void trrojan::d3d12::gpu_timer::get_clock_calibration(
 
     auto hr = queue->GetClockCalibration(&gpu_timestamp, &cpu_timestamp);
     if (FAILED(hr)) {
-        throw ATL::CAtlException(hr);
+        throw std::system_error(hr, com_category());
     }
 }
 
@@ -45,7 +47,7 @@ trrojan::d3d12::gpu_timer::get_timestamp_frequency(
 
     auto hr = queue->GetTimestampFrequency(&retval);
     if (FAILED(hr)) {
-        throw ATL::CAtlException(hr);
+        throw std::system_error(hr, com_category());
     }
 
     return retval;
@@ -81,8 +83,9 @@ trrojan::d3d12::gpu_timer::to_milliseconds(
 /*
  * trrojan::d3d12::gpu_timer::gpu_timer
  */
-trrojan::d3d12::gpu_timer::gpu_timer(ID3D12Device *device,
-        const size_type queries, const size_type buffers,
+trrojan::d3d12::gpu_timer::gpu_timer(winrt::com_ptr<ID3D12Device> device,
+        const size_type queries,
+        const size_type buffers,
         const D3D12_QUERY_HEAP_TYPE heap_type)
         : _device(device), _heap_type(heap_type) {
     if (this->_device == nullptr) {
@@ -106,11 +109,11 @@ trrojan::d3d12::gpu_timer::gpu_timer(ID3D12CommandQueue *queue,
             "intialise a gpu_timer.");
     }
 
-    ATL::CComPtr<ID3D12Device> device;
+    winrt::com_ptr<ID3D12Device> device;
     {
         auto hr = queue->GetDevice(IID_PPV_ARGS(&this->_device));
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
         }
     }
 
@@ -149,7 +152,7 @@ void trrojan::d3d12::gpu_timer::end(ID3D12GraphicsCommandList *cmd_list,
         const size_type query) {
     assert(cmd_list != nullptr);
     auto idx = this->result_index(query, query_location::end);
-    cmd_list->EndQuery(this->_heap, D3D12_QUERY_TYPE_TIMESTAMP, idx);
+    cmd_list->EndQuery(this->_heap.get(), D3D12_QUERY_TYPE_TIMESTAMP, idx);
 }
 
 
@@ -163,8 +166,8 @@ trrojan::d3d12::gpu_timer::size_type trrojan::d3d12::gpu_timer::end_frame(
     const auto index = this->result_index(0, first);
     const auto queries = this->queries_per_buffer();
     const auto offset = index * sizeof(value_type);
-    cmd_list->ResolveQueryData(this->_heap, D3D12_QUERY_TYPE_TIMESTAMP,
-        index, queries, this->_result_buffer, offset);
+    cmd_list->ResolveQueryData(this->_heap.get(), D3D12_QUERY_TYPE_TIMESTAMP,
+        index, queries, this->_result_buffer.get(), offset);
     return this->_idx_active_buffer;
 }
 
@@ -196,7 +199,7 @@ void trrojan::d3d12::gpu_timer::evaluate(value_type& outStart,
     {
         auto hr = this->_result_buffer->Map(0, &range, &data);
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
         }
     }
 
@@ -273,7 +276,7 @@ void trrojan::d3d12::gpu_timer::resize(const size_type queries,
             nullptr,
             IID_PPV_ARGS(&this->_result_buffer));
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
         }
         set_debug_object_name(this->_result_buffer, "gpu_timer buffer");
     }
@@ -282,7 +285,7 @@ void trrojan::d3d12::gpu_timer::resize(const size_type queries,
         auto hr = this->_device->CreateQueryHeap(&desc,
             IID_PPV_ARGS(&this->_heap));
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
         }
         set_debug_object_name(this->_heap, "gpu_timer heap");
     }
@@ -301,7 +304,7 @@ void trrojan::d3d12::gpu_timer::start(ID3D12GraphicsCommandList *cmd_list,
         const size_type query) {
     assert(cmd_list != nullptr);
     auto idx = this->result_index(query, query_location::start);
-    cmd_list->EndQuery(this->_heap, D3D12_QUERY_TYPE_TIMESTAMP, idx);
+    cmd_list->EndQuery(this->_heap.get(), D3D12_QUERY_TYPE_TIMESTAMP, idx);
 }
 
 

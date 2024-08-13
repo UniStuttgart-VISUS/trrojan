@@ -33,7 +33,7 @@ namespace d3d12 {
         /// A descriptor table repesented as a descriptor heap and offsets to
         /// the entries in that heap.
         /// </summary>
-        typedef std::pair<ATL::CComPtr<ID3D12DescriptorHeap>,
+        typedef std::pair<winrt::com_ptr<ID3D12DescriptorHeap>,
             std::vector<D3D12_GPU_DESCRIPTOR_HANDLE>> descriptor_table_type;
 
         /// <summary>
@@ -144,7 +144,7 @@ namespace d3d12 {
         /// This buffer does not necessarily need to be valid, because callers
         /// can chose to load data into a custom buffer.
         /// </remarks>
-        inline ATL::CComPtr<ID3D12Resource> data(void) const noexcept {
+        inline winrt::com_ptr<ID3D12Resource> data(void) const noexcept {
             return this->_data;
         }
 
@@ -202,7 +202,7 @@ namespace d3d12 {
         /// <returns>A pointer the upload buffer. Callers need to keep this
         /// buffer alive until they have executed <paramref name="cmd_list" />.
         /// </returns>
-        ATL::CComPtr<ID3D12Resource> load(
+        winrt::com_ptr<ID3D12Resource> load(
             ID3D12GraphicsCommandList *cmd_list,
             const shader_id_type shader_code,
             const sphere_rendering_configuration& config,
@@ -337,7 +337,7 @@ namespace d3d12 {
         std::array<glm::vec3, 2> _bbox;
         UINT _cnt_spheres;
         std::array<float, 4> _colour;
-        ATL::CComPtr<ID3D12Resource> _data;
+        winrt::com_ptr<ID3D12Resource> _data;
         std::vector<D3D12_INPUT_ELEMENT_DESC> _input_layout;
         std::array<float, 2> _intensity_range;
         float _max_radius;

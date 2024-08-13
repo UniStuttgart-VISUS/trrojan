@@ -1,10 +1,12 @@
-// <copyright file="stats_query.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2022 Visualisierungsinstitut der Universität Stuttgart.
+ï»¿// <copyright file="stats_query.cpp" company="Visualisierungsinstitut der UniversitÃ¤t Stuttgart">
+// Copyright Â© 2022 - 2024 Visualisierungsinstitut der UniversitÃ¤t Stuttgart.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
-// <author>Christoph Müller</author>
+// <author>Christoph MÃ¼ller</author>
 
 #include "trrojan/d3d12/stats_query.h"
+
+#include "trrojan/com_error_category.h"
 
 #include "trrojan/d3d12/utilities.h"
 
@@ -13,7 +15,8 @@
  * trrojan::d3d12::stats_query::stats_query
  */
 trrojan::d3d12::stats_query::stats_query(ID3D12Device *device,
-        const size_type queries, const size_type buffers) : _device(device) {
+        const size_type queries, const size_type buffers) {
+    this->_device.copy_from(device);
     if (this->_device == nullptr) {
         throw std::invalid_argument("The device cannot be null.");
     }
@@ -33,7 +36,7 @@ void trrojan::d3d12::stats_query::begin(ID3D12GraphicsCommandList *cmd_list,
     assert(cmd_list != nullptr);
     assert(this->_heap != nullptr);
     auto index = this->result_index(query);
-    cmd_list->BeginQuery(this->_heap, stats_query::query_type, index);
+    cmd_list->BeginQuery(this->_heap.get(), stats_query::query_type, index);
 }
 
 /*
@@ -52,7 +55,7 @@ void trrojan::d3d12::stats_query::end(ID3D12GraphicsCommandList *cmd_list,
     assert(cmd_list != nullptr);
     assert(this->_heap != nullptr);
     auto index = this->result_index(query);
-    cmd_list->EndQuery(this->_heap, stats_query::query_type, index);
+    cmd_list->EndQuery(this->_heap.get(), stats_query::query_type, index);
 }
 
 
@@ -64,8 +67,8 @@ trrojan::d3d12::stats_query::size_type trrojan::d3d12::stats_query::end_frame(
     assert(cmd_list != nullptr);
     const auto index = this->result_index(0);
     const auto offset = index * sizeof(value_type);
-    cmd_list->ResolveQueryData(this->_heap, stats_query::query_type, index,
-        this->_cnt_queries, this->_result_buffer, offset);
+    cmd_list->ResolveQueryData(this->_heap.get(), stats_query::query_type, index,
+        this->_cnt_queries, this->_result_buffer.get(), offset);
     return this->_idx_active_buffer;
 }
 
@@ -93,7 +96,7 @@ trrojan::d3d12::stats_query::value_type trrojan::d3d12::stats_query::evaluate(
     {
         auto hr = this->_result_buffer->Map(0, &range, &data);
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
         }
     }
 
@@ -158,7 +161,7 @@ void trrojan::d3d12::stats_query::resize(const size_type queries,
             nullptr,
             IID_PPV_ARGS(&this->_result_buffer));
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
         }
         set_debug_object_name(this->_result_buffer, "stats_query buffer");
     }
@@ -167,7 +170,7 @@ void trrojan::d3d12::stats_query::resize(const size_type queries,
         auto hr = this->_device->CreateQueryHeap(&desc,
             IID_PPV_ARGS(&this->_heap));
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
         }
         set_debug_object_name(this->_heap, "stats_query heap");
     }

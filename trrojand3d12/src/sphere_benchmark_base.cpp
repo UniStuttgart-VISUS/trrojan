@@ -14,6 +14,7 @@
 #include <glm/ext.hpp>
 
 #include "trrojan/clipping.h"
+#include "trrojan/com_error_category.h"
 #include "trrojan/constants.h"
 #include "trrojan/factor_enum.h"
 #include "trrojan/factor_range.h"
@@ -139,7 +140,10 @@ void trrojan::d3d12::sphere_benchmark_base::set_descriptors(
         ID3D12GraphicsCommandList *cmd_list,
         const descriptor_table_type& descriptors) {
     assert(cmd_list != nullptr);
-    cmd_list->SetDescriptorHeaps(1, &descriptors.first.p);
+    {
+        auto h = descriptors.first.get();
+        cmd_list->SetDescriptorHeaps(1, &h);
+    }
 
     for (UINT i = 0; i < descriptors.second.size(); ++i) {
         cmd_list->SetGraphicsRootDescriptorTable(i,
@@ -300,7 +304,7 @@ void trrojan::d3d12::sphere_benchmark_base::create_colour_map_view(
         ID3D12Device *device, const D3D12_CPU_DESCRIPTOR_HANDLE handle) {
     assert(device != nullptr);
     assert(this->_colour_map);
-    device->CreateShaderResourceView(this->_colour_map, nullptr, handle);
+    device->CreateShaderResourceView(this->_colour_map.get(), nullptr, handle);
 }
 
 
@@ -390,7 +394,7 @@ trrojan::d3d12::sphere_benchmark_base::get_pipeline_builder(
 /*
  * trrojan::d3d12::sphere_benchmark_base::get_pipeline_state
  */
-ATL::CComPtr<ID3D12PipelineState>
+winrt::com_ptr<ID3D12PipelineState>
 trrojan::d3d12::sphere_benchmark_base::get_pipeline_state(ID3D12Device *device,
         const shader_id_type shader_code) {
     assert(device != nullptr);
@@ -400,8 +404,8 @@ trrojan::d3d12::sphere_benchmark_base::get_pipeline_state(ID3D12Device *device,
     if (!is_create) {
         // If the device was switched, we need to recreate the pipeline state
         // on the new device.
-        auto existing_device = get_device(it->second);
-        is_create = (existing_device != device);
+        auto existing_device = get_device(it->second.get());
+        is_create = (existing_device.get() != device);
     }
 
     if (is_create) {
@@ -421,7 +425,7 @@ trrojan::d3d12::sphere_benchmark_base::get_pipeline_state(ID3D12Device *device,
 /*
  * trrojan::d3d12::sphere_benchmark_base::get_root_signature
  */
-ATL::CComPtr<ID3D12RootSignature>
+winrt::com_ptr<ID3D12RootSignature>
 trrojan::d3d12::sphere_benchmark_base::get_root_signature(ID3D12Device *device,
         const shader_id_type shader_code) {
     assert(device != nullptr);
@@ -431,8 +435,8 @@ trrojan::d3d12::sphere_benchmark_base::get_root_signature(ID3D12Device *device,
     if (!is_create) {
         // If the device was switched, we need to recreate the root signature
         // on the new device.
-        auto existing_device = get_device(it->second);
-        is_create = (existing_device != device);
+        auto existing_device = get_device(it->second.get());
+        is_create = (existing_device.get() != device);
     }
 
     if (is_create) {
@@ -570,10 +574,10 @@ void trrojan::d3d12::sphere_benchmark_base::on_device_switch(device& device) {
         void *p;
         auto hr = this->_constant_buffer->Map(0, nullptr, &p);
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
         }
 
-        set_debug_object_name(this->_constant_buffer.p, "constant_buffer");
+        set_debug_object_name(this->_constant_buffer, "constant_buffer");
 
         this->_sphere_constants = static_cast<SphereConstants *>(p);
         p = offset_by_n<SphereConstants,
@@ -640,7 +644,7 @@ trrojan::d3d12::sphere_benchmark_base::set_descriptors(
             log::instance().write_line(log_level::debug, "Rendering technique "
                 "uses per-vertex-colouring. Setting transfer function ...");
 #endif /* (defined(DEBUG) || defined(_DEBUG)) */
-            device->CreateShaderResourceView(this->_colour_map, nullptr,
+            device->CreateShaderResourceView(this->_colour_map.get(), nullptr,
                 cpu_handle);
             cpu_handle.ptr += increment;
             gpu_handle.ptr += increment;
@@ -652,7 +656,7 @@ trrojan::d3d12::sphere_benchmark_base::set_descriptors(
                 "uses instancing. Setting structured buffer view ...");
 #endif /* (defined(DEBUG) || defined(_DEBUG)) */
             this->create_buffer_resource_view(
-                (data != nullptr) ? data: this->_data.data(),
+                (data != nullptr) ? data : this->_data.data().get(),
                 first_data_element,
                 (cnt_data > 0) ? cnt_data : this->_data.spheres(),
                 this->_data.stride(),
@@ -670,7 +674,7 @@ trrojan::d3d12::sphere_benchmark_base::set_descriptors(
 #endif /* (defined(DEBUG) || defined(_DEBUG)) */
         tables.push_back(gpu_handle);
 
-        device->CreateShaderResourceView(this->_colour_map, nullptr,
+        device->CreateShaderResourceView(this->_colour_map.get(), nullptr,
             cpu_handle);
 
         cpu_handle.ptr += increment;

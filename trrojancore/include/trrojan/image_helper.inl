@@ -1,8 +1,8 @@
-/// <copyright file="image_helper.inl" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Christoph Müller</author>
+﻿// <copyright file="image_helper.inl" company="Visualisierungsinstitut der Universität Stuttgart">
+// Copyright © 2016 - 2014 Visualisierungsinstitut der Universität Stuttgart.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Christoph Müller</author>
 
 
 /*
@@ -23,8 +23,9 @@ void trrojan::save_image(const std::string& fileName, const T *data,
 
     try {
         auto format = detail::wic_format_traits<T>::id(channels);
-        trrojan::wic_save(trrojan::get_wic_factory(), data, width, height,
-            0, format, fileName, ::GUID_NULL);
+        auto wic = trrojan::get_wic_factory();
+        trrojan::wic_save(wic.get(), data, width, height, 0, format, fileName,
+            ::GUID_NULL);
         ::CoUninitialize();
     } catch (...) {
         ::CoUninitialize();

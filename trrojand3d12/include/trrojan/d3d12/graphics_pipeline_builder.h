@@ -1,14 +1,16 @@
-// <copyright file="graphics_pipeline_builder.h" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2022 Visualisierungsinstitut der Universität Stuttgart.
+ï»¿// <copyright file="graphics_pipeline_builder.h" company="Visualisierungsinstitut der UniversitÃ¤t Stuttgart">
+// Copyright Â© 2022 - 2024 Visualisierungsinstitut der UniversitÃ¤t Stuttgart.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
-// <author>Christoph Müller</author>
+// <author>Christoph MÃ¼ller</author>
 
 #pragma once
 
 #include <functional>
 #include <type_traits>
 #include <utility>
+
+#include <tchar.h>
 
 #include "trrojan/aligned_allocator.h"
 #include "trrojan/enum_dispatch_list.h"
@@ -44,7 +46,7 @@ namespace d3d12 {
         /// <param name="byte_code"></param>
         /// <param name="length"></param>
         /// <returns></returns>
-        static ATL::CComPtr<ID3D12RootSignature> root_signature_from_shader(
+        static winrt::com_ptr<ID3D12RootSignature> root_signature_from_shader(
             ID3D12Device *device, const BYTE *byte_code, const SIZE_T length);
 
         /// <summary>
@@ -53,7 +55,7 @@ namespace d3d12 {
         /// <param name="device"></param>
         /// <param name="byte_code"></param>
         /// <returns></returns>
-        static ATL::CComPtr<ID3D12RootSignature> root_signature_from_shader(
+        static winrt::com_ptr<ID3D12RootSignature> root_signature_from_shader(
             ID3D12Device *device, const std::vector<BYTE>& byte_code);
 
         /// <summary>
@@ -63,7 +65,7 @@ namespace d3d12 {
         /// <param name="device"></param>
         /// <param name="builder"></param>
         /// <returns></returns>
-        static ATL::CComPtr<ID3D12RootSignature> root_signature_from_shader(
+        static winrt::com_ptr<ID3D12RootSignature> root_signature_from_shader(
             ID3D12Device *device, const graphics_pipeline_builder& builder);
 
         /// <summary>
@@ -77,7 +79,7 @@ namespace d3d12 {
         /// </summary>
         /// <param name="device"></param>
         /// <returns></returns>
-        ATL::CComPtr<ID3D12PipelineState> build(ID3D12Device2 *device);
+        winrt::com_ptr<ID3D12PipelineState> build(ID3D12Device2 *device);
 
         /// <summary>
         /// Build a <see cref="ID3D12PipelineState" /> from the current state of
@@ -85,7 +87,7 @@ namespace d3d12 {
         /// </summary>
         /// <param name="device"></param>
         /// <returns></returns>
-        ATL::CComPtr<ID3D12PipelineState> build(ID3D12Device *device);
+        winrt::com_ptr<ID3D12PipelineState> build(ID3D12Device *device);
 
         /// <summary>
         /// Removes all shader subobjects from the builder.
@@ -472,7 +474,7 @@ namespace d3d12 {
         std::vector<BYTE> _hs;
         std::vector<D3D12_INPUT_ELEMENT_DESC> _il;
         std::vector<BYTE> _ps;
-        ATL::CComPtr<ID3D12RootSignature> _root_sig;
+        winrt::com_ptr<ID3D12RootSignature> _root_sig;
         std::vector<BYTE, alloc_type> _stream;
         std::vector<BYTE> _vs;
 

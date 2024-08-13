@@ -501,7 +501,7 @@ namespace d3d11 {
         /// </summary>
         /// <param name="list">The list to be modified.</param>
         /// <param name="size">The requested number of queries.</param>
-        /// <exception cref="ATL::CAtlException">If one or more queries could
+        /// <exception cref="std::system_error">If one or more queries could
         /// not be created.</exception>
         void assert_queries(query_list_type& list, const size_type size);
 

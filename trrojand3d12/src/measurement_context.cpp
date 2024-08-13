@@ -16,7 +16,7 @@ trrojan::d3d12::measurement_context::measurement_context(d3d12::device& device,
         const std::size_t gpu_ranges, const std::size_t pipeline_depth)
     : cpu_iterations(1),
         gpu_timer(device.d3d_device(), gpu_ranges, pipeline_depth),
-        stats_query(device.d3d_device(), 1, 1) {
+        stats_query(device.d3d_device().get(), 1, 1) {
     this->_gpu_timer_frequency = gpu_timer::get_timestamp_frequency(
         device.command_queue());
 }

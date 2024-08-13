@@ -129,13 +129,13 @@ DXGI_FORMAT trrojan::d3d12::volume_benchmark_base::get_format(
 /*
  * trrojan::d3d12::volume_benchmark_base::load_brudervn_xfer_func
  */
-ATL::CComPtr<ID3D12Resource>
+winrt::com_ptr<ID3D12Resource>
 trrojan::d3d12::volume_benchmark_base::load_brudervn_xfer_func(
         const std::string& path,
         d3d12::device& device,
         ID3D12GraphicsCommandList *cmd_list,
         const D3D12_RESOURCE_STATES state,
-        ATL::CComPtr<ID3D12Resource>& out_staging) {
+        winrt::com_ptr<ID3D12Resource>& out_staging) {
     log::instance().write_line(log_level::debug, "Loading transfer function "
         "from {} ...", path);
     const auto data = trrojan::load_brudervn_xfer_func(path);
@@ -146,7 +146,7 @@ trrojan::d3d12::volume_benchmark_base::load_brudervn_xfer_func(
 /*
  * trrojan::d3d12::volume_benchmark_base::load_volume
  */
-ATL::CComPtr<ID3D12Resource>
+winrt::com_ptr<ID3D12Resource>
 trrojan::d3d12::volume_benchmark_base::load_volume(
         const std::string& path,
         const frame_type frame,
@@ -154,7 +154,7 @@ trrojan::d3d12::volume_benchmark_base::load_volume(
         ID3D12GraphicsCommandList *cmd_list,
         const D3D12_RESOURCE_STATES state,
         info_type& out_info,
-        ATL::CComPtr<ID3D12Resource>& out_staging) {
+        winrt::com_ptr<ID3D12Resource>& out_staging) {
     log::instance().write_line(log_level::debug, "Loading volume data "
         "from {} ...", path);
     auto reader = reader_type::open(path);
@@ -175,27 +175,27 @@ trrojan::d3d12::volume_benchmark_base::load_volume(
 
     // Stage the volume.
     const auto data = reader.read_current();
-    out_staging = create_upload_buffer(device.d3d_device(), data.size());
-    set_debug_object_name(out_staging.p, "volume_staging");
-    stage_data(out_staging, data.data(), data.size());
+    out_staging = create_upload_buffer(device.d3d_device().get(), data.size());
+    set_debug_object_name(out_staging, "volume_staging");
+    stage_data(out_staging.get(), data.data(), data.size());
 
     // Copy the data from the staging buffer to the texture.
     const auto format = get_format(reader.info());
     auto retval = create_texture(device.d3d_device(), resolution[0],
         resolution[1], resolution[2], format);
-    set_debug_object_name(retval.p, "volume");
+    set_debug_object_name(retval, "volume");
 
-    auto src_loc = get_copy_location(out_staging);
+    auto src_loc = get_copy_location(out_staging.get());
     assert(src_loc.PlacedFootprint.Footprint.Format == DXGI_FORMAT_UNKNOWN);
     src_loc.PlacedFootprint.Footprint.Format = format;
     src_loc.PlacedFootprint.Footprint.Width = resolution[0];
     src_loc.PlacedFootprint.Footprint.Height = resolution[1];
     src_loc.PlacedFootprint.Footprint.Depth = resolution[2];
     src_loc.PlacedFootprint.Footprint.RowPitch = reader.info().row_pitch();
-    auto dst_loc = get_copy_location(retval);
+    auto dst_loc = get_copy_location(retval.get());
 
     cmd_list->CopyTextureRegion(&dst_loc, 0, 0, 0, &src_loc, nullptr);
-    transition_resource(cmd_list, retval, D3D12_RESOURCE_STATE_COPY_DEST,
+    transition_resource(cmd_list, retval.get(), D3D12_RESOURCE_STATE_COPY_DEST,
         state);
 
     // Return the info block in case of success.
@@ -208,13 +208,13 @@ trrojan::d3d12::volume_benchmark_base::load_volume(
 /*
  * trrojan::d3d12::volume_benchmark_base::load_xfer_func
  */
-ATL::CComPtr<ID3D12Resource>
+winrt::com_ptr<ID3D12Resource>
 trrojan::d3d12::volume_benchmark_base::load_xfer_func(
         const std::vector<std::uint8_t>& data,
         d3d12::device& device,
         ID3D12GraphicsCommandList *cmd_list,
         const D3D12_RESOURCE_STATES state,
-        ATL::CComPtr<ID3D12Resource>& out_staging) {
+        winrt::com_ptr<ID3D12Resource>& out_staging) {
     const auto cnt = std::div(static_cast<long>(data.size()), 4l);
     const auto format = DXGI_FORMAT_R8G8B8A8_UNORM;
 
@@ -229,24 +229,24 @@ trrojan::d3d12::volume_benchmark_base::load_xfer_func(
     }
 
     // Create a staging buffer for uploading the data.
-    out_staging = create_upload_buffer(device.d3d_device(), data.size());
-    set_debug_object_name(out_staging.p, "xfer_func_staging");
-    stage_data(out_staging, data.data(), data.size());
+    out_staging = create_upload_buffer(device.d3d_device().get(), data.size());
+    set_debug_object_name(out_staging, "xfer_func_staging");
+    stage_data(out_staging.get(), data.data(), data.size());
 
     // Copy the data from the staging buffer to the texture.
     auto retval = create_texture(device.d3d_device(), cnt.quot, format);
-    set_debug_object_name(retval.p, "xfer_func");
+    set_debug_object_name(retval, "xfer_func");
 
-    auto src_loc = get_copy_location(out_staging);
+    auto src_loc = get_copy_location(out_staging.get());
     assert(src_loc.PlacedFootprint.Footprint.Format == DXGI_FORMAT_UNKNOWN);
     src_loc.PlacedFootprint.Footprint.Format = format;
     assert(src_loc.PlacedFootprint.Footprint.Width > data.size());
     src_loc.PlacedFootprint.Footprint.Width
         = static_cast<UINT>(data.size() / 4);
-    auto dst_loc = get_copy_location(retval);
+    auto dst_loc = get_copy_location(retval.get());
 
     cmd_list->CopyTextureRegion(&dst_loc, 0, 0, 0, &src_loc, nullptr);
-    transition_resource(cmd_list, retval, D3D12_RESOURCE_STATE_COPY_DEST,
+    transition_resource(cmd_list, retval.get(), D3D12_RESOURCE_STATE_COPY_DEST,
         state);
 
     return retval;
@@ -256,13 +256,13 @@ trrojan::d3d12::volume_benchmark_base::load_xfer_func(
 /*
  * trrojan::d3d12::volume_benchmark_base::load_xfer_func
  */
-ATL::CComPtr<ID3D12Resource>
+winrt::com_ptr<ID3D12Resource>
 trrojan::d3d12::volume_benchmark_base::load_xfer_func(
         const std::string &path,
         d3d12::device& device,
         ID3D12GraphicsCommandList *cmd_list,
         const D3D12_RESOURCE_STATES state,
-        ATL::CComPtr<ID3D12Resource>& out_staging) {
+        winrt::com_ptr<ID3D12Resource>& out_staging) {
     log::instance().write_line(log_level::debug, "Loading transfer function "
         "from {} ...", path);
     const auto data = read_binary_file(path);
@@ -273,13 +273,13 @@ trrojan::d3d12::volume_benchmark_base::load_xfer_func(
 /*
  * trrojan::d3d12::volume_benchmark_base::load_xfer_func
  */
-ATL::CComPtr<ID3D12Resource>
+winrt::com_ptr<ID3D12Resource>
 trrojan::d3d12::volume_benchmark_base::load_xfer_func(
         const configuration& config,
         d3d12::device& device,
         ID3D12GraphicsCommandList *cmd_list,
         const D3D12_RESOURCE_STATES state,
-        ATL::CComPtr<ID3D12Resource>& out_staging) {
+        winrt::com_ptr<ID3D12Resource>& out_staging) {
     try {
         auto path = config.get<std::string>(factor_xfer_func);
 
@@ -373,11 +373,11 @@ trrojan::result trrojan::d3d12::volume_benchmark_base::on_run(
         // The following variable keeps the staging buffer alive until the
         // command list has completed processing. This is required or the
         // whole stuff crashes.
-        std::array<ATL::CComPtr<ID3D12Resource>, 2> staging_buffers;
+        std::array<winrt::com_ptr<ID3D12Resource>, 2> staging_buffers;
 
         if (this->_tex_volume == nullptr) {
             this->_tex_volume = this->load_volume(config, device,
-                cmd_list, res_target_state, this->_volume_info,
+                cmd_list.get(), res_target_state, this->_volume_info,
                 staging_buffers.front());
             this->calc_bounding_box(this->_volume_bbox.front(),
                 this->_volume_bbox.back());
@@ -385,7 +385,7 @@ trrojan::result trrojan::d3d12::volume_benchmark_base::on_run(
 
         if (this->_tex_xfer_func == nullptr) {
             this->_tex_xfer_func = this->load_xfer_func(config, device,
-                cmd_list, res_target_state, staging_buffers.back());
+                cmd_list.get(), res_target_state, staging_buffers.back());
         }
 
         if (cmd_list != nullptr) {
@@ -413,9 +413,9 @@ void trrojan::d3d12::volume_benchmark_base::set_textures(
         const D3D12_CPU_DESCRIPTOR_HANDLE handle_xfer_func) const {
     assert(this->_tex_volume != nullptr);
     assert(this->_tex_xfer_func != nullptr);
-    auto device = get_device(this->_tex_volume.p);
-    device->CreateShaderResourceView(this->_tex_volume, nullptr,
+    auto device = get_device(this->_tex_volume);
+    device->CreateShaderResourceView(this->_tex_volume.get(), nullptr,
         handle_volume);
-    device->CreateShaderResourceView(this->_tex_xfer_func, nullptr,
+    device->CreateShaderResourceView(this->_tex_xfer_func.get(), nullptr,
         handle_xfer_func);
 }

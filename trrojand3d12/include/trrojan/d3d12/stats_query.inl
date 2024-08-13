@@ -24,7 +24,7 @@ void trrojan::d3d12::stats_query::evaluate(TIterator oit,
     {
         auto hr = this->_result_buffer->Map(0, &range, &data);
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
         }
     }
 

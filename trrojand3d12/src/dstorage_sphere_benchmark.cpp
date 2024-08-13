@@ -1,5 +1,5 @@
 ﻿// <copyright file="dstorage_sphere_benchmark.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2023 Visualisierungsinstitut der Universität Stuttgart.
+// Copyright © 2023 - 2024 Visualisierungsinstitut der Universität Stuttgart.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
 // <author>Christoph Müller</author>
@@ -7,6 +7,7 @@
 #if defined(TRROJAN_WITH_DSTORAGE)
 #include "trrojan/d3d12/dstorage_sphere_benchmark.h"
 
+#include "trrojan/com_error_category.h"
 #include "trrojan/contains.h"
 #include "trrojan/text.h"
 
@@ -76,8 +77,8 @@ bool trrojan::d3d12::dstorage_sphere_benchmark::check_stream_changed(
     if (retval) {
         log::instance().write_line(log_level::debug, "(Re-) Building GPU "
             "stream on device 0x{0:p} ...",
-            static_cast<void *>(device.d3d_device().p));
-        this->_stream.rebuild(device.d3d_device(), config,
+            static_cast<void *>(device.d3d_device().get()));
+        this->_stream.rebuild(device.d3d_device().get(), config,
             D3D12_HEAP_TYPE_DEFAULT,
             D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 
@@ -93,7 +94,7 @@ bool trrojan::d3d12::dstorage_sphere_benchmark::check_stream_changed(
         // target from present to rendering state and vice versa.
         this->_direct_cmd_allocators.clear();
         create_command_allocators(this->_direct_cmd_allocators,
-            device.d3d_device(),
+            device.d3d_device().get(),
             D3D12_COMMAND_LIST_TYPE_DIRECT,
             this->_stream.batch_count() + 2);
     }
@@ -280,7 +281,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_batches(
     std::uint32_t frame = 0;
     const auto frames = 1u + config.get<std::uint32_t>(
         sphere_streaming_context::factor_repeat_frame);
-    const auto gpu_freq = gpu_timer::get_timestamp_frequency(cmd_queue.p);
+    const auto gpu_freq = gpu_timer::get_timestamp_frequency(cmd_queue.get());
     winrt::com_ptr<IDStorageQueue> io_queue;
     measurement_context mctx(device, 2, this->pipeline_depth());
     stats_query::value_type pipeline_stats;
@@ -335,7 +336,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_batches(
     std::vector<winrt::com_ptr<ID3D12GraphicsCommandList>> cmd_lists;
     cmd_lists.reserve(this->_stream.batch_count());
     for (std::size_t b = 0; (b < this->_stream.batch_count()); ++b) {
-        auto list = to_winrt(this->create_graphics_command_list(b, pipeline));
+        auto list = this->create_graphics_command_list(b, pipeline);
         set_debug_object_name(list.get(), "Command list for batch {0}", b);
         list->Close();
         cmd_lists.push_back(list);
@@ -355,7 +356,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_batches(
         auto hr = dstorage->OpenFile(this->_path.c_str(),
             IID_PPV_ARGS(file.put()));
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
         }
     }
 
@@ -364,11 +365,11 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_batches(
         ::ZeroMemory(&desc, sizeof(desc));
         dstorage_config.apply(desc);
         desc.SourceType = DSTORAGE_REQUEST_SOURCE_FILE;
-        desc.Device = device.d3d_device();
+        desc.Device = device.d3d_device().get();
 
         auto hr = dstorage->CreateQueue(&desc, IID_PPV_ARGS(io_queue.put()));
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
         }
     }
 
@@ -378,7 +379,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_batches(
         auto hr = device.d3d_device()->CreateFence(this->_next_fence_value,
             D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(this->_fence.put()));
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
         }
     }
 
@@ -427,7 +428,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_batches(
                     // reset now. Afterwards, reset the command list that used 
                     // the allocator.
                     alloc->Reset();
-                    list->Reset(alloc, pipeline);
+                    list->Reset(alloc.get(), pipeline.get());
 
                     // Set the render target, and if this is the first batch,
                     // transition it as well.
@@ -446,7 +447,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_batches(
                         shader_code,
                         0,
                         b * cnt_descs,
-                        this->_stream.buffer(b).get(),
+                        this->_stream.buffer(b),
                         0,
                         spheres);
 
@@ -455,7 +456,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_batches(
                     const auto fence_value = this->enqueue_request(io_queue,
                         request, frame, t, b);
 
-                    list->SetGraphicsRootSignature(root_sig);
+                    list->SetGraphicsRootSignature(root_sig.get());
                     list->IASetPrimitiveTopology(topology);
                     this->set_descriptors(list.get(), desc_tables);
                     this->set_vertex_buffer(list.get(), shader_code, b);
@@ -522,7 +523,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_batches(
             // reset now. Afterwards, reset the command list that used 
             // the allocator.
             alloc->Reset();
-            list->Reset(alloc, pipeline);
+            list->Reset(alloc.get(), pipeline.get());
 
             // Set the render target, and if this is the first batch,
             // transition it as well.
@@ -541,7 +542,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_batches(
                 shader_code,
                 0,
                 b * cnt_descs,
-                this->_stream.buffer(b).get(),
+                this->_stream.buffer(b),
                 0,
                 spheres);
 
@@ -550,7 +551,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_batches(
             const auto fence_value = this->enqueue_request(io_queue,
                 request, frame, t, b);
 
-            list->SetGraphicsRootSignature(root_sig);
+            list->SetGraphicsRootSignature(root_sig.get());
             list->IASetPrimitiveTopology(topology);
             this->set_descriptors(list.get(), desc_tables);
             this->set_vertex_buffer(list.get(), shader_code, b);
@@ -620,7 +621,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_batches(
             // reset now. Afterwards, reset the command list that used 
             // the allocator.
             alloc->Reset();
-            list->Reset(alloc, pipeline);
+            list->Reset(alloc.get(), pipeline.get());
 
             // Set the render target, and if this is the first batch,
             // transition it as well.
@@ -642,7 +643,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_batches(
                 shader_code,
                 0,
                 b * cnt_descs,
-                this->_stream.buffer(b).get(),
+                this->_stream.buffer(b),
                 0,
                 spheres);
 
@@ -651,7 +652,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_batches(
             const auto fence_value = this->enqueue_request(io_queue,
                 request, frame, t, b);
 
-            list->SetGraphicsRootSignature(root_sig);
+            list->SetGraphicsRootSignature(root_sig.get());
             list->IASetPrimitiveTopology(topology);
             this->set_descriptors(list.get(), desc_tables);
             this->set_vertex_buffer(list.get(), shader_code, b);
@@ -676,7 +677,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_batches(
 
             // Schedule a signal after we have submitted the command
             // list for batch 'b'.
-            this->_stream.signal_done(b, this->command_queue());
+            this->_stream.signal_done(b, this->command_queue().get());
 
             // If this was the last batch, we need to swap the buffer.
             if (last) {
@@ -703,7 +704,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_batches(
     {
         // Allocate queries for each batch, because we cannot span the queries
         // over multiple command lists.
-        stats_query stats_query(device.d3d_device(),
+        stats_query stats_query(device.d3d_device().get(),
             this->_stream.total_batches(), 1);
 
         stats_query::size_type stats_index = 0;
@@ -733,7 +734,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_batches(
             // reset now. Afterwards, reset the command list that used 
             // the allocator.
             alloc->Reset();
-            list->Reset(alloc, pipeline);
+            list->Reset(alloc.get(), pipeline.get());
 
             // Set the render target, and if this is the first batch,
             // transition it as well.
@@ -752,7 +753,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_batches(
                 shader_code,
                 0,
                 b * cnt_descs,
-                this->_stream.buffer(b).get(),
+                this->_stream.buffer(b),
                 0,
                 spheres);
 
@@ -761,7 +762,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_batches(
             const auto fence_value = this->enqueue_request(io_queue,
                 request, 0, t, b);
 
-            list->SetGraphicsRootSignature(root_sig);
+            list->SetGraphicsRootSignature(root_sig.get());
             list->IASetPrimitiveTopology(topology);
             this->set_descriptors(list.get(), desc_tables);
             this->set_vertex_buffer(list.get(), shader_code, b);
@@ -868,7 +869,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_gdeflate(
     std::uint32_t frame = 0;
     const auto frames = 1u + config.get<std::uint32_t>(
         sphere_streaming_context::factor_repeat_frame);
-    const auto gpu_freq = gpu_timer::get_timestamp_frequency(cmd_queue.p);
+    const auto gpu_freq = gpu_timer::get_timestamp_frequency(cmd_queue);
     winrt::com_ptr<IDStorageQueue> io_queue;
     measurement_context mctx(device, 2, this->pipeline_depth());
     stats_query::value_type pipeline_stats;
@@ -923,7 +924,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_gdeflate(
     std::vector<winrt::com_ptr<ID3D12GraphicsCommandList>> cmd_lists;
     cmd_lists.reserve(this->_stream.batch_count());
     for (std::size_t b = 0; (b < this->_stream.batch_count()); ++b) {
-        auto list = to_winrt(this->create_graphics_command_list(b, pipeline));
+        auto list = this->create_graphics_command_list(b, pipeline);
         set_debug_object_name(list.get(), "Command list for batch {0}", b);
         list->Close();
         cmd_lists.push_back(list);
@@ -943,7 +944,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_gdeflate(
         auto hr = dstorage->OpenFile(this->_path.c_str(),
             IID_PPV_ARGS(file.put()));
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
         }
     }
 
@@ -952,11 +953,11 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_gdeflate(
         ::ZeroMemory(&desc, sizeof(desc));
         dstorage_config.apply(desc);
         desc.SourceType = DSTORAGE_REQUEST_SOURCE_FILE;
-        desc.Device = device.d3d_device();
+        desc.Device = device.d3d_device().get();
 
         auto hr = dstorage->CreateQueue(&desc, IID_PPV_ARGS(io_queue.put()));
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
         }
     }
 
@@ -966,7 +967,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_gdeflate(
         auto hr = device.d3d_device()->CreateFence(this->_next_fence_value,
             D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(this->_fence.put()));
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
         }
     }
 
@@ -1016,7 +1017,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_gdeflate(
                     // reset now. Afterwards, reset the command list that used 
                     // the allocator.
                     alloc->Reset();
-                    list->Reset(alloc, pipeline);
+                    list->Reset(alloc.get(), pipeline.get());
 
                     // Set the render target, and if this is the first batch,
                     // transition it as well.
@@ -1035,7 +1036,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_gdeflate(
                         shader_code,
                         0,
                         b * cnt_descs,
-                        this->_stream.buffer(b).get(),
+                        this->_stream.buffer(b),
                         0,
                         spheres);
 
@@ -1044,7 +1045,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_gdeflate(
                     const auto fence_value = this->enqueue_gdeflate_request(
                         io_queue, request, frame, t, b);
 
-                    list->SetGraphicsRootSignature(root_sig);
+                    list->SetGraphicsRootSignature(root_sig.get());
                     list->IASetPrimitiveTopology(topology);
                     this->set_descriptors(list.get(), desc_tables);
                     this->set_vertex_buffer(list.get(), shader_code, b);
@@ -1112,7 +1113,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_gdeflate(
             // reset now. Afterwards, reset the command list that used 
             // the allocator.
             alloc->Reset();
-            list->Reset(alloc, pipeline);
+            list->Reset(alloc.get(), pipeline.get());
 
             // Set the render target, and if this is the first batch,
             // transition it as well.
@@ -1131,7 +1132,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_gdeflate(
                 shader_code,
                 0,
                 b * cnt_descs,
-                this->_stream.buffer(b).get(),
+                this->_stream.buffer(b),
                 0,
                 spheres);
 
@@ -1140,7 +1141,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_gdeflate(
             const auto fence_value = this->enqueue_gdeflate_request(io_queue,
                 request, frame, t, b);
 
-            list->SetGraphicsRootSignature(root_sig);
+            list->SetGraphicsRootSignature(root_sig.get());
             list->IASetPrimitiveTopology(topology);
             this->set_descriptors(list.get(), desc_tables);
             this->set_vertex_buffer(list.get(), shader_code, b);
@@ -1210,7 +1211,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_gdeflate(
             // reset now. Afterwards, reset the command list that used 
             // the allocator.
             alloc->Reset();
-            list->Reset(alloc, pipeline);
+            list->Reset(alloc.get(), pipeline.get());
 
             // Set the render target, and if this is the first batch,
             // transition it as well.
@@ -1232,7 +1233,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_gdeflate(
                 shader_code,
                 0,
                 b * cnt_descs,
-                this->_stream.buffer(b).get(),
+                this->_stream.buffer(b),
                 0,
                 spheres);
 
@@ -1241,7 +1242,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_gdeflate(
             const auto fence_value = this->enqueue_gdeflate_request(io_queue,
                 request, frame, t, b);
 
-            list->SetGraphicsRootSignature(root_sig);
+            list->SetGraphicsRootSignature(root_sig.get());
             list->IASetPrimitiveTopology(topology);
             this->set_descriptors(list.get(), desc_tables);
             this->set_vertex_buffer(list.get(), shader_code, b);
@@ -1293,7 +1294,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_gdeflate(
     {
         // Allocate queries for each batch, because we cannot span the queries
         // over multiple command lists.
-        stats_query stats_query(device.d3d_device(),
+        stats_query stats_query(device.d3d_device().get(),
             this->_stream.total_batches(), 1);
 
         stats_query::size_type stats_index = 0;
@@ -1323,7 +1324,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_gdeflate(
             // reset now. Afterwards, reset the command list that used 
             // the allocator.
             alloc->Reset();
-            list->Reset(alloc, pipeline);
+            list->Reset(alloc.get(), pipeline.get());
 
             // Set the render target, and if this is the first batch,
             // transition it as well.
@@ -1342,7 +1343,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_gdeflate(
                 shader_code,
                 0,
                 b * cnt_descs,
-                this->_stream.buffer(b).get(),
+                this->_stream.buffer(b),
                 0,
                 spheres);
 
@@ -1351,7 +1352,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_gdeflate(
             const auto fence_value = this->enqueue_gdeflate_request(io_queue,
                 request, 0, t, b);
 
-            list->SetGraphicsRootSignature(root_sig);
+            list->SetGraphicsRootSignature(root_sig.get());
             list->IASetPrimitiveTopology(topology);
             this->set_descriptors(list.get(), desc_tables);
             this->set_vertex_buffer(list.get(), shader_code, b);
@@ -1462,7 +1463,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_naive(
     std::uint32_t frame = 0;
     const auto frames = 1u + config.get<std::uint32_t>(
         sphere_streaming_context::factor_repeat_frame);
-    const auto gpu_freq = gpu_timer::get_timestamp_frequency(cmd_queue.p);
+    const auto gpu_freq = gpu_timer::get_timestamp_frequency(cmd_queue);
     winrt::com_ptr<IDStorageQueue> io_queue;
     measurement_context mctx(device, 2, this->pipeline_depth());
     stats_query::value_type pipeline_stats;
@@ -1516,7 +1517,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_naive(
     std::vector<winrt::com_ptr<ID3D12GraphicsCommandList>> cmd_lists;
     cmd_lists.reserve(this->_stream.batch_count());
     for (std::size_t b = 0; (b < this->_stream.batch_count()); ++b) {
-        auto list = to_winrt(this->create_graphics_command_list(b, pipeline));
+        auto list = this->create_graphics_command_list(b, pipeline);
         set_debug_object_name(list.get(), "Command list for batch {0}", b);
         list->Close();
         cmd_lists.push_back(list);
@@ -1533,7 +1534,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_naive(
     {
         auto hr = ::DStorageGetFactory(IID_PPV_ARGS(dstorage.put()));
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
         }
     }
 
@@ -1541,7 +1542,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_naive(
         auto hr = dstorage->OpenFile(this->_path.c_str(),
             IID_PPV_ARGS(file.put()));
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
         }
     }
 
@@ -1550,11 +1551,11 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_naive(
         ::ZeroMemory(&desc, sizeof(desc));
         dstorage_config.apply(desc);
         desc.SourceType = DSTORAGE_REQUEST_SOURCE_FILE;
-        desc.Device = device.d3d_device();
+        desc.Device = device.d3d_device().get();
 
         auto hr = dstorage->CreateQueue(&desc, IID_PPV_ARGS(io_queue.put()));
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
         }
     }
 
@@ -1564,7 +1565,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_naive(
         auto hr = device.d3d_device()->CreateFence(this->_next_fence_value,
             D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(this->_fence.put()));
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
         }
     }
 
@@ -1605,7 +1606,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_naive(
                     // reset now. Afterwards, reset the command list that used 
                     // the allocator.
                     alloc->Reset();
-                    list->Reset(alloc, pipeline);
+                    list->Reset(alloc.get(), pipeline.get());
 
                     // Set the render target, and if this is the first batch,
                     // transition it as well.
@@ -1624,7 +1625,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_naive(
                         shader_code,
                         0,
                         b * cnt_descs,
-                        this->_stream.buffer(b).get(),
+                        this->_stream.buffer(b),
                         0,
                         spheres);
 
@@ -1633,7 +1634,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_naive(
                     const auto fence_value = this->submit_request(io_queue,
                         request, frame, t, b);
 
-                    list->SetGraphicsRootSignature(root_sig);
+                    list->SetGraphicsRootSignature(root_sig.get());
                     list->IASetPrimitiveTopology(topology);
                     this->set_descriptors(list.get(), desc_tables);
                     this->set_vertex_buffer(list.get(), shader_code, b);
@@ -1693,7 +1694,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_naive(
             // reset now. Afterwards, reset the command list that used 
             // the allocator.
             alloc->Reset();
-            list->Reset(alloc, pipeline);
+            list->Reset(alloc.get(), pipeline.get());
 
             // Set the render target, and if this is the first batch,
             // transition it as well.
@@ -1712,7 +1713,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_naive(
                 shader_code,
                 0,
                 b * cnt_descs,
-                this->_stream.buffer(b).get(),
+                this->_stream.buffer(b),
                 0,
                 spheres);
 
@@ -1721,7 +1722,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_naive(
             const auto fence_value = this->submit_request(io_queue,
                 request, frame, t, b);
 
-            list->SetGraphicsRootSignature(root_sig);
+            list->SetGraphicsRootSignature(root_sig.get());
             list->IASetPrimitiveTopology(topology);
             this->set_descriptors(list.get(), desc_tables);
             this->set_vertex_buffer(list.get(), shader_code, b);
@@ -1783,7 +1784,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_naive(
             // reset now. Afterwards, reset the command list that used 
             // the allocator.
             alloc->Reset();
-            list->Reset(alloc, pipeline);
+            list->Reset(alloc.get(), pipeline.get());
 
             // Set the render target, and if this is the first batch,
             // transition it as well.
@@ -1805,7 +1806,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_naive(
                 shader_code,
                 0,
                 b * cnt_descs,
-                this->_stream.buffer(b).get(),
+                this->_stream.buffer(b),
                 0,
                 spheres);
 
@@ -1814,7 +1815,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_naive(
             const auto fence_value = this->submit_request(io_queue,
                 request, frame, t, b);
 
-            list->SetGraphicsRootSignature(root_sig);
+            list->SetGraphicsRootSignature(root_sig.get());
             list->IASetPrimitiveTopology(topology);
             this->set_descriptors(list.get(), desc_tables);
             this->set_vertex_buffer(list.get(), shader_code, b);
@@ -1865,7 +1866,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_naive(
     {
         // Allocate queries for each batch, because we cannot span the queries
         // over multiple command lists.
-        stats_query stats_query(device.d3d_device(),
+        stats_query stats_query(device.d3d_device().get(),
             this->_stream.total_batches(), 1);
 
         stats_query::size_type stats_index = 0;
@@ -1888,7 +1889,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_naive(
             // reset now. Afterwards, reset the command list that used 
             // the allocator.
             alloc->Reset();
-            list->Reset(alloc, pipeline);
+            list->Reset(alloc.get(), pipeline.get());
 
             // Set the render target, and if this is the first batch,
             // transition it as well.
@@ -1907,7 +1908,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_naive(
                 shader_code,
                 0,
                 b * cnt_descs,
-                this->_stream.buffer(b).get(),
+                this->_stream.buffer(b),
                 0,
                 spheres);
 
@@ -1916,7 +1917,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_naive(
             const auto fence_value = this->submit_request(io_queue,
                 request, 0, t, b);
 
-            list->SetGraphicsRootSignature(root_sig);
+            list->SetGraphicsRootSignature(root_sig.get());
             list->IASetPrimitiveTopology(topology);
             this->set_descriptors(list.get(), desc_tables);
             this->set_vertex_buffer(list.get(), shader_code, b);
