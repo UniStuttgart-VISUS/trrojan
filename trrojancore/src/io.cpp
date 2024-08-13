@@ -13,6 +13,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <streambuf>
+#include <system_error>
 
 #if defined(TRROJAN_FOR_UWP)
 #include <winrt/windows.foundation.h>
@@ -21,6 +22,7 @@
 #include <winrt/windows.storage.streams.h>
 #endif /* defined(TRROJAN_FOR_UWP) */
 
+#include "trrojan/com_error_category.h"
 #include "trrojan/executive.h"
 #include "trrojan/on_exit.h"
 
@@ -148,7 +150,7 @@ std::string trrojan::get_temp_folder(void) {
     std::array<char, MAX_PATH + 1> retval;
 
     if (!::GetTempPathA(static_cast<DWORD>(retval.size()), retval.data())) {
-        throw ATL::CAtlException(HRESULT_FROM_WIN32(::GetLastError()));
+        throw std::system_error(::GetLastError(), std::system_category());
     }
 
     return retval.data();

@@ -1,5 +1,5 @@
 ﻿// <copyright file="excel_output.h" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2016 - 2023 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+// Copyright © 2016 - 2024 Visualisierungsinstitut der Universität Stuttgart.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
 // <author>Christoph Müller</author>
@@ -12,8 +12,9 @@
 #include <vector>
 
 #if (defined(_WIN32) && !defined(TRROJAN_FOR_UWP))
-#include <atlbase.h>
 #include <Ole2.h>
+
+#include <winrt/base.h>
 #endif /* (defined(_WIN32) && !defined(TRROJAN_FOR_UWP)) */
 
 #include "trrojan/excel_output_params.h"
@@ -71,13 +72,13 @@ namespace trrojan {
         /// <summary>
         /// Get zero-based (!) cell range.
         /// <summary>
-        ATL::CComPtr<IDispatch> get_range(const long firstRow,
+        winrt::com_ptr<IDispatch> get_range(const long firstRow,
             const long firstCol,const long lastRow, const long lastCol);
 
         /// <summary>
         /// Get zero-based (!) cell range in a single row.
         /// <summary>
-        inline ATL::CComPtr<IDispatch> get_range(const long row,
+        inline winrt::com_ptr<IDispatch> get_range(const long row,
                 const long firstCol, const long lastCol) {
             return this->get_range(row, firstCol, row, lastCol);
         }
@@ -85,7 +86,7 @@ namespace trrojan {
         /// <summary>
         /// Get zero-based (!) cell.
         /// <summary>
-        inline ATL::CComPtr<IDispatch> get_range(const long row,
+        inline winrt::com_ptr<IDispatch> get_range(const long row,
                 const long col) {
             return this->get_range(row, col, col);
         }
@@ -93,7 +94,7 @@ namespace trrojan {
         /// <summary>
         /// Gets the used range in <see cref="trrojan::excel_output::sheet" />.
         /// </summary>
-        ATL::CComPtr<IDispatch> get_used_range(void);
+        winrt::com_ptr<IDispatch> get_used_range(void);
 
         /// <summary>
         /// Gets the zero-based (!) last row in the active sheet.
@@ -129,10 +130,10 @@ namespace trrojan {
         void write_value(const std::string& value, const long row,
             const long col);
 
-        ATL::CComPtr<IDispatch> book;
-        ATL::CComPtr<IDispatch> books;
-        ATL::CComPtr<IDispatch> excel;
-        ATL::CComPtr<IDispatch> sheet;
+        winrt::com_ptr<IDispatch> book;
+        winrt::com_ptr<IDispatch> books;
+        winrt::com_ptr<IDispatch> excel;
+        winrt::com_ptr<IDispatch> sheet;
     };
 #endif /* (defined(_WIN32) && !defined(TRROJAN_FOR_UWP)) */
 }

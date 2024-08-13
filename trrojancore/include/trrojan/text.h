@@ -249,7 +249,7 @@ namespace trrojan {
     /// <param name="str"></param>
     /// <tparam name="T"></tparam>
     /// <returns></returns>
-    template<class T> inline std::basic_string<T> TRROJANCORE_API trim_left(
+    template<class T> inline std::basic_string<T> trim_left(
             const std::basic_string<T>& str) {
         // http://stackoverflow.com/questions/216823/whats-the-best-way-to-trim-stdstring
         auto end = str.cend();

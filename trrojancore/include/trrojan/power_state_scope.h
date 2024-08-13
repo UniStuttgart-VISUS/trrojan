@@ -1,8 +1,8 @@
-/// <copyright file="power_state_scope.h" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Christoph Müller</author>
+ï»¿// <copyright file="power_state_scope.h" company="Visualisierungsinstitut der UniversitÃ¤t Stuttgart">
+// Copyright Â© 2016 - 2024 Visualisierungsinstitut der UniversitÃ¤t Stuttgart.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Christoph MÃ¼ller</author>
 
 #pragma once
 
@@ -18,7 +18,7 @@
 #pragma comment(lib, "d3d12.lib")
 #endif /* (defined(_WIN32_MAXVER) && (_WIN32_MAXVER >= 0x0A00)) */
 
-#include <atlbase.h>
+#include <winrt/base.h>
 #endif /* defined _WIN32 */
 
 #include <vector>
@@ -55,7 +55,7 @@ namespace trrojan {
         /// <summary>
         /// Stores the devices that are used to enforce the stable power state.
         /// </summary>
-        std::vector<ATL::CComPtr<ID3D12Device>> devices;
+        std::vector<winrt::com_ptr<ID3D12Device>> devices;
 #endif /* defined(TRROJAN_WITH_POWER_STATE_SCOPE) */
 
     };

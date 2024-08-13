@@ -1,5 +1,5 @@
 ﻿// <copyright file="excel_output.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2016 - 2023 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+// Copyright © 2016 - 2024 Visualisierungsinstitut der Universität Stuttgart.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
 // <author>Christoph Müller</author>
@@ -47,7 +47,7 @@ void trrojan::excel_output::close(void) {
         //    AutoWrap(DISPATCH_PROPERTYPUT, NULL, pXlBook, L"Saved", 1, x);
         //}
 
-        excel_output::invoke(NULL, DISPATCH_METHOD, this->excel, L"Quit");
+        excel_output::invoke(NULL, DISPATCH_METHOD, this->excel.get(), L"Quit");
 
         this->sheet = nullptr;
         this->book = nullptr;
@@ -107,7 +107,7 @@ void trrojan::excel_output::open(const output_params& params) {
         VARIANT input;
         input.vt = VT_I4;
         input.lVal = 1;
-        excel_output::invoke(nullptr, DISPATCH_PROPERTYPUT, this->excel,
+        excel_output::invoke(nullptr, DISPATCH_PROPERTYPUT, this->excel.get(),
             L"Visible", input);
     }
 
@@ -115,27 +115,27 @@ void trrojan::excel_output::open(const output_params& params) {
     {
         VARIANT output;
         ::VariantInit(&output);
-        excel_output::invoke(&output, DISPATCH_PROPERTYGET, this->excel,
+        excel_output::invoke(&output, DISPATCH_PROPERTYGET, this->excel.get(),
             L"Workbooks");
-        this->books = output.pdispVal;
+        this->books.attach(output.pdispVal);
     }
 
     /* Add a new workbook for the results. */
     {
         VARIANT output;
         ::VariantInit(&output);
-        excel_output::invoke(&output, DISPATCH_PROPERTYGET, this->books,
+        excel_output::invoke(&output, DISPATCH_PROPERTYGET, this->books.get(),
             L"Add");
-        this->book = output.pdispVal;
+        this->book.attach(output.pdispVal);
     }
 
     /* Get the active sheet. */
     {
         VARIANT output;
         ::VariantInit(&output);
-        excel_output::invoke(&output, DISPATCH_PROPERTYGET, this->excel,
+        excel_output::invoke(&output, DISPATCH_PROPERTYGET, this->excel.get(),
             L"ActiveSheet");
-        this->sheet = output.pdispVal;
+        this->sheet.attach(output.pdispVal);
     }
 
     /* Save the workbook to the specified file. */
@@ -219,12 +219,12 @@ std::wstring trrojan::excel_output::convert(const std::string & str) {
 /*
  * trrojan::excel_output::get_range
  */
-ATL::CComPtr<IDispatch> trrojan::excel_output::get_range(const long firstRow,
+winrt::com_ptr<IDispatch> trrojan::excel_output::get_range(const long firstRow,
         const long firstCol, const long lastRow, const long lastCol) {
-    VARIANT input;                  // Input of automation call.
-    VARIANT output;                 // Output of automation call.
-    ATL::CComPtr<IDispatch> range;  // Range of new row.
-    std::wstringstream rangeSpec;   // String representation of the range.
+    VARIANT input;                      // Input of automation call.
+    VARIANT output;                     // Output of automation call.
+    winrt::com_ptr<IDispatch> range;    // Range of new row.
+    std::wstringstream rangeSpec;       // String representation of the range.
 
     /* Prepare input. */
     VariantInit(&input);
@@ -240,10 +240,10 @@ ATL::CComPtr<IDispatch> trrojan::excel_output::get_range(const long firstRow,
     /* Make call. */
     assert(this->sheet != nullptr);
     try {
-        excel_output::invoke(&output, DISPATCH_PROPERTYGET, this->sheet,
+        excel_output::invoke(&output, DISPATCH_PROPERTYGET, this->sheet.get(),
             L"Range", input);
         ::VariantClear(&input);
-        range = output.pdispVal;
+        range.attach(output.pdispVal);
     } catch (...) {
         ::VariantClear(&input);
         throw;
@@ -256,7 +256,7 @@ ATL::CComPtr<IDispatch> trrojan::excel_output::get_range(const long firstRow,
 /*
  * trrojan::excel_output::get_used_range
  */
-ATL::CComPtr<IDispatch> trrojan::excel_output::get_used_range(void) {
+winrt::com_ptr<IDispatch> trrojan::excel_output::get_used_range(void) {
     VARIANT output;                 // Output of automation call.
 
     /* Prepare output. */
@@ -264,10 +264,11 @@ ATL::CComPtr<IDispatch> trrojan::excel_output::get_used_range(void) {
 
     /* Make call. */
     assert(this->sheet != nullptr);
-    excel_output::invoke(&output, DISPATCH_PROPERTYGET, this->sheet,
+    excel_output::invoke(&output, DISPATCH_PROPERTYGET, this->sheet.get(),
         L"UsedRange");
 
-    return output.pdispVal;
+    return winrt::com_ptr<IDispatch>(output.pdispVal,
+        winrt::take_ownership_from_abi);
 }
 
 
@@ -282,13 +283,13 @@ long trrojan::excel_output::last_row(void) {
 
     /* Retrieve the used rows. */
     ::VariantInit(&output);
-    excel_output::invoke(&output, DISPATCH_PROPERTYGET, range, L"Rows");
-    range = output.pdispVal;
+    excel_output::invoke(&output, DISPATCH_PROPERTYGET, range.get(), L"Rows");
+    range.attach(output.pdispVal);
     ::VariantClear(&output);
 
     /* Retrieve number of rows. */
     ::VariantInit(&output);
-    excel_output::invoke(&output, DISPATCH_PROPERTYGET, range, L"Count");
+    excel_output::invoke(&output, DISPATCH_PROPERTYGET, range.get(), L"Count");
     auto retval = output.lVal - 1;
     ::VariantClear(&output);
 
@@ -307,7 +308,8 @@ void trrojan::excel_output::read_value(VARIANT& outValue,
 
     /* Get the value. */
     ::VariantInit(&outValue);
-    excel_output::invoke(&outValue, DISPATCH_PROPERTYGET, range, L"Value");
+    excel_output::invoke(&outValue, DISPATCH_PROPERTYGET, range.get(),
+        L"Value");
 }
 
 
@@ -316,7 +318,8 @@ void trrojan::excel_output::read_value(VARIANT& outValue,
  */
 void trrojan::excel_output::save(const std::string& path) {
     if (path.empty()) {
-        excel_output::invoke(nullptr, DISPATCH_METHOD, this->book, L"Save");
+        excel_output::invoke(nullptr, DISPATCH_METHOD, this->book.get(),
+            L"Save");
 
     } else {
         VARIANT input;
@@ -324,7 +327,7 @@ void trrojan::excel_output::save(const std::string& path) {
         input.vt = VT_BSTR;
         input.bstrVal = ::SysAllocString(excel_output::convert(path).c_str());
         try {
-            excel_output::invoke(nullptr, DISPATCH_METHOD, this->book,
+            excel_output::invoke(nullptr, DISPATCH_METHOD, this->book.get(),
                 L"SaveAs", input);
             ::VariantClear(&input);
         } catch (...) {
@@ -353,8 +356,8 @@ void trrojan::excel_output::write_formula(const std::wstring formula,
 
     /* Set range to 'inputRow'. */
     try {
-        excel_output::invoke(nullptr, DISPATCH_PROPERTYPUT, range, L"Formula",
-            inputCell);
+        excel_output::invoke(nullptr, DISPATCH_PROPERTYPUT, range.get(),
+            L"Formula", inputCell);
         ::VariantClear(&inputCell);
     } catch (...) {
         ::VariantClear(&inputCell);
@@ -380,8 +383,8 @@ void trrojan::excel_output::write_value(const variant& value, const long row,
 
     /* Set range to 'inputRow'. */
     try {
-        excel_output::invoke(nullptr, DISPATCH_PROPERTYPUT, range, L"Value",
-            cell);
+        excel_output::invoke(nullptr, DISPATCH_PROPERTYPUT, range.get(),
+            L"Value", cell);
         ::VariantClear(&cell);
     } catch (...) {
         ::VariantClear(&cell);
@@ -408,8 +411,8 @@ void trrojan::excel_output::write_value(const std::string& value,
 
     /* Set range to 'inputRow'. */
     try {
-        excel_output::invoke(nullptr, DISPATCH_PROPERTYPUT, range, L"Value",
-            inputCell);
+        excel_output::invoke(nullptr, DISPATCH_PROPERTYPUT, range.get(),
+            L"Value", inputCell);
         ::VariantClear(&inputCell);
     } catch (...) {
         ::VariantClear(&inputCell);

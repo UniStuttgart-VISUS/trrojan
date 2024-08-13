@@ -1,5 +1,5 @@
 ﻿// <copyright file="excellent_converter.h" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2023 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+// Copyright © 2023 - 2024 Visualisierungsinstitut der Universität Stuttgart.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
 // <author>Christoph Müller</author>
@@ -8,8 +8,9 @@
 #if defined(_WIN32) && !defined(_UWP)
 #include <sstream>
 
-#include <atlbase.h>
 #include <Ole2.h>
+
+#include <winrt/base.h>
 
 #include "trrojan/text.h"
 #include "trrojan/variant.h"

@@ -1,10 +1,10 @@
-/// <copyright file="image_helper.h" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Steffen Frey</author>
-/// <author>Valentin Bruder</author>
-/// <author>Christoph Müller</author>
+// <copyright file="image_helper.h" company="Visualisierungsinstitut der Universität Stuttgart">
+// Copyright © 2016 - 2024 Visualisierungsinstitut der Universität Stuttgart.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Steffen Frey</author>
+// <author>Valentin Bruder</author>
+// <author>Christoph Müller</author>
 
 #pragma once
 
@@ -17,9 +17,10 @@
 
 #ifdef _WIN32
 #include <Windows.h>
-#include <atlbase.h>
 #include <wincodec.h>
 #pragma comment(lib, "windowscodecs.lib")
+
+#include <winrt/base.h>
 #endif /* _WIN32 */
 
 #ifdef TRROJAN_WITH_CIMG
@@ -29,20 +30,17 @@
 #include "trrojan/export.h"
 
 
-namespace trrojan
-{
+namespace trrojan {
 
     /// <summary>
     /// std::array initializing helper.
     /// </summary>
     template <size_t N, class T>
-    std::array<T, N> make_array(const T &v)
-    {
+    std::array<T, N> make_array(const T& v) {
         std::array<T, N> ret;
         ret.fill(v);
         return ret;
     }
-
 
 #ifdef TRROJAN_WITH_CIMG
     /// <summary>
@@ -235,7 +233,7 @@ namespace detail {
     /// <summary>
     /// Get a WIC bitmap for the specified raw data.
     /// </summary>
-    ATL::CComPtr<IWICBitmapSource> TRROJANCORE_API get_wic_bitmap(
+    winrt::com_ptr<IWICBitmapSource> TRROJANCORE_API get_wic_bitmap(
         IWICImagingFactory *wic, const void *data, const size_t width,
         const size_t height, const GUID& fmtData, size_t stride = 0,
         GUID fmtBitmap = ::GUID_NULL);
@@ -274,7 +272,7 @@ namespace detail {
     /// </summary>
     /// <returns></returns>
     /// <exception cref=""></exception>
-    ATL::CComPtr<IWICImagingFactory> TRROJANCORE_API get_wic_factory(void);
+    winrt::com_ptr<IWICImagingFactory> TRROJANCORE_API get_wic_factory(void);
 #endif /* _WIN32 */
 
 
