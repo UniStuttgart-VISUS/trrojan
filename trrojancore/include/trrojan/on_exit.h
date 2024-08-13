@@ -1,5 +1,5 @@
 ﻿// <copyright file="on_exit.h" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2021 - 2023 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+// Copyright © 2021 - 2023 Visualisierungsinstitut der Universität Stuttgart.
 // </copyright>
 // <author>Christoph Müller</author>
 

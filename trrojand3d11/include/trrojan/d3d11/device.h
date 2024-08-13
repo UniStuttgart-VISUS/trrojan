@@ -1,5 +1,5 @@
 ﻿// <copyright file="device.h" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2016 - 2023 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+// Copyright © 2016 - 2024 Visualisierungsinstitut der Universität Stuttgart.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
 // <author>Christoph Müller</author>
@@ -9,8 +9,10 @@
 #include <memory>
 
 #include <Windows.h>
-#include <atlbase.h>
 #include <d3d11_2.h>
+
+#include <winrt/base.h>
+
 
 #include "trrojan/device.h"
 #include "trrojan/lazy.h"
@@ -35,8 +37,8 @@ namespace d3d11 {
         /// </summary>
         /// <param name="device"></param>
         /// <returns></returns>
-        static ATL::CComPtr<ID3D11DeviceContext> get_context(
-            ATL::CComPtr<ID3D11Device> device);
+        static winrt::com_ptr<ID3D11DeviceContext> get_context(
+            winrt::com_ptr<ID3D11Device> device);
 
         /// <summary>
         /// Gets the DXGI adapter for the given D3D device.
@@ -44,8 +46,8 @@ namespace d3d11 {
         /// <param name="device">The D3D device to get the DXGI adapter for. It
         /// is safe to pass <c>nullptr</c>.</param>
         /// <returns>The adapter the device is running on.</returns>
-        static ATL::CComPtr<IDXGIAdapter> get_dxgi_adapter(
-            ATL::CComPtr<ID3D11Device> device);
+        static winrt::com_ptr<IDXGIAdapter> get_dxgi_adapter(
+            winrt::com_ptr<ID3D11Device> device);
 
         /// <summary>
         /// Gets the DXGI device for the given D3D device.
@@ -53,8 +55,8 @@ namespace d3d11 {
         /// <param name="device">The D3D device to get the DXGI device for. It
         /// is safe to pass <c>nullptr</c>.</param>
         /// <returns>The underlying DXGI device.</returns>
-        static ATL::CComPtr<IDXGIDevice> get_dxgi_device(
-            ATL::CComPtr<ID3D11Device> device);
+        static winrt::com_ptr<IDXGIDevice> get_dxgi_device(
+            winrt::com_ptr<ID3D11Device> device);
 
         /// <summary>
         /// Gets the DXGI factory that was used to create the given D3D device.
@@ -62,8 +64,8 @@ namespace d3d11 {
         /// <param name="device">The D3D device to get the DXGI factory for. It
         /// is safe to pass <c>nullptr</c>.</param>
         /// <returns>The underlying DXGI factory.</returns>
-        static ATL::CComPtr<IDXGIFactory> get_dxgi_factory(
-            ATL::CComPtr<ID3D11Device> device);
+        static winrt::com_ptr<IDXGIFactory> get_dxgi_factory(
+            winrt::com_ptr<ID3D11Device> device);
 
 #if !defined(TRROJAN_FOR_UWP)
         /// <summary>
@@ -71,7 +73,7 @@ namespace d3d11 {
         /// </summary>
         /// <param name="d3d_device">The Direct3D device to be represented by
         /// this instance. This must not be <c>nullptr</c>.</param>
-        explicit device(ATL::CComPtr<ID3D11Device> d3d_device);
+        explicit device(winrt::com_ptr<ID3D11Device> d3d_device);
 #endif /* !defined(TRROJAN_FOR_UWP) */
 
 #if defined(TRROJAN_FOR_UWP)
@@ -100,7 +102,7 @@ namespace d3d11 {
         /// <summary>
         /// Answer the immediate context of the underlying Direct3D device.
         /// </summary>
-        inline ATL::CComPtr<ID3D11DeviceContext>& d3d_context(void) {
+        inline winrt::com_ptr<ID3D11DeviceContext>& d3d_context(void) {
 #if defined(TRROJAN_FOR_UWP)
             if (this->_d3d_context == nullptr) {
                 this->_d3d_context = get_context(this->d3d_device());
@@ -112,7 +114,7 @@ namespace d3d11 {
         /// <summary>
         /// Answer the underlying Direct3D device.
         /// </summary>
-        inline ATL::CComPtr<ID3D11Device> d3d_device(void) {
+        inline winrt::com_ptr<ID3D11Device> d3d_device(void) {
             return this->_d3d_device;
         }
 
@@ -131,11 +133,11 @@ namespace d3d11 {
 
         void set_desc_from_device(void);
 
-        ATL::CComPtr<ID3D11DeviceContext> _d3d_context;
+        winrt::com_ptr<ID3D11DeviceContext> _d3d_context;
 #if defined(TRROJAN_FOR_UWP)
-        lazy<ATL::CComPtr<ID3D11Device>> _d3d_device;
+        lazy<winrt::com_ptr<ID3D11Device>> _d3d_device;
 #else /* defined(TRROJAN_FOR_UWP) */
-        ATL::CComPtr<ID3D11Device> _d3d_device;
+        winrt::com_ptr<ID3D11Device> _d3d_device;
 #endif /* defined(TRROJAN_FOR_UWP) */
 
     };

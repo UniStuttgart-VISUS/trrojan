@@ -1,5 +1,5 @@
 ﻿// <copyright file="debug_render_target.h" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2016 - 2023 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+// Copyright © 2016 - 2024 Visualisierungsinstitut der Universität Stuttgart.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
 // <author>Christoph Müller</author>
@@ -10,8 +10,9 @@
 #include <memory>
 #include <thread>
 
-#include <atlbase.h>
 #include <Windows.h>
+
+#include <winrt/base.h>
 
 #include "trrojan/d3d11/d2d_overlay.h"
 #include "trrojan/d3d11/render_target.h"
@@ -50,7 +51,7 @@ namespace d3d11 {
             const unsigned int height);
 
         /// <inheritdoc />
-        virtual ATL::CComPtr<ID3D11UnorderedAccessView> to_uav(void);
+        virtual winrt::com_ptr<ID3D11UnorderedAccessView> to_uav(void);
 
     private:
 
@@ -91,7 +92,7 @@ namespace d3d11 {
         /// <summary>
         /// The swap chain for the window.
         /// </summary>
-        ATL::CComPtr<IDXGISwapChain> swapChain;
+        winrt::com_ptr<IDXGISwapChain> swapChain;
 
         /// <summary>
         /// An unordered access view for compute shaders.
@@ -102,7 +103,7 @@ namespace d3d11 {
         /// reason for that is that mapping the back buffer is not recommended
         /// anymore and is also not supported on D3D12.
         /// </remarks>
-        ATL::CComPtr<ID3D11UnorderedAccessView> _uav;
+        winrt::com_ptr<ID3D11UnorderedAccessView> _uav;
     };
 
 } /* namespace d3d11 */

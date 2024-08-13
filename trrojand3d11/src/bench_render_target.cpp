@@ -1,8 +1,8 @@
-/// <copyright file="bench_render_target.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Christoph Müller</author>
+ï»¿// <copyright file="bench_render_target.cpp" company="Visualisierungsinstitut der UniversitÃ¤t Stuttgart">
+// Copyright Â© 2016 - 2024 Visualisierungsinstitut der UniversitÃ¤t Stuttgart.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Christoph MÃ¼ller</author>
 
 #include "trrojan/d3d11/bench_render_target.h"
 
@@ -27,7 +27,7 @@ trrojan::d3d11::bench_render_target::bench_render_target(
  */
 void trrojan::d3d11::bench_render_target::resize(
         const unsigned int width, const unsigned int height) {
-    ATL::CComPtr<ID3D11Texture2D> backBuffer;
+    winrt::com_ptr<ID3D11Texture2D> backBuffer;
     HRESULT hr = S_OK;
     D3D11_TEXTURE2D_DESC texDesc;
 
@@ -43,15 +43,15 @@ void trrojan::d3d11::bench_render_target::resize(
     texDesc.Usage = D3D11_USAGE_DEFAULT;
     texDesc.Width = width;
 
-    hr = this->device()->CreateTexture2D(&texDesc, nullptr, &backBuffer);
+    hr = this->device()->CreateTexture2D(&texDesc, nullptr, backBuffer.put());
     if (FAILED(hr)) {
-        throw ATL::CAtlException(hr);
+        throw std::system_error(hr, com_category());
     }
 
-    set_debug_object_name(backBuffer.p, "bench_render_target (colour buffer)");
+    set_debug_object_name(backBuffer, "bench_render_target (colour buffer)");
 
     // Update the back buffer and all of its views.
     this->_dsv = nullptr;
     this->_rtv = nullptr;
-    this->set_back_buffer(backBuffer.p);
+    this->set_back_buffer(backBuffer);
 }

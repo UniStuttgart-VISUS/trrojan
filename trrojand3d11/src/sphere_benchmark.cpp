@@ -1,5 +1,5 @@
 ﻿// <copyright file="sphere_benchmark.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2016 - 2023 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+// Copyright © 2016 - 2024 Visualisierungsinstitut der Universität Stuttgart.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
 // <author>Christoph Müller</author>
@@ -186,25 +186,25 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
         // Constant buffers.
         this->sphere_constants = create_buffer(dev, D3D11_USAGE_DEFAULT,
             D3D11_BIND_CONSTANT_BUFFER, nullptr, sizeof(SphereConstants));
-        set_debug_object_name(this->sphere_constants.p, "sphere_constants");
+        set_debug_object_name(this->sphere_constants, "sphere_constants");
         this->tessellation_constants = create_buffer(dev, D3D11_USAGE_DEFAULT,
             D3D11_BIND_CONSTANT_BUFFER, nullptr, sizeof(TessellationConstants));
-        set_debug_object_name(this->tessellation_constants.p,
+        set_debug_object_name(this->tessellation_constants,
             "tessellation_constants");
         this->view_constants = create_buffer(dev, D3D11_USAGE_DEFAULT,
             D3D11_BIND_CONSTANT_BUFFER, nullptr, sizeof(ViewConstants));
-        set_debug_object_name(this->view_constants.p, "view_constants");
+        set_debug_object_name(this->view_constants, "view_constants");
 
         // Textures and SRVs.
         this->colour_map = nullptr;
-        create_viridis_colour_map(dev, &this->colour_map);
+        create_viridis_colour_map(dev.get(), this->colour_map.put());
 
         // Samplers.
-        this->linear_sampler = create_linear_sampler(dev);
+        this->linear_sampler = create_linear_sampler(dev.get());
 
         // Queries.
         this->done_query = create_event_query(dev);
-        this->stats_query = create_pipline_stats_query(dev);
+        this->stats_query = create_pipline_stats_query(dev.get());
     }
 
     // Determine whether the data set header must be loaded. This needs to be
@@ -214,7 +214,7 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
 
         try {
             // Try to interpret the path as description of random spheres.
-            this->make_random_spheres(dev, shaderCode, config);
+            this->make_random_spheres(dev.get(), shaderCode, config);
             assert(this->check_data_compatibility(shaderCode));
         } catch (std::exception& ex) {
             // If parsing the path as random spheres failed, interpret it as
@@ -242,7 +242,7 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
             auto isFrameCompat = this->check_data_compatibility(shaderCode);
 
             if (isFrameChanged || !isFrameCompat) {
-                this->load_mmpld_frame(dev, shaderCode, config);
+                this->load_mmpld_frame(dev.get(), shaderCode, config);
                 assert(this->check_data_compatibility(shaderCode));
             }
         }
@@ -255,7 +255,7 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
                 log::instance().write_line(log_level::debug, "Recreating "
                     "random sphere data set due to incompatibility with "
                     "current rendering technique.");
-                r->recreate(dev, shaderCode);
+                r->recreate(dev.get(), shaderCode);
                 assert(this->check_data_compatibility(shaderCode));
             }
         }
@@ -279,7 +279,7 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
 
     // Select or create the right rendering technique and apply the data set
     // to the technique.
-    auto& technique = this->get_technique(dev, shaderCode);
+    auto& technique = this->get_technique(dev.get(), shaderCode);
     this->data->apply(technique, rendering_technique::combine_shader_stages(
         shader_stage::vertex), 0, 1);
 
@@ -433,11 +433,11 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
         factor_poly_corners);
 
     // Update constant buffers.
-    ctx->UpdateSubresource(this->sphere_constants.p, 0, nullptr,
+    ctx->UpdateSubresource(this->sphere_constants.get(), 0, nullptr,
         &sphereConstants, 0, 0);
-    ctx->UpdateSubresource(this->tessellation_constants.p, 0, nullptr,
+    ctx->UpdateSubresource(this->tessellation_constants.get(), 0, nullptr,
         &tessConstants, 0, 0);
-    ctx->UpdateSubresource(this->view_constants.p, 0, nullptr,
+    ctx->UpdateSubresource(this->view_constants.get(), 0, nullptr,
         &viewConstants, 0, 0);
 
     // Configure the rasteriser.
@@ -500,8 +500,8 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
 #endif /* defined(CREATE_D2D_OVERLAY) */
             }
 
-            ctx->End(this->done_query);
-            wait_for_event_query(ctx, this->done_query);
+            ctx->End(this->done_query.get());
+            wait_for_event_query(ctx.get(), this->done_query.get());
             batchTime = cpuTimer.elapsed_millis();
 
             cntPrewarms = trrojan::estimate_iterations(minWallTime, batchTime,
@@ -542,20 +542,20 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
     log::instance().write_line(log_level::debug, "Collecting pipeline "
         "statistics ...");
     this->clear_target();
-    ctx->Begin(this->stats_query);
+    ctx->Begin(this->stats_query.get());
     if (isInstanced) {
         ctx->DrawInstanced(cntPrimitives, cntInstances, 0, 0);
     } else {
         ctx->Draw(cntPrimitives, 0);
     }
-    ctx->End(this->stats_query);
+    ctx->End(this->stats_query.get());
     this->present_target(0);
 #if defined(CREATE_D2D_OVERLAY)
     // Using the overlay will change the state such that we need to
     // re-apply it after presenting.
     technique.apply(ctx);
 #endif /* defined(CREATE_D2D_OVERLAY) */
-    wait_for_stats_query(pipeStats, ctx, this->stats_query);
+    wait_for_stats_query(pipeStats, ctx.get(), this->stats_query.get());
 
     // Do the wall clock measurement.
     log::instance().write_line(log_level::debug, "Measuring wall clock "
@@ -576,8 +576,8 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
         technique.apply(ctx);
 #endif /* defined(CREATE_D2D_OVERLAY) */
     }
-    ctx->End(this->done_query);
-    wait_for_event_query(ctx, this->done_query);
+    ctx->End(this->done_query.get());
+    wait_for_event_query(ctx.get(), this->done_query.get());
     auto cpuTime = cpuTimer.elapsed_millis();
     benchmark_base::leave_power_scope(powerCollector);
 

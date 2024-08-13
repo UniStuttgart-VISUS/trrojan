@@ -1,13 +1,13 @@
 ﻿// <copyright file="dstorage_configuration.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2023 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+// Copyright © 2023 - 2024 Visualisierungsinstitut der Universität Stuttgart.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
 // <author>Christoph Müller</author>
 
 #include "trrojan/d3d12/dstorage_configuration.h"
 
-#include <atlexcept.h>
 
+#include "trrojan/com_error_category.h"
 #include "trrojan/contains.h"
 #include "trrojan/io.h"
 

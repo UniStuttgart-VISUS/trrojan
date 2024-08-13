@@ -1,5 +1,5 @@
 # CMakeLists.txt
-# Copyright (C) 2016 - 2023 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+# Copyright (C) 2016 - 2023 Visualisierungsinstitut der Universität Stuttgart.
 
 project(trrojancore)
 

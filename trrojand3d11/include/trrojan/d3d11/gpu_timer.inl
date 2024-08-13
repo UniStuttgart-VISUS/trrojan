@@ -1,8 +1,8 @@
-/// <copyright file="gpu_timer.inl" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Christoph Müller</author>
+ï»¿// <copyright file="gpu_timer.inl" company="Visualisierungsinstitut der UniversitÃ¤t Stuttgart">
+// Copyright Â© 2016 - 2024 Visualisierungsinstitut der UniversitÃ¤t Stuttgart.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Christoph MÃ¼ller</author>
 
 /*
  * include\the\graphics\directx\d3d11_performance_counter.inl
@@ -87,7 +87,7 @@ template<size_t L>
 void trrojan::d3d11::gpu_timer<L>::end_frame(void) {
     assert(this->immediateContext != nullptr);
     assert(this->active_query().disjoint_query != nullptr);
-    this->immediateContext->End(this->active_query().disjoint_query);
+    this->immediateContext->End(this->active_query().disjoint_query.get());
     this->idxActiveQuery = ++this->idxActiveQuery % L;
 }
 
@@ -143,7 +143,8 @@ void trrojan::d3d11::gpu_timer<L>::end(
     assert(this->immediateContext != nullptr);
     assert(this->active_query().timestamp_end_query.size() > query);
     assert(this->active_query().timestamp_end_query[query] != nullptr);
-    this->immediateContext->End(this->active_query().timestamp_end_query[query]);
+    this->immediateContext->End(this->active_query().timestamp_end_query[query]
+        .get());
 }
 
 
@@ -227,8 +228,8 @@ void trrojan::d3d11::gpu_timer<L>::initialise(
             "before.");
     }
 
-    this->device = device;
-    this->device->GetImmediateContext(&this->immediateContext);
+    this->device.copy_from(device);
+    this->device->GetImmediateContext(this->immediateContext.put());
 
     /* Create the timestamp queries. */
     this->resize(cntPerFrameQueries);
@@ -265,13 +266,13 @@ void trrojan::d3d11::gpu_timer<L>::start_frame(void) {
         ::ZeroMemory(&desc, sizeof(desc));
         desc.Query = D3D11_QUERY_TIMESTAMP_DISJOINT;
 
-        auto hr = this->device->CreateQuery(&desc, &q.disjoint_query);
+        auto hr = this->device->CreateQuery(&desc, q.disjoint_query.put());
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
         }
     }
 
-    this->immediateContext->Begin(q.disjoint_query);
+    this->immediateContext->Begin(q.disjoint_query.get());
 }
 
 
@@ -285,7 +286,7 @@ void trrojan::d3d11::gpu_timer<L>::start(
     assert(this->active_query().timestamp_start_query.size() > query);
     assert(this->active_query().timestamp_start_query[query] != nullptr);
     this->immediateContext->End(this->active_query().timestamp_start_query[
-        query]);
+        query].get());
 }
 
 
@@ -310,7 +311,7 @@ bool trrojan::d3d11::gpu_timer<L>::try_evaluate(
     }
 
     /* Try to retrieve the start point. */
-    hr = this->immediateContext->GetData(q.timestamp_start_query[query],
+    hr = this->immediateContext->GetData(q.timestamp_start_query[query].get(),
         &outStart, sizeof(outStart), 0);
     switch (hr) {
         case S_OK:
@@ -321,11 +322,11 @@ bool trrojan::d3d11::gpu_timer<L>::try_evaluate(
             return false;
 
         default:
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
     }
 
     /* Try to retrieve the end point. */
-    hr = this->immediateContext->GetData(q.timestamp_end_query[query],
+    hr = this->immediateContext->GetData(q.timestamp_end_query[query].get(),
         &outEnd, sizeof(outStart), 0);
     switch (hr) {
         case S_OK:
@@ -336,7 +337,7 @@ bool trrojan::d3d11::gpu_timer<L>::try_evaluate(
             return false;
 
         default:
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
     }
 
     return true;
@@ -360,7 +361,7 @@ bool trrojan::d3d11::gpu_timer<L>::try_evaluate_frame(
     }
 
     /* Do the query. */
-    HRESULT hr = this->immediateContext->GetData(q.disjoint_query,
+    HRESULT hr = this->immediateContext->GetData(q.disjoint_query.get(),
         &disjointData, sizeof(D3D11_QUERY_DATA_TIMESTAMP_DISJOINT), 0);
     switch (hr) {
         case S_OK:
@@ -372,7 +373,7 @@ bool trrojan::d3d11::gpu_timer<L>::try_evaluate_frame(
             return false;
 
         default:
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
     }
 }
 
@@ -393,9 +394,9 @@ void trrojan::d3d11::gpu_timer<L>::assert_queries(
     list.resize(size);
     for (auto it = list.begin(); it != list.end(); ++it) {
         if (*it == nullptr) {
-            hr = this->device->CreateQuery(&desc, &(*it));
+            hr = this->device->CreateQuery(&desc, it->put());
             if (FAILED(hr)) {
-                throw ATL::CAtlException(hr);
+                throw std::system_error(hr, com_category());
             }
         }
     }

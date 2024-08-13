@@ -1,5 +1,5 @@
 ﻿// <copyright file="environment.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2016 - 2023 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+// Copyright © 2016 - 2024 Visualisierungsinstitut der Universität Stuttgart.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
 // <author>Christoph Müller</author>
@@ -11,11 +11,14 @@
 #include <iterator>
 #include <memory>
 #include <set>
+#include <system_error>
 
 #include <Windows.h>
-#include <atlbase.h>
 #include <dxgi.h>
 
+#include <winrt/base.h>
+
+#include "trrojan/com_error_category.h"
 #include "trrojan/cmd_line.h"
 #include "trrojan/log.h"
 #include "trrojan/text.h"
@@ -80,9 +83,8 @@ void trrojan::d3d11::environment::on_finalise(void) {
  * trrojan::d3d11::environment::on_initialise
  */
 void trrojan::d3d11::environment::on_initialise(const cmd_line& cmdLine) {
-    USES_CONVERSION;
     DWORD deviceFlags = D3D11_CREATE_DEVICE_DISABLE_GPU_TIMEOUT;
-    ATL::CComPtr<IDXGIFactory> factory;
+    winrt::com_ptr<IDXGIFactory> factory;
     HRESULT hr = S_OK;
     const auto isBasicRender = contains_switch("--with-basic-render-driver",
         cmdLine.begin(), cmdLine.end());
@@ -94,15 +96,14 @@ void trrojan::d3d11::environment::on_initialise(const cmd_line& cmdLine) {
     /* Initialise COM (for WIC). */
     hr = ::CoInitialize(nullptr);
     if (FAILED(hr)) {
-        throw ATL::CAtlException(hr);
+        throw std::system_error(hr, com_category());
     }
 #endif /* defined(TRROJAN_FOR_UWP) */
 
     /* Create DXGI factory. */
-    hr = ::CreateDXGIFactory1(IID_IDXGIFactory1, reinterpret_cast<void **>(
-        &factory));
+    hr = ::CreateDXGIFactory1(IID_IDXGIFactory1, factory.put_void());
     if (FAILED(hr)) {
-        throw ATL::CAtlException(hr);
+        throw std::system_error(hr, com_category());
     }
 
 #if (defined(DEBUG) || defined(_DEBUG))
@@ -112,11 +113,11 @@ void trrojan::d3d11::environment::on_initialise(const cmd_line& cmdLine) {
 #endif /* (defined(DEBUG) || defined(_DEBUG)) */
 
     for (UINT a = 0; SUCCEEDED(hr) || (hr != DXGI_ERROR_NOT_FOUND); ++a) {
-        ATL::CComPtr<IDXGIAdapter> adapter;
+        winrt::com_ptr<IDXGIAdapter> adapter;
         DXGI_ADAPTER_DESC desc;
-        ATL::CComPtr<ID3D11Device> device;
+        winrt::com_ptr<ID3D11Device> device;
 
-        hr = factory->EnumAdapters(a, &adapter);
+        hr = factory->EnumAdapters(a, adapter.put());
         if (SUCCEEDED(hr)) {
             hr = adapter->GetDesc(&desc);
         }
@@ -129,7 +130,7 @@ void trrojan::d3d11::environment::on_initialise(const cmd_line& cmdLine) {
                 log::instance().write_line(log_level::information, "Excluding "
                     "\"{}\" from list of device eligible for benchmarking "
                     "because --with-basic-render-driver was not specified.",
-                    W2A(desc.Description));
+                    to_utf8(desc.Description));
                 continue;
             }
 
@@ -140,7 +141,7 @@ void trrojan::d3d11::environment::on_initialise(const cmd_line& cmdLine) {
                     log::instance().write_line(log_level::information,
                         "Excluding \"{}\" from list of device eligible for "
                         "benchmarking because another device with the same PCI "
-                        "IDs was already added.", W2A(desc.Description));
+                        "IDs was already added.", to_utf8(desc.Description));
                     continue;
                 } else {
                     pciIds.emplace(std::move(pciId));
@@ -151,8 +152,8 @@ void trrojan::d3d11::environment::on_initialise(const cmd_line& cmdLine) {
 #if !defined(TRROJAN_FOR_UWP)
         if (SUCCEEDED(hr)) {
             D3D_FEATURE_LEVEL featureLevel;
-            hr = ::D3D11CreateDevice(adapter, D3D_DRIVER_TYPE_UNKNOWN, NULL,
-                deviceFlags, NULL, 0, D3D11_SDK_VERSION, &device,
+            hr = ::D3D11CreateDevice(adapter.get(), D3D_DRIVER_TYPE_UNKNOWN,
+                NULL, deviceFlags, NULL, 0, D3D11_SDK_VERSION, device.put(),
                 &featureLevel, nullptr);//&immediateContext);
         }
 #endif /* !defined(TRROJAN_FOR_UWP) */
@@ -166,9 +167,9 @@ void trrojan::d3d11::environment::on_initialise(const cmd_line& cmdLine) {
             this->_devices.push_back(std::make_shared<d3d11::device>(
                     [adapter, deviceFlags](void) {
                 D3D_FEATURE_LEVEL featureLevel;
-                ATL::CComPtr<ID3D11Device> retval;
+                winrt::com_ptr<ID3D11Device> retval;
                 auto hr = ::D3D11CreateDevice(adapter, D3D_DRIVER_TYPE_UNKNOWN,
-                    NULL, deviceFlags, NULL, 0, D3D11_SDK_VERSION, &retval,
+                    NULL, deviceFlags, NULL, 0, D3D11_SDK_VERSION, retval.put(),
                     &featureLevel, nullptr);
                 if (FAILED(hr)) {
                     throw ATL::CAtlException(hr);
@@ -182,6 +183,6 @@ void trrojan::d3d11::environment::on_initialise(const cmd_line& cmdLine) {
     }
 
     if (FAILED(hr) && (hr != DXGI_ERROR_NOT_FOUND)) {
-        throw ATL::CAtlException(hr);
+        throw std::system_error(hr, com_category());
     }
 }

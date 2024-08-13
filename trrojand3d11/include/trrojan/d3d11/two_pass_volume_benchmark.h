@@ -1,8 +1,8 @@
-// <copyright file="two_pass_volume_benchmark.h" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2016 - 2022 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+ï»¿// <copyright file="two_pass_volume_benchmark.h" company="Visualisierungsinstitut der UniversitÃ¤t Stuttgart">
+// Copyright Â© 2016 - 2024 Visualisierungsinstitut der UniversitÃ¤t Stuttgart.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
-// <author>Christoph Müller</author>
+// <author>Christoph MÃ¼ller</author>
 
 #pragma once
 
@@ -56,11 +56,11 @@ namespace d3d11 {
 
         void begin_volume_pass(ID3D11DeviceContext *ctx);
 
-        ATL::CComPtr<ID3D11Query> done_query;
+        winrt::com_ptr<ID3D11Query> done_query;
         rendering_technique::srv_type entry_source;
-        ATL::CComPtr<ID3D11RenderTargetView> entry_target;
+        winrt::com_ptr<ID3D11RenderTargetView> entry_target;
         rendering_technique::srv_type ray_source;
-        ATL::CComPtr<ID3D11RenderTargetView> ray_target;
+        winrt::com_ptr<ID3D11RenderTargetView> ray_target;
         rendering_technique ray_technique;
         rendering_technique::buffer_type raycasting_constants;
         rendering_technique::buffer_type view_constants;

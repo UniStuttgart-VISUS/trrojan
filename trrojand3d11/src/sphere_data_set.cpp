@@ -1,5 +1,5 @@
 ﻿// <copyright file="sphere_data_set.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2016 - 2023 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+// Copyright © 2016 - 2024 Visualisierungsinstitut der Universität Stuttgart.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
 // <author>Christoph Müller</author>
@@ -9,6 +9,7 @@
 #include <mmpld.h>
 
 #include "trrojan/clipping.h"
+#include "trrojan/com_error_category.h"
 #include "trrojan/log.h"
 
 #include "sphere_techniques.h"
@@ -74,11 +75,11 @@ void trrojan::d3d11::sphere_data_set_base::apply(rendering_technique& technique,
         const UINT idxSrv) {
     if ((this->properties() & property_structured_resource) != 0) {
         // Add the data set as structured resource view.
-        ATL::CComPtr<ID3D11Device> device;
+        winrt::com_ptr<ID3D11Device> device;
         D3D11_SHADER_RESOURCE_VIEW_DESC desc;
         rendering_technique::srv_type srv;
 
-        this->buffer()->GetDevice(&device);
+        this->buffer()->GetDevice(device.put());
 
         ::ZeroMemory(&desc, sizeof(desc));
         desc.Format = DXGI_FORMAT_UNKNOWN;
@@ -86,10 +87,10 @@ void trrojan::d3d11::sphere_data_set_base::apply(rendering_technique& technique,
         desc.Buffer.FirstElement = 0;
         desc.Buffer.NumElements = this->size();
 
-        auto hr = device->CreateShaderResourceView(this->buffer().p, &desc,
-            &srv);
+        auto hr = device->CreateShaderResourceView(this->buffer().get(), &desc,
+            srv.put());
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
         }
 
         technique.set_shader_resource_views(srv, stages, idxSrv);
@@ -97,7 +98,7 @@ void trrojan::d3d11::sphere_data_set_base::apply(rendering_technique& technique,
     } else {
         // Add the data set as vertex buffer.
         rendering_technique::vertex_buffer vb;
-        vb.buffer = this->buffer().p;
+        vb.buffer = this->buffer();
         vb.offset = 0;
         vb.size = this->size();
         vb.stride = this->stride();

@@ -1,8 +1,8 @@
-/// <copyright file="sphere_benchmark.h" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Christoph Müller</author>
+ï»¿// <copyright file="sphere_benchmark.h" company="Visualisierungsinstitut der UniversitÃ¤t Stuttgart">
+// Copyright Â© 2016 - 2024 Visualisierungsinstitut der UniversitÃ¤t Stuttgart.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Christoph MÃ¼ller</author>
 
 #pragma once
 
@@ -227,7 +227,7 @@ namespace d3d11 {
         /// <summary>
         /// An event query for detecting the end of rendering on the GPU.
         /// </summary>
-        ATL::CComPtr<ID3D11Query> done_query;
+        winrt::com_ptr<ID3D11Query> done_query;
 
         /// <summary>
         /// A linear texture sampler state for the transfer function.
@@ -247,7 +247,7 @@ namespace d3d11 {
         /// <summary>
         /// A query for pipeline statistics.
         /// </summary>
-        ATL::CComPtr<ID3D11Query> stats_query;
+        winrt::com_ptr<ID3D11Query> stats_query;
 
         /// <summary>
         /// Caches rendering techniques already created.

@@ -1,5 +1,5 @@
 ﻿// <copyright file="debug_render_target.h" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2016 - 2023 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+// Copyright © 2016 - 2023 Visualisierungsinstitut der Universität Stuttgart.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
 // <author>Michael Becher</author>
@@ -7,11 +7,12 @@
 
 #pragma once
 
-#include <atlbase.h>
 #include <d2d1_3.h>
 #include <dwrite_3.h>
 #include <wincodec.h>
 #include <Windows.h>
+
+#include <winrt/base.h>
 
 #include "trrojan/uwp_render_target_base.h"
 
@@ -53,7 +54,7 @@ namespace d3d11 {
             const unsigned int height);
 
         /// <inheritdoc />
-        virtual ATL::CComPtr<ID3D11UnorderedAccessView> to_uav(void);
+        virtual winrt::com_ptr<ID3D11UnorderedAccessView> to_uav(void);
 
     private:
 
@@ -62,7 +63,7 @@ namespace d3d11 {
         /// <summary>
         /// The swap chain for the window.
         /// </summary>
-        ATL::CComPtr<IDXGISwapChain1> swapChain;
+        winrt::com_ptr<IDXGISwapChain1> swapChain;
 
         /// <summary>
         /// An unordered access view for compute shaders.
@@ -73,7 +74,7 @@ namespace d3d11 {
         /// reason for that is that mapping the back buffer is not recommended
         /// anymore and is also not supported on D3D12.
         /// </remarks>
-        ATL::CComPtr<ID3D11UnorderedAccessView> _uav;
+        winrt::com_ptr<ID3D11UnorderedAccessView> _uav;
 
         /// Direct2D drawing components.
 #if defined(CREATE_D2D_OVERLAY)

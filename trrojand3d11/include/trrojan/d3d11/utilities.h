@@ -1,8 +1,8 @@
-/// <copyright file="utilities.h" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Christoph Müller</author>
+ï»¿// <copyright file="utilities.h" company="Visualisierungsinstitut der UniversitÃ¤t Stuttgart">
+// Copyright Â© 2016 - 2024 Visualisierungsinstitut der UniversitÃ¤t Stuttgart.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Christoph MÃ¼ller</author>
 
 #pragma once
 
@@ -13,22 +13,39 @@
 #include <stdexcept>
 #include <vector>
 
-#include <atlbase.h>
 #include <Windows.h>
 #include <d3d11.h>
 #include <dxgi.h>
 
+#include <winrt/base.h>
+
+#include <winrt/base.h>
+
+#include "trrojan/com_error_category.h"
+
 #include "trrojan/d3d11/export.h"
+
 
 namespace trrojan {
 namespace d3d11 {
 
     HANDLE TRROJAND3D11_API get_shared_handle(ID3D11Resource *resource);
 
-    ATL::CComPtr<ID3D11Buffer> TRROJAND3D11_API create_buffer(
+    winrt::com_ptr<ID3D11Buffer> TRROJAND3D11_API create_buffer(
         ID3D11Device *device, const D3D11_USAGE usage,
         const D3D11_BIND_FLAG binding, const void *data, const UINT cntData,
         const UINT cpuAccess = 0);
+
+    inline winrt::com_ptr<ID3D11Buffer> TRROJAND3D11_API create_buffer(
+            winrt::com_ptr<ID3D11Device> device,
+            const D3D11_USAGE usage,
+            const D3D11_BIND_FLAG binding,
+            const void *data,
+            const UINT cntData,
+            const UINT cpuAccess = 0) {
+        return create_buffer(device.get(), usage, binding, data, cntData,
+            cpuAccess);
+    }
 
     /// <summary>
     /// Create a DXGI surface that can be used as Direct2D render target with
@@ -37,15 +54,22 @@ namespace d3d11 {
     /// <param name="device"></param>
     /// <param name="swap_chain"></param>
     /// <returns></returns>
-    ATL::CComPtr<ID3D11Texture2D> create_compatible_surface(
+    winrt::com_ptr<ID3D11Texture2D> create_compatible_surface(
         ID3D11Device *device, IDXGISwapChain *swap_chain);
 
-    ATL::CComPtr<ID3D11ComputeShader> create_compute_shader(ID3D11Device *device,
+    winrt::com_ptr<ID3D11ComputeShader> create_compute_shader(ID3D11Device *device,
         const BYTE *byteCode, const size_t cntByteCode);
 
-    inline ATL::CComPtr<ID3D11ComputeShader> create_compute_shader(
+    inline winrt::com_ptr<ID3D11ComputeShader> create_compute_shader(
             ID3D11Device *device, const std::vector<std::uint8_t>& byteCode) {
         return create_compute_shader(device, byteCode.data(), byteCode.size());
+    }
+
+    inline winrt::com_ptr<ID3D11ComputeShader> create_compute_shader(
+            winrt::com_ptr<ID3D11Device> device,
+            const std::vector<std::uint8_t> &byteCode) {
+        return create_compute_shader(device.get(), byteCode.data(),
+            byteCode.size());
     }
 
     /// <summary>
@@ -58,42 +82,47 @@ namespace d3d11 {
         ID3D11Buffer **outVertices, ID3D11Buffer **outIndices,
         const float size = 1.0f);
 
-    ATL::CComPtr<ID3D11DomainShader> create_domain_shader(ID3D11Device *device,
+    winrt::com_ptr<ID3D11DomainShader> create_domain_shader(ID3D11Device *device,
         const BYTE *byteCode, const size_t cntByteCode);
 
     template<size_t N>
-    inline ATL::CComPtr<ID3D11DomainShader> create_domain_shader(
+    inline winrt::com_ptr<ID3D11DomainShader> create_domain_shader(
             ID3D11Device *device, const BYTE(&byteCode)[N]) {
         return create_domain_shader(device, byteCode, N);
     }
 
-    inline ATL::CComPtr<ID3D11DomainShader> create_domain_shader(
+    inline winrt::com_ptr<ID3D11DomainShader> create_domain_shader(
             ID3D11Device *device, const std::vector<std::uint8_t>& byteCode) {
         return create_domain_shader(device, byteCode.data(), byteCode.size());
     }
 
-    inline ATL::CComPtr<ID3D11DomainShader> create_domain_shader(
+    inline winrt::com_ptr<ID3D11DomainShader> create_domain_shader(
             ID3D11Device *device, std::nullptr_t) {
         return nullptr;
     }
 
-    ATL::CComPtr<ID3D11Query> create_event_query(ID3D11Device *device);
+    winrt::com_ptr<ID3D11Query> create_event_query(ID3D11Device *device);
 
-    ATL::CComPtr<ID3D11GeometryShader> create_geometry_shader(
+    inline winrt::com_ptr<ID3D11Query> create_event_query(
+            winrt::com_ptr<ID3D11Device> device) {
+        return create_event_query(device.get());
+    }
+
+    winrt::com_ptr<ID3D11GeometryShader> create_geometry_shader(
         ID3D11Device *device, const BYTE *byteCode, const size_t cntByteCode);
 
     template<size_t N>
-    inline ATL::CComPtr<ID3D11GeometryShader> create_geometry_shader(
+    inline winrt::com_ptr<ID3D11GeometryShader> create_geometry_shader(
             ID3D11Device *device, const BYTE(&byteCode)[N]) {
         return create_geometry_shader(device, byteCode, N);
     }
 
-    inline ATL::CComPtr<ID3D11GeometryShader> create_geometry_shader(
+    inline winrt::com_ptr<ID3D11GeometryShader> create_geometry_shader(
             ID3D11Device *device, const std::vector<std::uint8_t>& byteCode) {
         return create_geometry_shader(device, byteCode.data(), byteCode.size());
     }
 
-    inline ATL::CComPtr<ID3D11GeometryShader> create_geometry_shader(
+    inline winrt::com_ptr<ID3D11GeometryShader> create_geometry_shader(
             ID3D11Device *device, std::nullptr_t) {
         return nullptr;
     }
@@ -101,43 +130,43 @@ namespace d3d11 {
     /// <summary>
     /// Create a new geometry shader from the byte code in a shader object file.
     /// </summary>
-    ATL::CComPtr<ID3D11GeometryShader> create_geometry_shader(
+    winrt::com_ptr<ID3D11GeometryShader> create_geometry_shader(
         ID3D11Device *device, const std::string& path);
 
     /// <summary>
     /// Creates a new geometry shader with stream output.
     /// </summary>
-    ATL::CComPtr<ID3D11GeometryShader> create_geometry_shader(
+    winrt::com_ptr<ID3D11GeometryShader> create_geometry_shader(
         ID3D11Device *device, const BYTE *byteCode, const size_t cntByteCode,
         const D3D11_SO_DECLARATION_ENTRY *soDecls, const size_t cntSoDecls,
         const UINT *bufferStrides = nullptr, const size_t cntBufferStrides = 0,
         const UINT rasterisedStream = 0);
 
-    ATL::CComPtr<ID3D11HullShader> create_hull_shader(ID3D11Device *device,
+    winrt::com_ptr<ID3D11HullShader> create_hull_shader(ID3D11Device *device,
         const BYTE *byteCode, const size_t cntByteCode);
 
     template<size_t N>
-    inline ATL::CComPtr<ID3D11HullShader> create_hull_shader(
+    inline winrt::com_ptr<ID3D11HullShader> create_hull_shader(
             ID3D11Device *device, const BYTE(&byteCode)[N]) {
         return create_hull_shader(device, byteCode, N);
     }
 
-    inline ATL::CComPtr<ID3D11HullShader> create_hull_shader(
+    inline winrt::com_ptr<ID3D11HullShader> create_hull_shader(
             ID3D11Device *device, const std::vector<std::uint8_t>& byteCode) {
         return create_hull_shader(device, byteCode.data(), byteCode.size());
     }
 
 
-    inline ATL::CComPtr<ID3D11HullShader> create_hull_shader(
+    inline winrt::com_ptr<ID3D11HullShader> create_hull_shader(
             ID3D11Device *device, std::nullptr_t) {
         return nullptr;
     }
 
-    ATL::CComPtr<ID3D11InputLayout> create_input_layout(ID3D11Device *device,
+    winrt::com_ptr<ID3D11InputLayout> create_input_layout(ID3D11Device *device,
         const std::vector<D3D11_INPUT_ELEMENT_DESC>& elements,
         const BYTE *byteCode, const size_t cntByteCode);
 
-    inline ATL::CComPtr<ID3D11InputLayout> create_input_layout(
+    inline winrt::com_ptr<ID3D11InputLayout> create_input_layout(
             ID3D11Device *device,
             const std::vector<D3D11_INPUT_ELEMENT_DESC>& elements,
             const std::vector<std::uint8_t>& byteCode) {
@@ -146,33 +175,33 @@ namespace d3d11 {
     }
 
     template<size_t N>
-    inline ATL::CComPtr<ID3D11InputLayout> create_input_layout(
+    inline winrt::com_ptr<ID3D11InputLayout> create_input_layout(
             ID3D11Device *device,
             const std::vector<D3D11_INPUT_ELEMENT_DESC>& elements,
             const BYTE(&byteCode)[N]) {
         return create_input_layout(device, elements, byteCode, N);
     }
 
-    ATL::CComPtr<ID3D11SamplerState> create_linear_sampler(
+    winrt::com_ptr<ID3D11SamplerState> create_linear_sampler(
         ID3D11Device *device);
 
-    ATL::CComPtr<ID3D11Query> create_pipline_stats_query(ID3D11Device *device);
+    winrt::com_ptr<ID3D11Query> create_pipline_stats_query(ID3D11Device *device);
 
-    ATL::CComPtr<ID3D11PixelShader> create_pixel_shader(ID3D11Device *device,
+    winrt::com_ptr<ID3D11PixelShader> create_pixel_shader(ID3D11Device *device,
         const BYTE *byteCode, const size_t cntByteCode);
 
     template<size_t N>
-    inline ATL::CComPtr<ID3D11PixelShader> create_pixel_shader(
+    inline winrt::com_ptr<ID3D11PixelShader> create_pixel_shader(
             ID3D11Device *device, const BYTE(&byteCode)[N]) {
         return create_pixel_shader(device, byteCode, N);
     }
 
-    inline ATL::CComPtr<ID3D11PixelShader> create_pixel_shader(
+    inline winrt::com_ptr<ID3D11PixelShader> create_pixel_shader(
             ID3D11Device *device, const std::vector<std::uint8_t>& byteCode) {
         return create_pixel_shader(device, byteCode.data(), byteCode.size());
     }
 
-    inline ATL::CComPtr<ID3D11PixelShader> create_pixel_shader(
+    inline winrt::com_ptr<ID3D11PixelShader> create_pixel_shader(
             ID3D11Device *device, std::nullptr_t) {
         return nullptr;
     }
@@ -181,14 +210,22 @@ namespace d3d11 {
     /// Creates an unordered access view for a structured resource buffer of
     /// the specified element size.
     /// </summary>
-    ATL::CComPtr<ID3D11UnorderedAccessView> create_uav(ID3D11Device *device,
+    winrt::com_ptr<ID3D11UnorderedAccessView> create_uav(ID3D11Device *device,
         const UINT width, const UINT height, const UINT elementSize);
 
     /// <summary>
     /// Creates an unordered access view for the given texture.
     /// </summary>
-    ATL::CComPtr<ID3D11UnorderedAccessView> create_uav(
+    winrt::com_ptr<ID3D11UnorderedAccessView> create_uav(
         ID3D11Texture2D *texture);
+
+    /// <summary>
+    /// Creates an unordered access view for the given texture.
+    /// </summary>
+    inline winrt::com_ptr<ID3D11UnorderedAccessView> create_uav(
+            winrt::com_ptr<ID3D11Texture2D> texture) {
+        return create_uav(texture.get());
+    }
 
     /// <summary>
     /// Create a vertex shader from the given byte code.
@@ -199,7 +236,7 @@ namespace d3d11 {
     /// <returns></returns>
     /// <exception cref="ATL::CAtlException">In case the shader creation failed.
     /// </exception>
-    ATL::CComPtr<ID3D11VertexShader> create_vertex_shader(ID3D11Device *device,
+    winrt::com_ptr<ID3D11VertexShader> create_vertex_shader(ID3D11Device *device,
         const BYTE *byteCode, const size_t cntByteCode);
 
     /// <summary>
@@ -212,7 +249,7 @@ namespace d3d11 {
     /// <exception cref="ATL::CAtlException">In case the shader creation failed.
     /// </exception>
     template<size_t N>
-    inline ATL::CComPtr<ID3D11VertexShader> create_vertex_shader(
+    inline winrt::com_ptr<ID3D11VertexShader> create_vertex_shader(
             ID3D11Device *device, const BYTE(&byteCode)[N]) {
         return create_vertex_shader(device, byteCode, N);
     }
@@ -225,7 +262,7 @@ namespace d3d11 {
     /// <returns></returns>
     /// <exception cref="ATL::CAtlException">In case the shader creation failed.
     /// </exception>
-    inline ATL::CComPtr<ID3D11VertexShader> create_vertex_shader(
+    inline winrt::com_ptr<ID3D11VertexShader> create_vertex_shader(
             ID3D11Device *device, const std::vector<std::uint8_t>& byteCode) {
         return create_vertex_shader(device, byteCode.data(), byteCode.size());
     }
@@ -238,7 +275,7 @@ namespace d3d11 {
     /// <returns></returns>
     /// <exception cref="ATL::CAtlException">In case the shader creation failed.
     /// </exception>
-    inline ATL::CComPtr<ID3D11VertexShader> create_vertex_shader(
+    inline winrt::com_ptr<ID3D11VertexShader> create_vertex_shader(
             ID3D11Device *device, std::nullptr_t) {
         return nullptr;
     }
@@ -252,7 +289,7 @@ namespace d3d11 {
     /// <returns></returns>
     /// <exception cref="ATL::CAtlException">In case the texture could not be
     /// created.</exception>
-    ATL::CComPtr<ID3D11Texture1D> create_viridis_colour_map(
+    winrt::com_ptr<ID3D11Texture1D> create_viridis_colour_map(
         ID3D11Device *device, ID3D11ShaderResourceView **outOptSrv = nullptr);
 
     /// <summary>
@@ -260,33 +297,51 @@ namespace d3d11 {
     /// </summary>
     /// <param name="swap_chain"></param>
     /// <returns></returns>
-    ATL::CComPtr<ID3D11Texture2D> get_back_buffer(IDXGISwapChain *swap_chain);
+    winrt::com_ptr<ID3D11Texture2D> get_back_buffer(IDXGISwapChain *swap_chain);
 
     /// <summary>
     /// Gets the device the texture is resident on.
     /// </summary>
     /// <param name="texture"></param>
     /// <returns></returns>
-    ATL::CComPtr<ID3D11Device> get_device(ID3D11Texture2D *texture);
+    winrt::com_ptr<ID3D11Device> get_device(ID3D11Texture2D *texture);
 
     /// <summary>
     /// Gets the underlying DXGI device for a given D3D device.
     /// </summary>
     /// <param name="device"></param>
     /// <returns></returns>
-    ATL::CComPtr<IDXGIDevice> get_device(ID3D11Device *device);
+    winrt::com_ptr<IDXGIDevice> get_device(ID3D11Device *device);
+
+    /// <summary>
+    /// Gets the underlying DXGI device for a given D3D device.
+    /// </summary>
+    /// <param name="device"></param>
+    /// <returns></returns>
+    inline winrt::com_ptr<IDXGIDevice> get_device(
+            winrt::com_ptr<ID3D11Device> device) {
+        return get_device(device.get());
+    }
 
     /// <summary>
     /// Gets the underlying DXGI resource for a given texture.
     /// </summary>
     /// <param name="texture"></param>
     /// <returns></returns>
-    ATL::CComPtr<IDXGISurface> get_surface(ID3D11Texture2D *texture);
+    winrt::com_ptr<IDXGISurface> get_surface(ID3D11Texture2D *texture);
 
     /// <summary>
     /// Sets the <c>WKPDID_D3DDebugObjectName</c> of the given object.
     /// </summary>
     template<class T> void set_debug_object_name(T *obj, const char *name);
+
+    /// <summary>
+    /// Sets the <c>WKPDID_D3DDebugObjectName</c> of the given object.
+    /// </summary>
+    template<class T>
+    inline void set_debug_object_name(winrt::com_ptr<T> obj, const char *name) {
+        set_debug_object_name(obj.get(), name);
+    }
 
     /// <summary>
     /// Determines whether the debug layers are installed on Windows 10.

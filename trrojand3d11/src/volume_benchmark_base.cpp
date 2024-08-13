@@ -1,5 +1,5 @@
 // <copyright file="volume_benchmark_base.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2016 - 2023 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+// Copyright © 2016 - 2023 Visualisierungsinstitut der Universität Stuttgart.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
 // <author>Christoph Müller</author>
@@ -175,7 +175,7 @@ void trrojan::d3d11::volume_benchmark_base::load_volume(const char *path,
 
         auto hr = device->CreateTexture3D(&desc, &id, outTexture);
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
         }
     }
 
@@ -185,7 +185,7 @@ void trrojan::d3d11::volume_benchmark_base::load_volume(const char *path,
         auto hr = device->CreateShaderResourceView(*outTexture, nullptr,
             outSrv);
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
         }
     }
 
@@ -223,7 +223,7 @@ void trrojan::d3d11::volume_benchmark_base::load_xfer_func(
 
         auto hr = device->CreateTexture1D(&desc, &id, outTexture);
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
         }
         set_debug_object_name(*outTexture, "volume_data_set");
     }
@@ -234,7 +234,7 @@ void trrojan::d3d11::volume_benchmark_base::load_xfer_func(
         auto hr = device->CreateShaderResourceView(*outTexture, nullptr,
             outSrv);
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
         }
     }
 }
@@ -262,10 +262,10 @@ void trrojan::d3d11::volume_benchmark_base::load_xfer_func(
 
         if (ends_with(path, std::string(".brudervn"))) {
             return volume_benchmark_base::load_brudervn_xfer_func(path.c_str(),
-                device.d3d_device(), outTexture, outSrv);
+                device.d3d_device().get(), outTexture, outSrv);
         } else {
             return volume_benchmark_base::load_xfer_func(path.c_str(),
-                device.d3d_device(), outTexture, outSrv);
+                device.d3d_device().get(), outTexture, outSrv);
         }
 
     } catch (...) {
@@ -298,7 +298,7 @@ void trrojan::d3d11::volume_benchmark_base::load_xfer_func(
 
             auto hr = dev->CreateTexture1D(&desc, &id, outTexture);
             if (FAILED(hr)) {
-                throw ATL::CAtlException(hr);
+                throw std::system_error(hr, com_category());
             }
             set_debug_object_name(*outTexture, "transfer_function");
         }
@@ -307,7 +307,7 @@ void trrojan::d3d11::volume_benchmark_base::load_xfer_func(
             auto hr = dev->CreateShaderResourceView(*outTexture, nullptr,
                 outSrv);
             if (FAILED(hr)) {
-                throw ATL::CAtlException(hr);
+                throw std::system_error(hr, com_category());
             }
         }
     }
@@ -359,7 +359,7 @@ trrojan::result trrojan::d3d11::volume_benchmark_base::on_run(
         this->xfer_func_view = nullptr;
 
         // Samplers.
-        this->linear_sampler = create_linear_sampler(device.d3d_device());
+        this->linear_sampler = create_linear_sampler(device.d3d_device().get());
 
         // Queries.
         //this->done_query = create_event_query(dev);
@@ -378,15 +378,15 @@ trrojan::result trrojan::d3d11::volume_benchmark_base::on_run(
 
     // Recreate resources.
     if (this->data_view == nullptr) {
-        ATL::CComPtr<ID3D11Texture3D> tex;
+        winrt::com_ptr<ID3D11Texture3D> tex;
         volume_benchmark_base::load_volume(config, device, this->_volume_info,
-            &tex, &this->data_view);
+            tex.put(), this->data_view.put());
     }
 
     if (this->xfer_func_view == nullptr) {
-        ATL::CComPtr<ID3D11Texture1D> tex;
-        volume_benchmark_base::load_xfer_func(config, device, &tex,
-            &this->xfer_func_view);
+        winrt::com_ptr<ID3D11Texture1D> tex;
+        volume_benchmark_base::load_xfer_func(config, device, tex.put(),
+            this->xfer_func_view.put());
     }
 
     return trrojan::result();

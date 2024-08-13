@@ -1,5 +1,5 @@
 ﻿// <copyright file="d2d_overlay.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2022 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+// Copyright © 2022 - 2024 Visualisierungsinstitut der Universität Stuttgart.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
 // <author>Christoph Müller</author>
@@ -7,6 +7,9 @@
 #include "trrojan/d3d11/d2d_overlay.h"
 
 #include <algorithm>
+#include <system_error>
+
+#include "trrojan/com_error_category.h"
 
 #include "trrojan/d3d11/plugin.h"
 #include "trrojan/d3d11/utilities.h"
@@ -15,17 +18,17 @@
 /*
  * trrojan::d3d11::d2d_overlay::get_font
  */
-ATL::CComPtr<IDWriteFont> trrojan::d3d11::d2d_overlay::get_font(
+winrt::com_ptr<IDWriteFont> trrojan::d3d11::d2d_overlay::get_font(
         IDWriteTextFormat *format) {
     BOOL exists = FALSE;
-    ATL::CComPtr<IDWriteFontFamily> family;
-    ATL::CComPtr<IDWriteFontCollection> fc;
+    winrt::com_ptr<IDWriteFontFamily> family;
+    winrt::com_ptr<IDWriteFontCollection> fc;
     UINT32 index = 0;
     std::vector<wchar_t> name;
-    ATL::CComPtr<IDWriteFont> retval;
+    winrt::com_ptr<IDWriteFont> retval;
 
     if (format == nullptr) {
-        throw ATL::CAtlException(E_POINTER);
+        throw std::system_error(E_POINTER, com_category());
     }
 
     {
@@ -33,39 +36,39 @@ ATL::CComPtr<IDWriteFont> trrojan::d3d11::d2d_overlay::get_font(
         name.resize(cntBuffer);
         auto hr = format->GetFontFamilyName(name.data(), cntBuffer);
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
         }
     }
 
     {
-        auto hr = format->GetFontCollection(&fc);
+        auto hr = format->GetFontCollection(fc.put());
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
         }
     }
 
     {
         auto hr = fc->FindFamilyName(name.data(), &index, &exists);
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
         }
         if (!exists) {
-            throw ATL::CAtlException(E_FAIL);
+            throw std::system_error(E_FAIL, com_category());
         }
     }
 
     {
-        auto hr = fc->GetFontFamily(index, &family);
+        auto hr = fc->GetFontFamily(index, family.put());
         if (FAILED(hr)) {
-            throw ATL::CAtlException(E_FAIL);
+            throw std::system_error(E_FAIL, com_category());
         }
     }
 
     {
         auto hr = family->GetFirstMatchingFont(format->GetFontWeight(),
-            format->GetFontStretch(), format->GetFontStyle(), &retval);
+            format->GetFontStretch(), format->GetFontStyle(), retval.put());
         if (FAILED(hr)) {
-            throw ATL::CAtlException(E_FAIL);
+            throw std::system_error(E_FAIL, com_category());
         }
     }
 
@@ -77,8 +80,9 @@ ATL::CComPtr<IDWriteFont> trrojan::d3d11::d2d_overlay::get_font(
  * trrojan::d3d11::d2d_overlay::d2d_overlay
  */
 trrojan::d3d11::d2d_overlay::d2d_overlay(ID3D11Device *device,
-        IDXGISwapChain *swap_chain)
-        : _d3d_device(device), _swap_chain(swap_chain) {
+        IDXGISwapChain *swap_chain) {
+    this->_d3d_device.copy_from(device);
+    this->_swap_chain.copy_from(swap_chain);
     assert(this->_d3d_device != nullptr);
     assert(this->_swap_chain != nullptr);
     this->create_target_independent_resources();
@@ -93,10 +97,10 @@ void trrojan::d3d11::d2d_overlay::begin_draw(void) {
     assert(this->_d2d_context != nullptr);
     assert(this->_drawing_state_block != nullptr);
     if (this->_d2d_context == nullptr) {
-        throw ATL::CAtlException(E_NOT_VALID_STATE);
+        throw std::system_error(E_NOT_VALID_STATE, com_category());
     }
 
-    this->_d2d_context->SaveDrawingState(this->_drawing_state_block);
+    this->_d2d_context->SaveDrawingState(this->_drawing_state_block.get());
     this->_d2d_context->BeginDraw();
 }
 
@@ -104,17 +108,17 @@ void trrojan::d3d11::d2d_overlay::begin_draw(void) {
 /*
  * trrojan::d3d11::d2d_overlay::create_brush
  */
-ATL::CComPtr<ID2D1Brush> trrojan::d3d11::d2d_overlay::create_brush(
+winrt::com_ptr<ID2D1Brush> trrojan::d3d11::d2d_overlay::create_brush(
         const D2D1::ColorF& colour) {
     if (this->_d2d_context == nullptr) {
-        throw ATL::CAtlException(E_NOT_VALID_STATE);
+        throw std::system_error(E_NOT_VALID_STATE, com_category());
     }
 
-    ATL::CComPtr<ID2D1Brush> retval;
+    winrt::com_ptr<ID2D1Brush> retval;
     auto hr = this->_d2d_context->CreateSolidColorBrush(colour,
         reinterpret_cast<ID2D1SolidColorBrush **>(&retval));
     if (FAILED(hr)) {
-        throw ATL::CAtlException(hr);
+        throw std::system_error(hr, com_category());
     }
 
     return retval;
@@ -124,7 +128,7 @@ ATL::CComPtr<ID2D1Brush> trrojan::d3d11::d2d_overlay::create_brush(
 /*
  * trrojan::d3d11::d2d_overlay::create_text_format
  */
-ATL::CComPtr<IDWriteTextFormat> trrojan::d3d11::d2d_overlay::create_text_format(
+winrt::com_ptr<IDWriteTextFormat> trrojan::d3d11::d2d_overlay::create_text_format(
         const wchar_t *font_family,
         const float font_size,
         const DWRITE_FONT_WEIGHT font_weight,
@@ -146,7 +150,7 @@ ATL::CComPtr<IDWriteTextFormat> trrojan::d3d11::d2d_overlay::create_text_format(
                 LOCALE_SNAME, locale.data(), locale_len);
         }
         if (locale_len == 0) {
-            throw ATL::CAtlException(HRESULT_FROM_WIN32(::GetLastError()));
+            throw std::system_error(::GetLastError(), std::system_category());
         }
 
     } else {
@@ -155,12 +159,12 @@ ATL::CComPtr<IDWriteTextFormat> trrojan::d3d11::d2d_overlay::create_text_format(
         std::copy(locale_name, locale_name + locale_len, locale.begin());
     }
 
-    ATL::CComPtr<IDWriteTextFormat> retval;
+    winrt::com_ptr<IDWriteTextFormat> retval;
     auto hr = this->_dwrite_factory->CreateTextFormat(font_family, NULL,
         font_weight, font_style, font_stretch, font_size, locale.data(),
-        &retval);
+        retval.put());
     if (FAILED(hr)) {
-        throw ATL::CAtlException(hr);
+        throw std::system_error(hr, com_category());
 
     }
 
@@ -201,10 +205,10 @@ void trrojan::d3d11::d2d_overlay::end_draw(void) {
 
     auto hr = _d2d_context->EndDraw();
     if (FAILED(hr) && (hr != D2DERR_RECREATE_TARGET)) {
-        throw ATL::CAtlException(hr);
+        throw std::system_error(hr, com_category());
     }
 
-    this->_d2d_context->RestoreDrawingState(this->_drawing_state_block);
+    this->_d2d_context->RestoreDrawingState(this->_drawing_state_block.get());
 }
 
 
@@ -228,7 +232,7 @@ void trrojan::d3d11::d2d_overlay::on_resized(void) {
  * trrojan::d3d11::d2d_overlay::create_target_dependent_resources
  */
 void trrojan::d3d11::d2d_overlay::create_target_dependent_resources(
-        IDXGISurface *surface) {
+        winrt::com_ptr<IDXGISurface> surface) {
     assert(this->_d2d_context != nullptr);
     assert(surface != nullptr);
 
@@ -243,12 +247,12 @@ void trrojan::d3d11::d2d_overlay::create_target_dependent_resources(
         // of the window, the swap chain resize process is not involved.
         this->_d2d_target = nullptr;
         auto hr = this->_d2d_context->CreateBitmapFromDxgiSurface(
-            surface, &bmp_props, &this->_d2d_target);
+            surface.get(), &bmp_props, this->_d2d_target.put());
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
         }
 
-        this->_d2d_context->SetTarget(this->_d2d_target);
+        this->_d2d_context->SetTarget(this->_d2d_target.get());
     }
 
     this->_d2d_context->SetTextAntialiasMode(
@@ -264,8 +268,8 @@ void trrojan::d3d11::d2d_overlay::create_target_dependent_resources(void) {
     assert(this->_d2d_device != nullptr);
     assert(this->_d2d_factory != nullptr);
     assert(this->_d3d_device != nullptr);
-    auto back_buffer = get_back_buffer(this->_swap_chain);
-    this->create_target_dependent_resources(get_surface(back_buffer));
+    auto back_buffer = get_back_buffer(this->_swap_chain.get());
+    this->create_target_dependent_resources(get_surface(back_buffer.get()));
 }
 
 
@@ -284,40 +288,41 @@ void trrojan::d3d11::d2d_overlay::create_target_independent_resources(void) {
             ::IID_ID2D1Factory3,
             reinterpret_cast<void **>(&this->_d2d_factory));
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
         }
     }
 
     {
-        auto hr = this->_d2d_factory->CreateDevice(
-            get_device(this->_d3d_device), &this->_d2d_device);
+        auto device = get_device(this->_d3d_device);
+        auto hr = this->_d2d_factory->CreateDevice(device.get(),
+            this->_d2d_device.put());
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
         }
     }
 
     {
         auto hr = this->_d2d_device->CreateDeviceContext(
-            D2D1_DEVICE_CONTEXT_OPTIONS_NONE, &this->_d2d_context);
+            D2D1_DEVICE_CONTEXT_OPTIONS_NONE, this->_d2d_context.put());
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
         }
     }
 
     {
         auto hr = this->_d2d_factory->CreateDrawingStateBlock(
-            &this->_drawing_state_block);
+            this->_drawing_state_block.put());
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
         }
     }
 
     {
         auto hr = ::DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED,
             __uuidof(IDWriteFactory),
-            reinterpret_cast<IUnknown **>(&this->_dwrite_factory));
+            reinterpret_cast<IUnknown **>(this->_dwrite_factory.get()));
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
         }
     }
 }

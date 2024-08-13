@@ -1,5 +1,5 @@
 ﻿// <copyright file="benchmark_base.h" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2016 - 2023 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+// Copyright © 2016 - 2023 Visualisierungsinstitut der Universität Stuttgart.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
 // <author>Christoph Müller</author>
@@ -114,10 +114,9 @@ namespace d3d11 {
         /// Disables the render target view and returns an UAV for its back
         /// buffer instead.
         /// </summary>
-        virtual ATL::CComPtr<ID3D11UnorderedAccessView> switch_to_uav_target(
+        virtual winrt::com_ptr<ID3D11UnorderedAccessView> switch_to_uav_target(
             void);
 
-    //private:
     protected:
 
         typedef trrojan::benchmark_base base;

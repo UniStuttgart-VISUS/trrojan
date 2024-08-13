@@ -1,5 +1,5 @@
 ﻿// <copyright file="estimate_iterations.h" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2023 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+// Copyright © 2023 Visualisierungsinstitut der Universität Stuttgart.
 // </copyright>
 // <author>Christoph Müller</author>
 

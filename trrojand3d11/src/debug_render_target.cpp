@@ -1,17 +1,22 @@
-// <copyright file="debug_render_target.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2016 - 2022 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+ï»¿// <copyright file="debug_render_target.cpp" company="Visualisierungsinstitut der UniversitÃ¤t Stuttgart">
+// Copyright Â© 2016 - 2024 Visualisierungsinstitut der UniversitÃ¤t Stuttgart.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
-// <author>Christoph Müller</author>
+// <author>Christoph MÃ¼ller</author>
 
 #include "trrojan/d3d11/debug_render_target.h"
 
 #include <cassert>
 #include <sstream>
+#include <system_error>
 
+#include <tchar.h>
+
+#include "trrojan/com_error_category.h"
 #include "trrojan/log.h"
 
 #include "trrojan/d3d11/utilities.h"
+
 
 #if !defined(TRROJAN_FOR_UWP)
 /*
@@ -47,27 +52,26 @@ trrojan::d3d11::debug_render_target::~debug_render_target(void) {
 void trrojan::d3d11::debug_render_target::present(const UINT sync_interval) {
     if (this->_uav != nullptr) {
         assert(this->swapChain != nullptr);
-        ATL::CComPtr<ID3D11Texture2D> dst;
-        ATL::CComPtr<ID3D11Resource> res;
-        ATL::CComPtr<ID3D11Texture2D> src;
+        winrt::com_ptr<ID3D11Texture2D> dst;
+        winrt::com_ptr<ID3D11Resource> res;
+        winrt::com_ptr<ID3D11Texture2D> src;
 
         {
             auto hr = this->swapChain->GetBuffer(0, IID_ID3D11Texture2D,
                 reinterpret_cast<void **>(&dst));
             if (FAILED(hr)) {
-                throw ATL::CAtlException(hr);
+                std::system_error(hr, com_category());
             }
         }
 
         {
-            this->_uav->GetResource(&res);
-            auto hr = res->QueryInterface(&src);
-            if (FAILED(hr)) {
-                throw ATL::CAtlException(hr);
+            this->_uav->GetResource(res.put());
+            if (!res.try_as(src)) {
+                std::system_error(E_NOINTERFACE, com_category());
             }
         }
 
-        this->device_context()->CopyResource(dst, src);
+        this->device_context()->CopyResource(dst.get(), src.get());
     }
 
 #if defined(CREATE_D2D_OVERLAY)
@@ -93,7 +97,7 @@ void trrojan::d3d11::debug_render_target::present(const UINT sync_interval) {
  */
 void trrojan::d3d11::debug_render_target::resize(const unsigned int width,
         const unsigned int height) {
-    ATL::CComPtr<ID3D11Texture2D> backBuffer;
+    winrt::com_ptr<ID3D11Texture2D> backBuffer;
     DXGI_SWAP_CHAIN_DESC desc;
     HRESULT hr = S_OK;
 
@@ -123,7 +127,7 @@ void trrojan::d3d11::debug_render_target::resize(const unsigned int width,
         desc.Windowed = TRUE;
 
         {
-            ATL::CComPtr<ID3D11Device> device;
+            winrt::com_ptr<ID3D11Device> device;
             UINT deviceFlags = D3D11_CREATE_DEVICE_DISABLE_GPU_TIMEOUT;
 #if defined(CREATE_D2D_OVERLAY)
             deviceFlags |= D3D11_CREATE_DEVICE_BGRA_SUPPORT;
@@ -137,10 +141,10 @@ void trrojan::d3d11::debug_render_target::resize(const unsigned int width,
 
             hr = ::D3D11CreateDeviceAndSwapChain(nullptr,
                 D3D_DRIVER_TYPE_HARDWARE, NULL, deviceFlags, nullptr, 0,
-                D3D11_SDK_VERSION, &desc, &this->swapChain, &device,
+                D3D11_SDK_VERSION, &desc, this->swapChain.put(), device.put(),
                 nullptr, nullptr);
             if (FAILED(hr)) {
-                throw ATL::CAtlException(hr);
+                std::system_error(hr, com_category());
             }
 
             this->set_device(device);
@@ -168,13 +172,13 @@ void trrojan::d3d11::debug_render_target::resize(const unsigned int width,
 
         hr = this->swapChain->GetDesc(&desc);
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            std::system_error(hr, com_category());
         }
 
         hr = this->swapChain->ResizeBuffers(desc.BufferCount, width,
             height, desc.BufferDesc.Format, 0);
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            std::system_error(hr, com_category());
         }
 
     } /* end if (this->swapChain == nullptr) */
@@ -193,7 +197,7 @@ void trrojan::d3d11::debug_render_target::resize(const unsigned int width,
         wndRect.bottom = height;
         if (::AdjustWindowRectEx(&wndRect, style, FALSE, styleEx) == FALSE) {
             auto hr = __HRESULT_FROM_WIN32(::GetLastError());
-            throw ATL::CAtlException(hr);
+            std::system_error(hr, com_category());
         }
 
         ::SetWindowPos(this->hWnd, HWND_TOP, 0, 0,
@@ -206,12 +210,12 @@ void trrojan::d3d11::debug_render_target::resize(const unsigned int width,
     hr = this->swapChain->GetBuffer(0, IID_ID3D11Texture2D,
         reinterpret_cast<void **>(&backBuffer));
     if (FAILED(hr)) {
-        throw ATL::CAtlException(hr);
+        std::system_error(hr, com_category());
     }
 
-    set_debug_object_name(backBuffer.p, "debug_render_target (colour buffer)");
+    set_debug_object_name(backBuffer, "debug_render_target (colour buffer)");
 
-    this->set_back_buffer(backBuffer.p);
+    this->set_back_buffer(backBuffer);
 
 #if defined(CREATE_D2D_OVERLAY)
     // Recreate the resource of the overlay.
@@ -225,17 +229,17 @@ void trrojan::d3d11::debug_render_target::resize(const unsigned int width,
 /*
  * trrojan::d3d11::debug_render_target::to_uav
  */
-ATL::CComPtr<ID3D11UnorderedAccessView>
+winrt::com_ptr<ID3D11UnorderedAccessView>
 trrojan::d3d11::debug_render_target::to_uav(void) {
     if (this->_uav == nullptr) {
         D3D11_TEXTURE2D_DESC desc;
-        ATL::CComPtr<ID3D11Texture2D> texture;
+        winrt::com_ptr<ID3D11Texture2D> texture;
 
         {
             auto hr = this->swapChain->GetBuffer(0, IID_ID3D11Texture2D,
                 reinterpret_cast<void **>(&texture));
             if (FAILED(hr)) {
-                throw ATL::CAtlException(hr);
+                std::system_error(hr, com_category());
             }
         }
 
@@ -244,9 +248,10 @@ trrojan::d3d11::debug_render_target::to_uav(void) {
         texture = nullptr;
 
         {
-            auto hr = this->device()->CreateTexture2D(&desc, nullptr, &texture);
+            auto hr = this->device()->CreateTexture2D(&desc, nullptr,
+                texture.put());
             if (FAILED(hr)) {
-                throw ATL::CAtlException(hr);
+                std::system_error(hr, com_category());
             }
         }
 
@@ -314,7 +319,7 @@ void trrojan::d3d11::debug_render_target::doMsg(void) {
     const auto hInstance = ::GetModuleHandle(NULL);
     if (hInstance == NULL) {
         auto hr = __HRESULT_FROM_WIN32(::GetLastError());
-        throw ATL::CAtlException(hr);
+        std::system_error(hr, com_category());
     }
 
     {
@@ -329,7 +334,7 @@ void trrojan::d3d11::debug_render_target::doMsg(void) {
 
             if (!::RegisterClassEx(&wndClass)) {
                 auto hr = __HRESULT_FROM_WIN32(::GetLastError());
-                throw ATL::CAtlException(hr);
+                std::system_error(hr, com_category());
             }
         }
     }
@@ -350,7 +355,7 @@ void trrojan::d3d11::debug_render_target::doMsg(void) {
             this);
         if (this->hWnd.load() == NULL) {
             auto hr = __HRESULT_FROM_WIN32(::GetLastError());
-            throw ATL::CAtlException(hr);
+            std::system_error(hr, com_category());
         }
     }
 

@@ -1,8 +1,8 @@
-/// <copyright file="rendering_technique.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Christoph Müller</author>
+ï»¿// <copyright file="rendering_technique.cpp" company="Visualisierungsinstitut der UniversitÃ¤t Stuttgart">
+// Copyright Â© 2016 - 2024 Visualisierungsinstitut der UniversitÃ¤t Stuttgart.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Christoph MÃ¼ller</author>
 
 #include "trrojan/d3d11/rendering_technique.h"
 
@@ -39,12 +39,12 @@ trrojan::d3d11::rendering_technique::rendering_technique(
  */
 trrojan::d3d11::rendering_technique::rendering_technique(
         const std::string& name, std::vector<vertex_buffer>&& vbs,
-        ID3D11InputLayout *il, const D3D11_PRIMITIVE_TOPOLOGY pt,
-        ID3D11VertexShader *vs, shader_resources&& vsRes,
-        ID3D11HullShader* hs, shader_resources&& hsRes,
-        ID3D11DomainShader *ds, shader_resources&& dsRes,
-        ID3D11GeometryShader *gs, shader_resources&& gsRes,
-        ID3D11PixelShader *ps, shader_resources&& psRes)
+        winrt::com_ptr<ID3D11InputLayout> il, const D3D11_PRIMITIVE_TOPOLOGY pt,
+        winrt::com_ptr<ID3D11VertexShader> vs, shader_resources&& vsRes,
+        winrt::com_ptr<ID3D11HullShader> hs, shader_resources&& hsRes,
+        winrt::com_ptr<ID3D11DomainShader> ds, shader_resources&& dsRes,
+        winrt::com_ptr<ID3D11GeometryShader> gs, shader_resources&& gsRes,
+        winrt::com_ptr<ID3D11PixelShader> ps, shader_resources&& psRes)
     : domainShader(ds), geometryShader(gs), hullShader(hs), inputLayout(il),
         _name(name), pixelShader(ps), primitiveTopology(pt),
         vertexBuffers(std::move(vbs)), vertexShader(vs) {
@@ -61,12 +61,12 @@ trrojan::d3d11::rendering_technique::rendering_technique(
  */
 trrojan::d3d11::rendering_technique::rendering_technique(
         const std::string& name, const vertex_buffer& vb,
-        ID3D11InputLayout *il, const D3D11_PRIMITIVE_TOPOLOGY pt,
-        ID3D11VertexShader *vs, shader_resources&& vsRes,
-        ID3D11HullShader* hs, shader_resources&& hsRes,
-        ID3D11DomainShader *ds, shader_resources&& dsRes,
-        ID3D11GeometryShader *gs, shader_resources&& gsRes,
-        ID3D11PixelShader *ps, shader_resources&& psRes)
+        winrt::com_ptr<ID3D11InputLayout> il, const D3D11_PRIMITIVE_TOPOLOGY pt,
+        winrt::com_ptr<ID3D11VertexShader> vs, shader_resources&& vsRes,
+        winrt::com_ptr<ID3D11HullShader> hs, shader_resources&& hsRes,
+        winrt::com_ptr<ID3D11DomainShader> ds, shader_resources&& dsRes,
+        winrt::com_ptr<ID3D11GeometryShader> gs, shader_resources&& gsRes,
+        winrt::com_ptr<ID3D11PixelShader> ps, shader_resources&& psRes)
     : domainShader(ds), geometryShader(gs), hullShader(hs), inputLayout(il),
         _name(name), pixelShader(ps), primitiveTopology(pt),
         vertexBuffers(1, vb), vertexShader(vs) {
@@ -82,13 +82,13 @@ trrojan::d3d11::rendering_technique::rendering_technique(
  * trrojan::d3d11::rendering_technique::rendering_technique
  */
 trrojan::d3d11::rendering_technique::rendering_technique(
-        const std::string& name, ID3D11InputLayout *il,
+        const std::string& name, winrt::com_ptr<ID3D11InputLayout> il,
         const D3D11_PRIMITIVE_TOPOLOGY pt,
-        ID3D11VertexShader *vs, shader_resources&& vsRes,
-        ID3D11HullShader* hs, shader_resources&& hsRes,
-        ID3D11DomainShader *ds, shader_resources&& dsRes,
-        ID3D11GeometryShader *gs, shader_resources&& gsRes,
-        ID3D11PixelShader *ps, shader_resources&& psRes)
+        winrt::com_ptr<ID3D11VertexShader> vs, shader_resources&& vsRes,
+        winrt::com_ptr<ID3D11HullShader> hs, shader_resources&& hsRes,
+        winrt::com_ptr<ID3D11DomainShader> ds, shader_resources&& dsRes,
+        winrt::com_ptr<ID3D11GeometryShader> gs, shader_resources&& gsRes,
+        winrt::com_ptr<ID3D11PixelShader> ps, shader_resources&& psRes)
     : domainShader(ds), geometryShader(gs), hullShader(hs), inputLayout(il),
         _name(name), pixelShader(ps), primitiveTopology(pt), vertexShader(vs) {
     this->_resources[shader_stage::vertex] = std::move(vsRes);
@@ -102,10 +102,10 @@ trrojan::d3d11::rendering_technique::rendering_technique(
  * trrojan::d3d11::rendering_technique::rendering_technique
  */
 trrojan::d3d11::rendering_technique::rendering_technique(
-        const std::string& name, ID3D11InputLayout *il,
+        const std::string& name, winrt::com_ptr<ID3D11InputLayout> il,
         const D3D11_PRIMITIVE_TOPOLOGY pt,
-        ID3D11VertexShader *vs, shader_resources&& vsRes,
-        ID3D11PixelShader *ps, shader_resources&& psRes)
+        winrt::com_ptr<ID3D11VertexShader> vs, shader_resources&& vsRes,
+        winrt::com_ptr<ID3D11PixelShader> ps, shader_resources&& psRes)
     : inputLayout(il), _name(name), pixelShader(ps), primitiveTopology(pt),
         vertexShader(vs) {
     this->_resources[shader_stage::vertex] = std::move(vsRes);
@@ -117,10 +117,10 @@ trrojan::d3d11::rendering_technique::rendering_technique(
  * trrojan::d3d11::rendering_technique::rendering_technique
  */
 trrojan::d3d11::rendering_technique::rendering_technique(
-        const std::string & name, std::vector<vertex_buffer>&& vb,
-        ID3D11InputLayout *il, const D3D11_PRIMITIVE_TOPOLOGY pt,
-        ID3D11VertexShader *vs, shader_resources&& vsRes,
-        ID3D11PixelShader *ps, shader_resources && psRes)
+        const std::string& name, std::vector<vertex_buffer>&& vb,
+        winrt::com_ptr<ID3D11InputLayout> il, const D3D11_PRIMITIVE_TOPOLOGY pt,
+        winrt::com_ptr<ID3D11VertexShader> vs, shader_resources&& vsRes,
+        winrt::com_ptr<ID3D11PixelShader> ps, shader_resources && psRes)
     : inputLayout(il), _name(name), pixelShader(ps), primitiveTopology(pt),
         vertexBuffers(std::move(vb)), vertexShader(vs) {
     this->_resources[shader_stage::vertex] = std::move(vsRes);
@@ -133,10 +133,11 @@ trrojan::d3d11::rendering_technique::rendering_technique(
  */
 trrojan::d3d11::rendering_technique::rendering_technique(
         const std::string & name, std::vector<vertex_buffer>&& vb,
-        index_buffer&& ib, ID3D11InputLayout *il,
+        index_buffer&& ib,
+        winrt::com_ptr<ID3D11InputLayout> il,
         const D3D11_PRIMITIVE_TOPOLOGY pt,
-        ID3D11VertexShader *vs, shader_resources&& vsRes,
-        ID3D11PixelShader *ps, shader_resources && psRes)
+        winrt::com_ptr<ID3D11VertexShader> vs, shader_resources&& vsRes,
+        winrt::com_ptr<ID3D11PixelShader> ps, shader_resources && psRes)
     : indexBuffer(std::move(ib)), inputLayout(il), _name(name), pixelShader(ps),
         primitiveTopology(pt), vertexBuffers(std::move(vb)), vertexShader(vs) {
     this->_resources[shader_stage::vertex] = std::move(vsRes);
@@ -148,11 +149,12 @@ trrojan::d3d11::rendering_technique::rendering_technique(
  * trrojan::d3d11::rendering_technique::rendering_technique
  */
 trrojan::d3d11::rendering_technique::rendering_technique(
-        const std::string& name, ID3D11InputLayout *il,
+        const std::string& name,
+        winrt::com_ptr<ID3D11InputLayout> il,
         const D3D11_PRIMITIVE_TOPOLOGY pt,
-        ID3D11VertexShader *vs, shader_resources&& vsRes,
-        ID3D11GeometryShader *gs, shader_resources&& gsRes,
-        ID3D11PixelShader *ps, shader_resources&& psRes)
+        winrt::com_ptr<ID3D11VertexShader> vs, shader_resources&& vsRes,
+        winrt::com_ptr<ID3D11GeometryShader> gs, shader_resources&& gsRes,
+        winrt::com_ptr<ID3D11PixelShader> ps, shader_resources&& psRes)
     : geometryShader(gs), inputLayout(il),  _name(name), pixelShader(ps),
         primitiveTopology(pt), vertexShader(vs) {
     this->_resources[shader_stage::vertex] = std::move(vsRes);
@@ -165,12 +167,13 @@ trrojan::d3d11::rendering_technique::rendering_technique(
  * trrojan::d3d11::rendering_technique::rendering_technique
  */
 trrojan::d3d11::rendering_technique::rendering_technique(
-        const std::string& name, ID3D11InputLayout *il,
+        const std::string& name,
+        winrt::com_ptr<ID3D11InputLayout> il,
         const D3D11_PRIMITIVE_TOPOLOGY pt,
-        ID3D11VertexShader *vs, shader_resources&& vsRes,
-        ID3D11HullShader* hs, shader_resources&& hsRes,
-        ID3D11DomainShader *ds, shader_resources&& dsRes,
-        ID3D11PixelShader *ps, shader_resources&& psRes)
+        winrt::com_ptr<ID3D11VertexShader> vs, shader_resources&& vsRes,
+        winrt::com_ptr<ID3D11HullShader> hs, shader_resources&& hsRes,
+        winrt::com_ptr<ID3D11DomainShader> ds, shader_resources&& dsRes,
+        winrt::com_ptr<ID3D11PixelShader> ps, shader_resources&& psRes)
     : domainShader(ds), hullShader(hs), inputLayout(il), _name(name),
         pixelShader(ps), primitiveTopology(pt), vertexShader(vs) {
     this->_resources[shader_stage::vertex] = std::move(vsRes);
@@ -185,7 +188,7 @@ trrojan::d3d11::rendering_technique::rendering_technique(
  */
 trrojan::d3d11::rendering_technique::rendering_technique(
         const std::string& name,
-        ID3D11ComputeShader *cs, shader_resources&& csRes)
+        winrt::com_ptr<ID3D11ComputeShader> cs, shader_resources&& csRes)
         : computeShader(cs), _name(name) {
     this->_resources[shader_stage::compute] = std::move(csRes);
 }
@@ -194,12 +197,13 @@ trrojan::d3d11::rendering_technique::rendering_technique(
 /*
  * trrojan::d3d11::rendering_technique::apply
  */
-void trrojan::d3d11::rendering_technique::apply(ID3D11DeviceContext *ctx) {
+void trrojan::d3d11::rendering_technique::apply(
+        winrt::com_ptr<ID3D11DeviceContext> ctx) {
     assert(ctx != nullptr);
 
     /* Configure input. */
     if (this->vertexShader != nullptr) {
-        ctx->IASetInputLayout(this->inputLayout);
+        ctx->IASetInputLayout(this->inputLayout.get());
         ctx->IASetPrimitiveTopology(this->primitiveTopology);
         {
             std::vector<ID3D11Buffer *> vbs;
@@ -211,7 +215,7 @@ void trrojan::d3d11::rendering_technique::apply(ID3D11DeviceContext *ctx) {
             strides.reserve(this->vertexBuffers.size());
 
             for (auto& v : this->vertexBuffers) {
-                vbs.push_back(v.buffer.p);
+                vbs.push_back(v.buffer.get());
                 offsets.push_back(v.offset);
                 strides.push_back(v.stride);
             }
@@ -220,17 +224,17 @@ void trrojan::d3d11::rendering_technique::apply(ID3D11DeviceContext *ctx) {
                 vbs.data(), strides.data(), offsets.data());
         }
 
-        ctx->IASetIndexBuffer(this->indexBuffer.buffer,
+        ctx->IASetIndexBuffer(this->indexBuffer.buffer.get(),
             this->indexBuffer.format, this->indexBuffer.offset);
     }
 
     /* Configure shaders. */
-    ctx->VSSetShader(this->vertexShader.p, nullptr, 0);
-    ctx->DSSetShader(this->domainShader.p, nullptr, 0);
-    ctx->HSSetShader(this->hullShader, nullptr, 0);
-    ctx->GSSetShader(this->geometryShader, nullptr, 0);
-    ctx->PSSetShader(this->pixelShader, nullptr, 0);
-    ctx->CSSetShader(this->computeShader, nullptr, 0);
+    ctx->VSSetShader(this->vertexShader.get(), nullptr, 0);
+    ctx->DSSetShader(this->domainShader.get(), nullptr, 0);
+    ctx->HSSetShader(this->hullShader.get(), nullptr, 0);
+    ctx->GSSetShader(this->geometryShader.get(), nullptr, 0);
+    ctx->PSSetShader(this->pixelShader.get(), nullptr, 0);
+    ctx->CSSetShader(this->computeShader.get(), nullptr, 0);
 
     /* Bind shader resources. */
     for (auto& res : this->_resources) {
@@ -328,13 +332,13 @@ void trrojan::d3d11::rendering_technique::apply(ID3D11DeviceContext *ctx) {
     } /* end for (auto& res : this->_resources) */
 
     /* Apply specific rasteriser state. */
-    ctx->RSSetState(this->rasteriserState.p);
+    ctx->RSSetState(this->rasteriserState.get());
 
     /* Apply specific depth/stencil state. */
-    ctx->OMSetDepthStencilState(this->depthStencilState.p, 0);
+    ctx->OMSetDepthStencilState(this->depthStencilState.get(), 0);
 
     /* Apply the blend state. */
-    ctx->OMSetBlendState(this->blendState, nullptr, 0xffffffff);
+    ctx->OMSetBlendState(this->blendState.get(), nullptr, 0xffffffff);
 }
 
 

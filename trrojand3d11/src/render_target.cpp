@@ -1,13 +1,15 @@
-/// <copyright file="render_target.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Christoph Müller</author>
+ï»¿// <copyright file="render_target.cpp" company="Visualisierungsinstitut der UniversitÃ¤t Stuttgart">
+// Copyright Â© 2016 - 2024 Visualisierungsinstitut der UniversitÃ¤t Stuttgart.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Christoph MÃ¼ller</author>
 
 #include "trrojan/d3d11/render_target.h"
 
 #include <cassert>
+#include <system_error>
 
+#include "trrojan/com_error_category.h"
 #include "trrojan/image_helper.h"
 #include "trrojan/log.h"
 
@@ -28,9 +30,10 @@ void trrojan::d3d11::render_target_base::clear(void) {
     assert(this->_dsv != nullptr);
     assert(this->_rtv != nullptr);
     static const FLOAT CLEAR_COLOUR[] = { 0.0f, 0.0f, 0.0f, 0.0f }; // TODO
-    this->_device_context->ClearRenderTargetView(this->_rtv, CLEAR_COLOUR);
-    this->_device_context->ClearDepthStencilView(this->_dsv, D3D11_CLEAR_DEPTH,
-        this->_depth_clear, 0);
+    this->_device_context->ClearRenderTargetView(this->_rtv.get(),
+        CLEAR_COLOUR);
+    this->_device_context->ClearDepthStencilView(this->_dsv.get(),
+        D3D11_CLEAR_DEPTH, this->_depth_clear, 0);
 }
 
 
@@ -39,10 +42,10 @@ void trrojan::d3d11::render_target_base::clear(void) {
  */
 void trrojan::d3d11::render_target_base::enable(void) {
     assert(this->_device_context != nullptr);
-    this->_device_context->OMSetDepthStencilState(this->_dss.p, 0);
+    this->_device_context->OMSetDepthStencilState(this->_dss.get(), 0);
 
-    ID3D11RenderTargetView* const targets[1] = { this->_rtv.p };
-    this->_device_context->OMSetRenderTargets(1, targets, this->_dsv.p);
+    ID3D11RenderTargetView* const targets[1] = { this->_rtv.get() };
+    this->_device_context->OMSetRenderTargets(1, targets, this->_dsv.get());
     //this->_device_context->OMSetRenderTargets(1, &this->_rtv.p, this->_dsv.p);
 }
 
@@ -60,14 +63,13 @@ void trrojan::d3d11::render_target_base::save(const std::string& path) {
     if (this->_rtv != nullptr) {
         D3D11_TEXTURE2D_DESC desc;
         HRESULT hr = S_OK;
-        ATL::CComPtr<ID3D11Resource> res;
+        winrt::com_ptr<ID3D11Resource> res;
         D3D11_MAPPED_SUBRESOURCE map;
-        ATL::CComPtr<ID3D11Texture2D> tex;
+        winrt::com_ptr<ID3D11Texture2D> tex;
 
-        this->_rtv->GetResource(&res);
-        hr = res->QueryInterface(&tex);
-        if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+        this->_rtv->GetResource(res.put());
+        if (!res.try_as(tex)) {
+            throw std::system_error(hr, com_category());
         }
         tex->GetDesc(&desc);
 
@@ -79,19 +81,20 @@ void trrojan::d3d11::render_target_base::save(const std::string& path) {
 
             this->_staging_texture = nullptr;
             hr = this->device()->CreateTexture2D(&desc, nullptr,
-                &this->_staging_texture);
+                this->_staging_texture.put());
             if (FAILED(hr)) {
-                throw ATL::CAtlException(hr);
+                throw std::system_error(hr, com_category());
             }
         }
         assert(this->_staging_texture != nullptr);
 
-        this->_device_context->CopyResource(this->_staging_texture, tex);
+        this->_device_context->CopyResource(this->_staging_texture.get(),
+            tex.get());
 
-        hr = this->_device_context->Map(this->_staging_texture, 0,
+        hr = this->_device_context->Map(this->_staging_texture.get(), 0,
             D3D11_MAP_READ, 0, &map);
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
         }
 
         auto wic_pixel_format = GUID_WICPixelFormat32bppRGBA;
@@ -100,12 +103,12 @@ void trrojan::d3d11::render_target_base::save(const std::string& path) {
         }
 
         try {
-            trrojan::wic_save(trrojan::get_wic_factory(), map.pData, desc.Width,
-                desc.Height, map.RowPitch, wic_pixel_format, path,
-                GUID_NULL);
-            this->_device_context->Unmap(this->_staging_texture, 0);
+            auto wic = trrojan::get_wic_factory();
+            trrojan::wic_save(wic.get(), map.pData, desc.Width, desc.Height,
+                map.RowPitch, wic_pixel_format, path, GUID_NULL);
+            this->_device_context->Unmap(this->_staging_texture.get(), 0);
         } catch (...) {
-            this->_device_context->Unmap(this->_staging_texture, 0);
+            this->_device_context->Unmap(this->_staging_texture.get(), 0);
             throw;
         }
 
@@ -119,15 +122,13 @@ void trrojan::d3d11::render_target_base::save(const std::string& path) {
 /*
  * trrojan::d3d11::render_target_base::to_uav
  */
-ATL::CComPtr<ID3D11UnorderedAccessView>
+winrt::com_ptr<ID3D11UnorderedAccessView>
 trrojan::d3d11::render_target_base::to_uav(void) {
     if (this->_rtv != nullptr) {
-        ATL::CComPtr<ID3D11Resource> backBuffer;
-        ATL::CComPtr<ID3D11Texture2D> texture;
-        this->_rtv->GetResource(&backBuffer);
+        winrt::com_ptr<ID3D11Resource> backBuffer;
+        this->_rtv->GetResource(backBuffer.put());
         this->_rtv = nullptr;
-        backBuffer.QueryInterface(&texture);
-        return create_uav(texture);
+        return create_uav(backBuffer.try_as<ID3D11Texture2D>());
 
     } else {
         return nullptr;
@@ -150,9 +151,10 @@ void trrojan::d3d11::render_target_base::use_reversed_depth_buffer(
         desc.DepthFunc = D3D11_COMPARISON_GREATER;
         desc.StencilEnable = FALSE;
 
-        auto hr = this->_device->CreateDepthStencilState(&desc, &this->_dss);
+        auto hr = this->_device->CreateDepthStencilState(&desc,
+            this->_dss.put());
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
         }
 
         this->_depth_clear = 0.0f;
@@ -182,11 +184,11 @@ trrojan::d3d11::render_target_base::render_target_base(
  * trrojan::d3d11::render_target_base::set_back_buffer
  */
 void trrojan::d3d11::render_target_base::set_back_buffer(
-        ID3D11Texture2D *backBuffer) {
+        winrt::com_ptr<ID3D11Texture2D> backBuffer) {
     assert(this->_dsv == nullptr);
     assert(this->_rtv == nullptr);
     assert(backBuffer != nullptr);
-    ATL::CComPtr<ID3D11Texture2D> depthBuffer;
+    winrt::com_ptr<ID3D11Texture2D> depthBuffer;
     HRESULT hr = S_OK;
     D3D11_TEXTURE2D_DESC texDesc;
     D3D11_VIEWPORT viewport;
@@ -194,25 +196,25 @@ void trrojan::d3d11::render_target_base::set_back_buffer(
     // Erase old staging texture for lazy recreate in save().
     this->_staging_texture = nullptr;
 
-    hr = this->_device->CreateRenderTargetView(backBuffer, nullptr,
-        &this->_rtv);
+    hr = this->_device->CreateRenderTargetView(backBuffer.get(), nullptr,
+        this->_rtv.put());
     if (FAILED(hr)) {
-        throw ATL::CAtlException(hr);
+        throw std::system_error(hr, com_category());
     }
 
     backBuffer->GetDesc(&texDesc);
     texDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
     texDesc.Format = DXGI_FORMAT_D32_FLOAT;
 
-    hr = this->_device->CreateTexture2D(&texDesc, nullptr, &depthBuffer);
+    hr = this->_device->CreateTexture2D(&texDesc, nullptr, depthBuffer.put());
     if (FAILED(hr)) {
-        throw ATL::CAtlException(hr);
+        throw std::system_error(hr, com_category());
     }
 
-    hr = this->_device->CreateDepthStencilView(depthBuffer, nullptr,
-            &this->_dsv);
+    hr = this->_device->CreateDepthStencilView(depthBuffer.get(), nullptr,
+        this->_dsv.put());
     if (FAILED(hr)) {
-        throw ATL::CAtlException(hr);
+        throw std::system_error(hr, com_category());
     }
 
     viewport.TopLeftX = 0.0f;
@@ -231,9 +233,10 @@ void trrojan::d3d11::render_target_base::set_back_buffer(
 /*
  * trrojan::d3d11::render_target_base::set_device
  */
-void trrojan::d3d11::render_target_base::set_device(ID3D11Device *device) {
+void trrojan::d3d11::render_target_base::set_device(
+        winrt::com_ptr<ID3D11Device> device) {
     assert(device != nullptr);
     this->_device = device;
     this->_device_context == nullptr;
-    this->_device->GetImmediateContext(&this->_device_context);
+    this->_device->GetImmediateContext(this->_device_context.put());
 }

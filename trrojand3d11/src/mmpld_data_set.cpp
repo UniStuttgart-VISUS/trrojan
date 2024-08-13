@@ -1,5 +1,5 @@
 ﻿// <copyright file="mmpld_data_set.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2016 - 2023 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+// Copyright © 2016 - 2023 Visualisierungsinstitut der Universität Stuttgart.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
 // <author>Christoph Müller</author>
@@ -359,7 +359,7 @@ trrojan::d3d11::mmpld_data_set::read_frame(ID3D11Device *device,
     ::ZeroMemory(&id, sizeof(id));
     id.pSysMem = data.data();
 
-    auto hr = device->CreateBuffer(&bufferDesc, &id, &retval);
+    auto hr = device->CreateBuffer(&bufferDesc, &id, retval.put());
     if (FAILED(hr)) {
         std::stringstream msg;
         msg << "Failed to create vertex buffer from MMPLD with error " << hr
@@ -367,7 +367,7 @@ trrojan::d3d11::mmpld_data_set::read_frame(ID3D11Device *device,
         throw std::runtime_error(msg.str());
     }
 
-    set_debug_object_name(retval.p, "mmpld_data_set");
+    set_debug_object_name(retval, "mmpld_data_set");
 
     this->_buffer = retval;
     this->_properties = (options & VALID_INPUT_FLAGS);

@@ -1,8 +1,8 @@
-/// <copyright file="volume_benchmark_base.h" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Christoph Müller</author>
+ï»¿// <copyright file="volume_benchmark_base.h" company="Visualisierungsinstitut der UniversitÃ¤t Stuttgart">
+// Copyright Â© 2016 - 2024 Visualisierungsinstitut der UniversitÃ¤t Stuttgart.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Christoph MÃ¼ller</author>
 
 #pragma once
 
@@ -68,7 +68,7 @@ namespace d3d11 {
             auto path = config.get<std::string>(factor_data_set);
             auto frame = config.get<frame_type>(factor_frame);
             return volume_benchmark_base::load_volume(path.c_str(), frame,
-                device.d3d_device(), outInfo, outTexture, outSrv);
+                device.d3d_device().get(), outInfo, outTexture, outSrv);
         }
 
         static void load_xfer_func(const std::vector<std::uint8_t>& data,
@@ -113,9 +113,9 @@ namespace d3d11 {
         void optimise_order(configuration_set& inOutConfs) override;
 
         trrojan::perspective_camera camera;
-        ATL::CComPtr<ID3D11ShaderResourceView> data_view;
-        ATL::CComPtr<ID3D11SamplerState> linear_sampler;
-        ATL::CComPtr<ID3D11ShaderResourceView> xfer_func_view;
+        winrt::com_ptr<ID3D11ShaderResourceView> data_view;
+        winrt::com_ptr<ID3D11SamplerState> linear_sampler;
+        winrt::com_ptr<ID3D11ShaderResourceView> xfer_func_view;
     };
 
 } /* end namespace d3d11 */

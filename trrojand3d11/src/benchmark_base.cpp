@@ -1,5 +1,5 @@
 ﻿// <copyright file="benchmark_base.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2016 - 2023 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+// Copyright © 2016 - 2024 Visualisierungsinstitut der Universität Stuttgart.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
 // <author>Christoph Müller</author>
@@ -207,7 +207,7 @@ void trrojan::d3d11::benchmark_base::save_target(const char *path) {
 /*
  * trrojan::d3d11::benchmark_base::switch_to_uav_target
  */
-ATL::CComPtr<ID3D11UnorderedAccessView>
+winrt::com_ptr<ID3D11UnorderedAccessView>
 trrojan::d3d11::benchmark_base::switch_to_uav_target(void) {
     assert(this->render_target != nullptr);
     auto ctx = this->render_target->device_context();

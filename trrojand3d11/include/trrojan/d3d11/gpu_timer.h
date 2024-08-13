@@ -1,8 +1,8 @@
-/// <copyright file="gpu_timer.h" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Christoph Müller</author>
+ï»¿// <copyright file="gpu_timer.h" company="Visualisierungsinstitut der UniversitÃ¤t Stuttgart">
+// Copyright Â© 2016 - 2024 Visualisierungsinstitut der UniversitÃ¤t Stuttgart.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Christoph MÃ¼ller</author>
 
 /*
  * include\the\graphics\directx\d3d11_performance_counter.h
@@ -42,9 +42,10 @@
 #include <stdexcept>
 #include <vector>
 
-#include <atlbase.h>
 #include <Windows.h>
 #include <d3d11.h>
+
+#include <winrt/base.h>
 
 #include "trrojan/constants.h"
 #include "trrojan/timer.h"
@@ -337,6 +338,19 @@ namespace d3d11 {
         void initialise(ID3D11Device *device,
             const size_type cntPerFrameQueries = 1);
 
+        /// <summary>
+        /// Associates the performance counter with the specified device and
+        /// prepares <paramref name="cntPerFrameQueries" /> for being issued
+        /// between the calls to <see cref="start_frame" /> and
+        /// <see cref="end_frame" />.
+        /// </summary>
+        /// <param name="device"></param>
+        /// <param name="cntPerFrameQueries"></param>
+        inline void initialise(winrt::com_ptr<ID3D11Device> device,
+                const size_type cntPerFrameQueries = 1) {
+            this->initialise(device.get(), cntPerFrameQueries);
+        }
+
         /**
         * Resizes the number of queries that can be issued per frame.
         *
@@ -442,9 +456,9 @@ namespace d3d11 {
 
     private:
 
-        typedef ATL::CComPtr<ID3D11DeviceContext> context_type;
-        typedef ATL::CComPtr<ID3D11Device> device_type;
-        typedef ATL::CComPtr<ID3D11Query> query_type;
+        typedef winrt::com_ptr<ID3D11DeviceContext> context_type;
+        typedef winrt::com_ptr<ID3D11Device> device_type;
+        typedef winrt::com_ptr<ID3D11Query> query_type;
         typedef std::vector<query_type> query_list_type;
 
         /// <summary>

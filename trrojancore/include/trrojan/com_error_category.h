@@ -11,6 +11,8 @@
 
 #include <Windows.h>
 
+#include "trrojan/export.h"
+
 
 namespace trrojan {
 namespace detail {
@@ -18,7 +20,8 @@ namespace detail {
     /// <summary>
     /// An error category for <c>HRESULT</c>s from COM.
     /// </summary>
-    class com_error_category final : public std::error_category {
+    class TRROJANCORE_API com_error_category final
+            : public std::error_category {
 
     public:
 
@@ -57,7 +60,8 @@ namespace detail {
     /// </summary>
     /// <returns>The only instance of <see cref="com_error_category" />.
     /// </returns>
-    _Ret_valid_ const std::error_category& com_category(void) noexcept;
+    _Ret_valid_ extern TRROJANCORE_API const std::error_category& com_category(
+        void) noexcept;
 
 } /* namespace trrojan */
 

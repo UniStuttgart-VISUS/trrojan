@@ -1,5 +1,5 @@
 ﻿// <copyright file="render_target.h" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+// Copyright © 2016 - 2024 Visualisierungsinstitut der Universität Stuttgart.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
 // <author>Christoph Müller</author>
@@ -9,8 +9,9 @@
 #include <memory>
 
 #include <Windows.h>
-#include <atlbase.h>
 #include <d3d11.h>
+
+#include <winrt/base.h>
 
 #include "trrojan/d3d11/device.h"
 #include "trrojan/d3d11/export.h"
@@ -46,7 +47,7 @@ namespace d3d11 {
         /// Answer the device the render target belongs to.
         /// </summary>
         /// <returns></returns>
-        inline ATL::CComPtr<ID3D11Device>& device(void) {
+        inline winrt::com_ptr<ID3D11Device>& device(void) {
             return this->_device;
         }
 
@@ -55,7 +56,7 @@ namespace d3d11 {
         /// <see cref="render_target_base::device" />.
         /// </summary>
         /// <returns></returns>
-        inline ATL::CComPtr<ID3D11DeviceContext> device_context(void) {
+        inline winrt::com_ptr<ID3D11DeviceContext> device_context(void) {
             return this->_device_context;
         }
 
@@ -97,7 +98,7 @@ namespace d3d11 {
         /// Creates an unordered access view for the back buffer, which must
         /// have been created before.
         /// </summary>
-        virtual ATL::CComPtr<ID3D11UnorderedAccessView> to_uav(void);
+        virtual winrt::com_ptr<ID3D11UnorderedAccessView> to_uav(void);
 
         /// <summary>
         /// Enables or disables used of reversed 32-bit depth buffer.
@@ -123,12 +124,12 @@ namespace d3d11 {
         /// <see cref="_dsv" /> and <see cref="_rtv" /> must have been deleted
         /// before this method can be called.
         /// </remarks>
-        void set_back_buffer(ID3D11Texture2D *backBuffer);
+        void set_back_buffer(winrt::com_ptr<ID3D11Texture2D> backBuffer);
 
         /// <summary>
         /// Sets the D3D device and updates the immediate context.
         /// </summary>
-        void set_device(ID3D11Device *device);
+        void set_device(winrt::com_ptr<ID3D11Device> device);
 
         /// <summary>
         /// Clear value for the depth buffer.
@@ -138,34 +139,34 @@ namespace d3d11 {
         /// <summary>
         /// A depth-stencil state that is being activated with the target.
         /// </summary>
-        ATL::CComPtr<ID3D11DepthStencilState> _dss;
+        winrt::com_ptr<ID3D11DepthStencilState> _dss;
 
         /// <summary>
         /// The depth/stencil view.
         /// </summary>
-        ATL::CComPtr<ID3D11DepthStencilView> _dsv;
+        winrt::com_ptr<ID3D11DepthStencilView> _dsv;
 
         /// <summary>
         /// The render target view.
         /// </summary>
-        ATL::CComPtr<ID3D11RenderTargetView> _rtv;
+        winrt::com_ptr<ID3D11RenderTargetView> _rtv;
 
     private:
 
         /// <summary>
         /// The device the render target lives on.
         /// </summary>
-        ATL::CComPtr<ID3D11Device> _device;
+        winrt::com_ptr<ID3D11Device> _device;
 
         /// <summary>
         /// The immediate context of <see cref="_device" />.
         /// </summary>
-        ATL::CComPtr<ID3D11DeviceContext> _device_context;
+        winrt::com_ptr<ID3D11DeviceContext> _device_context;
 
         /// <summary>
         /// A staging texture for saving the back buffer to disk.
         /// </summary>
-        ATL::CComPtr<ID3D11Texture2D> _staging_texture;
+        winrt::com_ptr<ID3D11Texture2D> _staging_texture;
     };
 
 

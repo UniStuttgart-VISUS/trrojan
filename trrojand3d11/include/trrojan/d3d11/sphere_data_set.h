@@ -1,8 +1,8 @@
-/// <copyright file="sphere_data_set.h" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Christoph Müller</author>
+ï»¿// <copyright file="sphere_data_set.h" company="Visualisierungsinstitut der UniversitÃ¤t Stuttgart">
+// Copyright Â© 2016 - 2024 Visualisierungsinstitut der UniversitÃ¤t Stuttgart.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Christoph MÃ¼ller</author>
 
 #pragma once
 
@@ -11,10 +11,10 @@
 #include <vector>
 
 #include <Windows.h>
-#include <atlbase.h>
-#include <atlcom.h>
 #include <d3d11.h>
 #include <DirectXMath.h>
+
+#include <winrt/base.h>
 
 #include "hlsltypemapping.hlsli"
 

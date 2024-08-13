@@ -1,8 +1,8 @@
-/// <copyright file="rendering_technique.h" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Christoph Müller</author>
+ï»¿// <copyright file="rendering_technique.h" company="Visualisierungsinstitut der UniversitÃ¤t Stuttgart">
+// Copyright Â© 2016 - 2024 Visualisierungsinstitut der UniversitÃ¤t Stuttgart.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Christoph MÃ¼ller</author>
 
 #pragma once
 
@@ -11,9 +11,10 @@
 #include <stdexcept>
 #include <vector>
 
-#include <atlbase.h>
 #include <Windows.h>
 #include <d3d11.h>
+
+#include <winrt/base.h>
 
 #include "trrojan/d3d11/export.h"
 
@@ -29,20 +30,20 @@ namespace d3d11 {
 
     public:
 
-        typedef ATL::CComPtr<ID3D11BlendState> blend_state_type;
-        typedef ATL::CComPtr<ID3D11Buffer> buffer_type;
-        typedef ATL::CComPtr<ID3D11ComputeShader> compute_shader_type;
-        typedef ATL::CComPtr<ID3D11DepthStencilState> depth_state_type;
-        typedef ATL::CComPtr<ID3D11DomainShader> domain_shader_type;
-        typedef ATL::CComPtr<ID3D11GeometryShader> geometry_shader_type;
-        typedef ATL::CComPtr<ID3D11HullShader> hull_shader_type;
-        typedef ATL::CComPtr<ID3D11InputLayout> input_layout_type;
-        typedef ATL::CComPtr<ID3D11PixelShader> pixel_shader_type;
-        typedef ATL::CComPtr<ID3D11RasterizerState> rasteriser_state_type;
-        typedef ATL::CComPtr<ID3D11SamplerState> sampler_state_type;
-        typedef ATL::CComPtr<ID3D11ShaderResourceView> srv_type;
-        typedef ATL::CComPtr<ID3D11UnorderedAccessView> uav_type;
-        typedef ATL::CComPtr<ID3D11VertexShader> vertex_shader_type;
+        typedef winrt::com_ptr<ID3D11BlendState> blend_state_type;
+        typedef winrt::com_ptr<ID3D11Buffer> buffer_type;
+        typedef winrt::com_ptr<ID3D11ComputeShader> compute_shader_type;
+        typedef winrt::com_ptr<ID3D11DepthStencilState> depth_state_type;
+        typedef winrt::com_ptr<ID3D11DomainShader> domain_shader_type;
+        typedef winrt::com_ptr<ID3D11GeometryShader> geometry_shader_type;
+        typedef winrt::com_ptr<ID3D11HullShader> hull_shader_type;
+        typedef winrt::com_ptr<ID3D11InputLayout> input_layout_type;
+        typedef winrt::com_ptr<ID3D11PixelShader> pixel_shader_type;
+        typedef winrt::com_ptr<ID3D11RasterizerState> rasteriser_state_type;
+        typedef winrt::com_ptr<ID3D11SamplerState> sampler_state_type;
+        typedef winrt::com_ptr<ID3D11ShaderResourceView> srv_type;
+        typedef winrt::com_ptr<ID3D11UnorderedAccessView> uav_type;
+        typedef winrt::com_ptr<ID3D11VertexShader> vertex_shader_type;
 
         /// <summary>
         /// Groups all information to bind and index buffer.
@@ -147,85 +148,93 @@ namespace d3d11 {
         /// </summary>
         rendering_technique(const std::string& name,
             std::vector<vertex_buffer>&& vb,
-            ID3D11InputLayout *il, const D3D11_PRIMITIVE_TOPOLOGY pt,
-            ID3D11VertexShader *vs, shader_resources&& vsRes,
-            ID3D11HullShader *hs, shader_resources&& hsRes,
-            ID3D11DomainShader *ds, shader_resources&& dsRes,
-            ID3D11GeometryShader *gs, shader_resources&& gsRes,
-            ID3D11PixelShader *ps, shader_resources&& psRes);
+            winrt::com_ptr<ID3D11InputLayout> il,
+            const D3D11_PRIMITIVE_TOPOLOGY pt,
+            winrt::com_ptr<ID3D11VertexShader> vs, shader_resources&& vsRes,
+            winrt::com_ptr<ID3D11HullShader> hs, shader_resources&& hsRes,
+            winrt::com_ptr<ID3D11DomainShader> ds, shader_resources&& dsRes,
+            winrt::com_ptr<ID3D11GeometryShader> gs, shader_resources&& gsRes,
+            winrt::com_ptr<ID3D11PixelShader> ps, shader_resources&& psRes);
 
         /// <summary>
         /// Initialises a new instance.
         /// </summary>
         rendering_technique(const std::string& name, const vertex_buffer& vb,
-            ID3D11InputLayout *il, const D3D11_PRIMITIVE_TOPOLOGY pt,
-            ID3D11VertexShader *vs, shader_resources&& vsRes,
-            ID3D11HullShader *hs, shader_resources&& hsRes,
-            ID3D11DomainShader *ds, shader_resources&& dsRes,
-            ID3D11GeometryShader *gs, shader_resources&& gsRes,
-            ID3D11PixelShader *ps, shader_resources&& psRes);
+            winrt::com_ptr<ID3D11InputLayout> il,
+            const D3D11_PRIMITIVE_TOPOLOGY pt,
+            winrt::com_ptr<ID3D11VertexShader> vs, shader_resources&& vsRes,
+            winrt::com_ptr<ID3D11HullShader> hs, shader_resources&& hsRes,
+            winrt::com_ptr<ID3D11DomainShader> ds, shader_resources&& dsRes,
+            winrt::com_ptr<ID3D11GeometryShader> gs, shader_resources&& gsRes,
+            winrt::com_ptr<ID3D11PixelShader> ps, shader_resources&& psRes);
 
         /// <summary>
         /// Initialises a new instance.
         /// </summary>
-        rendering_technique(const std::string& name, ID3D11InputLayout *il,
+        rendering_technique(const std::string& name,
+            winrt::com_ptr<ID3D11InputLayout> il,
             const D3D11_PRIMITIVE_TOPOLOGY pt,
-            ID3D11VertexShader *vs, shader_resources&& vsRes,
-            ID3D11HullShader *hs, shader_resources&& hsRes,
-            ID3D11DomainShader *ds, shader_resources&& dsRes,
-            ID3D11GeometryShader *gs, shader_resources&& gsRes,
-            ID3D11PixelShader *ps, shader_resources&& psRes);
+            winrt::com_ptr<ID3D11VertexShader> vs, shader_resources&& vsRes,
+            winrt::com_ptr<ID3D11HullShader> hs, shader_resources&& hsRes,
+            winrt::com_ptr<ID3D11DomainShader> ds, shader_resources&& dsRes,
+            winrt::com_ptr<ID3D11GeometryShader> gs, shader_resources&& gsRes,
+            winrt::com_ptr<ID3D11PixelShader> ps, shader_resources&& psRes);
 
         /// <summary>
         /// Initialises a new instance.
         /// </summary>
-        rendering_technique(const std::string& name, ID3D11InputLayout *il,
+        rendering_technique(const std::string& name,
+            winrt::com_ptr<ID3D11InputLayout> il,
             const D3D11_PRIMITIVE_TOPOLOGY pt,
-            ID3D11VertexShader *vs, shader_resources&& vsRes,
-            ID3D11PixelShader *ps, shader_resources&& psRes);
+            winrt::com_ptr<ID3D11VertexShader> vs, shader_resources&& vsRes,
+            winrt::com_ptr<ID3D11PixelShader> ps, shader_resources&& psRes);
 
         /// <summary>
         /// Initialises a new instance.
         /// </summary>
         rendering_technique(const std::string& name,
             std::vector<vertex_buffer>&& vb,
-            ID3D11InputLayout *il, const D3D11_PRIMITIVE_TOPOLOGY pt,
-            ID3D11VertexShader *vs, shader_resources&& vsRes,
-            ID3D11PixelShader *ps, shader_resources&& psRes);
+            winrt::com_ptr<ID3D11InputLayout> il,
+            const D3D11_PRIMITIVE_TOPOLOGY pt,
+            winrt::com_ptr<ID3D11VertexShader> vs, shader_resources&& vsRes,
+            winrt::com_ptr<ID3D11PixelShader> ps, shader_resources&& psRes);
 
         /// <summary>
         /// Initialises a new instance.
         /// </summary>
         rendering_technique(const std::string& name,
             std::vector<vertex_buffer>&& vb, index_buffer&& ib,
-            ID3D11InputLayout *il, const D3D11_PRIMITIVE_TOPOLOGY pt,
-            ID3D11VertexShader *vs, shader_resources&& vsRes,
-            ID3D11PixelShader *ps, shader_resources&& psRes);
-
-        /// <summary>
-        /// Initialises a new instance.
-        /// </summary>
-        rendering_technique(const std::string& name, ID3D11InputLayout *il,
+            winrt::com_ptr<ID3D11InputLayout> il,
             const D3D11_PRIMITIVE_TOPOLOGY pt,
-            ID3D11VertexShader *vs, shader_resources&& vsRes,
-            ID3D11GeometryShader *gs, shader_resources&& gsRes,
-            ID3D11PixelShader *ps, shader_resources&& psRes);
-
-        /// <summary>
-        /// Initialises a new instance.
-        /// </summary>
-        rendering_technique(const std::string& name, ID3D11InputLayout *il,
-            const D3D11_PRIMITIVE_TOPOLOGY pt,
-            ID3D11VertexShader *vs, shader_resources&& vsRes,
-            ID3D11HullShader *hs, shader_resources&& hsRes,
-            ID3D11DomainShader *ds, shader_resources&& dsRes,
-            ID3D11PixelShader *ps, shader_resources&& psRes);
+            winrt::com_ptr<ID3D11VertexShader> vs, shader_resources&& vsRes,
+            winrt::com_ptr<ID3D11PixelShader> ps, shader_resources&& psRes);
 
         /// <summary>
         /// Initialises a new instance.
         /// </summary>
         rendering_technique(const std::string& name,
-            ID3D11ComputeShader *cs, shader_resources&& csRes);
+            winrt::com_ptr<ID3D11InputLayout> il,
+            const D3D11_PRIMITIVE_TOPOLOGY pt,
+            winrt::com_ptr<ID3D11VertexShader> vs, shader_resources&& vsRes,
+            winrt::com_ptr<ID3D11GeometryShader> gs, shader_resources&& gsRes,
+            winrt::com_ptr<ID3D11PixelShader> ps, shader_resources&& psRes);
+
+        /// <summary>
+        /// Initialises a new instance.
+        /// </summary>
+        rendering_technique(const std::string& name,
+            winrt::com_ptr<ID3D11InputLayout> il,
+            const D3D11_PRIMITIVE_TOPOLOGY pt,
+            winrt::com_ptr<ID3D11VertexShader> vs, shader_resources&& vsRes,
+            winrt::com_ptr<ID3D11HullShader> hs, shader_resources&& hsRes,
+            winrt::com_ptr<ID3D11DomainShader> ds, shader_resources&& dsRes,
+            winrt::com_ptr<ID3D11PixelShader> ps, shader_resources&& psRes);
+
+        /// <summary>
+        /// Initialises a new instance.
+        /// </summary>
+        rendering_technique(const std::string& name,
+            winrt::com_ptr<ID3D11ComputeShader> cs, shader_resources&& csRes);
 
         /// <summary>
         /// Finalise the instance.
@@ -237,7 +246,7 @@ namespace d3d11 {
         /// required for rendering.
         /// </summary>
         /// <param name="ctx"></param>
-        void apply(ID3D11DeviceContext *ctx);
+        void apply(winrt::com_ptr<ID3D11DeviceContext> ctx);
 
         /// <summary>
         /// Get, if used, the compute shader for the rendering technique.
@@ -436,7 +445,7 @@ namespace d3d11 {
         /// increasing the reference count.
         /// </summary>
         template<class T>
-        static std::vector<T *> unsmart(std::vector<ATL::CComPtr<T>>& input);
+        static std::vector<T *> unsmart(std::vector<winrt::com_ptr<T>>& input);
 
         /// <summary>
         /// Invokes <paramref name="action" /> for all stages marked in

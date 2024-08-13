@@ -1,5 +1,5 @@
 ﻿// <copyright file="cs_volume_benchmark.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2016 - 2023 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+// Copyright © 2016 - 2024 Visualisierungsinstitut der Universität Stuttgart.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
 // <author>Christoph Müller</author>
@@ -8,6 +8,8 @@
 
 #include <limits>
 #include <memory>
+
+#include <tchar.h>
 
 #include "trrojan/estimate_iterations.h"
 #include "trrojan/io.h"
@@ -67,11 +69,11 @@ trrojan::result trrojan::d3d11::cs_volume_benchmark::on_run(
         // Constant buffers.
         this->raycasting_constants = create_buffer(dev, D3D11_USAGE_DEFAULT,
             D3D11_BIND_CONSTANT_BUFFER, nullptr, sizeof(RaycastingConstants));
-        set_debug_object_name(this->raycasting_constants.p,
+        set_debug_object_name(this->raycasting_constants,
             "raycasting_constants");
         this->view_constants = create_buffer(dev, D3D11_USAGE_DEFAULT,
             D3D11_BIND_CONSTANT_BUFFER, nullptr, sizeof(ViewConstants));
-        set_debug_object_name(this->view_constants.p, "view_constants");
+        set_debug_object_name(this->view_constants, "view_constants");
 
         // Rebuild the technique.
 #if defined(TRROJAN_FOR_UWP)
@@ -142,7 +144,7 @@ trrojan::result trrojan::d3d11::cs_volume_benchmark::on_run(
     raycastingConstants.StepSize = this->calc_base_step_size()
         * config.get<float>(factor_step_size);
 
-    ctx->UpdateSubresource(this->raycasting_constants.p, 0, nullptr,
+    ctx->UpdateSubresource(this->raycasting_constants.get(), 0, nullptr,
         &raycastingConstants, 0, 0);
 
     // Update the camera and view parameters.
@@ -199,7 +201,7 @@ trrojan::result trrojan::d3d11::cs_volume_benchmark::on_run(
         viewConstants.ImageSize.y = viewport[1];
 
         // Update the GPU resources.
-        ctx->UpdateSubresource(this->view_constants.p, 0, nullptr,
+        ctx->UpdateSubresource(this->view_constants.get(), 0, nullptr,
             &viewConstants, 0, 0);
     }
 
@@ -247,8 +249,8 @@ trrojan::result trrojan::d3d11::cs_volume_benchmark::on_run(
                 this->present_target(config);
             }
 
-            ctx->End(this->done_query);
-            wait_for_event_query(ctx, this->done_query);
+            ctx->End(this->done_query.get());
+            wait_for_event_query(ctx.get(), this->done_query.get());
             batchTime = cpuTimer.elapsed_millis();
 
             cntPrewarms = trrojan::estimate_iterations(minWallTime, batchTime,
@@ -287,8 +289,8 @@ trrojan::result trrojan::d3d11::cs_volume_benchmark::on_run(
         ctx->Dispatch(groupX, groupY, 1u);
         this->present_target(config);
     }
-    ctx->End(this->done_query);
-    wait_for_event_query(ctx, this->done_query);
+    ctx->End(this->done_query.get());
+    wait_for_event_query(ctx.get(), this->done_query.get());
     auto cpuTime = cpuTimer.elapsed_millis();
     benchmark_base::leave_power_scope(powerCollector);
 

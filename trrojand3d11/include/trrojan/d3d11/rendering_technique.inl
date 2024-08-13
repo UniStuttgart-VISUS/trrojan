@@ -1,8 +1,8 @@
-/// <copyright file="rendering_technique.inl" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Christoph Müller</author>
+ï»¿// <copyright file="rendering_technique.inl" company="Visualisierungsinstitut der UniversitÃ¤t Stuttgart">
+// Copyright Â© 2016 - 2024 Visualisierungsinstitut der UniversitÃ¤t Stuttgart.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Christoph MÃ¼ller</author>
 
 
 /*
@@ -54,9 +54,9 @@ void trrojan::d3d11::rendering_technique::assert_range(std::vector<T>& dst,
  */
 template<class T>
 std::vector<T *> trrojan::d3d11::rendering_technique::unsmart(
-        std::vector<ATL::CComPtr<T>>& input) {
+        std::vector<winrt::com_ptr<T>>& input) {
     std::vector<T *> retval(input.size());
     std::transform(input.begin(), input.end(), retval.begin(),
-        [](ATL::CComPtr<T>& i) { return i.p; });
+        [](winrt::com_ptr<T>& i) { return i.get(); });
     return std::move(retval);
 }

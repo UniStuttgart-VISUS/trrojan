@@ -1,8 +1,8 @@
-// <copyright file="random_sphere_data_set.cpp" company="Visualisierungsinstitut der Universit�t Stuttgart">
-// Copyright � 2016 - 2022 Visualisierungsinstitut der Universit�t Stuttgart. Alle Rechte vorbehalten.
+﻿// <copyright file="random_sphere_data_set.cpp" company="Visualisierungsinstitut der Universit�t Stuttgart">
+// Copyright © 2016 - 2024 Visualisierungsinstitut der Universität Stuttgart.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
-// <author>Christoph M�ller</author>
+// <author>Christoph Müller</author>
 
 #include "trrojan/d3d11/random_sphere_data_set.h"
 
@@ -10,6 +10,7 @@
 #include <cinttypes>
 #include <random>
 
+#include "trrojan/com_error_category.h"
 #include "trrojan/log.h"
 #include "trrojan/text.h"
 
@@ -173,13 +174,13 @@ void trrojan::d3d11::random_sphere_data_set::recreate(ID3D11Device *device,
 
     {
         this->_buffer = nullptr;
-        auto hr = device->CreateBuffer(&bufferDesc, &id, &this->_buffer);
+        auto hr = device->CreateBuffer(&bufferDesc, &id, this->_buffer.put());
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
         }
     }
 
-    set_debug_object_name(this->_buffer.p, "random_sphere_data_set");
+    set_debug_object_name(this->_buffer, "random_sphere_data_set");
 }
 
 

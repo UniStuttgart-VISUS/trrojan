@@ -1,26 +1,29 @@
-/// <copyright file="utilities.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Christoph Müller</author>
+ï»¿// <copyright file="utilities.cpp" company="Visualisierungsinstitut der UniversitÃ¤t Stuttgart">
+// Copyright Â© 2016 - 2024 Visualisierungsinstitut der UniversitÃ¤t Stuttgart.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Christoph MÃ¼ller</author>
 
 #include "trrojan/d3d11/utilities.h"
 
+#include <system_error>
+
 #include <DirectXMath.h>
 
+#include "trrojan/com_error_category.h"
 #include "trrojan/io.h"
 
 
 /*
  * trrojan::d3d11::create_buffer
  */
-ATL::CComPtr<ID3D11Buffer> trrojan::d3d11::create_buffer(ID3D11Device *device,
+winrt::com_ptr<ID3D11Buffer> trrojan::d3d11::create_buffer(ID3D11Device *device,
         const D3D11_USAGE usage, const D3D11_BIND_FLAG binding,
         const void *data, const UINT cntData, const UINT cpuAccess) {
     assert(device != nullptr);
     D3D11_BUFFER_DESC bufferDesc;
     D3D11_SUBRESOURCE_DATA id;
-    ATL::CComPtr<ID3D11Buffer> retval;
+    winrt::com_ptr<ID3D11Buffer> retval;
 
     ::ZeroMemory(&bufferDesc, sizeof(bufferDesc));
     bufferDesc.ByteWidth = static_cast<UINT>(cntData);
@@ -34,9 +37,9 @@ ATL::CComPtr<ID3D11Buffer> trrojan::d3d11::create_buffer(ID3D11Device *device,
     }
 
     auto hr = device->CreateBuffer(&bufferDesc,
-        (data != nullptr) ? &id : nullptr, &retval);
+        (data != nullptr) ? &id : nullptr, retval.put());
     if (FAILED(hr)) {
-        throw ATL::CAtlException(hr);
+        throw std::system_error(hr, com_category());
     }
 
     return retval;
@@ -46,10 +49,10 @@ ATL::CComPtr<ID3D11Buffer> trrojan::d3d11::create_buffer(ID3D11Device *device,
 /*
  * trrojan::d3d11::create_compatible_surface
  */
-ATL::CComPtr<ID3D11Texture2D> trrojan::d3d11::create_compatible_surface(
+winrt::com_ptr<ID3D11Texture2D> trrojan::d3d11::create_compatible_surface(
         ID3D11Device *device, IDXGISwapChain *swap_chain) {
     if (device == nullptr) {
-        throw ATL::CAtlException(E_POINTER);
+        throw std::system_error(E_POINTER, com_category());
     }
 
     // Get the back buffer texture to obtain its properties.
@@ -64,9 +67,9 @@ ATL::CComPtr<ID3D11Texture2D> trrojan::d3d11::create_compatible_surface(
     desc.Usage = D3D11_USAGE_DEFAULT;
 
     texture = nullptr;
-    auto hr = device->CreateTexture2D(&desc, nullptr, &texture);
+    auto hr = device->CreateTexture2D(&desc, nullptr, texture.put());
     if (FAILED(hr)) {
-        throw ATL::CAtlException(hr);
+        throw std::system_error(hr, com_category());
     }
 
     return texture;
@@ -76,15 +79,15 @@ ATL::CComPtr<ID3D11Texture2D> trrojan::d3d11::create_compatible_surface(
 /*
  * trrojan::d3d11::create_compute_shader
  */
-ATL::CComPtr<ID3D11ComputeShader> trrojan::d3d11::create_compute_shader(
+winrt::com_ptr<ID3D11ComputeShader> trrojan::d3d11::create_compute_shader(
         ID3D11Device *device, const BYTE *byteCode, const size_t cntByteCode) {
     assert(device != nullptr);
-    ATL::CComPtr<ID3D11ComputeShader> retval;
+    winrt::com_ptr<ID3D11ComputeShader> retval;
 
     auto hr = device->CreateComputeShader(byteCode, cntByteCode, nullptr,
-        &retval);
+        retval.put());
     if (FAILED(hr)) {
-        throw ATL::CAtlException(hr);
+        throw std::system_error(hr, com_category());
     }
 
     return retval;
@@ -155,7 +158,7 @@ std::vector<D3D11_INPUT_ELEMENT_DESC>  trrojan::d3d11::create_cube(
 
         auto hr = device->CreateBuffer(&desc, &id, outVertices);
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
         }
 
         set_debug_object_name(*outVertices, "Cube vertex buffer");
@@ -172,7 +175,7 @@ std::vector<D3D11_INPUT_ELEMENT_DESC>  trrojan::d3d11::create_cube(
 
         auto hr = device->CreateBuffer(&desc, &id, outIndices);
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
         }
 
         set_debug_object_name(*outIndices, "Cube index buffer");
@@ -185,15 +188,15 @@ std::vector<D3D11_INPUT_ELEMENT_DESC>  trrojan::d3d11::create_cube(
 /*
  * trrojan::d3d11::create_geometry_shader
  */
-ATL::CComPtr<ID3D11DomainShader> trrojan::d3d11::create_domain_shader(
+winrt::com_ptr<ID3D11DomainShader> trrojan::d3d11::create_domain_shader(
         ID3D11Device *device, const BYTE *byteCode, const size_t cntByteCode) {
     assert(device != nullptr);
-    ATL::CComPtr<ID3D11DomainShader> retval;
+    winrt::com_ptr<ID3D11DomainShader> retval;
 
     auto hr = device->CreateDomainShader(byteCode, cntByteCode, nullptr,
-        &retval);
+        retval.put());
     if (FAILED(hr)) {
-        throw ATL::CAtlException(hr);
+        throw std::system_error(hr, com_category());
     }
 
     return retval;
@@ -203,18 +206,18 @@ ATL::CComPtr<ID3D11DomainShader> trrojan::d3d11::create_domain_shader(
 /*
  * trrojan::d3d11::create_event_query
  */
-ATL::CComPtr<ID3D11Query> trrojan::d3d11::create_event_query(
+winrt::com_ptr<ID3D11Query> trrojan::d3d11::create_event_query(
         ID3D11Device *device) {
     assert(device != nullptr);
     D3D11_QUERY_DESC desc;
-    ATL::CComPtr<ID3D11Query> retval;
+    winrt::com_ptr<ID3D11Query> retval;
 
     ::ZeroMemory(&desc, sizeof(desc));
     desc.Query = D3D11_QUERY::D3D11_QUERY_EVENT;
 
-    auto hr = device->CreateQuery(&desc, &retval);
+    auto hr = device->CreateQuery(&desc, retval.put());
     if (FAILED(hr)) {
-        throw ATL::CAtlException(hr);
+        throw std::system_error(hr, com_category());
     }
 
     return retval;
@@ -224,15 +227,15 @@ ATL::CComPtr<ID3D11Query> trrojan::d3d11::create_event_query(
 /*
 * trrojan::d3d11::create_geometry_shader
 */
-ATL::CComPtr<ID3D11GeometryShader> trrojan::d3d11::create_geometry_shader(
+winrt::com_ptr<ID3D11GeometryShader> trrojan::d3d11::create_geometry_shader(
     ID3D11Device *device, const BYTE *byteCode, const size_t cntByteCode) {
     assert(device != nullptr);
-    ATL::CComPtr<ID3D11GeometryShader> retval;
+    winrt::com_ptr<ID3D11GeometryShader> retval;
 
     auto hr = device->CreateGeometryShader(byteCode, cntByteCode, nullptr,
-        &retval);
+        retval.put());
     if (FAILED(hr)) {
-        throw ATL::CAtlException(hr);
+        throw std::system_error(hr, com_category());
     }
 
     return retval;
@@ -242,7 +245,7 @@ ATL::CComPtr<ID3D11GeometryShader> trrojan::d3d11::create_geometry_shader(
 /*
  * trrojan::d3d11::create_geometry_shader
  */
-ATL::CComPtr<ID3D11GeometryShader> trrojan::d3d11::create_geometry_shader(
+winrt::com_ptr<ID3D11GeometryShader> trrojan::d3d11::create_geometry_shader(
         ID3D11Device *device, const std::string& path) {
     auto byteCode = trrojan::read_binary_file(path);
     return create_geometry_shader(device,
@@ -253,22 +256,22 @@ ATL::CComPtr<ID3D11GeometryShader> trrojan::d3d11::create_geometry_shader(
 /*
  * trrojan::d3d11::create_geometry_shader
  */
-ATL::CComPtr<ID3D11GeometryShader> trrojan::d3d11::create_geometry_shader(
+winrt::com_ptr<ID3D11GeometryShader> trrojan::d3d11::create_geometry_shader(
         ID3D11Device *device, const BYTE *byteCode, const size_t cntByteCode,
         const D3D11_SO_DECLARATION_ENTRY * soDecls, const size_t cntSoDecls,
         const UINT *bufferStrides, const size_t cntBufferStrides,
         const UINT rasterisedStream) {
     assert(device != nullptr);
-    ATL::CComPtr<ID3D11GeometryShader> retval;
+    winrt::com_ptr<ID3D11GeometryShader> retval;
 
     assert(cntSoDecls <= UINT_MAX);
     assert(cntBufferStrides <= UINT_MAX);
     auto hr = device->CreateGeometryShaderWithStreamOutput(
         byteCode, cntByteCode, soDecls, static_cast<UINT>(cntSoDecls),
         bufferStrides, static_cast<UINT>(cntBufferStrides), rasterisedStream,
-        nullptr, &retval);
+        nullptr, retval.put());
     if (FAILED(hr)) {
-        throw ATL::CAtlException(hr);
+        throw std::system_error(hr, com_category());
     }
 
     return retval;
@@ -278,15 +281,16 @@ ATL::CComPtr<ID3D11GeometryShader> trrojan::d3d11::create_geometry_shader(
 /*
  * trrojan::d3d11::create_hull_shader
  */
-ATL::CComPtr<ID3D11HullShader> trrojan::d3d11::create_hull_shader(
+winrt::com_ptr<ID3D11HullShader> trrojan::d3d11::create_hull_shader(
         ID3D11Device *device, const BYTE *byteCode,
         const size_t cntByteCode) {
     assert(device != nullptr);
-    ATL::CComPtr<ID3D11HullShader> retval;
+    winrt::com_ptr<ID3D11HullShader> retval;
 
-    auto hr = device->CreateHullShader(byteCode, cntByteCode, nullptr, &retval);
+    auto hr = device->CreateHullShader(byteCode, cntByteCode, nullptr,
+        retval.put());
     if (FAILED(hr)) {
-        throw ATL::CAtlException(hr);
+        throw std::system_error(hr, com_category());
     }
 
     return retval;
@@ -296,19 +300,19 @@ ATL::CComPtr<ID3D11HullShader> trrojan::d3d11::create_hull_shader(
 /*
  * trrojan::d3d11::create_input_layout
  */
-ATL::CComPtr<ID3D11InputLayout> trrojan::d3d11::create_input_layout(
+winrt::com_ptr<ID3D11InputLayout> trrojan::d3d11::create_input_layout(
         ID3D11Device *device,
         const std::vector<D3D11_INPUT_ELEMENT_DESC>& elements,
         const BYTE *byteCode, const size_t cntByteCode) {
     assert(device != nullptr);
     assert(byteCode != nullptr);
-    ATL::CComPtr<ID3D11InputLayout> retval;
+    winrt::com_ptr<ID3D11InputLayout> retval;
 
     auto hr = device->CreateInputLayout(elements.data(),
         static_cast<UINT>(elements.size()), byteCode,
-        static_cast<UINT>(cntByteCode), &retval);
+        static_cast<UINT>(cntByteCode), retval.put());
     if (FAILED(hr)) {
-        throw ATL::CAtlException(hr);
+        throw std::system_error(hr, com_category());
     }
 
     return retval;
@@ -318,10 +322,10 @@ ATL::CComPtr<ID3D11InputLayout> trrojan::d3d11::create_input_layout(
 /*
  * trrojan::d3d11::create_linear_sampler
  */
-ATL::CComPtr<ID3D11SamplerState> trrojan::d3d11::create_linear_sampler(
+winrt::com_ptr<ID3D11SamplerState> trrojan::d3d11::create_linear_sampler(
         ID3D11Device *device) {
     assert(device != nullptr);
-    ATL::CComPtr<ID3D11SamplerState> retval;
+    winrt::com_ptr<ID3D11SamplerState> retval;
     D3D11_SAMPLER_DESC desc;
 
     ::ZeroMemory(&desc, sizeof(desc));
@@ -330,9 +334,9 @@ ATL::CComPtr<ID3D11SamplerState> trrojan::d3d11::create_linear_sampler(
     desc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
     desc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
 
-    auto hr = device->CreateSamplerState(&desc, &retval);
+    auto hr = device->CreateSamplerState(&desc, retval.put());
     if (FAILED(hr)) {
-        throw ATL::CAtlException(hr);
+        throw std::system_error(hr, com_category());
     }
 
     return retval;
@@ -342,18 +346,18 @@ ATL::CComPtr<ID3D11SamplerState> trrojan::d3d11::create_linear_sampler(
 /*
  * trrojan::d3d11::create_pipline_stats_query
  */
-ATL::CComPtr<ID3D11Query> trrojan::d3d11::create_pipline_stats_query(
+winrt::com_ptr<ID3D11Query> trrojan::d3d11::create_pipline_stats_query(
         ID3D11Device *device) {
     assert(device != nullptr);
     D3D11_QUERY_DESC desc;
-    ATL::CComPtr<ID3D11Query> retval;
+    winrt::com_ptr<ID3D11Query> retval;
 
     ::ZeroMemory(&desc, sizeof(desc));
     desc.Query = D3D11_QUERY::D3D11_QUERY_PIPELINE_STATISTICS;
 
-    auto hr = device->CreateQuery(&desc, &retval);
+    auto hr = device->CreateQuery(&desc, retval.put());
     if (FAILED(hr)) {
-        throw ATL::CAtlException(hr);
+        throw std::system_error(hr, com_category());
     }
 
     return retval;
@@ -363,16 +367,16 @@ ATL::CComPtr<ID3D11Query> trrojan::d3d11::create_pipline_stats_query(
 /*
  * trrojan::d3d11::create_pixel_shader
  */
-ATL::CComPtr<ID3D11PixelShader> trrojan::d3d11::create_pixel_shader(
+winrt::com_ptr<ID3D11PixelShader> trrojan::d3d11::create_pixel_shader(
         ID3D11Device *device, const BYTE *byteCode, const size_t cntByteCode) {
     assert(device != nullptr);
     assert(byteCode != nullptr);
-    ATL::CComPtr<ID3D11PixelShader> retval;
+    winrt::com_ptr<ID3D11PixelShader> retval;
 
     auto hr = device->CreatePixelShader(byteCode,
-        static_cast<UINT>(cntByteCode), nullptr, &retval);
+        static_cast<UINT>(cntByteCode), nullptr, retval.put());
     if (FAILED(hr)) {
-        throw ATL::CAtlException(hr);
+        throw std::system_error(hr, com_category());
     }
 
     return retval;
@@ -382,11 +386,11 @@ ATL::CComPtr<ID3D11PixelShader> trrojan::d3d11::create_pixel_shader(
 /*
  * trrojan::d3d11::create_uav
  */
-ATL::CComPtr<ID3D11UnorderedAccessView> trrojan::d3d11::create_uav(
+winrt::com_ptr<ID3D11UnorderedAccessView> trrojan::d3d11::create_uav(
         ID3D11Device *device, const UINT width, const UINT height,
         const UINT elementSize) {
-    ATL::CComPtr<ID3D11Buffer> buffer;
-    ATL::CComPtr<ID3D11UnorderedAccessView> retval;
+    winrt::com_ptr<ID3D11Buffer> buffer;
+    winrt::com_ptr<ID3D11UnorderedAccessView> retval;
 
     // Allocate a new buffer.
     {
@@ -398,9 +402,9 @@ ATL::CComPtr<ID3D11UnorderedAccessView> trrojan::d3d11::create_uav(
         desc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
         desc.StructureByteStride = elementSize;
 
-        auto hr = device->CreateBuffer(&desc, nullptr, &buffer);
+        auto hr = device->CreateBuffer(&desc, nullptr, buffer.put());
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
         }
     }
 
@@ -413,9 +417,10 @@ ATL::CComPtr<ID3D11UnorderedAccessView> trrojan::d3d11::create_uav(
         desc.Format = DXGI_FORMAT_UNKNOWN;
         desc.Buffer.NumElements = width * height;
 
-        auto hr = device->CreateUnorderedAccessView(buffer, &desc, &retval);
+        auto hr = device->CreateUnorderedAccessView(buffer.get(), &desc,
+            retval.put());
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
         }
     }
 
@@ -426,25 +431,26 @@ ATL::CComPtr<ID3D11UnorderedAccessView> trrojan::d3d11::create_uav(
 /*
  * trrojan::d3d11::create_uav
  */
-ATL::CComPtr<ID3D11UnorderedAccessView> trrojan::d3d11::create_uav(
+winrt::com_ptr<ID3D11UnorderedAccessView> trrojan::d3d11::create_uav(
         ID3D11Texture2D *texture) {
     assert(texture != nullptr);
     D3D11_TEXTURE2D_DESC texDesc;
-    ATL::CComPtr<ID3D11Device> device;
-    ATL::CComPtr<ID3D11UnorderedAccessView> retval;
+    winrt::com_ptr<ID3D11Device> device;
+    winrt::com_ptr<ID3D11UnorderedAccessView> retval;
     D3D11_UNORDERED_ACCESS_VIEW_DESC uavDesc;
 
     texture->GetDesc(&texDesc);
-    texture->GetDevice(&device);
+    texture->GetDevice(device.put());
 
     ::ZeroMemory(&uavDesc, sizeof(uavDesc));
     uavDesc.Format = texDesc.Format;
     //uavDesc.Format = DXGI_FORMAT_UNKNOWN;
     uavDesc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2D;
 
-    auto hr = device->CreateUnorderedAccessView(texture, &uavDesc, &retval);
+    auto hr = device->CreateUnorderedAccessView(texture, &uavDesc,
+        retval.put());
     if (FAILED(hr)) {
-        throw ATL::CAtlException(hr);
+        throw std::system_error(hr, com_category());
     }
 
     return retval;
@@ -454,16 +460,16 @@ ATL::CComPtr<ID3D11UnorderedAccessView> trrojan::d3d11::create_uav(
 /*
  * trrojan::d3d11::create_vertex_shader
  */
-ATL::CComPtr<ID3D11VertexShader> trrojan::d3d11::create_vertex_shader(
+winrt::com_ptr<ID3D11VertexShader> trrojan::d3d11::create_vertex_shader(
         ID3D11Device *device, const BYTE *byteCode, const size_t cntByteCode) {
     assert(device != nullptr);
     assert(byteCode != nullptr);
-    ATL::CComPtr<ID3D11VertexShader> retval;
+    winrt::com_ptr<ID3D11VertexShader> retval;
 
-    auto hr = device->CreateVertexShader(byteCode, 
-        static_cast<UINT>(cntByteCode), nullptr, &retval);
+    auto hr = device->CreateVertexShader(byteCode,
+        static_cast<UINT>(cntByteCode), nullptr, retval.put());
     if (FAILED(hr)) {
-        throw ATL::CAtlException(hr);
+        throw std::system_error(hr, com_category());
     }
 
     return retval;
@@ -473,7 +479,7 @@ ATL::CComPtr<ID3D11VertexShader> trrojan::d3d11::create_vertex_shader(
 /*
  * trrojan::d3d11::create_viridis_colour_map
  */
-ATL::CComPtr<ID3D11Texture1D> trrojan::d3d11::create_viridis_colour_map(
+winrt::com_ptr<ID3D11Texture1D> trrojan::d3d11::create_viridis_colour_map(
         ID3D11Device *device, ID3D11ShaderResourceView **outOptSrv) {
     assert(device != nullptr);
 #pragma warning(disable: 4244)
@@ -742,7 +748,7 @@ ATL::CComPtr<ID3D11Texture1D> trrojan::d3d11::create_viridis_colour_map(
     D3D11_TEXTURE1D_DESC desc;
     D3D11_SUBRESOURCE_DATA initData;
     HRESULT hr = S_OK;
-    ATL::CComPtr<ID3D11Texture1D> retval;
+    winrt::com_ptr<ID3D11Texture1D> retval;
 
     ::ZeroMemory(&desc, sizeof(desc));
     desc.ArraySize = 1;
@@ -755,17 +761,17 @@ ATL::CComPtr<ID3D11Texture1D> trrojan::d3d11::create_viridis_colour_map(
     ::ZeroMemory(&initData, sizeof(initData));
     initData.pSysMem = data;
 
-    hr = device->CreateTexture1D(&desc, &initData, &retval);
+    hr = device->CreateTexture1D(&desc, &initData, retval.put());
     if (FAILED(hr)) {
-        throw ATL::CAtlException(hr);
+        throw std::system_error(hr, com_category());
     }
 
-    set_debug_object_name(retval.p, "viridis_colour_map");
+    set_debug_object_name(retval, "viridis_colour_map");
 
     if (outOptSrv != nullptr) {
-        hr = device->CreateShaderResourceView(retval, nullptr, outOptSrv);
+        hr = device->CreateShaderResourceView(retval.get(), nullptr, outOptSrv);
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
         }
     }
 
@@ -776,18 +782,18 @@ ATL::CComPtr<ID3D11Texture1D> trrojan::d3d11::create_viridis_colour_map(
 /*
  * trrojan::d3d11::get_back_buffer
  */
-ATL::CComPtr<ID3D11Texture2D> trrojan::d3d11::get_back_buffer(
+winrt::com_ptr<ID3D11Texture2D> trrojan::d3d11::get_back_buffer(
         IDXGISwapChain *swap_chain) {
     if (swap_chain == nullptr) {
-        throw ATL::CAtlException(E_POINTER);
+        throw std::system_error(E_POINTER, com_category());
     }
 
-    ATL::CComPtr<ID3D11Texture2D> retval;
+    winrt::com_ptr<ID3D11Texture2D> retval;
 
     auto hr = swap_chain->GetBuffer(0, IID_ID3D11Texture2D,
         reinterpret_cast<void **>(&retval));
     if (FAILED(hr)) {
-        throw ATL::CAtlException(E_POINTER);
+        throw std::system_error(E_POINTER, com_category());
     }
 
     return retval;
@@ -797,14 +803,14 @@ ATL::CComPtr<ID3D11Texture2D> trrojan::d3d11::get_back_buffer(
 /*
  * trrojan::d3d11::get_device
  */
-ATL::CComPtr<ID3D11Device> trrojan::d3d11::get_device(
+winrt::com_ptr<ID3D11Device> trrojan::d3d11::get_device(
         ID3D11Texture2D *texture) {
     if (texture == nullptr) {
-        throw ATL::CAtlException(E_POINTER);
+        throw std::system_error(E_POINTER, com_category());
     }
 
-    ATL::CComPtr<ID3D11Device> retval;
-    texture->GetDevice(&retval);
+    winrt::com_ptr<ID3D11Device> retval;
+    texture->GetDevice(retval.put());
 
     return retval;
 }
@@ -813,16 +819,16 @@ ATL::CComPtr<ID3D11Device> trrojan::d3d11::get_device(
 /*
  * trrojan::d3d11::get_device
  */
-ATL::CComPtr<IDXGIDevice> trrojan::d3d11::get_device(ID3D11Device *device) {
+winrt::com_ptr<IDXGIDevice> trrojan::d3d11::get_device(ID3D11Device *device) {
     if (device == nullptr) {
-        throw ATL::CAtlException(E_POINTER);
+        throw std::system_error(E_POINTER, com_category());
     }
 
-    ATL::CComPtr<IDXGIDevice> retval;
+    winrt::com_ptr<IDXGIDevice> retval;
     auto hr = device->QueryInterface(::IID_IDXGIDevice,
         reinterpret_cast<void **>(&retval));
     if (FAILED(hr)) {
-        throw ATL::CAtlException(E_POINTER);
+        throw std::system_error(E_POINTER, com_category());
     }
 
     return retval;
@@ -832,17 +838,17 @@ ATL::CComPtr<IDXGIDevice> trrojan::d3d11::get_device(ID3D11Device *device) {
 /*
  * trrojan::d3d11::get_surface
  */
-ATL::CComPtr<IDXGISurface> trrojan::d3d11::get_surface(
+winrt::com_ptr<IDXGISurface> trrojan::d3d11::get_surface(
         ID3D11Texture2D *texture) {
     if (texture == nullptr) {
-        throw ATL::CAtlException(E_POINTER);
+        throw std::system_error(E_POINTER, com_category());
     }
 
-    ATL::CComPtr<IDXGISurface> retval;
+    winrt::com_ptr<IDXGISurface> retval;
     auto hr = texture->QueryInterface(::IID_IDXGISurface,
         reinterpret_cast<void **>(&retval));
     if (FAILED(hr)) {
-        throw ATL::CAtlException(E_POINTER);
+        throw std::system_error(E_POINTER, com_category());
     }
 
     return retval;
@@ -854,20 +860,20 @@ ATL::CComPtr<IDXGISurface> trrojan::d3d11::get_surface(
  */
 HANDLE trrojan::d3d11::get_shared_handle(ID3D11Resource *resource) {
     assert(resource != nullptr);
-    ATL::CComPtr<IDXGIResource> dxgiRes;
+    winrt::com_ptr<IDXGIResource> dxgiRes;
     HANDLE retval = NULL;
 
     {
-        auto hr = resource->QueryInterface(&dxgiRes);
+        auto hr = resource->QueryInterface(dxgiRes.put());
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
         }
     }
 
     {
         auto hr = dxgiRes->GetSharedHandle(&retval);
         if (FAILED(hr)) {
-            throw ATL::CAtlException(hr);
+            throw std::system_error(hr, com_category());
         }
     }
 
@@ -887,7 +893,7 @@ void trrojan::d3d11::wait_for_event_query(ID3D11DeviceContext *ctx,
 
     while ((hr = ctx->GetData(query, nullptr, 0, 0)) == S_FALSE);
     if (FAILED(hr)) {
-        throw ATL::CAtlException(hr);
+        throw std::system_error(hr, com_category());
     }
 }
 
@@ -904,6 +910,6 @@ void trrojan::d3d11::wait_for_stats_query(
 
     while ((hr = ctx->GetData(query, &dst, sizeof(dst), 0)) == S_FALSE);
     if (FAILED(hr)) {
-        throw ATL::CAtlException(hr);
+        throw std::system_error(hr, com_category());
     }
 }

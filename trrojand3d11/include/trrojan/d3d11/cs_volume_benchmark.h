@@ -1,8 +1,8 @@
-/// <copyright file="cs_volume_benchmark.h" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
-/// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
-/// </copyright>
-/// <author>Christoph Müller</author>
+ï»¿// <copyright file="cs_volume_benchmark.h" company="Visualisierungsinstitut der UniversitÃ¤t Stuttgart">
+// Copyright Â© 2016 - 2024 Visualisierungsinstitut der UniversitÃ¤t Stuttgart.
+// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
+// </copyright>
+// <author>Christoph MÃ¼ller</author>
 
 #pragma once
 
@@ -47,7 +47,7 @@ namespace d3d11 {
     private:
 
         rendering_technique::uav_type compute_target;
-        ATL::CComPtr<ID3D11Query> done_query;
+        winrt::com_ptr<ID3D11Query> done_query;
         rendering_technique::buffer_type raycasting_constants;
         rendering_technique technique;
         rendering_technique::buffer_type view_constants;

@@ -1,5 +1,5 @@
 ﻿// <copyright file="two_pass_volume_benchmark.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2016 - 2023 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+// Copyright © 2016 - 2023 Visualisierungsinstitut der Universität Stuttgart.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
 // <author>Christoph Müller</author>
@@ -8,9 +8,11 @@
 #include "trrojan/d3d11/two_pass_volume_benchmark.h"
 
 #include <DirectXMath.h>
+#include <tchar.h>
 
 #include <glm/ext.hpp>
 
+#include "trrojan/com_error_category.h"
 #include "trrojan/estimate_iterations.h"
 #include "trrojan/io.h"
 #include "trrojan/log.h"
@@ -67,11 +69,11 @@ trrojan::result trrojan::d3d11::two_pass_volume_benchmark::on_run(
         // Constant buffers.
         this->raycasting_constants = create_buffer(dev, D3D11_USAGE_DEFAULT,
             D3D11_BIND_CONSTANT_BUFFER, nullptr, sizeof(RaycastingConstants));
-        set_debug_object_name(this->raycasting_constants.p,
+        set_debug_object_name(this->raycasting_constants,
             "raycasting_constants");
         this->view_constants = create_buffer(dev, D3D11_USAGE_DEFAULT,
             D3D11_BIND_CONSTANT_BUFFER, nullptr, sizeof(ViewConstants));
-        set_debug_object_name(this->view_constants.p, "view_constants");
+        set_debug_object_name(this->view_constants, "view_constants");
 
         // Rebuild the ray computation technique.
         {
@@ -83,12 +85,12 @@ trrojan::result trrojan::d3d11::two_pass_volume_benchmark::on_run(
                 MAKEINTRESOURCE(VOLUME_RAY_PASS_VERTEX_SHADER),
                 _T("SHADER"));
 #endif /* defined(TRROJAN_FOR_UWP) */
-            auto vs = create_vertex_shader(dev, vss);
+            auto vs = create_vertex_shader(dev.get(), vss);
 
-            ATL::CComPtr<ID3D11Buffer> ib;
-            ATL::CComPtr<ID3D11Buffer> vb;
-            auto ils = create_cube(dev, &vb, &ib);
-            auto il = create_input_layout(dev, ils, vss);
+            winrt::com_ptr<ID3D11Buffer> ib;
+            winrt::com_ptr<ID3D11Buffer> vb;
+            auto ils = create_cube(dev.get(), vb.put(), ib.put());
+            auto il = create_input_layout(dev.get(), ils, vss);
 
 #if defined(TRROJAN_FOR_UWP)
             const auto pss = plugin::load_shader_asset(
@@ -98,15 +100,15 @@ trrojan::result trrojan::d3d11::two_pass_volume_benchmark::on_run(
                 MAKEINTRESOURCE(VOLUME_RAY_PASS_PIXEL_SHADER),
                 _T("SHADER"));
 #endif /* defined(TRROJAN_FOR_UWP) */
-            auto ps = create_pixel_shader(dev, pss);
+            auto ps = create_pixel_shader(dev.get(), pss);
 
             auto stride = static_cast<UINT>(sizeof(DirectX::XMFLOAT3));
             this->ray_technique = rendering_technique("rays",
                 { rendering_technique::vertex_buffer(vb, 8, stride) },
-                rendering_technique::index_buffer(ib), il.p,
+                rendering_technique::index_buffer(ib), il,
                 D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST,
-                vs.p, rendering_technique::shader_resources(),
-                ps.p, rendering_technique::shader_resources());
+                vs, rendering_technique::shader_resources(),
+                ps, rendering_technique::shader_resources());
 
             this->ray_technique.set_constant_buffers(this->view_constants,
                 static_cast<rendering_technique::shader_stages>(
@@ -115,23 +117,23 @@ trrojan::result trrojan::d3d11::two_pass_volume_benchmark::on_run(
 
         // Add a rasteriser state without backface culling.
         {
-            ATL::CComPtr<ID3D11RasterizerState> state;
+            winrt::com_ptr<ID3D11RasterizerState> state;
 
             D3D11_RASTERIZER_DESC desc;
             ::ZeroMemory(&desc, sizeof(desc));
             desc.FillMode = D3D11_FILL_SOLID;
             desc.CullMode = D3D11_CULL_NONE;
 
-            auto hr = dev->CreateRasterizerState(&desc, &state);
+            auto hr = dev->CreateRasterizerState(&desc, state.put());
             if (FAILED(hr)) {
-                throw ATL::CAtlException(hr); 
+                throw std::system_error(hr, com_category());
             }
             this->ray_technique.set_rasteriser_state(state);
         }
 
         // Set an additive blending state for the ray computation pass.
         {
-            ATL::CComPtr<ID3D11BlendState> state;
+            winrt::com_ptr<ID3D11BlendState> state;
 
             D3D11_BLEND_DESC desc;
             ::ZeroMemory(&desc, sizeof(desc));
@@ -147,9 +149,9 @@ trrojan::result trrojan::d3d11::two_pass_volume_benchmark::on_run(
                     = D3D11_COLOR_WRITE_ENABLE_ALL;
             }
 
-            auto hr = dev->CreateBlendState(&desc, &state);
+            auto hr = dev->CreateBlendState(&desc, state.put());
             if (FAILED(hr)) {
-                throw ATL::CAtlException(hr);
+                throw std::system_error(hr, com_category());
             }
             this->ray_technique.set_blend_state(state);
         }
@@ -217,46 +219,49 @@ trrojan::result trrojan::d3d11::two_pass_volume_benchmark::on_run(
         desc.Width = vp[0];
 
         {
-            ATL::CComPtr<ID3D11Texture2D> tex;
-            auto hr = dev->CreateTexture2D(&desc, nullptr, &tex);
+            winrt::com_ptr<ID3D11Texture2D> tex;
+            auto hr = dev->CreateTexture2D(&desc, nullptr, tex.put());
             if (FAILED(hr)) {
-                throw ATL::CAtlException(hr);
+                throw std::system_error(hr, com_category());
             }
-            set_debug_object_name(tex.p, "entry_target_texture");
+            set_debug_object_name(tex, "entry_target_texture");
 
-            hr = dev->CreateRenderTargetView(tex, nullptr, &this->entry_target);
+            hr = dev->CreateRenderTargetView(tex.get(), nullptr,
+                this->entry_target.put());
             if (FAILED(hr)) {
-                throw ATL::CAtlException(hr);
+                throw std::system_error(hr, com_category());
             }
-            set_debug_object_name(this->entry_target.p, "entry_target_view");
+            set_debug_object_name(this->entry_target, "entry_target_view");
 
-            hr = dev->CreateShaderResourceView(tex, nullptr,
-                &this->entry_source);
+            hr = dev->CreateShaderResourceView(tex.get(), nullptr,
+                this->entry_source.put());
             if (FAILED(hr)) {
-                throw ATL::CAtlException(hr);
+                throw std::system_error(hr, com_category());
             }
-            set_debug_object_name(this->entry_source.p, "entry_source_view");
+            set_debug_object_name(this->entry_source, "entry_source_view");
         }
 
         {
-            ATL::CComPtr<ID3D11Texture2D> tex;
-            auto hr = dev->CreateTexture2D(&desc, nullptr, &tex);
+            winrt::com_ptr<ID3D11Texture2D> tex;
+            auto hr = dev->CreateTexture2D(&desc, nullptr, tex.put());
             if (FAILED(hr)) {
-                throw ATL::CAtlException(hr);
+                throw std::system_error(hr, com_category());
             }
-            set_debug_object_name(tex.p, "ray_target_texture");
+            set_debug_object_name(tex, "ray_target_texture");
 
-            hr = dev->CreateRenderTargetView(tex, nullptr, &this->ray_target);
+            hr = dev->CreateRenderTargetView(tex.get(), nullptr,
+                this->ray_target.put());
             if (FAILED(hr)) {
-                throw ATL::CAtlException(hr);
+                throw std::system_error(hr, com_category());
             }
-            set_debug_object_name(this->ray_target.p, "ray_target_view");
+            set_debug_object_name(this->ray_target, "ray_target_view");
 
-            hr = dev->CreateShaderResourceView(tex, nullptr, &this->ray_source);
+            hr = dev->CreateShaderResourceView(tex.get(), nullptr,
+                this->ray_source.put());
             if (FAILED(hr)) {
-                throw ATL::CAtlException(hr);
+                throw std::system_error(hr, com_category());
             }
-            set_debug_object_name(this->ray_source.p, "ray_source_view");
+            set_debug_object_name(this->ray_source, "ray_source_view");
         }
     }
 
@@ -274,7 +279,7 @@ trrojan::result trrojan::d3d11::two_pass_volume_benchmark::on_run(
     raycastingConstants.ImageSize.x = vp[0];
     raycastingConstants.ImageSize.y = vp[1];
 
-    ctx->UpdateSubresource(this->raycasting_constants.p, 0, nullptr,
+    ctx->UpdateSubresource(this->raycasting_constants.get(), 0, nullptr,
         &raycastingConstants, 0, 0);
 
     // Update the camera and view parameters.
@@ -322,7 +327,7 @@ trrojan::result trrojan::d3d11::two_pass_volume_benchmark::on_run(
             DirectX::XMMatrixTranspose(mvp));
 
         // Update the GPU resources.
-        ctx->UpdateSubresource(this->view_constants.p, 0, nullptr,
+        ctx->UpdateSubresource(this->view_constants.get(), 0, nullptr,
             &viewConstants, 0, 0);
     }
 
@@ -363,17 +368,17 @@ trrojan::result trrojan::d3d11::two_pass_volume_benchmark::on_run(
             cpuTimer.start();
             for (; cntCpuIterations < cntPrewarms; ++cntCpuIterations) {
                 this->clear_target();
-                this->begin_ray_pass(ctx, vp);
+                this->begin_ray_pass(ctx.get(), vp);
                 this->ray_technique.apply(ctx);
                 ctx->DrawIndexed(36, 0, 0);
-                this->begin_volume_pass(ctx);
+                this->begin_volume_pass(ctx.get());
                 this->volume_technique.apply(ctx);
                 ctx->Dispatch(groupX, groupY, 1);
                 this->present_target(config);
             }
 
-            ctx->End(this->done_query);
-            wait_for_event_query(ctx, this->done_query);
+            ctx->End(this->done_query.get());
+            wait_for_event_query(ctx.get(), this->done_query.get());
             batchTime = cpuTimer.elapsed_millis();
 
             cntPrewarms = trrojan::estimate_iterations(minWallTime, batchTime,
@@ -391,10 +396,10 @@ trrojan::result trrojan::d3d11::two_pass_volume_benchmark::on_run(
         gpuTimer.start_frame();
         gpuTimer.start(0);
         this->clear_target();
-        this->begin_ray_pass(ctx, vp);
+        this->begin_ray_pass(ctx.get(), vp);
         this->ray_technique.apply(ctx);
         ctx->DrawIndexed(36, 0, 0);
-        this->begin_volume_pass(ctx);
+        this->begin_volume_pass(ctx.get());
         this->volume_technique.apply(ctx);
         ctx->Dispatch(groupX, groupY, 1);
         this->present_target(config);
@@ -416,16 +421,16 @@ trrojan::result trrojan::d3d11::two_pass_volume_benchmark::on_run(
     cpuTimer.start();
     for (std::uint32_t i = 0; i < cntCpuIterations; ++i) {
         this->clear_target();
-        this->begin_ray_pass(ctx, vp);
+        this->begin_ray_pass(ctx.get(), vp);
         this->ray_technique.apply(ctx);
         ctx->DrawIndexed(36, 0, 0);
-        this->begin_volume_pass(ctx);
+        this->begin_volume_pass(ctx.get());
         this->volume_technique.apply(ctx);
         ctx->Dispatch(groupX, groupY, 1);
         this->present_target(config);
     }
-    ctx->End(this->done_query);
-    wait_for_event_query(ctx, this->done_query);
+    ctx->End(this->done_query.get());
+    wait_for_event_query(ctx.get(), this->done_query.get());
     auto cpuTime = cpuTimer.elapsed_millis();
     benchmark_base::leave_power_scope(powerCollector);
 
@@ -476,10 +481,10 @@ void trrojan::d3d11::two_pass_volume_benchmark::begin_ray_pass(
 
     // Set the render targets.
     ID3D11RenderTargetView *rtvs[] = {
-        this->entry_target.p, this->ray_target.p
+        this->entry_target.get(), this->ray_target.get()
     };
-    ctx->ClearRenderTargetView(this->entry_target, BLACK);
-    ctx->ClearRenderTargetView(this->ray_target, BLACK);
+    ctx->ClearRenderTargetView(this->entry_target.get(), BLACK);
+    ctx->ClearRenderTargetView(this->ray_target.get(), BLACK);
     ctx->OMSetRenderTargets(2, rtvs, nullptr);
 }
 
