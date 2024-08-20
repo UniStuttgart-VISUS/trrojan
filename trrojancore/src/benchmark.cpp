@@ -154,7 +154,7 @@ size_t trrojan::benchmark_base::run(const configuration_set& configs,
                 return true;
             }
 
-        } catch (const std::system_error &ex) {
+        } catch (const std::system_error& ex) {
             log::instance().write_line(log_level::error, "An unexpected system "
                 "error 0x{0:x} ({1}) was encountered while running a "
                 "benchmark.", ex.code().value(), ex.what());

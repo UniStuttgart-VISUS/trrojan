@@ -60,7 +60,7 @@ trrojan::result trrojan::d3d12::sphere_streaming_benchmark::on_run(
     // properties, so this must be done *after* loading the data. Also note
     // that, as we override count_descriptor_tables, the base class will
     // allocate enought slots for all the batches we will render.
-    this->create_descriptor_heaps(device.d3d_device(), shader_code);
+    this->create_descriptor_heaps_for_shader(device.d3d_device(), shader_code);
 
     auto pipeline = this->get_pipeline_state(device.d3d_device(), shader_code);
     auto root_sig = this->get_root_signature(device.d3d_device(), shader_code);

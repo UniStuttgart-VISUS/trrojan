@@ -346,9 +346,9 @@ void trrojan::d3d12::sphere_benchmark_base::create_constant_buffer_view(
 
 
 /*
- * trrojan::d3d12::sphere_benchmark_base::create_descriptor_heaps
+ * trrojan::d3d12::sphere_benchmark_base::create_descriptor_heaps_for_shader
  */
-void trrojan::d3d12::sphere_benchmark_base::create_descriptor_heaps(
+void trrojan::d3d12::sphere_benchmark_base::create_descriptor_heaps_for_shader(
         ID3D12Device *device, const shader_id_type shader_code) {
     this->create_descriptor_heaps(device, this->_cnt_descriptor_tables
         = this->count_descriptor_tables(shader_code, true)); // SFX ;-)

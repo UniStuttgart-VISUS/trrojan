@@ -201,7 +201,22 @@ namespace d3d12 {
             const D3D12_CPU_DESCRIPTOR_HANDLE view_constants,
             const D3D12_CPU_DESCRIPTOR_HANDLE tessellation_constants);
 
-        using benchmark_base::create_descriptor_heaps;
+        /// <summary>
+        /// Change the descriptor heaps of the benchmark to match the needs of
+        /// the specified rendering technique as computed by
+        /// <see cref="count_descriptor_tables" />.
+        /// </summary>
+        /// <para>Descriptor heaps are allocated for all frames of the pipeline.
+        /// </para>
+        /// <para>Derived classes that want to influence this method should
+        /// override <see cref="count_descriptor_tables" />.</para>
+        /// </remarks>
+        /// <remarks>
+        /// <param name="device"></param>
+        /// <param name="shader_code"></param>
+        virtual void create_descriptor_heaps_for_shader(
+            ID3D12Device *device,
+            const shader_id_type shader_code);
 
         /// <summary>
         /// Change the descriptor heaps of the benchmark to match the needs of
@@ -216,8 +231,11 @@ namespace d3d12 {
         /// <remarks>
         /// <param name="device"></param>
         /// <param name="shader_code"></param>
-        virtual void create_descriptor_heaps(ID3D12Device *device,
-            const shader_id_type shader_code);
+        inline void create_descriptor_heaps_for_shader(
+                winrt::com_ptr<ID3D12Device> device,
+                const shader_id_type shader_code) {
+            this->create_descriptor_heaps_for_shader(device.get(), shader_code);
+        }
 
         /// <summary>
         /// Gets a <see cref="graphics_pipeline_builder" /> preconfigured for

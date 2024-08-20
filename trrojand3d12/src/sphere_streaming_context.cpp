@@ -391,7 +391,7 @@ std::size_t trrojan::d3d12::sphere_streaming_context::try_next_batch(void) {
     //log::instance().write_line(log_level::debug, "Fence is {0}.",
     //    finished_value);
 
-    /// Search all fence values for reusable ones.
+    // Search all fence values for reusable ones.
     this->_ready_count = 0;
     for (std::size_t i = 0; i < this->_fence_values.size(); ++i) {
         if (this->_fence_values[i] <= finished_value) {

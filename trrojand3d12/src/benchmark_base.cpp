@@ -364,12 +364,12 @@ void trrojan::d3d12::benchmark_base::create_descriptor_heaps(
     desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 
     this->_descriptor_heaps.clear();
-    this->_descriptor_heaps.reserve(this->pipeline_depth());
+    const auto pipeline_depth = this->pipeline_depth();
+    this->_descriptor_heaps.reserve(pipeline_depth);
     log::instance().write_line(log_level::debug, "Allocating generic descriptor "
-        "heap(s) with {0} entries for {1} frame(s) ...", cnt,
-        this->pipeline_depth());
+        "heap(s) with {0} entries for {1} frame(s) ...", cnt, pipeline_depth);
 
-    for (UINT f = 0; f < this->pipeline_depth(); ++f) {
+    for (UINT f = 0; f < pipeline_depth; ++f) {
         winrt::com_ptr<ID3D12DescriptorHeap> heap;
 
         auto hr = device->CreateDescriptorHeap(&desc,

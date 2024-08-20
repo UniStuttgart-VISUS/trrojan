@@ -30,9 +30,17 @@ namespace d3d12 {
 
     public:
 
+        static const std::string implementation_split_batches;
         static const std::string implementation_batches;
         static const std::string implementation_gdeflate;
         static const std::string implementation_naive;
+
+        /// <summary>
+        /// Specifies the number of I/O batches being integrated into a single
+        /// rendering batch provided the selected implementation is
+        /// &quot;aggregated_batches&quot;.
+        /// </summary>
+        static const char *factor_batch_splits;
 
         /// <summary>
         /// Specifies the approach being implemented.
@@ -155,6 +163,14 @@ namespace d3d12 {
             return retval;
         }
 
+        inline winrt::com_ptr<ID3D12Resource> make_request(
+            DSTORAGE_REQUEST& request,
+            const std::size_t frame,
+            const std::size_t batch,
+            const std::size_t slot,
+            const std::size_t sub_batch,
+            const std::size_t sub_batches) const noexcept;
+
         trrojan::result run_batches(d3d12::device& device,
             const configuration& config,
             const sphere_rendering_configuration& sphere_config,
@@ -168,6 +184,12 @@ namespace d3d12 {
             const std::vector<std::string>& changed);
 
         trrojan::result run_naive(d3d12::device& device,
+            const configuration& config,
+            const sphere_rendering_configuration& sphere_config,
+            power_collector::pointer& power_collector,
+            const std::vector<std::string>& changed);
+
+        trrojan::result run_split_batches(d3d12::device& device,
             const configuration& config,
             const sphere_rendering_configuration& sphere_config,
             power_collector::pointer& power_collector,

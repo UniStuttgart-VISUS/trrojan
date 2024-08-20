@@ -89,7 +89,7 @@ void trrojan::excel_output::open(const output_params& params) {
     /* Start Excel server. */
     assert(this->excel == nullptr);
     hr = ::CoCreateInstance(clsid, nullptr, CLSCTX_LOCAL_SERVER, IID_IDispatch,
-        reinterpret_cast<void **>(&this->excel));
+        this->excel.put_void());
     if (FAILED(hr)) {
         std::stringstream msg;
         msg << "Failed to instantiate Excel server: " << hr << std::ends;
@@ -285,13 +285,13 @@ long trrojan::excel_output::last_row(void) {
     ::VariantInit(&output);
     excel_output::invoke(&output, DISPATCH_PROPERTYGET, range.get(), L"Rows");
     range.attach(output.pdispVal);
-    ::VariantClear(&output);
+    // Do not clear VARIANT here, bc 'range' owns the interface now.
 
     /* Retrieve number of rows. */
     ::VariantInit(&output);
     excel_output::invoke(&output, DISPATCH_PROPERTYGET, range.get(), L"Count");
     auto retval = output.lVal - 1;
-    ::VariantClear(&output);
+    // Do not clear VARIANT here, bc 'range' owns the interface now.
 
     return retval;
 }

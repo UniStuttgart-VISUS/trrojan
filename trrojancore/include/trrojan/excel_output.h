@@ -10,6 +10,7 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include <system_error>
 
 #if (defined(_WIN32) && !defined(TRROJAN_FOR_UWP))
 #include <Ole2.h>
@@ -17,8 +18,10 @@
 #include <winrt/base.h>
 #endif /* (defined(_WIN32) && !defined(TRROJAN_FOR_UWP)) */
 
+#include "trrojan/com_error_category.h"
 #include "trrojan/excel_output_params.h"
 #include "trrojan/output.h"
+
 
 
 namespace trrojan {

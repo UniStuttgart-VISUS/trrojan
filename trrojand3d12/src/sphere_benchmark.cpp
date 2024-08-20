@@ -84,7 +84,7 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
     // Prepare the descriptor heaps required for the requested technique and
     // data set. Note that create_descriptor_heap will access the data
     // properties, so this must be done *after* loading the data.
-    this->create_descriptor_heaps(device.d3d_device(), shader_code);
+    this->create_descriptor_heaps_for_shader(device.d3d_device(), shader_code);
 
     // Determine the number of primitives to emit and record the draw call
     // into a command bundle.

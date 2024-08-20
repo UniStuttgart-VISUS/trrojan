@@ -24,9 +24,7 @@ void trrojan::excel_output::invoke(VARIANT *outResult, const int automationType,
     hr = dispatch->GetIDsOfNames(IID_NULL, &name, 1, 0x040, //LOCALE_USER_DEFAULT,
         &dispID);
     if (FAILED(hr)) {
-        std::stringstream msg;
-        msg << "Failed to get dispatch ID: " << hr << std::ends;
-        throw std::runtime_error(msg.str());
+        throw std::system_error(hr, com_category());
     }
 
     /* Allocate memory for arguments. */
@@ -46,9 +44,7 @@ void trrojan::excel_output::invoke(VARIANT *outResult, const int automationType,
     hr = dispatch->Invoke(dispID, IID_NULL, LOCALE_SYSTEM_DEFAULT, 
         automationType, &dp, outResult, nullptr, nullptr);
     if (FAILED(hr)) {
-        std::stringstream msg;
-        msg << "Failed to invoke dispatch interface: " << hr << std::ends;
-        throw std::runtime_error(msg.str());
+        throw std::system_error(hr, com_category());
     }
 }
 #endif /* (defined(_WIN32) && !defined(TRROJAN_FOR_UWP)) */

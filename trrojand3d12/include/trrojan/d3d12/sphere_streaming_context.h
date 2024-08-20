@@ -385,6 +385,14 @@ namespace d3d12 {
         }
 
         /// <summary>
+        /// Answer the size of a single particle in bytes.
+        /// </summary>
+        /// <returns>The particle stride in bytes.</returns>
+        inline std::size_t stride(void) const {
+            return this->_stride;
+        }
+
+        /// <summary>
         /// Answer the total number of batches that need to be rendered for
         /// streaming a whole frame given the current configuration (number of
         /// total spheres and batch size).
