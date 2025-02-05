@@ -94,7 +94,7 @@ endif ()
 
 # spdlog
 FetchContent_Declare(spdlog
-    URL "https://github.com/gabime/spdlog/archive/refs/tags/v1.12.0.zip"
+    URL "https://github.com/gabime/spdlog/archive/refs/tags/v1.15.1.zip"
     DOWNLOAD_EXTRACT_TIMESTAMP ON
 )
 option(SPDLOG_INSTALL "" ON)
