@@ -351,8 +351,7 @@ UINT64 trrojan::d3d12::sphere_data::load(
                 src_header.colour_type = actual_colour;
                 std::vector<std::uint8_t> buffer(mmpld::get_size<std::size_t>(
                     src_header));
-                file.read_particles(src_header, buffer.data(),
-                    src_header.particles);
+                file.read_particles(src_header, buffer.data(), retval);
                 mmpld::convert(buffer.data(), src_header, data, list_header);
 
             } else {
