@@ -1,0 +1,21 @@
+d3d11::sphere-renderer {
+    string data_set = pos_rad_intensity : 100000000 : 42 : 1 1 1 : 0.00045 0.0018
+    float32 global_radius = 0.07
+    uint32 frame = 0
+    uint32 repeat_frame = 3
+
+    uint32 min_prewarms = 4
+    uint32 min_wall_time = 1000
+
+    string method = quad_inst
+    boolean vs_raygen = false
+    boolean vs_xfer_function = true
+
+    uint32vec2 viewport = 4096 2160
+    boolean debug_view = true
+
+    string manoeuvre = orbit_y
+    uint32 manoeuvre_steps = 8
+    uint32 manoeuvre_step = 0 -> 7
+    boolean save_view = true
+}
