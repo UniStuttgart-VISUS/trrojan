@@ -1,5 +1,5 @@
 ﻿// <copyright file="trrojan.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2016 - 2023 Visualisierungsinstitut der Universität Stuttgart.
+// Copyright © 2016 - 2026 Visualisierungsinstitut der Universität Stuttgart.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
 // <author>Christoph Müller</author>
@@ -70,7 +70,7 @@ int main(const int argc, const char **argv) {
         if (!trrojan::contains_switch("--nologo", cmdLine.begin(),
                 cmdLine.end())) {
             std::cout << "TRRojan" << std::endl;
-            std::cout << "Copyright (C) 2016 - 2023 Visualisierungsinstitut "
+            std::cout << "Copyright (C) 2016 - 2026 Visualisierungsinstitut "
                 "der Universität Stuttgart."
                 << std::endl << std::endl;
             std::cout << "The way you're meant to be trrolled." 

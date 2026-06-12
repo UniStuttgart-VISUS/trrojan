@@ -188,7 +188,7 @@ void trrojan::power_collector::start(
         const interval_type sampling_interval) {
     assert(this->_details != nullptr);
 
-    if (!this->_details->sensors) {
+    if (this->_details->sensors) {
         throw std::runtime_error("The sampler thread of the power_collector is "
             "already running and cannot be restarted.");
     }
@@ -236,7 +236,11 @@ void trrojan::power_collector::start(
         descriptions.data(), descriptions.size()));
     this->_details->ids.reserve(descriptions.size());
     for (const auto& d : descriptions) {
-        this->_details->ids.emplace_back(to_utf8(d.id()));
+        auto id = to_utf8(d.id());
+        auto name = to_utf8(d.name());
+        log::instance().write_line(log_level::information, "Using power sensor "
+            "\"{0}\" (\"{1}\").", name, id);
+        this->_details->ids.emplace_back(id);
     }
 
 //"sensor";"timestamp";"valid";"voltage";"current";"power";"power_uid"
@@ -276,7 +280,9 @@ void trrojan::power_collector::stop(void) {
     assert(this->_details != nullptr);
 
     // Stop sampling power data.
-    this->_details->sensors.stop();
+    if (this->_details->sensors) {
+        this->_details->sensors.stop();
+    }
 
     // Dispose the array, which serves as guard whether we are running or not.
     this->_details->sensors = visus::pwrowg::sensor_array();
