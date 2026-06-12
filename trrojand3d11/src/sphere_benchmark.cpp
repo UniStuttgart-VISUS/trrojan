@@ -974,8 +974,8 @@ void trrojan::d3d11::sphere_benchmark::load_mmpld_frame(ID3D11Device *dev,
     auto f = config.get<frame_type>(factor_frame);
 
     if (d == nullptr) {
-        std::logic_error("A call to load_mmpld_frame is only valid while an "
-            "MMPLD data set is open.");
+        throw std::logic_error("A call to load_mmpld_frame is only valid while "
+            "an MMPLD data set is open.");
     }
 
     if (config.get<bool>(factor_fit_bounding_box)) {

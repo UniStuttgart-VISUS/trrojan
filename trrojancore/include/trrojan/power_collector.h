@@ -6,7 +6,6 @@
 
 #pragma once
 
-
 #include <array>
 #include <atomic>
 #include <chrono>
@@ -22,8 +21,6 @@
 // Forward declarations.
 namespace trrojan { class configuration; }
 namespace trrojan { namespace detail { struct power_details; } }
-namespace visus { namespace power_overwhelming { class hmc8015_sensor; } }
-namespace visus { namespace power_overwhelming { class measurement; } }
 
 
 namespace trrojan {
@@ -44,6 +41,14 @@ namespace trrojan {
         /// A pointer type by which the collector is referenced.
         /// </summary>
         typedef std::shared_ptr<power_collector> pointer;
+
+        /// <summary>
+        /// Gets, if any, the power collector for the given
+        /// <pararmef name="configuration" />.
+        /// </summary>
+        /// <param name="c"></param>
+        /// <returns></returns>
+        static pointer get(const configuration& configuration);
 
         /// <summary>
         /// The column delimiter.
@@ -108,23 +113,6 @@ namespace trrojan {
             const std::string& phase);
 
         /// <summary>
-        /// Sets the header text to be written in the first line of the file.
-        /// </summary>
-        /// <param name="config">The configuration to be included in each line-
-        /// </param>
-        /// <param name="phase">The name of the phase column, which defaults to
-        /// &quot;phase&quot;.</param>
-        void set_header(const configuration& config,
-            const std::string &phase = "phase");
-
-        /// <summary>
-        /// Sets the header text to be written in the first line of the file.
-        /// </summary>
-        /// <param name="uid">The name of the column of the unique power ID,
-        /// which defaults to &quot;power_uid&quot;.</param>
-        void set_header(const std::string& uid = "power_uid");
-
-        /// <summary>
         /// Generate a new unique identifier and set it as the description for
         /// the current measurement.
         /// </summary>
@@ -153,29 +141,9 @@ namespace trrojan {
 
     private:
 
-        static void on_measurement(
-            const visus::power_overwhelming::measurement& m,
-            void *context);
-
-        static void start_hmc8015_sensor(
-            visus::power_overwhelming::hmc8015_sensor& sensor);
-
-        void flush_buffer(void);
-
-        void sample(const interval_type sampling_interval);
-
-        void setup_adl_sensors(void);
-
-        void setup_hmc8015_sensors(void);
-
-        void setup_nvml_sensors(void);
-
-        void setup_tinkerforge_sensors(void);
-
         std::string _description;
         std::unique_ptr<detail::power_details> _details;
         std::string _file;
-        std::string _header;
         std::atomic<bool> _is_collecting;
         std::atomic<bool> _is_running;
         std::mutex _lock;

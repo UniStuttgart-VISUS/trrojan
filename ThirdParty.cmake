@@ -1,5 +1,5 @@
 ﻿# ThirdParty.cmake
-# Copyright © 2023 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
+# Copyright © 2023 - 2026 Visualisierungsinstitut der Universität Stuttgart. Alle Rechte vorbehalten.
 
 include(ExternalProject)
 include(FetchContent)
@@ -65,7 +65,7 @@ mark_as_advanced(FORCE
 # Power Overwhelming
 if (TRROJAN_WITH_POWER_OVERWHELMING)
     FetchContent_Declare(power_overwhelming
-        URL "https://github.com/UniStuttgart-VISUS/power-overwhelming/archive/c86eb31c33ea85b6121916b957cf0616d4c92548.zip" # v1.x branch on 2026-06-10
+        URL "https://github.com/UniStuttgart-VISUS/power-overwhelming/archive/refs/heads/master.zip"
         DOWNLOAD_EXTRACT_TIMESTAMP ON
     )
     option(PWROWG_BuildDemo "" OFF)

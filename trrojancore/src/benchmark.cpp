@@ -195,29 +195,6 @@ std::string trrojan::benchmark_base::enter_power_scope(
 
 
 /*
- * trrojan::benchmark_base::initialise_power_collector
- */
-trrojan::power_collector::pointer
-trrojan::benchmark_base::initialise_power_collector(
-        const trrojan::configuration& c) {
-    power_collector::pointer retval;
-
-#if defined(TRROJAN_WITH_POWER_OVERWHELMING)
-    auto it = c.find(power_collector::factor_name);
-    if (it != c.end()) {
-        retval = it->value().as<power_collector::pointer>();
-    }
-
-    if (retval != nullptr) {
-        retval->set_header();
-    }
-#endif /* defined(TRROJAN_WITH_POWER_OVERWHELMING) */
-
-    return retval;
-}
-
-
-/*
  * trrojan::benchmark_base::leave_power_scope
  */
 void trrojan::benchmark_base::leave_power_scope(

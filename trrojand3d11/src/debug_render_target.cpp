@@ -60,14 +60,14 @@ void trrojan::d3d11::debug_render_target::present(const UINT sync_interval) {
             auto hr = this->swapChain->GetBuffer(0, IID_ID3D11Texture2D,
                 reinterpret_cast<void **>(&dst));
             if (FAILED(hr)) {
-                std::system_error(hr, com_category());
+                throw std::system_error(hr, com_category());
             }
         }
 
         {
             this->_uav->GetResource(res.put());
             if (!res.try_as(src)) {
-                std::system_error(E_NOINTERFACE, com_category());
+                throw std::system_error(E_NOINTERFACE, com_category());
             }
         }
 
@@ -144,7 +144,7 @@ void trrojan::d3d11::debug_render_target::resize(const unsigned int width,
                 D3D11_SDK_VERSION, &desc, this->swapChain.put(), device.put(),
                 nullptr, nullptr);
             if (FAILED(hr)) {
-                std::system_error(hr, com_category());
+                throw std::system_error(hr, com_category());
             }
 
             this->set_device(device);
@@ -172,13 +172,13 @@ void trrojan::d3d11::debug_render_target::resize(const unsigned int width,
 
         hr = this->swapChain->GetDesc(&desc);
         if (FAILED(hr)) {
-            std::system_error(hr, com_category());
+            throw std::system_error(hr, com_category());
         }
 
         hr = this->swapChain->ResizeBuffers(desc.BufferCount, width,
             height, desc.BufferDesc.Format, 0);
         if (FAILED(hr)) {
-            std::system_error(hr, com_category());
+            throw std::system_error(hr, com_category());
         }
 
     } /* end if (this->swapChain == nullptr) */
@@ -197,7 +197,7 @@ void trrojan::d3d11::debug_render_target::resize(const unsigned int width,
         wndRect.bottom = height;
         if (::AdjustWindowRectEx(&wndRect, style, FALSE, styleEx) == FALSE) {
             auto hr = __HRESULT_FROM_WIN32(::GetLastError());
-            std::system_error(hr, com_category());
+            throw std::system_error(hr, com_category());
         }
 
         ::SetWindowPos(this->hWnd, HWND_TOP, 0, 0,
@@ -210,7 +210,7 @@ void trrojan::d3d11::debug_render_target::resize(const unsigned int width,
     hr = this->swapChain->GetBuffer(0, IID_ID3D11Texture2D,
         reinterpret_cast<void **>(&backBuffer));
     if (FAILED(hr)) {
-        std::system_error(hr, com_category());
+        throw std::system_error(hr, com_category());
     }
 
     set_debug_object_name(backBuffer, "debug_render_target (colour buffer)");
@@ -239,7 +239,7 @@ trrojan::d3d11::debug_render_target::to_uav(void) {
             auto hr = this->swapChain->GetBuffer(0, IID_ID3D11Texture2D,
                 reinterpret_cast<void **>(&texture));
             if (FAILED(hr)) {
-                std::system_error(hr, com_category());
+                throw std::system_error(hr, com_category());
             }
         }
 
@@ -251,7 +251,7 @@ trrojan::d3d11::debug_render_target::to_uav(void) {
             auto hr = this->device()->CreateTexture2D(&desc, nullptr,
                 texture.put());
             if (FAILED(hr)) {
-                std::system_error(hr, com_category());
+                throw std::system_error(hr, com_category());
             }
         }
 
@@ -319,7 +319,7 @@ void trrojan::d3d11::debug_render_target::doMsg(void) {
     const auto hInstance = ::GetModuleHandle(NULL);
     if (hInstance == NULL) {
         auto hr = __HRESULT_FROM_WIN32(::GetLastError());
-        std::system_error(hr, com_category());
+        throw std::system_error(hr, com_category());
     }
 
     {
@@ -334,7 +334,7 @@ void trrojan::d3d11::debug_render_target::doMsg(void) {
 
             if (!::RegisterClassEx(&wndClass)) {
                 auto hr = __HRESULT_FROM_WIN32(::GetLastError());
-                std::system_error(hr, com_category());
+                throw std::system_error(hr, com_category());
             }
         }
     }
@@ -355,7 +355,7 @@ void trrojan::d3d11::debug_render_target::doMsg(void) {
             this);
         if (this->hWnd.load() == NULL) {
             auto hr = __HRESULT_FROM_WIN32(::GetLastError());
-            std::system_error(hr, com_category());
+            throw std::system_error(hr, com_category());
         }
     }
 

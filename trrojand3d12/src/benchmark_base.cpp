@@ -60,7 +60,7 @@ trrojan::result trrojan::d3d12::benchmark_base::run(const configuration& c) {
 
     auto genericDev = c.get<trrojan::device>(factor_device);
     auto device = std::dynamic_pointer_cast<trrojan::d3d12::device>(genericDev);
-    auto power_collector = initialise_power_collector(c);
+    auto power_collector = power_collector::get(c);
 #if defined(TRROJAN_FOR_UWP)
     auto window = c.get<executive::window_type>(executive::factor_core_window);
     if (!window) {
