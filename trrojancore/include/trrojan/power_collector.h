@@ -73,6 +73,16 @@ namespace trrojan {
         ~power_collector(void);
 
         /// <summary>
+        /// Generate a new unique identifier and set it as the description for
+        /// the current measurement.
+        /// </summary>
+        /// <remarks>
+        /// <para>This method is thread-safe.</para>
+        /// </remarks>
+        /// <returns></returns>
+        std::uint64_t enter_scope(void);
+
+        /// <summary>
         /// Gets the name of the log file the collector is writing to.
         /// </summary>
         /// <returns></returns>
@@ -81,47 +91,13 @@ namespace trrojan {
         }
 
         /// <summary>
-        /// Create and return the next unique benchmark identifier.
-        /// </summary>
-        /// <returns>The next identifier.</returns>
-        std::string next_unique_identifier(void);
-
-        /// <summary>
-        /// Updates the description of what is currently measured.
+        /// Clears the description for the current measurement, which will
+        /// temporarily prevent samples from being saved.
         /// </summary>
         /// <remarks>
-        /// <para>Setting a new description flushes all data that have been
-        /// collected for the previous description to disk.</para>
-        /// <para>Setting an empty descriptions will disable the collection
-        /// of data until a new non-empty string is set. The sensors will
-        /// still run, but all samples will be discarded.</para>
+        /// <para>This method is thread-safe.</para>
         /// </remarks>
-        /// <param name="description"></param>
-        void set_description(const std::string& description);
-
-        /// <summary>
-        /// Updates the description of what is currently measured to the
-        /// given configuration.
-        /// </summary>
-        /// <remarks>
-        /// <para>Setting a new description flushes all data that have been
-        /// collected for the previous description to disk.</para>
-        /// </remarks>
-        /// <param name="config"></param>
-        /// <param name="phase"></param>
-        void set_description(const configuration& config,
-            const std::string& phase);
-
-        /// <summary>
-        /// Generate a new unique identifier and set it as the description for
-        /// the current measurement.
-        /// </summary>
-        /// <returns></returns>
-        inline std::string set_next_unique_description(void) {
-            auto retval = this->next_unique_identifier();
-            this->set_description(retval);
-            return retval;
-        }
+        void leave_scope(void);
 
         /// <summary>
         /// Trigger time sync on sensors with internal clock.
@@ -141,15 +117,12 @@ namespace trrojan {
 
     private:
 
-        std::string _description;
+        std::uint64_t _current_identifier;
         std::unique_ptr<detail::power_details> _details;
         std::string _file;
-        std::atomic<bool> _is_collecting;
-        std::atomic<bool> _is_running;
         std::mutex _lock;
-        std::thread _sampler;
+        std::uint64_t _next_identifier;
         std::ofstream _stream;
-        std::atomic<std::uint64_t> _unique_identifier;
 #else /* defined(TRROJAN_WITH_POWER_OVERWHELMING) */
         power_collector(void) = delete;
 #endif /* defined(TRROJAN_WITH_POWER_OVERWHELMING) */

@@ -180,17 +180,17 @@ size_t trrojan::benchmark_base::run(const configuration_set& configs,
 /*
  * trrojan::benchmark_base::enter_power_scope
  */
-std::string trrojan::benchmark_base::enter_power_scope(
+std::uint64_t trrojan::benchmark_base::enter_power_scope(
         const power_collector::pointer& collector) {
 #if defined(TRROJAN_WITH_POWER_OVERWHELMING)
     if (collector != nullptr) {
         collector->sync_time();
         // If we have a power sensor, we want to record data now.
-        return collector->set_next_unique_description();
+        return collector->enter_scope();
     }
 #endif /* defined(TRROJAN_WITH_POWER_OVERWHELMING) */
 
-    return "";
+    return 0;
 }
 
 
@@ -201,7 +201,7 @@ void trrojan::benchmark_base::leave_power_scope(
         const power_collector::pointer& collector) {
 #if defined(TRROJAN_WITH_POWER_OVERWHELMING)
     if (collector != nullptr) {
-        collector->set_description("");
+        collector->leave_scope();
     }
 #endif /* defined(TRROJAN_WITH_POWER_OVERWHELMING) */
 }

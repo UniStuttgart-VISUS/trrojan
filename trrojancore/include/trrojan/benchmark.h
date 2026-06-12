@@ -180,7 +180,7 @@ namespace trrojan {
         /// </summary>
         /// <param name="collector">An optional power collector.</param>
         /// <returns>The ID of the power measuring scope.</returns>
-        static std::string enter_power_scope(
+        static std::uint64_t enter_power_scope(
             const power_collector::pointer& collector);
 
         /// <summary>
