@@ -1,5 +1,5 @@
 # CMakeLists.txt
-# Copyright (C) 2016 - 2023 Visualisierungsinstitut der Universit‰t Stuttgart.
+# Copyright (C) 2016 - 2023 Visualisierungsinstitut der Universit√§t Stuttgart.
 
 project(trrojancore)
 
@@ -36,6 +36,9 @@ target_link_libraries(${PROJECT_NAME} PUBLIC datraw)
 target_link_libraries(${PROJECT_NAME} PUBLIC mmpld)
 target_link_libraries(${PROJECT_NAME} PUBLIC spdlog)
 target_link_libraries(${PROJECT_NAME} PRIVATE glm::glm)
+if (WIN32)
+    target_link_libraries(${PROJECT_NAME} PRIVATE runtimeobject)
+endif ()
 
 if (CMAKE_COMPILER_IS_GNUCXX)
     target_link_libraries(${PROJECT_NAME} PRIVATE dl)
@@ -43,7 +46,14 @@ endif ()
 
 if (TRROJAN_WITH_POWER_OVERWHELMING)
     target_link_libraries(${PROJECT_NAME} PRIVATE power_overwhelming)
-    #add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy "${POWER_OVERWHELMING_DIR}/${CMAKE_VS_PLATFORM_NAME}/Release/power_overwhelming.dll" "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/$<CONFIG>")
+    #add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    #    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_RUNTIME_DLLS:${PROJECT_NAME}> $<TARGET_FILE_DIR:${PROJECT_NAME}>
+    #    COMMAND_EXPAND_LISTS)
+    #add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    #    COMMAND ${CMAKE_COMMAND} -E copy "${POWER_OVERWHELMING_DIR}/${CMAKE_VS_PLATFORM_NAME}/Release/power_overwhelming.dll" $<TARGET_FILE_DIR:${PROJECT_NAME}>
+    #    COMMAND_EXPAND_LISTS)
+    #add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    #    COMMAND ${CMAKE_COMMAND} -E copy "${POWER_OVERWHELMING_DIR}/${CMAKE_VS_PLATFORM_NAME}/Release/power_overwhelming.dll" "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/$<CONFIG>")
 endif ()
 
 

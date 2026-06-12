@@ -70,8 +70,16 @@ if (TRROJAN_FOR_UWP)
     add_compile_definitions(TRROJAN_FOR_UWP)
 endif ()
 
+if (TRROJAN_WITH_DSTORAGE)
+    add_compile_definitions(TRROJAN_WITH_DSTORAGE)
+endif()
+
 if (TRROJAN_FORCE_NO_D3D_DEBUG)
     add_compile_definitions(TRROJAN_FORCE_NO_D3D_DEBUG)
+endif()
+
+if (TRROJAN_WITH_POWER_OVERWHELMING)
+    add_compile_definitions(TRROJAN_WITH_POWER_OVERWHELMING)
 endif()
 
 

@@ -1,6 +1,6 @@
 d3d11::cs-volume-renderer {
 	string data_set = S:\Daten\Volumen\kauker\tiere\veiled-chameleon.u8.dat
-	#string data_set = S:\Daten\Volumen\tuebingen\foot.dat
+	#string data_set = S:\Daten\Volumen\foot\foot.dat
 
 	uint32vec2 viewport = 1920 1080
 	boolean save_view = true

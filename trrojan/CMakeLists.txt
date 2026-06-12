@@ -1,5 +1,5 @@
 # CMakeLists.txt
-# Copyright © 2016 - 2023 Visualisierungsinstitut der Universität Stuttgart.
+# Copyright Â© 2016 - 2023 Visualisierungsinstitut der UniversitÃ¤t Stuttgart.
 
 project(trrojan)
 include(FindPkgConfig)
@@ -177,6 +177,12 @@ if (TRROJAN_WITH_DSTORAGE)
         add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different "${TRROJAN_DSTORAGE_BINARY}" "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>")
     endforeach ()
 endif ()
+
+if (TRROJAN_WITH_POWER_OVERWHELMING)
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_RUNTIME_DLLS:${PROJECT_NAME}> $<TARGET_FILE_DIR:${PROJECT_NAME}>
+        COMMAND_EXPAND_LISTS)
+endif()
 
 # Installation
 install(TARGETS ${PROJECT_NAME}

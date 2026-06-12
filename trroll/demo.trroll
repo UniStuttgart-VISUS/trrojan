@@ -1,5 +1,5 @@
 #d3d11::cs-volume-renderer {
-#	string data_set = S:\Daten\Volumen\tuebingen\foot.dat
+#	string data_set = S:\Daten\Volumen\foot\foot.dat
 #	string xfer_func = T:\Programmcode\trrojan\trrojan\trrojan_cham1.brudervn
 #	boolean debug_view = true
 #
@@ -12,7 +12,7 @@
 #}
 
 #d3d11::2pass-volume-renderer {
-#	string data_set = S:\Daten\Volumen\tuebingen\foot.dat
+#	string data_set = S:\Daten\Volumen\foot\foot.dat
 #	boolean debug_view = true
 #
 #	float32 step_size = 0.5; 1; 2

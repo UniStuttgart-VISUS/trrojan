@@ -1,8 +1,8 @@
-/// <copyright file="trrojansnfo.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-/// Copyright © 2016 - 2018 Visualisierungsinstitut der Universität Stuttgart.
+/// <copyright file="trrojansnfo.cpp" company="Visualisierungsinstitut der UniversitÃ¤t Stuttgart">
+/// Copyright Â© 2016 - 2018 Visualisierungsinstitut der UniversitÃ¤t Stuttgart.
 /// Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 /// </copyright>
-/// <author>Christoph Müller</author>
+/// <author>Christoph MÃ¼ller</author>
 
 
 #if (defined(WIN32) && !defined(TRROJANSNFO_STATIC))

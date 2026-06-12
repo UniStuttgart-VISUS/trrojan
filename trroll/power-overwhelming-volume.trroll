@@ -1,7 +1,7 @@
 d3d11::2pass-volume-renderer {
-	#string data_set = S:\Daten\Volumen\kauker\tiere\veiled-chameleon.u8.dat; S:\Daten\Volumen\tuebingen\foot.dat; S:\Daten\Volumen\kauker\tiere\malachite-kingfisher.u8.dat
+	#string data_set = S:\Daten\Volumen\kauker\tiere\veiled-chameleon.u8.dat; S:\Daten\Volumen\foot\foot.dat; S:\Daten\Volumen\kauker\tiere\malachite-kingfisher.u8.dat
 	#string data_set = S:\Daten\Volumen\kauker\tiere\veiled-chameleon.u8.dat
-	string data_set = S:\Daten\Volumen\tuebingen\foot.dat
+	string data_set = S:\Daten\Volumen\foot\foot.dat
 	#string data_set = S:\Daten\Volumen\kauker\tiere\malachite-kingfisher.u8.dat
 
 	#uint32vec2 viewport = 3840 2160

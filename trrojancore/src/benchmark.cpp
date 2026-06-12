@@ -1,9 +1,9 @@
-// <copyright file="benchmark.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2016 - 2023 Visualisierungsinstitut der Universität Stuttgart.
+// <copyright file="benchmark.cpp" company="Visualisierungsinstitut der UniversitÃ¤t Stuttgart">
+// Copyright Â© 2016 - 2026 Visualisierungsinstitut der UniversitÃ¤t Stuttgart.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
 // <author>Valentin Bruder</author>
-// <author>Christoph Müller</author>
+// <author>Christoph MÃ¼ller</author>
 
 #include "trrojan/benchmark.h"
 
@@ -183,9 +183,10 @@ size_t trrojan::benchmark_base::run(const configuration_set& configs,
 std::string trrojan::benchmark_base::enter_power_scope(
         const power_collector::pointer& collector) {
 #if defined(TRROJAN_WITH_POWER_OVERWHELMING)
-    if (powerCollector != nullptr) {
+    if (collector != nullptr) {
+        collector->sync_time();
         // If we have a power sensor, we want to record data now.
-        powerUid = powerCollector->set_next_unique_description();
+        return collector->set_next_unique_description();
     }
 #endif /* defined(TRROJAN_WITH_POWER_OVERWHELMING) */
 
@@ -222,8 +223,8 @@ trrojan::benchmark_base::initialise_power_collector(
 void trrojan::benchmark_base::leave_power_scope(
         const power_collector::pointer& collector) {
 #if defined(TRROJAN_WITH_POWER_OVERWHELMING)
-    if (powerCollector != nullptr) {
-        powerCollector->set_description("");
+    if (collector != nullptr) {
+        collector->set_description("");
     }
 #endif /* defined(TRROJAN_WITH_POWER_OVERWHELMING) */
 }

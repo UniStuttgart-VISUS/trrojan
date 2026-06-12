@@ -1,8 +1,8 @@
-// <copyright file="power_collector.h" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2022 - 2023 Visualisierungsinstitut der Universität Stuttgart.
+// <copyright file="power_collector.h" company="Visualisierungsinstitut der UniversitÃ¤t Stuttgart">
+// Copyright Â© 2022 - 2026 Visualisierungsinstitut der UniversitÃ¤t Stuttgart.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
-// <author>Christoph Müller</author>
+// <author>Christoph MÃ¼ller</author>
 
 #pragma once
 
@@ -11,21 +11,22 @@
 #include <atomic>
 #include <chrono>
 #include <fstream>
+#include <memory>
 #include <mutex>
 #include <thread>
 #include <vector>
 
-#if defined(TRROJAN_WITH_POWER_OVERWHELMING)
-#include "power_overwhelming/collector.h"
-#endif /* defined(TRROJAN_WITH_POWER_OVERWHELMING) */
-
 #include "trrojan/export.h"
 
 
-namespace trrojan {
+// Forward declarations.
+namespace trrojan { class configuration; }
+namespace trrojan { namespace detail { struct power_details; } }
+namespace visus { namespace power_overwhelming { class hmc8015_sensor; } }
+namespace visus { namespace power_overwhelming { class measurement; } }
 
-    /* Forward declarations. */
-    class configuration;
+
+namespace trrojan {
 
     /// <summary>
     /// A utility class for sampling power sensors.
@@ -40,7 +41,7 @@ namespace trrojan {
         typedef std::chrono::milliseconds interval_type;
 
         /// <summary>
-        /// A pointer type by which the collector is referecned.
+        /// A pointer type by which the collector is referenced.
         /// </summary>
         typedef std::shared_ptr<power_collector> pointer;
 
@@ -135,6 +136,11 @@ namespace trrojan {
         }
 
         /// <summary>
+        /// Trigger time sync on sensors with internal clock.
+        /// </summary>
+        void sync_time(void);
+
+        /// <summary>
         /// Start all sensors with the specified sampling interval.
         /// </summary>
         void start(const std::string& file,
@@ -166,19 +172,15 @@ namespace trrojan {
 
         void setup_tinkerforge_sensors(void);
 
-        std::vector<visus::power_overwhelming::adl_sensor> _adl_sensors;
-        std::vector<visus::power_overwhelming::measurement> _buffer;
         std::string _description;
+        std::unique_ptr<detail::power_details> _details;
         std::string _file;
         std::string _header;
-        std::vector<visus::power_overwhelming::hmc8015_sensor> _hmc8015_sensors;
         std::atomic<bool> _is_collecting;
         std::atomic<bool> _is_running;
         std::mutex _lock;
-        std::vector<visus::power_overwhelming::nvml_sensor> _nvml_sensors;
         std::thread _sampler;
         std::ofstream _stream;
-        std::vector<visus::power_overwhelming::tinkerforge_sensor> _tinkerforge_sensors;
         std::atomic<std::uint64_t> _unique_identifier;
 #else /* defined(TRROJAN_WITH_POWER_OVERWHELMING) */
         power_collector(void) = delete;

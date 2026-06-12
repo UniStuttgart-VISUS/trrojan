@@ -1,5 +1,5 @@
 # CMakeLists.txt
-# Copyright (C) 2022 - 2023 Visualisierungsinstitut der Universit‰t Stuttgart.
+# Copyright (C) 2022 - 2023 Visualisierungsinstitut der Universit√§t Stuttgart.
 
 project(trrojand3d12)
 
