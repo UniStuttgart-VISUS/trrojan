@@ -263,8 +263,7 @@ void trrojan::power_collector::start(
         << "\"voltage\"" << delimiter
         << "\"current\"" << delimiter
         << "\"power\"" << delimiter
-        << "\"power_uid\"" << delimiter
-        << std::endl;
+        << "\"power_uid\"" << std::endl;
 
     log::instance().write_line(log_level::information, "Logging power usage to "
         "\"{0}\" at an {1} ms interval.", this->_file,
