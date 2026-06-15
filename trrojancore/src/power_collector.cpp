@@ -7,11 +7,14 @@
 #include "trrojan/power_collector.h"
 
 #if defined(TRROJAN_WITH_POWER_OVERWHELMING)
+#include <memory>
+
 #include <visus/pwrowg/csv_iomanip.h>
 #include <visus/pwrowg/hmc8015_instrument.h>
 #include <visus/pwrowg/rtx_configuration.h>
 #include <visus/pwrowg/sensor_array.h>
 #include <visus/pwrowg/sensor_filters.h>
+#include <visus/pwrowg/thread_local_sink.h>
 #include <visus/pwrowg/tinkerforge_configuration.h>
 #include <visus/pwrowg/usb_pd_configuration.h>
 #endif /* defined(TRROJAN_WITH_POWER_OVERWHELMING) */
@@ -19,19 +22,22 @@
 #include "trrojan/configuration.h"
 #include "trrojan/csv_util.h"
 #include "trrojan/log.h"
-#include "trrojan/text.h"
+#include "trrojan/power_compatibility_sink.h"
 
 
 #if defined(TRROJAN_WITH_POWER_OVERWHELMING)
 namespace trrojan {
 namespace detail {
 
+    typedef visus::pwrowg::thread_local_sink<power_compatibility_sink> pwr_sink;
+
     /// <summary>
-    /// Holds the Power-Overwhelming-related data we want to hide from the header.
+    /// Holds the Power-Overwhelming-related data we want to hide from the
+    /// header.
     /// </summary>
     struct power_details final {
         std::vector<visus::pwrowg::hmc8015_instrument> hmc8015;
-        std::vector<std::string> ids;
+        std::unique_ptr<pwr_sink> sink;
         visus::pwrowg::sensor_array sensors;
     };
 
@@ -107,8 +113,7 @@ const char *trrojan::power_collector::factor_name = "powerlog";
  * trrojan::power_collector::power_collector
  */
 trrojan::power_collector::power_collector(void)
-        : _current_identifier(0),
-        _details(std::make_unique<detail::power_details>()),
+        : _details(std::make_unique<detail::power_details>()),
         _next_identifier(1) {
     assert(this->_details != nullptr);
 
@@ -155,8 +160,13 @@ trrojan::power_collector::~power_collector(void) {
  * trrojan::power_collector::enter_scope
  */
 std::uint64_t trrojan::power_collector::enter_scope(void) {
-    std::lock_guard<decltype(this->_lock)> l(this->_lock);
-    auto retval = this->_current_identifier = this->_next_identifier++;
+    assert(this->_details != nullptr);
+    const auto retval = this->_next_identifier++;
+
+    if (this->_details->sink) {
+        this->_details->sink->power_uid(retval);
+    }
+
     return retval;
 }
 
@@ -165,8 +175,10 @@ std::uint64_t trrojan::power_collector::enter_scope(void) {
  * trrojan::power_collector::leave_scope
  */
 void trrojan::power_collector::leave_scope(void) {
-    std::lock_guard<decltype(this->_lock)> l(this->_lock);
-    this->_current_identifier = 0;
+    assert(this->_details != nullptr);
+    if (this->_details->sink) {
+        this->_details->sink->power_uid(0);
+    }
 }
 
 
@@ -174,9 +186,8 @@ void trrojan::power_collector::leave_scope(void) {
  * trrojan::power_collector::sync_time
  */
 void trrojan::power_collector::sync_time(void) {
-    //for (auto& s : this->_details->tinkerforge) {
-    //    s.resync_internal_clock();
-    //}
+    assert(this->_details != nullptr);
+    this->_details->sensors.resync_tinkerforge();
 }
 
 
@@ -193,31 +204,17 @@ void trrojan::power_collector::start(
             "already running and cannot be restarted.");
     }
 
+    // Prepare the output sink.
+    this->_file = file;
+    this->_details->sink.reset(new detail::pwr_sink(1024, this->_file.c_str()));
+
+    // Configure the sensors.
     visus::pwrowg::sensor_array_configuration config;
     config.exclude<visus::pwrowg::rtx_configuration>()
         .exclude<visus::pwrowg::usb_pd_configuration>()
         .sample_every(5)
-        .deliver_to([](const visus::pwrowg::sample *samples,
-                const std::size_t cnt,
-                const visus::pwrowg::sensor_description *descs,
-                void *context) {
-            auto that = static_cast<power_collector *>(context);
-            //if (that->_is_collecting.load(
-            //        std::memory_order::memory_order_acquire)) {
-            std::lock_guard<decltype(that->_lock)> l(that->_lock);
-            for (std::size_t i = 0; i < cnt; ++i) {
-                that->_stream
-                    << "\"" << that->_details->ids[i] << "\"" << that->delimiter
-                    << samples[i].timestamp.value() << that->delimiter
-                    << 1 << that->delimiter
-                    << that->delimiter
-                    << that->delimiter
-                    << samples[i].reading.floating_point << that->delimiter
-                    << that->_current_identifier
-                    << std::endl;
-            }
-        })
-        .deliver_context(this)
+        .deliver_to(detail::pwr_sink::sample_callback)
+        .deliver_context(this->_details->sink.get())
         .configure<visus::pwrowg::tinkerforge_configuration>(
                 [](visus::pwrowg::tinkerforge_configuration& c) {
             typedef visus::pwrowg::tinkerforge_sample_averaging avg;
@@ -230,43 +227,8 @@ void trrojan::power_collector::start(
     this->_details->sensors = visus::pwrowg::sensor_array::for_matches(
         std::move(config), visus::pwrowg::is_power_sensor);
 
-    std::vector<visus::pwrowg::sensor_description> descriptions(
-        this->_details->sensors.descriptions(nullptr, 0));
-    descriptions.resize(this->_details->sensors.descriptions(
-        descriptions.data(), descriptions.size()));
-    this->_details->ids.reserve(descriptions.size());
-    for (const auto& d : descriptions) {
-        auto id = to_utf8(d.id());
-        auto name = to_utf8(d.name());
-        log::instance().write_line(log_level::information, "Using power sensor "
-            "\"{0}\" (\"{1}\").", name, id);
-        this->_details->ids.emplace_back(id);
-    }
-
-//"sensor";"timestamp";"valid";"voltage";"current";"power";"power_uid"
-//"Tinkerforge/localhost:4223/Ufm";13301178422235;1;-3.40282e+38;-3.40282e+38;inf;1
-//"Tinkerforge/localhost:4223/UgC";13301178422235;1;-3.40282e+38;-3.40282e+38;44.698;1
-//"Tinkerforge/localhost:4223/UeW";13301178422235;1;-3.40282e+38;-3.40282e+38;inf;1
-//"ADL/ASIC/AMD Radeon PRO W6800/0";13301185622222;1;-3.40282e+38;-3.40282e+38;96;1
-
-    // Prepare the output file.
-    this->_file = file;
-    this->_stream = std::ofstream(this->_file, std::ios::trunc);
-    if (!this->_stream.is_open()) {
-        throw std::invalid_argument("Failed to open output stream.");
-    }
-
-    this->_stream
-        << "\"sensor\"" << delimiter
-        << "\"timestamp\"" << delimiter
-        << "\"valid\"" << delimiter
-        << "\"voltage\"" << delimiter
-        << "\"current\"" << delimiter
-        << "\"power\"" << delimiter
-        << "\"power_uid\"" << std::endl;
-
     log::instance().write_line(log_level::information, "Logging power usage to "
-        "\"{0}\" at an {1} ms interval.", this->_file,
+        "\"{0}\" at an {1} ms interval.", this->_file.c_str(),
         sampling_interval.count());
     this->_details->sensors.start();
 }
@@ -298,7 +260,7 @@ void trrojan::power_collector::stop(void) {
     }
 
     // Finalise the output file.
-    this->_stream.close();
+    this->_details->sink.reset();
 }
 
 #endif /* defined(TRROJAN_WITH_POWER_OVERWHELMING) */
