@@ -120,7 +120,6 @@ namespace trrojan {
 
         std::unique_ptr<detail::power_details> _details;
         std::string _file;
-        std::atomic<std::uint64_t> _next_identifier;
 #else /* defined(TRROJAN_WITH_POWER_OVERWHELMING) */
         power_collector(void) = delete;
 #endif /* defined(TRROJAN_WITH_POWER_OVERWHELMING) */

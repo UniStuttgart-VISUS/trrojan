@@ -11,6 +11,7 @@
 
 #include <visus/pwrowg/csv_iomanip.h>
 #include <visus/pwrowg/hmc8015_instrument.h>
+#include <visus/pwrowg/marker_configuration.h>
 #include <visus/pwrowg/rtx_configuration.h>
 #include <visus/pwrowg/sensor_array.h>
 #include <visus/pwrowg/sensor_filters.h>
@@ -37,6 +38,8 @@ namespace detail {
     /// </summary>
     struct power_details final {
         std::vector<visus::pwrowg::hmc8015_instrument> hmc8015;
+        visus::pwrowg::marker_controller *markers { };
+        visus::pwrowg::tinkerforge_controller *tinkerforge { };
         std::unique_ptr<pwr_sink> sink;
         visus::pwrowg::sensor_array sensors;
     };
@@ -113,11 +116,10 @@ const char *trrojan::power_collector::factor_name = "powerlog";
  * trrojan::power_collector::power_collector
  */
 trrojan::power_collector::power_collector(void)
-        : _details(std::make_unique<detail::power_details>()),
-        _next_identifier(1) {
+        : _details(std::make_unique<detail::power_details>()) {
     assert(this->_details != nullptr);
 
-    // For backward compatibiliy, we set up the HMC 8015 separately.
+    // For backward compatibility, we set up the HMC 8015 separately.
     try {
         this->_details->hmc8015.resize(
             visus::pwrowg::hmc8015_instrument::for_all(nullptr, 0));
@@ -161,7 +163,8 @@ trrojan::power_collector::~power_collector(void) {
  */
 std::uint64_t trrojan::power_collector::enter_scope(void) {
     assert(this->_details != nullptr);
-    const auto retval = this->_next_identifier++;
+    unsigned int retval = 0;
+    this->_details->markers->emit(&retval);
 
     if (this->_details->sink) {
         this->_details->sink->power_uid(retval);
@@ -176,9 +179,10 @@ std::uint64_t trrojan::power_collector::enter_scope(void) {
  */
 void trrojan::power_collector::leave_scope(void) {
     assert(this->_details != nullptr);
-    if (this->_details->sink) {
-        this->_details->sink->power_uid(0);
-    }
+    this->_details->markers->emit(0u);
+    //if (this->_details->sink) {
+    //    this->_details->sink->power_uid(0);
+    //}
 }
 
 
@@ -187,7 +191,9 @@ void trrojan::power_collector::leave_scope(void) {
  */
 void trrojan::power_collector::sync_time(void) {
     assert(this->_details != nullptr);
-    this->_details->sensors.resync_tinkerforge();
+    if (this->_details->tinkerforge) {
+        this->_details->tinkerforge->resync_clock();
+    }
 }
 
 
@@ -225,12 +231,20 @@ void trrojan::power_collector::start(
         });
 
     this->_details->sensors = visus::pwrowg::sensor_array::for_matches(
-        std::move(config), visus::pwrowg::is_power_sensor);
+        std::move(config), visus::pwrowg::is_any_of<
+        visus::pwrowg::is_power_sensor, visus::pwrowg::is_marker_sensor>);
+
+    this->_details->markers = this->_details->sensors.controller<
+        visus::pwrowg::marker_configuration>();
+    this->_details->tinkerforge = this->_details->sensors.controller<
+        visus::pwrowg::tinkerforge_configuration>();
 
     log::instance().write_line(log_level::information, "Logging power usage to "
         "\"{0}\" at an {1} ms interval.", this->_file.c_str(),
         sampling_interval.count());
     this->_details->sensors.start();
+    assert(this->_details->markers != nullptr);
+    this->_details->markers->emit();
 }
 
 
