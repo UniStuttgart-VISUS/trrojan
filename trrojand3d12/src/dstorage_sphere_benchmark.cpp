@@ -222,6 +222,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::make_result(
     return std::make_shared<basic_result>(config,
         std::initializer_list<std::string> {
             "benchmark",
+            "power_uid",
             "particles",
             "data_extents",
             "ia_vertices",
@@ -535,6 +536,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_naive(
     // Do the wall clock measurements.
     log::instance().write_line(log_level::debug, "Measuring wall clock "
         "timings over {} iterations ...", mctx.cpu_iterations);
+    const auto powerUid = benchmark_base::enter_power_scope(power_collector);
     this->_stream.reset_stalls();
     mctx.cpu_timer.start();
     for (std::uint32_t i = 0; i < mctx.cpu_iterations; ++i) {
@@ -617,6 +619,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_naive(
 #endif
     const auto cpu_time = mctx.cpu_timer.elapsed_millis();
     const auto cnt_stalls = this->_stream.reset_stalls();
+    benchmark_base::leave_power_scope(power_collector);
 
 #if true
     // Do the GPU counter measurements.
@@ -841,6 +844,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_naive(
     // Output the results.
     retval->add({
         this->name(),
+        powerUid,
         this->_data.spheres(),
         this->_data.extents(),
         pipeline_stats.IAVertices,
@@ -1113,6 +1117,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_split_batches(
     // Do the wall clock measurements.
     log::instance().write_line(log_level::debug, "Measuring wall clock "
         "timings over {} iterations ...", mctx.cpu_iterations);
+    const auto powerUid = benchmark_base::enter_power_scope(power_collector);
     this->_stream.reset_stalls();
     mctx.cpu_timer.start();
     for (std::uint32_t i = 0; i < mctx.cpu_iterations; ++i) {
@@ -1210,6 +1215,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_split_batches(
 #endif
     const auto cpu_time = mctx.cpu_timer.elapsed_millis();
     const auto cnt_stalls = this->_stream.reset_stalls();
+    benchmark_base::leave_power_scope(power_collector);
 
 #if true
     // Do the GPU counter measurements.
@@ -1464,6 +1470,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_split_batches(
     auto retval = make_result(config);
     retval->add({
         this->name(),
+        powerUid,
         this->_data.spheres(),
         this->_data.extents(),
         pipeline_stats.IAVertices,
@@ -1725,6 +1732,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_batches(
     // Do the wall clock measurements.
     log::instance().write_line(log_level::debug, "Measuring wall clock "
         "timings over {} iterations ...", mctx.cpu_iterations);
+    const auto powerUid = benchmark_base::enter_power_scope(power_collector);
     this->_stream.reset_stalls();
     mctx.cpu_timer.start();
     for (std::uint32_t i = 0; i < mctx.cpu_iterations; ++i) {
@@ -1814,6 +1822,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_batches(
 #endif
     const auto cpu_time = mctx.cpu_timer.elapsed_millis();
     const auto cnt_stalls = this->_stream.reset_stalls();
+    benchmark_base::leave_power_scope(power_collector);
 
 #if true
     // Do the GPU counter measurements.
@@ -2052,6 +2061,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_batches(
     auto retval = make_result(config);
     retval->add({
         this->name(),
+        powerUid,
         this->_data.spheres(),
         this->_data.extents(),
         pipeline_stats.IAVertices,
@@ -2315,6 +2325,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_gdeflate(
     // Do the wall clock measurements.
     log::instance().write_line(log_level::debug, "Measuring wall clock "
         "timings over {} iterations ...", mctx.cpu_iterations);
+    const auto powerUid = benchmark_base::enter_power_scope(power_collector);
     this->_stream.reset_stalls();
     mctx.cpu_timer.start();
     for (std::uint32_t i = 0; i < mctx.cpu_iterations; ++i) {
@@ -2404,6 +2415,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_gdeflate(
 #endif
     const auto cpu_time = mctx.cpu_timer.elapsed_millis();
     const auto cnt_stalls = this->_stream.reset_stalls();
+    benchmark_base::leave_power_scope(power_collector);
 
 #if true
     // Do the GPU counter measurements.
@@ -2646,6 +2658,7 @@ trrojan::result trrojan::d3d12::dstorage_sphere_benchmark::run_gdeflate(
     auto retval = make_result(config);
     retval->add({
         this->name(),
+        powerUid,
         this->_data.spheres(),
         this->_data.extents(),
         pipeline_stats.IAVertices,

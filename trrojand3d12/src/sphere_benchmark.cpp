@@ -193,6 +193,7 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
     // Do the wall clock measurement using the prepared command lists.
     log::instance().write_line(log_level::debug, "Measuring wall clock "
         "timings over {} iterations ...", mctx.cpu_iterations);
+    const auto powerUid = benchmark_base::enter_power_scope(power_collector);
     mctx.cpu_timer.start();
     for (std::uint32_t i = 0; i < mctx.cpu_iterations; ++i) {
         auto cmd_list = cmd_lists[this->buffer_index()];
@@ -201,6 +202,7 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
     }
     device.wait_for_gpu();
     const auto cpu_time = mctx.cpu_timer.elapsed_millis();
+    benchmark_base::leave_power_scope(power_collector);
 #endif
 
 #if 1
@@ -292,6 +294,7 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
     auto retval = std::make_shared<basic_result>(config,
         std::initializer_list<std::string> {
         "benchmark",
+        "power_uid",
         "particles",
         "data_extents",
         "ia_vertices",
@@ -319,6 +322,7 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
     // Output the results.
     retval->add({
         this->name(),
+        powerUid,
         this->_data.spheres(),
         this->_data.extents(),
         pipeline_stats.IAVertices,
