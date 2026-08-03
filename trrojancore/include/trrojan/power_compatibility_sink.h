@@ -6,6 +6,7 @@
 
 #if !defined(_TRROJAN_POWER_COMPATIBILITY_SINK_H)
 #define _TRROJAN_POWER_COMPATIBILITY_SINK_H
+#if defined(TRROJAN_WITH_POWER_OVERWHELMING)
 #pragma once
 
 #include <atomic>
@@ -61,4 +62,5 @@ namespace trrojan {
 
 #include "trrojan/power_compatibility_sink.inl"
 
+#endif /* defined(TRROJAN_WITH_POWER_OVERWHELMING) */
 #endif /* !defined(_TRROJAN_POWER_COMPATIBILITY_SINK_H) */

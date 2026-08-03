@@ -6,13 +6,15 @@
 
 #include "trrojan/power_collector.h"
 
-#if defined(TRROJAN_WITH_POWER_OVERWHELMING)
 #include <memory>
 
+#if defined(TRROJAN_WITH_POWER_OVERWHELMING)
+#include <visus/pwrowg/convert_string.h>
 #include <visus/pwrowg/csv_iomanip.h>
 #include <visus/pwrowg/hmc8015_instrument.h>
 #include <visus/pwrowg/marker_configuration.h>
 #include <visus/pwrowg/rtx_configuration.h>
+#include <visus/pwrowg/rtx_sensor_trigger.h>
 #include <visus/pwrowg/sensor_array.h>
 #include <visus/pwrowg/sensor_filters.h>
 #include <visus/pwrowg/thread_local_sink.h>
@@ -39,6 +41,7 @@ namespace detail {
     struct power_details final {
         std::vector<visus::pwrowg::hmc8015_instrument> hmc8015;
         visus::pwrowg::marker_controller *markers { };
+        visus::pwrowg::rtx_sensor_trigger rtx_trigger;
         visus::pwrowg::tinkerforge_controller *tinkerforge { };
         std::unique_ptr<pwr_sink> sink;
         visus::pwrowg::sensor_array sensors;
@@ -159,6 +162,29 @@ trrojan::power_collector::~power_collector(void) {
 
 
 /*
+ * trrojan::power_collector::acquire_rtx
+ */
+bool  trrojan::power_collector::acquire_rtx(
+        const std::function<void(bool)>& cb) {
+    if ((this->_details == nullptr) || !this->_details->rtx_trigger) {
+        return false;
+    }
+
+    this->_details->rtx_trigger.acquire(
+        [&cb](void) { cb(true); },
+        [&cb](const std::exception_ptr) { cb(false); return true; });
+}
+
+
+/*
+ * trrojan::power_collector::configure_rtx
+ */
+void trrojan::power_collector::configure_rtx(const std::string& file) {
+    this->_rtx_config = file;
+}
+
+
+/*
  * trrojan::power_collector::enter_scope
  */
 std::uint64_t trrojan::power_collector::enter_scope(void) {
@@ -203,6 +229,7 @@ void trrojan::power_collector::sync_time(void) {
 void trrojan::power_collector::start(
         const std::string& file,
         const interval_type sampling_interval) {
+    using namespace visus::pwrowg;
     assert(this->_details != nullptr);
 
     if (this->_details->sensors) {
@@ -215,20 +242,31 @@ void trrojan::power_collector::start(
     this->_details->sink.reset(new detail::pwr_sink(1024, this->_file.c_str()));
 
     // Configure the sensors.
-    visus::pwrowg::sensor_array_configuration config;
-    config.exclude<visus::pwrowg::rtx_configuration>()
-        .exclude<visus::pwrowg::usb_pd_configuration>()
-        .sample_every(5)
+    sensor_array_configuration config;
+    config.exclude<rtx_configuration>()
+        .exclude<usb_pd_configuration>()
+        .sample_every(sampling_interval)
         .deliver_to(detail::pwr_sink::sample_callback)
         .deliver_context(this->_details->sink.get())
-        .configure<visus::pwrowg::tinkerforge_configuration>(
-                [](visus::pwrowg::tinkerforge_configuration& c) {
+        .configure<tinkerforge_configuration>(
+                [](tinkerforge_configuration& c) {
             typedef visus::pwrowg::tinkerforge_sample_averaging avg;
             typedef visus::pwrowg::tinkerforge_conversion_time conv;
             c.averaging(avg::average_of_4);
-            c.current_conversion_time(conv::microseconds_588);
-            c.voltage_conversion_time(conv::microseconds_588);
+            c.current_conversion_time(conv::milliseconds_1_1);
+            c.voltage_conversion_time(conv::milliseconds_1_1);
         });
+
+    // Enable the oscilloscope if a configuration was provided.
+    if (!this->_rtx_config.empty()) {
+        config.configure<rtx_configuration>(
+            [this](rtx_configuration& c) {
+                c = rtx_configuration::load(this->_rtx_config.c_str());
+                this->_details->rtx_trigger = c.trigger();
+            });
+    } else {
+        config.exclude<rtx_configuration>();
+    }
 
     this->_details->sensors = visus::pwrowg::sensor_array::for_matches(
         std::move(config), visus::pwrowg::is_any_of<

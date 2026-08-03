@@ -5,11 +5,11 @@
 // <author>Christoph Müller</author>
 
 #pragma once
-#if defined(TRROJAN_WITH_POWER_OVERWHELMING)
 
 #include <array>
 #include <atomic>
 #include <chrono>
+#include <functional>
 #include <fstream>
 #include <memory>
 #include <mutex>
@@ -74,6 +74,27 @@ namespace trrojan {
         ~power_collector(void);
 
         /// <summary>
+        /// Acquire a sample from the Rohde &amp; Schwarz RTx oscilloscopes and
+        /// signal whether the acquisition was successful via the given callback.
+        /// </summary>
+        /// <param name="cb">The callback that will be invoked if either the
+        /// acquisition failed or has completed successfully. It might take some
+        /// time until this callback is called if the sampling rate is high. The
+        /// callback will not be invoked if the method returns
+        /// <see langword="false" />.
+        /// </param>
+        /// <returns><see langword="true" /> if the acquisition was started,
+        /// <see langword="false" /> if no RTx oscilloscope is available.</returns>
+        bool acquire_rtx(const std::function<void(bool)>& cb);
+
+        /// <summary>
+        /// Configures Rohde &amp; Schwarz RTx oscilloscopes from the given JSON
+        /// file.
+        /// </summary>
+        /// <param name="file"></param>
+        void configure_rtx(const std::string& file);
+
+        /// <summary>
         /// Generate a new unique identifier and set it as the description for
         /// the current measurement.
         /// </summary>
@@ -120,11 +141,10 @@ namespace trrojan {
 
         std::unique_ptr<detail::power_details> _details;
         std::string _file;
+        std::string _rtx_config;
 #else /* defined(TRROJAN_WITH_POWER_OVERWHELMING) */
         power_collector(void) = delete;
 #endif /* defined(TRROJAN_WITH_POWER_OVERWHELMING) */
     };
 
 } /* end namespace trrojan */
-
-#endif /* defined(TRROJAN_WITH_POWER_OVERWHELMING) */

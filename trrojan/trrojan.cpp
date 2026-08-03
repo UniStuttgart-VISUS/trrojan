@@ -84,7 +84,16 @@ int main(const int argc, const char **argv) {
             if (it != cmdLine.end()) {
                 // Create and start a power collector on request.
                 power_collector = std::make_shared<trrojan::power_collector>();
-                power_collector->start(*it, std::chrono::milliseconds(5));
+
+                {
+                    auto jt = trrojan::find_argument("--rtx-configuration",
+                        cmdLine.begin(), cmdLine.end());
+                    if (jt != cmdLine.end()) {
+                        power_collector->configure_rtx(*jt);
+                    }
+                }
+
+                power_collector->start(*it, std::chrono::milliseconds(10));
             }
         }
 #endif /* defined(TRROJAN_WITH_POWER_OVERWHELMING) */
