@@ -213,8 +213,8 @@ void trrojan::power_collector::start(const std::string& file,
     for (auto& s : this->_details->tinkerforge) {
         s.configure(
             sample_averaging::average_of_4,
-            conversion_time::microseconds_588,
-            conversion_time::microseconds_588);
+            conversion_time::milliseconds_1_1,
+            conversion_time::milliseconds_1_1);
         s.sample(on_measurement, tinkerforge_sensor_source::power, si, this);
         log::instance().write_line(log_level::information, "Power sensor "
             "\"{0}\" started.", convert_string<char>(s.name()));
