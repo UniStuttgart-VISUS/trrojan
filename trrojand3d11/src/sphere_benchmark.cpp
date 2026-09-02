@@ -561,6 +561,7 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
     log::instance().write_line(log_level::debug, "Measuring wall clock "
         "timings over {} iterations ...", cntCpuIterations);
     const auto powerUid = benchmark_base::enter_power_scope(powerCollector);
+
     cpuTimer.start();
     for (std::uint32_t i = 0; i < cntCpuIterations; ++i) {
         this->clear_target();

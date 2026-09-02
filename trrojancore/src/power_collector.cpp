@@ -13,6 +13,7 @@
 #include <visus/pwrowg/csv_iomanip.h>
 #include <visus/pwrowg/hmc8015_instrument.h>
 #include <visus/pwrowg/marker_configuration.h>
+#include <visus/pwrowg/msr_configuration.h>
 #include <visus/pwrowg/rtx_configuration.h>
 #include <visus/pwrowg/rtx_sensor_trigger.h>
 #include <visus/pwrowg/sensor_array.h>
@@ -164,13 +165,13 @@ trrojan::power_collector::~power_collector(void) {
 /*
  * trrojan::power_collector::acquire_rtx
  */
-bool  trrojan::power_collector::acquire_rtx(
+bool trrojan::power_collector::acquire_rtx(
         const std::function<void(bool)>& cb) {
     if ((this->_details == nullptr) || !this->_details->rtx_trigger) {
         return false;
     }
 
-    this->_details->rtx_trigger.acquire(
+    return this->_details->rtx_trigger.acquire(
         [&cb](void) { cb(true); },
         [&cb](const std::exception_ptr) { cb(false); return true; });
 }
@@ -243,8 +244,7 @@ void trrojan::power_collector::start(
 
     // Configure the sensors.
     sensor_array_configuration config;
-    config.exclude<rtx_configuration>()
-        .exclude<usb_pd_configuration>()
+    config.exclude<usb_pd_configuration>()
         .sample_every(sampling_interval)
         .deliver_to(detail::pwr_sink::sample_callback)
         .deliver_context(this->_details->sink.get())
@@ -253,8 +253,11 @@ void trrojan::power_collector::start(
             typedef visus::pwrowg::tinkerforge_sample_averaging avg;
             typedef visus::pwrowg::tinkerforge_conversion_time conv;
             c.averaging(avg::average_of_4);
-            c.current_conversion_time(conv::milliseconds_1_1);
-            c.voltage_conversion_time(conv::milliseconds_1_1);
+            c.current_conversion_time(conv::milliseconds_2_116);
+            c.voltage_conversion_time(conv::milliseconds_2_116);
+        })
+        .configure<msr_configuration>([](msr_configuration& c) {
+            c.first_core(true);
         });
 
     // Enable the oscilloscope if a configuration was provided.
