@@ -172,8 +172,8 @@ bool trrojan::power_collector::acquire_rtx(
     }
 
     return this->_details->rtx_trigger.acquire(
-        [&cb](void) { cb(true); },
-        [&cb](const std::exception_ptr) { cb(false); return true; });
+        [cb](void) { cb(true); },
+        [cb](const std::exception_ptr) { cb(false); return true; });
 }
 
 
