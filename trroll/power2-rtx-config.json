@@ -98,7 +98,7 @@
         "polarity": 0,
         "range": {
           "unit": "V",
-          "value": 2.0
+          "value": 1.0
         },
         "skew": {
           "unit": "",
@@ -171,7 +171,7 @@
         "polarity": 0,
         "range": {
           "unit": "V",
-          "value": 2.0
+          "value": 1.0
         },
         "skew": {
           "unit": "",
@@ -244,7 +244,7 @@
         "polarity": 0,
         "range": {
           "unit": "V",
-          "value": 2.0
+          "value": 1.0
         },
         "skew": {
           "unit": "",
@@ -317,7 +317,7 @@
         "polarity": 0,
         "range": {
           "unit": "V",
-          "value": 2.0
+          "value": 1.0
         },
         "skew": {
           "unit": "",
@@ -390,7 +390,7 @@
         "polarity": 0,
         "range": {
           "unit": "V",
-          "value": 2.0
+          "value": 1.0
         },
         "skew": {
           "unit": "",
@@ -463,7 +463,7 @@
         "polarity": 0,
         "range": {
           "unit": "V",
-          "value": 2.0
+          "value": 1.0
         },
         "skew": {
           "unit": "",
