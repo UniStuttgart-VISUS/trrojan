@@ -11,6 +11,7 @@
 #if defined(TRROJAN_WITH_POWER_OVERWHELMING)
 #include <visus/pwrowg/convert_string.h>
 #include <visus/pwrowg/csv_iomanip.h>
+#include <visus/pwrowg/dump_sensors.h>
 #include <visus/pwrowg/hmc8015_instrument.h>
 #include <visus/pwrowg/marker_configuration.h>
 #include <visus/pwrowg/msr_configuration.h>
@@ -229,7 +230,8 @@ void trrojan::power_collector::sync_time(void) {
  */
 void trrojan::power_collector::start(
         const std::string& file,
-        const interval_type sampling_interval) {
+        const interval_type sampling_interval,
+        const std::string& sensor_dump) {
     using namespace visus::pwrowg;
     assert(this->_details != nullptr);
 
@@ -274,6 +276,12 @@ void trrojan::power_collector::start(
     this->_details->sensors = visus::pwrowg::sensor_array::for_matches(
         std::move(config), visus::pwrowg::is_any_of<
         visus::pwrowg::is_power_sensor, visus::pwrowg::is_marker_sensor>);
+
+    if (!sensor_dump.empty()) {
+        log::instance().write_line(log_level::verbose, "Logging power sensors "
+            " to \"{0}\".", sensor_dump.c_str());
+        dump_sensors(this->_details->sensors, sensor_dump);
+    }
 
     this->_details->markers = this->_details->sensors.controller<
         visus::pwrowg::marker_configuration>();

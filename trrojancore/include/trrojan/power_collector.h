@@ -130,7 +130,8 @@ namespace trrojan {
         /// Start all sensors with the specified sampling interval.
         /// </summary>
         void start(const std::string& file,
-            const interval_type sampling_interval);
+            const interval_type sampling_interval,
+            const std::string& sensor_dump);
 
         /// <summary>
         /// Stop all sensors and wait for all asynchronous processing to end.

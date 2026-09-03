@@ -93,7 +93,19 @@ int main(const int argc, const char **argv) {
                     }
                 }
 
-                power_collector->start(*it, std::chrono::milliseconds(10));
+                std::string dump_location;
+                {
+                    auto jt = trrojan::find_argument("--dump-power-sensors",
+                        cmdLine.begin(), cmdLine.end());
+                    if (jt != cmdLine.end()) {
+                        dump_location = *jt;
+                    }
+                }
+
+                power_collector->start(
+                    *it,
+                    std::chrono::milliseconds(10),
+                    dump_location);
             }
         }
 #endif /* defined(TRROJAN_WITH_POWER_OVERWHELMING) */
