@@ -11,6 +11,7 @@
 *.log
 *.csv
 *.user
+/*.json
 /.vs
 
 # Build folders

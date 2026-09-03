@@ -28,7 +28,7 @@ $troll | %{
         throw "TRRoll script `"$t`" does not exist."
     }
 
-    $l = Join-Path $out ([System.IO.Path]::ChangeExtension($_, '.txt'))
+    $l = Join-Path $out ([System.IO.Path]::ChangeExtension($_, '.log'))
     Write-Host "Log output is `"$l`"."
 
     $o = Join-Path $out ([System.IO.Path]::ChangeExtension("timings-$_", '.csv'))

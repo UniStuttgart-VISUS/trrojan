@@ -182,7 +182,16 @@ if (TRROJAN_WITH_POWER_OVERWHELMING)
     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_RUNTIME_DLLS:${PROJECT_NAME}> $<TARGET_FILE_DIR:${PROJECT_NAME}>
         COMMAND_EXPAND_LISTS)
-endif()
+    get_target_property(foo_out power_overwhelming RUNTIME_OUTPUT_DIRECTORY)
+
+    if (PWROWG_WithNvapi)
+        # The NVAPI wrapper is not linked to Power Overwhelming, so we need to 
+        # copy it manually. This is by design.
+        add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy ${power_overwhelming_BINARY_DIR}/pwrovrnvapi/$<CONFIG>/pwrovrnvapi.dll $<TARGET_FILE_DIR:${PROJECT_NAME}>
+            COMMAND_EXPAND_LISTS)
+    endif ()
+endif ()
 
 # Installation
 install(TARGETS ${PROJECT_NAME}
