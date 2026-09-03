@@ -39,7 +39,7 @@ file(GLOB_RECURSE TRROJAN_DSTORAGE_BINARIES "${TRROJAN_DSTORAGE_DIR}/bin/${CMAKE
 
 # glm
 FetchContent_Declare(glm
-    URL "https://github.com/g-truc/glm/releases/download/0.9.9.8/glm-0.9.9.8.zip"
+    URL "https://github.com/g-truc/glm/releases/download/1.0.3/glm-1.0.3.zip"
     DOWNLOAD_EXTRACT_TIMESTAMP ON
 )
 FetchContent_MakeAvailable(glm)
