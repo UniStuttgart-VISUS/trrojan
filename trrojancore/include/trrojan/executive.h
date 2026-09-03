@@ -165,11 +165,13 @@ namespace trrojan {
         /// to be replaces with their actual instantiation.</param>
         void run(benchmark_base& benchmark, configuration_set configs,
             output_base& output, const cool_down& coolDown,
-            const std::size_t continue_at);
+            const std::size_t continue_at,
+            const std::vector<std::string>& exclude_devices);
 
         void run(const benchmark& benchmark, const configuration_set& configs,
             output_base& output, const cool_down& coolDown,
-            const std::size_t continue_at);
+            const std::size_t continue_at,
+            const std::vector<std::string>& exclude_devices);
 
         /// <summary>
         /// Runs the benchmarks in the given TRROLL script writing the results
@@ -189,7 +191,8 @@ namespace trrojan {
             output_base& output,
             const cool_down& cool_down,
             const std::size_t continue_at,
-            power_collector::pointer power_collector);
+            power_collector::pointer power_collector,
+            const std::vector<std::string>& exclude_devices);
 
         executive operator =(const executive&) = delete;
 
