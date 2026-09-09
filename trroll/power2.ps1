@@ -1,17 +1,21 @@
 # TRRojan binary to execute
 $bin = 'T:\Programmcode\trrojan-github\_build\trrojan\Debug\trrojan.exe'
 $bin = 'C:\Users\mueller\source\repos\trrojan\_build\trrojan\Debug\trrojan.exe'
-#$bin = 'C:\Users\mueller\source\repos\trrojan\_build\trrojan\Release\trrojan.exe'
+$bin = 'C:\Users\mueller\source\repos\trrojan\_build\trrojan\Release\trrojan.exe'
 #$bin = 'C:\Users\mueller\source\repos\trrojan-old\_build\trrojan\Release\trrojan.exe'
+
 # Location where the $trroll scripts are located.
 $scripts = 'T:\Programmcode\trrojan-github\trroll'
 $scripts = 'C:\Users\mueller\source\repos\trrojan\trroll'
+
 # Location where the output files are written to.
 $out = 'C:\Users\mueller\Documents\pwrowg2'
 #$out = 'T:\Programmcode\trrojan-github\'
+
 # RTx oscilloscope configuration.
 $rtx = Join-Path $scripts '\power2-rtx-config.json'
-$rtx = $null
+#$rtx = $null
+
 # List of TRRoll scripts in $scripts to execute.
 $troll = ('power2-rayspheres.trroll', 'power2-tessspheres.trroll')
 $troll = ('power2-rayspheres.trroll')
