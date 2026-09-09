@@ -74,6 +74,7 @@ if (TRROJAN_WITH_POWER_OVERWHELMING)
     option(PWROWG_BuildStablePower "" OFF)
     option(PWROWG_BuildTests "" OFF)
     option(PWROWG_BuildWeb "" OFF)
+    option(PWROWG_WithBenchlab "" ON)
     FetchContent_MakeAvailable(power_overwhelming)
     mark_as_advanced(FORCE
         FETCHCONTENT_SOURCE_DIR_POWER_OVERWHELMING

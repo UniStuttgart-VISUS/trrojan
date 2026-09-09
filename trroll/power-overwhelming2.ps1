@@ -13,13 +13,16 @@ $rtx = Join-Path $scripts '\power2-rtx-config.json'
 $rtx = $null
 # List of TRRoll scripts in $scripts to execute.
 $troll = ('power2-rayspheres.trroll', 'power2-tessspheres.trroll')
+$troll = ('power2-rayspheres.trroll')
 #$troll = ('power2-tessspheres.trroll')
+#$excluded = 'Intel(R) Graphics'
 
 if (-not (Test-Path -PathType Container -Path $out)) {
     throw "Output directory `"$out`" does not exist."
 }
 
 $troll | %{
+    $t = (Get-Date -Format "yyyyMMddHHmmss")
     $b = gi $bin
     Write-Host "Binary `"$b`" was built at $($b.LastWriteTime)"
 
@@ -30,22 +33,26 @@ $troll | %{
         throw "TRRoll script `"$t`" does not exist."
     }
 
-    $l = Join-Path $out ([System.IO.Path]::ChangeExtension($_, '.log'))
+    $l = Join-Path $out ([System.IO.Path]::ChangeExtension("$t-$_", '.log'))
     Write-Host "Log output is `"$l`"."
 
-    $o = Join-Path $out ([System.IO.Path]::ChangeExtension("timings-$_", '.csv'))
+    $o = Join-Path $out ([System.IO.Path]::ChangeExtension("$t-timings-$_", '.csv'))
     Write-Host "Timing output is `"$o`"."
 
-    $p = Join-Path $out ([System.IO.Path]::ChangeExtension("power-$_", '.csv'))
+    $p = Join-Path $out ([System.IO.Path]::ChangeExtension("$t-power-$_", '.csv'))
     Write-Host "Power output is `"$p`"."
 
-    $s = Join-Path $out ([System.IO.Path]::ChangeExtension("sensors-$_", '.json'))
+    $s = Join-Path $out ([System.IO.Path]::ChangeExtension("$t-sensors-$_", '.json'))
     Write-Host "Sensor dump is `"$s`"."
 
-    $args = '--nologo', '--trroll', $t, '--log', $l, '--output', $o, '--power', $p, '--dump-power-sensors', $s, '--exclude-device', 'Intel(R) Graphics'
+    $args = '--nologo', '--trroll', $t, '--log', $l, '--output', $o, '--power', $p, '--dump-power-sensors', $s
     if ($rtx) {
         $args += '--rtx-configuration'
-        $rtx += $rtx
+        $args += $rtx
+    }
+    if ($excluded) {
+        $args += '--exclude-device'
+        $args += $rtx
     }
 
     Write-Host "`"$bin`" $($args -join ' ')"

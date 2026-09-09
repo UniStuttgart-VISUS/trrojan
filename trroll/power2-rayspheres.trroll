@@ -5,8 +5,8 @@ d3d11::sphere-renderer {
 	float32 global_radius = 0.07
 
 	uint32vec2 viewport = 1920 1080; 4096 2160
-	uint32 sync_interval = 0
-	#uint32 sync_interval = 0; 1
+	#uint32 sync_interval = 0
+	uint32 sync_interval = 0; 1
 
 	# Adaptation range for "adapt_poly_tess", "adapt_sphere_tess" and "adapt_hemisphere_tess"
 	#uint32 adapt_tess_minimum = 4; 5
