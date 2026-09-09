@@ -163,13 +163,37 @@ namespace trrojan {
         /// method before actually starting the benchmark. For instance, all
         /// names of <see cref="environment" /> and <see cref="device" />s need
         /// to be replaces with their actual instantiation.</param>
-        void run(benchmark_base& benchmark, configuration_set configs,
-            output_base& output, const cool_down& coolDown,
-            const std::size_t continue_at);
+        void run(benchmark_base& benchmark,
+            configuration_set configs,
+            output_base& output,
+            const cool_down& coolDown,
+            const std::size_t continue_at,
+            const std::vector<std::string>& exclude_devices);
 
-        void run(const benchmark& benchmark, const configuration_set& configs,
-            output_base& output, const cool_down& coolDown,
-            const std::size_t continue_at);
+        inline void run(benchmark_base& benchmark,
+                const configuration_set& configs,
+                output_base& output,
+                const cool_down& coolDown,
+                const std::size_t continue_at) {
+            static const std::vector<std::string> none;
+            this->run(benchmark, configs, output, coolDown, continue_at, none);
+        }
+
+        void run(const benchmark& benchmark,
+            const configuration_set& configs,
+            output_base& output,
+            const cool_down& coolDown,
+            const std::size_t continue_at,
+            const std::vector<std::string>& exclude_devices);
+
+        inline void run(const benchmark& benchmark,
+                const configuration_set& configs,
+                output_base& output,
+                const cool_down& coolDown,
+                const std::size_t continue_at) {
+                static const std::vector<std::string> none;
+            this->run(benchmark, configs, output, coolDown, continue_at, none);
+        }
 
         /// <summary>
         /// Runs the benchmarks in the given TRROLL script writing the results
@@ -185,11 +209,28 @@ namespace trrojan {
         /// configurations until the given one.</param>
         /// <param name="power_collector">If not <c>nullptr</c>, enables the
         /// benchmark to measure the power consumption of its work.</param>
+        /// <param name="exclude_devices">A list of device names to be excluded
+        /// from the test.</param>
         void trroll(const troll_input_type& path,
             output_base& output,
             const cool_down& cool_down,
             const std::size_t continue_at,
-            power_collector::pointer power_collector);
+            power_collector::pointer power_collector,
+            const std::vector<std::string>& exclude_devices);
+
+        inline void trroll(const troll_input_type& path,
+                output_base& output,
+                const cool_down& cool_down,
+                const std::size_t continue_at,
+                power_collector::pointer power_collector = nullptr) {
+            static const std::vector<std::string> none;
+            this->trroll(path,
+                output,
+                cool_down,
+                continue_at,
+                power_collector,
+                none);
+        }
 
         executive operator =(const executive&) = delete;
 

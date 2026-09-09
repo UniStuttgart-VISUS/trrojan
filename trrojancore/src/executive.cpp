@@ -249,7 +249,8 @@ void trrojan::executive::run(benchmark_base& benchmark,
         configuration_set configs,
         output_base& output,
         const cool_down& cool_down,
-        const std::size_t continue_at) {
+        const std::size_t continue_at,
+        const std::vector<std::string>& exclude_devices) {
     // Note: This method is called from the scripting interface and possibly
     // from other places we do not yet know. Therefore, we do not optimise
     // the order of the parameters, but keep them as they have been passed
@@ -262,6 +263,15 @@ void trrojan::executive::run(benchmark_base& benchmark,
             environment_base::factor_name, e.environment));
 
         for (auto d : e.devices) {
+            if (std::find(exclude_devices.begin(),
+                    exclude_devices.end(),
+                    d->name()) != exclude_devices.end()) {
+                log::instance().write_line(log_level::warning, "Skipping "
+                    "device \"{0}\" because it was excluded by the user.",
+                    d->name().c_str());
+                continue;
+            }
+
             log::instance().write_line(log_level::information, "Using device "
                 "\"{0}\" ...", d ? d->name().c_str() : "");
             configs.replace_factor(factor::from_manifestations(
@@ -308,12 +318,14 @@ void trrojan::executive::run(const benchmark& benchmark,
         const configuration_set& configs,
         output_base& output,
         const cool_down& cool_down,
-        const std::size_t continue_at) {
+        const std::size_t continue_at,
+        const std::vector<std::string>& exclude_devices) {
     if (benchmark == nullptr) {
         throw std::runtime_error("The benchmark to run must not be nullptr.");
     }
 
-    this->run(*benchmark, configs, output, cool_down, continue_at);
+    this->run(*benchmark, configs, output, cool_down, continue_at,
+        exclude_devices);
 }
 
 
@@ -324,7 +336,8 @@ void trrojan::executive::trroll(const troll_input_type& path,
         output_base& output,
         const cool_down& cool_down,
         const std::size_t continue_at,
-        power_collector::pointer power_collector) {
+        power_collector::pointer power_collector,
+        const std::vector<std::string>& exclude_devices) {
     typedef trroll_parser::benchmark_configs bcs;
     auto bcss = trroll_parser::parse(path);
     std::vector<benchmark> benchmarks;
