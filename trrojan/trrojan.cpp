@@ -178,6 +178,12 @@ int main(const int argc, const char **argv) {
             }
         }
 
+        // Actively stop the power collector to force an orderly shutdown. This
+        // ensures that the power log is properly finalised.
+        if (power_collector != nullptr) {
+            power_collector->stop();
+        }
+
         return 0;
 
     } catch (std::exception& ex) {

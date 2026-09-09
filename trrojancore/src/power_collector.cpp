@@ -15,6 +15,7 @@
 #include <visus/pwrowg/hmc8015_instrument.h>
 #include <visus/pwrowg/marker_configuration.h>
 #include <visus/pwrowg/msr_configuration.h>
+#include <visus/pwrowg/parquet_sink.h>
 #include <visus/pwrowg/rtx_configuration.h>
 #include <visus/pwrowg/rtx_sensor_trigger.h>
 #include <visus/pwrowg/sensor_array.h>
@@ -34,7 +35,12 @@
 namespace trrojan {
 namespace detail {
 
+#if defined(USE_PARQUET_SINK)
+    typedef visus::pwrowg::thread_local_sink<visus::pwrowg::parquet_sink>
+        pwr_sink;
+#else /* (defined(USE_PARQUET_SINK) */
     typedef visus::pwrowg::thread_local_sink<power_compatibility_sink> pwr_sink;
+#endif /* (defined(USE_PARQUET_SINK) */
 
     /// <summary>
     /// Holds the Power-Overwhelming-related data we want to hide from the
@@ -194,9 +200,11 @@ std::uint64_t trrojan::power_collector::enter_scope(void) {
     unsigned int retval = 0;
     this->_details->markers->emit(&retval);
 
+#if !defined(USE_PARQUET_SINK)
     if (this->_details->sink) {
         this->_details->sink->power_uid(retval);
     }
+#endif /* !define(USE_PARQUET_SINK) */
 
     return retval;
 }
@@ -242,7 +250,16 @@ void trrojan::power_collector::start(
 
     // Prepare the output sink.
     this->_file = file;
+#if defined(USE_PARQUET_SINK)
+    {
+        parquet_configuration c(this->_file.c_str());
+        c.identity(parquet_identity_column::label);
+        c.raw(false);
+        this->_details->sink.reset(new detail::pwr_sink(1024, c));
+    }
+#else /* defined(USE_PARQUET_SINK) */
     this->_details->sink.reset(new detail::pwr_sink(1024, this->_file.c_str()));
+#endif /* defined(USE_PARQUET_SINK) */
 
     // Configure the sensors.
     sensor_array_configuration config;
@@ -302,11 +319,16 @@ void trrojan::power_collector::start(
  */
 void trrojan::power_collector::stop(void) {
     assert(this->_details != nullptr);
+    log::instance().write_line(log_level::information, "Stopping power data "
+        "collection.");
 
     // Stop sampling power data.
     if (this->_details->sensors) {
         this->_details->sensors.stop();
     }
+
+    // Finalise the output file.
+    this->_details->sink.reset();
 
     // Dispose the array, which serves as guard whether we are running or not.
     this->_details->sensors = visus::pwrowg::sensor_array();
@@ -321,9 +343,6 @@ void trrojan::power_collector::stop(void) {
             log::instance().write_line(ex);
         }
     }
-
-    // Finalise the output file.
-    this->_details->sink.reset();
 }
 
 #endif /* defined(TRROJAN_WITH_POWER_OVERWHELMING) */

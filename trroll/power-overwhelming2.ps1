@@ -1,6 +1,7 @@
 # TRRojan binary to execute
 $bin = 'T:\Programmcode\trrojan-github\_build\trrojan\Debug\trrojan.exe'
-$bin = 'C:\Users\mueller\source\repos\trrojan\_build\trrojan\Release\trrojan.exe'
+$bin = 'C:\Users\mueller\source\repos\trrojan\_build\trrojan\Debug\trrojan.exe'
+#$bin = 'C:\Users\mueller\source\repos\trrojan\_build\trrojan\Release\trrojan.exe'
 #$bin = 'C:\Users\mueller\source\repos\trrojan-old\_build\trrojan\Release\trrojan.exe'
 # Location where the $trroll scripts are located.
 $scripts = 'T:\Programmcode\trrojan-github\trroll'
@@ -15,14 +16,14 @@ $rtx = $null
 $troll = ('power2-rayspheres.trroll', 'power2-tessspheres.trroll')
 $troll = ('power2-rayspheres.trroll')
 #$troll = ('power2-tessspheres.trroll')
-#$excluded = 'Intel(R) Graphics'
+$excluded = 'Intel(R) Graphics'
 
 if (-not (Test-Path -PathType Container -Path $out)) {
     throw "Output directory `"$out`" does not exist."
 }
 
 $troll | %{
-    $t = (Get-Date -Format "yyyyMMddHHmmss")
+    $d = (Get-Date -Format "yyyyMMddHHmmss")
     $b = gi $bin
     Write-Host "Binary `"$b`" was built at $($b.LastWriteTime)"
 
@@ -33,16 +34,20 @@ $troll | %{
         throw "TRRoll script `"$t`" does not exist."
     }
 
-    $l = Join-Path $out ([System.IO.Path]::ChangeExtension("$t-$_", '.log'))
+    $l = Join-Path $out ([System.IO.Path]::ChangeExtension("$d-$_", '.log'))
     Write-Host "Log output is `"$l`"."
 
-    $o = Join-Path $out ([System.IO.Path]::ChangeExtension("$t-timings-$_", '.csv'))
+    $o = Join-Path $out ([System.IO.Path]::ChangeExtension("$d-timings-$_", '.csv'))
     Write-Host "Timing output is `"$o`"."
 
-    $p = Join-Path $out ([System.IO.Path]::ChangeExtension("$t-power-$_", '.csv'))
+    if ($b -imatch "-old") {
+        $p = Join-Path $out ([System.IO.Path]::ChangeExtension("$d-power-$_", '.csv'))
+    } else {
+        $p = Join-Path $out ([System.IO.Path]::ChangeExtension("$d-power-$_", '.parquet'))
+    }
     Write-Host "Power output is `"$p`"."
 
-    $s = Join-Path $out ([System.IO.Path]::ChangeExtension("$t-sensors-$_", '.json'))
+    $s = Join-Path $out ([System.IO.Path]::ChangeExtension("$d-sensors-$_", '.json'))
     Write-Host "Sensor dump is `"$s`"."
 
     $args = '--nologo', '--trroll', $t, '--log', $l, '--output', $o, '--power', $p, '--dump-power-sensors', $s
@@ -52,7 +57,7 @@ $troll | %{
     }
     if ($excluded) {
         $args += '--exclude-device'
-        $args += $rtx
+        $args += $excluded
     }
 
     Write-Host "`"$bin`" $($args -join ' ')"

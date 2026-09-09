@@ -20,6 +20,7 @@ endif ()
 cmake_dependent_option(TRROJAN_WITH_DSTORAGE "Enable support for DirectStorage in Direct3D 12 plugin." ON WIN32 OFF)
 cmake_dependent_option(TRROJAN_FORCE_NO_D3D_DEBUG "Force the debug layer to be disabled." OFF WIN32 OFF)
 cmake_dependent_option(TRROJAN_WITH_POWER_OVERWHELMING "Enable power_overwhelming for measuring GPU power consumption." ON "NOT TRROJAN_FOR_UWP" OFF)
+cmake_dependent_option(TRROJAN_WITH_PARQUET_SINK "Enable the Parquet power sink if available." OFF TRROJAN_WITH_POWER_OVERWHELMING OFF)
 option(TRROJAN_DEBUG_OVERLAY "Enable overlay in debug view." OFF)
 set(TRROJAN_UWP_PLATFORM_VERSION "10.0.19041.0" CACHE STRING "Specifies the minimum target platform version for UWP.")
 
