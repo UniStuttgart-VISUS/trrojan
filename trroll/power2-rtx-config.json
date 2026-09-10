@@ -2,7 +2,7 @@
     "base_configuration": {
         "acquisition": {
             "count": 1,
-            "points": 5000000,
+            "points": 1000000,
             "segmented": true,
             "state": 0
         },
@@ -57,7 +57,7 @@
                 },
                 "offset": {
                     "unit": "A",
-                    "value": 5.0
+                    "value": 2.0
                 },
                 "polarity": 0,
                 "range": {
@@ -135,7 +135,7 @@
                 "polarity": 0,
                 "range": {
                     "unit": "A",
-                    "value": 5.0
+                    "value": 11.0
                 },
                 "skew": {
                     "unit": "",
@@ -208,7 +208,7 @@
                 "polarity": 0,
                 "range": {
                     "unit": "A",
-                    "value": 10.0
+                    "value": 12.0
                 },
                 "skew": {
                     "unit": "",
@@ -281,7 +281,7 @@
                 "polarity": 0,
                 "range": {
                     "unit": "A",
-                    "value": 10.0
+                    "value": 12.0
                 },
                 "skew": {
                     "unit": "",
@@ -349,12 +349,12 @@
                 },
                 "offset": {
                     "unit": "A",
-                    "value": 0.3
+                    "value": 3.0
                 },
                 "polarity": 0,
                 "range": {
                     "unit": "A",
-                    "value": 1.0
+                    "value": 7.0
                 },
                 "skew": {
                     "unit": "",
@@ -390,7 +390,7 @@
                 "polarity": 0,
                 "range": {
                     "unit": "V",
-                    "value": 1.0
+                    "value": 2.0
                 },
                 "skew": {
                     "unit": "",
@@ -422,12 +422,12 @@
                 },
                 "offset": {
                     "unit": "A",
-                    "value": 2.0
+                    "value": 5.0
                 },
                 "polarity": 0,
                 "range": {
                     "unit": "A",
-                    "value": 5.0
+                    "value": 15.0
                 },
                 "skew": {
                     "unit": "",
@@ -463,7 +463,7 @@
                 "polarity": 0,
                 "range": {
                     "unit": "V",
-                    "value": 1.0
+                    "value": 4.0
                 },
                 "skew": {
                     "unit": "",
@@ -495,12 +495,12 @@
                 },
                 "offset": {
                     "unit": "A",
-                    "value": 10.0
+                    "value": 30.0
                 },
                 "polarity": 0,
                 "range": {
                     "unit": "A",
-                    "value": 50.0
+                    "value": 66.0
                 },
                 "skew": {
                     "unit": "",
