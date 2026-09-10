@@ -6,6 +6,7 @@ d3d11::sphere-renderer {
 
 	uint32vec2 viewport = 1920 1080; 4096 2160
 	#uint32vec2 viewport = 1920 1080
+	#uint32vec2 viewport = 4096 2160
 	#uint32 sync_interval = 0; 1
 	uint32 sync_interval = 0
 	uint32 gpu_counter_iterations = 16
