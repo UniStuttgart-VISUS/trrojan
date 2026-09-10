@@ -26,6 +26,9 @@ set(TRROJAN_UWP_PLATFORM_VERSION "10.0.19041.0" CACHE STRING "Specifies the mini
 
 
 # Third-party software
+if (TRROJAN_WITH_PARQUET_SINK)
+    option(PWROWG_WithParquet "" ON)
+endif ()
 include("ThirdParty.cmake")
 
 set(CMAKE_VERBOSE_MAKEFILE ON)

@@ -41,7 +41,7 @@ target_link_libraries(${PROJECT_NAME} PUBLIC mmpld)
 target_link_libraries(${PROJECT_NAME} PUBLIC spdlog)
 target_link_libraries(${PROJECT_NAME} PRIVATE glm::glm)
 if (WIN32)
-    target_link_libraries(${PROJECT_NAME} PRIVATE runtimeobject)
+    target_link_libraries(${PROJECT_NAME} PRIVATE runtimeobject)    # For WRL
 endif ()
 
 if (CMAKE_COMPILER_IS_GNUCXX)
@@ -60,6 +60,8 @@ if (TRROJAN_WITH_POWER_OVERWHELMING)
     #    COMMAND ${CMAKE_COMMAND} -E copy "${POWER_OVERWHELMING_DIR}/${CMAKE_VS_PLATFORM_NAME}/Release/power_overwhelming.dll" "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/$<CONFIG>")
 endif ()
 
+
+#message(${PWROG_PARQUET_RELEASE_DEPENDENCIES})
 
 # Installation
 install(TARGETS ${PROJECT_NAME}
