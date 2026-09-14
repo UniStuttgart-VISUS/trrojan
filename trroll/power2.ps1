@@ -48,14 +48,14 @@ $troll | %{
     if ($b -imatch "-old") {
         $p = Join-Path $out ([System.IO.Path]::ChangeExtension("$d-power-$_", '.csv'))
     } else {
-        $p = Join-Path $out ([System.IO.Path]::ChangeExtension("$d-power-$_", '.parquet'))
+        $p = Join-Path $out ([System.IO.Path]::ChangeExtension("$d-power-$_", '.pwog'))
     }
     Write-Host "Power output is `"$p`"."
 
     $s = Join-Path $out ([System.IO.Path]::ChangeExtension("$d-sensors-$_", '.json'))
     Write-Host "Sensor dump is `"$s`"."
 
-    $args = '--nologo', '--trroll', $t, '--log', $l, '--output', $o, '--power', $p, '--dump-power-sensors', $s
+    $args = '--nologo', '--trroll', $t, '--log', $l, '--output', $o, '--power', $p, '--dump-power-sensors', $s, '--record-voltage', '--record-current'
     if ($rtx) {
         $args += '--rtx-configuration'
         $args += $rtx

@@ -110,7 +110,9 @@ int main(const int argc, const char **argv) {
                 power_collector->start(
                     *it,
                     std::chrono::milliseconds(10),
-                    dump_location);
+                    dump_location,
+                    record_voltage,
+                    record_current);
             }
         }
 #endif /* defined(TRROJAN_WITH_POWER_OVERWHELMING) */
