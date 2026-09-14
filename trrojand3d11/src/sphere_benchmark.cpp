@@ -560,10 +560,13 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
     // Do the wall clock measurement.
     log::instance().write_line(log_level::debug, "Measuring wall clock "
         "timings over {} iterations ...", cntCpuIterations);
-    const auto powerUid = benchmark_base::enter_power_scope(powerCollector);
+    bool power_done = false;
+    const auto powerUid = benchmark_base::enter_power_scope(powerCollector,
+        [&power_done](const bool) { power_done = true; });
 
     cpuTimer.start();
-    for (std::uint32_t i = 0; i < cntCpuIterations; ++i) {
+    std::uint32_t cpu_iterations = 0;
+    for (; cpu_iterations < cntCpuIterations || !power_done; ++cpu_iterations) {
         this->clear_target();
         if (isInstanced) {
             ctx->DrawInstanced(cntPrimitives, cntInstances, 0, 0);
@@ -607,9 +610,9 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
         gpuTimes.front(),
         gpuMedian,
         gpuTimes.back(),
-        cntCpuIterations,
+        cpu_iterations,
         cpuTime,
-        static_cast<double>(cpuTime) / cntCpuIterations
+        static_cast<double>(cpuTime) / cpu_iterations
         });
 
     return retval;

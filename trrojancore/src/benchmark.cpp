@@ -181,26 +181,23 @@ size_t trrojan::benchmark_base::run(const configuration_set& configs,
  * trrojan::benchmark_base::enter_power_scope
  */
 std::uint64_t trrojan::benchmark_base::enter_power_scope(
-        const power_collector::pointer& collector) {
+        const power_collector::pointer& collector,
+        const std::function<void(bool)>& when_done) {
 #if defined(TRROJAN_WITH_POWER_OVERWHELMING)
     if (collector != nullptr) {
         collector->sync_time();
         // If we have a power sensor, we want to record data now.
         const auto retval = collector->enter_scope();
 
-        const auto started = collector->acquire_rtx([collector, retval](const bool success) {
-            if (!success) {
-                log::instance().write_line(log_level::error, "RTx acquisition "
-                    "was started, but failed.");
-            }
-        });
+        const auto started = collector->acquire_rtx(when_done);
 
         if (started) {
             log::instance().write_line(log_level::information,
                 "RTx acquisition triggered.");
         } else {
             log::instance().write_line(log_level::warning, "No RTx acquisition "
-                "possible.");
+                "possible. Signalling that we do not need to wait for it.");
+            when_done(false);
         }
 
         return retval;
@@ -208,6 +205,20 @@ std::uint64_t trrojan::benchmark_base::enter_power_scope(
 #endif /* defined(TRROJAN_WITH_POWER_OVERWHELMING) */
 
     return 0;
+}
+
+
+/*
+ * trrojan::benchmark_base::enter_power_scope
+ */
+std::uint64_t trrojan::benchmark_base::enter_power_scope(
+        const power_collector::pointer& collector) {
+    return enter_power_scope(collector, [](const bool success) {
+        if (!success) {
+            log::instance().write_line(log_level::error, "RTx acquisition "
+                "was started, but failed.");
+        }
+    });
 }
 
 

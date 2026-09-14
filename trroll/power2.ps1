@@ -21,6 +21,7 @@ $troll = ('power2-rayspheres.trroll', 'power2-tessspheres.trroll')
 $troll = ('power2-rayspheres.trroll')
 #$troll = ('power2-tessspheres.trroll')
 $excluded = 'Intel(R) Graphics'
+$excluded = $null
 
 if (-not (Test-Path -PathType Container -Path $out)) {
     throw "Output directory `"$out`" does not exist."
