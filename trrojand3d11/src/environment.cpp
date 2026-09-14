@@ -15,6 +15,7 @@
 
 #include <Windows.h>
 #include <dxgi.h>
+#include <dxgi1_6.h>
 
 #include <winrt/base.h>
 
@@ -85,8 +86,11 @@ void trrojan::d3d11::environment::on_finalise(void) {
 void trrojan::d3d11::environment::on_initialise(const cmd_line& cmdLine) {
     DWORD deviceFlags = D3D11_CREATE_DEVICE_DISABLE_GPU_TIMEOUT;
     winrt::com_ptr<IDXGIFactory> factory;
+    winrt::com_ptr<IDXGIFactory6> factory6;
     HRESULT hr = S_OK;
     const auto isBasicRender = contains_switch("--with-basic-render-driver",
+        cmdLine.begin(), cmdLine.end());
+    const auto isMostPerformant = contains_switch("--most-performant-only",
         cmdLine.begin(), cmdLine.end());
     const auto isUniqueDevice = contains_switch("--unique-devices",
         cmdLine.begin(), cmdLine.end());
@@ -106,6 +110,13 @@ void trrojan::d3d11::environment::on_initialise(const cmd_line& cmdLine) {
         throw std::system_error(hr, com_category());
     }
 
+    if (isMostPerformant) {
+        hr = factory->QueryInterface(IID_IDXGIFactory6, factory6.put_void());
+        if (FAILED(hr)) {
+            throw std::system_error(hr, com_category());
+        }
+    }
+
 #if (defined(DEBUG) || defined(_DEBUG))
     if (supports_debug_layer()) {
         deviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
@@ -117,7 +128,14 @@ void trrojan::d3d11::environment::on_initialise(const cmd_line& cmdLine) {
         DXGI_ADAPTER_DESC desc;
         winrt::com_ptr<ID3D11Device> device;
 
-        hr = factory->EnumAdapters(a, adapter.put());
+        if (isMostPerformant) {
+            hr = factory6->EnumAdapterByGpuPreference(a,
+                DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE,
+                IID_IDXGIAdapter,
+                adapter.put_void());
+        } else {
+            hr = factory->EnumAdapters(a, adapter.put());
+        }
         if (SUCCEEDED(hr)) {
             hr = adapter->GetDesc(&desc);
         }
@@ -186,6 +204,13 @@ void trrojan::d3d11::environment::on_initialise(const cmd_line& cmdLine) {
 #else /* !defined(TRROJAN_FOR_UWP) */
             this->_devices.push_back(std::make_shared<d3d11::device>(device));
 #endif /* !defined(TRROJAN_FOR_UWP) */
+
+            if (isMostPerformant) {
+                log::instance().write_line(log_level::information, "Stopping "
+                    "device enumeration because only the most performant "
+                    "device was requested.");
+                hr = DXGI_ERROR_NOT_FOUND;
+            }
         }
     }
 
