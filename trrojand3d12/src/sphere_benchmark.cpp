@@ -1,5 +1,5 @@
 ﻿// <copyright file="sphere_benchmark.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2016 - 2023 Visualisierungsinstitut der Universität Stuttgart.
+// Copyright © 2016 - 2026 Visualisierungsinstitut der Universität Stuttgart.
 // Licensed under the MIT licence. See LICENCE.txt file in the project root for full licence information.
 // </copyright>
 // <author>Christoph Müller</author>
@@ -7,6 +7,7 @@
 #include "trrojan/d3d12/sphere_benchmark.h"
 
 #include "trrojan/log.h"
+#include "trrojan/on_exit.h"
 #include "trrojan/timer.h"
 
 #include "trrojan/d3d12/gpu_timer.h"
@@ -193,9 +194,28 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
     // Do the wall clock measurement using the prepared command lists.
     log::instance().write_line(log_level::debug, "Measuring wall clock "
         "timings over {} iterations ...", mctx.cpu_iterations);
-    const auto powerUid = benchmark_base::enter_power_scope(power_collector);
+    std::atomic<bool> rtx_acquired(false);
+    auto evt_done = ::CreateEvent(nullptr, FALSE, FALSE, nullptr);
+    if (evt_done == NULL) {
+        throw std::system_error(::GetLastError(), std::system_category());
+    }
+    on_exit([evt_done](void) { ::CloseHandle(evt_done); });
+    const auto powerUid = benchmark_base::enter_power_scope(power_collector,
+        [&rtx_acquired](void) {
+            log::instance().write_line(log_level::information, "RTx sample "
+                "acquired.");
+            rtx_acquired.store(true, std::memory_order_release);
+        },
+        [evt_done](const bool) {
+            log::instance().write_line(log_level::information, "RTx sample "
+                "downloaded.");
+            ::SetEvent(evt_done);
+        });
     mctx.cpu_timer.start();
-    for (std::uint32_t i = 0; i < mctx.cpu_iterations; ++i) {
+    std::uint32_t cpu_iterations = 0;
+    for (; (cpu_iterations < mctx.cpu_iterations)
+            || !rtx_acquired.load(std::memory_order_acquire);
+            ++cpu_iterations) {
         auto cmd_list = cmd_lists[this->buffer_index()];
         device.execute_command_list(cmd_list);
         this->present_target(config);
@@ -344,8 +364,14 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
         gpu_times.back(),
         mctx.cpu_iterations,
         cpu_time,
-        static_cast<double>(cpu_time) / mctx.cpu_iterations
+        static_cast<double>(cpu_time) / cpu_iterations
     });
+
+    // Make sure that the download of the power data has finished before we
+    // continue to the next benchmark.
+    log::instance().write_line(log_level::debug, "Waiting for "
+        "RTx sample to be downloaded.");
+    ::WaitForSingleObject(evt_done, INFINITE);
 
     return retval;
 }

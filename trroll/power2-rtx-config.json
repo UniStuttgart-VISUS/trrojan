@@ -2,7 +2,7 @@
     "base_configuration": {
         "acquisition": {
             "count": 1,
-            "points": 500000,
+            "points": 1000000,
             "segmented": true,
             "state": 0
         },
@@ -276,12 +276,12 @@
                 },
                 "offset": {
                     "unit": "A",
-                    "value": 5.0
+                    "value": 2.0
                 },
                 "polarity": 0,
                 "range": {
                     "unit": "A",
-                    "value": 12.0
+                    "value": 10.0
                 },
                 "skew": {
                     "unit": "",
