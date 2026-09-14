@@ -22,6 +22,7 @@
 #include "trrojan/factor_range.h"
 #include "trrojan/io.h"
 #include "trrojan/log.h"
+#include "trrojan/on_exit.h"
 #include "trrojan/mmpld_reader.h"
 #include "trrojan/result.h"
 #include "trrojan/system_factors.h"
@@ -560,13 +561,25 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
     // Do the wall clock measurement.
     log::instance().write_line(log_level::debug, "Measuring wall clock "
         "timings over {} iterations ...", cntCpuIterations);
-    bool power_done = false;
+    std::atomic<bool> power_done(false);
+    auto evt_done = ::CreateEvent(nullptr, FALSE, FALSE, nullptr);
+    if (evt_done == NULL) {
+        throw std::system_error(::GetLastError(), std::system_category());
+    }
+    on_exit([evt_done](void) { ::CloseHandle(evt_done); }); 
     const auto powerUid = benchmark_base::enter_power_scope(powerCollector,
-        [&power_done](const bool) { power_done = true; });
+        [&power_done](void) {
+            power_done.store(true, std::memory_order_release);
+        },
+        [evt_done](const bool) {
+            ::SetEvent(evt_done);
+        });
 
     cpuTimer.start();
     std::uint32_t cpu_iterations = 0;
-    for (; cpu_iterations < cntCpuIterations || !power_done; ++cpu_iterations) {
+    for (; (cpu_iterations < cntCpuIterations)
+            || !power_done.load(std::memory_order_acquire);
+            ++cpu_iterations) {
         this->clear_target();
         if (isInstanced) {
             ctx->DrawInstanced(cntPrimitives, cntInstances, 0, 0);
@@ -614,6 +627,10 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
         cpuTime,
         static_cast<double>(cpuTime) / cpu_iterations
         });
+
+    // Make sure that the download of the power data has finished before we
+    // continue to the next benchmark.
+    ::WaitForSingleObject(evt_done, INFINITE);
 
     return retval;
 }

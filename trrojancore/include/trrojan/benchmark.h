@@ -179,12 +179,15 @@ namespace trrojan {
         /// unique power measurement scope and return its name.
         /// </summary>
         /// <param name="collector">An optional power collector.</param>
-        /// <param name="on_done">A callback to be invoked when the RTx
+        /// <param name="when_acquired">A callback to be invoked when the first
+        /// RTx instrument reports that its acquisition has finished.</param>
+        /// <param name="when_done">A callback to be invoked when the RTx
         /// acquisition completed. If no RTx acquisition was possible, the
         /// callback will be invoked immediately indicating failure.</param>
         /// <returns>The ID of the power measuring scope.</returns>
         static std::uint64_t enter_power_scope(
             const power_collector::pointer& collector,
+            const std::function<void(void)>& when_acquired,
             const std::function<void(bool)>& when_done);
 
         /// <summary>
