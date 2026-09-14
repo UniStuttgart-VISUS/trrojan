@@ -2,7 +2,7 @@
     "base_configuration": {
         "acquisition": {
             "count": 1,
-            "points": 1000000,
+            "points": 500000,
             "segmented": true,
             "state": 0
         },
