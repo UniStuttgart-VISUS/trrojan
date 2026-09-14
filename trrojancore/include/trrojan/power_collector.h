@@ -77,7 +77,10 @@ namespace trrojan {
         /// Acquire a sample from the Rohde &amp; Schwarz RTx oscilloscopes and
         /// signal whether the acquisition was successful via the given callback.
         /// </summary>
-        /// <param name="cb">The callback that will be invoked if either the
+        /// <param name="acquired">The callback that will be invoked if the
+        /// acquisition was completed, but before the download of the data from
+        /// the instruments starts.</param>
+        /// <param name="done">The callback that will be invoked if either the
         /// acquisition failed or has completed successfully. It might take some
         /// time until this callback is called if the sampling rate is high. The
         /// callback will not be invoked if the method returns
@@ -85,7 +88,8 @@ namespace trrojan {
         /// </param>
         /// <returns><see langword="true" /> if the acquisition was started,
         /// <see langword="false" /> if no RTx oscilloscope is available.</returns>
-        bool acquire_rtx(const std::function<void(bool)>& cb);
+        bool acquire_rtx(const std::function<void(void)>& acquired,
+            const std::function<void(bool)>& done);
 
         /// <summary>
         /// Configures Rohde &amp; Schwarz RTx oscilloscopes from the given JSON
@@ -131,7 +135,9 @@ namespace trrojan {
         /// </summary>
         void start(const std::string& file,
             const interval_type sampling_interval,
-            const std::string& sensor_dump);
+            const std::string& sensor_dump,
+            const bool record_voltage = false,
+            const bool record_current = false);
 
         /// <summary>
         /// Stop all sensors and wait for all asynchronous processing to end.

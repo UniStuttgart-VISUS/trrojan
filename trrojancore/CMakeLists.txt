@@ -33,6 +33,10 @@ if (TRROJAN_WITH_PARQUET_SINK)
     target_compile_definitions(${PROJECT_NAME} PRIVATE USE_PARQUET_SINK)
 endif ()
 
+if (TRROJAN_WITH_PWOG_SINK)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE USE_PWOG_SINK)
+endif ()
+
 if (NOT TRROJAN_FOR_UWP)
     target_link_libraries(${PROJECT_NAME} PUBLIC trrojansnfo)
 endif ()

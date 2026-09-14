@@ -102,6 +102,11 @@ int main(const int argc, const char **argv) {
                     }
                 }
 
+                const auto record_voltage = trrojan::contains_switch(
+                    "--record-voltage", cmdLine.begin(), cmdLine.end());
+                const auto record_current = trrojan::contains_switch(
+                    "--record-current", cmdLine.begin(), cmdLine.end());
+
                 power_collector->start(
                     *it,
                     std::chrono::milliseconds(10),
