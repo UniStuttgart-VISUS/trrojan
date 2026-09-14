@@ -206,11 +206,11 @@ std::uint64_t trrojan::power_collector::enter_scope(void) {
     unsigned int retval = 0;
     this->_details->markers->emit(&retval);
 
-#if !defined(USE_PARQUET_SINK)
+#if (!defined(USE_PARQUET_SINK) && !defined(USE_PWOG_SINK))
     if (this->_details->sink) {
         this->_details->sink->power_uid(retval);
     }
-#endif /* !define(USE_PARQUET_SINK) */
+#endif /* (!defined(USE_PARQUET_SINK) && !defined(USE_PWOG_SINK)) */
 
     return retval;
 }

@@ -2,7 +2,7 @@
     "base_configuration": {
         "acquisition": {
             "count": 1,
-            "points": 500000,
+            "points": 1000000,
             "segmented": true,
             "state": 0
         },
@@ -45,7 +45,7 @@
             "current_channel": {
                 "attenuation": {
                     "unit": "A",
-                    "value": 10.0
+                    "value": 100.0
                 },
                 "bandwidth": 0,
                 "channel": 4,
@@ -118,7 +118,7 @@
             "current_channel": {
                 "attenuation": {
                     "unit": "A",
-                    "value": 10.0
+                    "value": 100.0
                 },
                 "bandwidth": 0,
                 "channel": 2,
@@ -191,7 +191,7 @@
             "current_channel": {
                 "attenuation": {
                     "unit": "A",
-                    "value": 10.0
+                    "value": 100.0
                 },
                 "bandwidth": 0,
                 "channel": 4,
@@ -264,7 +264,7 @@
             "current_channel": {
                 "attenuation": {
                     "unit": "A",
-                    "value": 10.0
+                    "value": 100.0
                 },
                 "bandwidth": 0,
                 "channel": 2,
@@ -337,7 +337,7 @@
             "current_channel": {
                 "attenuation": {
                     "unit": "A",
-                    "value": 10.0
+                    "value": 100.0
                 },
                 "bandwidth": 0,
                 "channel": 4,
@@ -410,7 +410,7 @@
             "current_channel": {
                 "attenuation": {
                     "unit": "A",
-                    "value": 10.0
+                    "value": 100.0
                 },
                 "bandwidth": 0,
                 "channel": 2,
