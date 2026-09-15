@@ -889,9 +889,17 @@ void trrojan::d3d11::wait_for_event_query(ID3D11DeviceContext *ctx,
         ID3D11Asynchronous *query) {
     assert(ctx != nullptr);
     assert(query != nullptr);
-    HRESULT hr = S_FALSE;
+    winrt::com_ptr<ID3D11Device> device;
 
-    while ((hr = ctx->GetData(query, nullptr, 0, 0)) == S_FALSE);
+    ctx->GetDevice(device.put());
+    auto hr = device->GetDeviceRemovedReason();
+    if (FAILED(hr)) {
+        throw std::system_error(hr, com_category());
+    }
+
+    while ((hr = ctx->GetData(query, nullptr, 0, 0)) == S_FALSE) {
+        std::this_thread::yield();
+    }
     if (FAILED(hr)) {
         throw std::system_error(hr, com_category());
     }

@@ -276,12 +276,12 @@
                 },
                 "offset": {
                     "unit": "A",
-                    "value": 2.0
+                    "value": 3.0
                 },
                 "polarity": 0,
                 "range": {
                     "unit": "A",
-                    "value": 10.0
+                    "value": 14.0
                 },
                 "skew": {
                     "unit": "",

@@ -562,27 +562,29 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
     log::instance().write_line(log_level::debug, "Measuring wall clock "
         "timings over {} iterations ...", cntCpuIterations);
     std::atomic<bool> rtx_acquired(false);
-    auto evt_done = ::CreateEvent(nullptr, FALSE, FALSE, nullptr);
-    if (evt_done == NULL) {
+    auto rtx_done = ::CreateEvent(nullptr, FALSE, FALSE, nullptr);
+    if (rtx_done == NULL) {
         throw std::system_error(::GetLastError(), std::system_category());
     }
-    on_exit([evt_done](void) { ::CloseHandle(evt_done); }); 
+    on_exit([rtx_done](void) { ::CloseHandle(rtx_done); });
     const auto powerUid = benchmark_base::enter_power_scope(powerCollector,
         [&rtx_acquired](void) {
             log::instance().write_line(log_level::information, "RTx sample "
                 "acquired.");
-            rtx_acquired.store(true, std::memory_order_release);
+            //rtx_acquired.store(true, std::memory_order_release);
         },
-        [evt_done](const bool) {
+        [rtx_done, &rtx_acquired](const bool) {
             log::instance().write_line(log_level::information, "RTx sample "
                 "downloaded.");
-            ::SetEvent(evt_done);
+            rtx_acquired.store(true, std::memory_order_release);
+            ::SetEvent(rtx_done);
         });
 
     cpuTimer.start();
     std::uint32_t cpu_iterations = 0;
+    assert(cntCpuIterations > 0);
     for (; (cpu_iterations < cntCpuIterations)
-            || !rtx_acquired.load(std::memory_order_acquire);
+            /*|| !rtx_acquired.load(std::memory_order_acquire)*/;
             ++cpu_iterations) {
         this->clear_target();
         if (isInstanced) {
@@ -632,11 +634,9 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
         static_cast<double>(cpuTime) / cpu_iterations
         });
 
-    // Make sure that the download of the power data has finished before we
-    // continue to the next benchmark.
     log::instance().write_line(log_level::debug, "Waiting for "
-        "RTx sample to be downloaded.");
-    ::WaitForSingleObject(evt_done, INFINITE);
+        "RTx sample to be downloaded before leaving the benchmark.");
+    ::WaitForSingleObject(rtx_done, INFINITE);
 
     return retval;
 }
