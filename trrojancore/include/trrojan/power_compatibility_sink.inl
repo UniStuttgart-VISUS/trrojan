@@ -12,7 +12,8 @@ template<class TIterator>
 void trrojan::power_compatibility_sink::write_samples(
         _In_ const TIterator begin,
         _In_ const TIterator end,
-        _In_ const visus::pwrowg::sensor_description *sensors) {
+        _In_reads_(cnt) const visus::pwrowg::sensor_description *sensors,
+        _In_ const std::size_t cnt) {
     assert(sensors != nullptr);
     const auto power_uid = this->_power_uid.load(std::memory_order_acquire);
 

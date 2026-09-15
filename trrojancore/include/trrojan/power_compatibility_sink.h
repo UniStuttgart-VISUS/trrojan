@@ -48,7 +48,8 @@ namespace trrojan {
         template<class TIterator>
         void write_samples(_In_ const TIterator begin,
             _In_ const TIterator end,
-            _In_ const visus::pwrowg::sensor_description *sensors);
+            _In_reads_(cnt) const visus::pwrowg::sensor_description *sensors,
+            _In_ const std::size_t cnt);
 
     private:
 
