@@ -137,7 +137,8 @@ namespace trrojan {
             const interval_type sampling_interval,
             const std::string& sensor_dump,
             const bool record_voltage = false,
-            const bool record_current = false);
+            const bool record_current = false,
+            const std::size_t batch_size = 1024);
 
         /// <summary>
         /// Stop all sensors and wait for all asynchronous processing to end.

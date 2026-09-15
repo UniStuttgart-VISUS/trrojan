@@ -222,6 +222,9 @@ std::uint64_t trrojan::power_collector::enter_scope(void) {
 void trrojan::power_collector::leave_scope(void) {
     assert(this->_details != nullptr);
     this->_details->markers->emit(0u);
+#if !defined(USE_PARQUET_SINK)
+    this->_details->sink->flush();
+#endif /* !defined(USE_PARQUET_SINK) */
     //if (this->_details->sink) {
     //    this->_details->sink->power_uid(0);
     //}
@@ -247,7 +250,8 @@ void trrojan::power_collector::start(
         const interval_type sampling_interval,
         const std::string& sensor_dump,
         const bool record_voltage,
-        const bool record_current) {
+        const bool record_current,
+        const std::size_t batch_size) {
     using namespace visus::pwrowg;
     assert(this->_details != nullptr);
 
@@ -259,16 +263,18 @@ void trrojan::power_collector::start(
     // Prepare the output sink.
     this->_file = file;
 #if defined(USE_PWOG_SINK)
-    this->_details->sink.reset(new detail::pwr_sink(1024, this->_file.c_str()));
+    this->_details->sink.reset(new detail::pwr_sink(batch_size, false,
+        this->_file.c_str()));
 #elif defined(USE_PARQUET_SINK)
     {
         parquet_configuration c(this->_file.c_str());
         c.identity(parquet_identity_column::label);
         c.raw(false);
-        this->_details->sink.reset(new detail::pwr_sink(1024, c));
+        this->_details->sink.reset(new detail::pwr_sink(batch_size, c));
     }
 #else /* defined(USE_PARQUET_SINK) */
-    this->_details->sink.reset(new detail::pwr_sink(1024, this->_file.c_str()));
+    this->_details->sink.reset(new detail::pwr_sink(batch_size, false,
+        this->_file.c_str()));
 #endif /* defined(USE_PARQUET_SINK) */
 
     // Configure the sensors.

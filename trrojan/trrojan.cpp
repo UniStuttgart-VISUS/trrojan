@@ -102,6 +102,15 @@ int main(const int argc, const char **argv) {
                     }
                 }
 
+                std::size_t batch_size = 1024;
+                {
+                    auto jt = trrojan::find_argument("--power-batch",
+                        cmdLine.begin(), cmdLine.end());
+                    if (jt != cmdLine.end()) {
+                        batch_size = trrojan::parse<std::size_t>(jt->c_str());
+                    }
+                }
+
                 const auto record_voltage = trrojan::contains_switch(
                     "--record-voltage", cmdLine.begin(), cmdLine.end());
                 const auto record_current = trrojan::contains_switch(
@@ -112,7 +121,8 @@ int main(const int argc, const char **argv) {
                     std::chrono::milliseconds(10),
                     dump_location,
                     record_voltage,
-                    record_current);
+                    record_current,
+                    batch_size);
             }
         }
 #endif /* defined(TRROJAN_WITH_POWER_OVERWHELMING) */
