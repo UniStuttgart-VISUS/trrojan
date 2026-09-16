@@ -584,7 +584,7 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
     std::uint32_t cpu_iterations = 0;
     assert(cntCpuIterations > 0);
     for (; (cpu_iterations < cntCpuIterations)
-            /*|| !rtx_acquired.load(std::memory_order_acquire)*/;
+            || !rtx_acquired.load(std::memory_order_acquire);
             ++cpu_iterations) {
         this->clear_target();
         if (isInstanced) {
