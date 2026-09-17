@@ -37,7 +37,7 @@
     },
     "download_retries": 1,
     "download_timeout": 60000,
-    "reset_delay": 2000,
+    "reset_delay": 3000,
     "reset_flags": 5,
     "reset_on_enumerate": false,
     "sensors": [
@@ -554,7 +554,7 @@
         }
     ],
     "trigger": {
-        "acquisition_delay": 200,
+        "acquisition_delay": 1000,
         "daisy_chain": 2.5,
         "external_trigger": "LPT3",
         "external_trigger_duration": 10,
