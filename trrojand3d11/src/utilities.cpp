@@ -890,16 +890,21 @@ void trrojan::d3d11::wait_for_event_query(ID3D11DeviceContext *ctx,
     assert(ctx != nullptr);
     assert(query != nullptr);
     winrt::com_ptr<ID3D11Device> device;
+    HRESULT hr = S_FALSE;
 
-    ctx->GetDevice(device.put());
-    auto hr = device->GetDeviceRemovedReason();
-    if (FAILED(hr)) {
-        throw std::system_error(hr, com_category());
-    }
+    //ctx->GetDevice(device.put());
+    //auto hr = device->GetDeviceRemovedReason();
+    //if (FAILED(hr)) {
+    //    throw std::system_error(hr, com_category());
+    //}
 
-    while ((hr = ctx->GetData(query, nullptr, 0, 0)) == S_FALSE) {
-        std::this_thread::yield();
-    }
+    // Flush manually and tell GetData to not flush. Having GetData flush by
+    // itself multiple times causes certain NVIDIA cards to run into an infinite
+    // loop here.
+    ctx->Flush();
+
+    while ((hr = ctx->GetData(query, nullptr, 0,
+        D3D11_ASYNC_GETDATA_DONOTFLUSH)) == S_FALSE);
     if (FAILED(hr)) {
         throw std::system_error(hr, com_category());
     }

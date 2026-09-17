@@ -571,12 +571,12 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
         [&rtx_acquired](void) {
             log::instance().write_line(log_level::information, "RTx sample "
                 "acquired.");
-            //rtx_acquired.store(true, std::memory_order_release);
+            rtx_acquired.store(true, std::memory_order_release);
         },
         [rtx_done, &rtx_acquired](const bool) {
             log::instance().write_line(log_level::information, "RTx sample "
                 "downloaded.");
-            rtx_acquired.store(true, std::memory_order_release);
+            //rtx_acquired.store(true, std::memory_order_release);
             ::SetEvent(rtx_done);
         });
 
@@ -599,6 +599,8 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
         technique.apply(ctx);
 #endif /* defined(CREATE_D2D_OVERLAY) */
     }
+    log::instance().write_line(log_level::debug, "Tested over {} iterations "
+        "while {} were requested.", cpu_iterations, cntCpuIterations);
     ctx->End(this->done_query.get());
     wait_for_event_query(ctx.get(), this->done_query.get());
     auto cpuTime = cpuTimer.elapsed_millis();
