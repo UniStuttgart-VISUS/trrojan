@@ -561,31 +561,25 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
     // Do the wall clock measurement.
     log::instance().write_line(log_level::debug, "Measuring wall clock "
         "timings over {} iterations ...", cntCpuIterations);
-    std::atomic<bool> rtx_acquired(false);
     auto rtx_done = ::CreateEvent(nullptr, FALSE, FALSE, nullptr);
     if (rtx_done == NULL) {
         throw std::system_error(::GetLastError(), std::system_category());
     }
     on_exit([rtx_done](void) { ::CloseHandle(rtx_done); });
     const auto powerUid = benchmark_base::enter_power_scope(powerCollector,
-        [&rtx_acquired](void) {
+        [](void) {
             log::instance().write_line(log_level::information, "RTx sample "
                 "acquired.");
-            rtx_acquired.store(true, std::memory_order_release);
         },
-        [rtx_done, &rtx_acquired](const bool) {
+        [rtx_done](const bool) {
             log::instance().write_line(log_level::information, "RTx sample "
                 "downloaded.");
-            //rtx_acquired.store(true, std::memory_order_release);
             ::SetEvent(rtx_done);
         });
 
     cpuTimer.start();
-    std::uint32_t cpu_iterations = 0;
     assert(cntCpuIterations > 0);
-    for (; (cpu_iterations < cntCpuIterations)
-            || !rtx_acquired.load(std::memory_order_acquire);
-            ++cpu_iterations) {
+    for (std::size_t i = 0; i < cntCpuIterations; ++i) {
         this->clear_target();
         if (isInstanced) {
             ctx->DrawInstanced(cntPrimitives, cntInstances, 0, 0);
@@ -599,11 +593,13 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
         technique.apply(ctx);
 #endif /* defined(CREATE_D2D_OVERLAY) */
     }
-    log::instance().write_line(log_level::debug, "Tested over {} iterations "
-        "while {} were requested.", cpu_iterations, cntCpuIterations);
     ctx->End(this->done_query.get());
     wait_for_event_query(ctx.get(), this->done_query.get());
     auto cpuTime = cpuTimer.elapsed_millis();
+
+    log::instance().write_line(log_level::debug, "Waiting for "
+        "RTx sample to be downloaded before leaving the power scope.");
+    ::WaitForSingleObject(rtx_done, INFINITE);
     benchmark_base::leave_power_scope(powerCollector);
 
     // Compute derived statistics for GPU counters.
@@ -631,14 +627,10 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
         gpuTimes.front(),
         gpuMedian,
         gpuTimes.back(),
-        cpu_iterations,
+        cntCpuIterations,
         cpuTime,
-        static_cast<double>(cpuTime) / cpu_iterations
+        static_cast<double>(cpuTime) / cntCpuIterations
         });
-
-    log::instance().write_line(log_level::debug, "Waiting for "
-        "RTx sample to be downloaded before leaving the benchmark.");
-    ::WaitForSingleObject(rtx_done, INFINITE);
 
     return retval;
 }
