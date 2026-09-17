@@ -22,11 +22,15 @@ cmake_dependent_option(TRROJAN_FORCE_NO_D3D_DEBUG "Force the debug layer to be d
 cmake_dependent_option(TRROJAN_WITH_POWER_OVERWHELMING "Enable power_overwhelming for measuring GPU power consumption." ON "NOT TRROJAN_FOR_UWP" OFF)
 cmake_dependent_option(TRROJAN_WITH_PARQUET_SINK "Enable the Parquet power sink if available." OFF TRROJAN_WITH_POWER_OVERWHELMING OFF)
 cmake_dependent_option(TRROJAN_WITH_PWOG_SINK "Enable the PWOG power sink if available." OFF TRROJAN_WITH_POWER_OVERWHELMING OFF)
+cmake_dependent_option(TRROJAN_WITH_HDF5_SINK "Enable the HDF5 power sink if available." OFF TRROJAN_WITH_POWER_OVERWHELMING OFF)
 option(TRROJAN_DEBUG_OVERLAY "Enable overlay in debug view." OFF)
 set(TRROJAN_UWP_PLATFORM_VERSION "10.0.19041.0" CACHE STRING "Specifies the minimum target platform version for UWP.")
 
 
 # Third-party software
+if (TRROJAN_WITH_HDF5_SINK)
+    option(PWROWG_WithHdf5 "" ON)
+endif ()
 if (TRROJAN_WITH_PARQUET_SINK)
     option(PWROWG_WithParquet "" ON)
 endif ()

@@ -12,6 +12,7 @@
 #include <visus/pwrowg/convert_string.h>
 #include <visus/pwrowg/csv_iomanip.h>
 #include <visus/pwrowg/dump_sensors.h>
+#include <visus/pwrowg/hdf5_sink.h>
 #include <visus/pwrowg/hmc8015_instrument.h>
 #include <visus/pwrowg/marker_configuration.h>
 #include <visus/pwrowg/msr_configuration.h>
@@ -36,7 +37,9 @@
 namespace trrojan {
 namespace detail {
 
-#if defined(USE_PWOG_SINK)
+#if defined(USE_HDF5_SINK)
+    typedef visus::pwrowg::thread_local_sink<visus::pwrowg::hdf5_sink> pwr_sink;
+#elif defined(USE_PWOG_SINK)
     typedef visus::pwrowg::thread_local_sink<visus::pwrowg::pwog_sink>
         pwr_sink;
 #elif defined(USE_PARQUET_SINK)
@@ -206,12 +209,11 @@ std::uint64_t trrojan::power_collector::enter_scope(void) {
     unsigned int retval = 0;
     this->_details->markers->emit(&retval);
 
-#if (!defined(USE_PARQUET_SINK) && !defined(USE_PWOG_SINK))
+#if (!defined(USE_HDF5_SINK) && !defined(USE_PARQUET_SINK) && !defined(USE_PWOG_SINK))
     if (this->_details->sink) {
         this->_details->sink->power_uid(retval);
     }
-#endif /* (!defined(USE_PARQUET_SINK) && !defined(USE_PWOG_SINK)) */
-
+#endif /* (!defined(USE_HDF5_SINK) && !defined(USE_PARQUET_SINK) && !defined(USE_PWOG_SINK)) */
     return retval;
 }
 
@@ -262,7 +264,16 @@ void trrojan::power_collector::start(
 
     // Prepare the output sink.
     this->_file = file;
-#if defined(USE_PWOG_SINK)
+#if defined(USE_HDF5_SINK)
+    {
+        hdf5_configuration c(this->_file.c_str(), true);
+        c.chunk_size(batch_size);
+        c.raw(false);
+
+        this->_details->sink.reset(new detail::pwr_sink(batch_size, false,
+            this->_file.c_str()));
+    }
+#elif defined(USE_PWOG_SINK)
     this->_details->sink.reset(new detail::pwr_sink(batch_size, false,
         this->_file.c_str()));
 #elif defined(USE_PARQUET_SINK)

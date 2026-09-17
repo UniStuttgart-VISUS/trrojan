@@ -42,6 +42,7 @@ FetchContent_Declare(glm
     URL "https://github.com/g-truc/glm/releases/download/1.0.3/glm-1.0.3.zip"
     DOWNLOAD_EXTRACT_TIMESTAMP ON
 )
+option(GLM_BUILD_LIBRARY "" OFF)
 FetchContent_MakeAvailable(glm)
 mark_as_advanced(FORCE
     FETCHCONTENT_SOURCE_DIR_GLM

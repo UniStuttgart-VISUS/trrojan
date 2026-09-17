@@ -29,6 +29,10 @@ target_include_directories(${PROJECT_NAME}
     PRIVATE
         $<BUILD_INTERFACE:${SourceDirectory}>)
 
+if (TRROJAN_WITH_HDF5_SINK)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE USE_HDF5_SINK)
+endif ()
+
 if (TRROJAN_WITH_PARQUET_SINK)
     target_compile_definitions(${PROJECT_NAME} PRIVATE USE_PARQUET_SINK)
 endif ()
