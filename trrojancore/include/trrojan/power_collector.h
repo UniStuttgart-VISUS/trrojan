@@ -16,6 +16,7 @@
 #include <thread>
 #include <vector>
 
+#include "trrojan/cmd_line.h"
 #include "trrojan/export.h"
 
 
@@ -135,10 +136,7 @@ namespace trrojan {
         /// </summary>
         void start(const std::string& file,
             const interval_type sampling_interval,
-            const std::string& sensor_dump,
-            const bool record_voltage = false,
-            const bool record_current = false,
-            const std::size_t batch_size = 1024);
+            const cmd_line& cmd_line);
 
         /// <summary>
         /// Stop all sensors and wait for all asynchronous processing to end.

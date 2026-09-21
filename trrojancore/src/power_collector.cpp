@@ -29,8 +29,10 @@
 
 #include "trrojan/configuration.h"
 #include "trrojan/csv_util.h"
+#include "trrojan/io.h"
 #include "trrojan/log.h"
 #include "trrojan/power_compatibility_sink.h"
+#include "trrojan/system_factors.h"
 
 
 #if defined(TRROJAN_WITH_POWER_OVERWHELMING)
@@ -163,7 +165,7 @@ trrojan::power_collector::power_collector(void)
                 visus::pwrowg::hmc8015_log_mode::unlimited);
         }
     } catch (std::exception& ex) {
-        log::instance().write_line(ex);
+        log::instance().write(log_level::warning, ex);
     }
 }
 
@@ -250,10 +252,7 @@ void trrojan::power_collector::sync_time(void) {
 void trrojan::power_collector::start(
         const std::string& file,
         const interval_type sampling_interval,
-        const std::string& sensor_dump,
-        const bool record_voltage,
-        const bool record_current,
-        const std::size_t batch_size) {
+        const cmd_line& cmd_line) {
     using namespace visus::pwrowg;
     assert(this->_details != nullptr);
 
@@ -261,6 +260,30 @@ void trrojan::power_collector::start(
         throw std::runtime_error("The sampler thread of the power_collector is "
             "already running and cannot be restarted.");
     }
+
+    // Parse the optional settings from the command line.
+    {
+        auto it = trrojan::find_argument("--rtx-configuration",
+            cmd_line.begin(), cmd_line.end());
+        if (it != cmd_line.end()) {
+            this->configure_rtx(*it);
+        }
+    }
+
+    std::size_t batch_size = 1024;
+    {
+        auto it = trrojan::find_argument("--power-batch",
+            cmd_line.begin(), cmd_line.end());
+        if (it != cmd_line.end()) {
+            batch_size = trrojan::parse<std::size_t>(it->c_str());
+        }
+    }
+
+    const auto record_voltage = trrojan::contains_switch(
+        "--record-voltage", cmd_line.begin(), cmd_line.end());
+    const auto record_current = trrojan::contains_switch(
+        "--record-current", cmd_line.begin(), cmd_line.end());
+
 
     // Prepare the output sink.
     this->_file = file;
@@ -274,8 +297,104 @@ void trrojan::power_collector::start(
             this->_file.c_str()));
     }
 #elif defined(USE_PWOG_SINK)
-    this->_details->sink.reset(new detail::pwr_sink(batch_size, false,
-        this->_file.c_str()));
+    {
+        auto file = visus::pwrowg::pwog_file::create(this->_file.c_str(), true);
+
+        try {
+            auto it = trrojan::find_argument("--trroll", cmd_line.begin(),
+                cmd_line.end());
+            file << visus::pwrowg::make_pwog_meta_data("TRRollFile", *it);
+
+            if (it != cmd_line.end()) {
+                const auto t = read_text_file(*it);
+                file << visus::pwrowg::make_pwog_meta_data("TRRollScript", t);
+            }
+        } catch (std::exception& ex) {
+            log::instance().write_line(log_level::warning, ex);
+        }
+
+        try {
+            {
+                std::stringstream ss;
+                ss << system_factors::instance().bios();
+                file << visus::pwrowg::make_pwog_meta_data(
+                    "SystemFactorBios", ss.str());
+            }
+            {
+                std::stringstream ss;
+                ss << system_factors::instance().computer_name();
+                file << visus::pwrowg::make_pwog_meta_data(
+                    "SystemFactorComputerName", ss.str());
+            }
+            {
+                std::stringstream ss;
+                ss << system_factors::instance().cpu();
+                file << visus::pwrowg::make_pwog_meta_data(
+                    "SystemFactorCPU", ss.str());
+            }
+            {
+                std::stringstream ss;
+                ss << system_factors::instance().debug_build();
+                file << visus::pwrowg::make_pwog_meta_data(
+                    "SystemFactorDebugBuild", ss.str());
+            }
+            {
+                std::stringstream ss;
+                ss << system_factors::instance().installed_memory();
+                file << visus::pwrowg::make_pwog_meta_data(
+                    "SystemFactorInstalledMemory", ss.str());
+            }
+            {
+                std::stringstream ss;
+                ss << system_factors::instance().logical_cores();
+                file << visus::pwrowg::make_pwog_meta_data(
+                    "SystemFactorLogicalCores", ss.str());
+            }
+            {
+                std::stringstream ss;
+                ss << system_factors::instance().mainboard();
+                file << visus::pwrowg::make_pwog_meta_data(
+                    "SystemFactorMainboard", ss.str());
+            }
+            {
+                std::stringstream ss;
+                ss << system_factors::instance().os();
+                ss << " ";
+                ss << system_factors::instance().os_version();
+                file << visus::pwrowg::make_pwog_meta_data(
+                    "SystemFactorOperatingSystem", ss.str());
+            }
+            {
+                std::stringstream ss;
+                ss << system_factors::instance().ram();
+                file << visus::pwrowg::make_pwog_meta_data(
+                    "SystemFactorRAM", ss.str());
+            }
+            {
+                std::stringstream ss;
+                ss << system_factors::instance().system_desc();
+                file << visus::pwrowg::make_pwog_meta_data(
+                    "SystemFactorSystemDescription", ss.str());
+            }
+            {
+                std::stringstream ss;
+                ss << system_factors::instance().tdr_delay();
+                file << visus::pwrowg::make_pwog_meta_data(
+                    "SystemFactorTDRDelay", ss.str());
+            }
+            {
+                std::stringstream ss;
+                ss << system_factors::instance().tdr_level();
+                file << visus::pwrowg::make_pwog_meta_data(
+                    "SystemFactorTDRLevel", ss.str());
+            }
+        } catch (std::exception& ex) {
+            log::instance().write_line(log_level::warning, ex);
+        }
+
+        this->_details->sink.reset(new detail::pwr_sink(batch_size, false,
+            std::move(file)));
+    }
 #elif defined(USE_PARQUET_SINK)
     {
         parquet_configuration c(this->_file.c_str());
@@ -343,10 +462,14 @@ void trrojan::power_collector::start(
                 visus::pwrowg::is_marker_sensor>);
     }
 
-    if (!sensor_dump.empty()) {
-        log::instance().write_line(log_level::verbose, "Logging power sensors "
-            " to \"{0}\".", sensor_dump.c_str());
-        dump_sensors(this->_details->sensors, sensor_dump);
+    {
+        auto it = trrojan::find_argument("--dump-power-sensors",
+            cmd_line.begin(), cmd_line.end());
+        if (it != cmd_line.end()) {
+            log::instance().write_line(log_level::verbose, "Logging power "
+                "sensors  to \"{0}\".", it->c_str());
+            dump_sensors(this->_details->sensors, *it);
+        }
     }
 
     this->_details->markers = this->_details->sensors.controller<

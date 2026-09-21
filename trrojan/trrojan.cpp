@@ -84,45 +84,8 @@ int main(const int argc, const char **argv) {
             if (it != cmdLine.end()) {
                 // Create and start a power collector on request.
                 power_collector = std::make_shared<trrojan::power_collector>();
-
-                {
-                    auto jt = trrojan::find_argument("--rtx-configuration",
-                        cmdLine.begin(), cmdLine.end());
-                    if (jt != cmdLine.end()) {
-                        power_collector->configure_rtx(*jt);
-                    }
-                }
-
-                std::string dump_location;
-                {
-                    auto jt = trrojan::find_argument("--dump-power-sensors",
-                        cmdLine.begin(), cmdLine.end());
-                    if (jt != cmdLine.end()) {
-                        dump_location = *jt;
-                    }
-                }
-
-                std::size_t batch_size = 1024;
-                {
-                    auto jt = trrojan::find_argument("--power-batch",
-                        cmdLine.begin(), cmdLine.end());
-                    if (jt != cmdLine.end()) {
-                        batch_size = trrojan::parse<std::size_t>(jt->c_str());
-                    }
-                }
-
-                const auto record_voltage = trrojan::contains_switch(
-                    "--record-voltage", cmdLine.begin(), cmdLine.end());
-                const auto record_current = trrojan::contains_switch(
-                    "--record-current", cmdLine.begin(), cmdLine.end());
-
-                power_collector->start(
-                    *it,
-                    std::chrono::milliseconds(10),
-                    dump_location,
-                    record_voltage,
-                    record_current,
-                    batch_size);
+                power_collector->start(*it, std::chrono::milliseconds(10),
+                    cmdLine);
             }
         }
 #endif /* defined(TRROJAN_WITH_POWER_OVERWHELMING) */
