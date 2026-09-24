@@ -144,7 +144,7 @@ void trrojan::d3d11::debug_render_target::resize(const unsigned int width,
                 D3D11_SDK_VERSION, &desc, this->swapChain.put(), device.put(),
                 nullptr, nullptr);
             if (FAILED(hr)) {
-                std::system_error(hr, com_category());
+                throw std::system_error(hr, com_category());
             }
 
             this->set_device(device);
