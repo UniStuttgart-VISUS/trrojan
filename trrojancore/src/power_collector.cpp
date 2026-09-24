@@ -418,8 +418,8 @@ void trrojan::power_collector::start(
             typedef visus::pwrowg::tinkerforge_sample_averaging avg;
             typedef visus::pwrowg::tinkerforge_conversion_time conv;
             c.averaging(avg::average_of_4);
-            c.current_conversion_time(conv::milliseconds_2_116);
-            c.voltage_conversion_time(conv::milliseconds_2_116);
+            c.current_conversion_time(conv::milliseconds_1_1);
+            c.voltage_conversion_time(conv::milliseconds_1_1);
         })
         .configure<msr_configuration>([](msr_configuration& c) {
             c.first_core(true);

@@ -21,7 +21,8 @@ $troll = ('power2-rayspheres.trroll', 'power2-tessspheres.trroll')
 $troll = ('power2-rayspheres.trroll')
 #$troll = ('power2-tessspheres.trroll')
 $excluded = 'Intel(R) Graphics'
-$excluded = $null
+$excluded = 'AMD Radeon(TM) Graphics'
+#$excluded = $null
 $mostPerformant = $true
 
 if (-not (Test-Path -PathType Container -Path $out)) {
@@ -63,7 +64,7 @@ $troll | %{
     }
     if ($excluded) {
         $args += '--exclude-device'
-        $args += $excluded
+        $args += "`"$excluded`""
     }
     if ($mostPerformant) {
         $args +=  '--most-performant-only'
