@@ -1,15 +1,17 @@
-{
+﻿{
     "base_configuration": {
         "acquisition": {
             "count": 1,
-            "points": 1000000,
+            "points": 5000000,
             "segmented": true,
             "state": 0
         },
         "beep_on_apply": 1,
         "beep_on_error": false,
         "beep_on_trigger": true,
-        "channels": [],
+        "channels": [
+
+        ],
         "reference_position": 5000,
         "time_range": {
             "unit": "ms",
@@ -72,7 +74,7 @@
                 "zero_adjust": false,
                 "zero_offset": {
                     "unit": "",
-                    "value": -0.08601389825344086
+                    "value": -0.08549319952726364
                 }
             },
             "description": "ATX3V3",
@@ -143,7 +145,7 @@
                 "zero_adjust": false,
                 "zero_offset": {
                     "unit": "",
-                    "value": -0.0215659998357296
+                    "value": -0.020795200020074844
                 }
             },
             "description": "ATX5V",
@@ -214,7 +216,7 @@
                 "zero_adjust": false,
                 "zero_offset": {
                     "unit": "",
-                    "value": -0.14786650240421295
+                    "value": -0.1478419005870819
                 }
             },
             "description": "ATX12V",
@@ -270,12 +272,12 @@
                 },
                 "offset": {
                     "unit": "A",
-                    "value": 3.0
+                    "value": 5.0
                 },
                 "polarity": 0,
                 "range": {
                     "unit": "A",
-                    "value": 13.0
+                    "value": 16.0
                 },
                 "skew": {
                     "unit": "",
@@ -285,7 +287,7 @@
                 "zero_adjust": false,
                 "zero_offset": {
                     "unit": "",
-                    "value": -0.013673500157892704
+                    "value": -0.012927300296723843
                 }
             },
             "description": "P8",
@@ -356,7 +358,7 @@
                 "zero_adjust": false,
                 "zero_offset": {
                     "unit": "",
-                    "value": -0.021889900788664818
+                    "value": -0.02837200090289116
                 }
             },
             "description": "PEG3V3",
@@ -427,7 +429,7 @@
                 "zero_adjust": false,
                 "zero_offset": {
                     "unit": "",
-                    "value": 0.0026519999373704195
+                    "value": 0.0022040000185370445
                 }
             },
             "description": "PEG12V",
@@ -498,7 +500,7 @@
                 "zero_adjust": true,
                 "zero_offset": {
                     "unit": "",
-                    "value": 0.5715999603271484
+                    "value": 0.9556000232696533
                 }
             },
             "description": "PCIe12V",
