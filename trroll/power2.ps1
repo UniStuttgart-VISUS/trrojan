@@ -40,20 +40,20 @@ $troll | %{
         throw "TRRoll script `"$t`" does not exist."
     }
 
-    $l = Join-Path $out ([System.IO.Path]::ChangeExtension("$d-$_", '.log'))
+    $l = Join-Path $out ([System.IO.Path]::ChangeExtension("$d-$($env:COMPUTERNAME)-$_", '.log'))
     Write-Host "Log output is `"$l`"."
 
-    $o = Join-Path $out ([System.IO.Path]::ChangeExtension("$d-timings-$_", '.csv'))
+    $o = Join-Path $out ([System.IO.Path]::ChangeExtension("$d-$($env:COMPUTERNAME)-timings-$_", '.csv'))
     Write-Host "Timing output is `"$o`"."
 
     if ($b -imatch "-old") {
-        $p = Join-Path $out ([System.IO.Path]::ChangeExtension("$d-power-$_", '.csv'))
+        $p = Join-Path $out ([System.IO.Path]::ChangeExtension("$d-$($env:COMPUTERNAME)-power-$_", '.csv'))
     } else {
-        $p = Join-Path $out ([System.IO.Path]::ChangeExtension("$d-power-$_", '.pwog'))
+        $p = Join-Path $out ([System.IO.Path]::ChangeExtension("$d-$($env:COMPUTERNAME)-power-$_", '.pwog'))
     }
     Write-Host "Power output is `"$p`"."
 
-    $s = Join-Path $out ([System.IO.Path]::ChangeExtension("$d-sensors-$_", '.json'))
+    $s = Join-Path $out ([System.IO.Path]::ChangeExtension("$d-$($env:COMPUTERNAME)-sensors-$_", '.json'))
     Write-Host "Sensor dump is `"$s`"."
 
     $args = '--nologo', '--trroll', $t, '--log', $l, '--output', $o, '--power', $p, '--dump-power-sensors', $s, '--record-voltage', '--record-current'
