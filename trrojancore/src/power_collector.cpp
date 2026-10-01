@@ -436,31 +436,33 @@ void trrojan::power_collector::start(
         config.exclude<rtx_configuration>();
     }
 
-    if (record_voltage && record_current) {
-        this->_details->sensors = visus::pwrowg::sensor_array::for_matches(
-            std::move(config), visus::pwrowg::is_any_of<
-                visus::pwrowg::is_power_sensor,
-                visus::pwrowg::is_marker_sensor,
-                visus::pwrowg::is_voltage_sensor,
-                visus::pwrowg::is_current_sensor>);
-    } else if (record_voltage) {
-        this->_details->sensors = visus::pwrowg::sensor_array::for_matches(
-            std::move(config), visus::pwrowg::is_any_of<
-                visus::pwrowg::is_power_sensor,
-                visus::pwrowg::is_marker_sensor,
-                visus::pwrowg::is_voltage_sensor>);
-    } else if (record_current) {
-        this->_details->sensors = visus::pwrowg::sensor_array::for_matches(
-            std::move(config), visus::pwrowg::is_any_of<
-                visus::pwrowg::is_power_sensor,
-                visus::pwrowg::is_marker_sensor,
-                visus::pwrowg::is_current_sensor>);
-    } else {
-        this->_details->sensors = visus::pwrowg::sensor_array::for_matches(
-            std::move(config), visus::pwrowg::is_any_of<
-                visus::pwrowg::is_power_sensor,
-                visus::pwrowg::is_marker_sensor>);
-    }
+    this->_details->sensors = sensor_array::for_matches(
+        std::move(config),
+        [record_voltage, record_current](const sensor_description& d) {
+            if (is_power_sensor(d) || is_marker_sensor(d)) {
+                // Power and markers are always recorded.
+                return true;
+            }
+
+            if (is_tinkerforge_sensor(d)) {
+                // For Tinkerforge, nothing else will be recorded due to
+                // bandwidth limitations.
+                return false;
+            }
+
+            if (is_current_sensor(d)) {
+                // Record current if desired.
+                return record_current;
+            }
+
+            if (is_voltage_sensor(d)) {
+                // Record voltage if desired.
+                return record_voltage;
+            }
+
+            // Everything else is off.
+            return false;
+        });
 
     {
         auto it = trrojan::find_argument("--dump-power-sensors",

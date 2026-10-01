@@ -130,7 +130,7 @@ void trrojan::d3d12::environment::on_initialise(const cmd_line& cmdLine) {
         }
 
         // If supported, enable GPU-based validation.
-        {
+        if (debug != nullptr) {
             auto hr = debug->QueryInterface(IID_PPV_ARGS(&debug1));
             if (SUCCEEDED(hr)) {
                 debug1->SetEnableGPUBasedValidation(true);
