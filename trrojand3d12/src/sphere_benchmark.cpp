@@ -218,9 +218,11 @@ trrojan::result trrojan::d3d12::sphere_benchmark::on_run(d3d12::device& device,
     device.wait_for_gpu();
     const auto cpu_time = mctx.cpu_timer.elapsed_millis();
 
-    log::instance().write_line(log_level::debug, "Waiting for "
-        "RTx sample to be downloaded before leaving the power scope.");
-    ::WaitForSingleObject(rtx_done, INFINITE);
+    if (powerUid > 0) {
+        log::instance().write_line(log_level::debug, "Waiting for "
+            "RTx sample to be downloaded before leaving the power scope.");
+        ::WaitForSingleObject(rtx_done, INFINITE);
+    }
     benchmark_base::leave_power_scope(power_collector);
 #endif
 

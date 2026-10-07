@@ -597,9 +597,11 @@ trrojan::result trrojan::d3d11::sphere_benchmark::on_run(d3d11::device& device,
     wait_for_event_query(ctx.get(), this->done_query.get());
     auto cpuTime = cpuTimer.elapsed_millis();
 
-    log::instance().write_line(log_level::debug, "Waiting for "
-        "RTx sample to be downloaded before leaving the power scope.");
-    ::WaitForSingleObject(rtx_done, INFINITE);
+    if (powerUid > 0) {
+        log::instance().write_line(log_level::debug, "Waiting for "
+            "RTx sample to be downloaded before leaving the power scope.");
+        ::WaitForSingleObject(rtx_done, INFINITE);
+    }
     benchmark_base::leave_power_scope(powerCollector);
 
     // Compute derived statistics for GPU counters.
