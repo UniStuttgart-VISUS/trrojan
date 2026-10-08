@@ -67,6 +67,7 @@ mark_as_advanced(FORCE
 if (TRROJAN_WITH_POWER_OVERWHELMING)
     FetchContent_Declare(power_overwhelming
         URL "https://github.com/UniStuttgart-VISUS/power-overwhelming/archive/refs/heads/master.zip"
+        #URL https://github.com/UniStuttgart-VISUS/power-overwhelming/archive/refs/tags/v2.3.0.zip
         DOWNLOAD_EXTRACT_TIMESTAMP ON
     )
     option(PWROWG_BuildDemo "" OFF)
