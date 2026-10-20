@@ -211,6 +211,10 @@ void trrojan::power_collector::start(const std::string& file,
         s.reset();
     }
     for (auto& s : this->_details->tinkerforge) {
+        s.configure(
+            sample_averaging::average_of_4,
+            conversion_time::milliseconds_1_1,
+            conversion_time::milliseconds_1_1);
         s.sample(on_measurement, tinkerforge_sensor_source::power, si, this);
         log::instance().write_line(log_level::information, "Power sensor "
             "\"{0}\" started.", convert_string<char>(s.name()));
@@ -489,10 +493,7 @@ void trrojan::power_collector::setup_tinkerforge_sensors(void) {
         this->_details->tinkerforge.reserve(cnt);
         for (auto& d : descs) {
             this->_details->tinkerforge.emplace_back(d);
-            this->_details->tinkerforge.back().configure(
-                sample_averaging::average_of_4,
-                conversion_time::microseconds_588,
-                conversion_time::microseconds_588);
+            // Do not configure here, will be overwritten by reset.
         }
 
     } catch (std::exception& ex) {
