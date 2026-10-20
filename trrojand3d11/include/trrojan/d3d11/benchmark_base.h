@@ -44,6 +44,11 @@ namespace d3d11 {
         static const std::string factor_debug_view;
 
         /// <summary>
+        /// Boolean factor closing the debug view after run.
+        /// </summary>
+        static const std::string factor_debug_view_auto_close;
+
+        /// <summary>
         /// Boolean factor enabling output of the frame buffer to disk.
         /// </summary>
         static const std::string factor_save_view;

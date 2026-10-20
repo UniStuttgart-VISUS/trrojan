@@ -11,6 +11,7 @@ d3d11::cs-volume-renderer {
 	#string xfer_func = T:\Programmcode\trrojan\trroll\trrojan_cham1.brudervn
 	string xfer_func = C:\trrojan\src\trroll\trrojan_cham1.brudervn
 	boolean debug_view = true
+	boolean debug_view_auto_close = true
 
 	float32 step_size = 2; 1; 0.5
 	float32 ert_threshold = 0; 0.99

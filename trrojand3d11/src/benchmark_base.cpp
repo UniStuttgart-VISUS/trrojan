@@ -28,6 +28,7 @@
 const std::string trrojan::d3d11::benchmark_base::factor_##f(#f)
 
 _D3D_BENCH_DEFINE_FACTOR(debug_view);
+_D3D_BENCH_DEFINE_FACTOR(debug_view_auto_close);
 _D3D_BENCH_DEFINE_FACTOR(save_view);
 _D3D_BENCH_DEFINE_FACTOR(sync_interval);
 
@@ -76,6 +77,7 @@ trrojan::result trrojan::d3d11::benchmark_base::run(const configuration& c) {
     // Determine whether we are in debug viewing mode, which will block all
     // device-related factors.
     auto isDebugView = c.get<bool>(factor_debug_view);
+    auto isDebugViewAutoClose = c.get<bool>(factor_debug_view_auto_close);
 
     if (contains(changed, factor_debug_view)) {
         // If the debug view has been changed, an implicit switch of the device
@@ -101,7 +103,7 @@ trrojan::result trrojan::d3d11::benchmark_base::run(const configuration& c) {
 #else /* defined(TRROJAN_FOR_UWP) */
             log::instance().write_line(log_level::verbose, "Lazy creation of "
                 "D3D11 debug render target.");
-            this->debug_target = std::make_shared<debug_render_target>();
+            this->debug_target = std::make_shared<debug_render_target>(isDebugViewAutoClose);
             this->debug_target->resize(1, 1);   // Force resource allocation.
             this->debug_device = std::make_shared<d3d11::device>(
                 this->debug_target->device());
@@ -166,6 +168,8 @@ trrojan::d3d11::benchmark_base::benchmark_base(const std::string& name)
         : trrojan::graphics_benchmark_base(name) {
     this->_default_configs.add_factor(factor::from_manifestations(
         factor_debug_view, false));
+    this->_default_configs.add_factor(factor::from_manifestations(
+        factor_debug_view_auto_close, false));
     this->_default_configs.add_factor(factor::from_manifestations(
         factor_save_view, false));
     this->_default_configs.add_factor(factor::from_manifestations(
