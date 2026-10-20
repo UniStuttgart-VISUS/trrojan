@@ -22,7 +22,8 @@
  * trrojan::d3d12::debug_render_target::debug_render_target
  */
 trrojan::d3d12::debug_render_target::debug_render_target(
-        const trrojan::device& device) : base(device, 2), _wnd(NULL) {
+        const trrojan::device& device, bool debug_view_auto_close)
+    : base(device, 2), _wnd(NULL), _debugViewAutoClose(debug_view_auto_close){
     assert(this->_wnd.is_lock_free());
     this->_msg_pump = std::thread(std::bind(&debug_render_target::do_msg,
         std::ref(*this)));
@@ -33,14 +34,16 @@ trrojan::d3d12::debug_render_target::debug_render_target(
  * trrojan::d3d12::debug_render_target::~debug_render_target
  */
 trrojan::d3d12::debug_render_target::~debug_render_target(void) {
-    //auto hWnd = this->hWnd.exchange(NULL);
-    //if (hWnd != NULL) {
-    //    ::SendMessage(hWnd, WM_CLOSE, 0, 0);
-    //}
-
     if (this->_msg_pump.joinable()) {
-        log::instance().write_line(log_level::information, "Please close the "
-            "debug view to end the programme.");
+        if (_debugViewAutoClose) {
+            auto hWnd = this->_wnd.exchange(NULL);
+            if (hWnd != NULL) {
+                ::SendMessage(hWnd, WM_CLOSE, 0, 0);
+            }
+        } else {
+            log::instance().write_line(log_level::information, "Please close "
+                "the debug view to end the programme.");
+        }
         this->_msg_pump.join();
     }
 }
@@ -225,12 +228,16 @@ LRESULT trrojan::d3d12::debug_render_target::wnd_proc(HWND hWnd, UINT msg,
             break;
 
         case WM_CLOSE:
+            ::DestroyWindow(hWnd);
+            break;
+
+        case WM_DESTROY:
             ::PostQuitMessage(0);
             break;
 
         case WM_KEYDOWN:
             if ((wParam == VK_ESCAPE) && (that != nullptr)) {
-                ::PostQuitMessage(0);
+                ::DestroyWindow(hWnd);
             }
             break;
 

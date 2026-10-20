@@ -36,7 +36,7 @@ namespace d3d11 {
         /// <summary>
         /// Initialises a new instance.
         /// </summary>
-        debug_render_target(void);
+        debug_render_target(bool debug_view_auto_close);
 
         /// <summary>
         /// Finalises the instance.
@@ -104,6 +104,11 @@ namespace d3d11 {
         /// anymore and is also not supported on D3D12.
         /// </remarks>
         winrt::com_ptr<ID3D11UnorderedAccessView> _uav;
+
+        /// <summary>
+        /// Automatically close the debug window on destruction.
+        /// </summary>
+        bool _debugViewAutoClose;
     };
 
 } /* namespace d3d11 */

@@ -41,7 +41,7 @@ namespace d3d12 {
         /// <summary>
         /// Initialises a new instance.
         /// </summary>
-        debug_render_target(const trrojan::device& device);
+        debug_render_target(const trrojan::device& device, bool debug_view_auto_close);
 
         /// <summary>
         /// Finalises the instance.
@@ -108,6 +108,11 @@ namespace d3d12 {
         /// The handle of the debug window.
         /// </summary>
         std::atomic<HWND> _wnd;
+
+        /// <summary>
+        /// Automatically close the debug window on destruction.
+        /// </summary>
+        bool _debugViewAutoClose;
     };
 #endif /* !defined(TRROJAN_FOR_UWP) */
 
